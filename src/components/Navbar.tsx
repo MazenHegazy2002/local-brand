@@ -6,6 +6,8 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import CartDrawer from './CartDrawer';
 import NotificationBell from './NotificationBell';
+import LanguageToggle from './LanguageToggle';
+import { useLanguage } from '@/providers/LanguageContext';
 import { useCartStore } from '@/lib/cartStore';
 
 export default function Navbar() {
@@ -14,6 +16,7 @@ export default function Navbar() {
   const [search, setSearch] = useState('');
   const router = useRouter();
   const cartCount = useCartStore((s) => s.count());
+  const { t } = useLanguage();
 
   const role = (session?.user as any)?.role;
   const dashboardHref = role === 'SELLER' ? '/seller-hub' : role === 'ADMIN' ? '/admin-os' : '/dashboard';
@@ -33,7 +36,7 @@ export default function Navbar() {
           
           {/* Logo */}
           <Link href="/" className="text-xl font-black tracking-tight shrink-0 text-white">
-            Marketplace
+            {t("Marketplace")}
           </Link>
 
           {/* Search */}
@@ -42,7 +45,7 @@ export default function Navbar() {
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search products, brands..."
+              placeholder={t("SearchPlaceholder")}
               className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-lg py-2 px-4 pr-10 outline-none text-sm focus:bg-white/15 transition-colors"
             />
             <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white">
@@ -52,13 +55,15 @@ export default function Navbar() {
 
           {/* Nav links */}
           <div className="hidden xl:flex items-center gap-5 text-sm font-semibold text-white/85">
-            <Link href="/flash-sales" className="hover:text-white transition-colors border-b-2 border-white pb-0.5 text-white">Flash Sales</Link>
-            <Link href="/brands" className="hover:text-white transition-colors">Top Brands</Link>
-            <Link href="/help" className="hover:text-white transition-colors">Help</Link>
+            <Link href="/flash-sales" className="hover:text-white transition-colors border-b-2 border-white pb-0.5 text-white">{t("FlashSales")}</Link>
+            <Link href="/brands" className="hover:text-white transition-colors">{t("TopBrands")}</Link>
+            <Link href="/help" className="hover:text-white transition-colors">{t("Help")}</Link>
           </div>
 
           {/* Right actions */}
           <div className="flex items-center gap-4 shrink-0">
+            
+            <LanguageToggle />
             
             {/* Wishlist */}
             <Link href="/dashboard" className="hidden sm:block text-white/80 hover:text-white transition-colors">
@@ -84,17 +89,17 @@ export default function Navbar() {
                     <span className="text-xs text-gray-500 capitalize">{role?.toLowerCase() ?? 'buyer'}</span>
                   </div>
                   <Link href={dashboardHref} className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
-                    <DashboardIcon /> Dashboard
+                    <DashboardIcon /> {t("Dashboard")}
                   </Link>
                   <button onClick={() => signOut({ callbackUrl: '/' })} className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
-                    <LogoutIcon /> Sign out
+                    <LogoutIcon /> {t("SignOut")}
                   </button>
                 </div>
               </div>
             ) : (
               <Link href="/login" className="flex items-center gap-1.5 text-sm font-semibold text-white/85 hover:text-white transition-colors">
                 <UserIcon />
-                <span className="hidden sm:inline">Sign in</span>
+                <span className="hidden sm:inline">{t("SignIn")}</span>
               </Link>
             )}
 
@@ -117,7 +122,7 @@ export default function Navbar() {
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search products..."
+              placeholder={t("SearchPlaceholder")}
               className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-lg py-2 px-4 pr-10 outline-none text-sm"
             />
             <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white">

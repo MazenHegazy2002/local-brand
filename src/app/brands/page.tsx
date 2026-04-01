@@ -1,16 +1,22 @@
+'use client';
+
 import Navbar from "@/components/Navbar";
 import { MOCK_BRANDS } from "@/lib/data";
 import Link from "next/link";
+import { useLanguage } from "@/providers/LanguageContext";
 
 export default function BrandsPage() {
+  const { t } = useLanguage();
   return (
     <main className="min-h-screen bg-[hsl(var(--background))]">
       <Navbar />
       
       <div className="container py-12 md:py-24">
         <div className="text-center max-w-3xl mx-auto mb-20 fade-in">
-          <h1 className="text-5xl md:text-7xl font-serif font-bold text-[hsl(var(--primary))] mb-6">Our <span className="text-[hsl(var(--accent))]">Creators</span></h1>
-          <p className="text-xl text-gray-600">Meet the visionaries crafting the soul of the platform. We verify and support every artisan to ensure authentic quality.</p>
+          <h1 className="text-5xl md:text-7xl font-serif font-bold text-[hsl(var(--primary))] mb-6">
+            {t('OurCreators')}
+          </h1>
+          <p className="text-xl text-gray-600">{t('OurCreatorsDesc')}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -21,7 +27,7 @@ export default function BrandsPage() {
                   <span className="text-3xl font-serif font-bold text-[hsl(var(--primary))] opacity-80">{brand.name.substring(0, 1)}</span>
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">{brand.name}</h3>
-                <span className="text-sm font-bold uppercase tracking-widest text-[hsl(var(--accent))]">Partner since {brand.joined}</span>
+                <span className="text-sm font-bold uppercase tracking-widest text-[hsl(var(--accent))]">{t('PartnerSince')} {brand.joined}</span>
               </div>
             </Link>
           ))}

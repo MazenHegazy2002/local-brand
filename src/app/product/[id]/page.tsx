@@ -6,14 +6,15 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { useCartStore } from '@/lib/cartStore';
 import { MOCK_PRODUCTS } from '@/lib/data';
+import { useLanguage } from '@/providers/LanguageContext';
 
-// Note: Using mock data for client-side demo until full SSR is wired up
 export default function ProductPage() {
   const { id } = useParams();
   const product = MOCK_PRODUCTS.find(p => String(p.id) === id);
   const addItem = useCartStore(s => s.addItem);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const { t } = useLanguage();
 
   if (!product) {
     return (
@@ -21,8 +22,8 @@ export default function ProductPage() {
         <Navbar />
         <div className="container mx-auto px-4 py-32 text-center text-gray-500">
           <div className="text-6xl mb-4">🔍</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Product Not Found</h1>
-          <p>The product you are looking for does not exist or has been removed.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('ProductNotFound')}</h1>
+          <p>{t('ProductNotFoundDesc')}</p>
         </div>
       </main>
     );
@@ -48,9 +49,9 @@ export default function ProductPage() {
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-100 py-3">
         <div className="container mx-auto px-4 text-xs font-semibold text-gray-500 flex items-center gap-2">
-          <span>Home</span>
+          <span>{t('Home')}</span>
           <span>/</span>
-          <span>Shop</span>
+          <span>{t('Shop')}</span>
           <span>/</span>
           <span className="text-[#1e3b8a]">{product.category}</span>
           <span>/</span>
@@ -67,14 +68,14 @@ export default function ProductPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
             </div>
-            {/* Thumbnails placeholder */}
+            {/* Thumbnails */}
             <div className="flex gap-3">
               <div className="w-20 h-20 rounded-lg bg-gray-50 border-2 border-[#1e3b8a] p-1 cursor-pointer">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={product.image} className="w-full h-full object-cover rounded" alt="" />
               </div>
               <div className="w-20 h-20 rounded-lg bg-gray-50 border border-gray-200 cursor-pointer opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-bold text-gray-400">
-                + More
+                {t('More')}
               </div>
             </div>
           </div>
@@ -89,9 +90,9 @@ export default function ProductPage() {
             </h1>
             
             <div className="flex items-center gap-4 mb-6">
-              <div className="text-3xl font-black text-[#1e3b8a]">{product.price.toLocaleString()} EGP</div>
+              <div className="text-3xl font-black text-[#1e3b8a]">{product.price.toLocaleString()} {t('EGP')}</div>
               <div className="flex bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-100">
-                ✓ In Stock ({product.stock} left)
+                ✓ {t('InStock')} ({product.stock} {t('Left')})
               </div>
             </div>
 
@@ -130,11 +131,11 @@ export default function ProductPage() {
                 }`}
               >
                 {added ? (
-                  <>✓ Added to Cart</>
+                  <>{t('AddedToCart')}</>
                 ) : (
                   <>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                    Add to Cart
+                    {t('AddToCart')}
                   </>
                 )}
               </button>
@@ -155,9 +156,9 @@ export default function ProductPage() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               </div>
               <div>
-                <h4 className="font-bold text-gray-900 text-sm mb-1">Local Brand Guarantee</h4>
+                <h4 className="font-bold text-gray-900 text-sm mb-1">{t('LocalBrandGuarantee')}</h4>
                 <p className="text-xs text-gray-500 leading-relaxed">
-                  Every product is authenticated. Free returns within 14 days for all domestic orders. Secure payment processing.
+                  {t('GuaranteeText')}
                 </p>
               </div>
             </div>

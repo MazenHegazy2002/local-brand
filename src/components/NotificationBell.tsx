@@ -12,7 +12,6 @@ interface Notification {
   createdAt: string;
 }
 
-// Simulated notifications — in production these come from the DB/websocket
 const MOCK_NOTIFICATIONS: Notification[] = [
   { id: '1', title: 'Order Confirmed', message: 'Your order #ORD-001 has been confirmed and is being packed.', type: 'order', read: false, createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString() },
   { id: '2', title: 'Flash Deal 🔥', message: '20% off all local fashion brands today only!', type: 'promo', read: false, createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString() },
@@ -29,6 +28,10 @@ function timeAgo(dateStr: string) {
   return `${mins}m ago`;
 }
 
+const typeIcon = { order: '📦', promo: '🔥', system: '🔔' };
+const typeBg  = { order: 'bg-blue-50',  promo: 'bg-orange-50',  system: 'bg-gray-50'  };
+const typeDot = { order: 'bg-blue-500', promo: 'bg-orange-400', system: 'bg-gray-400' };
+
 export default function NotificationBell() {
   const { data: session } = useSession();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -39,7 +42,7 @@ export default function NotificationBell() {
     if (session) setNotifications(MOCK_NOTIFICATIONS);
   }, [session]);
 
-  // Close dropdown on outside click
+  // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -49,16 +52,13 @@ export default function NotificationBell() {
   }, []);
 
   const unreadCount = notifications.filter(n => !n.read).length;
-
-  const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
-
-  const markRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
+  const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const markRead = (id: string) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
 
   if (!session) return null;
+
+  // Detect RTL so we can anchor the panel correctly
+  const isRtl = typeof document !== 'undefined' && document.documentElement.dir === 'rtl';
 
   return (
     <div className="relative" ref={ref}>
@@ -66,64 +66,113 @@ export default function NotificationBell() {
       <button
         id="notification-bell"
         onClick={() => setOpen(!open)}
-        className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors"
-        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+        className="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-white/15 transition-colors"
+        aria-label="Notifications"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none shadow">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
-      {/* Dropdown panel */}
+      {/* Dropdown panel — anchors left in RTL, right in LTR */}
       {open && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl border border-gray-100 shadow-2xl z-50 overflow-hidden">
+        <div
+          className="absolute mt-3 z-[100] shadow-2xl rounded-2xl border border-gray-100 bg-white overflow-hidden"
+          style={{
+            width: 340,
+            [isRtl ? 'left' : 'right']: 0,
+            top: '100%',
+          }}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <h3 className="font-bold text-gray-900 text-sm">Notifications</h3>
+          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary-light))]">
+            <div className="flex items-center gap-2">
+              <span className="text-white font-bold text-sm">
+                {isRtl ? 'الإشعارات' : 'Notifications'}
+              </span>
+              {unreadCount > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">
+                  {unreadCount}
+                </span>
+              )}
+            </div>
             {unreadCount > 0 && (
-              <button onClick={markAllRead} className="text-xs font-medium text-[hsl(var(--accent))] hover:underline">
-                Mark all read
+              <button
+                onClick={markAllRead}
+                className="text-[11px] font-bold text-white/80 hover:text-white border border-white/30 hover:border-white/60 px-3 py-1 rounded-full transition-all"
+              >
+                {isRtl ? 'تحديد الكل كمقروء' : 'Mark all read'}
               </button>
             )}
           </div>
 
           {/* Notification list */}
-          <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+          <div className="max-h-[340px] overflow-y-auto divide-y divide-gray-100">
             {notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-gray-400 text-sm">No notifications yet</div>
+              <div className="px-4 py-10 text-center text-gray-400 text-sm">
+                <div className="text-3xl mb-2">🔔</div>
+                {isRtl ? 'لا توجد إشعارات' : 'No notifications yet'}
+              </div>
             ) : (
               notifications.map(n => (
-                <button
+                <div
                   key={n.id}
-                  onClick={() => markRead(n.id)}
-                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex gap-3 ${!n.read ? 'bg-blue-50/40' : ''}`}
+                  className={`flex gap-3 px-4 py-3.5 transition-colors ${!n.read ? typeBg[n.type] : 'bg-white hover:bg-gray-50'}`}
                 >
-                  <span className="text-xl mt-0.5 shrink-0">
-                    {n.type === 'order' ? '📦' : n.type === 'promo' ? '🔥' : '🔔'}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs font-bold text-gray-900 truncate">{n.title}</p>
-                      {!n.read && <span className="w-1.5 h-1.5 bg-blue-500 rounded-full shrink-0" />}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{n.message}</p>
-                    <p className="text-[10px] text-gray-400 mt-1">{timeAgo(n.createdAt)}</p>
+                  {/* Icon */}
+                  <div className="shrink-0 w-9 h-9 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center text-base mt-0.5">
+                    {typeIcon[n.type]}
                   </div>
-                </button>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          {!n.read && (
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${typeDot[n.type]}`} />
+                          )}
+                          <p className="text-xs font-bold text-gray-900 truncate">{n.title}</p>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{n.message}</p>
+                        <p className="text-[10px] text-gray-400 mt-1.5">{timeAgo(n.createdAt)}</p>
+                      </div>
+
+                      {/* Per-item mark as read */}
+                      {!n.read && (
+                        <button
+                          onClick={() => markRead(n.id)}
+                          title={isRtl ? 'تحديد كمقروء' : 'Mark as read'}
+                          className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-white border border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-400 hover:text-blue-500 flex items-center justify-center transition-all"
+                        >
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               ))
             )}
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-2.5 border-t border-gray-100 text-center">
-            <button onClick={() => setOpen(false)} className="text-xs font-medium text-gray-400 hover:text-gray-600">
-              Close
+          <div className="px-4 py-2.5 border-t border-gray-100 flex items-center justify-between bg-gray-50">
+            <span className="text-[11px] text-gray-400">
+              {notifications.length} {isRtl ? 'إشعارات' : 'notifications'}
+            </span>
+            <button
+              onClick={() => setOpen(false)}
+              className="text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors"
+            >
+              {isRtl ? 'إغلاق' : 'Close'}
             </button>
           </div>
         </div>

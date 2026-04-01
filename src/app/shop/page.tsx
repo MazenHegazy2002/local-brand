@@ -2,12 +2,11 @@
 
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCartStore } from "@/lib/cartStore";
 import { MOCK_PRODUCTS, MOCK_CATEGORIES } from "@/lib/data";
-
-import { Suspense } from "react";
+import { useLanguage } from "@/providers/LanguageContext";
 
 function ShopContent() {
   const searchParams = useSearchParams();
@@ -17,14 +16,16 @@ function ShopContent() {
   const [sort, setSort] = useState<'default' | 'price-asc' | 'price-desc'>('default');
   const addItem = useCartStore(s => s.addItem);
   const [added, setAdded] = useState<Record<number, boolean>>({});
+  const { t, lang } = useLanguage();
 
   // Update q when URL param changes  
   useEffect(() => { setQ(searchParams.get('q') ?? ''); }, [searchParams]);
 
-  const categories = ['All', ...MOCK_CATEGORIES];
+  const allLabel = t('All');
+  const categories = [allLabel, ...MOCK_CATEGORIES];
 
   let filtered = MOCK_PRODUCTS
-    .filter(p => category === 'All' || p.category === category)
+    .filter(p => category === allLabel || p.category === category)
     .filter(p => !q || p.name.toLowerCase().includes(q.toLowerCase()) || p.brand.toLowerCase().includes(q.toLowerCase()));
 
   if (sort === 'price-asc') filtered = [...filtered].sort((a, b) => a.price - b.price);
@@ -41,28 +42,30 @@ function ShopContent() {
     setTimeout(() => setAdded(prev => ({ ...prev, [product.id]: false })), 1200);
   };
 
+  const egp = t('EGP');
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header + search */}
       <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8">
         <div className="flex-1">
           <h1 className="text-2xl font-black text-gray-900">
-            {q ? `Results for "${q}"` : category === 'All' ? 'All Products' : category}
+            {q ? `${t('ResultsFor')} "${q}"` : category === allLabel ? t('AllProducts') : category}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">{filtered.length} products</p>
+          <p className="text-sm text-gray-500 mt-1">{filtered.length} {t('Products')}</p>
         </div>
         <div className="flex gap-3">
           <input
             value={q}
             onChange={e => setQ(e.target.value)}
-            placeholder="Search..."
+            placeholder={t('SearchDots')}
             className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3b8a] bg-white"
           />
           <select value={sort} onChange={e => setSort(e.target.value as any)}
             className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none bg-white text-gray-700">
-            <option value="default">Sort: Default</option>
-            <option value="price-asc">Price: Low → High</option>
-            <option value="price-desc">Price: High → Low</option>
+            <option value="default">{t('SortDefault')}</option>
+            <option value="price-asc">{t('PriceLowHigh')}</option>
+            <option value="price-desc">{t('PriceHighLow')}</option>
           </select>
         </div>
       </div>
@@ -70,7 +73,7 @@ function ShopContent() {
       <div className="flex gap-8">
         {/* Sidebar filters */}
         <aside className="hidden md:block w-48 shrink-0">
-          <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3">Category</h3>
+          <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3">{t('Category')}</h3>
           {categories.map(cat => (
             <button key={cat} onClick={() => setCategory(cat)}
               className={`block w-full text-left py-1.5 px-3 text-sm rounded-md mb-1 transition-colors ${category === cat ? 'bg-[#1e3b8a] text-white font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
@@ -84,8 +87,8 @@ function ShopContent() {
           {filtered.length === 0 ? (
             <div className="text-center py-20 text-gray-400">
               <div className="text-5xl mb-4">🔍</div>
-              <p className="font-semibold">No products found</p>
-              <p className="text-sm mt-2">Try a different search or category</p>
+              <p className="font-semibold">{t('NoProductsFound')}</p>
+              <p className="text-sm mt-2">{t('TryDifferentSearch')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -96,8 +99,8 @@ function ShopContent() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       <div className="absolute top-2 left-2">
-                        {product.tags.slice(0, 1).map(t => (
-                          <span key={t} className="text-[10px] font-bold bg-[#1e3b8a] text-white px-2 py-0.5 rounded-full">{t}</span>
+                        {product.tags.slice(0, 1).map(tag => (
+                          <span key={tag} className="text-[10px] font-bold bg-[#1e3b8a] text-white px-2 py-0.5 rounded-full">{tag}</span>
                         ))}
                       </div>
                     </div>
@@ -106,11 +109,11 @@ function ShopContent() {
                     <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide mb-0.5">{product.brand}</p>
                     <h3 className="font-bold text-gray-900 text-sm mb-2 leading-tight line-clamp-2">{product.name}</h3>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-black text-[#1e3b8a] text-sm">{product.price.toLocaleString()} EGP</span>
+                      <span className="font-black text-[#1e3b8a] text-sm">{product.price.toLocaleString()} {egp}</span>
                       <button
                         onClick={() => handleAddToCart(product)}
                         className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-all ${added[product.id] ? 'bg-green-500 text-white' : 'bg-[#1e3b8a] text-white hover:bg-[#152c6e]'}`}>
-                        {added[product.id] ? '✓ Added' : 'Add'}
+                        {added[product.id] ? t('Added') : t('Add')}
                       </button>
                     </div>
                   </div>

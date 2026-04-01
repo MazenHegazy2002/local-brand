@@ -3,28 +3,30 @@ import Hero from "@/components/Hero";
 import Link from "next/link";
 import Image from "next/image";
 import { getHomepageData } from "./actions";
+import { DictKey } from "@/lib/i18n/dicts";
+import { getDictionary } from "@/lib/i18n/server";
 
 export default async function Home() {
   const { categories: dbCategories, featuredProducts, recentProducts } = await getHomepageData();
+  const dict = await getDictionary();
 
   const categories = dbCategories.length > 0 ? dbCategories.map((c: any) => ({
     name: c.name,
     icon: <ElectronicsIcon /> // Fallback icon
   })) : [
-    { name: "Electronics", icon: <ElectronicsIcon /> },
-    { name: "Fashion", icon: <FashionIcon /> },
-    { name: "Home", icon: <HomeIcon /> },
-    { name: "Groceries", icon: <GroceryIcon /> },
-    { name: "Health & Beauty", icon: <HealthIcon /> },
-    { name: "Sports", icon: <SportsIcon /> },
+    { name: dict.Electronics, icon: <ElectronicsIcon /> },
+    { name: dict.Fashion, icon: <FashionIcon /> },
+    { name: dict.HomeDecor, icon: <HomeIcon /> },
+    { name: dict.HealthBeauty, icon: <HealthIcon /> },
+    { name: dict.Sports, icon: <SportsIcon /> },
   ];
 
   const hotDeals: any[] = featuredProducts.map((p: any) => ({
     id: p.id,
-    brand: "LOCAL BRAND",
+    brand: dict.LocalBrand,
     title: p.title,
-    price: `${p.basePrice} EGP`,
-    badge: "Sale",
+    price: `${p.basePrice} ${dict.EGP}`,
+    badge: dict.Sale,
     badgeColor: "bg-[#d97706]",
     img: p.images[0]?.url || "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop"
   }));
@@ -37,7 +39,7 @@ export default async function Home() {
   const pickedForYou = recentProducts.map((p: any) => ({
     id: p.id,
     title: p.title,
-    price: `${p.basePrice} EGP`,
+    price: `${p.basePrice} ${dict.EGP}`,
     img: p.images[0]?.url || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop"
   }));
 
@@ -49,9 +51,9 @@ export default async function Home() {
       {/* 1. Browse Categories Section */}
       <section className="container mx-auto px-4 py-8">
         <div className="flex items-end justify-between mb-6 px-1">
-          <h2 className="text-[22px] md:text-2xl font-bold text-gray-900 tracking-tight">Browse Categories</h2>
+          <h2 className="text-[22px] md:text-2xl font-bold text-gray-900 tracking-tight">{dict.BrowseCategories}</h2>
           <Link href="/categories" className="text-[#1e3b8a] font-bold text-[13px] hover:underline mb-1">
-            View All Departments
+            {dict.ViewAllDepartments}
           </Link>
         </div>
 
@@ -73,10 +75,10 @@ export default async function Home() {
       {/* 2. Hot Deals Now */}
       <section className="container mx-auto px-4 py-6">
         <div className="flex items-center gap-3 mb-6 px-1">
-          <h2 className="text-[22px] md:text-2xl font-bold text-gray-900 tracking-tight">Hot Deals Now</h2>
+          <h2 className="text-[22px] md:text-2xl font-bold text-gray-900 tracking-tight">{dict.HotDealsNow}</h2>
           <span className="bg-red-50 text-red-600 text-[11px] font-bold px-2.5 py-1 rounded-full border border-red-100 flex items-center gap-1">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            Ends in 04:23:18
+            {dict.EndsIn} 04:23:18
           </span>
         </div>
 
@@ -108,12 +110,12 @@ export default async function Home() {
       <section className="container mx-auto px-4 py-12">
         <div className="bg-[#eef3f7] rounded-xl p-8 md:p-12 flex flex-col lg:flex-row items-center justify-between gap-10">
           <div className="lg:w-1/2 max-w-md">
-            <h2 className="text-2xl md:text-[28px] font-bold text-[#1e3b8a] mb-4 tracking-tight leading-tight">Empowering Local Brands</h2>
+            <h2 className="text-2xl md:text-[28px] font-bold text-[#1e3b8a] mb-4 tracking-tight leading-tight">{dict.EmpoweringLocalBrands}</h2>
             <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-              Discover a curated selection of artisans and independent sellers bringing you unique, high-quality products from your community.
+              {dict.PlatformFeaturesDesc}
             </p>
             <button className="bg-[#1e3b8a] hover:bg-[#152c6e] text-white font-bold text-sm py-2.5 px-6 rounded-md transition-colors shadow-sm">
-              Explore Brands
+              {dict.ShopLocal}
             </button>
           </div>
           

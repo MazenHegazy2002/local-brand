@@ -58,6 +58,31 @@ html, body {
   font-family: var(--font-sans);
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
+  top: 0px !important;
+}
+
+/* Hide Google Translate completely from view */
+.goog-te-banner-frame.skiptranslate {
+  display: none !important;
+}
+#goog-gt-tt {
+  display: none !important;
+  opacity: 0 !important;
+}
+.goog-tooltip {
+  display: none !important;
+}
+.goog-tooltip:hover {
+  display: none !important;
+}
+.goog-text-highlight {
+  background-color: transparent !important;
+  border: none !important; 
+  box-shadow: none !important;
+}
+
+html[dir="rtl"] body {
+  font-family: var(--font-cairo), system-ui, sans-serif !important;
 }
 
 /* Typography */

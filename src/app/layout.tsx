@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Outfit, Cairo } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/providers/SessionProvider";
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
+import GoogleTranslate from "@/components/GoogleTranslate";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -45,25 +46,28 @@ export const metadata: Metadata = {
   }
 };
 
+import { LanguageProvider } from "@/providers/LanguageContext";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Detect locale from Accept-Language header for RTL support
-  // Switch lang to "ar" and dir to "rtl" when Arabic is active
-  const headersList = await headers();
-  const acceptLang = headersList.get('accept-language') || 'en';
-  const isArabic = acceptLang.startsWith('ar');
-  const lang = isArabic ? 'ar' : 'en';
+  const cookieStore = await cookies();
+  const googTrans = cookieStore.get('googtrans')?.value;
+  
+  const isArabic = googTrans ? googTrans.includes('/ar') : false;
   const dir = isArabic ? 'rtl' : 'ltr';
 
   return (
-    <html lang={lang} dir={dir}>
+    <html lang="en" dir={dir}>
       <body className={`${inter.variable} ${outfit.variable} ${cairo.variable} bg-[hsl(var(--background))] text-[hsl(var(--foreground))] antialiased`}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <LanguageProvider>
+          <GoogleTranslate />
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </LanguageProvider>
       </body>
     </html>
   );
