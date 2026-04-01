@@ -1,0 +1,25 @@
+.next/dev/types/validator.ts(270,31): error TS2344: Type 'typeof import("C:/Users/Mazen/Desktop/Apps Store/Local brand/src/app/api/orders/[id]/invoice/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/orders/[id]/invoice">'.
+  Types of property 'GET' are incompatible.
+    Type '(req: Request, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ message: string; }> | NextResponse<{ invoice: { invoiceNumber: string; date: Date; platform: { name: string; taxRegistrationNumber: string; address: string; }; customer: { ...; }; lineItems: { ...; }[]; financials: { ...; }; }; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(279,31): error TS2344: Type 'typeof import("C:/Users/Mazen/Desktop/Apps Store/Local brand/src/app/api/orders/[id]/status/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/orders/[id]/status">'.
+  Types of property 'PATCH' are incompatible.
+    Type '(req: Request, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ message: string; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+.next/dev/types/validator.ts(288,31): error TS2344: Type 'typeof import("C:/Users/Mazen/Desktop/Apps Store/Local brand/src/app/api/products/[id]/recommendations/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/products/[id]/recommendations">'.
+  Types of property 'GET' are incompatible.
+    Type '(req: Request, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ message: string; }> | NextResponse<{ recommendations: ({ seller: { storeName: string; }; images: { id: string; url: string; isPrimary: boolean; productId: string; }[]; } & { ...; })[]; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+src/app/api/business-rules/cancel-item/route.ts(71,71): error TS2322: Type '"CANCELLED"' is not assignable to type 'OrderItemStatus | EnumOrderItemStatusFieldUpdateOperationsInput | undefined'.
+src/app/api/business-rules/cancel-item/route.ts(80,69): error TS2367: This comparison appears to be unintentional because the types 'OrderItemStatus' and '"CANCELLED"' have no overlap.
+src/app/api/payment/intent/route.ts(14,58): error TS2322: Type '"2025-01-27.acacia"' is not assignable to type '"2026-03-25.dahlia"'.
+src/app/api/payment/webhook/route.ts(18,75): error TS2322: Type '"2025-01-27.acacia"' is not assignable to type '"2026-03-25.dahlia"'.

@@ -1,0 +1,236 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.db{display:flex;min-height:640px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden}
+.sidebar{width:186px;flex-shrink:0;background:#1a1a2e;padding:16px 0;display:flex;flex-direction:column}
+.logo{padding:0 16px 20px;font-size:15px;font-weight:500;color:#fff}
+.logo span{color:#7F77DD}
+.nav-section{font-size:10px;font-weight:500;color:#444;letter-spacing:.08em;padding:10px 16px 4px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;cursor:pointer;font-size:12px;color:#888;transition:background .12s}
+.nav-item:hover{background:rgba(255,255,255,.05);color:#ccc}
+.nav-item.active{background:rgba(127,119,221,.15);color:#AFA9EC}
+.nav-icon{width:15px;height:15px;flex-shrink:0}
+.main{flex:1;min-width:0;padding:18px;background:var(--color-background-secondary);overflow:auto}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.page-title{font-size:17px;font-weight:500;color:var(--color-text-primary)}
+.top-actions{display:flex;gap:8px;align-items:center}
+.alert-dot{width:8px;height:8px;border-radius:50%;background:#E24B4A;flex-shrink:0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px}
+.stat{background:var(--color-background-primary);border-radius:var(--border-radius-md);padding:12px;border:0.5px solid var(--color-border-tertiary)}
+.stat-label{font-size:10px;color:var(--color-text-secondary);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.stat-val{font-size:20px;font-weight:500;color:var(--color-text-primary);line-height:1}
+.stat-sub{font-size:11px;margin-top:4px}
+.up{color:#27500A}.down{color:#791F1F}
+.card{background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);padding:14px;margin-bottom:11px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.card-title{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
+.badge{font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px;flex-shrink:0}
+.b-pending{background:#FAEEDA;color:#633806}
+.b-active{background:#E1F5EE;color:#085041}
+.b-banned{background:#FCEBEB;color:#791F1F}
+.b-dispute{background:#FCEBEB;color:#791F1F}
+.b-resolved{background:#E1F5EE;color:#085041}
+.b-new{background:#EEEDFE;color:#3C3489}
+.action-btn{font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary)}
+.action-btn:hover{background:var(--color-background-secondary)}
+.action-btn.approve{border-color:#0F6E56;color:#085041}
+.action-btn.reject{border-color:#A32D2D;color:#791F1F}
+.row-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.row-item:last-child{border-bottom:none}
+.avatar-sm{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0}
+.chart-bars{display:flex;align-items:flex-end;gap:3px;height:60px}
+.bar-w{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.bar{width:100%;border-radius:2px 2px 0 0;background:#7F77DD;min-height:3px}
+.bar-l{font-size:9px;color:var(--color-text-tertiary)}
+.metric-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px}
+.metric-row:last-child{border-bottom:none}
+.audit-row{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:11px}
+.audit-row:last-child{border-bottom:none}
+.audit-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px}
+</style>
+
+<div class="db">
+<div class="sidebar">
+  <div class="logo">Admin<span>OS</span></div>
+  <div class="nav-section">Main</div>
+  <div class="nav-item active">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".9"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".6"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".6"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".3"/></svg>
+    Overview
+  </div>
+  <div class="nav-item" onclick="sendPrompt('Give me the React code for the admin sellers management page with approve/ban')">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="3" stroke="currentColor" stroke-width="1.2" fill="none" opacity=".7"/><path d="M1 14c0-2.8 2.2-5 5-5" stroke="currentColor" stroke-width="1.2" fill="none" opacity=".6"/><path d="M11 9l1.5 1.5L15 8" stroke="currentColor" stroke-width="1.3" fill="none" opacity=".8"/></svg>
+    Sellers
+  </div>
+  <div class="nav-item" onclick="sendPrompt('Give me the React code for the admin users management page')">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="5" r="2.5" stroke="currentColor" stroke-width="1.1" fill="none" opacity=".6"/><circle cx="11" cy="5" r="2.5" stroke="currentColor" stroke-width="1.1" fill="none" opacity=".6"/><path d="M1 14c0-2.5 1.8-4 4-4M7 14c0-2.5 1.8-4 4-4s4 1.5 4 4" stroke="currentColor" stroke-width="1.1" fill="none" opacity=".5"/></svg>
+    Users
+  </div>
+  <div class="nav-item" onclick="sendPrompt('Give me the React code for the admin orders oversight page')">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="12" height="14" rx="2" stroke="currentColor" stroke-width="1.2" fill="none" opacity=".7"/><rect x="5" y="5" width="6" height="1" rx=".5" fill="currentColor" opacity=".5"/><rect x="5" y="8" width="4" height="1" rx=".5" fill="currentColor" opacity=".4"/></svg>
+    Orders
+  </div>
+  <div class="nav-section">Finance</div>
+  <div class="nav-item" onclick="sendPrompt('Give me the React code for the admin financial reconciliation and payouts page')">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="4" width="14" height="9" rx="2" fill="currentColor" opacity=".5"/><rect x="1" y="4" width="14" height="3" rx="1" fill="currentColor" opacity=".7"/><circle cx="11.5" cy="9.5" r="1.5" fill="#7F77DD"/></svg>
+    Payouts
+  </div>
+  <div class="nav-item" onclick="sendPrompt('Give me the React code for the admin revenue and analytics page')">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><polyline points="1,12 5,7 8,10 11,4 15,8" stroke="currentColor" stroke-width="1.3" fill="none" opacity=".7"/></svg>
+    Analytics
+  </div>
+  <div class="nav-section">Support</div>
+  <div class="nav-item" onclick="sendPrompt('Give me the React code for the admin disputes resolution page')">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M8 1.5C4.4 1.5 1.5 4.4 1.5 8S4.4 14.5 8 14.5 14.5 11.6 14.5 8 11.6 1.5 8 1.5z" stroke="currentColor" stroke-width="1.2" fill="none" opacity=".7"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg>
+    Disputes
+  </div>
+  <div class="nav-item" onclick="sendPrompt('Give me the React code for the admin content moderation queue')">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.2" fill="none" opacity=".6"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.3" fill="none" opacity=".8"/></svg>
+    Moderation
+  </div>
+  <div class="nav-section">System</div>
+  <div class="nav-item" onclick="sendPrompt('Give me the React code for the admin platform configuration settings page')">
+    <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.2" fill="none" opacity=".7"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none" opacity=".5"/></svg>
+    Settings
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="page-title">Platform overview</div>
+    <div class="top-actions">
+      <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-secondary)">
+        <div class="alert-dot"></div>
+        4 disputes open
+      </div>
+      <div style="width:34px;height:34px;border-radius:var(--border-radius-md);background:#EEEDFE;display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5A4.5 4.5 0 003.5 6c0 1.5-.5 3-1.5 4h12c-1-1-1.5-2.5-1.5-4A4.5 4.5 0 008 1.5z" fill="#534AB7" opacity=".8"/><path d="M6.5 13.5a1.5 1.5 0 003 0" stroke="#534AB7" stroke-width="1.2" fill="none"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">GMV (March)</div>
+      <div class="stat-val">1.2M</div>
+      <div class="stat-sub up">+24% vs Feb</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Platform revenue</div>
+      <div class="stat-val" style="color:#534AB7">96,400</div>
+      <div class="stat-sub" style="color:var(--color-text-secondary)">EGP (8% avg)</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Active sellers</div>
+      <div class="stat-val">284</div>
+      <div class="stat-sub up">+12 this month</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Total users</div>
+      <div class="stat-val">18,492</div>
+      <div class="stat-sub up">+340 today</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Orders this week</div></div>
+      <div class="chart-bars">
+        <div class="bar-w"><div class="bar" style="height:50%"></div><div class="bar-l">M</div></div>
+        <div class="bar-w"><div class="bar" style="height:70%"></div><div class="bar-l">T</div></div>
+        <div class="bar-w"><div class="bar" style="height:55%"></div><div class="bar-l">W</div></div>
+        <div class="bar-w"><div class="bar" style="height:90%"></div><div class="bar-l">T</div></div>
+        <div class="bar-w"><div class="bar" style="height:100%"></div><div class="bar-l">F</div></div>
+        <div class="bar-w"><div class="bar" style="height:75%"></div><div class="bar-l">S</div></div>
+        <div class="bar-w"><div class="bar" style="height:60%"></div><div class="bar-l">S</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Key metrics</div></div>
+      <div class="metric-row"><span style="color:var(--color-text-secondary)">Avg order value</span><span style="font-weight:500">892 EGP</span></div>
+      <div class="metric-row"><span style="color:var(--color-text-secondary)">Conversion rate</span><span style="font-weight:500;color:#27500A">3.4%</span></div>
+      <div class="metric-row"><span style="color:var(--color-text-secondary)">Refund rate</span><span style="font-weight:500;color:#791F1F">2.1%</span></div>
+      <div class="metric-row"><span style="color:var(--color-text-secondary)">Pending payouts</span><span style="font-weight:500">214,800 EGP</span></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Seller applications</div><span class="badge b-pending">3 pending</span></div>
+      <div class="row-item">
+        <div class="avatar-sm" style="background:#EEEDFE;color:#3C3489">KT</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:500;color:var(--color-text-primary)">Kareem Tech</div>
+          <div style="font-size:11px;color:var(--color-text-secondary)">Electronics · Applied 2h ago</div>
+        </div>
+        <div style="display:flex;gap:5px">
+          <button class="action-btn approve" onclick="sendPrompt('Give me the React code for the seller approval workflow in the admin panel')">Approve</button>
+          <button class="action-btn reject">Reject</button>
+        </div>
+      </div>
+      <div class="row-item">
+        <div class="avatar-sm" style="background:#E1F5EE;color:#085041">SF</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:500;color:var(--color-text-primary)">Style Fashion</div>
+          <div style="font-size:11px;color:var(--color-text-secondary)">Fashion · Applied 5h ago</div>
+        </div>
+        <div style="display:flex;gap:5px">
+          <button class="action-btn approve">Approve</button>
+          <button class="action-btn reject">Reject</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Open disputes</div><span class="badge b-dispute">4 open</span></div>
+      <div class="row-item">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:500;color:var(--color-text-primary)">#ORD-4801 — Item not received</div>
+          <div style="font-size:11px;color:var(--color-text-secondary)">Buyer: Ahmed K. · 1 day old</div>
+        </div>
+        <button class="action-btn" onclick="sendPrompt('Give me the React code for the admin dispute resolution page')">Review</button>
+      </div>
+      <div class="row-item">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:500;color:var(--color-text-primary)">#ORD-4788 — Wrong item sent</div>
+          <div style="font-size:11px;color:var(--color-text-secondary)">Buyer: Sara M. · 3 days old</div>
+        </div>
+        <button class="action-btn">Review</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">Admin audit log</div><span style="font-size:11px;color:var(--color-text-secondary)">Last 24h</span></div>
+    <div class="audit-row">
+      <div class="audit-dot" style="background:#E24B4A"></div>
+      <div style="flex:1">
+        <span style="font-weight:500;color:var(--color-text-primary)">Admin Hana</span>
+        <span style="color:var(--color-text-secondary)"> banned seller </span>
+        <span style="font-weight:500;color:var(--color-text-primary)">FakeGoods LLC</span>
+        <span style="color:var(--color-text-secondary)"> · policy violation</span>
+      </div>
+      <span style="color:var(--color-text-tertiary);font-size:11px;flex-shrink:0">2m ago</span>
+    </div>
+    <div class="audit-row">
+      <div class="audit-dot" style="background:#1D9E75"></div>
+      <div style="flex:1">
+        <span style="font-weight:500;color:var(--color-text-primary)">Admin Omar</span>
+        <span style="color:var(--color-text-secondary)"> approved seller </span>
+        <span style="font-weight:500;color:var(--color-text-primary)">TechZone Egypt</span>
+      </div>
+      <span style="color:var(--color-text-tertiary);font-size:11px;flex-shrink:0">18m ago</span>
+    </div>
+    <div class="audit-row">
+      <div class="audit-dot" style="background:#7F77DD"></div>
+      <div style="flex:1">
+        <span style="font-weight:500;color:var(--color-text-primary)">Admin Hana</span>
+        <span style="color:var(--color-text-secondary)"> issued full refund on </span>
+        <span style="font-weight:500;color:var(--color-text-primary)">#ORD-4788</span>
+        <span style="color:var(--color-text-secondary)"> · 1,650 EGP</span>
+      </div>
+      <span style="color:var(--color-text-tertiary);font-size:11px;flex-shrink:0">1h ago</span>
+    </div>
+  </div>
+</div>
+</div>

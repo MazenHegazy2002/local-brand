@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Color Palette - Warm Offwhite & Rich Brown theme */
+  --primary: 30 25% 25%; /* Deep Brown #4f4238 */
+  --primary-light: 30 20% 40%;
+  --accent: 35 100% 50%; /* Vibrant Orange/Yellow #ff8c00 */
+  --accent-hover: 35 100% 40%;
+  
+  --background: 40 20% 95%; /* Warm off-white #f2efe9 */
+  --foreground: 30 20% 15%; /* Dark charcoal/brown #2d2824 */
+  
+  --card: 0 0% 100%;
+  --card-foreground: 210 20% 12%;
+  
+  --popover: 0 0% 100%;
+  --popover-foreground: 210 20% 12%;
+  
+  --border: 30 15% 85%;
+  --input: 30 15% 85%;
+  --ring: 30 25% 25%;
+  
+  --radius: 1rem;
+  
+  --font-serif: 'Outfit', sans-serif;
+  --font-sans: 'Inter', sans-serif;
+}
+
+.dark {
+  --background: 210 20% 4%;
+  --foreground: 210 20% 98%;
+  
+  --card: 210 20% 8%;
+  --card-foreground: 210 20% 98%;
+  
+  --popover: 210 20% 8%;
+  --popover-foreground: 210 20% 98%;
+  
+  --border: 210 20% 15%;
+  --input: 210 20% 15%;
+  --ring: 35 100% 64%;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  border-color: hsl(var(--border));
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans);
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography */
+h1, h2, h3, h4, .font-serif {
+  font-family: var(--font-serif);
+  letter-spacing: -0.02em;
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass {
+  background: rgba(10, 10, 10, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Utilities */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  font-family: var(--font-sans);
+}
+
+.btn-primary {
+  background-color: hsl(var(--primary));
+  color: white;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.btn-accent {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--primary));
+}
+
+.btn-accent:hover {
+  background-color: hsl(var(--accent-hover));
+  transform: translateY(-2px);
+}
+
+/* Grid Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.6s ease forwards;
+}
+
+/* Product Cards */
+.product-card {
+  background: hsl(var(--card));
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+}
+
+.dark .product-card:hover {
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}

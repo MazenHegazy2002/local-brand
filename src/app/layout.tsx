@@ -1,0 +1,70 @@
+import type { Metadata } from "next";
+import { Inter, Outfit, Cairo } from "next/font/google";
+import "./globals.css";
+import AuthProvider from "@/providers/SessionProvider";
+import { headers } from "next/headers";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
+
+const outfit = Outfit({
+  variable: "--font-outfit",
+  subsets: ["latin"],
+});
+
+// Arabic font — activated when locale = ar
+const cairo = Cairo({
+  variable: "--font-cairo",
+  subsets: ["arabic", "latin"],
+  weight: ["400", "600", "700", "900"],
+});
+
+export const metadata: Metadata = {
+  title: "Local Brand | Premium Marketplace",
+  description: "Discover and support high-end local Egyptian brands. Authentic, quality, and curated.",
+  keywords: ["marketplace", "local brands", "egypt", "fashion", "electronics", "authentic"],
+  openGraph: {
+    title: "Local Brand Marketplace",
+    description: "The premier destination for authentic Egyptian brands and premium local products.",
+    url: "https://localbrand-egypt.com",
+    siteName: "LocalBrand",
+    images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Local Brand Marketplace",
+    description: "Support high-end local Egyptian artisans.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  }
+};
+
+export default async function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  // Detect locale from Accept-Language header for RTL support
+  // Switch lang to "ar" and dir to "rtl" when Arabic is active
+  const headersList = await headers();
+  const acceptLang = headersList.get('accept-language') || 'en';
+  const isArabic = acceptLang.startsWith('ar');
+  const lang = isArabic ? 'ar' : 'en';
+  const dir = isArabic ? 'rtl' : 'ltr';
+
+  return (
+    <html lang={lang} dir={dir}>
+      <body className={`${inter.variable} ${outfit.variable} ${cairo.variable} bg-[hsl(var(--background))] text-[hsl(var(--foreground))] antialiased`}>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}
