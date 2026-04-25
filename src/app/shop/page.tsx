@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useCartStore } from "@/lib/cartStore";
 import { MOCK_PRODUCTS, MOCK_CATEGORIES } from "@/lib/data";
 import { useLanguage } from "@/providers/LanguageContext";
+import WishlistButton from "@/components/WishlistButton";
 
 function ShopContent() {
   const searchParams = useSearchParams();
@@ -98,10 +99,13 @@ function ShopContent() {
                     <div className="aspect-square relative overflow-hidden bg-gray-50">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      <div className="absolute top-2 left-2">
+                      <div className="absolute top-2 left-2 z-10">
                         {product.tags.slice(0, 1).map(tag => (
                           <span key={tag} className="text-[10px] font-bold bg-[#1e3b8a] text-white px-2 py-0.5 rounded-full">{tag}</span>
                         ))}
+                      </div>
+                      <div className="absolute top-2 right-2 z-20">
+                        <WishlistButton product={product} />
                       </div>
                     </div>
                   </Link>

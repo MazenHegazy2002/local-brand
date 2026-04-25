@@ -5,6 +5,7 @@ import Image from "next/image";
 import { getHomepageData } from "./actions";
 import { DictKey } from "@/lib/i18n/dicts";
 import { getDictionary } from "@/lib/i18n/server";
+import WishlistButton from "@/components/WishlistButton";
 
 export default async function Home() {
   const { categories: dbCategories, featuredProducts, recentProducts } = await getHomepageData();
@@ -52,14 +53,14 @@ export default async function Home() {
       <section className="container mx-auto px-4 py-8">
         <div className="flex items-end justify-between mb-6 px-1">
           <h2 className="text-[22px] md:text-2xl font-bold text-gray-900 tracking-tight">{dict.BrowseCategories}</h2>
-          <Link href="/categories" className="text-[#1e3b8a] font-bold text-[13px] hover:underline mb-1">
+          <Link href="/shop" className="text-[#1e3b8a] font-bold text-[13px] hover:underline mb-1">
             {dict.ViewAllDepartments}
           </Link>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 border-b border-gray-200 pb-12">
           {categories.map((cat: any, i: number) => (
-            <div key={i} className="flex flex-col items-center group cursor-pointer">
+            <Link href="/shop" key={i} className="flex flex-col items-center group cursor-pointer">
               {/* Boxy White Background Card with Blue Icon */}
               <div className="w-full aspect-[1.1/1] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 group-hover:shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all rounded-lg flex items-center justify-center mb-4">
                 <div className="text-[#1e3b8a] scale-[1.35] group-hover:scale-[1.45] transition-transform">
@@ -67,7 +68,7 @@ export default async function Home() {
                 </div>
               </div>
               <span className="font-bold text-gray-800 text-[13px] tracking-tight">{cat.name}</span>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
@@ -91,6 +92,9 @@ export default async function Home() {
                     {item.badge}
                   </div>
                 )}
+                <div className="absolute top-4 right-4 z-20">
+                  <WishlistButton product={item} />
+                </div>
                 <Image src={item.img} alt={item.title} layout="fill" objectFit="cover" className="group-hover:scale-105 transition-transform duration-500" />
               </div>
               <div className="p-4">
@@ -157,6 +161,9 @@ export default async function Home() {
           {pickedForYou.map((item: any, i: number) => (
             <Link href={`/product/${item.id}`} key={i} className="group cursor-pointer">
               <div className="w-full aspect-[4/5] bg-white rounded-lg overflow-hidden border border-gray-100 mb-3 relative">
+                <div className="absolute top-2 right-2 z-20">
+                  <WishlistButton product={item} />
+                </div>
                 <Image src={item.img} alt={item.title} layout="fill" objectFit="cover" className="group-hover:scale-105 transition-transform duration-500" />
               </div>
               <h3 className="font-bold text-gray-900 text-xs mb-1 truncate">{item.title}</h3>

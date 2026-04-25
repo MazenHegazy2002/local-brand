@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import WishlistButton from "./WishlistButton";
 
 export default function ProductCard({ product, index }: { product: any, index?: number }) {
   return (
@@ -11,7 +12,10 @@ export default function ProductCard({ product, index }: { product: any, index?: 
           fill
           className="object-cover transition-transform duration-700 group-hover:scale-110"
         />
-        <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+        <div className="absolute top-4 right-4 z-20">
+          <WishlistButton product={product} />
+        </div>
+        <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-10">
           {product.tags.map((tag: string) => (
             <span key={tag} className="bg-[hsl(var(--primary))]/80 backdrop-blur-md text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-tighter">
               {tag}

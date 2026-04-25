@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import { useCartStore } from '@/lib/cartStore';
 import { MOCK_PRODUCTS } from '@/lib/data';
 import { useLanguage } from '@/providers/LanguageContext';
+import WishlistButton from '@/components/WishlistButton';
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -139,6 +140,11 @@ export default function ProductPage() {
                   </>
                 )}
               </button>
+
+              {/* Wishlist button */}
+              <div className="flex-shrink-0 flex items-center justify-center">
+                <WishlistButton product={product} className="!w-12 !h-12 !bg-white border border-gray-200 hover:!bg-gray-50" />
+              </div>
             </div>
 
             {/* Tags */}
