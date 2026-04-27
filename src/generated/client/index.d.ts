@@ -2392,6 +2392,10 @@ export namespace Prisma {
       isolationLevel?: Prisma.TransactionIsolationLevel
     }
     /**
+     * Instance of a Driver Adapter, e.g., like one provided by `@prisma/adapter-planetscale`
+     */
+    adapter?: runtime.DriverAdapter | null
+    /**
      * Global configuration for omitting model fields by default.
      * 
      * @example
@@ -17682,6 +17686,7 @@ export namespace Prisma {
   export type OrderMinAggregateOutputType = {
     id: string | null
     userId: string | null
+    guestEmail: string | null
     couponId: string | null
     totalAmount: number | null
     discountAmount: number | null
@@ -17699,6 +17704,7 @@ export namespace Prisma {
   export type OrderMaxAggregateOutputType = {
     id: string | null
     userId: string | null
+    guestEmail: string | null
     couponId: string | null
     totalAmount: number | null
     discountAmount: number | null
@@ -17716,6 +17722,7 @@ export namespace Prisma {
   export type OrderCountAggregateOutputType = {
     id: number
     userId: number
+    guestEmail: number
     couponId: number
     totalAmount: number
     discountAmount: number
@@ -17747,6 +17754,7 @@ export namespace Prisma {
   export type OrderMinAggregateInputType = {
     id?: true
     userId?: true
+    guestEmail?: true
     couponId?: true
     totalAmount?: true
     discountAmount?: true
@@ -17764,6 +17772,7 @@ export namespace Prisma {
   export type OrderMaxAggregateInputType = {
     id?: true
     userId?: true
+    guestEmail?: true
     couponId?: true
     totalAmount?: true
     discountAmount?: true
@@ -17781,6 +17790,7 @@ export namespace Prisma {
   export type OrderCountAggregateInputType = {
     id?: true
     userId?: true
+    guestEmail?: true
     couponId?: true
     totalAmount?: true
     discountAmount?: true
@@ -17884,7 +17894,8 @@ export namespace Prisma {
 
   export type OrderGroupByOutputType = {
     id: string
-    userId: string
+    userId: string | null
+    guestEmail: string | null
     couponId: string | null
     totalAmount: number
     discountAmount: number
@@ -17921,6 +17932,7 @@ export namespace Prisma {
   export type OrderSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     userId?: boolean
+    guestEmail?: boolean
     couponId?: boolean
     totalAmount?: boolean
     discountAmount?: boolean
@@ -17933,7 +17945,7 @@ export namespace Prisma {
     shippingAddressSnapshot?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Order$userArgs<ExtArgs>
     coupon?: boolean | Order$couponArgs<ExtArgs>
     items?: boolean | Order$itemsArgs<ExtArgs>
     shipments?: boolean | Order$shipmentsArgs<ExtArgs>
@@ -17943,6 +17955,7 @@ export namespace Prisma {
   export type OrderSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     userId?: boolean
+    guestEmail?: boolean
     couponId?: boolean
     totalAmount?: boolean
     discountAmount?: boolean
@@ -17955,13 +17968,14 @@ export namespace Prisma {
     shippingAddressSnapshot?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Order$userArgs<ExtArgs>
     coupon?: boolean | Order$couponArgs<ExtArgs>
   }, ExtArgs["result"]["order"]>
 
   export type OrderSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     userId?: boolean
+    guestEmail?: boolean
     couponId?: boolean
     totalAmount?: boolean
     discountAmount?: boolean
@@ -17974,13 +17988,14 @@ export namespace Prisma {
     shippingAddressSnapshot?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Order$userArgs<ExtArgs>
     coupon?: boolean | Order$couponArgs<ExtArgs>
   }, ExtArgs["result"]["order"]>
 
   export type OrderSelectScalar = {
     id?: boolean
     userId?: boolean
+    guestEmail?: boolean
     couponId?: boolean
     totalAmount?: boolean
     discountAmount?: boolean
@@ -17995,34 +18010,35 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "couponId" | "totalAmount" | "discountAmount" | "shippingFee" | "status" | "paymentMethod" | "paymentStatus" | "paymentId" | "idempotencyKey" | "shippingAddressSnapshot" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
+  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "guestEmail" | "couponId" | "totalAmount" | "discountAmount" | "shippingFee" | "status" | "paymentMethod" | "paymentStatus" | "paymentId" | "idempotencyKey" | "shippingAddressSnapshot" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
   export type OrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Order$userArgs<ExtArgs>
     coupon?: boolean | Order$couponArgs<ExtArgs>
     items?: boolean | Order$itemsArgs<ExtArgs>
     shipments?: boolean | Order$shipmentsArgs<ExtArgs>
     _count?: boolean | OrderCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OrderIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Order$userArgs<ExtArgs>
     coupon?: boolean | Order$couponArgs<ExtArgs>
   }
   export type OrderIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Order$userArgs<ExtArgs>
     coupon?: boolean | Order$couponArgs<ExtArgs>
   }
 
   export type $OrderPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Order"
     objects: {
-      user: Prisma.$UserPayload<ExtArgs>
+      user: Prisma.$UserPayload<ExtArgs> | null
       coupon: Prisma.$CouponPayload<ExtArgs> | null
       items: Prisma.$OrderItemPayload<ExtArgs>[]
       shipments: Prisma.$ShipmentPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
-      userId: string
+      userId: string | null
+      guestEmail: string | null
       couponId: string | null
       totalAmount: number
       discountAmount: number
@@ -18429,7 +18445,7 @@ export namespace Prisma {
    */
   export interface Prisma__OrderClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", ClientOptions> | Null, Null, ExtArgs, ClientOptions>
+    user<T extends Order$userArgs<ExtArgs> = {}>(args?: Subset<T, Order$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", ClientOptions> | null, null, ExtArgs, ClientOptions>
     coupon<T extends Order$couponArgs<ExtArgs> = {}>(args?: Subset<T, Order$couponArgs<ExtArgs>>): Prisma__CouponClient<$Result.GetResult<Prisma.$CouponPayload<ExtArgs>, T, "findUniqueOrThrow", ClientOptions> | null, null, ExtArgs, ClientOptions>
     items<T extends Order$itemsArgs<ExtArgs> = {}>(args?: Subset<T, Order$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findMany", ClientOptions> | Null>
     shipments<T extends Order$shipmentsArgs<ExtArgs> = {}>(args?: Subset<T, Order$shipmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ShipmentPayload<ExtArgs>, T, "findMany", ClientOptions> | Null>
@@ -18464,6 +18480,7 @@ export namespace Prisma {
   interface OrderFieldRefs {
     readonly id: FieldRef<"Order", 'String'>
     readonly userId: FieldRef<"Order", 'String'>
+    readonly guestEmail: FieldRef<"Order", 'String'>
     readonly couponId: FieldRef<"Order", 'String'>
     readonly totalAmount: FieldRef<"Order", 'Float'>
     readonly discountAmount: FieldRef<"Order", 'Float'>
@@ -18857,6 +18874,25 @@ export namespace Prisma {
      * Filter which Orders to delete
      */
     where?: OrderWhereInput
+  }
+
+  /**
+   * Order.user
+   */
+  export type Order$userArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
   }
 
   /**
@@ -23481,6 +23517,7 @@ export namespace Prisma {
   export const OrderScalarFieldEnum: {
     id: 'id',
     userId: 'userId',
+    guestEmail: 'guestEmail',
     couponId: 'couponId',
     totalAmount: 'totalAmount',
     discountAmount: 'discountAmount',
@@ -24684,7 +24721,8 @@ export namespace Prisma {
     OR?: OrderWhereInput[]
     NOT?: OrderWhereInput | OrderWhereInput[]
     id?: StringFilter<"Order"> | string
-    userId?: StringFilter<"Order"> | string
+    userId?: StringNullableFilter<"Order"> | string | null
+    guestEmail?: StringNullableFilter<"Order"> | string | null
     couponId?: StringNullableFilter<"Order"> | string | null
     totalAmount?: FloatFilter<"Order"> | number
     discountAmount?: FloatFilter<"Order"> | number
@@ -24697,7 +24735,7 @@ export namespace Prisma {
     shippingAddressSnapshot?: StringFilter<"Order"> | string
     createdAt?: DateTimeFilter<"Order"> | Date | string
     updatedAt?: DateTimeFilter<"Order"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     coupon?: XOR<CouponNullableScalarRelationFilter, CouponWhereInput> | null
     items?: OrderItemListRelationFilter
     shipments?: ShipmentListRelationFilter
@@ -24705,7 +24743,8 @@ export namespace Prisma {
 
   export type OrderOrderByWithRelationInput = {
     id?: SortOrder
-    userId?: SortOrder
+    userId?: SortOrderInput | SortOrder
+    guestEmail?: SortOrderInput | SortOrder
     couponId?: SortOrderInput | SortOrder
     totalAmount?: SortOrder
     discountAmount?: SortOrder
@@ -24730,7 +24769,8 @@ export namespace Prisma {
     AND?: OrderWhereInput | OrderWhereInput[]
     OR?: OrderWhereInput[]
     NOT?: OrderWhereInput | OrderWhereInput[]
-    userId?: StringFilter<"Order"> | string
+    userId?: StringNullableFilter<"Order"> | string | null
+    guestEmail?: StringNullableFilter<"Order"> | string | null
     couponId?: StringNullableFilter<"Order"> | string | null
     totalAmount?: FloatFilter<"Order"> | number
     discountAmount?: FloatFilter<"Order"> | number
@@ -24742,7 +24782,7 @@ export namespace Prisma {
     shippingAddressSnapshot?: StringFilter<"Order"> | string
     createdAt?: DateTimeFilter<"Order"> | Date | string
     updatedAt?: DateTimeFilter<"Order"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     coupon?: XOR<CouponNullableScalarRelationFilter, CouponWhereInput> | null
     items?: OrderItemListRelationFilter
     shipments?: ShipmentListRelationFilter
@@ -24750,7 +24790,8 @@ export namespace Prisma {
 
   export type OrderOrderByWithAggregationInput = {
     id?: SortOrder
-    userId?: SortOrder
+    userId?: SortOrderInput | SortOrder
+    guestEmail?: SortOrderInput | SortOrder
     couponId?: SortOrderInput | SortOrder
     totalAmount?: SortOrder
     discountAmount?: SortOrder
@@ -24775,7 +24816,8 @@ export namespace Prisma {
     OR?: OrderScalarWhereWithAggregatesInput[]
     NOT?: OrderScalarWhereWithAggregatesInput | OrderScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Order"> | string
-    userId?: StringWithAggregatesFilter<"Order"> | string
+    userId?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    guestEmail?: StringNullableWithAggregatesFilter<"Order"> | string | null
     couponId?: StringNullableWithAggregatesFilter<"Order"> | string | null
     totalAmount?: FloatWithAggregatesFilter<"Order"> | number
     discountAmount?: FloatWithAggregatesFilter<"Order"> | number
@@ -26070,6 +26112,7 @@ export namespace Prisma {
 
   export type OrderCreateInput = {
     id?: string
+    guestEmail?: string | null
     totalAmount: number
     discountAmount?: number
     shippingFee?: number
@@ -26081,7 +26124,7 @@ export namespace Prisma {
     shippingAddressSnapshot: string
     createdAt?: Date | string
     updatedAt?: Date | string
-    user: UserCreateNestedOneWithoutOrdersInput
+    user?: UserCreateNestedOneWithoutOrdersInput
     coupon?: CouponCreateNestedOneWithoutOrdersInput
     items?: OrderItemCreateNestedManyWithoutOrderInput
     shipments?: ShipmentCreateNestedManyWithoutOrderInput
@@ -26089,7 +26132,8 @@ export namespace Prisma {
 
   export type OrderUncheckedCreateInput = {
     id?: string
-    userId: string
+    userId?: string | null
+    guestEmail?: string | null
     couponId?: string | null
     totalAmount: number
     discountAmount?: number
@@ -26108,6 +26152,7 @@ export namespace Prisma {
 
   export type OrderUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    guestEmail?: NullableStringFieldUpdateOperationsInput | string | null
     totalAmount?: FloatFieldUpdateOperationsInput | number
     discountAmount?: FloatFieldUpdateOperationsInput | number
     shippingFee?: FloatFieldUpdateOperationsInput | number
@@ -26119,7 +26164,7 @@ export namespace Prisma {
     shippingAddressSnapshot?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutOrdersNestedInput
+    user?: UserUpdateOneWithoutOrdersNestedInput
     coupon?: CouponUpdateOneWithoutOrdersNestedInput
     items?: OrderItemUpdateManyWithoutOrderNestedInput
     shipments?: ShipmentUpdateManyWithoutOrderNestedInput
@@ -26127,7 +26172,8 @@ export namespace Prisma {
 
   export type OrderUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    guestEmail?: NullableStringFieldUpdateOperationsInput | string | null
     couponId?: NullableStringFieldUpdateOperationsInput | string | null
     totalAmount?: FloatFieldUpdateOperationsInput | number
     discountAmount?: FloatFieldUpdateOperationsInput | number
@@ -26146,7 +26192,8 @@ export namespace Prisma {
 
   export type OrderCreateManyInput = {
     id?: string
-    userId: string
+    userId?: string | null
+    guestEmail?: string | null
     couponId?: string | null
     totalAmount: number
     discountAmount?: number
@@ -26163,6 +26210,7 @@ export namespace Prisma {
 
   export type OrderUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
+    guestEmail?: NullableStringFieldUpdateOperationsInput | string | null
     totalAmount?: FloatFieldUpdateOperationsInput | number
     discountAmount?: FloatFieldUpdateOperationsInput | number
     shippingFee?: FloatFieldUpdateOperationsInput | number
@@ -26178,7 +26226,8 @@ export namespace Prisma {
 
   export type OrderUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    guestEmail?: NullableStringFieldUpdateOperationsInput | string | null
     couponId?: NullableStringFieldUpdateOperationsInput | string | null
     totalAmount?: FloatFieldUpdateOperationsInput | number
     discountAmount?: FloatFieldUpdateOperationsInput | number
@@ -27410,6 +27459,11 @@ export namespace Prisma {
     not?: NestedEnumPaymentStatusFilter<$PrismaModel> | $Enums.PaymentStatus
   }
 
+  export type UserNullableScalarRelationFilter = {
+    is?: UserWhereInput | null
+    isNot?: UserWhereInput | null
+  }
+
   export type CouponNullableScalarRelationFilter = {
     is?: CouponWhereInput | null
     isNot?: CouponWhereInput | null
@@ -27428,6 +27482,7 @@ export namespace Prisma {
   export type OrderCountOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
+    guestEmail?: SortOrder
     couponId?: SortOrder
     totalAmount?: SortOrder
     discountAmount?: SortOrder
@@ -27451,6 +27506,7 @@ export namespace Prisma {
   export type OrderMaxOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
+    guestEmail?: SortOrder
     couponId?: SortOrder
     totalAmount?: SortOrder
     discountAmount?: SortOrder
@@ -27468,6 +27524,7 @@ export namespace Prisma {
   export type OrderMinOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
+    guestEmail?: SortOrder
     couponId?: SortOrder
     totalAmount?: SortOrder
     discountAmount?: SortOrder
@@ -28788,10 +28845,12 @@ export namespace Prisma {
     set?: $Enums.PaymentStatus
   }
 
-  export type UserUpdateOneRequiredWithoutOrdersNestedInput = {
+  export type UserUpdateOneWithoutOrdersNestedInput = {
     create?: XOR<UserCreateWithoutOrdersInput, UserUncheckedCreateWithoutOrdersInput>
     connectOrCreate?: UserCreateOrConnectWithoutOrdersInput
     upsert?: UserUpsertWithoutOrdersInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutOrdersInput, UserUpdateWithoutOrdersInput>, UserUncheckedUpdateWithoutOrdersInput>
   }
@@ -29318,6 +29377,7 @@ export namespace Prisma {
 
   export type OrderCreateWithoutUserInput = {
     id?: string
+    guestEmail?: string | null
     totalAmount: number
     discountAmount?: number
     shippingFee?: number
@@ -29336,6 +29396,7 @@ export namespace Prisma {
 
   export type OrderUncheckedCreateWithoutUserInput = {
     id?: string
+    guestEmail?: string | null
     couponId?: string | null
     totalAmount: number
     discountAmount?: number
@@ -29548,7 +29609,8 @@ export namespace Prisma {
     OR?: OrderScalarWhereInput[]
     NOT?: OrderScalarWhereInput | OrderScalarWhereInput[]
     id?: StringFilter<"Order"> | string
-    userId?: StringFilter<"Order"> | string
+    userId?: StringNullableFilter<"Order"> | string | null
+    guestEmail?: StringNullableFilter<"Order"> | string | null
     couponId?: StringNullableFilter<"Order"> | string | null
     totalAmount?: FloatFilter<"Order"> | number
     discountAmount?: FloatFilter<"Order"> | number
@@ -31361,6 +31423,7 @@ export namespace Prisma {
 
   export type OrderCreateWithoutCouponInput = {
     id?: string
+    guestEmail?: string | null
     totalAmount: number
     discountAmount?: number
     shippingFee?: number
@@ -31372,14 +31435,15 @@ export namespace Prisma {
     shippingAddressSnapshot: string
     createdAt?: Date | string
     updatedAt?: Date | string
-    user: UserCreateNestedOneWithoutOrdersInput
+    user?: UserCreateNestedOneWithoutOrdersInput
     items?: OrderItemCreateNestedManyWithoutOrderInput
     shipments?: ShipmentCreateNestedManyWithoutOrderInput
   }
 
   export type OrderUncheckedCreateWithoutCouponInput = {
     id?: string
-    userId: string
+    userId?: string | null
+    guestEmail?: string | null
     totalAmount: number
     discountAmount?: number
     shippingFee?: number
@@ -31695,6 +31759,7 @@ export namespace Prisma {
 
   export type OrderCreateWithoutItemsInput = {
     id?: string
+    guestEmail?: string | null
     totalAmount: number
     discountAmount?: number
     shippingFee?: number
@@ -31706,14 +31771,15 @@ export namespace Prisma {
     shippingAddressSnapshot: string
     createdAt?: Date | string
     updatedAt?: Date | string
-    user: UserCreateNestedOneWithoutOrdersInput
+    user?: UserCreateNestedOneWithoutOrdersInput
     coupon?: CouponCreateNestedOneWithoutOrdersInput
     shipments?: ShipmentCreateNestedManyWithoutOrderInput
   }
 
   export type OrderUncheckedCreateWithoutItemsInput = {
     id?: string
-    userId: string
+    userId?: string | null
+    guestEmail?: string | null
     couponId?: string | null
     totalAmount: number
     discountAmount?: number
@@ -31774,6 +31840,7 @@ export namespace Prisma {
 
   export type OrderUpdateWithoutItemsInput = {
     id?: StringFieldUpdateOperationsInput | string
+    guestEmail?: NullableStringFieldUpdateOperationsInput | string | null
     totalAmount?: FloatFieldUpdateOperationsInput | number
     discountAmount?: FloatFieldUpdateOperationsInput | number
     shippingFee?: FloatFieldUpdateOperationsInput | number
@@ -31785,14 +31852,15 @@ export namespace Prisma {
     shippingAddressSnapshot?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutOrdersNestedInput
+    user?: UserUpdateOneWithoutOrdersNestedInput
     coupon?: CouponUpdateOneWithoutOrdersNestedInput
     shipments?: ShipmentUpdateManyWithoutOrderNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutItemsInput = {
     id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    guestEmail?: NullableStringFieldUpdateOperationsInput | string | null
     couponId?: NullableStringFieldUpdateOperationsInput | string | null
     totalAmount?: FloatFieldUpdateOperationsInput | number
     discountAmount?: FloatFieldUpdateOperationsInput | number
@@ -31843,6 +31911,7 @@ export namespace Prisma {
 
   export type OrderCreateWithoutShipmentsInput = {
     id?: string
+    guestEmail?: string | null
     totalAmount: number
     discountAmount?: number
     shippingFee?: number
@@ -31854,14 +31923,15 @@ export namespace Prisma {
     shippingAddressSnapshot: string
     createdAt?: Date | string
     updatedAt?: Date | string
-    user: UserCreateNestedOneWithoutOrdersInput
+    user?: UserCreateNestedOneWithoutOrdersInput
     coupon?: CouponCreateNestedOneWithoutOrdersInput
     items?: OrderItemCreateNestedManyWithoutOrderInput
   }
 
   export type OrderUncheckedCreateWithoutShipmentsInput = {
     id?: string
-    userId: string
+    userId?: string | null
+    guestEmail?: string | null
     couponId?: string | null
     totalAmount: number
     discountAmount?: number
@@ -31895,6 +31965,7 @@ export namespace Prisma {
 
   export type OrderUpdateWithoutShipmentsInput = {
     id?: StringFieldUpdateOperationsInput | string
+    guestEmail?: NullableStringFieldUpdateOperationsInput | string | null
     totalAmount?: FloatFieldUpdateOperationsInput | number
     discountAmount?: FloatFieldUpdateOperationsInput | number
     shippingFee?: FloatFieldUpdateOperationsInput | number
@@ -31906,14 +31977,15 @@ export namespace Prisma {
     shippingAddressSnapshot?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutOrdersNestedInput
+    user?: UserUpdateOneWithoutOrdersNestedInput
     coupon?: CouponUpdateOneWithoutOrdersNestedInput
     items?: OrderItemUpdateManyWithoutOrderNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutShipmentsInput = {
     id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    guestEmail?: NullableStringFieldUpdateOperationsInput | string | null
     couponId?: NullableStringFieldUpdateOperationsInput | string | null
     totalAmount?: FloatFieldUpdateOperationsInput | number
     discountAmount?: FloatFieldUpdateOperationsInput | number
@@ -32363,6 +32435,7 @@ export namespace Prisma {
 
   export type OrderCreateManyUserInput = {
     id?: string
+    guestEmail?: string | null
     couponId?: string | null
     totalAmount: number
     discountAmount?: number
@@ -32419,6 +32492,7 @@ export namespace Prisma {
 
   export type OrderUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
+    guestEmail?: NullableStringFieldUpdateOperationsInput | string | null
     totalAmount?: FloatFieldUpdateOperationsInput | number
     discountAmount?: FloatFieldUpdateOperationsInput | number
     shippingFee?: FloatFieldUpdateOperationsInput | number
@@ -32437,6 +32511,7 @@ export namespace Prisma {
 
   export type OrderUncheckedUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
+    guestEmail?: NullableStringFieldUpdateOperationsInput | string | null
     couponId?: NullableStringFieldUpdateOperationsInput | string | null
     totalAmount?: FloatFieldUpdateOperationsInput | number
     discountAmount?: FloatFieldUpdateOperationsInput | number
@@ -32455,6 +32530,7 @@ export namespace Prisma {
 
   export type OrderUncheckedUpdateManyWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
+    guestEmail?: NullableStringFieldUpdateOperationsInput | string | null
     couponId?: NullableStringFieldUpdateOperationsInput | string | null
     totalAmount?: FloatFieldUpdateOperationsInput | number
     discountAmount?: FloatFieldUpdateOperationsInput | number
@@ -33159,7 +33235,8 @@ export namespace Prisma {
 
   export type OrderCreateManyCouponInput = {
     id?: string
-    userId: string
+    userId?: string | null
+    guestEmail?: string | null
     totalAmount: number
     discountAmount?: number
     shippingFee?: number
@@ -33175,6 +33252,7 @@ export namespace Prisma {
 
   export type OrderUpdateWithoutCouponInput = {
     id?: StringFieldUpdateOperationsInput | string
+    guestEmail?: NullableStringFieldUpdateOperationsInput | string | null
     totalAmount?: FloatFieldUpdateOperationsInput | number
     discountAmount?: FloatFieldUpdateOperationsInput | number
     shippingFee?: FloatFieldUpdateOperationsInput | number
@@ -33186,14 +33264,15 @@ export namespace Prisma {
     shippingAddressSnapshot?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutOrdersNestedInput
+    user?: UserUpdateOneWithoutOrdersNestedInput
     items?: OrderItemUpdateManyWithoutOrderNestedInput
     shipments?: ShipmentUpdateManyWithoutOrderNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutCouponInput = {
     id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    guestEmail?: NullableStringFieldUpdateOperationsInput | string | null
     totalAmount?: FloatFieldUpdateOperationsInput | number
     discountAmount?: FloatFieldUpdateOperationsInput | number
     shippingFee?: FloatFieldUpdateOperationsInput | number
@@ -33211,7 +33290,8 @@ export namespace Prisma {
 
   export type OrderUncheckedUpdateManyWithoutCouponInput = {
     id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    guestEmail?: NullableStringFieldUpdateOperationsInput | string | null
     totalAmount?: FloatFieldUpdateOperationsInput | number
     discountAmount?: FloatFieldUpdateOperationsInput | number
     shippingFee?: FloatFieldUpdateOperationsInput | number

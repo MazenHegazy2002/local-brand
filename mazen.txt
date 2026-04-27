@@ -1,0 +1,77 @@
+# Project Task List - Marketplace Platform
+
+## 🟢 1. Critical Bugs & Fixes (Immediate Priority)
+- [ ] **Fix Next.js 15 Breaking Changes**:
+  - [ ] Await `params` in `src/app/api/orders/[id]/invoice/route.ts`.
+  - [ ] Await `params` in `src/app/api/orders/[id]/status/route.ts`.
+  - [ ] Await `params` in `src/app/api/products/[id]/recommendations/route.ts`.
+  - [ ] Check all other dynamic routes for synchronous `params` access.
+- [ ] **Fix Stripe API Version Mismatch**:
+  - [ ] Update Stripe version in `src/app/api/payment/intent/route.ts` to `2026-03-25.dahlia`.
+  - [ ] Update Stripe version in `src/app/api/payment/webhook/route.ts` to `2026-03-25.dahlia`.
+- [ ] **Fix Prisma Enum Errors**:
+  - [ ] Resolve type mismatch for `"CANCELLED"` in `src/app/api/business-rules/cancel-item/route.ts`.
+- [ ] **Complete `createOrder` Logic**:
+  - [ ] Implement coupon validation and application logic (currently placeholder).
+  - [ ] Add shipping fee calculation logic.
+  - [ ] Add VAT calculation logic (currently hardcoded 14%).
+
+## 🟡 2. Core Features (Implementation)
+- [ ] **Seller Hub Enhancements**:
+  - [ ] Implement full Product CRUD (currently only basic create/delete).
+  - [ ] Add Inventory management UI.
+  - [ ] Add Order management for sellers.
+  - [ ] Add Earnings dashboard for sellers.
+- [ ] **Admin OS Enhancements**:
+  - [ ] Implement Seller approval/rejection workflow.
+  - [ ] Add User management dashboard.
+  - [ ] Add Platform-wide analytics.
+  - [ ] Improve Taxonomy management (Categories, Tags, Collections).
+- [ ] **Buyer Features**:
+  - [ ] Complete Wishlist functionality (ensure state sync between client/server).
+  - [ ] Implement Review/Rating system with verified purchase badge.
+  - [ ] Complete Address management (Add/Edit/Delete).
+  - [ ] Implement Loyalty points tracking and redemption.
+
+## 🔵 3. Improvements & UX
+- [ ] **Localization (i18n)**:
+  - [ ] Audit `src/lib/i18n/dicts.ts` for missing keys.
+  - [ ] Ensure all hardcoded strings in `src/app/page.tsx` and components are localized.
+  - [ ] Fix missing icons in categories on homepage.
+- [ ] **Search & Discovery**:
+  - [ ] Improve `LiveSearch.tsx` performance and UI.
+  - [ ] Implement advanced filtering (price range, brands, attributes).
+- [ ] **UI Refinement**:
+  - [ ] Improve `CartDrawer.tsx` design and animations.
+  - [ ] Ensure full responsiveness of `Hero.tsx` and `ProductGrid.tsx`.
+  - [ ] Add loading skeletons for all data-fetching sections.
+
+## ⚪ 4. Technical Debt & DevOps
+- [ ] **Testing**:
+  - [ ] Add unit tests for `getDashboardStats`.
+  - [ ] Add integration tests for checkout flow.
+  - [ ] Add E2E tests for buyer/seller workflows.
+- [ ] **Security**:
+  - [ ] Audit all server actions in `src/app/actions.ts` for proper authorization.
+  - [ ] Implement rate limiting on sensitive API endpoints (auth, payment).
+- [ ] **Optimization**:
+  - [ ] Optimize Image components with proper sizes and priorities.
+  - [ ] Implement Redis caching for frequently accessed data (categories, featured products).
+- [ ] **Cleanup**:
+  - [ ] Remove unused icons and boilerplate code in `src/app/page.tsx`.
+  - [ ] Refactor large files (like `actions.ts`) into smaller, domain-specific files.
+
+## 🚩 5. Vercel Login Investigation Findings
+**Issue:** Users `mazen@example.com`, `mazen2@example.com`, and `ali@example.com` fail to log in on Vercel.
+
+**Potential Causes & Actions:**
+- [ ] **Seed Data Missing**: The users are defined in `script/seed.ts`, which Vercel does not run automatically.
+  - *Action:* Run `npx tsx script/seed.ts` locally pointing to the production database, or add a temporary API endpoint to trigger the seed.
+- [ ] **Environment Variables**:
+  - [ ] Verify `NEXTAUTH_SECRET` is set in Vercel.
+  - [ ] Verify `NEXTAUTH_URL` matches the Vercel deployment URL.
+  - [ ] Verify `DATABASE_URL` is correctly pointing to the production database (Neon).
+- [ ] **Next.js 15 Route Failures**: TypeScript errors in API routes (like `orders/[id]/invoice`) due to synchronous `params` access may be causing runtime crashes in the production build.
+  - *Action:* Prioritize fixing the "Critical Bugs" in Section 1.
+- [ ] **Stripe Version Mismatch**: API version mismatch in `payment/intent` and `payment/webhook` might be crashing the auth flow if Stripe initialization fails.
+

@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/client"
+  provider        = "prisma-client-js"
+  output          = "../src/generated/client"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -234,7 +235,8 @@ enum DiscountType {
 
 model Order {
   id                  String   @id @default(uuid())
-  userId              String
+  userId              String?
+  guestEmail          String?
   couponId            String?
   totalAmount         Float
   discountAmount      Float    @default(0)
@@ -251,7 +253,7 @@ model Order {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  user                User     @relation(fields: [userId], references: [id])
+  user                User?     @relation(fields: [userId], references: [id])
   coupon              Coupon?  @relation(fields: [couponId], references: [id])
   items               OrderItem[]
   shipments           Shipment[]

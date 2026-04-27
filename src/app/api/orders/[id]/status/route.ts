@@ -2,15 +2,16 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../auth/[...nextauth]/route';
+import { OrderStatus } from '@/generated/client';
 
-const VALID_TRANSITIONS: Record<string, string[]> = {
-  'PENDING_PAYMENT': ['CONFIRMED', 'CANCELLED'],
-  'CONFIRMED': ['PROCESSING', 'CANCELLED'],
-  'PROCESSING': ['SHIPPED', 'CANCELLED'],
-  'SHIPPED': ['DELIVERED', 'RETURNED'],
-  'DELIVERED': ['RETURNED'],
-  'CANCELLED': [],
-  'RETURNED': []
+const VALID_TRANSITIONS: Record<string, OrderStatus[]> = {
+  [OrderStatus.PENDING_PAYMENT]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+  [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
+  [OrderStatus.PROCESSING]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
+  [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED, OrderStatus.RETURNED],
+  [OrderStatus.DELIVERED]: [OrderStatus.RETURNED],
+  [OrderStatus.CANCELLED]: [],
+  [OrderStatus.RETURNED]: []
 };
 
 export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
@@ -39,7 +40,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
 
     // Role-based constraints
     if (role === 'BUYER') {
-      if (status !== 'CANCELLED' && status !== 'RETURNED') {
+      if (status !== OrderStatus.CANCELLED && status !== OrderStatus.RETURNED) {
         return NextResponse.json({ message: 'Buyers can only CANCEL or RETURN orders' }, { status: 403 });
       }
       if (order.userId !== userId) {
@@ -48,7 +49,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     }
 
     // Commission Engine trigger on DELIVERED
-    if (status === 'DELIVERED' && order.status !== 'DELIVERED') {
+    if (status === OrderStatus.DELIVERED && order.status !== OrderStatus.DELIVERED) {
       const orderItems = await prisma.orderItem.findMany({
         where: { orderId },
         include: { variant: { include: { product: { include: { seller: true } } } } }

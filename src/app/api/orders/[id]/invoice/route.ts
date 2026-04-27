@@ -26,8 +26,8 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
     if (!order) return NextResponse.json({ message: 'Order not found' }, { status: 404 });
 
-    // Validate ownership
-    if (role === 'BUYER' && order.userId !== userId) {
+    // Validate ownership (allow guest orders for guest email)
+    if (role === 'BUYER' && order.userId && order.userId !== userId && !order.guestEmail) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
@@ -42,6 +42,9 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     const totalToPay = subtotal + vatAmount + shippingFee - order.discountAmount;
 
     // Build formal JSON structure representing the PDF Invoice Payload
+    const customerName = order.user?.name || order.guestEmail || 'Guest Customer';
+    const customerEmail = order.user?.email || order.guestEmail || '';
+    
     const invoice = {
       invoiceNumber: `LCL-INV-${order.id.split('-')[0].toUpperCase()}`,
       date: order.createdAt,
@@ -51,8 +54,8 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
         address: 'Cairo, Egypt'
       },
       customer: {
-        name: order.user.name,
-        email: order.user.email,
+        name: customerName,
+        email: customerEmail,
         address: JSON.parse(order.shippingAddressSnapshot)
       },
       lineItems: order.items.map(i => ({

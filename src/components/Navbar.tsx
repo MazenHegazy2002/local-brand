@@ -6,6 +6,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import CartDrawer from './CartDrawer';
 import NotificationBell from './NotificationBell';
+import LiveSearch from './LiveSearch';
 import LanguageToggle from './LanguageToggle';
 import { useLanguage } from '@/providers/LanguageContext';
 import { useCartStore } from '@/lib/cartStore';
@@ -21,13 +22,6 @@ export default function Navbar() {
   const role = (session?.user as any)?.role;
   const dashboardHref = role === 'SELLER' ? '/seller-hub' : role === 'ADMIN' ? '/admin-os' : '/dashboard';
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (search.trim()) {
-      router.push(`/shop?q=${encodeURIComponent(search.trim())}`);
-      setSearch('');
-    }
-  };
 
   return (
     <>
@@ -40,18 +34,9 @@ export default function Navbar() {
           </Link>
 
           {/* Search */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-[480px] mx-4 relative">
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder={t("SearchPlaceholder")}
-              className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-lg py-2 px-4 pr-10 outline-none text-sm focus:bg-white/15 transition-colors"
-            />
-            <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white">
-              <SearchIcon />
-            </button>
-          </form>
+          <div className="hidden md:flex flex-1 max-w-[480px] mx-4">
+            <LiveSearch />
+          </div>
 
           {/* Nav links */}
           <div className="hidden xl:flex items-center gap-5 text-sm font-semibold text-white/85">
@@ -91,6 +76,15 @@ export default function Navbar() {
                   <Link href={dashboardHref} className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
                     <DashboardIcon /> {t("Dashboard")}
                   </Link>
+                  <Link href="/dashboard" className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+                    <ListIcon /> My List
+                  </Link>
+                  <Link href="/dashboard?tab=discounts" className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+                    <DiscountIcon /> Discounts
+                  </Link>
+                  <Link href="/dashboard?tab=points" className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+                    <PointsIcon /> Points (Bonus)
+                  </Link>
                   <button onClick={() => signOut({ callbackUrl: '/' })} className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
                     <LogoutIcon /> {t("SignOut")}
                   </button>
@@ -116,20 +110,9 @@ export default function Navbar() {
         </div>
 
         {/* Mobile search */}
-        <form onSubmit={handleSearch} className="md:hidden px-4 pb-3">
-          <div className="relative">
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder={t("SearchPlaceholder")}
-              className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-lg py-2 px-4 pr-10 outline-none text-sm"
-            />
-            <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white">
-              <SearchIcon />
-            </button>
-          </div>
-        </form>
+        <div className="md:hidden px-4 pb-3">
+          <LiveSearch />
+        </div>
       </nav>
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
@@ -142,4 +125,7 @@ function HeartIcon() { return <svg width="20" height="20" viewBox="0 0 24 24" fi
 function UserIcon() { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>; }
 function CartIcon() { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>; }
 function DashboardIcon() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>; }
+function ListIcon() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>; }
+function DiscountIcon() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>; }
+function PointsIcon() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>; }
 function LogoutIcon() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>; }

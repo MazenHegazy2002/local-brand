@@ -48,6 +48,8 @@ export const metadata: Metadata = {
 
 import { LanguageProvider } from "@/providers/LanguageContext";
 
+import BottomNavigation from '@/components/BottomNavigation';
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -66,6 +68,7 @@ export default async function RootLayout({
           <GoogleTranslate />
           <AuthProvider>
             {children}
+            <BottomNavigation />
           </AuthProvider>
         </LanguageProvider>
       </body>

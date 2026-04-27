@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { OrderItemStatus, OrderStatus } from '@/generated/client';
 
 /**
  * Business rule enforcement middleware helpers
@@ -60,7 +61,8 @@ export async function cancelOrderItem(orderId: string, orderItemId: string, user
   });
 
   if (!order || order.userId !== userId) throw new Error('Order not found or forbidden');
-  if (!['PENDING_PAYMENT', 'CONFIRMED'].includes(order.status)) {
+  const currentStatus = order.status;
+  if (currentStatus !== OrderStatus.PENDING_PAYMENT && currentStatus !== OrderStatus.CONFIRMED) {
     throw new Error('Order cannot be cancelled at this stage');
   }
 
@@ -68,7 +70,7 @@ export async function cancelOrderItem(orderId: string, orderItemId: string, user
   if (!item) throw new Error('Order item not found');
 
   // Mark item as cancelled
-  await prisma.orderItem.update({ where: { id: orderItemId }, data: { status: 'CANCELLED' } });
+  await prisma.orderItem.update({ where: { id: orderItemId }, data: { status: OrderItemStatus.CANCELLED } });
 
   // Restock the variant
   await prisma.productVariant.update({
@@ -77,14 +79,14 @@ export async function cancelOrderItem(orderId: string, orderItemId: string, user
   });
 
   // Recalculate order total
-  const remaining = order.items.filter(i => i.id !== orderItemId && i.status !== 'CANCELLED');
+  const remaining = order.items.filter(i => i.id !== orderItemId && i.status !== OrderItemStatus.CANCELLED);
   const newTotal = remaining.reduce((sum, i) => sum + i.priceAtPurchase * i.quantity, 0);
   const vatAmount = newTotal * 0.14;
   const shippingFee = remaining.length > 0 ? 50 : 0;
 
   // If all items cancelled, cancel entire order
   if (remaining.length === 0) {
-    await prisma.order.update({ where: { id: orderId }, data: { status: 'CANCELLED', totalAmount: 0 } });
+    await prisma.order.update({ where: { id: orderId }, data: { status: OrderStatus.CANCELLED, totalAmount: 0 } });
     return { orderCancelled: true, refundAmount: order.totalAmount };
   }
 

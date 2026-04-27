@@ -255,6 +255,7 @@ exports.Prisma.CouponScalarFieldEnum = {
 exports.Prisma.OrderScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  guestEmail: 'guestEmail',
   couponId: 'couponId',
   totalAmount: 'totalAmount',
   discountAmount: 'discountAmount',

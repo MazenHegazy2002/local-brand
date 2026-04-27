@@ -118,9 +118,9 @@ export default async function Home() {
             <p className="text-gray-600 text-sm mb-6 leading-relaxed">
               {dict.PlatformFeaturesDesc}
             </p>
-            <button className="bg-[#1e3b8a] hover:bg-[#152c6e] text-white font-bold text-sm py-2.5 px-6 rounded-md transition-colors shadow-sm">
+            <Link href="/shop?local=true" className="inline-block bg-[#1e3b8a] hover:bg-[#152c6e] text-white font-bold text-sm py-2.5 px-6 rounded-md transition-colors shadow-sm">
               {dict.ShopLocal}
-            </button>
+            </Link>
           </div>
           
           <div className="lg:w-1/2 flex flex-col sm:flex-row justify-end gap-6 w-full">

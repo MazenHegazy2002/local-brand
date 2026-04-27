@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
+import { DiscountType } from '@/generated/client';
 
 // Stripe mock integration — real keys provided via env
 // Set STRIPE_SECRET_KEY in .env to enable live mode
@@ -11,7 +12,7 @@ async function getStripe() {
   if (!stripe) {
     if (!process.env.STRIPE_SECRET_KEY) return null;
     const Stripe = (await import('stripe')).default;
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-03-25.dahlia' as any });
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
   }
   return stripe;
 }
@@ -60,7 +61,7 @@ export async function POST(req: Request) {
     if (couponId) {
       const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
       if (coupon && coupon.isActive && coupon.expiryDate > new Date()) {
-        if (coupon.discountType === 'PERCENTAGE') {
+        if (coupon.discountType === DiscountType.PERCENTAGE) {
           discountAmount = subtotal * (coupon.discountValue / 100);
           if (coupon.maxDiscount) discountAmount = Math.min(discountAmount, coupon.maxDiscount);
         } else {

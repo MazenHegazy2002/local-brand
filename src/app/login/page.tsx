@@ -43,13 +43,22 @@ function LoginForm() {
       setError('Invalid email or password');
       setIsLoading(false);
     } else {
-      const { getSession } = await import('next-auth/react');
-      await router.refresh();
-      const session = await getSession();
-      const role = (session?.user as any)?.role;
-      if (role === 'ADMIN') router.push('/admin-os');
-      else if (role === 'SELLER') router.push('/seller-hub');
-      else router.push('/dashboard');
+      try {
+        const sessionRes = await fetch('/api/auth/session');
+        const session = await sessionRes.json();
+        const role = session?.user?.role;
+        
+        let target = callbackUrl;
+        if (!target || target === '/dashboard') {
+          if (role === 'ADMIN') target = '/admin-os';
+          else if (role === 'SELLER') target = '/seller-hub';
+          else target = '/dashboard';
+        }
+        
+        window.location.href = target;
+      } catch (err) {
+        window.location.href = callbackUrl || '/dashboard';
+      }
     }
   };
 

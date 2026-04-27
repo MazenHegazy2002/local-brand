@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from './api/auth/[...nextauth]/route';
 import { revalidatePath } from 'next/cache';
+import { OrderStatus, OrderItemStatus, DiscountType } from '@/generated/client';
 
 export async function getDashboardStats() {
   const session = await getServerSession(authOptions);
@@ -253,13 +254,30 @@ export async function createProduct(formData: FormData) {
   return { success: true };
 }
 
-export async function createOrder(cartItems: any[], addressInfo: any, paymentMethod: string) {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new Error("Unauthorized. Please log in to checkout.");
+export async function createOrder(cartItems: any[], addressInfo: any, paymentMethod: string, couponId?: string | null, guestEmail?: string) {
+  let userId: string | null = null;
+  let isGuest = false;
 
-  const userId = (session.user as any).id;
+  const session = await getServerSession(authOptions);
+  if (session) {
+    userId = (session.user as any).id;
+  } else if (guestEmail) {
+    isGuest = true;
+  } else {
+    throw new Error("Unauthorized. Please log in to checkout.");
+  }
+
   let totalAmount = 0;
+  let discountAmount = 0;
   const orderItemsData = [];
+
+  // Apply coupon if provided
+  if (couponId && !isGuest) {
+    const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
+    if (coupon && coupon.isActive && coupon.expiryDate > new Date()) {
+      // Calculate subtotal first, then apply discount
+    }
+  }
 
   for (const item of cartItems) {
     const product = await prisma.product.findUnique({
@@ -295,24 +313,55 @@ export async function createOrder(cartItems: any[], addressInfo: any, paymentMet
       sellerNameSnapshot: product.seller.storeName,
       priceAtPurchase: price,
       quantity: item.qty,
-      status: 'PENDING'
+      status: OrderItemStatus.PENDING
     });
   }
 
+  // Apply coupon discount after calculating subtotal
+  if (couponId && totalAmount > 0) {
+    const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
+    if (coupon && coupon.isActive && coupon.expiryDate > new Date()) {
+      const minOrderValue = coupon.minOrderValue || 0;
+      if (totalAmount >= minOrderValue) {
+        if (coupon.discountType === DiscountType.PERCENTAGE) {
+          discountAmount = totalAmount * (coupon.discountValue / 100);
+          if (coupon.maxDiscount) discountAmount = Math.min(discountAmount, coupon.maxDiscount);
+        } else {
+          discountAmount = Math.min(coupon.discountValue, totalAmount * 0.5);
+        }
+      }
+    }
+  }
+
+  const shippingFee = 50;
+  const vatAmount = totalAmount * 0.14;
+  const finalTotal = totalAmount + vatAmount + shippingFee - discountAmount;
+
   const order = await prisma.order.create({
     data: {
-      userId,
-      totalAmount,
-      shippingFee: 50,
+      userId: isGuest ? null : userId,
+      guestEmail: isGuest ? guestEmail : null,
+      couponId: couponId || null,
+      totalAmount: finalTotal,
+      discountAmount,
+      shippingFee,
       paymentMethod: paymentMethod === 'CREDIT_CARD' ? 'CREDIT_CARD' : 'CASH_ON_DELIVERY',
       paymentStatus: paymentMethod === 'CASH_ON_DELIVERY' ? 'UNPAID' : 'PAID',
-      status: 'CONFIRMED', 
+      status: OrderStatus.CONFIRMED, 
       shippingAddressSnapshot: JSON.stringify(addressInfo),
       items: {
         create: orderItemsData as any
       }
     }
   });
+
+  // Increment coupon usedCount after successful order
+  if (couponId && couponId) {
+    await prisma.coupon.update({
+      where: { id: couponId },
+      data: { usedCount: { increment: 1 } }
+    });
+  }
 
   revalidatePath('/dashboard');
   return { success: true, orderId: order.id };
