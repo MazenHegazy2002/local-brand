@@ -301,6 +301,53 @@ exports.Prisma.ReviewScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.NotificationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  title: 'title',
+  message: 'message',
+  link: 'link',
+  isRead: 'isRead',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.PayoutScalarFieldEnum = {
+  id: 'id',
+  sellerId: 'sellerId',
+  amount: 'amount',
+  status: 'status',
+  bankDetails: 'bankDetails',
+  transactionId: 'transactionId',
+  processedAt: 'processedAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ReturnRequestScalarFieldEnum = {
+  id: 'id',
+  orderItemId: 'orderItemId',
+  reason: 'reason',
+  details: 'details',
+  status: 'status',
+  adminNotes: 'adminNotes',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AuditLogScalarFieldEnum = {
+  id: 'id',
+  adminId: 'adminId',
+  action: 'action',
+  targetId: 'targetId',
+  details: 'details',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.SystemSettingsScalarFieldEnum = {
+  key: 'key',
+  value: 'value',
+  description: 'description',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.WishlistScalarFieldEnum = {
   userId: 'userId',
   productId: 'productId',
@@ -374,6 +421,20 @@ exports.OrderItemStatus = exports.$Enums.OrderItemStatus = {
   CANCELLED: 'CANCELLED'
 };
 
+exports.PayoutStatus = exports.$Enums.PayoutStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  PAID: 'PAID',
+  CANCELLED: 'CANCELLED'
+};
+
+exports.ReturnStatus = exports.$Enums.ReturnStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  COMPLETED: 'COMPLETED'
+};
+
 exports.Prisma.ModelName = {
   User: 'User',
   VerificationToken: 'VerificationToken',
@@ -392,6 +453,11 @@ exports.Prisma.ModelName = {
   OrderItem: 'OrderItem',
   Shipment: 'Shipment',
   Review: 'Review',
+  Notification: 'Notification',
+  Payout: 'Payout',
+  ReturnRequest: 'ReturnRequest',
+  AuditLog: 'AuditLog',
+  SystemSettings: 'SystemSettings',
   Wishlist: 'Wishlist'
 };
 

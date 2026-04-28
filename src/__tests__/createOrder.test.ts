@@ -32,7 +32,7 @@ jest.mock('@/app/api/auth/[...nextauth]/route', () => ({
 
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
-import { createOrder } from '@/app/actions';
+import { createOrder } from '../app/actions/orders';
 
 const mockSession = {
   user: { id: 'user-123', email: 'test@test.com', role: 'BUYER' },

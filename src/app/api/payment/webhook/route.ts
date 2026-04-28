@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { createOrder } from '@/app/actions';
+import { createOrder } from '@/app/actions/orders';
 
 // This webhook endpoint receives Stripe confirmation events
 // Set STRIPE_WEBHOOK_SECRET in .env to enable signature validation

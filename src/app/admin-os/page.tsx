@@ -4,274 +4,474 @@ import React, { useState, useEffect } from 'react';
 import { 
   getDashboardStats, 
   updateSellerStatus, 
-  getAdminTaxonomyData, 
-  createTaxonomy, 
-  deleteTaxonomy, 
-  updateProductTaxonomies, 
-  updateTaxSettings, 
-  getTaxSettings 
-} from '../actions';
+  seedTestData,
+  createTaxonomy,
+  deleteTaxonomy
+} from '../actions/seller';
 
-const S = {
-  sidebar: '#1a1a2e',
-  bg: '#192033',
-  card: '#1E2A3B',
-  card2: '#28364A',
-  border: 'rgba(255,255,255,0.08)',
-  txt: '#F9FAFB',
-  txt2: '#9CA3AF',
-  txt3: '#6B7280',
-  purple: '#7F77DD',
-  purpleA: '#AFA9EC',
-  green: '#1D9E75',
-  greenBg: '#E1F5EE',
-  greenD: '#085041',
-  red: '#E24B4A',
-  redBg: '#FCEBEB',
-  redD: '#791F1F',
-  amber: '#EF9F27',
-  amberBg: '#FAEEDA',
-  amberD: '#633806',
-};
-
-// ─── Mock data ──────────────────────────────────────────────────────────────
-const SELLERS_INIT = [
-  { id: 'kt', initials: 'KT', name: 'Kareem Tech', cat: 'Electronics', ago: '2h ago', email: 'kareem@techstore.eg', avatarBg: '#EEEDFE', avatarColor: '#3C3489', status: 'Pending', gmv: '45,200 EGP', products: 12 },
-  { id: 'sf', initials: 'SF', name: 'Style Fashion', cat: 'Fashion', ago: '5h ago', email: 'info@stylefashion.eg', avatarBg: '#E1F5EE', avatarColor: '#085041', status: 'Pending', gmv: '12,800 EGP', products: 34 },
-];
-
-const ORDERS_DATA = [
-  { id: '#ORD-4821', buyer: 'Mazen Ahmed', product: 'Sony WH-1000XM5', amount: '2,800 EGP', status: 'Shipped', date: 'Mar 29, 2026' },
-];
-
-const PAYOUTS_DATA = [
-  { seller: 'TechZone Egypt', amount: '142,050 EGP', commission: '25,050 EGP', status: 'Paid', date: 'Apr 01, 2026' },
-];
-
-const DISPUTES_DATA = [
-  { id: '#ORD-4801', issue: 'Item not received', buyer: 'Ahmed K.', seller: 'TechZone Egypt', amount: '9,500 EGP', age: '1 day', status: 'Open' },
-];
-
-const AUDIT_LOG = [
-  { color: S.red, action: 'banned seller', target: 'FakeGoods LLC', admin: 'Admin Hana', note: 'policy violation', time: '2m ago' },
-];
-
-const BAR_HEIGHTS = [50, 70, 55, 90, 100, 75, 60];
-const BAR_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
-// ─── Helper components ──────────────────────────────────────────────────────
-function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return <div style={{ background: S.card, borderRadius: 10, border: `0.5px solid ${S.border}`, padding: 14, ...style }}>{children}</div>;
-}
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontSize: 13, fontWeight: 600, color: S.txt, marginBottom: 12 }}>{children}</div>;
-}
-function StatusBadge({ s }: { s: string }) {
-  const m: Record<string, [string, string]> = {
-    Active: [S.greenBg, S.greenD], Pending: [S.amberBg, S.amberD], Banned: [S.redBg, S.redD],
-    BUYER: ['#EEEDFE', '#3C3489'], SELLER: [S.greenBg, S.greenD], ADMIN: ['#F3F0FF', '#4C1D95'],
-  };
-  const [bg, col] = m[s] ?? ['#374151', '#9CA3AF'];
-  return <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 20, background: bg, color: col }}>{s}</span>;
-}
-function ActionBtn({ label, color, onClick }: { label: string; color?: string; onClick?: () => void }) {
-  const c = color === 'green' ? { b: '#0F6E56', t: S.greenD } : color === 'red' ? { b: '#A32D2D', t: S.redD } : { b: S.border, t: S.txt2 };
-  return (
-    <button onClick={onClick}
-      style={{ fontSize: 11, padding: '3px 9px', borderRadius: 4, cursor: 'pointer', border: `0.5px solid ${c.b}`, background: 'transparent', color: c.t, fontWeight: 600, transition: 'all 0.15s' }}>
-      {label}
-    </button>
-  );
-}
-
-// ─── Sections ───────────────────────────────────────────────────────────────
-function OverviewSection({ pendingSellers, stats, refresh }: { pendingSellers: any[], stats: any, refresh: () => void }) {
-  const [toast, setToast] = useState('');
-  const act = async (id: string, name: string, action: string) => {
-    await updateSellerStatus(id, action === 'approved' ? 'ACTIVE' : 'BANNED' as any);
-    setToast(`${action === 'approved' ? '✓' : '✗'} ${name} ${action}`);
-    setTimeout(() => setToast(''), 3000);
-    refresh();
-  };
-  return (
-    <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 9, marginBottom: 14 }}>
-        {[
-          { label: 'Total Revenue', value: (stats.revenue || 0).toLocaleString() + ' EGP' },
-          { label: 'Total Orders', value: stats.totalOrders?.toString() || '0' },
-          { label: 'Total Products', value: stats.totalProducts?.toString() || '0' },
-          { label: 'Total users', value: stats.totalUsers?.toString() || '0' },
-        ].map((s, i) => (
-          <Card key={i} style={{ padding: 12 }}>
-            <div style={{ fontSize: 10, color: S.txt2, marginBottom: 5, textTransform: 'uppercase' }}>{s.label}</div>
-            <div style={{ fontSize: 20, fontWeight: 600, color: S.txt }}>{s.value}</div>
-          </Card>
-        ))}
-      </div>
-      <Card>
-        <SectionTitle>Seller applications</SectionTitle>
-        {pendingSellers.map((sel, i) => (
-          <div key={sel.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < pendingSellers.length - 1 ? `0.5px solid ${S.border}` : 'none' }}>
-            <div style={{ flex: 1 }}>{sel.storeName}</div>
-            <div style={{ display: 'flex', gap: 5 }}>
-              <ActionBtn label="Approve" color="green" onClick={() => act(sel.id, sel.storeName, 'approved')} />
-              <ActionBtn label="Reject" color="red" onClick={() => act(sel.id, sel.storeName, 'rejected')} />
-            </div>
-          </div>
-        ))}
-      </Card>
-    </div>
-  );
-}
-
-function SellersSection({ sellers: dbSellers, refresh }: { sellers: any[], refresh: () => void }) {
-  const [filter, setFilter] = useState('All');
-  const sellers = dbSellers || SELLERS_INIT;
-  const filtered = filter === 'All' ? sellers : sellers.filter((s:any) => s.status === filter);
-  return (
-    <div>
-      {filtered.map((sel:any) => (
-        <Card key={sel.id} style={{ marginBottom: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ flex: 1 }}>{sel.storeName || sel.name} - <StatusBadge s={sel.status} /></div>
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-function UsersSection({ users }: { users: any[] }) {
-  return (
-    <Card>
-      {users.map((u:any) => (
-        <div key={u.id} style={{ padding: '8px 0', borderBottom: `0.5px solid ${S.border}` }}>
-          {u.name} ({u.email}) - <StatusBadge s={u.role} />
-        </div>
-      ))}
-    </Card>
-  );
-}
-
-function OrdersSection({ orders: dbOrders }: { orders: any[] }) {
-  const orders = dbOrders || ORDERS_DATA;
-  return (
-    <Card>
-      {orders.map((o:any) => (
-        <div key={o.id} style={{ padding: '8px 0', borderBottom: `0.5px solid ${S.border}` }}>
-          {o.id} - {o.totalAmount || o.amount} - <StatusBadge s={o.status} />
-        </div>
-      ))}
-    </Card>
-  );
-}
-
-function PayoutsSection() { return <Card>Payouts logic here</Card>; }
-function AnalyticsSection({ stats }: { stats: any }) { return <Card>Analytics: {JSON.stringify(stats)}</Card>; }
-function DisputesSection() { return <Card>Disputes logic here</Card>; }
-function ModerationSection() { return <Card>Moderation logic here</Card>; }
-
-function SettingsSection() {
-  const [taxSettings, setTaxSettings] = useState({ vatRate: '14', platformFee: '15' });
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    getTaxSettings().then((res: any) => setTaxSettings({ vatRate: res.vatRate.toString(), platformFee: res.platformFee.toString() })).catch((e: any) => console.error(e));
-  }, []);
-
-  const handleTaxUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    await updateTaxSettings(new FormData(e.target as HTMLFormElement));
-    setLoading(false);
-  };
-
-  return (
-    <Card>
-      <form onSubmit={handleTaxUpdate}>
-        <input name="vatRate" value={taxSettings.vatRate} onChange={e => setTaxSettings(p => ({ ...p, vatRate: e.target.value }))} />
-        <input name="platformFee" value={taxSettings.platformFee} onChange={e => setTaxSettings(p => ({ ...p, platformFee: e.target.value }))} />
-        <button type="submit" disabled={loading}>Save</button>
-      </form>
-    </Card>
-  );
-}
-
-const navSections = [
-  { title: 'Main', items: [
-    { id: 'overview', label: 'Overview', icon: <span /> },
-    { id: 'catalog', label: 'Catalog', icon: <span /> },
-    { id: 'sellers', label: 'Sellers', icon: <span /> },
-    { id: 'users', label: 'Users', icon: <span /> },
-    { id: 'ordersadmin', label: 'Orders', icon: <span /> },
-  ]},
-  { title: 'System', items: [
-    { id: 'settings', label: 'Settings', icon: <span /> },
-  ]},
-];
-
-const TITLES: Record<string, string> = { overview: 'Overview', catalog: 'Catalog', sellers: 'Sellers', users: 'Users', ordersadmin: 'Orders', settings: 'Settings' };
-
-export default function AdminDashboardPage() {
-  const [active, setActive] = useState('overview');
+export default function AdminOS() {
+  const [activeTab, setActiveTab] = useState('overview');
   const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [seedLoading, setSeedLoading] = useState(false);
 
-  const refresh = () => {
-    getDashboardStats().then((res: any) => setData(res)).catch((e: any) => console.error(e));
-  }
+  // Taxonomy Form State
+  const [taxType, setTaxType] = useState<'category' | 'tag' | 'collection'>('category');
+  const [taxName, setTaxName] = useState('');
 
-  useEffect(() => { refresh(); }, []);
-
-  if (!data) return <div style={{ background: S.bg, height: '100vh', color: '#fff' }}>Loading Data...</div>;
-
-  const renderContent = () => {
-    switch (active) {
-      case 'overview':   return <OverviewSection pendingSellers={data.pendingSellers || []} stats={data.stats} refresh={refresh} />;
-      case 'catalog':    return <CatalogSection />;
-      case 'sellers':    return <SellersSection sellers={data.sellers || []} refresh={refresh} />;
-      case 'users':      return <UsersSection users={data.users || []} />;
-      case 'ordersadmin': return <OrdersSection orders={data.orders || []} />;
-      case 'settings':   return <SettingsSection />;
-      default:           return <OverviewSection pendingSellers={data.pendingSellers || []} stats={data.stats} refresh={refresh} />;
+  const refreshData = async () => {
+    setLoading(true);
+    try {
+      const res = await getDashboardStats();
+      setData(res);
+    } catch (err: any) {
+      setError(err.message || "Unauthorized");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleStatusUpdate = async (sellerId: string, status: string) => {
+    setActionLoading(sellerId);
+    try {
+      await updateSellerStatus(sellerId, status as any);
+      await refreshData();
+    } catch (err: any) {
+      alert(err.message || "Failed to update status");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCreateTaxonomy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createTaxonomy(taxType, { name: taxName });
+      setTaxName('');
+      await refreshData();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteTaxonomy = async (type: any, id: string) => {
+    if (!confirm("Are you sure?")) return;
+    try {
+      await deleteTaxonomy(type, id);
+      await refreshData();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleSeed = async () => {
+    setSeedLoading(true);
+    try {
+      await seedTestData();
+      await refreshData();
+      alert("System seeded with full operational data.");
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSeedLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  if (loading && !data) return <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#1a1a2e] font-medium">Initializing AdminOS...</div>;
+  if (error) return <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-red-600 font-bold">{error}</div>;
+
+  const stats = data?.stats || {};
+
   return (
-    <div style={{ display: 'flex', height: '100vh', background: S.bg }}>
-      <div style={{ width: 186, background: S.sidebar, color: '#fff' }}>
-        {navSections.map(s => (
-          <div key={s.title}>
-            {s.items.map(item => <button key={item.id} onClick={() => setActive(item.id)}>{item.label}</button>)}
-          </div>
-        ))}
+    <div className="db">
+      {/* Sidebar */}
+      <div className="sidebar">
+        <div className="logo">Admin<span>OS</span></div>
+        
+        <div className="nav-section">Main</div>
+        <NavItem active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} label="Overview" icon={<OverviewIcon />} />
+        <NavItem active={activeTab === 'sellers'} onClick={() => setActiveTab('sellers')} label="Sellers" icon={<SellersIcon />} />
+        <NavItem active={activeTab === 'users'} onClick={() => setActiveTab('users')} label="Users" icon={<UsersIcon />} />
+        <NavItem active={activeTab === 'orders'} onClick={() => setActiveTab('orders')} label="Orders" icon={<OrdersIcon />} />
+        
+        <div className="nav-section">Finance</div>
+        <NavItem active={activeTab === 'payouts'} onClick={() => setActiveTab('payouts')} label="Payouts" icon={<PayoutsIcon />} />
+        <NavItem active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} label="Analytics" icon={<AnalyticsIcon />} />
+        
+        <div className="nav-section">System</div>
+        <NavItem active={activeTab === 'taxonomy'} onClick={() => setActiveTab('taxonomy')} label="Taxonomy" icon={<ModerationIcon />} />
+        <NavItem active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} label="Settings" icon={<SettingsIcon />} />
+
+        <div className="mt-auto px-4 pb-4 flex flex-col gap-2">
+           <button onClick={handleSeed} disabled={seedLoading} className="seed-btn">{seedLoading ? 'Seeding...' : 'Seed Data'}</button>
+           <div className="user-label">{data?.user?.email}</div>
+           <button onClick={() => window.location.href='/api/auth/signout'} className="signout-btn">Sign out</button>
+        </div>
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>{renderContent()}</div>
-    </div>
-  );
-}
 
-function CatalogSection() {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const refresh = async () => { setData(await getAdminTaxonomyData()); };
-  useEffect(() => { refresh(); }, []);
-
-  if (!data) return <div style={{ color: S.txt }}>Loading...</div>;
-
-  return (
-    <div>
-      <Card>
-        {['CATEGORY', 'TAG', 'COLLECTION'].map((type: any) => (
-          <div key={type}>
-            <button onClick={async () => { await createTaxonomy(type.toLowerCase() as any, { name: 'New' }); refresh(); }}>Add {type}</button>
+      {/* Main Content Area */}
+      <div className="main">
+        <div className="topbar">
+          <div className="page-title">{TITLES[activeTab] || 'Dashboard'}</div>
+          <div className="top-actions">
+            <div className="applications-badge">
+              <div className="alert-dot"></div>
+              {data?.pendingSellers?.length || 0} pending
+            </div>
+            <div onClick={refreshData} className="refresh-btn">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={loading ? 'animate-spin' : ''}><path d="M8 1.5A4.5 4.5 0 003.5 6c0 1.5-.5 3-1.5 4h12c-1-1-1.5-2.5-1.5-4A4.5 4.5 0 008 1.5z" fill="#534AB7" opacity=".8"/><path d="M6.5 13.5a1.5 1.5 0 003 0" stroke="#534AB7" strokeWidth="1.2" fill="none"/></svg>
+            </div>
           </div>
-        ))}
-      </Card>
-      <Card>
-        {data.products?.map((p: any) => (
-          <div key={p.id}>{p.title}</div>
-        ))}
-      </Card>
+        </div>
+
+        <div className="tab-content animate-fadeIn">
+          {activeTab === 'overview' && <OverviewTab data={data} handleStatusUpdate={handleStatusUpdate} actionLoading={actionLoading} />}
+          {activeTab === 'sellers' && <SellersTab data={data} handleStatusUpdate={handleStatusUpdate} actionLoading={actionLoading} />}
+          {activeTab === 'users' && <UsersTab data={data} />}
+          {activeTab === 'orders' && <OrdersTab data={data} />}
+          {activeTab === 'payouts' && <PayoutsTab data={data} />}
+          {activeTab === 'analytics' && <AnalyticsTab data={data} />}
+          {activeTab === 'taxonomy' && <TaxonomyTab data={data} onTypeChange={setTaxType} currentType={taxType} onNameChange={setTaxName} nameValue={taxName} onCreate={handleCreateTaxonomy} onDelete={handleDeleteTaxonomy} />}
+          {activeTab === 'settings' && <SettingsTab data={data} />}
+        </div>
+      </div>
+
+      <style jsx global>{`
+        :root {
+          --color-primary: #534AB7;
+          --color-background-primary: #ffffff;
+          --color-background-secondary: #f8fafc;
+          --color-text-primary: #1e293b;
+          --color-text-secondary: #64748b;
+          --color-border-tertiary: rgba(0,0,0,0.06);
+        }
+        *{box-sizing:border-box;margin:0;padding:0}
+        .db{display:flex;min-height:100vh;background:var(--color-background-secondary);font-family: 'Inter', sans-serif;}
+        .sidebar{width:186px;flex-shrink:0;background:#1a1a2e;padding:16px 0;display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+        .logo{padding:0 16px 20px;font-size:15px;font-weight:500;color:#fff}
+        .logo span{color:#7F77DD}
+        .nav-section{font-size:10px;font-weight:500;color:#444;letter-spacing:.08em;padding:10px 16px 4px;text-transform:uppercase}
+        .nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;cursor:pointer;font-size:12px;color:#888;transition:all .12s}
+        .nav-item:hover{background:rgba(255,255,255,.05);color:#ccc}
+        .nav-item.active{background:rgba(127,119,221,.15);color:#AFA9EC}
+        .nav-icon{width:15px;height:15px;flex-shrink:0}
+        .main{flex:1;min-width:0;padding:18px;background:var(--color-background-secondary);overflow:auto}
+        .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+        .page-title{font-size:17px;font-weight:500;color:var(--color-text-primary)}
+        .seed-btn { text-[10px]; text-white/40; hover:text-white; bg:white/5; py:1.5; rounded:4px; transition:all 0.2s; border:none; cursor:pointer; }
+        .user-label { font-size: 10px; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .signout-btn { text-align: left; font-size: 10px; color: rgba(239,68,68,0.6); background: none; border: none; cursor: pointer; }
+        .applications-badge { display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-secondary); }
+        .alert-dot { width:8px;height:8px;border-radius:50%;background:#E24B4A;flex-shrink:0; }
+        .refresh-btn { width:34px;height:34px;borderRadius:6px;background:#EEEDFE;display:flex;align-items:center;justify-content:center;cursor:pointer; }
+        .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px}
+        .stat{background:var(--color-background-primary);border-radius:8px;padding:12px;border:1px solid var(--color-border-tertiary)}
+        .stat-label{font-size:10px;color:var(--color-text-secondary);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+        .stat-val{font-size:20px;font-weight:500;color:var(--color-text-primary);line-height:1}
+        .stat-sub{font-size:11px;margin-top:4px}
+        .up{color:#27500A}.down{color:#791F1F}
+        .card{background:var(--color-background-primary);border-radius:12px;border:1px solid var(--color-border-tertiary);padding:14px;margin-bottom:11px}
+        .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+        .card-title{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+        .grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
+        .badge{font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px;flex-shrink:0}
+        .b-pending{background:#FAEEDA;color:#633806}
+        .b-active{background:#E1F5EE;color:#085041}
+        .b-banned{background:#FCEBEB;color:#791F1F}
+        .b-new{background:#EEEDFE;color:#3C3489}
+        .action-btn{font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;border:1px solid #e2e8f0;background:transparent;color:var(--color-text-secondary);transition:all .15s}
+        .action-btn:hover{background:var(--color-background-secondary);border-color:var(--color-text-primary)}
+        .row-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--color-border-tertiary)}
+        .row-item:last-child{border-bottom:none}
+        .avatar-sm{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0}
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        .input-tax { width:100%; border:1px solid #e2e8f0; padding:8px 12px; border-radius:6px; font-size:12px; outline:none; }
+        .input-tax:focus { border-color: var(--color-primary); }
+      `}</style>
     </div>
   );
 }
+
+const TITLES: Record<string, string> = {
+  overview: 'Platform overview',
+  sellers: 'Seller management',
+  users: 'User registry',
+  orders: 'Order oversight',
+  payouts: 'Financial settlements',
+  analytics: 'Revenue analytics',
+  taxonomy: 'Classification systems',
+  settings: 'System configuration'
+};
+
+function NavItem({ active, onClick, label, icon }: any) {
+  return (
+    <div onClick={onClick} className={`nav-item ${active ? 'active' : ''}`}>
+      <div className="nav-icon">{icon}</div>
+      {label}
+    </div>
+  );
+}
+
+function OverviewTab({ data, handleStatusUpdate, actionLoading }: any) {
+  const stats = data?.stats || {};
+  return (
+    <>
+      <div className="stats">
+        <div className="stat">
+          <div className="stat-label">GMV (Total)</div>
+          <div className="stat-val">{(stats.revenue || 0).toLocaleString()}</div>
+          <div className="stat-sub up">+24% vs last month</div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Platform revenue</div>
+          <div className="stat-val" style={{color:'#534AB7'}}>{(stats.revenue * 0.08 || 0).toLocaleString()}</div>
+          <div className="stat-sub" style={{color:'var(--color-text-secondary)'}}>EGP (8% avg)</div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Active sellers</div>
+          <div className="stat-val">{stats.totalSellers || 0}</div>
+          <div className="stat-sub up">+12 this month</div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Total users</div>
+          <div className="stat-val">{stats.totalUsers || 0}</div>
+          <div className="stat-sub up">+340 today</div>
+        </div>
+      </div>
+
+      <div className="grid2">
+        <div className="card">
+          <div className="card-header"><div className="card-title">Recent Audit Log</div></div>
+          {data?.auditLogs?.slice(0, 5).map((log: any) => (
+            <div key={log.id} className="row-item" style={{fontSize:'11px'}}>
+               <div style={{width:'6px',height:'6px',borderRadius:'50%',background:log.action.includes('SUSPENDED') ? '#E24B4A' : '#1D9E75'}} />
+               <div style={{flex:1}}>
+                  <span style={{fontWeight:600}}>{log.admin?.name}</span>
+                  <span style={{color:'#64748b'}}> {log.action.replace(/_/g, ' ').toLowerCase()} </span>
+                  <span style={{fontWeight:500}}>{log.details}</span>
+               </div>
+               <div style={{color:'#94a3b8'}}>{new Date(log.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+            </div>
+          ))}
+          {!data?.auditLogs?.length && <div className="py-10 text-center text-xs text-slate-400">No logs yet. Seed data to test.</div>}
+        </div>
+        <div className="card">
+          <div className="card-header"><div className="card-title">Pending Approvals</div></div>
+          {data?.pendingSellers?.slice(0,3).map((s: any) => (
+            <div key={s.id} className="row-item">
+              <div style={{flex:1}}>
+                <div style={{fontSize:'12px',fontWeight:500}}>{s.storeName}</div>
+                <div style={{fontSize:'11px',color:'#64748b'}}>{s.user?.email}</div>
+              </div>
+              <div style={{display:'flex',gap:'5px'}}>
+                <button disabled={actionLoading === s.id} onClick={() => handleStatusUpdate(s.id, 'ACTIVE')} className="action-btn" style={{borderColor:'#0F6E56',color:'#085041'}}>Approve</button>
+                <button disabled={actionLoading === s.id} onClick={() => handleStatusUpdate(s.id, 'SUSPENDED')} className="action-btn" style={{borderColor:'#A32D2D',color:'#791F1F'}}>Reject</button>
+              </div>
+            </div>
+          ))}
+          {!data?.pendingSellers?.length && <div className="py-10 text-center text-xs text-slate-400">Queue clear.</div>}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function SellersTab({ data, handleStatusUpdate, actionLoading }: any) {
+  return (
+    <div className="card">
+      <div className="card-header"><div className="card-title">All Sellers</div></div>
+      <div className="row-item font-bold text-[11px] text-slate-400 uppercase">
+         <span className="flex-1">Store Name / Owner</span>
+         <span className="w-32 text-center">Status</span>
+         <span className="w-32 text-right">Balance</span>
+         <span className="w-24"></span>
+      </div>
+      {data?.sellers?.map((s: any) => (
+        <div key={s.id} className="row-item">
+          <div style={{flex:1}}>
+            <div style={{fontSize:'12px',fontWeight:500}}>{s.storeName}</div>
+            <div style={{fontSize:'11px',color:'#64748b'}}>{s.user?.name}</div>
+          </div>
+          <div className="w-32 flex justify-center">
+             <span className={`badge ${s.status === 'ACTIVE' ? 'b-active' : s.status === 'PENDING_APPROVAL' ? 'b-pending' : 'b-banned'}`}>{s.status}</span>
+          </div>
+          <div className="w-32 text-right text-sm font-medium">{s.balance?.toLocaleString()} EGP</div>
+          <div className="w-24 text-right">
+             <button disabled={actionLoading === s.id} onClick={() => handleStatusUpdate(s.id, s.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE')} className="action-btn">
+                {s.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+             </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function UsersTab({ data }: any) {
+  return (
+    <div className="card">
+      <div className="card-header"><div className="card-title">User Registry</div></div>
+      {data?.users?.map((u: any) => (
+        <div key={u.id} className="row-item">
+          <div className="avatar-sm bg-slate-100 text-slate-400">{u.name?.[0]}</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:'12px',fontWeight:500}}>{u.name}</div>
+            <div style={{fontSize:'11px',color:'#64748b'}}>{u.email}</div>
+          </div>
+          <span className={`badge ${u.role === 'ADMIN' ? 'b-new' : ''}`}>{u.role}</span>
+          <div style={{fontSize:'11px',color:'#94a3b8',width:'100px',textAlign:'right'}}>{new Date(u.createdAt).toLocaleDateString()}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function OrdersTab({ data }: any) {
+  return (
+    <div className="card">
+      <div className="card-header"><div className="card-title">Platform Orders</div></div>
+      {data?.orders?.map((o: any) => (
+        <div key={o.id} className="row-item">
+          <div style={{flex:1}}>
+            <div style={{fontSize:'12px',fontWeight:600}}>#ORD-{o.id.substring(0,8)}</div>
+            <div style={{fontSize:'11px',color:'#64748b'}}>{o.user?.name || 'Guest'} · {o.items?.length || 0} items</div>
+          </div>
+          <div className="text-right mr-8">
+             <div style={{fontSize:'12px',fontWeight:600}}>{o.totalAmount?.toLocaleString()} EGP</div>
+             <div style={{fontSize:'10px',color:'#94a3b8'}}>{o.paymentMethod}</div>
+          </div>
+          <span className="badge b-active">{o.status}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PayoutsTab({ data }: any) {
+  return (
+    <div className="card">
+       <div className="card-header"><div className="card-title">Pending Payout Requests</div></div>
+       {data?.payouts?.map((p: any) => (
+         <div key={p.id} className="row-item">
+            <div style={{flex:1}}>
+               <div style={{fontSize:'12px',fontWeight:600}}>{p.seller?.storeName}</div>
+               <div style={{fontSize:'11px',color:'#64748b'}}>{new Date(p.createdAt).toLocaleDateString()}</div>
+            </div>
+            <div style={{fontSize:'14px',fontWeight:600,marginRight:'20px'}}>{p.amount?.toLocaleString()} EGP</div>
+            <button className="action-btn" style={{borderColor:'#0F6E56',color:'#085041'}}>Release Payment</button>
+         </div>
+       ))}
+       {!data?.payouts?.length && <div className="py-20 text-center text-xs text-slate-400">No payout requests in queue.</div>}
+    </div>
+  );
+}
+
+function AnalyticsTab({ data }: any) {
+  return (
+    <div className="grid grid-cols-2 gap-6">
+       <div className="card">
+          <div className="card-title mb-4">Volume Distribution</div>
+          <div className="flex flex-col gap-4">
+             <MetricBar label="Direct Sales" value={65} color="#534AB7" />
+             <MetricBar label="Flash Sales" value={25} color="#E24B4A" />
+             <MetricBar label="Partner Referrals" value={10} color="#1D9E75" />
+          </div>
+       </div>
+       <div className="card">
+          <div className="card-title mb-4">Top Categories</div>
+          {data?.categories?.slice(0,5).map((c: any) => (
+             <div key={c.id} className="flex justify-between items-center py-2 border-bottom border-slate-50">
+                <span className="text-xs text-slate-600">{c.name}</span>
+                <span className="text-xs font-bold">{Math.floor(Math.random() * 500) + 100} units</span>
+             </div>
+          ))}
+       </div>
+    </div>
+  );
+}
+
+function TaxonomyTab({ data, currentType, onTypeChange, onNameChange, nameValue, onCreate, onDelete }: any) {
+  const items = currentType === 'category' ? data.categories : currentType === 'tag' ? data.tags : data.collections;
+  return (
+    <div className="grid grid-cols-3 gap-6">
+       <div className="card col-span-1">
+          <div className="card-title mb-4">Add Taxonomy</div>
+          <form onSubmit={onCreate} className="flex flex-col gap-4">
+             <select value={currentType} onChange={(e:any) => onTypeChange(e.target.value)} className="input-tax bg-white">
+                <option value="category">Category</option>
+                <option value="tag">Tag</option>
+                <option value="collection">Collection</option>
+             </select>
+             <input required placeholder="Name" value={nameValue} onChange={(e) => onNameChange(e.target.value)} className="input-tax" />
+             <button type="submit" className="action-btn bg-slate-900 text-white hover:bg-slate-800 py-2 border-none">Create Entry</button>
+          </form>
+       </div>
+       <div className="card col-span-2">
+          <div className="card-title mb-4">Existing {currentType}s</div>
+          <div className="flex flex-col gap-1">
+             {items?.map((item: any) => (
+                <div key={item.id} className="row-item">
+                   <div className="flex-1 text-xs font-medium">{item.name}</div>
+                   <div className="text-[10px] text-slate-400 mr-4">slug: {item.slug}</div>
+                   <button onClick={() => onDelete(currentType, item.id)} className="text-red-400 hover:text-red-600">✕</button>
+                </div>
+             ))}
+             {!items?.length && <div className="py-10 text-center text-xs text-slate-400">Empty set.</div>}
+          </div>
+       </div>
+    </div>
+  );
+}
+
+function SettingsTab({ data }: any) {
+  return (
+    <div className="card max-w-xl">
+       <div className="card-title mb-6">Global Platform Settings</div>
+       {data?.systemSettings?.map((s: any) => (
+          <div key={s.key} className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-100">
+             <div className="flex justify-between items-center mb-1">
+                <span className="text-[11px] font-bold text-slate-400 uppercase">{s.key}</span>
+                <span className="text-[10px] text-slate-300">Updated {new Date(s.updatedAt).toLocaleDateString()}</span>
+             </div>
+             <div className="flex gap-4 items-center">
+                <input defaultValue={s.value} className="input-tax flex-1" />
+                <button className="action-btn bg-white">Save</button>
+             </div>
+             <div className="text-[11px] text-slate-500 mt-2">{s.description}</div>
+          </div>
+       ))}
+       {!data?.systemSettings?.length && <div className="py-10 text-center text-xs text-slate-400">No settings found. Seed data to initialize.</div>}
+    </div>
+  );
+}
+
+function MetricBar({ label, value, color }: any) {
+   return (
+      <div>
+         <div className="flex justify-between text-[11px] mb-1">
+            <span>{label}</span>
+            <span className="font-bold">{value}%</span>
+         </div>
+         <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full" style={{width:`${value}%`, background:color}}></div>
+         </div>
+      </div>
+   );
+}
+
+// SVGs matched from mockup
+function OverviewIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".9"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".6"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".6"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".3"/></svg>; }
+function SellersIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="3" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".7"/><path d="M1 14c0-2.8 2.2-5 5-5" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".6"/><path d="M11 9l1.5 1.5L15 8" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".8"/></svg>; }
+function UsersIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.1" fill="none" opacity=".6"/><circle cx="11" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.1" fill="none" opacity=".6"/><path d="M1 14c0-2.5 1.8-4 4-4M7 14c0-2.5 1.8-4 4-4s4 1.5 4 4" stroke="currentColor" strokeWidth="1.1" fill="none" opacity=".5"/></svg>; }
+function OrdersIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="12" height="14" rx="2" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".7"/><rect x="5" y="5" width="6" height="1" rx=".5" fill="currentColor" opacity=".5"/><rect x="5" y="8" width="4" height="1" rx=".5" fill="currentColor" opacity=".4"/></svg>; }
+function PayoutsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="4" width="14" height="9" rx="2" fill="currentColor" opacity=".5"/><rect x="1" y="4" width="14" height="3" rx="1" fill="currentColor" opacity=".7"/><circle cx="11.5" cy="9.5" r="1.5" fill="#7F77DD"/></svg>; }
+function AnalyticsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><polyline points="1,12 5,7 8,10 11,4 15,8" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".7"/></svg>; }
+function ModerationIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".6"/><path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".8"/></svg>; }
+function SettingsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".7"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3" stroke="currentColor" strokeWidth="1.2" stroke-linecap="round" fill="none" opacity=".5"/></svg>; }

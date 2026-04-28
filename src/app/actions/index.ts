@@ -1,20 +1,3 @@
-'use server';
-
-// Re-export all actions from domain-specific files
-export { 
-  getDashboardStats, 
-  getHomepageData, 
-  updateSellerStatus, 
-  updateOrderStatus, 
-  deleteProduct, 
-  updateProduct, 
-  createProduct,
-  submitReview, 
-  getAdminTaxonomyData, 
-  createTaxonomy, 
-  deleteTaxonomy, 
-  updateProductTaxonomies 
-} from './seller';
-export { createOrder } from './orders';
-export { exportData, importProducts, updateTaxSettings, getTaxSettings } from './admin';
-export { addLoyaltyPoints, getUserPoints, redeemLoyaltyPoints, getLoyaltyHistory } from './loyalty';
+// Barrel file cleared to prevent "use server" re-export errors in Next.js 16/Turbopack.
+// Import actions directly from their respective files (e.g., @/app/actions/seller)
+export {};

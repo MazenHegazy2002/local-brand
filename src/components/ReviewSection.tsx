@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { submitReview } from '@/app/actions';
+import { submitReview } from '@/app/actions/seller';
 import { useLanguage } from '@/providers/LanguageContext';
 
 export default function ReviewSection({ productId, initialReviews }: { productId: string, initialReviews: any[] }) {
