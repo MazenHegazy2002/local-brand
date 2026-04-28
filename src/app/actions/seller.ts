@@ -4,7 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../api/auth/[...nextauth]/route';
 import { revalidatePath } from 'next/cache';
-import { OrderStatus, SellerStatus } from '@/generated/client';
+import { OrderStatus, SellerStatus, OrderItemStatus } from '@/generated/client';
+import bcrypt from 'bcryptjs';
 
 export async function getDashboardStats() {
   const session = await getServerSession(authOptions);
