@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Outfit, Cairo } from "next/font/google";
+
+export const dynamic = 'force-dynamic';
 import "./globals.css";
 import AuthProvider from "@/providers/SessionProvider";
 import { cookies } from "next/headers";
