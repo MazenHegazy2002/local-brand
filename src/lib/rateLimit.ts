@@ -1,7 +1,5 @@
-import { Redis } from 'ioredis';
 import { NextRequest } from 'next/server';
-
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+import { redis } from '@/lib/redis';
 
 interface RateLimitConfig {
   windowMs: number;
