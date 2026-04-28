@@ -197,22 +197,26 @@ function LoginForm() {
               ) : 'Sign in'}
             </button>
 
-            {/* EMERGENCY BYPASS BUTTON (Visible for test email only) */}
-            {email.includes('seller@localbrand.com') && (
+            {/* EMERGENCY BYPASS BUTTON (Visible for test emails only) */}
+            {(email.includes('seller@localbrand.com') || email.includes('admin@localbrand.com') || email.includes('buyer@localbrand.com')) && (
               <button
                 type="button"
                 onClick={async () => {
                   setIsLoading(true);
-                  // We use a special password that we'll hardcode in the authorize function for debug
+                  const targetEmail = email.includes('admin@localbrand.com') ? 'admin@localbrand.com' : 
+                                     email.includes('seller@localbrand.com') ? 'seller@localbrand.com' : 'buyer@localbrand.com';
+                  const targetUrl = email.includes('admin@localbrand.com') ? '/admin-os' : 
+                                   email.includes('seller@localbrand.com') ? '/seller-hub' : '/dashboard';
+                  
                   await signIn('credentials', { 
-                    email: 'seller@localbrand.com', 
+                    email: targetEmail, 
                     password: 'DEBUG_BYPASS_KEY',
-                    callbackUrl: '/seller-hub'
+                    callbackUrl: targetUrl
                   });
                 }}
                 className="w-full mt-2 py-2 px-4 border-2 border-dashed border-red-200 text-red-600 rounded-xl text-xs font-bold hover:bg-red-50 transition-all"
               >
-                ⚠️ EMERGENCY: Auto-Login as Seller
+                ⚠️ EMERGENCY: Auto-Login as {email.includes('admin') ? 'Admin' : email.includes('seller') ? 'Seller' : 'Buyer'}
               </button>
             )}
           </form>
