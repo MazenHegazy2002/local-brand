@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getHomepageData } from "@/app/actions/seller";
 import { DictKey } from "@/lib/i18n/dicts";
+import { en } from "@/lib/i18n/dicts";
 import { getDictionary } from "@/lib/i18n/server";
 import WishlistButton from "@/components/WishlistButton";
 import { ElectronicsIcon, FashionIcon, HomeIcon, HealthIcon, SportsIcon, GroceryIcon, ChevronLeft, ChevronRight } from "@/components/icons";
@@ -11,8 +12,19 @@ import { ProductGridSkeleton, CategoryGridSkeleton } from "@/components/Skeleton
 import { Suspense } from "react";
 
 export default async function Home() {
-  const { categories: dbCategories, featuredProducts, recentProducts } = await getHomepageData();
-  const dict = await getDictionary();
+  let homeData: any = { categories: [], featuredProducts: [], recentProducts: [] };
+  let dict: any = en;
+
+  try {
+    const data = await getHomepageData();
+    if (data) homeData = data;
+    const d = await getDictionary();
+    if (d) dict = d;
+  } catch (e) {
+    console.error("Critical SSR Error:", e);
+  }
+
+  const { categories: dbCategories, featuredProducts, recentProducts } = homeData;
 
   const categories = dbCategories.length > 0 ? dbCategories.map((c: any) => ({
     name: c.name,

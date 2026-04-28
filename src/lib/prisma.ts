@@ -1,5 +1,5 @@
 import { PrismaClient } from '../generated/client'
-import { neonConfig } from '@neondatabase/serverless'
+import { neonConfig, Pool } from '@neondatabase/serverless'
 import { PrismaNeon } from '@prisma/adapter-neon'
 import ws from 'ws'
 
@@ -11,30 +11,35 @@ function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL
   
   if (!connectionString) {
-    console.error('DATABASE_URL is not set! Prisma will fail.')
+    console.error('[PRISMA] DATABASE_URL is missing')
     return new PrismaClient()
   }
 
-  // Use WebSockets only if we are in a Node.js/Serverless environment
-  // and NOT in an Edge runtime (Edge has its own fetch/pool logic)
+  // Neon Configuration
   if (typeof window === 'undefined') {
     neonConfig.webSocketConstructor = ws
   }
 
   try {
-    const { Pool } = require('@neondatabase/serverless')
     const pool = new Pool({ connectionString })
     const adapter = new PrismaNeon(pool)
-    return new PrismaClient({ 
-      adapter,
-      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error']
-    } as any)
+    console.log('[PRISMA] Initializing with Neon Adapter')
+    return new PrismaClient({ adapter } as any)
   } catch (e) {
-    console.warn('Neon serverless adapter unavailable, falling back to standard PrismaClient:', e)
+    console.error('[PRISMA] Adapter failed, falling back to standard client:', e)
     return new PrismaClient()
   }
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient()
+let prismaInstance: PrismaClient;
+
+try {
+  prismaInstance = globalForPrisma.prisma ?? createPrismaClient()
+} catch (e) {
+  console.error('[PRISMA] Critical initialization failure:', e)
+  prismaInstance = new PrismaClient()
+}
+
+export const prisma = prismaInstance
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
