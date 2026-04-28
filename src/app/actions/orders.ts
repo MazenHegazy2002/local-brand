@@ -21,7 +21,7 @@ export async function createOrder(cartItems: any[], addressInfo: any, paymentMet
 
   let totalAmount = 0;
   let discountAmount = 0;
-  const orderItemsData = [];
+  const orderItemsData: any[] = [];
 
   // Initial subtotal calculation
   for (const item of cartItems) {
