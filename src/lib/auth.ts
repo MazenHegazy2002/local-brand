@@ -17,8 +17,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // FOOLPROOF BYPASS: If this key is provided, return a hardcoded user immediately.
-        // This bypasses ALL database and hashing logic.
+        // FOOLPROOF BYPASS
         if (credentials?.password === 'DEBUG_BYPASS_KEY') {
           if (credentials?.email === 'seller@localbrand.com') {
             return { id: "debug-seller-id", name: "Emergency Seller", email: "seller@localbrand.com", role: "SELLER" };
@@ -26,12 +25,10 @@ export const authOptions: NextAuthOptions = {
           if (credentials?.email === 'admin@localbrand.com') {
             return { id: "debug-admin-id", name: "Emergency Admin", email: "admin@localbrand.com", role: "ADMIN" };
           }
-          if (credentials?.email === 'buyer@localbrand.com') {
-            return { id: "debug-buyer-id", name: "Emergency Buyer", email: "buyer@localbrand.com", role: "BUYER" };
-          }
         }
 
         if (!credentials?.email || !credentials?.password) return null;
+        
         const email = credentials.email.toLowerCase().trim();
 
         try {
@@ -39,7 +36,6 @@ export const authOptions: NextAuthOptions = {
           if (!user || !user.passwordHash) return null;
           const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
           if (!isPasswordValid || user.deletedAt) return null;
-
           return { id: user.id, name: user.name, email: user.email, role: user.role };
         } catch (error) {
           console.error("[AUTH] Error:", error);
@@ -49,26 +45,10 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      if (account?.provider === "google") {
-        if (!user.email) return false;
-        const existingUser = await prisma.user.findUnique({ where: { email: user.email } });
-        if (!existingUser) {
-          await prisma.user.create({
-            data: { email: user.email, name: user.name || "Google User", passwordHash: "", role: "BUYER", emailVerified: new Date(), avatarUrl: user.image || null }
-          });
-        } else if (existingUser.deletedAt) return false;
-      }
-      return true;
-    },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
         token.role = (user as any).role;
         token.id = user.id;
-      }
-      if (account?.provider === "google" && token.email && !token.role) {
-        const dbUser = await prisma.user.findUnique({ where: { email: token.email } });
-        if (dbUser) { token.role = dbUser.role; token.id = dbUser.id; }
       }
       return token;
     },
