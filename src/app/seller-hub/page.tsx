@@ -33,9 +33,13 @@ export default function SellerHub() {
     setLoading(true);
     try {
       const res = await getDashboardStats();
+      if (!res) {
+        window.location.href = '/login?callbackUrl=/seller-hub';
+        return;
+      }
       setData(res);
     } catch (err: any) {
-      setError(err.message || "Unauthorized");
+      setError(err.message || "Failed to load dashboard");
     } finally {
       setLoading(false);
     }

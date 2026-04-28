@@ -35,8 +35,8 @@ export default function Hero() {
                 key={src}
                 src={src} 
                 alt={`Hero Background ${idx + 1}`} 
-                layout="fill" 
-                objectFit="cover" 
+                fill 
+                style={{ objectFit: "cover" }} 
                 className={`z-0 mix-blend-multiply transition-opacity duration-1000 ${currentSlide === idx ? 'opacity-100' : 'opacity-0'}`}
                 priority={idx === 0}
               />
@@ -82,7 +82,7 @@ export default function Hero() {
           <div className="flex flex-col gap-4 lg:col-span-1 h-[480px]">
             {/* Top Right Card */}
             <Link href="/shoes" className="relative flex-1 rounded-xl overflow-hidden group block cursor-pointer">
-              <Image src="https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=80&w=1000&auto=format&fit=crop" layout="fill" objectFit="cover" alt="Sneaker" className="z-0 grayscale contrast-125" />
+              <Image src="https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=80&w=1000&auto=format&fit=crop" fill style={{ objectFit: "cover" }} alt="Sneaker" className="z-0 grayscale contrast-125" />
               <div className="absolute inset-0 z-10 bg-gradient-to-t from-gray-900/90 to-transparent" />
               <div className="absolute bottom-0 left-0 p-8 z-20 w-full">
                 <h3 className="text-white text-2xl font-bold mb-1 tracking-tight">{t("NextGenFootwear" as any) || "Next-Gen Footwear"}</h3>
@@ -92,7 +92,7 @@ export default function Hero() {
 
             {/* Bottom Right Card */}
             <Link href="/watches" className="relative flex-1 rounded-xl overflow-hidden group block cursor-pointer">
-              <Image src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop" layout="fill" objectFit="cover" alt="Watch" className="z-0 object-center" />
+              <Image src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop" fill style={{ objectFit: "cover" }} alt="Watch" className="z-0 object-center" />
               <div className="absolute inset-0 z-10 bg-[#3a2c1f]/50 mix-blend-multiply" />
               <div className="absolute inset-0 z-15 bg-gradient-to-t from-[#2a1a0f] to-transparent" />
               <div className="absolute bottom-0 left-0 p-8 z-20 w-full">

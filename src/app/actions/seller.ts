@@ -9,7 +9,7 @@ import bcrypt from 'bcryptjs';
 
 export async function getDashboardStats() {
   const session = await getServerSession(authOptions);
-  if (!session) throw new Error("Unauthorized");
+  if (!session) return null;
 
   const userId = (session.user as any).id;
   const role = (session.user as any).role;
