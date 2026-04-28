@@ -9,7 +9,7 @@ import { prisma } from '@/lib/prisma';
 export async function POST(req: Request) {
   try {
     const { getServerSession } = await import('next-auth');
-    const { authOptions } = await import('@/app/api/auth/[...nextauth]/route');
+    const { authOptions } = await import('@/lib/auth');
     const session = await getServerSession(authOptions);
 
     const { eventType, productId, searchQuery, metadata } = await req.json();
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   try {
     const { getServerSession } = await import('next-auth');
-    const { authOptions } = await import('@/app/api/auth/[...nextauth]/route');
+    const { authOptions } = await import('@/lib/auth');
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ events: [] });
 

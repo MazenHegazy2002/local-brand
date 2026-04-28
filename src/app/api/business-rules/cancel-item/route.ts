@@ -103,7 +103,7 @@ export async function cancelOrderItem(orderId: string, orderItemId: string, user
 export async function POST(req: Request) {
   try {
     const { getServerSession } = await import('next-auth');
-    const { authOptions } = await import('@/app/api/auth/[...nextauth]/route');
+    const { authOptions } = await import('@/lib/auth');
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
