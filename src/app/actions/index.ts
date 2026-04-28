@@ -1,3 +1,5 @@
+'use server';
+
 // Re-export all actions from domain-specific files
 export { 
   getDashboardStats, 
