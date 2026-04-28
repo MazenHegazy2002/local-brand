@@ -3,30 +3,34 @@ import { neonConfig } from '@neondatabase/serverless'
 import { PrismaNeon } from '@prisma/adapter-neon'
 import ws from 'ws'
 
-// Use WebSockets in Node.js environment (Vercel serverless)
-neonConfig.webSocketConstructor = ws
-
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
 function createPrismaClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL!
-
+  const connectionString = process.env.DATABASE_URL
+  
   if (!connectionString) {
-    console.error('DATABASE_URL is not set!')
+    console.error('DATABASE_URL is not set! Prisma will fail.')
     return new PrismaClient()
   }
 
-  // Neon serverless adapter — works in both local and Vercel serverless
-  // It uses WebSockets to connect, which works in all environments
+  // Use WebSockets only if we are in a Node.js/Serverless environment
+  // and NOT in an Edge runtime (Edge has its own fetch/pool logic)
+  if (typeof window === 'undefined') {
+    neonConfig.webSocketConstructor = ws
+  }
+
   try {
     const { Pool } = require('@neondatabase/serverless')
     const pool = new Pool({ connectionString })
     const adapter = new PrismaNeon(pool)
-    return new PrismaClient({ adapter } as any)
+    return new PrismaClient({ 
+      adapter,
+      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error']
+    } as any)
   } catch (e) {
-    console.error('Failed to create Neon adapter, falling back to standard:', e)
+    console.warn('Neon serverless adapter unavailable, falling back to standard PrismaClient:', e)
     return new PrismaClient()
   }
 }
