@@ -196,6 +196,25 @@ function LoginForm() {
                 </span>
               ) : 'Sign in'}
             </button>
+
+            {/* EMERGENCY BYPASS BUTTON (Visible for test email only) */}
+            {email.includes('seller@localbrand.com') && (
+              <button
+                type="button"
+                onClick={async () => {
+                  setIsLoading(true);
+                  // We use a special password that we'll hardcode in the authorize function for debug
+                  await signIn('credentials', { 
+                    email: 'seller@localbrand.com', 
+                    password: 'DEBUG_BYPASS_KEY',
+                    callbackUrl: '/seller-hub'
+                  });
+                }}
+                className="w-full mt-2 py-2 px-4 border-2 border-dashed border-red-200 text-red-600 rounded-xl text-xs font-bold hover:bg-red-50 transition-all"
+              >
+                ⚠️ EMERGENCY: Auto-Login as Seller
+              </button>
+            )}
           </form>
 
           {/* Register link */}

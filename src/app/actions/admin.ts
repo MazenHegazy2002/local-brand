@@ -13,10 +13,17 @@ export async function updateTaxSettings(formData: FormData) {
   const vatRate = parseFloat(formData.get('vatRate') as string) || 14;
   const platformFee = parseFloat(formData.get('platformFee') as string) || 15;
 
-  // Store in settings (using a simple key-value approach)
-  await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "Settings" (key TEXT PRIMARY KEY, value TEXT)`;
-  await prisma.$executeRaw`INSERT INTO "Settings" (key, value) VALUES ('vatRate', ${vatRate.toString()}) ON CONFLICT(key) DO UPDATE SET value = EXCLUDED.value`;
-  await prisma.$executeRaw`INSERT INTO "Settings" (key, value) VALUES ('platformFee', ${platformFee.toString()}) ON CONFLICT(key) DO UPDATE SET value = EXCLUDED.value`;
+  await prisma.systemSettings.upsert({
+    where: { key: 'VAT_RATE' },
+    update: { value: vatRate.toString() },
+    create: { key: 'VAT_RATE', value: vatRate.toString(), description: "Value Added Tax percentage" }
+  });
+
+  await prisma.systemSettings.upsert({
+    where: { key: 'COMMISSION_BASE' },
+    update: { value: platformFee.toString() },
+    create: { key: 'COMMISSION_BASE', value: platformFee.toString(), description: "Base platform commission" }
+  });
 
   revalidatePath('/admin-os');
   return { success: true };
@@ -24,11 +31,11 @@ export async function updateTaxSettings(formData: FormData) {
 
 export async function getTaxSettings() {
   try {
-    const vatResult: any = await prisma.$queryRaw`SELECT value FROM "Settings" WHERE key = 'vatRate'`;
-    const feeResult: any = await prisma.$queryRaw`SELECT value FROM "Settings" WHERE key = 'platformFee'`;
+    const vatSetting = await prisma.systemSettings.findUnique({ where: { key: 'VAT_RATE' } });
+    const feeSetting = await prisma.systemSettings.findUnique({ where: { key: 'COMMISSION_BASE' } });
     return {
-      vatRate: vatResult[0] ? parseFloat(vatResult[0].value) : 14,
-      platformFee: feeResult[0] ? parseFloat(feeResult[0].value) : 15,
+      vatRate: vatSetting ? parseFloat(vatSetting.value) : 14,
+      platformFee: feeSetting ? parseFloat(feeSetting.value) : 15,
     };
   } catch {
     return { vatRate: 14, platformFee: 15 };

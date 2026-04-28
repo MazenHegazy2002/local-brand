@@ -81,11 +81,11 @@ export async function getDashboardStats() {
   }
 
   if (role === 'ADMIN') {
-    const sellers = await prisma.sellerProfile.findMany({ include: { user: true } });
-    const orders = await prisma.order.findMany({ include: { items: { include: { variant: true } }, user: true } });
-    const users = await prisma.user.findMany();
+    const sellers = await prisma.sellerProfile.findMany({ include: { user: { select: { id: true, name: true, email: true, role: true, createdAt: true } } } });
+    const orders = await prisma.order.findMany({ include: { items: { include: { variant: true } }, user: { select: { id: true, name: true, email: true } } } });
+    const users = await prisma.user.findMany({ select: { id: true, name: true, email: true, role: true, createdAt: true } });
     const products = await prisma.product.findMany();
-    const auditLogs = await prisma.auditLog.findMany({ include: { admin: true }, orderBy: { createdAt: 'desc' }, take: 50 });
+    const auditLogs = await prisma.auditLog.findMany({ include: { admin: { select: { name: true, email: true } } }, orderBy: { createdAt: 'desc' }, take: 50 });
     const systemSettings = await prisma.systemSettings.findMany();
     const payouts = await prisma.payout.findMany({ include: { seller: true }, orderBy: { createdAt: 'desc' } });
     const categories = await prisma.category.findMany({ include: { children: true } });
@@ -228,20 +228,32 @@ export async function createProduct(data: any) {
 
 export async function updateProduct(productId: string, data: any) {
   const session = await getServerSession(authOptions);
-  if (!session) throw new Error("Unauthorized");
+  if (!session || (session.user as any).role !== 'SELLER') throw new Error("Unauthorized");
 
-  const product = await prisma.product.update({
+  const seller = await prisma.sellerProfile.findUnique({ where: { userId: (session.user as any).id } });
+  if (!seller) throw new Error("Seller profile not found");
+
+  const product = await prisma.product.findUnique({ where: { id: productId } });
+  if (!product || product.sellerId !== seller.id) throw new Error("Unauthorized to update this product");
+
+  const updatedProduct = await prisma.product.update({
     where: { id: productId },
     data
   });
 
   revalidatePath('/seller-hub');
-  return product;
+  return updatedProduct;
 }
 
 export async function deleteProduct(productId: string) {
   const session = await getServerSession(authOptions);
-  if (!session) throw new Error("Unauthorized");
+  if (!session || (session.user as any).role !== 'SELLER') throw new Error("Unauthorized");
+
+  const seller = await prisma.sellerProfile.findUnique({ where: { userId: (session.user as any).id } });
+  if (!seller) throw new Error("Seller profile not found");
+
+  const product = await prisma.product.findUnique({ where: { id: productId } });
+  if (!product || product.sellerId !== seller.id) throw new Error("Unauthorized to delete this product");
 
   await prisma.product.delete({ where: { id: productId } });
 

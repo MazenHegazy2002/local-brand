@@ -23,7 +23,9 @@ export default function CheckoutPage() {
 
   const subtotal = total();
   const shipping = 50;
-  const grandTotal = subtotal + shipping;
+  const vatRate = 0.14; // Default VAT rate
+  const vatAmount = subtotal * vatRate;
+  const grandTotal = subtotal + shipping + vatAmount;
 
   if (items.length === 0 && !isLoading) {
     return (
@@ -204,6 +206,10 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-gray-600">
                   <span>Shipping Fee</span>
                   <span className="font-medium text-gray-900">{shipping.toLocaleString()} EGP</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Estimated VAT ({(vatRate * 100).toFixed(0)}%)</span>
+                  <span className="font-medium text-gray-900">{vatAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} EGP</span>
                 </div>
                 <div className="flex justify-between text-gray-900 border-t border-gray-100 pt-3">
                   <span className="font-bold text-base">Total</span>

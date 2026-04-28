@@ -39,15 +39,6 @@ export async function createOrder(cartItems: any[], addressInfo: any, paymentMet
       throw new Error(`Out of stock: ${product.title} only has ${variant.stockCount} remaining.`);
     }
 
-    const updatedVariant = await prisma.productVariant.updateMany({
-      where: { id: variant.id, stockCount: { gte: item.qty } },
-      data: { stockCount: { decrement: item.qty } }
-    });
-
-    if (updatedVariant.count === 0) {
-      throw new Error(`Concurrency error: ${product.title} just sold out.`);
-    }
-
     const price = variant.price || product.basePrice;
     totalAmount += price * item.qty;
 
@@ -87,38 +78,54 @@ export async function createOrder(cartItems: any[], addressInfo: any, paymentMet
   // Get VAT rate from settings
   let vatRate = 0.14; // Default Egypt VAT
   try {
-    const vatResult: any = await prisma.$queryRaw`SELECT value FROM "Settings" WHERE key = 'vatRate'`;
-    if (vatResult[0]) vatRate = parseFloat(vatResult[0].value) / 100;
+    const vatSetting = await prisma.systemSettings.findUnique({ where: { key: 'VAT_RATE' } });
+    if (vatSetting) vatRate = parseFloat(vatSetting.value) / 100;
   } catch {}
   
   const vatAmount = subtotalAfterDiscount * vatRate;
   const finalTotal = subtotalAfterDiscount + vatAmount + shippingFee;
 
-  const order = await prisma.order.create({
-    data: {
-      userId: isGuest ? null : userId,
-      guestEmail: isGuest ? guestEmail : null,
-      couponId: couponId || null,
-      totalAmount: finalTotal,
-      discountAmount,
-      shippingFee,
-      paymentMethod: paymentMethod === 'CREDIT_CARD' ? 'CREDIT_CARD' : 'CASH_ON_DELIVERY',
-      paymentStatus: paymentMethod === 'CASH_ON_DELIVERY' ? 'UNPAID' : 'PAID',
-      status: OrderStatus.CONFIRMED, 
-      shippingAddressSnapshot: JSON.stringify(addressInfo),
-      items: {
-        create: orderItemsData as any
-      }
+  const order = await prisma.$transaction(async (tx) => {
+    // Re-verify stock and decrement within transaction
+    for (const item of cartItems) {
+      const variant = await tx.productVariant.findUnique({ where: { id: item.variantId || '' } });
+      if (!variant || variant.stockCount < item.qty) throw new Error(`Out of stock or invalid variant for ${item.name}.`);
+      
+      const updatedVariant = await tx.productVariant.updateMany({
+        where: { id: variant.id, stockCount: { gte: item.qty } },
+        data: { stockCount: { decrement: item.qty } }
+      });
+      if (updatedVariant.count === 0) throw new Error(`Concurrency error: ${item.name} just sold out.`);
     }
-  });
 
-  // Increment coupon usedCount
-  if (couponId) {
-    await prisma.coupon.update({
-      where: { id: couponId },
-      data: { usedCount: { increment: 1 } }
+    const newOrder = await tx.order.create({
+      data: {
+        userId: isGuest ? null : userId,
+        guestEmail: isGuest ? guestEmail : null,
+        couponId: couponId || null,
+        totalAmount: finalTotal,
+        discountAmount,
+        shippingFee,
+        paymentMethod: paymentMethod === 'CREDIT_CARD' ? 'CREDIT_CARD' : 'CASH_ON_DELIVERY',
+        paymentStatus: paymentMethod === 'CASH_ON_DELIVERY' ? 'UNPAID' : 'PAID',
+        status: OrderStatus.CONFIRMED, 
+        shippingAddressSnapshot: JSON.stringify(addressInfo),
+        items: {
+          create: orderItemsData as any
+        }
+      }
     });
-  }
+
+    // Increment coupon usedCount
+    if (couponId) {
+      await tx.coupon.update({
+        where: { id: couponId },
+        data: { usedCount: { increment: 1 } }
+      });
+    }
+
+    return newOrder;
+  });
 
   // Add loyalty points for registered users
   if (userId && totalAmount > 0) {
