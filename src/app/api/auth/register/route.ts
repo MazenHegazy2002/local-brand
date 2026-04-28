@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Default to BUYER if role is missing or invalid. Allow SELLER assignment.
-    const userRole = (role === 'SELLER' || role === 'ADMIN') ? role : 'BUYER';
+    const userRole = role === 'SELLER' ? 'SELLER' : 'BUYER';
 
     // Create user in DB
     const user = await prisma.user.create({

@@ -17,24 +17,52 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email || !credentials?.password) {
+          console.log("[AUTH] Missing credentials");
+          return null;
+        }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        });
+        const email = credentials.email.toLowerCase().trim();
+        console.log(`[AUTH] Login attempt for: ${email}`);
 
-        if (!user || !user.passwordHash) return null;
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email }
+          });
 
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
-        if (!isPasswordValid) return null;
-        if (user.deletedAt) return null;
+          if (!user) {
+            console.log(`[AUTH] User not found: ${email}`);
+            return null;
+          }
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        };
+          if (!user.passwordHash) {
+            console.log(`[AUTH] User has no password (OAuth only): ${email}`);
+            return null;
+          }
+
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
+          
+          if (!isPasswordValid) {
+            console.log(`[AUTH] Invalid password for: ${email}`);
+            return null;
+          }
+
+          if (user.deletedAt) {
+            console.log(`[AUTH] Account is deleted: ${email}`);
+            return null;
+          }
+
+          console.log(`[AUTH] Successful login: ${email} (${user.role})`);
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          };
+        } catch (error) {
+          console.error("[AUTH] Database error during login:", error);
+          return null;
+        }
       }
     })
   ],
