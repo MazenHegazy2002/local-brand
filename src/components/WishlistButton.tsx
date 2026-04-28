@@ -2,9 +2,11 @@
 
 import { useWishlistStore } from '@/lib/wishlistStore';
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 
 export default function WishlistButton({ product, className = "" }: { product: any, className?: string }) {
   const { hasItem, toggleItem } = useWishlistStore();
+  const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -22,8 +24,8 @@ export default function WishlistButton({ product, className = "" }: { product: a
           id: String(product.id),
           name: product.name || product.title,
           price: product.price || product.basePrice,
-          image: product.image || product.img,
-        });
+          image: product.image || (product.images && product.images[0]?.url) || product.img,
+        }, session);
       }}
       className={`z-20 flex items-center justify-center w-8 h-8 rounded-full bg-white/80 backdrop-blur shadow hover:bg-white transition-colors ${className}`}
       aria-label="Toggle wishlist"

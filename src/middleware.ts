@@ -1,37 +1,40 @@
-import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/rateLimit';
 
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token;
-    const path = req.nextUrl.pathname;
-
-    // Must be ADMIN to access /admin-os
-    if (path.startsWith("/admin-os") && token?.role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
-
-    // Must be SELLER (or ADMIN) to access /seller-hub
-    if (path.startsWith("/seller-hub")) {
-      if (token?.role !== "SELLER" && token?.role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/login", req.url));
-      }
-    }
-
-    // Must be logged in to access /dashboard
-    if (path.startsWith("/dashboard") && !token) {
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
-
+export async function middleware(req: any) {
+  // Skip for non-API routes
+  if (!req.nextUrl.pathname.startsWith('/api/')) {
     return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token,
-    },
   }
-);
+
+  // Apply rate limiting
+  const rateLimitResult = await rateLimit(req);
+  
+  if (rateLimitResult.limited) {
+    return new NextResponse(
+      JSON.stringify({ 
+        error: 'Too many requests', 
+        retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000) 
+      }),
+      { 
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(Math.ceil((rateLimitResult.reset - Date.now()) / 1000)),
+          'X-RateLimit-Limit': '60',
+          'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+        }
+      }
+    );
+  }
+
+  const res = NextResponse.next();
+  res.headers.set('X-RateLimit-Remaining', String(rateLimitResult.remaining));
+  res.headers.set('X-RateLimit-Reset', String(rateLimitResult.reset));
+  
+  return res;
+}
 
 export const config = {
-  matcher: ["/admin-os/:path*", "/seller-hub/:path*", "/dashboard/:path*"],
+  matcher: '/api/:path*',
 };

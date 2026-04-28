@@ -2,10 +2,13 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Link from "next/link";
 import Image from "next/image";
-import { getHomepageData } from "./actions";
+import { getHomepageData } from "@/app/actions/seller";
 import { DictKey } from "@/lib/i18n/dicts";
 import { getDictionary } from "@/lib/i18n/server";
 import WishlistButton from "@/components/WishlistButton";
+import { ElectronicsIcon, FashionIcon, HomeIcon, HealthIcon, SportsIcon, GroceryIcon, ChevronLeft, ChevronRight } from "@/components/icons";
+import { ProductGridSkeleton, CategoryGridSkeleton } from "@/components/Skeleton";
+import { Suspense } from "react";
 
 export default async function Home() {
   const { categories: dbCategories, featuredProducts, recentProducts } = await getHomepageData();
@@ -13,13 +16,19 @@ export default async function Home() {
 
   const categories = dbCategories.length > 0 ? dbCategories.map((c: any) => ({
     name: c.name,
-    icon: <ElectronicsIcon /> // Fallback icon
+    slug: c.slug,
+    icon: c.name.toLowerCase().includes('electronic') ? <ElectronicsIcon /> :
+          c.name.toLowerCase().includes('fashion') ? <FashionIcon /> :
+          c.name.toLowerCase().includes('home') ? <HomeIcon /> :
+          c.name.toLowerCase().includes('health') || c.name.toLowerCase().includes('beauty') ? <HealthIcon /> :
+          c.name.toLowerCase().includes('sport') ? <SportsIcon /> :
+          c.name.toLowerCase().includes('grocery') ? <GroceryIcon /> : <ElectronicsIcon />
   })) : [
-    { name: dict.Electronics, icon: <ElectronicsIcon /> },
-    { name: dict.Fashion, icon: <FashionIcon /> },
-    { name: dict.HomeDecor, icon: <HomeIcon /> },
-    { name: dict.HealthBeauty, icon: <HealthIcon /> },
-    { name: dict.Sports, icon: <SportsIcon /> },
+    { name: dict.Electronics, slug: 'electronics', icon: <ElectronicsIcon /> },
+    { name: dict.Fashion, slug: 'fashion', icon: <FashionIcon /> },
+    { name: dict.HomeDecor, slug: 'home-decor', icon: <HomeIcon /> },
+    { name: dict.HealthBeauty, slug: 'health-beauty', icon: <HealthIcon /> },
+    { name: dict.Sports, slug: 'sports', icon: <SportsIcon /> },
   ];
 
   const hotDeals: any[] = featuredProducts.map((p: any) => ({
@@ -53,24 +62,26 @@ export default async function Home() {
       <section className="container mx-auto px-4 py-8">
         <div className="flex items-end justify-between mb-6 px-1">
           <h2 className="text-[22px] md:text-2xl font-bold text-gray-900 tracking-tight">{dict.BrowseCategories}</h2>
-          <Link href="/shop" className="text-[#1e3b8a] font-bold text-[13px] hover:underline mb-1">
+          <Link href="/departments" className="text-[#1e3b8a] font-bold text-[13px] hover:underline mb-1">
             {dict.ViewAllDepartments}
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 border-b border-gray-200 pb-12">
-          {categories.map((cat: any, i: number) => (
-            <Link href="/shop" key={i} className="flex flex-col items-center group cursor-pointer">
-              {/* Boxy White Background Card with Blue Icon */}
-              <div className="w-full aspect-[1.1/1] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 group-hover:shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all rounded-lg flex items-center justify-center mb-4">
-                <div className="text-[#1e3b8a] scale-[1.35] group-hover:scale-[1.45] transition-transform">
-                  {cat.icon}
+        <Suspense fallback={<CategoryGridSkeleton count={6} />}>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 border-b border-gray-200 pb-12">
+            {categories.map((cat: any, i: number) => (
+              <Link href={`/category/${cat.slug || cat.name.toLowerCase().replace(' ', '-')}`} key={i} className="flex flex-col items-center group cursor-pointer">
+                {/* Boxy White Background Card with Blue Icon */}
+                <div className="w-full aspect-[1.1/1] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 group-hover:shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all rounded-lg flex items-center justify-center mb-4">
+                  <div className="text-[#1e3b8a] scale-[1.35] group-hover:scale-[1.45] transition-transform">
+                    {cat.icon}
+                  </div>
                 </div>
-              </div>
-              <span className="font-bold text-gray-800 text-[13px] tracking-tight">{cat.name}</span>
-            </Link>
-          ))}
-        </div>
+                <span className="font-bold text-gray-800 text-[13px] tracking-tight">{cat.name}</span>
+              </Link>
+            ))}
+          </div>
+        </Suspense>
       </section>
       
       {/* 2. Hot Deals Now */}
@@ -83,31 +94,33 @@ export default async function Home() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {hotDeals.map((item: any, i: number) => (
-            <Link href={`/product/${item.id}`} key={i} className="bg-white rounded-lg overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow cursor-pointer block group">
-              <div className="relative aspect-square bg-gray-50 flex items-center justify-center">
-                {item.badge && (
-                  <div className={`absolute top-4 left-4 z-10 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm ${item.badgeColor}`}>
-                    {item.badge}
+        <Suspense fallback={<ProductGridSkeleton count={4} />}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {hotDeals.map((item: any, i: number) => (
+              <Link href={`/product/${item.id}`} key={i} className="bg-white rounded-lg overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow cursor-pointer block group">
+                <div className="relative aspect-square bg-gray-50 flex items-center justify-center">
+                  {item.badge && (
+                    <div className={`absolute top-4 left-4 z-10 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm ${item.badgeColor}`}>
+                      {item.badge}
+                    </div>
+                  )}
+                  <div className="absolute top-4 right-4 z-20">
+                    <WishlistButton product={item} />
                   </div>
-                )}
-                <div className="absolute top-4 right-4 z-20">
-                  <WishlistButton product={item} />
+                  <Image src={item.img} alt={item.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="group-hover:scale-105 transition-transform duration-500 object-cover" />
                 </div>
-                <Image src={item.img} alt={item.title} layout="fill" objectFit="cover" className="group-hover:scale-105 transition-transform duration-500" />
-              </div>
-              <div className="p-4">
-                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">{item.brand}</span>
-                <h3 className="font-bold text-gray-900 text-[13px] mb-2 leading-tight truncate">{item.title}</h3>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-gray-900 text-sm">{item.price}</span>
-                  {item.oldPrice && <span className="text-xs text-gray-400 font-medium line-through">{item.oldPrice}</span>}
+                <div className="p-4">
+                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">{item.brand}</span>
+                  <h3 className="font-bold text-gray-900 text-[13px] mb-2 leading-tight truncate">{item.title}</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-gray-900 text-sm">{item.price}</span>
+                    {item.oldPrice && <span className="text-xs text-gray-400 font-medium line-through">{item.oldPrice}</span>}
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        </Suspense>
       </section>
 
       {/* 3. Empowering Local Brands (Mid-page Banner) */}
@@ -157,26 +170,28 @@ export default async function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-          {pickedForYou.map((item: any, i: number) => (
-            <Link href={`/product/${item.id}`} key={i} className="group cursor-pointer">
-              <div className="w-full aspect-[4/5] bg-white rounded-lg overflow-hidden border border-gray-100 mb-3 relative">
-                <div className="absolute top-2 right-2 z-20">
-                  <WishlistButton product={item} />
+        <Suspense fallback={<ProductGridSkeleton count={6} />}>
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+            {pickedForYou.map((item: any, i: number) => (
+              <Link href={`/product/${item.id}`} key={i} className="group cursor-pointer">
+                <div className="w-full aspect-[4/5] bg-white rounded-lg overflow-hidden border border-gray-100 mb-3 relative">
+                  <div className="absolute top-2 right-2 z-20">
+                    <WishlistButton product={item} />
+                  </div>
+                  <Image src={item.img} alt={item.title} fill sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 16vw" className="group-hover:scale-105 transition-transform duration-500 object-cover" />
                 </div>
-                <Image src={item.img} alt={item.title} layout="fill" objectFit="cover" className="group-hover:scale-105 transition-transform duration-500" />
-              </div>
-              <h3 className="font-bold text-gray-900 text-xs mb-1 truncate">{item.title}</h3>
-              <p className="font-bold text-[#1e3b8a] text-xs">{item.price}</p>
-            </Link>
-          ))}
-        </div>
+                <h3 className="font-bold text-gray-900 text-xs mb-1 truncate">{item.title}</h3>
+                <p className="font-bold text-[#1e3b8a] text-xs">{item.price}</p>
+              </Link>
+            ))}
+          </div>
+        </Suspense>
       </section>
 
       {/* Footer styled exactly as the image */}
       <footer className="mt-16 container mx-auto px-4 py-12 border-t border-gray-200 pt-16">
         <div className="flex flex-col lg:flex-row justify-between gap-12">
-          
+           
           <div className="lg:w-1/3">
             <h2 className="text-xl font-bold text-[#1e3b8a] tracking-tight mb-4 uppercase">Marketplace</h2>
             <p className="text-[11px] leading-relaxed text-gray-500 max-w-xs mb-6">
@@ -194,28 +209,28 @@ export default async function Home() {
             <div>
               <h4 className="font-bold text-gray-900 text-[10px] uppercase tracking-wider mb-5">Shop & Discover</h4>
               <ul className="space-y-4 text-[11px] text-gray-500">
-                <li><Link href="/" className="hover:text-gray-900">Flash Sales</Link></li>
-                <li><Link href="/" className="hover:text-gray-900">Popular Brands</Link></li>
-                <li><Link href="/" className="hover:text-gray-900">Gift Cards</Link></li>
-                <li><Link href="/" className="hover:text-gray-900">Sell on Marketplace</Link></li>
+                <li><Link href="/shop" className="hover:text-gray-900">Flash Sales</Link></li>
+                <li><Link href="/brands" className="hover:text-gray-900">Popular Brands</Link></li>
+                <li><Link href="/shop" className="hover:text-gray-900">Gift Cards</Link></li>
+                <li><Link href="/sell" className="hover:text-gray-900">Sell on Marketplace</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold text-gray-900 text-[10px] uppercase tracking-wider mb-5">Customer Care</h4>
               <ul className="space-y-4 text-[11px] text-gray-500">
-                <li><Link href="/" className="hover:text-gray-900">Help Center</Link></li>
-                <li><Link href="/" className="hover:text-gray-900">Track My Order</Link></li>
-                <li><Link href="/" className="hover:text-gray-900">Shipping Info</Link></li>
-                <li><Link href="/" className="hover:text-gray-900">Returns & Refunds</Link></li>
+                <li><Link href="/help" className="hover:text-gray-900">Help Center</Link></li>
+                <li><Link href="/help" className="hover:text-gray-900">Track My Order</Link></li>
+                <li><Link href="/help" className="hover:text-gray-900">Shipping Info</Link></li>
+                <li><Link href="/help" className="hover:text-gray-900">Returns & Refunds</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold text-gray-900 text-[10px] uppercase tracking-wider mb-5">Legal & Policy</h4>
               <ul className="space-y-4 text-[11px] text-gray-500">
-                <li><Link href="/" className="hover:text-gray-900">Terms of Service</Link></li>
-                <li><Link href="/" className="hover:text-gray-900">Privacy Policy</Link></li>
-                <li><Link href="/" className="hover:text-gray-900">Cookie Settings</Link></li>
-                <li><Link href="/" className="hover:text-gray-900">Accessibility</Link></li>
+                <li><Link href="/legal#terms" className="hover:text-gray-900">Terms of Service</Link></li>
+                <li><Link href="/legal#privacy" className="hover:text-gray-900">Privacy Policy</Link></li>
+                <li><Link href="/legal#cookies" className="hover:text-gray-900">Cookie Settings</Link></li>
+                <li><Link href="/legal#accessibility" className="hover:text-gray-900">Accessibility</Link></li>
               </ul>
             </div>
           </div>
@@ -225,13 +240,3 @@ export default async function Home() {
     </main>
   );
 }
-
-// Minimal Icons used exactly as rendered in Stitch for categories
-function ElectronicsIcon() { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="16" height="12" rx="1" ry="1"/><path d="M6 16v4h8v-4"/><rect x="18" y="10" width="4" height="8" rx="1"/></svg>; }
-function FashionIcon() { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a2 2 0 0 0-2 2 c0 1 1 2 2 2 c1 0 2-1 2-2 a2 2 0 0 0-2-2z"/><path d="M12 6l-6 10h12z"/><path d="M12 6v-4"/></svg>; }
-function HomeIcon() { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>; }
-function GroceryIcon() { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>; }
-function HealthIcon() { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>; }
-function SportsIcon() { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 14.4V9.6"/><path d="M14 16.8V7.2"/><path d="M10 16.8V7.2"/><path d="M6 14.4V9.6"/><path d="M22 12H2"/><path d="M18 12h-4"/><path d="M10 12H6"/></svg>; }
-function ChevronLeft() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>; }
-function ChevronRight() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>; }

@@ -12,7 +12,9 @@ async function getStripe() {
   if (!stripe) {
     if (!process.env.STRIPE_SECRET_KEY) return null;
     const Stripe = (await import('stripe')).default;
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+      apiVersion: '2026-03-25.dahlia' as any,
+    });
   }
   return stripe;
 }

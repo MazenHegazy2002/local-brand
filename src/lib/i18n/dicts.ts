@@ -62,6 +62,14 @@ export const en = {
   OurCreators: "Our Creators",
   OurCreatorsDesc: "Meet the visionaries crafting the soul of the platform. We verify and support every artisan to ensure authentic quality.",
   PartnerSince: "PARTNER SINCE",
+  // Reviews
+  CustomerReviews: "Customer Reviews",
+  WriteAReview: "Write a Review",
+  SubmitReview: "Submit Review",
+  Submitting: "Submitting...",
+  NoReviewsYet: "No reviews yet. Be the first to review!",
+  VerifiedPurchase: "Verified Purchase",
+  ShareYourThoughts: "Share your thoughts about this product...",
 };
 
 export const ar = {
@@ -128,6 +136,14 @@ export const ar = {
   OurCreators: "مبدعونا",
   OurCreatorsDesc: "تعرف على العقول المبدعة التي تصنع روح المنصة. نتحقق من كل حِرَفي ونساعده لضمان الجودة الأصيلة.",
   PartnerSince: "شريك منذ",
+  // Reviews
+  CustomerReviews: "تقييمات العملاء",
+  WriteAReview: "اكتب تقييماً",
+  SubmitReview: "إرسال التقييم",
+  Submitting: "جاري الإرسال...",
+  NoReviewsYet: "لا توجد تقييمات بعد. كن أول من يقيم!",
+  VerifiedPurchase: "شراء مؤكد",
+  ShareYourThoughts: "شاركنا رأيك حول هذا المنتج...",
 };
 
 export type DictKey = keyof typeof en;

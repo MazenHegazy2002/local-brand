@@ -71,3 +71,45 @@ export async function DELETE(req: Request) {
   await prisma.address.delete({ where: { id } });
   return NextResponse.json({ message: 'Address deleted' }, { status: 200 });
 }
+
+// PUT /api/addresses — update an existing address
+export async function PUT(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+
+  const userId = (session.user as any).id;
+  const { id, street, city, governorate, postalCode, isDefault } = await req.json();
+
+  if (!id) return NextResponse.json({ message: 'Address ID required' }, { status: 400 });
+
+  const existing = await prisma.address.findUnique({ where: { id } });
+  if (!existing || existing.userId !== userId) {
+    return NextResponse.json({ message: 'Not found or forbidden' }, { status: 404 });
+  }
+
+  // If setting this as default, unset others
+  if (isDefault) {
+    await prisma.address.updateMany({
+      where: { userId },
+      data: { isDefault: false }
+    });
+    
+    await prisma.user.update({
+      where: { id: userId },
+      data: { defaultAddressId: id }
+    });
+  }
+
+  const updated = await prisma.address.update({
+    where: { id },
+    data: {
+      street: street ?? undefined,
+      city: city ?? undefined,
+      governorate: governorate ?? undefined,
+      postalCode: postalCode ?? undefined,
+      isDefault: isDefault !== undefined ? !!isDefault : undefined
+    }
+  });
+
+  return NextResponse.json({ address: updated }, { status: 200 });
+}

@@ -15,7 +15,9 @@ export async function POST(req: Request) {
     if (webhookSecret && sig) {
       // Live mode: validate signature to prevent spoofed webhook calls
       const Stripe = (await import('stripe')).default;
-      const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+      const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+        apiVersion: '2026-03-25.dahlia' as any,
+      });
       try {
         event = stripeInstance.webhooks.constructEvent(body, sig, webhookSecret);
       } catch (err: any) {

@@ -2,42 +2,79 @@
 
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCartStore } from "@/lib/cartStore";
-import { MOCK_PRODUCTS, MOCK_CATEGORIES } from "@/lib/data";
 import { useLanguage } from "@/providers/LanguageContext";
 import WishlistButton from "@/components/WishlistButton";
+import { ProductSkeleton, ProductGridSkeleton } from "@/components/Skeleton";
 
 function ShopContent() {
   const searchParams = useSearchParams();
   const initialQ = searchParams.get('q') ?? '';
+  const initialCategory = searchParams.get('category') ?? 'all';
+  const initialMinPrice = searchParams.get('minPrice') ?? '';
+  const initialMaxPrice = searchParams.get('maxPrice') ?? '';
+  
   const [q, setQ] = useState(initialQ);
-  const [category, setCategory] = useState('All');
+  const [category, setCategory] = useState(initialCategory);
   const [sort, setSort] = useState<'default' | 'price-asc' | 'price-desc'>('default');
+  const [minPrice, setMinPrice] = useState(initialMinPrice);
+  const [maxPrice, setMaxPrice] = useState(initialMaxPrice);
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<any[]>([]);
+  
   const addItem = useCartStore(s => s.addItem);
-  const [added, setAdded] = useState<Record<number, boolean>>({});
-  const { t, lang } = useLanguage();
+  const [added, setAdded] = useState<Record<string, boolean>>({});
+  const { t } = useLanguage();
 
-  // Update q when URL param changes  
-  useEffect(() => { setQ(searchParams.get('q') ?? ''); }, [searchParams]);
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (q) params.set('q', q);
+        if (category !== 'all') params.set('category', category);
+        if (minPrice) params.set('minPrice', minPrice);
+        if (maxPrice) params.set('maxPrice', maxPrice);
+        params.set('limit', '50');
+        
+        const res = await fetch(`/api/products?${params.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setProducts(data.products || []);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const allLabel = t('All');
-  const categories = [allLabel, ...MOCK_CATEGORIES];
+    fetchData();
+  }, [q, category, minPrice, maxPrice]);
 
-  let filtered = MOCK_PRODUCTS
-    .filter(p => category === allLabel || p.category === category)
-    .filter(p => !q || p.name.toLowerCase().includes(q.toLowerCase()) || p.brand.toLowerCase().includes(q.toLowerCase()));
+  useEffect(() => {
+    fetch('/api/categories')
+      .then(res => res.json())
+      .then(data => setCategories(data.categories || []))
+      .catch(err => console.error(err));
+  }, []);
 
-  if (sort === 'price-asc') filtered = [...filtered].sort((a, b) => a.price - b.price);
-  if (sort === 'price-desc') filtered = [...filtered].sort((a, b) => b.price - a.price);
+  const sortedProducts = useMemo(() => {
+    let sorted = [...products];
+    if (sort === 'price-asc') sorted.sort((a, b) => a.basePrice - b.basePrice);
+    if (sort === 'price-desc') sorted.sort((a, b) => b.basePrice - a.basePrice);
+    return sorted;
+  }, [products, sort]);
 
-  const handleAddToCart = (product: typeof MOCK_PRODUCTS[0]) => {
+  const handleAddToCart = (product: any) => {
     addItem({
       id: String(product.id),
-      name: product.name,
-      price: product.price,
-      image: product.image,
+      name: product.title,
+      price: product.basePrice,
+      image: product.images?.[0]?.url,
     });
     setAdded(prev => ({ ...prev, [product.id]: true }));
     setTimeout(() => setAdded(prev => ({ ...prev, [product.id]: false })), 1200);
@@ -47,13 +84,12 @@ function ShopContent() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header + search */}
       <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8">
         <div className="flex-1">
           <h1 className="text-2xl font-black text-gray-900">
-            {q ? `${t('ResultsFor')} "${q}"` : category === allLabel ? t('AllProducts') : category}
+            {q ? `${t('ResultsFor')} "${q}"` : category !== 'all' ? categories.find((c: any) => c.slug === category)?.name || 'Products' : t('AllProducts')}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">{filtered.length} {t('Products')}</p>
+          <p className="text-sm text-gray-500 mt-1">{sortedProducts.length} {t('Products')}</p>
         </div>
         <div className="flex gap-3">
           <input
@@ -72,20 +108,49 @@ function ShopContent() {
       </div>
 
       <div className="flex gap-8">
-        {/* Sidebar filters */}
-        <aside className="hidden md:block w-48 shrink-0">
-          <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3">{t('Category')}</h3>
-          {categories.map(cat => (
-            <button key={cat} onClick={() => setCategory(cat)}
-              className={`block w-full text-left py-1.5 px-3 text-sm rounded-md mb-1 transition-colors ${category === cat ? 'bg-[#1e3b8a] text-white font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
-              {cat}
+        <aside className="hidden md:block w-56 shrink-0">
+          <div className="bg-white rounded-xl p-4 border border-gray-100 sticky top-4">
+            <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3">{t('Category')}</h3>
+            <button 
+              onClick={() => setCategory('all')}
+              className={`block w-full text-left py-2 px-3 text-sm rounded-md mb-1 transition-colors ${category === 'all' ? 'bg-[#1e3b8a] text-white font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
+              {t('All')}
             </button>
-          ))}
+            {categories.map((cat: any) => (
+              <button 
+                key={cat.id}
+                onClick={() => setCategory(cat.slug)}
+                className={`block w-full text-left py-2 px-3 text-sm rounded-md mb-1 transition-colors ${category === cat.slug ? 'bg-[#1e3b8a] text-white font-bold' : 'text-gray-600 hover:bg-gray-100'}`}>
+                {cat.name}
+              </button>
+            ))}
+          </div>
+
+          <div className="bg-white rounded-xl p-4 border border-gray-100 mt-4 sticky top-[calc(4rem+180px)]">
+            <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3">Price Range</h3>
+            <div className="flex gap-2 mb-2">
+              <input
+                type="number"
+                placeholder="Min"
+                value={minPrice}
+                onChange={e => setMinPrice(e.target.value)}
+                className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm"
+              />
+              <input
+                type="number"
+                placeholder="Max"
+                value={maxPrice}
+                onChange={e => setMaxPrice(e.target.value)}
+                className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm"
+              />
+            </div>
+          </div>
         </aside>
 
-        {/* Grid */}
         <div className="flex-1">
-          {filtered.length === 0 ? (
+          {loading ? (
+            <ProductGridSkeleton count={12} />
+          ) : sortedProducts.length === 0 ? (
             <div className="text-center py-20 text-gray-400">
               <div className="text-5xl mb-4">🔍</div>
               <p className="font-semibold">{t('NoProductsFound')}</p>
@@ -93,27 +158,32 @@ function ShopContent() {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {filtered.map(product => (
+              {sortedProducts.map(product => (
                 <div key={product.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group">
                   <Link href={`/product/${product.id}`}>
                     <div className="aspect-square relative overflow-hidden bg-gray-50">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      <div className="absolute top-2 left-2 z-10">
-                        {product.tags.slice(0, 1).map(tag => (
-                          <span key={tag} className="text-[10px] font-bold bg-[#1e3b8a] text-white px-2 py-0.5 rounded-full">{tag}</span>
-                        ))}
-                      </div>
+                      <img 
+                        src={product.images?.[0]?.url || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400"} 
+                        alt={product.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      />
+                      {product.isFeatured && (
+                        <div className="absolute top-2 left-2 z-10">
+                          <span className="text-[10px] font-bold bg-[#1e3b8a] text-white px-2 py-0.5 rounded-full">Featured</span>
+                        </div>
+                      )}
                       <div className="absolute top-2 right-2 z-20">
                         <WishlistButton product={product} />
                       </div>
                     </div>
                   </Link>
                   <div className="p-3">
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide mb-0.5">{product.brand}</p>
-                    <h3 className="font-bold text-gray-900 text-sm mb-2 leading-tight line-clamp-2">{product.name}</h3>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide mb-0.5">{product.category?.name || 'General'}</p>
+                    <h3 className="font-bold text-gray-900 text-sm mb-2 leading-tight line-clamp-2">{product.title}</h3>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-black text-[#1e3b8a] text-sm">{product.price.toLocaleString()} {egp}</span>
+                      <span className="font-black text-[#1e3b8a] text-sm">{product.basePrice?.toLocaleString()} {egp}</span>
                       <button
                         onClick={() => handleAddToCart(product)}
                         className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-all ${added[product.id] ? 'bg-green-500 text-white' : 'bg-[#1e3b8a] text-white hover:bg-[#152c6e]'}`}>

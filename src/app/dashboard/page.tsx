@@ -24,14 +24,7 @@ const S = {
   amberBg: '#FAEEDA',
 };
 
-// ─── Mock data ──────────────────────────────────────────────────────────────
-const ALL_ORDERS = [
-  { id: 'ORD-4821', name: 'Sony WH-1000XM5 Headphones', date: 'Mar 29, 2026', price: 2800, status: 'Shipped', emoji: '🎧', bg: '#EEEDFE' },
-  { id: 'ORD-4790', name: 'Nike Air Max 270', date: 'Mar 20, 2026', price: 1650, status: 'Delivered', emoji: '👟', bg: '#E1F5EE' },
-  { id: 'ORD-4744', name: 'Samsung Galaxy S24', date: 'Mar 10, 2026', price: 8000, status: 'Delivered', emoji: '📱', bg: '#FAEEDA' },
-  { id: 'ORD-4701', name: 'Adidas Ultraboost 22', date: 'Feb 28, 2026', price: 3200, status: 'Delivered', emoji: '👟', bg: '#E1F5EE' },
-  { id: 'ORD-4680', name: 'Kindle Paperwhite', date: 'Feb 15, 2026', price: 1800, status: 'Delivered', emoji: '📚', bg: '#EEEDFE' },
-];
+// ─── Mock data removed - using real data from API ────────────────────────
 
 const WISHLIST = [
   { name: 'Apple Watch Series 9', price: 5200, emoji: '⌚', bg: '#EEEDFE', inStock: true },
@@ -199,24 +192,18 @@ function OrdersSection({ orders }: { orders: any[] }) {
   );
 }
 
-function WishlistSection() {
-  const [list, setList] = useState(WISHLIST);
+function DiscoverSection() {
   return (
     <div>
-      <div style={{ marginBottom: 12, fontSize: 12, color: S.txt2 }}>{list.length} saved items</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>
-        {list.map((p, i) => (
-          <Card key={i} style={{ padding: 12 }}>
-            <div style={{ height: 80, borderRadius: 8, background: p.bg, marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>{p.emoji}</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: S.txt, marginBottom: 4 }}>{p.name}</div>
-            <div style={{ fontSize: 12, color: S.purple, marginBottom: 8 }}>{p.price.toLocaleString()} EGP</div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button style={{ flex: 1, background: S.purple, color: '#fff', border: 'none', borderRadius: 6, padding: '6px 0', fontSize: 11, fontWeight: 600, cursor: 'pointer', opacity: p.inStock ? 1 : 0.5 }}
-                disabled={!p.inStock}>
-                {p.inStock ? 'Add to cart' : 'Out of stock'}
-              </button>
-              <button onClick={() => setList(l => l.filter((_, j) => j !== i))}
-                style={{ width: 32, background: S.redBg, color: S.red, border: 'none', borderRadius: 6, fontSize: 14, cursor: 'pointer' }}>×</button>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 16, marginBottom: 20 }}>
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <Card key={i} style={{ padding: 0, overflow: 'hidden', cursor: 'pointer' }}>
+            <div style={{ height: 180, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48 }}>
+              🛍️
+            </div>
+            <div style={{ padding: 12 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: S.txt, marginBottom: 4 }}>Discover Item {i}</div>
+              <div style={{ fontSize: 12, color: S.txt2 }}>Explore new trends and collections</div>
             </div>
           </Card>
         ))}
@@ -225,52 +212,137 @@ function WishlistSection() {
   );
 }
 
+function PointsSection({ data }: { data: any }) {
+  const points = data?.user?.loyaltyPoints || 0;
+  return (
+    <div>
+      <Card style={{ textAlign: 'center', padding: '32px 16px', marginBottom: 16 }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>⭐</div>
+        <div style={{ fontSize: 36, fontWeight: 700, color: S.purpleL }}>{points}</div>
+        <div style={{ fontSize: 14, color: S.txt2, marginTop: 4 }}>Loyalty Points</div>
+        <div style={{ fontSize: 12, color: S.txt3, marginTop: 8 }}>≈ {(points * 0.1).toFixed(2)} EGP value</div>
+      </Card>
+      <Card>
+        <SectionTitle title="How to earn points" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {[
+            { action: 'Purchase', points: '+10 per 100 EGP spent' },
+            { action: 'Review', points: '+5 per review' },
+            { action: 'Referral', points: '+50 per friend' },
+          ].map((item, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < 2 ? `0.5px solid ${S.border}` : 'none' }}>
+              <span style={{ fontSize: 13, color: S.txt }}>{item.action}</span>
+              <span style={{ fontSize: 12, color: S.purpleL, fontWeight: 600 }}>{item.points}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 function AddressesSection() {
-  const [addrs, setAddrs] = useState(ADDRESSES);
+  const [addrs, setAddrs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ label: '', street: '', city: '', gov: '' });
+  const [form, setForm] = useState({ street: '', city: '', governorate: '', postalCode: '', isDefault: false });
+
+  const fetchAddrs = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/addresses');
+      const d = await res.json();
+      setAddrs(d.addresses || []);
+    } catch (err) { console.error(err); }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchAddrs(); }, []);
+
+  const handleAdd = async () => {
+    if (!form.street || !form.city || !form.governorate) return;
+    try {
+      await fetch('/api/addresses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      setAdding(false);
+      setForm({ street: '', city: '', governorate: '', postalCode: '', isDefault: false });
+      fetchAddrs();
+    } catch (err) { console.error(err); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete address?')) return;
+    try {
+      await fetch(`/api/addresses?id=${id}`, { method: 'DELETE' });
+      fetchAddrs();
+    } catch (err) { console.error(err); }
+  };
+
+  const handleSetDefault = async (id: string) => {
+    try {
+      await fetch('/api/addresses', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, isDefault: true })
+      });
+      fetchAddrs();
+    } catch (err) { console.error(err); }
+  };
+
+  if (loading && addrs.length === 0) return <div style={{ color: S.txt2, textAlign: 'center', padding: 40 }}>Loading addresses...</div>;
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <div style={{ fontSize: 13, color: S.txt2 }}>{addrs.length} saved addresses</div>
         <button onClick={() => setAdding(!adding)}
-          style={{ background: S.purple, color: '#fff', border: 'none', borderRadius: 6, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>+ Add address</button>
+          style={{ background: S.purple, color: '#fff', border: 'none', borderRadius: 6, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+          {adding ? 'Cancel' : '+ Add address'}
+        </button>
       </div>
+
       {adding && (
         <Card style={{ marginBottom: 12 }}>
           <SectionTitle title="New address" />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-            {(['label', 'street', 'city', 'gov'] as const).map(f => (
-              <input key={f} value={form[f]} onChange={e => setForm(p => ({ ...p, [f]: e.target.value }))} placeholder={f === 'gov' ? 'Governorate' : f.charAt(0).toUpperCase() + f.slice(1)}
-                style={{ background: S.card2, border: `0.5px solid ${S.border}`, borderRadius: 6, padding: '8px 10px', fontSize: 12, color: S.txt, outline: 'none', gridColumn: f === 'street' ? '1 / -1' : undefined }} />
-            ))}
+            <input value={form.street} onChange={e => setForm(p => ({ ...p, street: e.target.value }))} placeholder="Street Address *" style={{ background: S.card2, border: `0.5px solid ${S.border}`, borderRadius: 6, padding: '8px 10px', fontSize: 12, color: S.txt, outline: 'none', gridColumn: '1 / -1' }} />
+            <input value={form.city} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} placeholder="City *" style={{ background: S.card2, border: `0.5px solid ${S.border}`, borderRadius: 6, padding: '8px 10px', fontSize: 12, color: S.txt, outline: 'none' }} />
+            <input value={form.governorate} onChange={e => setForm(p => ({ ...p, governorate: e.target.value }))} placeholder="Governorate *" style={{ background: S.card2, border: `0.5px solid ${S.border}`, borderRadius: 6, padding: '8px 10px', fontSize: 12, color: S.txt, outline: 'none' }} />
+            <input value={form.postalCode} onChange={e => setForm(p => ({ ...p, postalCode: e.target.value }))} placeholder="Postal Code" style={{ background: S.card2, border: `0.5px solid ${S.border}`, borderRadius: 6, padding: '8px 10px', fontSize: 12, color: S.txt, outline: 'none' }} />
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: S.txt2 }}>
+              <input type="checkbox" checked={form.isDefault} onChange={e => setForm(p => ({ ...p, isDefault: e.target.checked }))} /> Set as default
+            </label>
           </div>
-          <button onClick={() => { if (form.street && form.city) { setAddrs(a => [...a, { id: Date.now(), ...form, gov: form.gov || 'Cairo', isDefault: false }]); setForm({ label: '', street: '', city: '', gov: '' }); setAdding(false); } }}
-            style={{ background: S.purple, color: '#fff', border: 'none', borderRadius: 6, padding: '7px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Save</button>
+          <button onClick={handleAdd} style={{ background: S.purple, color: '#fff', border: 'none', borderRadius: 6, padding: '7px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Save</button>
         </Card>
       )}
-      {addrs.map((a, i) => (
+
+      {addrs.map((a: any) => (
         <Card key={a.id} style={{ marginBottom: 8 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: S.txt }}>{a.label}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: S.txt }}>{a.city}, {a.governorate}</span>
                 {a.isDefault && <span style={{ fontSize: 10, background: '#EEEDFE', color: '#3C3489', padding: '1px 6px', borderRadius: 20, fontWeight: 600 }}>Default</span>}
               </div>
               <div style={{ fontSize: 12, color: S.txt2 }}>{a.street}</div>
-              <div style={{ fontSize: 12, color: S.txt2 }}>{a.city}, {a.gov}</div>
+              {a.postalCode && <div style={{ fontSize: 11, color: S.txt3 }}>Postal: {a.postalCode}</div>}
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
               {!a.isDefault && (
-                <button onClick={() => setAddrs(prev => prev.map((x, j) => ({ ...x, isDefault: j === i })))}
+                <button onClick={() => handleSetDefault(a.id)}
                   style={{ fontSize: 11, padding: '3px 8px', borderRadius: 4, border: `0.5px solid ${S.border}`, background: 'transparent', color: S.txt2, cursor: 'pointer' }}>Set default</button>
               )}
-              <button onClick={() => setAddrs(a => a.filter((_, j) => j !== i))}
+              <button onClick={() => handleDelete(a.id)}
                 style={{ fontSize: 11, padding: '3px 8px', borderRadius: 4, border: `0.5px solid ${S.redBg}`, background: 'transparent', color: S.red, cursor: 'pointer' }}>Remove</button>
             </div>
           </div>
         </Card>
       ))}
+      {addrs.length === 0 && !adding && <div style={{ textAlign: 'center', color: S.txt3, padding: 40, fontSize: 13 }}>No saved addresses.</div>}
     </div>
   );
 }
@@ -348,8 +420,9 @@ const TITLES: Record<string, string> = {
   reviews: 'My reviews',
 };
 
-import { getDashboardStats } from '../actions';
+import { getDashboardStats } from '../actions/seller';
 import { useEffect } from 'react';
+import { useWishlistStore } from '@/lib/wishlistStore';
 
 // ─── Page ──────────────────────────────────────────────────────────────────
 export default function CustomerDashboardPage() {
@@ -357,8 +430,11 @@ export default function CustomerDashboardPage() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [data, setData] = useState<any>(null);
 
+  const { items: wishlistItems, fetchItems } = useWishlistStore();
+
   useEffect(() => {
     getDashboardStats().then(res => setData(res)).catch(e => console.error(e));
+    fetchItems();
   }, []);
 
   if (!data) return <div style={{ background: S.bg, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>Loading Data...</div>;
@@ -366,6 +442,33 @@ export default function CustomerDashboardPage() {
   const dbOrders = data.myOrders?.map((o: any) => ({
     id: o.id.substring(0, 8), name: o.items[0]?.productTitleSnapshot || 'Order', date: new Date(o.createdAt).toLocaleDateString(), price: o.totalAmount, status: o.status === 'CONFIRMED' ? 'Processing' : o.status, paymentStatus: o.paymentStatus, emoji: '📦', bg: '#EEEDFE'
   })) || [];
+
+  const WishlistSection = () => {
+    return (
+      <div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+          {wishlistItems.map((p: any) => (
+            <Card key={p.id} style={{ padding: 10 }}>
+              <div style={{ aspectRatio: '1/1', background: '#F3F4F6', borderRadius: 8, marginBottom: 10, overflow: 'hidden' }}>
+                <img src={p.image || '/placeholder.png'} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: S.txt, marginBottom: 4 }}>{p.name}</div>
+              <div style={{ fontSize: 12, color: S.purpleL, marginBottom: 8 }}>{p.price} EGP</div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button 
+                  onClick={() => window.location.href = `/product/${p.id}`}
+                  style={{ flex: 1, fontSize: 11, padding: '5px', borderRadius: 4, background: S.purple, color: '#fff', border: 'none', cursor: 'pointer' }}>View</button>
+                <button 
+                  onClick={() => useWishlistStore.getState().toggleItem(p, data.session)}
+                  style={{ fontSize: 11, padding: '5px 8px', borderRadius: 4, background: S.redBg, color: S.red, border: 'none', cursor: 'pointer' }}>✕</button>
+              </div>
+            </Card>
+          ))}
+        </div>
+        {wishlistItems.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: S.txt3 }}>Your wishlist is empty.</div>}
+      </div>
+    )
+  }
 
   const renderContent = () => {
     switch (active) {

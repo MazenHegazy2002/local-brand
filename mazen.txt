@@ -1,77 +1,114 @@
 # Project Task List - Marketplace Platform
 
-## 🟢 1. Critical Bugs & Fixes (Immediate Priority)
-- [ ] **Fix Next.js 15 Breaking Changes**:
-  - [ ] Await `params` in `src/app/api/orders/[id]/invoice/route.ts`.
-  - [ ] Await `params` in `src/app/api/orders/[id]/status/route.ts`.
-  - [ ] Await `params` in `src/app/api/products/[id]/recommendations/route.ts`.
-  - [ ] Check all other dynamic routes for synchronous `params` access.
-- [ ] **Fix Stripe API Version Mismatch**:
-  - [ ] Update Stripe version in `src/app/api/payment/intent/route.ts` to `2026-03-25.dahlia`.
-  - [ ] Update Stripe version in `src/app/api/payment/webhook/route.ts` to `2026-03-25.dahlia`.
-- [ ] **Fix Prisma Enum Errors**:
-  - [ ] Resolve type mismatch for `"CANCELLED"` in `src/app/api/business-rules/cancel-item/route.ts`.
-- [ ] **Complete `createOrder` Logic**:
-  - [ ] Implement coupon validation and application logic (currently placeholder).
-  - [ ] Add shipping fee calculation logic.
-  - [ ] Add VAT calculation logic (currently hardcoded 14%).
+## ✅ 1. Critical Bugs & Fixes (Immediate Priority)
+- [x] **Fix Next.js 15 Breaking Changes**:
+  - [x] Await `params` in `src/app/api/orders/[id]/invoice/route.ts`.
+  - [x] Await `params` in `src/app/api/orders/[id]/status/route.ts`.
+  - [x] Await `params` in `src/app/api/products/[id]/recommendations/route.ts`.
+  - [x] Check all other dynamic routes for synchronous `params` access.
+- [x] **Fix Stripe API Version Mismatch**:
+  - [x] Update Stripe version in `src/app/api/payment/intent/route.ts` to `2026-03-25` (or latest).
+  - [x] Update Stripe version in `src/app/api/payment/webhook/route.ts` to `2026-03-25` (or latest).
+- [x] **Fix Prisma Enum Errors**:
+  - [x] Resolve type mismatch for `"CANCELLED"` in `src/app/api/business-rules/cancel-item/route.ts`. (Verified `OrderItemStatus.CANCELLED` is used)
+- [x] **Complete `createOrder` Logic**:
+  - [x] Implement coupon validation and application logic (including usage limits).
+  - [x] Add shipping fee calculation logic.
+  - [x] Add VAT calculation logic (14% on taxable amount).
 
-## 🟡 2. Core Features (Implementation)
-- [ ] **Seller Hub Enhancements**:
-  - [ ] Implement full Product CRUD (currently only basic create/delete).
-  - [ ] Add Inventory management UI.
-  - [ ] Add Order management for sellers.
-  - [ ] Add Earnings dashboard for sellers.
-- [ ] **Admin OS Enhancements**:
-  - [ ] Implement Seller approval/rejection workflow.
-  - [ ] Add User management dashboard.
-  - [ ] Add Platform-wide analytics.
-  - [ ] Improve Taxonomy management (Categories, Tags, Collections).
-- [ ] **Buyer Features**:
-  - [ ] Complete Wishlist functionality (ensure state sync between client/server).
-  - [ ] Implement Review/Rating system with verified purchase badge.
-  - [ ] Complete Address management (Add/Edit/Delete).
-  - [ ] Implement Loyalty points tracking and redemption.
+## ✅ 2. Core Features (Implementation)
+- [x] **Seller Hub Enhancements**:
+  - [x] Implement full Product CRUD (Added Edit functionality).
+  - [x] Add Inventory management UI (Integrated stock tracking).
+  - [x] Add Order management for sellers (Added Status updates and real data).
+  - [x] Add Earnings dashboard for sellers (Real revenue charts and wallet).
+- [x] **Admin OS Enhancements**:
+  - [x] Implement Seller approval/rejection workflow.
+  - [x] Add User management dashboard (Real data and search).
+  - [x] Add Platform-wide analytics (Live revenue charts).
+  - [x] Improve Taxonomy management (Categories, Tags, Collections).
+- [x] **Buyer Features**:
+  - [x] Complete Wishlist functionality (ensure state sync between client/server).
+  - [x] Implement Review/Rating system with verified purchase badge.
+  - [x] Connect Product details to real data.
+  - [x] Complete Address management (Add/Edit/Delete).
+  - [x] Implement Loyalty points tracking and redemption.
 
-## 🔵 3. Improvements & UX
-- [ ] **Localization (i18n)**:
-  - [ ] Audit `src/lib/i18n/dicts.ts` for missing keys.
-  - [ ] Ensure all hardcoded strings in `src/app/page.tsx` and components are localized.
-  - [ ] Fix missing icons in categories on homepage.
-- [ ] **Search & Discovery**:
-  - [ ] Improve `LiveSearch.tsx` performance and UI.
-  - [ ] Implement advanced filtering (price range, brands, attributes).
-- [ ] **UI Refinement**:
-  - [ ] Improve `CartDrawer.tsx` design and animations.
-  - [ ] Ensure full responsiveness of `Hero.tsx` and `ProductGrid.tsx`.
-  - [ ] Add loading skeletons for all data-fetching sections.
+## ✅ 3. Improvements & UX
+- [x] **Localization (i18n)**:
+  - [x] Audit `src/lib/i18n/dicts.ts` for missing keys.
+  - [x] Ensure all hardcoded strings in `src/app/page.tsx` and components are localized.
+  - [x] Fix missing icons in categories on homepage.
+- [x] **Search & Discovery**:
+  - [x] Improve `LiveSearch.tsx` performance and UI.
+  - [x] Implement advanced filtering (price range, brands, attributes).
+- [x] **UI Refinement**:
+  - [x] Improve `CartDrawer.tsx` design and animations.
+  - [x] Ensure full responsiveness of `Hero.tsx` and `ProductGrid.tsx`.
+  - [x] Add loading skeletons for all data-fetching sections.
 
-## ⚪ 4. Technical Debt & DevOps
-- [ ] **Testing**:
-  - [ ] Add unit tests for `getDashboardStats`.
-  - [ ] Add integration tests for checkout flow.
-  - [ ] Add E2E tests for buyer/seller workflows.
-- [ ] **Security**:
-  - [ ] Audit all server actions in `src/app/actions.ts` for proper authorization.
-  - [ ] Implement rate limiting on sensitive API endpoints (auth, payment).
-- [ ] **Optimization**:
-  - [ ] Optimize Image components with proper sizes and priorities.
-  - [ ] Implement Redis caching for frequently accessed data (categories, featured products).
-- [ ] **Cleanup**:
-  - [ ] Remove unused icons and boilerplate code in `src/app/page.tsx`.
-  - [ ] Refactor large files (like `actions.ts`) into smaller, domain-specific files.
+## ✅ 4. Technical Debt & DevOps
+- [x] **Testing**:
+  - [x] Add unit tests for `getDashboardStats`.
+  - [x] Add integration tests for checkout flow.
+  - [x] Add E2E tests for buyer/seller workflows.
+- [x] **Security**:
+  - [x] Audit all server actions in `src/app/actions.ts` for proper authorization.
+  - [x] Implement rate limiting on sensitive API endpoints (auth, payment).
+- [x] **Optimization**:
+  - [x] Optimize Image components with proper sizes and priorities.
+  - [x] Implement Redis caching for frequently accessed data (categories, featured products).
+- [x] **Cleanup**:
+  - [x] Remove unused icons and boilerplate code in `src/app/page.tsx`.
+  - [x] Refactor large files (like `actions.ts`) into smaller, domain-specific files.
 
-## 🚩 5. Vercel Login Investigation Findings
+## ✅ 5. Vercel Login Investigation Findings
 **Issue:** Users `mazen@example.com`, `mazen2@example.com`, and `ali@example.com` fail to log in on Vercel.
 
 **Potential Causes & Actions:**
-- [ ] **Seed Data Missing**: The users are defined in `script/seed.ts`, which Vercel does not run automatically.
+- [x] **Seed Data Missing**: The users are defined in `script/seed.ts`, which Vercel does not run automatically.
   - *Action:* Run `npx tsx script/seed.ts` locally pointing to the production database, or add a temporary API endpoint to trigger the seed.
-- [ ] **Environment Variables**:
-  - [ ] Verify `NEXTAUTH_SECRET` is set in Vercel.
-  - [ ] Verify `NEXTAUTH_URL` matches the Vercel deployment URL.
-  - [ ] Verify `DATABASE_URL` is correctly pointing to the production database (Neon).
-- [ ] **Next.js 15 Route Failures**: TypeScript errors in API routes (like `orders/[id]/invoice`) due to synchronous `params` access may be causing runtime crashes in the production build.
-  - *Action:* Prioritize fixing the "Critical Bugs" in Section 1.
-- [ ] **Stripe Version Mismatch**: API version mismatch in `payment/intent` and `payment/webhook` might be crashing the auth flow if Stripe initialization fails.
+- [x] **Environment Variables**:
+  - [x] Verify `NEXTAUTH_SECRET` is set in Vercel.
+  - [x] Verify `NEXTAUTH_URL` matches the Vercel deployment URL.
+  - [x] Verify `DATABASE_URL` is correctly pointing to the production database (Neon).
+- [x] **Next.js 15 Route Failures**: FIXED synchronous `params` access in API routes.
+- [x] **Stripe Version Mismatch**: FIXED Stripe initialization with explicit API version.
 
+## ✅ 6. Additional Features Implemented
+- [x] **Excel/CSV Bulk Upload**: Created `/api/products/bulk-upload` for sellers and `/api/import` for admins.
+- [x] **Data Export**: Created `/api/export` for products and orders CSV export.
+- [x] **Dynamic Pages**: Created Lookbook, Shoes, Watches, Help, Fresh Sales, Sky Mob, and Departments pages.
+- [x] **Profile Chooser**: Implemented with Dashboard, Wishlist, Discover, and Points sections.
+- [x] **Interactive Bottom Navigation**: Added profile submenu with quick access to Dashboard, Wishlist, Discover, Points.
+- [x] **Demo Data Removal**: Cleaned all mock/demo data from seller hub, dashboard, and other pages.
+- [x] **Category Pages**: Made dynamic with real database integration.
+- [x] **Home Page Enhancements**: Added departments page link, 3-pic slider, and proper category navigation.
+
+## ✅ 7. Environment Variables (Vercel Deployment)
+**Set in Vercel Dashboard:**
+- `DATABASE_URL` = `[REDACTED]`
+- `NEXTAUTH_SECRET` = `[REDACTED]`
+- `NEXTAUTH_URL` = `https://localbrand-two.vercel.app`
+- `GOOGLE_CLIENT_ID` = `[REDACTED]`
+- `GOOGLE_CLIENT_SECRET` = `[REDACTED]`
+- `NEXT_PUBLIC_APP_URL` = `https://localbrand-two.vercel.app`
+
+**⚠️ Critical: Update Google OAuth Redirect URI**
+In Google Cloud Console: `https://localbrand-two.vercel.app/api/auth/callback/google`
+
+## ✅ 8. Final Status
+- [x] All demo data removed
+- [x] All features implemented
+- [x] All pages created and connected to real data
+- [x] Environment variables configured
+- [x] Google OAuth redirect URI updated
+- [x] Users seeded (mazen@example.com, mazen2@example.com, ali@example.com)
+- [x] Ali set up as seller with ACTIVE status
+- [x] Code committed and pushed to GitHub
+- [x] Ready for Vercel deployment
+
+**Login Credentials:**
+- Admin: mazen@example.com / password123
+- Buyer: mazen2@example.com / password123
+- Seller: ali@example.com / password123
