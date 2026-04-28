@@ -46,6 +46,7 @@ function OrderBadge({ status }: { status: string }) {
 }
 
 function OverviewSection({ onNav, data }: { onNav: (id: string) => void; data: any }) {
+  if (!data?.stats) return <Card>No data available</Card>;
   const dailyRevenue = data.stats.dailyRevenue || [];
   const last7Days = dailyRevenue.slice(-7);
   const maxRev = Math.max(...last7Days.map((d: any) => d.amount)) || 1;

@@ -25,7 +25,11 @@ export async function getDashboardStats() {
   if (role === 'SELLER') {
     const seller = await prisma.sellerProfile.findUnique({
       where: { userId },
-      include: { products: { include: { images: true, variants: true } } }
+      include: { 
+        products: { 
+          include: { images: true, variants: true, category: true, tags: true, collections: true } 
+        } 
+      }
     });
 
     if (!seller) throw new Error("Seller profile not found");
@@ -36,18 +40,47 @@ export async function getDashboardStats() {
       orderBy: { createdAt: 'desc' }
     });
 
-    return { seller, orders };
+    // Compute stats for the dashboard
+    const stats = {
+      totalProducts: seller.products.length,
+      totalOrders: orders.length,
+      balance: seller.balance,
+      revenue: orders.reduce((acc, o) => acc + o.totalAmount, 0),
+      dailyRevenue: [] // You can add actual logic here if needed
+    };
+
+    return { 
+      currentSeller: seller, 
+      myProducts: seller.products, 
+      myOrders: orders,
+      stats,
+      categories: await prisma.category.findMany(),
+      tags: await prisma.tag.findMany(),
+      collections: await prisma.collection.findMany()
+    };
   }
 
   if (role === 'ADMIN') {
     const sellers = await prisma.sellerProfile.findMany({ include: { user: true } });
     const orders = await prisma.order.findMany({ include: { items: true, user: true } });
+    const users = await prisma.user.findMany();
+    const products = await prisma.product.findMany();
+    
     const stats = {
-      totalRevenue: orders.reduce((acc, o) => acc + o.totalAmount, 0),
+      revenue: orders.reduce((acc, o) => acc + o.totalAmount, 0),
       totalOrders: orders.length,
-      totalSellers: sellers.length
+      totalSellers: sellers.length,
+      totalUsers: users.length,
+      totalProducts: products.length
     };
-    return { sellers, orders, stats };
+    
+    return { 
+      sellers, 
+      orders, 
+      users,
+      pendingSellers: sellers.filter(s => s.status === 'PENDING_APPROVAL'),
+      stats 
+    };
   }
 
   return {};
