@@ -29,7 +29,7 @@ export function useRealtimeNotifications() {
 
     eventSource.addEventListener('notification', (event) => {
       try {
-        const notification = JSON.parse(event.data);
+        const notification = JSON.parse(event.data) as Notification;
         setNotifications(prev => [notification, ...prev]);
         setUnreadCount(prev => prev + 1);
       } catch (error) {
@@ -57,12 +57,12 @@ export function useRealtimeNotifications() {
   }, [session, connect]);
 
   const markAsRead = useCallback((id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n } : n));
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
   }, []);
 
   const markAllAsRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n })));
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     setUnreadCount(0);
   }, []);
 
