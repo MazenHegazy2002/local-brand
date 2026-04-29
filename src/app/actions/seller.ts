@@ -8,114 +8,118 @@ import { OrderStatus, SellerStatus, OrderItemStatus } from '@/generated/client';
 import bcrypt from 'bcryptjs';
 
 export async function getDashboardStats() {
-  const session = await getServerSession(authOptions);
-  if (!session) return null;
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return { error: "Unauthorized" };
 
-  const userId = (session.user as any).id;
-  const role = (session.user as any).role;
+    const userId = (session.user as any).id;
+    const role = (session.user as any).role;
 
-  if (role === 'BUYER') {
-    const orders = await prisma.order.findMany({
-      where: { userId: (session.user as any).id },
-      include: { items: { include: { variant: { include: { product: { include: { images: true } } } } } } },
-      orderBy: { createdAt: 'desc' }
-    });
+    if (role === 'BUYER') {
+      const orders = await prisma.order.findMany({
+        where: { userId },
+        include: { items: { include: { variant: { include: { product: { include: { images: true } } } } } } },
+        orderBy: { createdAt: 'desc' }
+      });
 
-    const wishlist = await prisma.wishlist.findMany({
-      where: { userId: (session.user as any).id },
-      include: { product: { include: { images: true } } }
-    });
+      const wishlist = await prisma.wishlist.findMany({
+        where: { userId },
+        include: { product: { include: { images: true } } }
+      });
 
-    const notifications = await prisma.notification.findMany({
-      where: { userId: (session.user as any).id },
-      orderBy: { createdAt: 'desc' }
-    });
+      const notifications = await prisma.notification.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' }
+      });
 
-    return {
-      myOrders: orders,
-      wishlist,
-      notifications,
-      stats: {
+      return {
+        myOrders: orders,
+        wishlist,
+        notifications,
+        stats: {
+          totalOrders: orders.length,
+          wishlistCount: wishlist.length
+        }
+      };
+    }
+
+    if (role === 'SELLER') {
+      const seller = await prisma.sellerProfile.findUnique({
+        where: { userId },
+        include: { 
+          products: { 
+            include: { images: true, variants: true, category: true, tags: true, collections: true } 
+          } 
+        }
+      });
+
+      if (!seller) return { error: "Seller profile not found. Please contact support or complete your registration." };
+
+      const orders = await prisma.order.findMany({
+        where: { items: { some: { variant: { productId: { in: seller.products.map(p => p.id) } } } } },
+        include: { items: { include: { variant: true } } },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      const stats = {
+        totalProducts: seller.products.length,
         totalOrders: orders.length,
-        wishlistCount: wishlist.length
-      }
-    };
+        balance: seller.balance,
+        revenue: orders.reduce((acc, o) => acc + o.totalAmount, 0),
+        dailyRevenue: []
+      };
+
+      return { 
+        currentSeller: seller, 
+        myProducts: seller.products, 
+        myOrders: orders,
+        stats,
+        categories: await prisma.category.findMany(),
+        tags: await prisma.tag.findMany(),
+        collections: await prisma.collection.findMany()
+      };
+    }
+
+    if (role === 'ADMIN') {
+      const sellers = await prisma.sellerProfile.findMany({ include: { user: { select: { id: true, name: true, email: true, role: true, createdAt: true } } } });
+      const orders = await prisma.order.findMany({ include: { items: { include: { variant: true } }, user: { select: { id: true, name: true, email: true } } } });
+      const users = await prisma.user.findMany({ select: { id: true, name: true, email: true, role: true, createdAt: true } });
+      const products = await prisma.product.findMany();
+      const auditLogs = await prisma.auditLog.findMany({ include: { admin: { select: { name: true, email: true } } }, orderBy: { createdAt: 'desc' }, take: 50 });
+      const systemSettings = await prisma.systemSettings.findMany();
+      const payouts = await prisma.payout.findMany({ include: { seller: true }, orderBy: { createdAt: 'desc' } });
+      const categories = await prisma.category.findMany({ include: { children: true } });
+      const tags = await prisma.tag.findMany();
+      const collections = await prisma.collection.findMany();
+      
+      const stats = {
+        revenue: orders.reduce((acc, o) => acc + o.totalAmount, 0),
+        totalOrders: orders.length,
+        totalSellers: sellers.length,
+        totalUsers: users.length,
+        totalProducts: products.length
+      };
+      
+      return { 
+        sellers, 
+        orders, 
+        users,
+        auditLogs,
+        systemSettings,
+        payouts,
+        categories,
+        tags,
+        collections,
+        pendingSellers: sellers.filter(s => s.status === 'PENDING_APPROVAL'),
+        stats 
+      };
+    }
+
+    return { error: "Invalid role" };
+  } catch (err: any) {
+    console.error("[getDashboardStats] Error:", err);
+    return { error: "Database connection failed or data could not be retrieved." };
   }
-
-  if (role === 'SELLER') {
-    const seller = await prisma.sellerProfile.findUnique({
-      where: { userId },
-      include: { 
-        products: { 
-          include: { images: true, variants: true, category: true, tags: true, collections: true } 
-        } 
-      }
-    });
-
-    if (!seller) throw new Error("Seller profile not found");
-
-    const orders = await prisma.order.findMany({
-      where: { items: { some: { variant: { productId: { in: seller.products.map(p => p.id) } } } } },
-      include: { items: { include: { variant: true } } },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    // Compute stats for the dashboard
-    const stats = {
-      totalProducts: seller.products.length,
-      totalOrders: orders.length,
-      balance: seller.balance,
-      revenue: orders.reduce((acc, o) => acc + o.totalAmount, 0),
-      dailyRevenue: [] // You can add actual logic here if needed
-    };
-
-    return { 
-      currentSeller: seller, 
-      myProducts: seller.products, 
-      myOrders: orders,
-      stats,
-      categories: await prisma.category.findMany(),
-      tags: await prisma.tag.findMany(),
-      collections: await prisma.collection.findMany()
-    };
-  }
-
-  if (role === 'ADMIN') {
-    const sellers = await prisma.sellerProfile.findMany({ include: { user: { select: { id: true, name: true, email: true, role: true, createdAt: true } } } });
-    const orders = await prisma.order.findMany({ include: { items: { include: { variant: true } }, user: { select: { id: true, name: true, email: true } } } });
-    const users = await prisma.user.findMany({ select: { id: true, name: true, email: true, role: true, createdAt: true } });
-    const products = await prisma.product.findMany();
-    const auditLogs = await prisma.auditLog.findMany({ include: { admin: { select: { name: true, email: true } } }, orderBy: { createdAt: 'desc' }, take: 50 });
-    const systemSettings = await prisma.systemSettings.findMany();
-    const payouts = await prisma.payout.findMany({ include: { seller: true }, orderBy: { createdAt: 'desc' } });
-    const categories = await prisma.category.findMany({ include: { children: true } });
-    const tags = await prisma.tag.findMany();
-    const collections = await prisma.collection.findMany();
-    
-    const stats = {
-      revenue: orders.reduce((acc, o) => acc + o.totalAmount, 0),
-      totalOrders: orders.length,
-      totalSellers: sellers.length,
-      totalUsers: users.length,
-      totalProducts: products.length
-    };
-    
-    return { 
-      sellers, 
-      orders, 
-      users,
-      auditLogs,
-      systemSettings,
-      payouts,
-      categories,
-      tags,
-      collections,
-      pendingSellers: sellers.filter(s => s.status === 'PENDING_APPROVAL'),
-      stats 
-    };
-  }
-
-  return {};
 }
 
 export async function getHomepageData() {

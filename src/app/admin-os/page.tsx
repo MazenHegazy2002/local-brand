@@ -25,6 +25,10 @@ export default function AdminOS() {
     setLoading(true);
     try {
       const res = await getDashboardStats();
+      if (res?.error) {
+        setError(res.error);
+        return;
+      }
       setData(res);
     } catch (err: any) {
       setError(err.message || "Unauthorized");

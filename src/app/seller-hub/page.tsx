@@ -37,6 +37,10 @@ export default function SellerHub() {
         window.location.href = '/login?callbackUrl=/seller-hub';
         return;
       }
+      if (res.error) {
+        setError(res.error);
+        return;
+      }
       setData(res);
     } catch (err: any) {
       setError(err.message || "Failed to load dashboard");
