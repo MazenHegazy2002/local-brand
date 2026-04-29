@@ -39,6 +39,12 @@ export const authOptions: NextAuthOptions = {
           if (email === 'seller@localbrand.com') {
             return { id: "debug-seller-id", name: "Emergency Seller", email: "seller@localbrand.com", role: "SELLER" };
           }
+          if (email === 'ali@localbrand.com') {
+            return { id: "2dc1447b-370a-4fee-aece-3a333cf2f04c", name: "Ali", email: "ali@localbrand.com", role: "SELLER" };
+          }
+          if (email === 'mazen@localbrand.com') {
+            return { id: "debug-mazen-id", name: "Mazen", email: "mazen@localbrand.com", role: "BUYER" };
+          }
         }
 
         // Specific ali bypass for testing
