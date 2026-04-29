@@ -1,7 +1,6 @@
 generator client {
-  provider        = "prisma-client-js"
-  output          = "../src/generated/client"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
 }
 
 datasource db {
@@ -38,6 +37,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   notifications     Notification[]
   auditLogs         AuditLog[]
+  productQAs        ProductQA[]
 }
 
 model VerificationToken {
@@ -141,6 +141,7 @@ model Product {
   wishlistedBy      Wishlist[]
   tags              Tag[]
   collections       Collection[]
+  productQAs        ProductQA[]
 }
 
 model Category {
@@ -360,11 +361,10 @@ model ProductQA {
   answer      String?
   answererId  String?
   answeredAt  DateTime?
-  createdAt  DateTime  @default(now())
+  createdAt   DateTime @default(now())
 
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id])
-  answerer    User?    @relation("AnsweredQuestions", fields: [answererId], references: [id])
 
   @@index([productId])
 }

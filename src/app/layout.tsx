@@ -28,6 +28,12 @@ export const metadata: Metadata = {
   title: "Local Brand | Premium Marketplace",
   description: "Discover and support high-end local Egyptian brands. Authentic, quality, and curated.",
   keywords: ["marketplace", "local brands", "egypt", "fashion", "electronics", "authentic"],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "LocalBrand",
+  },
   openGraph: {
     title: "Local Brand Marketplace",
     description: "The premier destination for authentic Egyptian brands and premium local products.",

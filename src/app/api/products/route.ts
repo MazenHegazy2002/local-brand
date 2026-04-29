@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// GET /api/products?page=1&limit=12&category=&q=&minPrice=&maxPrice=&sort=
+// GET /api/products?page=1&limit=12&category=&q=&minPrice=&maxPrice=&sort=&brand=&rating=&tags=&condition=&inStock=&flashSale=
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -10,9 +10,15 @@ export async function GET(req: Request) {
     const skip = (page - 1) * limit;
     const q = searchParams.get('q') || '';
     const category = searchParams.get('category') || '';
+    const brand = searchParams.get('brand') || '';
     const minPrice = parseFloat(searchParams.get('minPrice') || '0');
     const maxPrice = parseFloat(searchParams.get('maxPrice') || '999999');
     const sort = searchParams.get('sort') || 'newest';
+    const rating = parseInt(searchParams.get('rating') || '0');
+    const tags = searchParams.get('tags') || '';
+    const condition = searchParams.get('condition') || '';
+    const inStock = searchParams.get('inStock') === 'true';
+    const flashSale = searchParams.get('flashSale') === 'true';
 
     const where: any = {
       published: true,
@@ -31,29 +37,93 @@ export async function GET(req: Request) {
       where.category = { slug: category };
     }
 
-    const orderBy: any = {
-      newest: { createdAt: 'desc' },
-      oldest: { createdAt: 'asc' },
-      price_asc: { basePrice: 'asc' },
-      price_desc: { basePrice: 'desc' },
-      featured: { isFeatured: 'desc' },
-    }[sort] || { createdAt: 'desc' };
+    if (brand) {
+      where.seller = { storeSlug: brand };
+    }
 
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy,
-        include: {
-          images: { where: { isPrimary: true } },
-          seller: { select: { storeName: true } },
-          category: { select: { name: true, slug: true } },
-          _count: { select: { reviews: true } },
+    if (condition) {
+      where.condition = condition.toUpperCase();
+    }
+
+    if (flashSale) {
+      where.AND = [
+        { flashSalePrice: { not: null } },
+        { flashSaleEndsAt: { gt: new Date() } },
+      ];
+    }
+
+    if (inStock) {
+      where.variants = {
+        some: {
+          inventory: { gt: 0 }
         }
-      }),
-      prisma.product.count({ where }),
-    ]);
+      };
+    }
+
+    if (tags) {
+      const tagList = tags.split(',').map(t => t.trim());
+      where.tags = {
+        some: {
+          slug: { in: tagList }
+        }
+      };
+    }
+
+    let orderBy: any;
+    switch (sort) {
+      case 'newest':
+        orderBy = { createdAt: 'desc' };
+        break;
+      case 'oldest':
+        orderBy = { createdAt: 'asc' };
+        break;
+      case 'price-asc':
+        orderBy = { basePrice: 'asc' };
+        break;
+      case 'price-desc':
+        orderBy = { basePrice: 'desc' };
+        break;
+      case 'rating':
+        orderBy = { reviews: { _count: 'desc' } };
+        break;
+      case 'featured':
+        orderBy = { isFeatured: 'desc' };
+        break;
+      default:
+        orderBy = { createdAt: 'desc' };
+    }
+
+    const productsWithRating = await prisma.product.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy,
+      include: {
+        images: { where: { isPrimary: true } },
+        seller: { select: { storeName: true, storeSlug: true } },
+        category: { select: { name: true, slug: true } },
+        tags: true,
+        _count: { select: { reviews: true } },
+        reviews: {
+          select: { rating: true },
+        },
+        variants: {
+          select: { inventory: true },
+        },
+      }
+    });
+
+    let products = productsWithRating;
+    if (rating > 0) {
+      products = productsWithRating.filter(p => {
+        const avgRating = p.reviews.length > 0
+          ? p.reviews.reduce((sum, r) => sum + r.rating, 0) / p.reviews.length
+          : 0;
+        return avgRating >= rating;
+      });
+    }
+
+    const total = await prisma.product.count({ where });
 
     return NextResponse.json({
       products,
