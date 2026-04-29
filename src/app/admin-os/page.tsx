@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { 
   getDashboardStats, 
   updateSellerStatus, 
@@ -13,11 +15,21 @@ import {
 } from '../actions/seller';
 
 export default function AdminOS() {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Access control - redirect non-admins
+  useEffect(() => {
+    const role = (session?.user as any)?.role;
+    if (session && role !== 'ADMIN') {
+      router.push('/dashboard');
+    }
+  }, [session, router]);
   const [seedLoading, setSeedLoading] = useState(false);
 
   // Taxonomy Form State
