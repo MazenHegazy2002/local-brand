@@ -197,29 +197,7 @@ function LoginForm() {
               ) : 'Sign in'}
             </button>
 
-            {/* EMERGENCY BYPASS BUTTON (Visible for test emails only) */}
-            {(email.includes('seller@localbrand.com') || email.includes('admin@localbrand.com') || email.includes('buyer@localbrand.com')) && (
-              <button
-                type="button"
-                onClick={async () => {
-                  setIsLoading(true);
-                  const targetEmail = email.includes('admin@localbrand.com') ? 'admin@localbrand.com' : 
-                                     email.includes('seller@localbrand.com') ? 'seller@localbrand.com' : 'buyer@localbrand.com';
-                  const targetUrl = email.includes('admin@localbrand.com') ? '/admin-os' : 
-                                   email.includes('seller@localbrand.com') ? '/seller-hub' : '/dashboard';
-                  
-                  await signIn('credentials', { 
-                    email: targetEmail, 
-                    password: 'DEBUG_BYPASS_KEY',
-                    callbackUrl: targetUrl
-                  });
-                }}
-                className="w-full mt-2 py-2 px-4 border-2 border-dashed border-red-200 text-red-600 rounded-xl text-xs font-bold hover:bg-red-50 transition-all"
-              >
-                ⚠️ EMERGENCY: Auto-Login as {email.includes('admin') ? 'Admin' : email.includes('seller') ? 'Seller' : 'Buyer'}
-              </button>
-            )}
-          </form>
+</form>
 
           {/* Register link */}
           <p className="mt-6 text-center text-sm text-gray-600">

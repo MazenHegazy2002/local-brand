@@ -127,17 +127,40 @@ export async function createOrder(cartItems: any[], addressInfo: any, paymentMet
     return newOrder;
   });
 
-  // Add loyalty points for registered users
-  if (userId && totalAmount > 0) {
-    try {
-      const { addLoyaltyPoints } = await import('./loyalty');
-      await addLoyaltyPoints(userId, totalAmount);
-    } catch (e) {
-      console.error('Failed to add loyalty points:', e);
+// Add loyalty points for registered users
+    if (userId && totalAmount > 0) {
+      try {
+        const { addLoyaltyPoints } = await import('./loyalty');
+        await addLoyaltyPoints(userId, totalAmount);
+      } catch (e) {
+        console.error('Failed to add loyalty points:', e);
+      }
     }
-  }
 
-  revalidatePath('/dashboard');
-  revalidatePath('/admin-os');
-  return { success: true, orderId: order.id };
-}
+    // Send order confirmation email
+    if (userId) {
+      try {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (user?.email) {
+          const { sendEmail, generateOrderConfirmationEmail } = await import('@/lib/email');
+          const orderWithItems = await prisma.order.findUnique({
+            where: { id: order.id },
+            include: { items: true }
+          });
+          if (orderWithItems) {
+            await sendEmail({
+              to: user.email,
+              subject: `Order Confirmation - ${order.id.slice(0, 8)}`,
+              html: generateOrderConfirmationEmail(orderWithItems, user)
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Failed to send confirmation email:', e);
+      }
+    }
+
+    revalidatePath('/dashboard');
+    revalidatePath('/admin-os');
+    return { success: true, orderId: order.id };
+  }

@@ -1,0 +1,389 @@
+================================================================================
+                     LOCAL BRAND PROJECT ANALYSIS REPORT
+                     Comprehensive Scan - Blanks, Errors & To-Do
+================================================================================
+
+Generated: 2026-04-29
+Project: Local Brand E-Commerce Platform
+Stack: Next.js 16 + PostgreSQL (Neon) + Prisma + NextAuth + Tailwind
+
+================================================================================
+                           SECTION 1: CRITICAL ISSUES
+================================================================================
+
+1.1 SECURITY ISSUES
+--------------------
+[CRITICAL] DEBUG BYPASS IN AUTH
+  Location: src/lib/auth.ts:20-28
+  Issue: Hardcoded debug bypass allows access with password 'DEBUG_BYPASS_KEY'
+  Impact: Anyone can access admin/seller accounts without real credentials
+  Fix: Remove debug bypass code completely
+
+[CRITICAL] EMERGENCY BYPASS BUTTON IN LOGIN
+  Location: src/app/login/page.tsx:200-221
+  Issue: Visible test bypass button for test emails (admin@, seller@, buyer@)
+  Fix: Remove emergency bypass button completely
+
+[CRITICAL] HARDCODED TEST DATA IN ADMIN PAGE
+  Location: src/app/admin/page.tsx:64-80
+  Issue: Brand approval queue shows hardcoded static data, not real pending sellers
+  Fix: Fetch real pending sellers from database
+
+
+1.2 MISSING API ROUTES (SCHEMAS DEFINED BUT NOT IMPLEMENTED)
+-------------------------------------------------------------
+- /api/payment/webhook - Stripe webhook handler (schema has paymentId field)
+- /api/reviews - POST to create review (submitReview action exists, needs API)
+- /api/shipping/calculate - Shipping fee calculator (mentioned in checkout)
+- /api/coupons/validate - Coupon validation before checkout
+- /api/products/[id]/related - Product recommendations
+- /api/orders/[id]/cancel - Order cancellation
+- /api/orders/[id]/refund - Refund processing
+- /api/seller/orders - Seller-specific order management
+- /api/wishlist - Wishlist API (has action but needs route)
+
+
+1.3 DATABASE SCHEMA GAPS
+-------------------------
+- No "LoyaltyTransaction" model - loyalty points history not stored
+- No "ProductQA" model - Q&A feature schema not present
+- No "CouponUsage" model - can't track per-user coupon usage
+- No "PriceHistory" model - can't track price changes over time
+- flashSalePrice & flashSaleEndsAt fields exist in schema but no automation
+
+
+================================================================================
+                           SECTION 2: PAGES - INCOMPLETE
+================================================================================
+
+2.1 ADMIN PAGES
+---------------
+/admin (src/app/admin/page.tsx)
+  - Status: INCOMPLETE / STATIC MOCK
+  - Issues:
+    * Shows hardcoded stats (1,240,500 revenue, 84 brands, etc.)
+    * Brand approval queue is hardcoded sample data
+    * Live activity log is mock data
+    * Download Report button does nothing
+    * System Settings button does nothing
+    * Missing: real data fetching from getDashboardStats()
+
+/admin-os (src/app/admin-os/page.tsx)
+  - Status: PARTIALLY IMPLEMENTED
+  - Needs: Real admin dashboard with live data
+
+2.2 SELLER PAGES
+----------------
+/seller-hub (src/app/seller-hub/page.tsx)
+  - Status: MOSTLY COMPLETE
+  - Missing features:
+    * Analytics tab is empty placeholder (line 480)
+    * Returns tab is empty placeholder (line 493)
+    * Settings tab Save button does nothing (line 512)
+    * Product Edit button doesn't work (line 379)
+    * No image upload to Cloudinary - uses base64 data URLs
+
+2.3 CUSTOMER PAGES
+------------------
+/dashboard (src/app/dashboard/page.tsx)
+  - Status: COMPLETE
+  - Minor: Wallet shows static "0.00 EGP" - loyalty points not connected
+
+/checkout (src/app/checkout/page.tsx)
+  - Status: COMPLETE but limited
+  - Missing features:
+    * No coupon code input field
+    * No discount calculation before order
+    * Credit card payment is "mock" - no Stripe integration
+    * No guest checkout flow
+
+2.4 STATIC/MISSING PAGES
+------------------------
+- /flash-sales (referenced in navbar but missing)
+- /track-order (order tracking page - missing)
+- /returns (returns request page - missing)
+/disputes (dispute resolution - has API route but no UI)
+/compare (product comparison - has API but no page)
+/lookbook (exists but minimal content)
+/brands (exists but minimal)
+/fresh-sales (exists but minimal)
+/watches, /shoes, /sky-mob (category pages - need full implementation)
+/category/[slug] (needs implementation)
+/brand/[slug] (needs implementation)
+/departments (needs implementation)
+
+
+================================================================================
+                        SECTION 3: COMPONENTS - INCOMPLETE
+================================================================================
+
+3.1 MISSING COMPONENTS
+----------------------
+- ProductGrid.tsx - needs pagination & infinite scroll
+- CartDrawer.tsx - needs quantity controls & remove buttons
+- BottomNavigation.tsx - needs proper mobile routing
+- NotificationBell.tsx - needs real notification fetching
+- LiveSearch.tsx - needs debounced search & full results
+
+3.2 COMPONENT GAPS
+------------------
+ReviewSection (src/components/ReviewSection.tsx)
+  - Write review form needs API endpoint
+  - Rating needs validation
+
+ProductDetails (src/app/product/[id]/ProductDetails.tsx)
+  - No variant selection UI (color/size)
+  - No add to cart with specific variant
+
+WishlistButton (src/components/WishlistButton.tsx)
+  - Works but needs API route connection
+
+
+================================================================================
+                        SECTION 4: ACTIONS - GAPS
+================================================================================
+
+4.1 SELLER ACTIONS (src/app/actions/seller.ts)
+---------------------------------------------
+COMPLETED:
+- getDashboardStats ✓
+- getHomepageData ✓
+- createProduct ✓
+- updateProduct ✓
+- deleteProduct ✓
+- toggleWishlist ✓
+- updateProfile ✓
+- submitReview ✓
+
+MISSING/FIX NEEDED:
+- updateProduct: Not revalidating product detail page
+- deleteProduct: Hard delete (should be soft delete with deletedAt)
+- createProduct: No Cloudinary image upload - stores base64
+- createProduct: No slug uniqueness check - may cause duplicates
+
+4.2 ORDERS ACTIONS (src/app/actions/orders.ts)
+---------------------------------------------
+COMPLETED:
+- createOrder ✓ (basic)
+
+MISSING:
+- cancelOrder - not implemented
+- refundOrder - not implemented
+- getOrderDetails - not implemented
+- updateShippingInfo - not implemented
+
+4.3 LOYALTY ACTIONS (src/app/actions/loyalty.ts)
+-----------------------------------------------
+INCOMPLETE:
+- addLoyaltyPoints: Works but no transaction logging
+- redeemLoyaltyPoints: Not connected to checkout
+- getLoyaltyHistory: Returns empty history (no table)
+
+4.4 ADMIN ACTIONS (src/app/actions/admin.ts)
+---------------------------------------------
+COMPLETED:
+- updateTaxSettings ✓
+- getTaxSettings ✓
+- exportData ✓
+- importProducts ✓ (basic)
+
+MISSING:
+- bulkDeleteUsers
+- bulkDeleteProducts
+- systemHealthCheck
+- generateReports
+
+
+================================================================================
+                        SECTION 5: API ROUTES - ANALYSIS
+================================================================================
+
+5.1 FULLY IMPLEMENTED
+---------------------
+- GET /api/auth/[...nextauth] ✓
+- GET /api/products ✓
+- GET /api/categories ✓
+- GET /api/cart ✓
+- POST /api/cart ✓
+
+5.2 PARTIALLY IMPLEMENTED
+--------------------------
+- POST /api/auth/register - Works but needs email verification
+- GET /api/orders/[id]/track - Returns empty/mocked data
+- POST /api/upload - Basic but doesn't connect to Cloudinary properly
+
+5.3 MISSING / NEEDS IMPLEMENTATION
+----------------------------------
+[Priority 1 - Critical]
+- POST /api/payment/webhook - Stripe webhook
+- POST /api/orders/[id]/cancel
+- POST /api/orders/[id]/refund
+
+[Priority 2 - Important]
+- GET /api/wishlist
+- POST /api/wishlist
+- POST /api/reviews
+- GET /api/shipping/calculate
+- POST /api/coupons/validate
+- GET/POST /api/rma (Return Merchandise Authorization)
+
+[Priority 3 - Nice to have]
+- GET /api/events
+- POST /api/disputes/open
+- GET /api/export
+- POST /api/import
+
+
+================================================================================
+                        SECTION 6: DATA & STORES
+================================================================================
+
+6.1 CART STORE (src/lib/cartStore.ts)
+-------------------------------------
+STATUS: Complete
+NOTE: Uses localStorage - works but should sync with DB when logged in
+
+6.2 WISHLIST STORE (src/lib/wishlistStore.ts)
+---------------------------------------------
+STATUS: Needs review
+
+6.3 I18N (src/lib/i18n/dicts.ts)
+--------------------------------
+STATUS: Complete for EN/AR
+GAPS: Some missing keys used in code
+
+6.4 DATA LAYER (src/lib/data.ts)
+--------------------------------
+STATUS: Needs review
+
+
+================================================================================
+                        SECTION 7: CONFIG & INFRASTRUCTURE
+================================================================================
+
+7.1 ENVIRONMENT VARIABLES NEEDED
+---------------------------------
+Missing from .env:
+- STRIPE_SECRET_KEY
+- STRIPE_WEBHOOK_SECRET
+- GOOGLE_CLIENT_ID
+- GOOGLE_CLIENT_SECRET
+- CLOUDINARY_API_KEY
+- CLOUDINARY_API_SECRET
+- CLOUDINARY_CLOUD_NAME
+- NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+- NEXTAUTH_URL
+- NEXTAUTH_SECRET
+
+7.2 DATABASE ISSUES
+--------------------
+- Prisma client generated to src/generated/client (non-standard)
+- Need to run: npx prisma generate
+- Need to run: npx prisma db push (or migrate)
+- Seed data scripts exist but not automatically run
+
+7.3 TAILWIND CONFIG
+-------------------
+- Uses hsl variables for colors
+- Missing custom animations
+- No dark mode configuration
+
+7.4 NEXT CONFIG
+--------------
+- Standard config, no special optimizations
+- Missing image domains for Cloudinary
+
+
+================================================================================
+                        SECTION 8: FEATURE PRIORITY MATRIX
+================================================================================
+
+HIGH PRIORITY (Must Fix)
+------------------------
+1. Remove debug bypass from auth.ts (SECURITY)
+2. Remove emergency bypass button from login page (SECURITY)
+3. Implement Stripe webhook handler
+4. Connect checkout to real payment gateway
+5. Fix admin page to show real data
+6. Implement coupon validation in checkout
+7. Add slug uniqueness to product creation
+
+MEDIUM PRIORITY (Should Fix)
+-----------------------------
+1. Cloudinary image upload integration
+2. Product variant selection UI
+3. Order tracking page
+4. Returns/Refund UI and flow
+5. Email notifications (order confirmation, shipping)
+6. Seller analytics dashboard
+7. Product Q&A feature
+8. Product comparison feature
+9. Fix loyalty points redemption flow
+
+LOW PRIORITY (Nice to Have)
+---------------------------
+1. Live chat support
+2. Social login (beyond Google)
+3. Advanced analytics
+4. Multi-vendor messaging
+5. Blog/Content section
+6. Mobile app API layer
+7. Progressive Web App (PWA)
+
+
+================================================================================
+                        SECTION 9: TESTING STATUS
+================================================================================
+
+- Jest configured: ✓
+- Test file exists: src/__tests__/createOrder.test.ts
+- Run tests: npm test
+- Status: Likely failing or incomplete
+
+
+================================================================================
+                        SECTION 10: DEPLOYMENT
+================================================================================
+
+EXISTING:
+- Dockerfile ✓
+- docker-compose.yml ✓
+- GitHub workflow: deploy.yml ✓
+
+NEEDED:
+- Environment setup for production
+- Database migration strategy
+- SSL certificate
+- CDN for images (Cloudinary)
+- Redis for production (currently uses local or mock)
+
+
+================================================================================
+                        SUMMARY
+================================================================================
+
+Total Files Scanned: ~80+
+Total Lines of Code: ~10,000+
+
+COMPLETED: ~65%
+PARTIALLY COMPLETE: ~20%
+MISSING: ~15%
+
+The project has a solid foundation with:
+- Full database schema
+- Authentication flow
+- Basic CRUD operations
+- Customer dashboard
+- Seller hub
+
+Major gaps are in:
+- Payment processing
+- Real-time features
+- Advanced seller tools
+- Admin analytics
+- Search and recommendations
+
+
+================================================================================
+                           END OF REPORT
+================================================================================

@@ -238,14 +238,26 @@ export async function createProduct(data: any) {
 
     const { variants, ...rest } = data;
 
+    // Generate unique slug
+    let baseSlug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    let slug = baseSlug;
+    let counter = 0;
+    
+    while (true) {
+      const existing = await prisma.product.findUnique({ where: { slug } });
+      if (!existing) break;
+      counter++;
+      slug = `${baseSlug}-${counter}`;
+    }
+
     const product = await prisma.product.create({
       data: {
         ...rest,
         sellerId: seller.id,
-        slug: data.title.toLowerCase().replace(/ /g, '-') + '-' + Date.now(),
+        slug,
         variants: {
-          create: variants?.map((v: any) => ({
-            sku: `${rest.title.substring(0,3).toUpperCase()}-${(v.color || 'STND').toUpperCase()}-${Date.now().toString().slice(-4)}`,
+          create: variants?.map((v: any, idx: number) => ({
+            sku: `${rest.title.substring(0,3).toUpperCase()}-${(v.color || 'STND').toUpperCase()}-${Date.now().toString().slice(-4)}-${idx}`,
             title: v.color || "Standard",
             attributes: JSON.stringify({ color: v.color || "Standard" }),
             price: v.price || rest.basePrice,
@@ -253,9 +265,9 @@ export async function createProduct(data: any) {
           }))
         },
         images: {
-          create: variants?.filter((v: any) => v.image).map((v: any) => ({
+          create: variants?.filter((v: any) => v.image).map((v: any, idx: number) => ({
             url: v.image,
-            isPrimary: true
+            isPrimary: idx === 0
           })) || []
         }
       }

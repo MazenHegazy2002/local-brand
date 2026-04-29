@@ -349,6 +349,27 @@ model Review {
 }
 
 // ============================================
+// PRODUCT Q&A
+// ============================================
+
+model ProductQA {
+  id          String   @id @default(uuid())
+  productId   String
+  userId      String
+  question    String
+  answer      String?
+  answererId  String?
+  answeredAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+  answerer    User?    @relation("AnsweredQuestions", fields: [answererId], references: [id])
+
+  @@index([productId])
+}
+
+// ============================================
 // SYSTEM & AUDIT
 // ============================================
 

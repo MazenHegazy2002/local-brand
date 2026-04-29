@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCartStore } from '@/lib/cartStore';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { createOrder } from '@/app/actions/orders';
 import Navbar from '@/components/Navbar';
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCartStore();
   const router = useRouter();
+  const { data: session } = useSession();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,12 +22,78 @@ export default function CheckoutPage() {
   });
   
   const [paymentMethod, setPaymentMethod] = useState<'CASH_ON_DELIVERY' | 'CREDIT_CARD'>('CASH_ON_DELIVERY');
+  
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [couponApplied, setCouponApplied] = useState<{id: string, amount: number} | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
 
+  // Loyalty points state
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
+  const [pointsToUse, setPointsToUse] = useState(0);
+  const [pointsError, setPointsError] = useState('');
+
+  // Fetch user loyalty points
+  useEffect(() => {
+    if (session?.user) {
+      fetch('/api/loyalty')
+        .then(res => res.json())
+        .then(data => {
+          if (data.points !== undefined) {
+            setLoyaltyPoints(data.points);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [session]);
+
+  // Calculations
   const subtotal = total();
+  const couponDiscount = couponApplied?.amount || 0;
+  const pointsDiscount = pointsToUse;
+  const afterDiscount = subtotal - couponDiscount - pointsDiscount;
   const shipping = 50;
-  const vatRate = 0.14; // Default VAT rate
-  const vatAmount = subtotal * vatRate;
-  const grandTotal = subtotal + shipping + vatAmount;
+  const vatRate = 0.14;
+  const vatAmount = Math.max(0, afterDiscount * vatRate);
+  const grandTotal = Math.max(0, afterDiscount + shipping + vatAmount);
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setApplyingCoupon(true);
+    setCouponError('');
+    
+    try {
+      const res = await fetch('/api/coupons/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode, cartTotal: subtotal - pointsDiscount })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setCouponError(data.message || 'Invalid coupon');
+        return;
+      }
+      
+      setCouponApplied({ id: data.couponId, amount: data.discountAmount });
+    } catch (err) {
+      setCouponError('Failed to apply coupon');
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCouponApplied(null);
+    setCouponCode('');
+  };
+
+  const handlePointsChange = (value: number) => {
+    const points = Math.max(0, Math.min(value, loyaltyPoints, subtotal - couponDiscount));
+    setPointsToUse(points);
+    setPointsError('');
+  };
 
   if (items.length === 0 && !isLoading) {
     return (
@@ -50,9 +118,22 @@ export default function CheckoutPage() {
     setError('');
 
     try {
-      const res = await createOrder(items, address, paymentMethod);
+      // Deduct loyalty points if used
+      if (pointsToUse > 0 && session?.user) {
+        try {
+          const { redeemLoyaltyPoints } = await import('@/app/actions/loyalty');
+          const userId = (session.user as any).id;
+          await redeemLoyaltyPoints(userId, pointsToUse);
+        } catch (err) {
+          console.error('Failed to redeem points:', err);
+        }
+      }
+
+      const res = await createOrder(items, address, paymentMethod, couponApplied?.id || null);
       if (res.success) {
         clearCart();
+        setCouponApplied(null);
+        setPointsToUse(0);
         router.push(`/checkout/success?orderId=${res.orderId}`);
       }
     } catch (err: any) {
@@ -128,10 +209,84 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              {/* Loyalty Points */}
+              {session && loyaltyPoints > 0 && (
+                <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">2</span>
+                    Loyalty Points
+                  </h2>
+                  
+                  <div className="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div>
+                      <div className="font-bold text-purple-800">Available: {loyaltyPoints} points</div>
+                      <div className="text-sm text-purple-600">1 point = 1 EGP discount</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max={Math.min(loyaltyPoints, subtotal - couponDiscount)}
+                        value={pointsToUse || ''}
+                        onChange={e => handlePointsChange(parseInt(e.target.value) || 0)}
+                        placeholder="Use points"
+                        className="w-24 border border-purple-300 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-purple-500 outline-none"
+                      />
+                      <span className="text-sm text-purple-600">= {pointsToUse} EGP</span>
+                    </div>
+                  </div>
+                  {pointsError && <p className="text-red-500 text-sm mt-2">{pointsError}</p>}
+                </div>
+              )}
+
+              {/* Promo Code */}
+              <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">3</span>
+                  Promo Code
+                </h2>
+                
+                {couponApplied ? (
+                  <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">✓</div>
+                      <div>
+                        <div className="font-bold text-green-800">Coupon Applied</div>
+                        <div className="text-sm text-green-600">You saved {couponDiscount.toLocaleString()} EGP</div>
+                      </div>
+                    </div>
+                    <button type="button" onClick={removeCoupon} className="text-green-700 hover:text-green-900 text-sm font-medium">
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                      placeholder="Enter promo code"
+                      className="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={applyCoupon}
+                      disabled={applyingCoupon || !couponCode.trim()}
+                      className="bg-[#1e3b8a] text-white font-bold px-6 py-2.5 rounded-lg hover:bg-[#152c6e] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {applyingCoupon ? 'Applying...' : 'Apply'}
+                    </button>
+                  </div>
+                )}
+                {couponError && (
+                  <p className="text-red-500 text-sm mt-2">{couponError}</p>
+                )}
+              </div>
+
               {/* Payment Method */}
               <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">2</span>
+                  <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">4</span>
                   Payment Method
                 </h2>
                 
@@ -183,10 +338,9 @@ export default function CheckoutPage() {
                   <div key={item.id} className="flex gap-4 py-3">
                     <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden shrink-0">
                       {item.image && item.image.startsWith('http') ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
                         <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xl">{item.emoji ?? '📦'}</div>
+                        <div className="w-full h-full flex items-center justify-center text-xl">📦</div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -203,6 +357,18 @@ export default function CheckoutPage() {
                   <span>Subtotal ({items.length} items)</span>
                   <span className="font-medium text-gray-900">{subtotal.toLocaleString()} EGP</span>
                 </div>
+                {pointsToUse > 0 && (
+                  <div className="flex justify-between text-purple-600">
+                    <span>Loyalty Points</span>
+                    <span className="font-medium">-{pointsToUse} EGP</span>
+                  </div>
+                )}
+                {couponApplied && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Coupon Discount</span>
+                    <span className="font-medium">-{couponDiscount.toLocaleString()} EGP</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-gray-600">
                   <span>Shipping Fee</span>
                   <span className="font-medium text-gray-900">{shipping.toLocaleString()} EGP</span>

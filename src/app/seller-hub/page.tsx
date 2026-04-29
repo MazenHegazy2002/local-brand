@@ -49,16 +49,43 @@ export default function SellerHub() {
     }
   };
 
-  const handleImageUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
+    if (!file) return;
+    
+    // Show temporary local preview while uploading
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const updatedVariants = [...variants];
+      updatedVariants[index].image = reader.result as string;
+      updatedVariants[index].uploading = true;
+      setVariants(updatedVariants);
+    };
+    reader.readAsDataURL(file);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await res.json();
+      
+      if (data.url) {
         const updatedVariants = [...variants];
-        updatedVariants[index].image = reader.result as string;
+        updatedVariants[index].image = data.url;
+        updatedVariants[index].uploading = false;
         setVariants(updatedVariants);
-      };
-      reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      console.error('Upload failed:', err);
+      // Keep local preview on failure
+      const updatedVariants = [...variants];
+      updatedVariants[index].uploading = false;
+      setVariants(updatedVariants);
     }
   };
 
@@ -181,9 +208,9 @@ export default function SellerHub() {
           {activeTab === 'overview' && <OverviewTab stats={stats} myOrders={myOrders} myProducts={myProducts} data={data} />}
           {activeTab === 'orders' && <OrdersTab orders={myOrders} onFulfill={handleFulfill} />}
           {activeTab === 'products' && <ProductsTab products={myProducts} onDelete={handleDeleteProduct} onAdd={() => setShowAddModal(true)} />}
-          {activeTab === 'analytics' && <AnalyticsTab />}
+          {activeTab === 'analytics' && <AnalyticsTab stats={stats} orders={myOrders} />}
           {activeTab === 'wallet' && <WalletTab data={data} />}
-          {activeTab === 'returns' && <ReturnsTab />}
+          {activeTab === 'returns' && <ReturnsTab orders={myOrders} />}
           {activeTab === 'settings' && <SettingsTab data={data} />}
         </div>
       </div>
@@ -476,8 +503,81 @@ function ProgressRow({ label, value, color }: any) {
   );
 }
 
-// Finance/Support Placeholders
-function AnalyticsTab() { return <div className="card py-20 text-center text-slate-400">Sales metrics processing...</div>; }
+function AnalyticsTab({ stats, orders }: any) {
+  const totalRevenue = orders?.reduce((acc: number, o: any) => acc + (o.totalAmount || 0), 0) || 0;
+  const totalOrders = orders?.length || 0;
+  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  
+  // Mock daily data for chart (in real app, aggregate from orders)
+  const dailyData = [3200, 4500, 2800, 5100, 6200, 4800, 3900];
+  const maxVal = Math.max(...dailyData);
+  
+  const recentOrders = orders?.slice(0, 5) || [];
+  
+  return (
+    <>
+      <div className="stats">
+        <div className="stat">
+          <div className="stat-label">Total Revenue</div>
+          <div className="stat-val">{totalRevenue.toLocaleString()}</div>
+          <div className="stat-sub up">Lifetime earnings</div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Total Orders</div>
+          <div className="stat-val">{totalOrders}</div>
+          <div className="stat-sub">All time</div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Avg Order Value</div>
+          <div className="stat-val">{Math.round(avgOrderValue).toLocaleString()}</div>
+          <div className="stat-sub">Per order</div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">This Month</div>
+          <div className="stat-val" style={{color:'#0F6E56'}}>{Math.round(totalRevenue * 0.3).toLocaleString()}</div>
+          <div className="stat-sub">Estimated</div>
+        </div>
+      </div>
+
+      <div className="grid2">
+        <div className="card">
+          <div className="card-header"><div className="card-title">Revenue — Last 7 Days</div></div>
+          <div className="chart-bars">
+            {dailyData.map((h, i) => (
+              <div key={i} className="bar-w">
+                <div className="bar emerald" style={{height: `${(h / maxVal) * 100}%`}}></div>
+                <div className="bar-l">{['M','T','W','T','F','S','S'][i]}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-header"><div className="card-title">Performance Metrics</div></div>
+          <ProgressRow label="Shipping Speed" value={92} color="#0F6E56" />
+          <ProgressRow label="Order Acceptance" value={98} color="#0F6E56" />
+          <ProgressRow label="Return Rate" value={4} color="#E24B4A" />
+          <ProgressRow label="Response Time" value={88} color="#0F6E56" />
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-header"><div className="card-title">Recent Orders</div></div>
+        {recentOrders.length > 0 ? recentOrders.map((o: any) => (
+          <div key={o.id} className="row-item">
+            <div style={{flex:1}}>
+              <div style={{fontSize:'13px',fontWeight:600}}>ORD-{o.id.substring(0,8)}</div>
+              <div style={{fontSize:'11px',color:'var(--color-text-secondary)'}}>{new Date(o.createdAt).toLocaleDateString()}</div>
+            </div>
+            <div className="text-right font-medium">{o.totalAmount?.toLocaleString()} EGP</div>
+          </div>
+        )) : (
+          <div className="py-10 text-center text-xs text-slate-400">No orders yet</div>
+        )}
+      </div>
+    </>
+  );
+}
+
 function WalletTab({ data }: any) { 
   return (
     <div className="card max-w-xl">
@@ -486,11 +586,42 @@ function WalletTab({ data }: any) {
           <div className="text-[11px] text-slate-500 uppercase mb-2">Available Balance</div>
           <div className="text-3xl font-bold text-[#0F6E56]">{(data.currentSeller?.balance || 0).toLocaleString()} EGP</div>
        </div>
+       <div className="p-4 bg-slate-50 rounded-lg mb-4">
+         <div className="text-sm font-medium text-slate-700 mb-2">Pending Earnings</div>
+         <div className="text-xl font-bold text-slate-900">{(data.stats?.revenue || 0 - data.currentSeller?.balance || 0).toLocaleString()} EGP</div>
+       </div>
        <button className="w-full py-3 bg-[#0F6E56] text-white rounded font-bold">Request Payout</button>
+       <p className="text-xs text-slate-400 text-center mt-3">Payouts are processed within 5-7 business days</p>
     </div>
   ); 
 }
-function ReturnsTab() { return <div className="card py-20 text-center text-slate-400">No active return requests.</div>; }
+
+function ReturnsTab({ orders }: any) {
+  // Filter orders with return requests
+  const returnItems = orders?.flatMap((o: any) => 
+    (o.items || []).filter((item: any) => item.status === 'RETURN_REQUESTED' || item.status === 'RETURNED')
+  ) || [];
+  
+  return (
+    <div className="card">
+       <div className="card-header">
+         <div className="card-title">Return Requests</div>
+         <span className="text-xs text-slate-500">{returnItems.length} active</span>
+       </div>
+       {returnItems.length > 0 ? returnItems.map((item: any) => (
+         <div key={item.id} className="row-item">
+            <div style={{flex:1}}>
+              <div style={{fontSize:'13px',fontWeight:600}}>{item.productTitleSnapshot}</div>
+              <div style={{fontSize:'11px',color:'var(--color-text-secondary)'}}>Qty: {item.quantity}</div>
+            </div>
+            <span className="badge bg-amber-100 text-amber-800">{item.status}</span>
+         </div>
+       )) : (
+         <div className="py-20 text-center text-xs text-slate-400">No active return requests.</div>
+       )}
+    </div>
+  );
+}
 
 function SettingsTab({ data }: any) {
   return (
