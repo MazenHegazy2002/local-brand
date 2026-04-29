@@ -76,15 +76,6 @@ export default function Navbar() {
                   <Link href={dashboardHref} className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
                     <DashboardIcon /> {t("Dashboard")}
                   </Link>
-                  <Link href="/dashboard" className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
-                    <ListIcon /> My List
-                  </Link>
-                  <Link href="/dashboard?tab=discounts" className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
-                    <DiscountIcon /> Discounts
-                  </Link>
-                  <Link href="/dashboard?tab=points" className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
-                    <PointsIcon /> Points (Bonus)
-                  </Link>
                   <button onClick={() => signOut({ callbackUrl: '/' })} className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
                     <LogoutIcon /> {t("SignOut")}
                   </button>
