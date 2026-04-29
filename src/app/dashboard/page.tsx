@@ -1,15 +1,29 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { getDashboardStats, toggleWishlist, updateProfile } from '../actions/seller';
 import Link from 'next/link';
 
 export default function CustomerDashboard() {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Access control - redirect admins/sellers to their dashboards
+  useEffect(() => {
+    const role = (session?.user as any)?.role;
+    if (session && role === 'ADMIN') {
+      router.push('/admin');
+    } else if (session && role === 'SELLER') {
+      router.push('/seller-hub');
+    }
+  }, [session, router]);
 
   const refreshData = async () => {
     setLoading(true);

@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { 
   getDashboardStats, 
   createProduct, 
@@ -9,6 +11,8 @@ import {
 } from '../actions/seller';
 
 export default function SellerHub() {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -19,6 +23,16 @@ export default function SellerHub() {
   const [editProduct, setEditProduct] = useState({ title: '', description: '', basePrice: '' as any, categoryId: '' });
   const [editVariants, setEditVariants] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Access control - redirect if not seller
+  useEffect(() => {
+    const role = (session?.user as any)?.role;
+    if (session && role === 'ADMIN') {
+      router.push('/admin');
+    } else if (session && role === 'BUYER') {
+      router.push('/dashboard');
+    }
+  }, [session, router]);
 
   const handleEditProduct = (product: any) => {
     setEditingProduct(product);
@@ -244,8 +258,6 @@ setNewProduct({ title: '', description: '', basePrice: '', flashSalePrice: '', c
         <NavItem active={activeTab === 'products'} onClick={() => setActiveTab('products')} label="Products" icon={<ProductsIcon />} />
         <NavItem active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} label="Analytics" icon={<AnalyticsIcon />} />
         <NavItem active={activeTab === 'wallet'} onClick={() => setActiveTab('wallet')} label="Wallet" icon={<WalletIcon />} />
-        <NavItem active={activeTab === 'returns'} onClick={() => setActiveTab('returns')} label="Returns" icon={<ReturnsIcon />} />
-        <NavItem active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} label="Settings" icon={<SettingsIcon />} />
 
         <div className="mt-auto px-4 pb-6">
            <div className="store-label">{data?.currentSeller?.storeName || 'TechStore EG'}</div>
@@ -269,7 +281,7 @@ setNewProduct({ title: '', description: '', basePrice: '', flashSalePrice: '', c
           {activeTab === 'products' && <ProductsTab products={myProducts} onDelete={handleDeleteProduct} onAdd={() => setShowAddModal(true)} onEdit={handleEditProduct} />}
           {activeTab === 'analytics' && <AnalyticsTab stats={stats} orders={myOrders} />}
           {activeTab === 'wallet' && <WalletTab data={data} />}
-          {activeTab === 'returns' && <ReturnsTab orders={myOrders} />}
+          
           {activeTab === 'settings' && <SettingsTab data={data} />}
         </div>
       </div>

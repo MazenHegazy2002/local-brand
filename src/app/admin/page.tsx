@@ -1,15 +1,27 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Navbar from "@/components/Navbar";
 import { getDashboardStats, updateSellerStatus } from "../actions/seller";
 import { updateTaxSettings } from "../actions/admin";
 
 export default function AdminPage() {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Access control - redirect if not admin
+  useEffect(() => {
+    const role = (session?.user as any)?.role;
+    if (session && role !== 'ADMIN') {
+      router.push('/dashboard');
+    }
+  }, [session, router]);
 
   const refreshData = async () => {
     setLoading(true);
