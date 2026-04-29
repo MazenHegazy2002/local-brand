@@ -50,7 +50,11 @@ export default function AdminOS() {
   const handleStatusUpdate = async (sellerId: string, status: string) => {
     setActionLoading(sellerId);
     try {
-      await updateSellerStatus(sellerId, status as any);
+      const res = await updateSellerStatus(sellerId, status as any) as any;
+      if (res?.error) {
+        alert(res.error);
+        return;
+      }
       await refreshData();
     } catch (err: any) {
       alert(err.message || "Failed to update status");
@@ -62,7 +66,11 @@ export default function AdminOS() {
   const handleCreateTaxonomy = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createTaxonomy(taxType, { name: taxName });
+      const res = await createTaxonomy(taxType, { name: taxName }) as any;
+      if (res?.error) {
+        alert(res.error);
+        return;
+      }
       setTaxName('');
       await refreshData();
     } catch (err: any) {
@@ -73,7 +81,11 @@ export default function AdminOS() {
   const handleDeleteTaxonomy = async (type: any, id: string) => {
     if (!confirm("Are you sure?")) return;
     try {
-      await deleteTaxonomy(type, id);
+      const res = await deleteTaxonomy(type, id) as any;
+      if (res?.error) {
+        alert(res.error);
+        return;
+      }
       await refreshData();
     } catch (err: any) {
       alert(err.message);

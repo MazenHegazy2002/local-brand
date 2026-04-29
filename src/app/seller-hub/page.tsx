@@ -77,7 +77,7 @@ export default function SellerHub() {
     setIsSubmitting(true);
     try {
       if (!newProduct.categoryId) throw new Error("Please select a category");
-      await createProduct({
+      const res = await createProduct({
         ...newProduct,
         basePrice: Number(newProduct.basePrice),
         flashSalePrice: newProduct.flashSalePrice > 0 ? Number(newProduct.flashSalePrice) : null,
@@ -87,7 +87,13 @@ export default function SellerHub() {
            price: Number(v.price) || Number(newProduct.basePrice)
         })),
         published: true
-      });
+      }) as any;
+
+      if (res?.error) {
+        alert(res.error);
+        return;
+      }
+
       setShowAddModal(false);
       resetForm();
       await refreshData();
@@ -101,7 +107,11 @@ export default function SellerHub() {
   const handleDeleteProduct = async (id: string) => {
     if (!confirm("Are you sure?")) return;
     try {
-      await deleteProduct(id);
+      const res = await deleteProduct(id) as any;
+      if (res?.error) {
+        alert(res.error);
+        return;
+      }
       await refreshData();
     } catch (err: any) {
       alert(err.message);
@@ -110,7 +120,11 @@ export default function SellerHub() {
 
   const handleFulfill = async (itemId: string) => {
     try {
-      await updateOrderItemStatus(itemId, 'SHIPPED');
+      const res = await updateOrderItemStatus(itemId, 'SHIPPED') as any;
+      if (res?.error) {
+        alert(res.error);
+        return;
+      }
       await refreshData();
     } catch (err: any) {
       alert(err.message);
