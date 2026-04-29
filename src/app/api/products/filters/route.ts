@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const brands = await prisma.sellerProfile.findMany({
       where: { status: 'ACTIVE' },
-      select: { storeName: true, storeSlug: true },
+      select: { storeName: true },
       orderBy: { storeName: 'asc' },
     });
 

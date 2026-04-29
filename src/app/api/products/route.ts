@@ -38,7 +38,7 @@ export async function GET(req: Request) {
     }
 
     if (brand) {
-      where.seller = { storeSlug: brand };
+      where.seller = { storeName: brand };
     }
 
     if (condition) {
@@ -55,7 +55,7 @@ export async function GET(req: Request) {
     if (inStock) {
       where.variants = {
         some: {
-          inventory: { gt: 0 }
+          stockCount: { gt: 0 }
         }
       };
     }
@@ -100,7 +100,7 @@ export async function GET(req: Request) {
       orderBy,
       include: {
         images: { where: { isPrimary: true } },
-        seller: { select: { storeName: true, storeSlug: true } },
+        seller: { select: { storeName: true } },
         category: { select: { name: true, slug: true } },
         tags: true,
         _count: { select: { reviews: true } },
@@ -108,7 +108,7 @@ export async function GET(req: Request) {
           select: { rating: true },
         },
         variants: {
-          select: { inventory: true },
+          select: { stockCount: true },
         },
       }
     });

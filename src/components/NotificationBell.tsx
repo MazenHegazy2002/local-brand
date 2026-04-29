@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 
 interface Notification {
   id: string;
@@ -11,12 +12,6 @@ interface Notification {
   read: boolean;
   createdAt: string;
 }
-
-const MOCK_NOTIFICATIONS: Notification[] = [
-  { id: '1', title: 'Order Confirmed', message: 'Your order #ORD-001 has been confirmed and is being packed.', type: 'order', read: false, createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString() },
-  { id: '2', title: 'Flash Deal 🔥', message: '20% off all local fashion brands today only!', type: 'promo', read: false, createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString() },
-  { id: '3', title: 'Order Shipped', message: 'Your package is on the way. Estimated delivery: 2 days.', type: 'order', read: true, createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
-];
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -34,15 +29,17 @@ const typeDot = { order: 'bg-blue-500', promo: 'bg-orange-400', system: 'bg-gray
 
 export default function NotificationBell() {
   const { data: session } = useSession();
+  const { notifications: realtimeNotifications, isConnected, unreadCount, markAllAsRead, markAsRead } = useRealtimeNotifications();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (session) setNotifications(MOCK_NOTIFICATIONS);
-  }, [session]);
+    if (session && realtimeNotifications.length > 0) {
+      setNotifications(realtimeNotifications);
+    }
+  }, [session, realtimeNotifications]);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -51,9 +48,15 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-  const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  const markRead = (id: string) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  const currentUnreadCount = unreadCount;
+  const handleMarkAllRead = () => {
+    markAllAsRead();
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+  const handleMarkRead = (id: string) => {
+    markAsRead(id);
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
 
   if (!session) return null;
 
@@ -73,10 +76,13 @@ export default function NotificationBell() {
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
-        {unreadCount > 0 && (
+        {currentUnreadCount > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none shadow">
-            {unreadCount > 9 ? '9+' : unreadCount}
+            {currentUnreadCount > 9 ? '9+' : currentUnreadCount}
           </span>
+        )}
+        {isConnected && (
+          <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-green-500 rounded-full border-2 border-white" />
         )}
       </button>
 
@@ -96,15 +102,15 @@ export default function NotificationBell() {
               <span className="text-white font-bold text-sm">
                 {isRtl ? 'الإشعارات' : 'Notifications'}
               </span>
-              {unreadCount > 0 && (
+              {currentUnreadCount > 0 && (
                 <span className="bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">
-                  {unreadCount}
+                  {currentUnreadCount}
                 </span>
               )}
             </div>
-            {unreadCount > 0 && (
+            {currentUnreadCount > 0 && (
               <button
-                onClick={markAllRead}
+                onClick={handleMarkAllRead}
                 className="text-[11px] font-bold text-white/80 hover:text-white border border-white/30 hover:border-white/60 px-3 py-1 rounded-full transition-all"
               >
                 {isRtl ? 'تحديد الكل كمقروء' : 'Mark all read'}
@@ -147,7 +153,7 @@ export default function NotificationBell() {
                       {/* Per-item mark as read */}
                       {!n.read && (
                         <button
-                          onClick={() => markRead(n.id)}
+                          onClick={() => handleMarkRead(n.id)}
                           title={isRtl ? 'تحديد كمقروء' : 'Mark as read'}
                           className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-white border border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-400 hover:text-blue-500 flex items-center justify-center transition-all"
                         >
