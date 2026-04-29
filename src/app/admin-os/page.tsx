@@ -6,7 +6,9 @@ import {
   updateSellerStatus, 
   seedTestData,
   createTaxonomy,
-  deleteTaxonomy
+  deleteTaxonomy,
+  adminCreateUser,
+  adminDeleteUser,
 } from '../actions/seller';
 
 export default function AdminOS() {
@@ -20,6 +22,14 @@ export default function AdminOS() {
   // Taxonomy Form State
   const [taxType, setTaxType] = useState<'category' | 'tag' | 'collection'>('category');
   const [taxName, setTaxName] = useState('');
+
+  // Create User Modal State
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [createUserLoading, setCreateUserLoading] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState({
+    name: '', email: '', password: '', role: 'BUYER' as 'ADMIN' | 'SELLER' | 'BUYER', storeName: ''
+  });
+  const [createUserError, setCreateUserError] = useState<string | null>(null);
 
   const refreshData = async () => {
     setLoading(true);
@@ -73,7 +83,8 @@ export default function AdminOS() {
   const handleSeed = async () => {
     setSeedLoading(true);
     try {
-      await seedTestData();
+      const res = await seedTestData() as any;
+      if (res?.error) { alert(res.error); return; }
       await refreshData();
       alert("System seeded with full operational data.");
     } catch (err: any) {
@@ -81,6 +92,30 @@ export default function AdminOS() {
     } finally {
       setSeedLoading(false);
     }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateUserLoading(true);
+    setCreateUserError(null);
+    try {
+      const res = await adminCreateUser(createUserForm) as any;
+      if (res?.error) { setCreateUserError(res.error); return; }
+      setShowCreateUser(false);
+      setCreateUserForm({ name: '', email: '', password: '', role: 'BUYER', storeName: '' });
+      await refreshData();
+    } catch (err: any) {
+      setCreateUserError(err.message || 'Failed to create user.');
+    } finally {
+      setCreateUserLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, email: string) => {
+    if (!confirm(`Delete account "${email}"? This cannot be undone.`)) return;
+    const res = await adminDeleteUser(userId) as any;
+    if (res?.error) { alert(res.error); return; }
+    await refreshData();
   };
 
   useEffect(() => {
@@ -137,7 +172,7 @@ export default function AdminOS() {
         <div className="tab-content animate-fadeIn">
           {activeTab === 'overview' && <OverviewTab data={data} handleStatusUpdate={handleStatusUpdate} actionLoading={actionLoading} />}
           {activeTab === 'sellers' && <SellersTab data={data} handleStatusUpdate={handleStatusUpdate} actionLoading={actionLoading} />}
-          {activeTab === 'users' && <UsersTab data={data} />}
+          {activeTab === 'users' && <UsersTab data={data} onDelete={handleDeleteUser} onCreateClick={() => setShowCreateUser(true)} />}
           {activeTab === 'orders' && <OrdersTab data={data} />}
           {activeTab === 'payouts' && <PayoutsTab data={data} />}
           {activeTab === 'analytics' && <AnalyticsTab data={data} />}
@@ -145,6 +180,18 @@ export default function AdminOS() {
           {activeTab === 'settings' && <SettingsTab data={data} />}
         </div>
       </div>
+
+      {/* Create User Modal */}
+      {showCreateUser && (
+        <CreateUserModal
+          form={createUserForm}
+          onChange={(f: any) => setCreateUserForm(f)}
+          onSubmit={handleCreateUser}
+          onClose={() => { setShowCreateUser(false); setCreateUserError(null); }}
+          loading={createUserLoading}
+          error={createUserError}
+        />
+      )}
 
       <style jsx global>{`
         :root {
@@ -198,6 +245,21 @@ export default function AdminOS() {
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
         .input-tax { width:100%; border:1px solid #e2e8f0; padding:8px 12px; border-radius:6px; font-size:12px; outline:none; }
         .input-tax:focus { border-color: var(--color-primary); }
+        .modal-overlay { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px; }
+        .modal-box { background:#fff;width:100%;max-width:480px;padding:28px;border-radius:16px;box-shadow:0 25px 60px rgba(0,0,0,0.2); }
+        .modal-title { font-size:16px;font-weight:600;color:#1e293b;margin-bottom:20px; }
+        .form-group { margin-bottom:14px; }
+        .form-label { display:block;font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px; }
+        .form-input { width:100%;border:1px solid #e2e8f0;padding:9px 12px;border-radius:8px;font-size:13px;outline:none;background:#fff;color:#1e293b; }
+        .form-input:focus { border-color:#534AB7;box-shadow:0 0 0 3px rgba(83,74,183,0.1); }
+        .role-select { appearance:none;cursor:pointer; }
+        .btn-primary { width:100%;padding:11px;background:#534AB7;color:#fff;font-size:13px;font-weight:600;border:none;border-radius:8px;cursor:pointer;transition:opacity .15s; }
+        .btn-primary:hover { opacity:.9; }
+        .btn-primary:disabled { opacity:.5;cursor:not-allowed; }
+        .btn-ghost { background:none;border:none;padding:11px;font-size:13px;color:#64748b;cursor:pointer;width:100%; }
+        .error-banner { background:#FEF2F2;border:1px solid #FCA5A5;color:#B91C1C;font-size:12px;padding:10px 14px;border-radius:8px;margin-bottom:14px; }
+        .del-btn { font-size:10px;color:#E24B4A;background:none;border:none;cursor:pointer;padding:3px 8px;border-radius:4px; }
+        .del-btn:hover { background:#FEF2F2; }
       `}</style>
     </div>
   );
@@ -318,21 +380,39 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: any) {
   );
 }
 
-function UsersTab({ data }: any) {
+function UsersTab({ data, onDelete, onCreateClick }: any) {
   return (
     <div className="card">
-      <div className="card-header"><div className="card-title">User Registry</div></div>
+      <div className="card-header">
+        <div className="card-title">User Registry</div>
+        <button onClick={onCreateClick} style={{background:'#534AB7',color:'#fff',fontSize:'11px',fontWeight:600,padding:'6px 14px',borderRadius:'6px',border:'none',cursor:'pointer'}}>
+          + Create Account
+        </button>
+      </div>
+      <div className="row-item" style={{fontSize:'10px',color:'#94a3b8',fontWeight:600,textTransform:'uppercase'}}>
+        <div style={{width:28}} />
+        <div style={{flex:1}}>Name / Email</div>
+        <div style={{width:80,textAlign:'center'}}>Role</div>
+        <div style={{width:100,textAlign:'right'}}>Joined</div>
+        <div style={{width:60}} />
+      </div>
       {data?.users?.map((u: any) => (
         <div key={u.id} className="row-item">
-          <div className="avatar-sm bg-slate-100 text-slate-400">{u.name?.[0]}</div>
+          <div className="avatar-sm" style={{background: u.role==='ADMIN' ? '#EEEDFE' : u.role==='SELLER' ? '#E1F5EE' : '#FFF7ED', color: u.role==='ADMIN' ? '#534AB7' : u.role==='SELLER' ? '#085041' : '#92400E'}}>{(u.name||'?')[0].toUpperCase()}</div>
           <div style={{flex:1}}>
             <div style={{fontSize:'12px',fontWeight:500}}>{u.name}</div>
             <div style={{fontSize:'11px',color:'#64748b'}}>{u.email}</div>
           </div>
-          <span className={`badge ${u.role === 'ADMIN' ? 'b-new' : ''}`}>{u.role}</span>
-          <div style={{fontSize:'11px',color:'#94a3b8',width:'100px',textAlign:'right'}}>{new Date(u.createdAt).toLocaleDateString()}</div>
+          <div style={{width:80,textAlign:'center'}}>
+            <span className={`badge ${u.role==='ADMIN' ? 'b-new' : u.role==='SELLER' ? 'b-active' : 'b-pending'}`}>{u.role}</span>
+          </div>
+          <div style={{fontSize:'11px',color:'#94a3b8',width:100,textAlign:'right'}}>{new Date(u.createdAt).toLocaleDateString()}</div>
+          <div style={{width:60,textAlign:'right'}}>
+            <button className="del-btn" onClick={() => onDelete(u.id, u.email)}>Delete</button>
+          </div>
         </div>
       ))}
+      {!data?.users?.length && <div className="py-10 text-center text-xs text-slate-400">No users found.</div>}
     </div>
   );
 }
@@ -479,3 +559,57 @@ function PayoutsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fi
 function AnalyticsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><polyline points="1,12 5,7 8,10 11,4 15,8" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".7"/></svg>; }
 function ModerationIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".6"/><path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".8"/></svg>; }
 function SettingsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".7"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3" stroke="currentColor" strokeWidth="1.2" stroke-linecap="round" fill="none" opacity=".5"/></svg>; }
+
+function CreateUserModal({ form, onChange, onSubmit, onClose, loading, error }: any) {
+  const update = (field: string, val: string) => onChange({ ...form, [field]: val });
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-title">Create New Account</div>
+
+        {error && <div className="error-banner">{error}</div>}
+
+        <form onSubmit={onSubmit}>
+          <div className="form-group">
+            <label className="form-label">Full Name</label>
+            <input required className="form-input" placeholder="e.g. Ahmed Hassan" value={form.name} onChange={e => update('name', e.target.value)} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Email Address</label>
+            <input required type="email" className="form-input" placeholder="user@example.com" value={form.email} onChange={e => update('email', e.target.value)} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Password</label>
+            <input required type="password" className="form-input" placeholder="Min. 8 characters" minLength={8} value={form.password} onChange={e => update('password', e.target.value)} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Account Role</label>
+            <select className="form-input role-select" value={form.role} onChange={e => update('role', e.target.value)}>
+              <option value="BUYER">🛍️ Buyer (Customer)</option>
+              <option value="SELLER">🏪 Seller (Merchant)</option>
+              <option value="ADMIN">🛡️ Admin (Staff)</option>
+            </select>
+          </div>
+
+          {form.role === 'SELLER' && (
+            <div className="form-group">
+              <label className="form-label">Store Name</label>
+              <input className="form-input" placeholder="e.g. Ahmed's Electronics" value={form.storeName} onChange={e => update('storeName', e.target.value)} />
+              <div style={{fontSize:'10px',color:'#94a3b8',marginTop:4}}>Leave blank to auto-generate from name</div>
+            </div>
+          )}
+
+          <div style={{display:'flex',gap:10,marginTop:20}}>
+            <button type="button" className="btn-ghost" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? 'Creating...' : `Create ${form.role === 'BUYER' ? 'Customer' : form.role === 'SELLER' ? 'Seller' : 'Admin'} Account`}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

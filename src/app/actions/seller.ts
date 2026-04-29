@@ -468,3 +468,85 @@ export async function updateProfile(data: any) {
   revalidatePath('/dashboard');
   return { success: true };
 }
+
+export async function adminCreateUser(formData: {
+  name: string;
+  email: string;
+  password: string;
+  role: 'ADMIN' | 'SELLER' | 'BUYER';
+  storeName?: string;
+}) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== 'ADMIN') return { error: 'Unauthorized' };
+
+    // Resolve real admin ID (handles debug bypass sessions)
+    let adminId = (session.user as any).id;
+    if (adminId.startsWith('debug-')) {
+      const dbAdmin = await prisma.user.findUnique({ where: { email: session.user?.email! } });
+      if (dbAdmin) adminId = dbAdmin.id;
+    }
+
+    // Check for duplicate email
+    const existing = await prisma.user.findUnique({ where: { email: formData.email.toLowerCase().trim() } });
+    if (existing) return { error: `An account with email "${formData.email}" already exists.` };
+
+    const hashedPassword = await bcrypt.hash(formData.password, 10);
+
+    const newUser = await prisma.user.create({
+      data: {
+        name: formData.name.trim(),
+        email: formData.email.toLowerCase().trim(),
+        passwordHash: hashedPassword,
+        role: formData.role,
+      }
+    });
+
+    // Auto-create SellerProfile for sellers
+    if (formData.role === 'SELLER') {
+      await prisma.sellerProfile.create({
+        data: {
+          userId: newUser.id,
+          storeName: formData.storeName?.trim() || `${formData.name.trim()}'s Store`,
+          status: 'ACTIVE',
+        }
+      });
+    }
+
+    // Audit log
+    if (adminId && !adminId.startsWith('debug-')) {
+      await prisma.auditLog.create({
+        data: {
+          adminId,
+          action: 'CREATED_USER',
+          targetId: newUser.id,
+          details: `Created ${formData.role} account for ${formData.email}`,
+        }
+      });
+    }
+
+    revalidatePath('/admin-os');
+    return { success: true, userId: newUser.id };
+  } catch (err: any) {
+    console.error('[adminCreateUser] Error:', err);
+    return { error: err.message || 'Failed to create user.' };
+  }
+}
+
+export async function adminDeleteUser(userId: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== 'ADMIN') return { error: 'Unauthorized' };
+
+    // Prevent self-deletion
+    if ((session.user as any).id === userId) return { error: 'You cannot delete your own account.' };
+
+    await prisma.user.delete({ where: { id: userId } });
+
+    revalidatePath('/admin-os');
+    return { success: true };
+  } catch (err: any) {
+    console.error('[adminDeleteUser] Error:', err);
+    return { error: err.message || 'Failed to delete user.' };
+  }
+}
