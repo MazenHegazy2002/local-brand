@@ -145,26 +145,37 @@ export async function getHomepageData() {
 }
 
 export async function updateSellerStatus(sellerId: string, status: SellerStatus) {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user as any).role !== 'ADMIN') throw new Error("Unauthorized");
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== 'ADMIN') return { error: "Unauthorized" };
 
-  await prisma.sellerProfile.update({
-    where: { id: sellerId },
-    data: { status }
-  });
-
-  // Log action
-  await prisma.auditLog.create({
-    data: {
-      adminId: (session.user as any).id,
-      action: status === 'ACTIVE' ? 'APPROVED_SELLER' : 'SUSPENDED_SELLER',
-      targetId: sellerId,
-      details: `Status changed to ${status}`
+    let adminId = (session.user as any).id;
+    if (adminId.startsWith('debug-')) {
+      const dbAdmin = await prisma.user.findUnique({ where: { email: session.user?.email! } });
+      if (dbAdmin) adminId = dbAdmin.id;
     }
-  });
 
-  revalidatePath('/admin-os');
-  return { success: true };
+    await prisma.sellerProfile.update({
+      where: { id: sellerId },
+      data: { status }
+    });
+
+    // Log action
+    await prisma.auditLog.create({
+      data: {
+        adminId: adminId,
+        action: status === 'ACTIVE' ? 'APPROVED_SELLER' : 'SUSPENDED_SELLER',
+        targetId: sellerId,
+        details: `Status changed to ${status}`
+      }
+    });
+
+    revalidatePath('/admin-os');
+    return { success: true };
+  } catch (err: any) {
+    console.error("[updateSellerStatus] Error:", err);
+    return { error: err.message || "Failed to update status" };
+  }
 }
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus) {
@@ -342,72 +353,83 @@ export async function updateProductTaxonomies(productId: string, taxonomyData: a
 }
 
 export async function seedTestData() {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user as any).role !== 'ADMIN') throw new Error("Unauthorized");
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== 'ADMIN') return { error: "Unauthorized" };
 
-  // Create 3 Test Users
-  const testUsers = [
-    { email: 'admin@localbrand.com', name: 'System Admin', role: 'ADMIN', pass: 'admin123' },
-    { email: 'seller@localbrand.com', name: 'Elite Seller', role: 'SELLER', pass: 'seller123' },
-    { email: 'buyer@localbrand.com', name: 'Frequent Buyer', role: 'BUYER', pass: 'buyer123' }
-  ];
+    let adminId = (session.user as any).id;
 
-  for (const u of testUsers) {
-    const hashedPassword = await bcrypt.hash(u.pass, 10);
-    const user = await prisma.user.upsert({
-      where: { email: u.email },
-      update: { role: u.role as any },
-      create: { 
-        email: u.email, 
-        name: u.name, 
-        role: u.role as any, 
-        passwordHash: hashedPassword 
+    // Create 3 Test Users
+    const testUsers = [
+      { email: 'admin@localbrand.com', name: 'System Admin', role: 'ADMIN', pass: 'admin123' },
+      { email: 'seller@localbrand.com', name: 'Elite Seller', role: 'SELLER', pass: 'seller123' },
+      { email: 'buyer@localbrand.com', name: 'Frequent Buyer', role: 'BUYER', pass: 'buyer123' }
+    ];
+
+    for (const u of testUsers) {
+      const hashedPassword = await bcrypt.hash(u.pass, 10);
+      const user = await prisma.user.upsert({
+        where: { email: u.email },
+        update: { role: u.role as any },
+        create: { 
+          email: u.email, 
+          name: u.name, 
+          role: u.role as any, 
+          passwordHash: hashedPassword 
+        }
+      });
+
+      if (u.email === session.user?.email && adminId.startsWith('debug-')) {
+        adminId = user.id; // Update to the real DB ID
+      }
+
+      if (u.role === 'SELLER') {
+        await prisma.sellerProfile.upsert({
+          where: { userId: user.id },
+          update: { status: 'ACTIVE' },
+          create: { userId: user.id, storeName: "Elite Local Goods", status: 'ACTIVE' }
+        });
+      }
+    }
+
+    // Create some categories
+    const catNames = ["Electronics", "Fashion", "Home & Kitchen", "Beauty"];
+    for (const name of catNames) {
+      await prisma.category.upsert({
+        where: { name },
+        update: {},
+        create: { name, slug: name.toLowerCase().replace(/ /g, '-') }
+      });
+    }
+
+    // Create system settings
+    const settings = [
+      { key: "VAT_RATE", value: "14.0", description: "Value Added Tax percentage" },
+      { key: "COMMISSION_BASE", value: "15.0", description: "Base platform commission" }
+    ];
+    for (const s of settings) {
+      await prisma.systemSettings.upsert({
+        where: { key: s.key },
+        update: {},
+        create: s
+      });
+    }
+
+    // Create some audit logs
+    await prisma.auditLog.create({
+      data: {
+        adminId: adminId,
+        action: "SYSTEM_SEED",
+        details: "Populated platform with initial test data and primary test accounts"
       }
     });
 
-    if (u.role === 'SELLER') {
-      await prisma.sellerProfile.upsert({
-        where: { userId: user.id },
-        update: { status: 'ACTIVE' },
-        create: { userId: user.id, storeName: "Elite Local Goods", status: 'ACTIVE' }
-      });
-    }
+    revalidatePath('/admin-os');
+    return { success: true };
+  } catch (err: any) {
+    console.error("[seedTestData] Error:", err);
+    return { error: err.message || "Failed to seed data" };
   }
-
-  // Create some categories
-  const catNames = ["Electronics", "Fashion", "Home & Kitchen", "Beauty"];
-  for (const name of catNames) {
-    await prisma.category.upsert({
-      where: { name },
-      update: {},
-      create: { name, slug: name.toLowerCase().replace(/ /g, '-') }
-    });
-  }
-
-  // Create system settings
-  const settings = [
-    { key: "VAT_RATE", value: "14.0", description: "Value Added Tax percentage" },
-    { key: "COMMISSION_BASE", value: "15.0", description: "Base platform commission" }
-  ];
-  for (const s of settings) {
-    await prisma.systemSettings.upsert({
-      where: { key: s.key },
-      update: {},
-      create: s
-    });
-  }
-
-  // Create some audit logs
-  await prisma.auditLog.create({
-    data: {
-      adminId: (session.user as any).id,
-      action: "SYSTEM_SEED",
-      details: "Populated platform with initial test data and primary test accounts"
-    }
-  });
-
-  revalidatePath('/admin-os');
-  return { success: true };
 }
 
 export async function toggleWishlist(productId: string) {
