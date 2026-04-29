@@ -1,4 +1,5 @@
 import { PrismaClient } from '../generated/client'
+import { PrismaNeon } from '@prisma/adapter-neon'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -6,18 +7,20 @@ const globalForPrisma = globalThis as unknown as {
 
 function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL
-  
+
   if (!connectionString) {
-    console.warn('[PRISMA] No DATABASE_URL found')
+    console.warn('[PRISMA] No DATABASE_URL found — returning unconfigured client')
     return new PrismaClient()
   }
 
-  console.log('[PRISMA] Initializing High-Stability Client')
-  
-  // We are using the standard PrismaClient which works perfectly with Neon 
-  // when using a pooled connection string (usually ends with -pooler)
+  console.log('[PRISMA] Initializing Neon Serverless Adapter Client')
+
+  // PrismaNeon (v6) accepts a PoolConfig object, not a Pool instance
+  const adapter = new PrismaNeon({ connectionString })
+
   return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    adapter,
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   })
 }
 
