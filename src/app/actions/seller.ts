@@ -596,11 +596,80 @@ export async function adminCreateUser(formData: {
   }
 }
 
+export async function adminUpdateUser(userId: string, data: { name?: string; email?: string; role?: 'ADMIN' | 'SELLER' | 'BUYER' }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return { error: 'Unauthorized: Session is null. Please log out and log back in.' };
+    if ((session.user as any).role !== 'ADMIN') return { error: `Unauthorized: Your role is ${(session.user as any)?.role}, but ADMIN is required.` };
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: data.name?.trim(),
+        email: data.email?.toLowerCase().trim(),
+        role: data.role,
+      }
+    });
+
+    revalidatePath('/admin-os');
+    return { success: true, user: updatedUser };
+  } catch (err: any) {
+    console.error('[adminUpdateUser] Error:', err);
+    return { error: err.message || 'Failed to update user.' };
+  }
+}
+
 export async function adminDeleteUser(userId: string) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'ADMIN') return { error: 'Unauthorized' };
+    
+    // Debug logging for session
+    if (!session) {
+      console.error('[adminDeleteUser] No session found');
+      return { error: 'Unauthorized: No session found. Please refresh and try again.' };
+    }
 
+    const userRole = (session.user as any).role;
+    if (userRole !== 'ADMIN') {
+      console.error(`[adminDeleteUser] Unauthorized access attempt by role: ${userRole}`);
+      return { error: `Unauthorized: Admin role required (Current role: ${userRole})` };
+    }
+
+    // Check if user has orders or other non-cascading relations
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        _count: {
+          select: { orders: true, reviews: true, auditLogs: true, productQAs: true }
+        }
+      }
+    });
+
+    if (!user) return { error: 'User not found.' };
+
+    if (user._count.orders > 0 || user._count.reviews > 0 || user._count.auditLogs > 0 || user._count.productQAs > 0) {
+      // If user has records, perform a "Soft Delete" instead of hard delete to preserve data integrity
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          deletedAt: new Date(),
+          email: `deleted_${userId.substring(0, 8)}@localbrand.invalid`, // anonymize
+          name: 'Deleted User',
+          passwordHash: 'DELETED',
+        }
+      });
+      
+      // If it's a seller, also deactivate profile
+      await prisma.sellerProfile.updateMany({
+        where: { userId },
+        data: { status: 'BANNED', deletedAt: new Date() }
+      });
+
+      revalidatePath('/admin-os');
+      return { success: true, message: 'User soft-deleted due to existing activity records.' };
+    }
+
+    // Hard delete if no dependent records
     await prisma.user.delete({ where: { id: userId } });
 
     revalidatePath('/admin-os');

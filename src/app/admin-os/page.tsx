@@ -9,6 +9,7 @@ import {
   deleteTaxonomy,
   adminCreateUser,
   adminDeleteUser,
+  adminUpdateUser,
 } from '../actions/seller';
 
 export default function AdminOS() {
@@ -30,6 +31,14 @@ export default function AdminOS() {
     name: '', email: '', password: '', role: 'BUYER' as 'ADMIN' | 'SELLER' | 'BUYER', storeName: ''
   });
   const [createUserError, setCreateUserError] = useState<string | null>(null);
+  
+  // Edit User Modal State
+  const [showEditUser, setShowEditUser] = useState(false);
+  const [editUserLoading, setEditUserLoading] = useState(false);
+  const [editUserForm, setEditUserForm] = useState({
+    id: '', name: '', email: '', role: 'BUYER' as 'ADMIN' | 'SELLER' | 'BUYER'
+  });
+  const [editUserError, setEditUserError] = useState<string | null>(null);
 
   const refreshData = async () => {
     setLoading(true);
@@ -125,9 +134,45 @@ export default function AdminOS() {
 
   const handleDeleteUser = async (userId: string, email: string) => {
     if (!confirm(`Delete account "${email}"? This cannot be undone.`)) return;
-    const res = await adminDeleteUser(userId) as any;
-    if (res?.error) { alert(res.error); return; }
-    await refreshData();
+    try {
+      const res = await adminDeleteUser(userId) as any;
+      if (res?.error) { alert(res.error); return; }
+      if (res?.message) alert(res.message);
+      await refreshData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete user.');
+    }
+  };
+
+  const handleEditClick = (user: any) => {
+    setEditUserForm({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    });
+    setEditUserError(null);
+    setShowEditUser(true);
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditUserLoading(true);
+    setEditUserError(null);
+    try {
+      const res = await adminUpdateUser(editUserForm.id, {
+        name: editUserForm.name,
+        email: editUserForm.email,
+        role: editUserForm.role
+      }) as any;
+      if (res?.error) { setEditUserError(res.error); return; }
+      setShowEditUser(false);
+      await refreshData();
+    } catch (err: any) {
+      setEditUserError(err.message || 'Failed to update user.');
+    } finally {
+      setEditUserLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -184,7 +229,7 @@ export default function AdminOS() {
         <div className="tab-content animate-fadeIn">
           {activeTab === 'overview' && <OverviewTab data={data} handleStatusUpdate={handleStatusUpdate} actionLoading={actionLoading} />}
           {activeTab === 'sellers' && <SellersTab data={data} handleStatusUpdate={handleStatusUpdate} actionLoading={actionLoading} />}
-          {activeTab === 'users' && <UsersTab data={data} onDelete={handleDeleteUser} onCreateClick={() => setShowCreateUser(true)} />}
+          {activeTab === 'users' && <UsersTab data={data} onDelete={handleDeleteUser} onEdit={handleEditClick} onCreateClick={() => setShowCreateUser(true)} />}
           {activeTab === 'orders' && <OrdersTab data={data} />}
           {activeTab === 'payouts' && <PayoutsTab data={data} />}
           {activeTab === 'analytics' && <AnalyticsTab data={data} />}
@@ -204,6 +249,19 @@ export default function AdminOS() {
           error={createUserError}
         />
       )}
+      
+      {/* Edit User Modal */}
+      {showEditUser && (
+        <EditUserModal
+          form={editUserForm}
+          onChange={(f: any) => setEditUserForm(f)}
+          onSubmit={handleUpdateUser}
+          onClose={() => { setShowEditUser(false); setEditUserError(null); }}
+          loading={editUserLoading}
+          error={editUserError}
+        />
+      )}
+
 
       <style jsx global>{`
         :root {
@@ -392,7 +450,7 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: any) {
   );
 }
 
-function UsersTab({ data, onDelete, onCreateClick }: any) {
+function UsersTab({ data, onDelete, onEdit, onCreateClick }: any) {
   return (
     <div className="card">
       <div className="card-header">
@@ -419,7 +477,8 @@ function UsersTab({ data, onDelete, onCreateClick }: any) {
             <span className={`badge ${u.role==='ADMIN' ? 'b-new' : u.role==='SELLER' ? 'b-active' : 'b-pending'}`}>{u.role}</span>
           </div>
           <div style={{fontSize:'11px',color:'#94a3b8',width:100,textAlign:'right'}}>{new Date(u.createdAt).toLocaleDateString()}</div>
-          <div style={{width:60,textAlign:'right'}}>
+          <div style={{width:80,textAlign:'right',display:'flex',gap:8,justifyContent:'flex-end'}}>
+            <button className="action-btn" onClick={() => onEdit(u)} style={{fontSize:'10px',padding:'2px 6px'}}>Edit</button>
             <button className="del-btn" onClick={() => onDelete(u.id, u.email)}>Delete</button>
           </div>
         </div>
@@ -571,6 +630,47 @@ function PayoutsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fi
 function AnalyticsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><polyline points="1,12 5,7 8,10 11,4 15,8" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".7"/></svg>; }
 function ModerationIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".6"/><path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".8"/></svg>; }
 function SettingsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".7"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3" stroke="currentColor" strokeWidth="1.2" stroke-linecap="round" fill="none" opacity=".5"/></svg>; }
+
+function EditUserModal({ form, onChange, onSubmit, onClose, loading, error }: any) {
+  const update = (field: string, val: string) => onChange({ ...form, [field]: val });
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-title">Edit User Account</div>
+
+        {error && <div className="error-banner">{error}</div>}
+
+        <form onSubmit={onSubmit}>
+          <div className="form-group">
+            <label className="form-label">Full Name</label>
+            <input required className="form-input" placeholder="e.g. Ahmed Hassan" value={form.name} onChange={e => update('name', e.target.value)} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Email Address</label>
+            <input required type="email" className="form-input" placeholder="user@example.com" value={form.email} onChange={e => update('email', e.target.value)} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Account Role</label>
+            <select className="form-input role-select" value={form.role} onChange={e => update('role', e.target.value)}>
+              <option value="BUYER">🛍️ Buyer (Customer)</option>
+              <option value="SELLER">🏪 Seller (Merchant)</option>
+              <option value="ADMIN">🛡️ Admin (Staff)</option>
+            </select>
+          </div>
+
+          <div style={{display:'flex',gap:10,marginTop:20}}>
+            <button type="button" className="btn-ghost" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 function CreateUserModal({ form, onChange, onSubmit, onClose, loading, error }: any) {
   const update = (field: string, val: string) => onChange({ ...form, [field]: val });
