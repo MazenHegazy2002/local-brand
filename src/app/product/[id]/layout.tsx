@@ -2,14 +2,14 @@ import { Metadata, ResolvingMetadata } from 'next';
 import { MOCK_PRODUCTS } from '@/lib/data'; // Currently using mock data for demo SSR
 
 type Props = {
-  params: { id: string }
+  params: Promise<{ id: string }>
 };
 
 export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const id = params.id;
+  const { id } = await params;
   const product = MOCK_PRODUCTS.find(p => String(p.id) === id);
 
   if (!product) {
