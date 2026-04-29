@@ -14,19 +14,75 @@ export default function SellerHub() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editProduct, setEditProduct] = useState({ title: '', description: '', basePrice: '' as any, categoryId: '' });
+  const [editVariants, setEditVariants] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleEditProduct = (product: any) => {
+    setEditingProduct(product);
+    setEditProduct({
+      title: product.title || '',
+      description: product.description || '',
+      basePrice: product.basePrice || '',
+      categoryId: product.categoryId || ''
+    });
+    setEditVariants(product.variants?.map((v: any) => ({
+      color: v.color || '',
+      stock: v.stockCount || 0,
+      price: v.price || '',
+      image: v.image?.url || ''
+    })) || []);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      if (!editProduct.categoryId) throw new Error("Please select a category");
+      if (!editProduct.basePrice || Number(editProduct.basePrice) <= 0) throw new Error("Base price is required");
+      if (editVariants.some((v: any) => !v.price || Number(v.price) <= 0)) throw new Error("All variant prices are required");
+      
+      // Call API to update - for now we'll delete and recreate
+      const res = await fetch(`/api/products/${editingProduct.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...editProduct,
+          basePrice: Number(editProduct.basePrice),
+          variants: editVariants.map((v: any) => ({
+            color: v.color,
+            stock: Number(v.stock),
+            price: Number(v.price)
+          }))
+        })
+      });
+      
+      if (!res.ok) throw new Error("Failed to update product");
+      
+      setShowEditModal(false);
+      setEditingProduct(null);
+      await refreshData();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Advanced Product State
   const [newProduct, setNewProduct] = useState({ 
     title: '', 
     description: '', 
-    basePrice: 0, 
-    flashSalePrice: 0,
+    basePrice: '' as any, 
+    flashSalePrice: '' as any,
     categoryId: ''
   });
   
   const [variants, setVariants] = useState<any[]>([
-    { color: 'Default', stock: 10, price: 0, image: '' }
+    { color: 'Default', stock: 10, price: '' as any, image: '' }
   ]);
 
   const refreshData = async () => {
@@ -104,6 +160,9 @@ export default function SellerHub() {
     setIsSubmitting(true);
     try {
       if (!newProduct.categoryId) throw new Error("Please select a category");
+      if (!newProduct.basePrice || newProduct.basePrice <= 0) throw new Error("Base price is required and must be greater than 0");
+      if (variants.some((v: any) => !v.price || Number(v.price) <= 0)) throw new Error("All variant prices are required and must be greater than 0");
+      
       const res = await createProduct({
         ...newProduct,
         basePrice: Number(newProduct.basePrice),
@@ -159,8 +218,8 @@ export default function SellerHub() {
   };
 
   const resetForm = () => {
-    setNewProduct({ title: '', description: '', basePrice: 0, flashSalePrice: 0, categoryId: '' });
-    setVariants([{ color: 'Default', stock: 10, price: 0, image: '' }]);
+setNewProduct({ title: '', description: '', basePrice: '', flashSalePrice: '', categoryId: '' });
+      setVariants([{ color: 'Default', stock: 10, price: '', image: '' }]);
   };
 
   useEffect(() => {
@@ -207,7 +266,7 @@ export default function SellerHub() {
         <div className="tab-content animate-fadeIn">
           {activeTab === 'overview' && <OverviewTab stats={stats} myOrders={myOrders} myProducts={myProducts} data={data} />}
           {activeTab === 'orders' && <OrdersTab orders={myOrders} onFulfill={handleFulfill} />}
-          {activeTab === 'products' && <ProductsTab products={myProducts} onDelete={handleDeleteProduct} onAdd={() => setShowAddModal(true)} />}
+          {activeTab === 'products' && <ProductsTab products={myProducts} onDelete={handleDeleteProduct} onAdd={() => setShowAddModal(true)} onEdit={handleEditProduct} />}
           {activeTab === 'analytics' && <AnalyticsTab stats={stats} orders={myOrders} />}
           {activeTab === 'wallet' && <WalletTab data={data} />}
           {activeTab === 'returns' && <ReturnsTab orders={myOrders} />}
@@ -230,7 +289,91 @@ export default function SellerHub() {
           addVariant={addVariant}
           updateVariant={updateVariant}
         />
+)}
+
+      {/* Edit Product Modal */}
+      {showEditModal && editingProduct && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal-content animate-fadeIn" style={{maxWidth:'800px', maxHeight:'90vh', overflowY:'auto'}} onClick={e => e.stopPropagation()}>
+            <div className="card-title" style={{fontSize:'18px', marginBottom:'20px'}}>Edit Product</div>
+            <form onSubmit={handleUpdateProduct} className="flex flex-col gap-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] text-slate-500 uppercase mb-1">Title</label>
+                  <input required type="text" value={editProduct.title} onChange={e => setEditProduct({...editProduct, title: e.target.value})} className="input-field" />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-slate-500 uppercase mb-1">Category</label>
+                  <select required value={editProduct.categoryId} onChange={e => setEditProduct({...editProduct, categoryId: e.target.value})} className="input-field bg-white">
+                    <option value="">Select Category...</option>
+                    {data?.categories?.map((c: any) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] text-slate-500 uppercase mb-1">Base Price (EGP) *</label>
+                  <input required type="number" min="1" value={editProduct.basePrice} onChange={e => setEditProduct({...editProduct, basePrice: e.target.value})} className="input-field" />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-[11px] text-slate-500 uppercase mb-1">Description</label>
+                  <textarea required value={editProduct.description} onChange={e => setEditProduct({...editProduct, description: e.target.value})} className="input-field" rows={3} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <label className="text-[12px] font-bold text-slate-700 uppercase">Product Variants</label>
+                  <button type="button" onClick={() => setEditVariants([...editVariants, { color: '', stock: 0, price: '', image: '' }])} className="text-[11px] text-[#0F6E56] font-bold">+ ADD VARIANT</button>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {editVariants.map((v: any, i: any) => (
+                    <div key={i} className="p-4 bg-slate-50 rounded-lg border border-slate-200 flex gap-4 items-start">
+                      <div className="flex-1 grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="text-[10px] text-slate-400 block">Color</label>
+                          <input required type="text" value={v.color} onChange={e => {
+                            const updated = [...editVariants];
+                            updated[i].color = e.target.value;
+                            setEditVariants(updated);
+                          }} className="input-field py-1" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-400 block">Stock</label>
+                          <input required type="number" value={v.stock} onChange={e => {
+                            const updated = [...editVariants];
+                            updated[i].stock = e.target.value;
+                            setEditVariants(updated);
+                          }} className="input-field py-1" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-400 block">Price (EGP) *</label>
+                          <input required type="number" min="1" value={v.price} onChange={e => {
+                            const updated = [...editVariants];
+                            updated[i].price = e.target.value;
+                            setEditVariants(updated);
+                          }} className="input-field py-1" />
+                        </div>
+                      </div>
+                      {editVariants.length > 1 && (
+                        <button type="button" onClick={() => setEditVariants(editVariants.filter((_: any, idx: any) => idx !== i))} className="text-red-400 hover:text-red-600 mt-4">✕</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 py-3 border border-slate-200 rounded hover:bg-slate-50 font-medium">Cancel</button>
+                <button type="submit" disabled={isSubmitting} className="flex-1 py-3 bg-[#0F6E56] text-white rounded hover:opacity-90 disabled:opacity-50 font-medium">
+                  {isSubmitting ? 'Updating...' : 'Update Product'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
+      </div>
 
       <style jsx global>{`
         :root {
@@ -383,7 +526,7 @@ function OrdersTab({ orders, onFulfill }: any) {
   );
 }
 
-function ProductsTab({ products, onDelete, onAdd }: any) {
+function ProductsTab({ products, onDelete, onAdd, onEdit }: any) {
   return (
     <div className="card">
        <div className="card-header"><div className="card-title">Product Catalog</div><button onClick={onAdd} className="add-product-btn">+ New</button></div>
@@ -403,7 +546,7 @@ function ProductsTab({ products, onDelete, onAdd }: any) {
                </div>
             </div>
             <div className="flex gap-4">
-               <button className="text-xs text-blue-500 hover:underline">Edit</button>
+               <button onClick={() => onEdit(p)} className="text-xs text-blue-500 hover:underline">Edit</button>
                <button onClick={() => onDelete(p.id)} className="text-xs text-red-400 hover:underline">Delete</button>
             </div>
          </div>
@@ -424,15 +567,27 @@ function AddProductModal({ onClose, onSubmit, newProduct, setNewProduct, variant
                    <label className="block text-[11px] text-slate-500 uppercase mb-1">Title</label>
                    <input required type="text" value={newProduct.title} onChange={e => setNewProduct({...newProduct, title: e.target.value})} className="input-field" />
                 </div>
-                <div>
-                   <label className="block text-[11px] text-slate-500 uppercase mb-1">Category</label>
-                   <select required value={newProduct.categoryId} onChange={e => setNewProduct({...newProduct, categoryId: e.target.value})} className="input-field bg-white">
-                      <option value="">Select Category...</option>
-                      {categories?.map((c: any) => (
-                         <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                   </select>
-                </div>
+<div>
+                    <label className="block text-[11px] text-slate-500 uppercase mb-1">Category</label>
+                    <select required value={newProduct.categoryId} onChange={e => setNewProduct({...newProduct, categoryId: e.target.value})} className="input-field bg-white">
+                       <option value="">Select Category...</option>
+                       {categories?.map((c: any) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                       ))}
+                    </select>
+                 </div>
+                 <div>
+                    <label className="block text-[11px] text-slate-500 uppercase mb-1">Base Price (EGP) *</label>
+                    <input 
+                       required 
+                       type="number" 
+                       min="1"
+                       value={newProduct.basePrice || ''} 
+                       onChange={e => setNewProduct({...newProduct, basePrice: Number(e.target.value)})} 
+                       className="input-field" 
+                       placeholder="Required"
+                    />
+                 </div>
                 <div className="col-span-2">
                    <label className="block text-[11px] text-slate-500 uppercase mb-1">Description</label>
                    <textarea required value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className="input-field" rows={3} />
@@ -464,10 +619,18 @@ function AddProductModal({ onClose, onSubmit, newProduct, setNewProduct, variant
                                <label className="text-[10px] text-slate-400 block">Stock</label>
                                <input required type="number" value={v.stock} onChange={(e) => updateVariant(i, 'stock', e.target.value)} className="input-field py-1" />
                             </div>
-                            <div>
-                               <label className="text-[10px] text-slate-400 block">Price (EGP)</label>
-                               <input type="number" value={v.price} onChange={(e) => updateVariant(i, 'price', e.target.value)} className="input-field py-1" placeholder="Optional" />
-                            </div>
+<div>
+                                <label className="text-[10px] text-slate-400 block">Price (EGP) *</label>
+                                <input 
+                                   required 
+                                   type="number" 
+                                   min="1"
+                                   value={v.price} 
+                                   onChange={(e) => updateVariant(i, 'price', e.target.value)} 
+                                   className="input-field py-1" 
+                                   placeholder="Required"
+                                />
+                             </div>
                          </div>
                          {variants.length > 1 && (
                             <button type="button" onClick={() => setVariants(variants.filter((_:any, idx:any) => idx !== i))} className="text-red-400 hover:text-red-600 mt-4">✕</button>
