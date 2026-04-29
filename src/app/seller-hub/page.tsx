@@ -373,8 +373,6 @@ setNewProduct({ title: '', description: '', basePrice: '', flashSalePrice: '', c
           </div>
         </div>
       )}
-      </div>
-      </div>
 
       <style jsx global>{`
         :root {
