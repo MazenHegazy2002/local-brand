@@ -478,7 +478,8 @@ export async function adminCreateUser(formData: {
 }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'ADMIN') return { error: 'Unauthorized' };
+    if (!session) return { error: 'Unauthorized: Session is null. Please log out and log back in.' };
+    if ((session.user as any).role !== 'ADMIN') return { error: `Unauthorized: Your role is ${(session.user as any)?.role}, but ADMIN is required.` };
 
     // Resolve real admin ID (handles debug bypass sessions)
     let adminId = (session.user as any).id;
