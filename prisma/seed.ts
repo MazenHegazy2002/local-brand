@@ -23,12 +23,26 @@ async function main() {
 
   // Create categories
   const categoriesData = [
+    { name: 'Women', slug: 'women' },
+    { name: 'Men', slug: 'men' },
+    { name: 'Kids', slug: 'kids' },
     { name: 'Electronics', slug: 'electronics' },
-    { name: 'Fashion', slug: 'fashion' },
-    { name: 'Home Decor', slug: 'home-decor' },
-    { name: 'Health & Beauty', slug: 'health-beauty' },
+    { name: 'Home', slug: 'home' },
+    { name: 'Beauty', slug: 'beauty' },
     { name: 'Sports', slug: 'sports' },
+    { name: 'Footwear', slug: 'footwear' },
     { name: 'Accessories', slug: 'accessories' },
+    { name: 'Toys', slug: 'toys' },
+    { name: 'Appliances', slug: 'appliances' },
+    { name: 'Groceries', slug: 'groceries' },
+    { name: 'Auto', slug: 'auto' },
+    { name: 'Furniture', slug: 'furniture' },
+    { name: 'Books', slug: 'books' },
+    { name: 'Health', slug: 'health' },
+    { name: 'Pets', slug: 'pets' },
+    { name: 'Jewelry', slug: 'jewelry' },
+    { name: 'Garden', slug: 'garden' },
+    { name: 'Pharma', slug: 'pharma' },
   ];
   
   const categories = await Promise.all(
