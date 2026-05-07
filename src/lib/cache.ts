@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { redis } from '@/lib/redis';
+import type { Prisma } from '@/generated/client';
 
 // Cache wrapper with Redis
 export async function getCachedData<T>(
@@ -67,7 +68,7 @@ export async function getCachedProducts(params: { q?: string, category?: string,
   return getCachedData(
     cacheKey,
     () => {
-      const where: any = { published: true };
+      const where: Prisma.ProductWhereInput = { published: true };
       if (params.q) {
         where.OR = [
           { title: { contains: params.q, mode: 'insensitive' } },

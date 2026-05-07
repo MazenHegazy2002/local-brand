@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       const currentCart = await redis.get(`cart:${guestId}`);
       let cart = currentCart ? JSON.parse(currentCart) : [];
       
-      const existing = cart.find((item: any) => item.variantId === variantId);
+      const existing = cart.find((item: { variantId: string }) => item.variantId === variantId);
       if (existing) {
         existing.quantity = quantity;
         existing.savedPrice = savedPrice;

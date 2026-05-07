@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { NOTIFICATION_TYPES } from '@/lib/constants';
+
+interface SendNotificationRequest {
+  userId?: string;
+  title: string;
+  message: string;
+  link?: string;
+  targetAudience?: 'all' | 'sellers' | 'buyers';
+}
 
 export async function POST(req: Request) {
   try {
@@ -11,11 +20,11 @@ export async function POST(req: Request) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: (session.user as any).id },
+      where: { id: (session.user as { id: string }).id },
       include: { sellerProfile: true },
     });
 
-    const { userId, title, message, link, targetAudience } = await req.json();
+    const { userId, title, message, link, targetAudience } = await req.json() as SendNotificationRequest;
 
     let userIds: string[] = [];
 
@@ -45,6 +54,7 @@ export async function POST(req: Request) {
         title,
         message,
         link,
+        type: NOTIFICATION_TYPES.SYSTEM_ANNOUNCEMENT,
       })),
     });
 

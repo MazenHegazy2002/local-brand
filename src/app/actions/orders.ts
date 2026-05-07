@@ -5,8 +5,31 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import { OrderStatus, OrderItemStatus, DiscountType } from '@/generated/client';
+import type { Order, User, Address } from '@/types';
+import { VAT_RATE } from '@/lib/constants';
 
-export async function createOrder(cartItems: any[], addressInfo: any, paymentMethod: string, couponId?: string | null, guestEmail?: string) {
+interface CartItemInput {
+  id: string;
+  name: string;
+  variantId?: string;
+  qty: number;
+}
+
+interface AddressInfo {
+  fullName: string;
+  phone: string;
+  address: string;
+  city: string;
+  governorate: string;
+}
+
+export async function createOrder(
+  cartItems: CartItemInput[],
+  addressInfo: AddressInfo,
+  paymentMethod: string,
+  couponId?: string | null,
+  guestEmail?: string
+): Promise<{ success?: boolean; orderId?: string; error?: string }> {
   let userId: string | null = null;
   let isGuest = false;
 
@@ -21,7 +44,14 @@ export async function createOrder(cartItems: any[], addressInfo: any, paymentMet
 
   let totalAmount = 0;
   let discountAmount = 0;
-  const orderItemsData: any[] = [];
+  const orderItemsData: {
+    variantId: string;
+    productTitleSnapshot: string;
+    sellerNameSnapshot: string;
+    priceAtPurchase: number;
+    quantity: number;
+    status: OrderItemStatus;
+  }[] = [];
 
   // Initial subtotal calculation
   for (const item of cartItems) {
@@ -76,7 +106,7 @@ export async function createOrder(cartItems: any[], addressInfo: any, paymentMet
   const subtotalAfterDiscount = Math.max(0, totalAmount - discountAmount);
   
   // Get VAT rate from settings
-  let vatRate = 0.14; // Default Egypt VAT
+  let vatRate = VAT_RATE; // Default Egypt VAT
   try {
     const vatSetting = await prisma.systemSettings.findUnique({ where: { key: 'VAT_RATE' } });
     if (vatSetting) vatRate = parseFloat(vatSetting.value) / 100;

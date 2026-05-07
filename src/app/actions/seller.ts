@@ -7,10 +7,12 @@ import { revalidatePath } from 'next/cache';
 import { OrderStatus, SellerStatus, OrderItemStatus } from '@/generated/client';
 import bcrypt from 'bcryptjs';
 
-// Helper to resolve real database ID from session (handles debug bypass)
-async function getRealUserId(session: any) {
+import type { Session } from 'next-auth';
+import type { Role, Product, Review } from '@/types';
+
+async function getRealUserId(session: Session | null) {
   if (!session?.user) return null;
-  let userId = (session.user as any).id;
+  let userId = (session.user as { id: string }).id;
   if (userId && userId.startsWith('debug-')) {
     const dbUser = await prisma.user.findUnique({ where: { email: session.user.email! } });
     if (dbUser) return dbUser.id;
@@ -24,6 +26,7 @@ export async function getDashboardStats() {
     if (!session) return { error: "Unauthorized" };
 
     const userId = await getRealUserId(session);
+    if (!userId) return { error: "Unauthorized" };
     const role = (session.user as any).role;
 
     if (role === 'BUYER') {
@@ -227,12 +230,28 @@ export async function updateOrderItemStatus(itemId: string, status: OrderItemSta
   }
 }
 
-export async function createProduct(data: any) {
+interface ProductData {
+  title: string;
+  description?: string;
+  basePrice: number;
+  categoryId: string;
+  flashSalePrice?: number;
+  flashSaleEndsAt?: string;
+  variants?: {
+    color?: string;
+    price?: number;
+    stock?: number;
+    image?: string;
+  }[];
+}
+
+export async function createProduct(data: ProductData): Promise<{ id?: string; error?: string } | Product> {
   try {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== 'SELLER') return { error: "Unauthorized" };
 
     const userId = await getRealUserId(session);
+    if (!userId) return { error: "User not found" };
     const seller = await prisma.sellerProfile.findUnique({ where: { userId } });
     if (!seller) return { error: "Seller profile not found" };
 
@@ -255,6 +274,7 @@ export async function createProduct(data: any) {
         ...rest,
         sellerId: seller.id,
         slug,
+        description: rest.description || '',
         variants: {
           create: variants?.map((v: any, idx: number) => ({
             sku: `${rest.title.substring(0,3).toUpperCase()}-${(v.color || 'STND').toUpperCase()}-${Date.now().toString().slice(-4)}-${idx}`,
@@ -281,12 +301,21 @@ export async function createProduct(data: any) {
   }
 }
 
-export async function updateProduct(productId: string, data: any) {
+interface UpdateProductData {
+  title?: string;
+  description?: string;
+  basePrice?: number;
+  categoryId?: string;
+  published?: boolean;
+}
+
+export async function updateProduct(productId: string, data: UpdateProductData): Promise<{ success?: boolean; error?: string } | Product> {
   try {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== 'SELLER') return { error: "Unauthorized" };
 
     const userId = await getRealUserId(session);
+    if (!userId) return { error: "User not found" };
     const seller = await prisma.sellerProfile.findUnique({ where: { userId } });
     if (!seller) return { error: "Seller profile not found" };
 
@@ -311,6 +340,7 @@ export async function deleteProduct(productId: string) {
     if (!session || (session.user as any).role !== 'SELLER') return { error: "Unauthorized" };
 
     const userId = await getRealUserId(session);
+    if (!userId) return { error: "User not found" };
     const seller = await prisma.sellerProfile.findUnique({ where: { userId } });
     if (!seller) return { error: "Seller profile not found" };
 
@@ -326,28 +356,34 @@ export async function deleteProduct(productId: string) {
   }
 }
 
-export async function submitReview(productIdOrData: any, rating?: number, comment?: string) {
+interface ReviewData {
+  productId: string;
+  rating: number;
+  comment?: string;
+}
+
+export async function submitReview(productIdOrData: string | ReviewData, rating?: number, comment?: string): Promise<{ success?: boolean; review?: Review; error?: string }> {
   try {
     const session = await getServerSession(authOptions);
     if (!session) return { error: "Unauthorized" };
 
     const userId = await getRealUserId(session);
+    if (!userId) return { error: "Unauthorized" };
 
-    let data;
-    if (typeof productIdOrData === 'object' && !rating) {
-      data = productIdOrData;
-    } else {
-      data = { productId: productIdOrData, rating, comment };
-    }
+    const productId = typeof productIdOrData === 'string' ? productIdOrData : productIdOrData.productId;
+    const reviewRating = typeof productIdOrData === 'string' ? rating! : productIdOrData.rating;
+    const reviewComment = typeof productIdOrData === 'string' ? comment : productIdOrData.comment;
 
     const review = await prisma.review.create({
       data: {
-        ...data,
-        userId: userId
+        productId,
+        rating: reviewRating,
+        comment: reviewComment,
+        userId,
       }
     });
 
-    revalidatePath(`/product/${data.productId}`);
+    revalidatePath(`/product/${productId}`);
     return { success: true, review };
   } catch (err: any) {
     return { error: err.message };
@@ -365,7 +401,13 @@ export async function getAdminTaxonomyData() {
   }
 }
 
-export async function createTaxonomy(type: 'category' | 'tag' | 'collection', data: any) {
+interface TaxonomyData {
+  name: string;
+  description?: string;
+  image?: string;
+}
+
+export async function createTaxonomy(type: 'category' | 'tag' | 'collection', data: TaxonomyData) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== 'ADMIN') return { error: "Unauthorized" };
@@ -516,7 +558,13 @@ export async function toggleWishlist(productId: string) {
   }
 }
 
-export async function updateProfile(data: any) {
+interface ProfileData {
+  name?: string;
+  phone?: string;
+  avatar?: string;
+}
+
+export async function updateProfile(data: ProfileData): Promise<{ success?: boolean; error?: string }> {
   try {
     const session = await getServerSession(authOptions);
     if (!session) return { error: "Unauthorized" };

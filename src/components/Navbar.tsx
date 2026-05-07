@@ -10,6 +10,7 @@ import LiveSearch from './LiveSearch';
 import LanguageToggle from './LanguageToggle';
 import { useLanguage } from '@/providers/LanguageContext';
 import { useCartStore } from '@/lib/cartStore';
+import CategoriesBar from './CategoriesBar';
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -104,6 +105,8 @@ export default function Navbar() {
         <div className="md:hidden px-4 pb-3">
           <LiveSearch />
         </div>
+
+        <CategoriesBar />
       </nav>
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />

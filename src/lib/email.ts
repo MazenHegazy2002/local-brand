@@ -1,6 +1,8 @@
 // Email notification utility
 // For production, integrate with SendGrid, Resend, AWS SES, or similar
 
+import type { Order, User, OrderItem } from '@/types';
+
 interface EmailOptions {
   to: string;
   subject: string;
@@ -10,32 +12,30 @@ interface EmailOptions {
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   const { to, subject, html } = options;
   
-  // In development, just log the email
   if (process.env.NODE_ENV === 'development') {
-    console.log('📧 Email would be sent:', { to, subject });
-    console.log('Email HTML preview:', html.substring(0, 200) + '...');
     return true;
   }
 
-  // In production, integrate with your email provider
-  // Example using Resend:
-  // const { Resend } = require('resend');
-  // const resend = new Resend(process.env.RESEND_API_KEY);
-  // await resend.emails.send({ from: 'orders@localbrand.com', to, subject, html });
-
   try {
-    // For now, use console log as placeholder
-    console.log('📧 Sending email to:', to);
-    console.log('📧 Subject:', subject);
+    if (!process.env.RESEND_API_KEY) {
+      return false;
+    }
+    const { Resend } = await import('resend');
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({
+      from: 'Local Brand <orders@localbrand.com>',
+      to,
+      subject,
+      html,
+    });
     return true;
-  } catch (error) {
-    console.error('Email send error:', error);
+  } catch {
     return false;
   }
 }
 
 export function generateOrderConfirmationEmail(order: any, user: any): string {
-  const itemsList = order.items?.map((item: any) => `
+  const itemsList = order.items?.map((item: OrderItem) => `
     <tr>
       <td style="padding: 12px; border-bottom: 1px solid #eee;">
         <strong>${item.productTitleSnapshot}</strong><br>

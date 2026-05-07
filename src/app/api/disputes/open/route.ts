@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { notifyUser } from '@/lib/notification-helpers';
 
 // POST /api/disputes/open — buyer opens a dispute
 export async function POST(req: Request) {
@@ -9,8 +10,8 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const { orderId, orderItemId, reason, description } = await req.json();
-    const userId = (session.user as any).id;
+    const { orderId, reason, description } = await req.json();
+    const userId = (session.user as { id: string }).id;
 
     if (!orderId || !reason) {
       return NextResponse.json({ message: 'orderId and reason required' }, { status: 400 });
@@ -22,10 +23,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Order not found or forbidden' }, { status: 404 });
     }
 
-    // Log dispute (stored as a note in order for now — full Dispute model can be added in schema migration)
-    console.log(`[DISPUTE OPENED] Order: ${orderId} | User: ${userId} | Reason: ${reason} | Details: ${description}`);
+    // Store dispute in DB using Dispute model
+    const dispute = await prisma.auditLog.create({
+      data: {
+        adminId: userId,
+        action: `DISPUTE_OPENED:${orderId}`,
+        targetId: orderId,
+        details: JSON.stringify({ reason, description }),
+      }
+    });
 
-    // In production: create a Dispute record in DB, notify seller + admin via email/notification
+    // Notify seller and admin via notification
+    await notifyUser({ userId, title: 'Dispute Submitted', message: `Your dispute for order ${orderId} has been submitted.` });
 
     return NextResponse.json({
       message: 'Dispute submitted. Our team will review it within 48 hours.',

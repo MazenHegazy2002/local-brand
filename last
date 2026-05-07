@@ -1,0 +1,508 @@
+FULL PROJECT PLAN: Local Brand E-commerce
+Project Overview
+Type: Multi-vendor Egyptian e-commerce marketplace
+Stack: Next.js 16.2 + React 19 + Prisma 6 + Neon Postgres + Stripe + Tailwind CSS 3.4
+Scale: 28 pages, 52 API routes, 20 DB models, 16 components
+---
+PHASE 1: CRITICAL SECURITY FIXES (Do First)
+#	Task
+1	Delete ALL debug routes (/api/debug*, /api/debug-login)
+2	Delete test-login page (src/app/test-login/)
+3	Create .env.example template documenting all 13 env vars
+4	Create vercel.json with runtime, headers, redirects
+5	Add production guards to any remaining debug code
+6	Move hardcoded DEBUG_BYPASS_KEY out of source
+7	Remove all 37 console.log statements from production code
+8	Remove console.log from src/lib/prisma.ts, src/lib/email.ts
+9	Strengthen CSP — remove 'unsafe-inline' and 'unsafe-eval'
+10	Add proper CORS config to API routes
+---
+PHASE 2: TYPE SYSTEM OVERHAUL
+#	Task
+11	Replace ALL 266+ any types with proper interfaces
+12	Create shared src/types/index.ts with all domain types
+13	Add Zod validation schemas for all API routes
+14	Type the product prop in ProductCard.tsx
+15	Type the product prop in WishlistButton.tsx
+16	Type initialReviews in ReviewSection.tsx
+17	Create Product, Order, User, Review, CartItem interfaces
+18	Type SSE client map properly (SSEClient interface)
+19	Replace any in server actions (seller.ts, orders.ts)
+---
+PHASE 3: CONSTANTS & CONFIG CENTRALIZATION
+#	Task
+20	Create src/lib/constants.ts — VAT (0.14), Commission (0.15), Return window (14), Escrow (7 days)
+21	Replace hardcoded 0.14 (VAT) in 9+ locations
+22	Replace hardcoded 0.15 (commission) throughout
+23	Create src/lib/shipping-rates.ts — all governorate rates
+24	Move phone +20 123 456 7890 to env var
+25	Move base URL 
+---
+PHASE 4: DATABASE / PRISMA
+#	Task
+26	Add Dispute model to schema (open endpoint logs but no DB model)
+27	Add Conversation / Message model for chat history
+28	Add SellerPayout schedule/cron tracking model
+29	Create Prisma migration for new models
+30	Verify seed files work (prisma/seed.ts, script/seed.ts)
+31	Add index on frequently queried fields (email, slug, sellerId)
+32	Add unique constraint on Product.slug
+33	Add unique constraint on Category.slug
+34	Fix placeholder tax reg: XXX-XXX-XXX → real number in env
+---
+PHASE 5: SERVERLESS / RUNTIME FIXES
+#	Task
+35	Fix SSE in-memory Map — use Redis pub/sub or Pusher
+36	Wire processEscrowPayouts() to Vercel Cron
+37	Add Vercel Cron route for payout processing
+38	Add Vercel Cron route for loyalty point expiry check
+39	Fix production REDIS_URL (localhost → Upstash/Redis Cloud)
+40	Add rate limiting middleware to all API routes
+---
+PHASE 6: BACKEND/API ROUTES — FIXES & COMPLETION
+#	Task
+41	Fix payment webhook cart retrieval (TODO comment)
+42	Add idempotency key to Stripe webhook
+43	Implement full dispute flow with DB storage
+44	Implement chat history persistence
+45	Add product comparison limit (max 4) validation
+46	Add seller health score calculation to full model
+47	Add refund flow for partial cancellations
+48	Implement Aramex/Bosta real shipping API
+49	Implement real email sending (SendGrid/Nodemailer)
+50	Add guest order tracking by email
+51	Add product view tracking persistence
+52	Add address geocoding/lat-lng
+53	Add product search indexing (Algolia/Meilisearch)
+54	Add pagination to admin user/order lists
+55	Add filters to admin order list (date range, status)
+56	Implement seller payout withdrawal flow
+57	Add product bulk delete for sellers
+58	Add product duplicate/cloning feature
+59	Add review moderation (approve/reject) for admin
+60	Add verified purchase badge on reviews
+---
+PHASE 7: FRONTEND — PAGES (Fixes & Completions)
+Public Pages
+#	Task
+61	Add loading skeletons to product detail
+62	Add 404 page with suggestions
+63	Add product zoom on image hover/click
+64	Add size guide / size chart component
+65	Add recently viewed products section
+66	Add related products to product page
+67	Add breadcrumb navigation
+68	Add sort options to category pages
+69	Add pagination to category pages
+70	Add pagination to brand pages
+71	Add search results page with filters
+72	Add infinite scroll to shop page
+73	Add product comparison page
+74	Add Flash Sale countdown timers
+75	Add Deal of the Day section to homepage
+76	Add "Sign up for newsletter" widget
+77	Add cookie consent banner (GDPR/PDPL Egypt)
+78	Add announcement/promo banner
+Auth Pages
+#	Task
+79	Add email verification flow
+80	Add resend verification email
+81	Add "remember me" checkbox
+82	Add OAuth error handling with friendly messages
+83	Add password strength indicator on register
+84	Add seller application review page (pending state)
+Customer Dashboard
+#	Task
+85	Add order cancellation request
+86	Add return/rma request from dashboard
+87	Add dispute filing from dashboard
+88	Add reorder / buy again button
+89	Add wallet top-up / balance display
+90	Add loyalty tier display (Bronze/Silver/Gold)
+91	Add saved payment methods management
+92	Add account deletion (GDPR/PDPL)
+93	Add order invoice download (PDF)
+94	Add product Q&A submission from customer
+95	Add profile photo upload
+Seller Hub
+#	Task
+96	Add product CSV/XLSX import from UI
+97	Add bulk product editor (multi-select + batch edit)
+98	Add seller payout history page
+99	Add payout withdrawal request UI
+100	Add shipping label generation
+101	Add return request management page
+102	Add dispute response page for sellers
+103	Add SEO fields per product (meta title, description)
+104	Add product variants management UI
+105	Add low stock alerts dashboard widget
+106	Add "announcement" / "out of stock" toggle per product
+Admin Dashboard
+#	Task
+107	Add full admin order management (CRUD)
+108	Add admin product moderation/approval queue
+109	Add admin coupon management (CRUD)
+110	Add admin flash sale creation & scheduling
+111	Add admin brand management (approve/edit)
+112	Add admin user suspension/deletion
+113	Add admin seller payout initiation
+114	Add admin system settings UI (VAT, commission)
+115	Add admin audit log viewer
+116	Add admin tax report export (VAT)
+117	Add admin review moderation queue
+118	Add admin analytics with charts (orders, revenue, users)
+Checkout Flow
+#	Task
+119	Add address autocomplete (Egypt map API)
+120	Add express checkout (Apple Pay / Google Pay)
+121	Add installment/pay-over-time option
+122	Add order summary sidebar sticky
+123	Add gift wrapping option
+124	Add order notes / special instructions
+Help & Legal
+#	Task
+125	Add FAQ page with categories
+126	Add contact form with ticket system
+127	Add seller terms & conditions page
+128	Add privacy policy (PDPL Egypt compliance)
+129	Add shipping policy page
+130	Add returns & refunds policy page
+---
+PHASE 8: COMPONENTS — FIXES & NEW
+#	Task
+131	Replace inline SVGs with lucide-react icons
+132	Fix CartDrawer — convert inline styles to Tailwind
+133	Add product quick-view modal
+134	Add image gallery/lightbox
+135	Add size selector component
+136	Add color swatch selector
+137	Add rating stars component (reusable)
+138	Add toast/notification component
+139	Add modal/dialog component
+140	Add accordion component
+141	Add tabs component
+142	Add badge component
+143	Add tooltip component
+144	Add avatar component
+145	Add card component
+146	Add input, textarea, select, checkbox form components
+147	Add button variants (outline, ghost, destructive)
+148	Add data table component for admin/seller
+149	Add chart component for analytics (recharts)
+150	Add pagination component
+151	Add breadcrumb component
+152	Add filter sidebar component (refactor from shop)
+153	Add countdown timer component
+154	Add cookie consent component
+155	Add loading spinner component
+156	Add empty state component
+157	Add error boundary component
+158	Add WCAG accessibility to all interactive elements
+159	Add keyboard navigation to dropdowns/modals
+160	Add focus trap for modals/drawers
+---
+PHASE 9: STATE MANAGEMENT & i18n
+#	Task
+161	Add Zustand store for user preferences (theme, language)
+162	Add Zustand store for recently viewed
+163	Add Zustand store for compare list
+164	Add Zustand store for notifications (badge count)
+165	Replace Google Translate with proper i18n (next-intl)
+166	Add AR translations for all UI strings
+167	Add RTL layout support (already partial)
+168	Add number formatting (EGP currency)
+169	Add date formatting for Egyptian locale
+170	Add pluralization rules for Arabic
+---
+PHASE 10: PERFORMANCE & SEO
+#	Task
+171	Add OG image meta tags for products
+172	Add Twitter Card meta tags
+173	Add JSON-LD structured data (Product, Offer, Breadcrumb)
+174	Add sitemap.xml generation (already has sitemap.ts)
+175	Add robots.txt (already has robots.ts)
+176	Add canonical URLs
+177	Add lazy loading for below-fold images
+178	Add skeleton loading for all async pages
+179	Add next/font optimization (already used)
+180	Add image blur placeholders
+181	Add bundle analyzer setup
+182	Add Core Web Vitals monitoring
+183	Add web vitals reporting API
+184	Implement product image CDN optimization
+185	Add favicon and manifest for PWA
+---
+PHASE 11: PAYMENTS & ORDERS
+#	Task
+186	Add Stripe Connect for multi-seller payouts
+187	Add PayMob payment gateway (Egyptian)
+188	Add Fawry payment option (Egyptian)
+189	Add wallet balance payment
+190	Add partial refund flow
+191	Add order status email notifications
+192	Add order cancellation email
+193	Add shipping tracking webhook integration
+194	Add delivery proof / confirmation flow
+195	Add invoice PDF generation
+---
+PHASE 12: SEARCH & DISCOVERY
+#	Task
+196	Add Algolia/Meilisearch for product search
+197	Add autocomplete/suggestions with search engine
+198	Add voice search
+199	Add image search (upload photo to find similar)
+200	Add personalized recommendations ML model
+201	Add "customers also bought" section
+202	Add trending products algorithm
+203	Add category popularity sorting
+---
+PHASE 13: MOBILE & PWA
+#	Task
+204	Test and fix all mobile layouts
+205	Add push notifications (Web Push API)
+206	Add "add to home screen" prompt
+207	Add offline mode for browsing (already PWA)
+208	Add offline cart persistence
+209	Add "share via app" deep links
+210	Add app links / universal links
+211	Fix BottomNavigation active state
+212	Add swipe gestures for product gallery
+---
+PHASE 14: ADMIN PANEL ENHANCEMENTS
+#	Task
+213	Add drag-and-drop category tree editor
+214	Add banner/carousel CMS
+215	Add homepage featured sections CMS
+216	Add email template editor (transactional emails)
+217	Add GDPR/PDPL data export tool for any user
+218	Add role-based admin permissions (not just ADMIN role)
+219	Add bulk user actions (export, email)
+220	Add financial dashboard (GMV, net revenue, fees)
+---
+PHASE 15: TESTING & QUALITY
+#	Task
+221	Add unit tests for server actions
+222	Add unit tests for API routes
+223	Add integration tests for checkout flow
+224	Add Playwright E2E tests
+225	Add accessibility audit (axe-core)
+226	Add lighthouse CI
+227	Add ESLint plugin (react, typescript)
+228	Add Prettier formatting
+229	Add commitlint / conventional commits
+230	Add CI/CD pipeline (GitHub Actions)
+---
+PHASE 16: VERCEL DEPLOYMENT CONFIG
+#	Task
+231	Create vercel.json with all rewrites, headers, redirects
+232	Add Vercel Analytics integration
+233	Add Vercel Speed Insights
+234	Add Vercel Blob storage config
+235	Configure Vercel environment variables in dashboard
+236	Set up preview deployments per PR
+237	Set up production branch protection
+238	Add deployment monitoring alerts
+239	Configure custom domain
+240	Add SSL certificate verification
+---
+PRIORITY EXECUTION ORDER
+TIER 1 (Must fix before ANY deploy):
+├── Phase 1: Security fixes
+├── Phase 4: Database indexes
+├── Phase 5: Serverless fixes (SSE, Redis, Cron)
+├── Phase 6: Critical API fixes (webhook, email)
+└── Phase 16: Vercel config
+TIER 2 (Polish for launch):
+├── Phase 2: Type system
+├── Phase 3: Constants
+├── Phase 7: Frontend completions (missing pages)
+├── Phase 8: Components
+├── Phase 10: SEO basics
+TIER 3 (Post-launch improvements):
+├── Phase 9: i18n proper
+├── Phase 11: Payment completeness
+├── Phase 12: Search & Discovery
+├── Phase 13: Mobile/PWA polish
+├── Phase 14: Admin enhancements
+└── Phase 15: Testing
+---
+ -  Summary Of Findings: The codebase is a high-quality prototype but requires significant hardening for production.              │    
+│                                                                                                                                   │    
+│    1. Frontend/UI Gaps: Monolithic dashboards (Admin-OS, Seller-Hub) need decomposition. Missing critical views for Payouts, Store│    
+│       Settings, Return Requests (RMA), and detailed Analytics. Lacks global loading/error states and a proper i18n framework      │    
+│       (currently uses Google Translate widget).                                                                                   │    
+│                                                                                                                                   │    
+│    2. Backend/API Issues: Complete lack of Zod validation for inputs. Payment flows are insecure; orders are marked as PAID       │    
+│       without gateway verification (webhook logic is incomplete). Transactions in multi-seller checkout flows are not atomic. Rate│    
+│       limiting is not enforced via middleware.                                                                                    │    
+│                                                                                                                                   │    
+│    3. Database/Schema Updates: Review model lacks images. Schema doesn't support pre-payment inventory locking or explicit        │    
+│       platform fee tracking per item. Structured bank details for payouts are missing.                                            │    
+│                                                                                                                                   │    
+│    4. Deployment & Infrastructure: Email and Payment providers are currently mocked. Redis is underutilized. The project uses     │    
+│       experimental/high versions of Next.js (16) and React (19) which may require stabilization. Hardcoded values for VAT and     │    
+│       shipping fees need to be moved to dynamic system settings or a dedicated calculation service.                               │    
+│  -  Relevant Locations:                                                                                                           │    
+│ ┌─────────────────────────────────────┬─────────────────────────────────────────────────────────────┬─────────────────────────────│    
+│ ┐                                                                                                                                 │    
+│ │ File Path                          │  Reasoning                                                  │ Key Symbols                 ││    
+│ ├─────────────────────────────────────┼─────────────────────────────────────────────────────────────┼─────────────────────────────│    
+│ ┤                                                                                                                                 │    
+│ │ src/app/actions/orders.ts          │  Contains critical order creation logic which lacks         │ ["createOrder"]             ││    
+│ │                                    │  validation, relies on hardcoded fees, and has insecure     │                             ││    
+│                                                                                                                                   │    
+│ │                                    │  payment status assignment.                                 │                             ││    
+│                                                                                                                                   │    
+│ │ src/app/api/checkout/split/route.t │  Handles multi-seller checkouts but lacks atomicity and     │ ["POST"]                    ││    
+│   s                                                                                                                               │    
+│ │                                    │  duplicates shipping fees incorrectly.                      │                             ││    
+│                                                                                                                                   │    
+│ │ src/app/admin-os/page.tsx          │  A monolithic 38KB file that manages the entire admin       │ ["AdminOS"]                 ││    
+│ │                                    │  experience; needs decomposition for production.            │                             ││    
+│                                                                                                                                   │    
+│ │ src/app/seller-hub/page.tsx        │  A monolithic 41KB file managing the seller experience;     │ ["SellerHub"]               ││    
+│ │                                    │  lacks several key features like payout management and      │                             ││    
+│                                         store                                                                                     │    
+│ │                                    │  settings.                                                  │                             ││    
+│                                                                                                                                   │    
+│ │ prisma/schema.prisma               │  The data model needs updates to support review images,     │ ["Review","Order","Payout"  ││    
+│                                                                                                      ]                            │    
+│ │                                    │  structured payouts, and better financial tracking.         │                             ││    
+│                                                                                                                                   │    
+│ │ src/lib/email.ts                   │  Currently a placeholder that logs to console; needs        │ ["sendEmail"]               ││    
+│ │                                    │  integration with a real provider like Resend or SendGrid.  │                             ││    
+│                                                                                                                                   │    
+│ │ src/app/api/payment/intent/route.t │  Contains payment logic with a mock fallback and hardcoded  │ ["POST"]                    ││    
+│   s                                                                                                                               │    
+│ │                                    │  VAT/shipping calculations.                                 │                             ││    
+│                                                                                                                                   │    
+│ │ src/components/ReviewSection.tsx   │  UI component for reviews that lacks the required image     │ ["ReviewSection"]           ││    
+│ │                                    │  upload functionality.                                      │                             ││    
+│                                                                                                                                   │    
+│ └─────────────────────────────────────┴─────────────────────────────────────────────────────────────┴─────────────────────────────│    
+│ ┘                                                                                                                                 │    
+│ -  Exploration Trace:                                                                                                             │    
+│    - Read package.json to identify dependencies and versioning. Found high versions of Next.js and React, and various service     │    
+│      integrations (Stripe, Cloudinary, Redis).                                                                                    │    
+│    - Analyzed prisma/schema.prisma to understand the data model. Identified gaps in Review images, financial tracking, and        │    
+│      inventory locking.                                                                                                           │    
+│    - Explored src/app directory structure. Found monolithic dashboard files for admin and seller.                                 │    
+│    - Analyzed src/app/actions/orders.ts and src/app/api/checkout/split/route.ts. Discovered lack of input validation, non-atomic  │    
+│      transactions in multi-seller flows, and mock payment logic.                                                                  │    
+│    - Inspected src/app/api/payment routes. Found that Stripe integration is partially implemented with mock fallbacks and lacks   │    
+│      proper order verification in webhooks.                                                                                       │    
+│    - Reviewed src/components including ReviewSection.tsx. Confirmed missing image upload support.                                 │    
+│    - Checked src/middleware.ts. Found role-based auth but no global rate limiting or error handling.                              │    
+│    - Verified src/lib utilities (email, redis, auth). Confirmed email is mocked and Redis is underutilized.                       │    
+│    - Searched for zod and error.tsx/loading.tsx. Confirmed their absence.                                                         │    
+│                                                                                                                                   │    
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯    
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Ready to start implementation?                                                                                                        │
+│                                                                                                                                       │
+│ Local Brand Master Implementation Plan                                                                                                │
+│                                                                                                                                       │
+│ This document outlines the exhaustive, multi-phase plan to transition the Local Brand e-commerce platform from a prototype to a       │
+│ production-ready, Vercel-deployed application. It covers all necessary database updates, backend hardening, frontend completion, and  │
+│ deployment configurations.                                                                                                            │
+│                                                                                                                                       │
+│ Phase 1: Foundation & Security Hardening (Backend First)                                                                              │
+│                                                                                                                                       │
+│ Objective: Secure the application, ensure data integrity, and implement robust validation.                                            │
+│                                                                                                                                       │
+│  1. Strict Request Validation (Zod Integration)                                                                                       │
+│      * Action: Install zod and create schema definitions for all API inputs and Server Actions.                                       │
+│      * Targets: src/app/api/** and src/app/actions/**.                                                                                │
+│      * Details: Validate email formats, password strength, required fields, and strictly type request bodies before touching the      │
+│        database.                                                                                                                      │
+│                                                                                                                                       │
+│  2. Authentication & Authorization Overhaul                                                                                           │
+│      * Action: Remove the hardcoded DEBUG_BYPASS_KEY from src/lib/auth.ts.                                                            │
+│      * Action: Enhance src/middleware.ts or implement a dedicated RBAC (Role-Based Access Control) utility to strictly protect routes │
+│        based on role (BUYER, SELLER, ADMIN).                                                                                          │
+│                                                                                                                                       │
+│  3. Database Atomicity (Prisma Transactions)                                                                                          │
+│      * Action: Refactor critical operations to use prisma.$transaction.                                                               │
+│      * Targets: src/app/api/checkout/split/route.ts and src/app/actions/orders.ts.                                                    │
+│      * Details: Ensure that stock deductions, order creation, and loyalty point updates happen atomically. If one fails, everything   │
+│        rolls back.                                                                                                                    │
+│                                                                                                                                       │
+│  4. Schema Adjustments (Prisma)                                                                                                       │
+│      * Action: Update prisma/schema.prisma.                                                                                           │
+│      * Changes:                                                                                                                       │
+│          * Add images (String[]) to the Review model to support user photo uploads.                                                   │
+│          * Add explicit platform fee tracking (e.g., commissionAmount) per OrderItem or Order to support split payouts.               │
+│          * Add structured bank details fields to the SellerProfile model.                                                             │
+│          * Consider adding an isLocal or originCity field to Product for the "Egyptian-made" filtering requirement.                   │
+│                                                                                                                                       │
+│ Phase 2: Core E-commerce Functionality Completion                                                                                     │
+│                                                                                                                                       │
+│ Objective: Implement missing business logic for payments, shipping, and email notifications.                                          │
+│                                                                                                                                       │
+│  1. Payment Gateway Integration (Stripe & Paymob)                                                                                     │
+│      * Action: Replace mock logic in src/app/api/payment/intent/route.ts.                                                             │
+│      * Action: Implement robust Webhooks (src/app/api/webhooks/stripe/route.ts) to securely update order status to PAID only when the │
+│        gateway confirms.                                                                                                              │
+│                                                                                                                                       │
+│  2. Email Notification Service                                                                                                        │
+│      * Action: Integrate a real ESP (e.g., Resend or SendGrid) in src/lib/email.ts.                                                   │
+│      * Details: Replace console.log placeholders with actual email sending logic for Order Confirmations, Shipping Updates, and       │
+│        Password Resets.                                                                                                               │
+│                                                                                                                                       │
+│  3. Dynamic Pricing & Shipping Calculation                                                                                            │
+│      * Action: Remove hardcoded VAT (14%) and shipping fees (50 EGP).                                                                 │
+│      * Details: Fetch these values from the SystemSettings table or implement a dedicated service that calculates shipping based on   │
+│        the selected Governorate.                                                                                                      │
+│                                                                                                                                       │
+│  4. Cart & Wishlist Synchronization                                                                                                   │
+│      * Action: Create API endpoints/actions to sync the client-side Zustand store with the database CartItem and Wishlist tables upon │
+│        user login.                                                                                                                    │
+│                                                                                                                                       │
+│ Phase 3: Frontend Decomposition & Feature Completion                                                                                  │
+│                                                                                                                                       │
+│ Objective: Break down monolithic dashboards and build out missing UI views.                                                           │
+│                                                                                                                                       │
+│  1. Dashboard Decomposition                                                                                                           │
+│      * Action: Refactor src/app/admin-os/page.tsx and src/app/seller-hub/page.tsx.                                                    │
+│      * Details: Break these massive files into smaller, maintainable components (e.g., SellerAnalytics, OrderFulfillmentTable,        │
+│        ProductManager). Use nested layouts.                                                                                           │
+│                                                                                                                                       │
+│  2. Missing Seller Views                                                                                                              │
+│      * Action: Build dedicated views/modals for Payout Management, Store Settings (logo, description, bank details), and Return       │
+│        Requests (RMA) handling.                                                                                                       │
+│                                                                                                                                       │
+│  3. Review System Upgrade                                                                                                             │
+│      * Action: Update src/components/ReviewSection.tsx to include image upload functionality (integrating with Cloudinary or Vercel   │
+│        Blob).                                                                                                                         │
+│                                                                                                                                       │
+│  4. Global Error & Loading States                                                                                                     │
+│      * Action: Add loading.tsx and error.tsx boundaries across all major routes in src/app/ to improve UX during data fetching and    │
+│        API failures.                                                                                                                  │
+│                                                                                                                                       │
+│  5. Internationalization (i18n)                                                                                                       │
+│      * Action: Evaluate migrating away from the client-side Google Translate widget to a robust server-side i18n solution (like       │
+│        next-intl) for better SEO and RTL layout support.                                                                              │
+│                                                                                                                                       │
+│ Phase 4: Infrastructure, Optimization & Vercel Deployment                                                                             │
+│                                                                                                                                       │
+│ Objective: Finalize caching, environment configuration, and deployment readiness.                                                     │
+│                                                                                                                                       │
+│  1. Environment Variables Audit                                                                                                       │
+│      * Action: Ensure all required secrets (Database URLs, Payment Keys, Email API Keys, NextAuth Secrets) are documented in          │
+│        .env.example and correctly set in the Vercel project settings.                                                                 │
+│                                                                                                                                       │
+│  2. Caching Strategy (Redis)                                                                                                          │
+│      * Action: Optimize src/lib/redis.ts usage.                                                                                       │
+│      * Details: Implement robust caching for heavily accessed data like Category trees, Featured Products, and System Settings.       │
+│        Ensure proper invalidation strategies on updates.                                                                              │
+│                                                                                                                                       │
+│  3. Rate Limiting                                                                                                                     │
+│      * Action: Implement a rate-limiting mechanism (potentially via Edge Middleware and Upstash Redis) to protect critical endpoints  │
+│        (login, checkout, API routes) from abuse.                                                                                      │
+│                                                                                                                                       │
+│  4. Clean Up & Housekeeping                                                                                                           │
+│      * Action: Remove obsolete root .html files (admin_dashboard.html, etc.).                                                         │
+│      * Action: Remove src/app/api/debug-* routes intended only for development.                                                       │
+│      * Action: Verify Vercel Build configurations (next.config.ts, package.json scripts) and ensure compatibility with Next.js        │
+│        16/React 19 RC features.                                                                                                       │
+│                                              

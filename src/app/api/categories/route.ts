@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@/generated/client';
 
 /**
  * Category landing pages API
@@ -23,13 +24,13 @@ export async function GET(req: Request) {
 
       if (!category) return NextResponse.json({ message: 'Category not found' }, { status: 404 });
 
-      const where: any = { categoryId: category.id, published: true, deletedAt: null };
-      const orderBy: any = {
+      const where: Prisma.ProductWhereInput = { categoryId: category.id, published: true, deletedAt: null };
+      const orderBy: Prisma.ProductOrderByWithRelationInput = {
         newest: { createdAt: 'desc' },
         price_asc: { basePrice: 'asc' },
         price_desc: { basePrice: 'desc' },
         featured: { isFeatured: 'desc' },
-      }[sort] || { createdAt: 'desc' };
+      }[sort as string] as Prisma.ProductOrderByWithRelationInput || { createdAt: 'desc' as const };
 
       const [products, total] = await Promise.all([
         prisma.product.findMany({

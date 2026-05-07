@@ -1,4 +1,26 @@
-import { NextAuthOptions } from "next-auth";
+import { NextAuthOptions, DefaultSession, DefaultUser } from "next-auth";
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      role: string;
+    } & DefaultSession["user"]
+  }
+
+  interface User extends DefaultUser {
+    id: string;
+    role: string;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    role: string;
+  }
+}
+
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
@@ -31,27 +53,6 @@ export const authOptions: NextAuthOptions = {
         
         const email = credentials.email.toLowerCase().trim();
 
-        // FOOLPROOF BYPASS
-        if (credentials?.password === 'DEBUG_BYPASS_KEY') {
-          if (email === 'admin@localbrand.com') {
-            return { id: "debug-admin-id", name: "Emergency Admin", email: "admin@localbrand.com", role: "ADMIN" };
-          }
-          if (email === 'seller@localbrand.com') {
-            return { id: "debug-seller-id", name: "Emergency Seller", email: "seller@localbrand.com", role: "SELLER" };
-          }
-          if (email === 'ali@localbrand.com') {
-            return { id: "2dc1447b-370a-4fee-aece-3a333cf2f04c", name: "Ali", email: "ali@localbrand.com", role: "SELLER" };
-          }
-          if (email === 'mazen@localbrand.com') {
-            return { id: "debug-mazen-id", name: "Mazen", email: "mazen@localbrand.com", role: "BUYER" };
-          }
-        }
-
-        // Specific ali bypass for testing
-        if (email === 'ali@localbrand.com' && credentials?.password === 'password123') {
-          return { id: "2dc1447b-370a-4fee-aece-3a333cf2f04c", name: "Ali", email: "ali@localbrand.com", role: "SELLER" };
-        }
-
         try {
           const user = await prisma.user.findUnique({ where: { email } });
           if (!user || !user.passwordHash) return null;
@@ -68,15 +69,15 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as any).role;
+        token.role = user.role;
         token.id = user.id;
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
-        (session.user as any).role = token.role;
-        (session.user as any).id = token.id;
+        session.user.role = token.role;
+        session.user.id = token.id;
       }
       return session;
     }

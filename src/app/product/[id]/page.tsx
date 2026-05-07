@@ -5,13 +5,15 @@ import { getDictionary } from '@/lib/i18n/server';
 import WishlistButton from '@/components/WishlistButton';
 import ReviewSection from '@/components/ReviewSection';
 import ProductDetails from './ProductDetails';
+import { PLATFORM_URL } from '@/lib/constants';
+import type { Review } from '@/types';
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const dict = await getDictionary();
   const t = dict;
 
-
+  const baseUrl = PLATFORM_URL;
 
   const product = await prisma.product.findUnique({
     where: { id },
@@ -43,9 +45,48 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   const primaryImage = product.images.find(i => i.isPrimary)?.url || product.images[0]?.url || '/placeholder.png';
   const stockCount = product.variants.reduce((acc, v) => acc + v.stockCount, 0);
+  const avgRating = product.reviews.length > 0
+    ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length
+    : 0;
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    description: product.description,
+    image: product.images.map(img => img.url),
+    brand: { '@type': 'Brand', name: product.seller?.storeName },
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'EGP',
+      price: product.flashSalePrice || product.basePrice,
+      availability: product.variants.some(v => v.stockCount > 0)
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      seller: { '@type': 'Organization', name: 'Local Brand' },
+    },
+    aggregateRating: product.reviews.length > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: avgRating,
+      reviewCount: product.reviews.length,
+    } : undefined,
+  };
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: baseUrl },
+      { '@type': 'ListItem', position: 2, name: product.category?.name, item: `${baseUrl}/shop?category=${product.category?.slug}` },
+      { '@type': 'ListItem', position: 3, name: product.title },
+    ],
+  };
 
   return (
     <main className="min-h-screen bg-[#f9f8f6]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      
       <Navbar />
       
       {/* Breadcrumb */}
@@ -130,7 +171,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Reviews Section */}
-        <ReviewSection productId={product.id} initialReviews={product.reviews} />
+        <ReviewSection productId={product.id} initialReviews={product.reviews as unknown as Review[]} />
       </div>
     </main>
   );

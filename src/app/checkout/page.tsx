@@ -16,7 +16,9 @@ export default function CheckoutPage() {
   const [error, setError] = useState('');
   
   const [address, setAddress] = useState({
-    street: '',
+    fullName: '',
+    phone: '',
+    address: '',
     city: '',
     governorate: '',
   });
@@ -33,6 +35,11 @@ export default function CheckoutPage() {
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [pointsToUse, setPointsToUse] = useState(0);
   const [pointsError, setPointsError] = useState('');
+
+  // Additional checkout options
+  const [orderNotes, setOrderNotes] = useState('');
+  const [giftWrapping, setGiftWrapping] = useState(false);
+  const [showInstallments, setShowInstallments] = useState(false);
 
   // Fetch user loyalty points
   useEffect(() => {
@@ -54,9 +61,10 @@ export default function CheckoutPage() {
   const pointsDiscount = pointsToUse;
   const afterDiscount = subtotal - couponDiscount - pointsDiscount;
   const shipping = 50;
+  const giftWrapFee = giftWrapping ? 25 : 0;
   const vatRate = 0.14;
   const vatAmount = Math.max(0, afterDiscount * vatRate);
-  const grandTotal = Math.max(0, afterDiscount + shipping + vatAmount);
+  const grandTotal = Math.max(0, afterDiscount + shipping + vatAmount + giftWrapFee);
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -169,13 +177,35 @@ export default function CheckoutPage() {
                 </h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name</label>
+                    <input 
+                      required 
+                      type="text" 
+                      value={address.fullName}
+                      onChange={e => setAddress({...address, fullName: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none" 
+                      placeholder="e.g. Ahmed Mohamed"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number</label>
+                    <input 
+                      required 
+                      type="tel" 
+                      value={address.phone}
+                      onChange={e => setAddress({...address, phone: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none" 
+                      placeholder="e.g. 01234567890"
+                    />
+                  </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Street Address</label>
                     <input 
                       required 
                       type="text" 
-                      value={address.street}
-                      onChange={e => setAddress({...address, street: e.target.value})}
+                      value={address.address}
+                      onChange={e => setAddress({...address, address: e.target.value})}
                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none" 
                       placeholder="e.g. 12 El Nasr St, Building 4" 
                     />
@@ -297,7 +327,7 @@ export default function CheckoutPage() {
                       name="payment" 
                       value="CASH_ON_DELIVERY"
                       checked={paymentMethod === 'CASH_ON_DELIVERY'}
-                      onChange={() => setPaymentMethod('CASH_ON_DELIVERY')}
+                      onChange={() => { setPaymentMethod('CASH_ON_DELIVERY'); setShowInstallments(false); }}
                       className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
                     />
                     <div className="flex-1">
@@ -313,15 +343,102 @@ export default function CheckoutPage() {
                       name="payment" 
                       value="CREDIT_CARD"
                       checked={paymentMethod === 'CREDIT_CARD'}
-                      onChange={() => setPaymentMethod('CREDIT_CARD')}
+                      onChange={() => { setPaymentMethod('CREDIT_CARD'); setShowInstallments(false); }}
                       className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
                     />
                     <div className="flex-1">
                       <div className="font-bold text-gray-900">Credit / Debit Card</div>
-                      <div className="text-sm text-gray-500">A mock successful payment will be simulated.</div>
+                      <div className="text-sm text-gray-500">Secure payment via Stripe</div>
                     </div>
                     <div className="text-3xl">💳</div>
                   </label>
+
+                  {/* Express Payment Buttons */}
+                  {paymentMethod === 'CREDIT_CARD' && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <p className="text-xs text-gray-500 mb-3">Or express checkout with</p>
+                      <div className="flex gap-3">
+                        <button type="button" disabled className="flex-1 py-2.5 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed flex items-center justify-center gap-2">
+                          <span>🍎</span> Apple Pay
+                        </button>
+                        <button type="button" disabled className="flex-1 py-2.5 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed flex items-center justify-center gap-2">
+                          <span>🔷</span> Google Pay
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2">Express payment requires Stripe setup</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Installment Option */}
+                {paymentMethod === 'CREDIT_CARD' && grandTotal >= 1000 && (
+                  <div className="mt-4">
+                    <button 
+                      type="button"
+                      onClick={() => setShowInstallments(!showInstallments)}
+                      className="text-sm text-[#1e3b8a] font-medium flex items-center gap-2"
+                    >
+                      <span>📊</span> 
+                      {showInstallments ? 'Hide' : 'Show'} installment options (valU / Tabby)
+                    </button>
+                    {showInstallments && (
+                      <div className="mt-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-sm text-amber-800 mb-3">
+                          Available for orders over 1,000 EGP. Pay in 3-6 easy installments.
+                        </p>
+                        <div className="flex gap-2">
+                          <button type="button" disabled className="flex-1 py-2 bg-white border border-amber-300 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed">
+                            valU (3-6 months)
+                          </button>
+                          <button type="button" disabled className="flex-1 py-2 bg-white border border-amber-300 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed">
+                            Tabby (4 payments)
+                          </button>
+                        </div>
+                        <p className="text-xs text-amber-600 mt-2">Installment payment integration coming soon</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Order Notes & Gift Wrapping */}
+              <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">5</span>
+                  Additional Options
+                </h2>
+                
+                <div className="space-y-4">
+                  {/* Gift Wrapping */}
+                  <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-colors ${giftWrapping ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="checkbox"
+                        checked={giftWrapping}
+                        onChange={(e) => setGiftWrapping(e.target.checked)}
+                        className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a] rounded"
+                      />
+                      <div>
+                        <div className="font-bold text-gray-900">🎁 Gift Wrapping</div>
+                        <div className="text-sm text-gray-500">Add premium gift packaging</div>
+                      </div>
+                    </div>
+                    <div className="font-bold text-[#1e3b8a]">+25 EGP</div>
+                  </label>
+
+                  {/* Order Notes */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Order Notes (Optional)</label>
+                    <textarea
+                      value={orderNotes}
+                      onChange={(e) => setOrderNotes(e.target.value)}
+                      placeholder="Special instructions for your order..."
+                      rows={3}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none resize-none"
+                      maxLength={500}
+                    />
+                    <p className="text-xs text-gray-400 mt-1">{orderNotes.length}/500 characters</p>
+                  </div>
                 </div>
               </div>
 
@@ -373,6 +490,12 @@ export default function CheckoutPage() {
                   <span>Shipping Fee</span>
                   <span className="font-medium text-gray-900">{shipping.toLocaleString()} EGP</span>
                 </div>
+                {giftWrapping && (
+                  <div className="flex justify-between text-pink-600">
+                    <span>Gift Wrapping</span>
+                    <span className="font-medium">+{giftWrapFee} EGP</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-gray-600">
                   <span>Estimated VAT ({(vatRate * 100).toFixed(0)}%)</span>
                   <span className="font-medium text-gray-900">{vatAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} EGP</span>

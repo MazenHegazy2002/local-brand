@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { Session } from '@/types';
 
 export interface WishlistItem {
   id: string;
@@ -10,7 +11,7 @@ export interface WishlistItem {
 
 interface WishlistStore {
   items: WishlistItem[];
-  toggleItem: (item: WishlistItem, session?: any) => Promise<void>;
+  toggleItem: (item: WishlistItem, session?: Session | null) => Promise<void>;
   hasItem: (id: string) => boolean;
   fetchItems: () => Promise<void>;
 }
@@ -25,16 +26,16 @@ export const useWishlistStore = create<WishlistStore>()(
           const res = await fetch('/api/wishlist');
           if (res.ok) {
             const data = await res.json();
-            const synced = data.wishlist.map((w: any) => ({
+            const synced = data.wishlist.map((w: { product: { id: string; title: string; basePrice: number; images: Array<{ isPrimary: boolean; url: string }> } }) => ({
               id: w.product.id,
               name: w.product.title,
               price: w.product.basePrice,
-              image: w.product.images.find((i: any) => i.isPrimary)?.url || w.product.images[0]?.url
+              image: w.product.images.find((i) => i.isPrimary)?.url || w.product.images[0]?.url
             }));
             set({ items: synced });
           }
-        } catch (err) {
-          console.error("Wishlist sync failed", err);
+        } catch {
+          // Silent fail - wishlist sync failure shouldn't break UI
         }
       },
 
@@ -57,9 +58,8 @@ export const useWishlistStore = create<WishlistStore>()(
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ productId: item.id })
             });
-          } catch (err) {
-            console.error("Server wishlist toggle failed", err);
-            // Rollback on error? (Optional, depends on preference)
+          } catch {
+            // Silent fail - optimistic UI already updated
           }
         }
       },

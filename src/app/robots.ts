@@ -1,14 +1,35 @@
 import { MetadataRoute } from 'next';
+import { PLATFORM_URL } from '@/lib/constants';
 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/shop', '/product/'],
-        disallow: ['/dashboard', '/seller-hub', '/admin-os', '/checkout', '/api/'],
+        allow: '/',
+        disallow: [
+          '/api/',
+          '/admin/',
+          '/admin-os/',
+          '/dashboard/',
+          '/dashboard/*',
+          '/seller-hub/',
+          '/seller-hub/*',
+          '/checkout',
+          '/payment/',
+          '/account/',
+        ],
+      },
+      {
+        userAgent: 'GPTBot',
+        disallow: ['/'],
+      },
+      {
+        userAgent: 'CCBot',
+        disallow: ['/'],
       },
     ],
-    sitemap: 'https://localbrand-egypt.com/sitemap.xml',
+    sitemap: `${PLATFORM_URL}/sitemap.xml`,
+    host: PLATFORM_URL,
   };
 }

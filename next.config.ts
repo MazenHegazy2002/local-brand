@@ -4,6 +4,9 @@ import withPWA from "next-pwa";
 const nextConfig: NextConfig = {
   // ─── Turbopack Configuration ────────────────────────────────────────────────
   turbopack: {},
+  
+  // ─── Server External Packages ───────────────────────────────────────────────
+  serverExternalPackages: ['@prisma/client', '@neondatabase/serverless', 'ws', 'pg'],
 
   // ─── Image Optimisation ───────────────────────────────────────────────────
   images: {
@@ -37,12 +40,13 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "script-src 'self' 'unsafe-eval' https://js.stripe.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: https: blob:",
               "connect-src 'self' https://api.stripe.com",
               "frame-src https://js.stripe.com",
+              "frame-ancestors 'self'",
             ].join('; ')
           },
         ],

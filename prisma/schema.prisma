@@ -88,6 +88,8 @@ model SellerProfile {
   storeName         String   @unique
   description       String?
   logoUrl           String?
+  city              String?
+  governorate       String?
   commissionRate    Float    @default(0.15) // Platform takes 15%
   status            SellerStatus @default(PENDING_APPROVAL)
   bankAccount       String?
@@ -128,6 +130,11 @@ model Product {
   // Flash Sale
   flashSalePrice    Float?
   flashSaleEndsAt   DateTime?
+  flashSaleLimit    Int?
+
+  // Local Verification
+  countryOfOrigin   String    @default("Egypt")
+  isVerifiedLocal   Boolean   @default(false)
 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -245,6 +252,8 @@ model Order {
   totalAmount         Float
   discountAmount      Float    @default(0)
   shippingFee         Float    @default(0)
+  platformFee         Float    @default(0)
+  sellerPayoutTotal   Float    @default(0)
   status              OrderStatus @default(PENDING_PAYMENT)
   paymentMethod       PaymentMethod
   paymentStatus       PaymentStatus @default(UNPAID)
@@ -314,6 +323,7 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+  PARTIALLY_REFUNDED
 }
 
 // ============================================
@@ -451,4 +461,74 @@ model Wishlist {
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@id([userId, productId])
+}
+
+// ============================================
+// DISPUTES
+// ============================================
+
+model Dispute {
+  id            String       @id @default(uuid())
+  orderId       String
+  orderItemId   String?
+  buyerId       String
+  sellerId      String?
+  reason        String
+  description   String?
+  status        DisputeStatus @default(OPEN)
+  resolution    String?
+  resolvedAt    DateTime?
+  caseReference String       @unique
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([orderId])
+  @@index([buyerId])
+  @@index([status])
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED_BUYER
+  RESOLVED_SELLER
+  CLOSED
+}
+
+// ============================================
+// CHAT / CONVERSATIONS
+// ============================================
+
+model Conversation {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String?
+  orderId   String?
+  status    ConversationStatus @default(ACTIVE)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  messages  Message[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  role           String   @default("USER")
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+}
+
+enum ConversationStatus {
+  ACTIVE
+  CLOSED
 }

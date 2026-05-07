@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@/generated/client';
 
 // GET /api/products?page=1&limit=12&category=&q=&minPrice=&maxPrice=&sort=&brand=&rating=&tags=&condition=&inStock=&flashSale=
 export async function GET(req: Request) {
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
     const inStock = searchParams.get('inStock') === 'true';
     const flashSale = searchParams.get('flashSale') === 'true';
 
-    const where: any = {
+    const where: Prisma.ProductWhereInput = {
       published: true,
       deletedAt: null,
       basePrice: { gte: minPrice, lte: maxPrice },
@@ -28,8 +29,8 @@ export async function GET(req: Request) {
 
     if (q) {
       where.OR = [
-        { title: { contains: q, mode: 'insensitive' } },
-        { description: { contains: q, mode: 'insensitive' } },
+        { title: { contains: q } },
+        { description: { contains: q } },
       ];
     }
 
@@ -46,10 +47,8 @@ export async function GET(req: Request) {
     }
 
     if (flashSale) {
-      where.AND = [
-        { flashSalePrice: { not: null } },
-        { flashSaleEndsAt: { gt: new Date() } },
-      ];
+      where.flashSalePrice = { not: null };
+      where.flashSaleEndsAt = { gt: new Date() };
     }
 
     if (inStock) {
@@ -64,12 +63,12 @@ export async function GET(req: Request) {
       const tagList = tags.split(',').map(t => t.trim());
       where.tags = {
         some: {
-          slug: { in: tagList }
-        }
+          slug: { in: tagList },
+        },
       };
     }
 
-    let orderBy: any;
+    let orderBy: Prisma.ProductOrderByWithRelationInput;
     switch (sort) {
       case 'newest':
         orderBy = { createdAt: 'desc' };

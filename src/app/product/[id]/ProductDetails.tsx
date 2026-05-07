@@ -172,12 +172,11 @@ export default function ProductDetails({ product }: { product: any }) {
         <div className="flex-shrink-0 flex items-center justify-center">
           <WishlistButton product={{
             id: product.id,
+            title: product.title,
             name: product.title,
+            basePrice: product.basePrice,
             price: selectedPrice,
             image: primaryImage,
-            brand: product.seller?.storeName || 'Local Brand',
-            category: product.category?.name || 'General',
-            tags: product.tags?.map((t: any) => t.name) || []
           }} className="!w-12 !h-12 !bg-white border border-gray-200 hover:!bg-gray-50" />
         </div>
       </div>

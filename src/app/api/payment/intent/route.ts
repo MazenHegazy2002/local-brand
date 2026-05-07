@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { DiscountType } from '@/generated/client';
+import { VAT_RATE } from '@/lib/constants';
 
 // Stripe mock integration — real keys provided via env
 // Set STRIPE_SECRET_KEY in .env to enable live mode

@@ -3,8 +3,20 @@
 import { useWishlistStore } from '@/lib/wishlistStore';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import type { Session } from '@/types';
 
-export default function WishlistButton({ product, className = "" }: { product: any, className?: string }) {
+type WishlistProduct = {
+  id: string;
+  title: string;
+  basePrice: number;
+  images?: Array<{ url: string; isPrimary?: boolean }>;
+  name?: string;
+  price?: number;
+  image?: string;
+  img?: string;
+};
+
+export default function WishlistButton({ product, className = "" }: { product: WishlistProduct, className?: string }) {
   const { hasItem, toggleItem } = useWishlistStore();
   const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
@@ -14,6 +26,7 @@ export default function WishlistButton({ product, className = "" }: { product: a
   if (!mounted) return null;
 
   const isWished = hasItem(String(product.id));
+  const productImage = product.image || product.images?.[0]?.url || product.img;
 
   return (
     <button
@@ -24,8 +37,8 @@ export default function WishlistButton({ product, className = "" }: { product: a
           id: String(product.id),
           name: product.name || product.title,
           price: product.price || product.basePrice,
-          image: product.image || (product.images && product.images[0]?.url) || product.img,
-        }, session);
+          image: productImage,
+        }, session as Session | null);
       }}
       className={`z-20 flex items-center justify-center w-8 h-8 rounded-full bg-white/80 backdrop-blur shadow hover:bg-white transition-colors ${className}`}
       aria-label="Toggle wishlist"

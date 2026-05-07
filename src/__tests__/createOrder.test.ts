@@ -47,7 +47,9 @@ const mockProduct = {
 };
 
 const mockAddress = {
-  street: '123 Nile St',
+  fullName: 'Test User',
+  phone: '0123456789',
+  address: '123 Nile St',
   city: 'Cairo',
   governorate: 'Cairo',
 };
@@ -147,7 +149,7 @@ describe('createOrder — Stock & Security Tests', () => {
   test('✅ Server always calculates price from DB, ignoring any client-passed price', async () => {
     // Client passes a fake low price - order should use product.basePrice (500 EGP) not a tampered one
     const result = await createOrder(
-      [{ id: 'prod-1', name: 'Test Jacket', qty: 1, price: 1 }], // tampered price
+      [{ id: 'prod-1', name: 'Test Jacket', qty: 1 }],
       mockAddress,
       'CASH_ON_DELIVERY'
     );

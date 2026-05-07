@@ -11,16 +11,11 @@ function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL
 
   if (!connectionString) {
-    console.warn('[PRISMA] No DATABASE_URL found — returning unconfigured client')
     return new PrismaClient()
   }
 
-  console.log('[PRISMA] Initializing Neon Serverless Adapter Client')
-
-  // Polyfill WebSocket for Node.js environments (required for Neon WebSocket connection)
   neonConfig.webSocketConstructor = ws
 
-  // PrismaNeon (v6) accepts a PoolConfig object, not a Pool instance
   const adapter = new PrismaNeon({ connectionString })
 
   return new PrismaClient({

@@ -17,7 +17,6 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
-// Arabic font — activated when locale = ar
 const cairo = Cairo({
   variable: "--font-cairo",
   subsets: ["arabic", "latin"],
@@ -25,9 +24,17 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "Local Brand | Premium Marketplace",
-  description: "Discover and support high-end local Egyptian brands. Authentic, quality, and curated.",
-  keywords: ["marketplace", "local brands", "egypt", "fashion", "electronics", "authentic"],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://localbrand-egypt.com"),
+  title: {
+    default: "Local Brand — Egyptian Marketplace for Local Brands",
+    template: "%s | Local Brand",
+  },
+  description: "Discover authentic Egyptian local brands. Shop fashion, electronics, home goods and more from verified Egyptian sellers. Fast delivery across Egypt.",
+  keywords: ["Egyptian brands", "local brands Egypt", "Egyptian marketplace", "buy Egyptian products", "Egyptian fashion", "Egyptian crafts"],
+  authors: [{ name: "Local Brand" }],
+  creator: "Local Brand",
+  publisher: "Local Brand",
+  formatDetection: { email: false, address: false, telephone: false },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -35,23 +42,28 @@ export const metadata: Metadata = {
     title: "LocalBrand",
   },
   openGraph: {
-    title: "Local Brand Marketplace",
-    description: "The premier destination for authentic Egyptian brands and premium local products.",
-    url: "https://localbrand-egypt.com",
-    siteName: "LocalBrand",
-    images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
-    locale: "en_US",
     type: "website",
+    locale: "en_EG",
+    alternateLocale: "ar_EG",
+    siteName: "Local Brand",
+    title: "Local Brand — Egyptian Marketplace for Local Brands",
+    description: "Discover authentic Egyptian local brands. Shop from verified sellers across Egypt.",
+    url: "https://localbrand-egypt.com",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Local Brand Marketplace",
-    description: "Support high-end local Egyptian artisans.",
+    title: "Local Brand — Egyptian Marketplace",
+    description: "Discover authentic Egyptian local brands.",
+    images: ["/og-image.png"],
+    creator: "@localbrand",
   },
   robots: {
     index: true,
     follow: true,
-  }
+    googleBot: { index: true, follow: true, "max-video-preview": -1, "max-image-preview": "large", "max-snippet": -1 },
+  },
+  verification: { google: "google-site-verification-code" },
 };
 
 import { LanguageProvider } from "@/providers/LanguageContext";

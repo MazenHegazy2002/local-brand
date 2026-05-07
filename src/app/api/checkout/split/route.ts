@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { VAT_RATE } from '@/lib/constants';
 
 /**
  * Multi-seller cart checkout — splits 1 cart into N sub-orders (1 per seller)
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
         });
       }
 
-      const vatAmount = subtotal * 0.14;
+      const vatAmount = subtotal * VAT_RATE;
       const shippingFee = 50;
       const totalAmount = subtotal + vatAmount + shippingFee;
 

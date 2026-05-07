@@ -1,0 +1,6 @@
+node_modules
+.next
+public
+src/generated
+prisma/dev.db
+*.css

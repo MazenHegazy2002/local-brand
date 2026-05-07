@@ -20,8 +20,7 @@ export async function POST(req: Request) {
       });
       try {
         event = stripeInstance.webhooks.constructEvent(body, sig, webhookSecret);
-      } catch (err: any) {
-        console.error('Webhook signature verification failed:', err.message);
+      } catch {
         return NextResponse.json({ message: 'Invalid signature' }, { status: 400 });
       }
     } else {
@@ -40,28 +39,45 @@ export async function POST(req: Request) {
       });
 
       if (existingOrder) {
-        console.log(`Webhook already processed for key: ${idempotencyKey}`);
         return NextResponse.json({ received: true }, { status: 200 });
       }
 
-      // Create order atomically on confirmed payment
-      console.log(`Payment confirmed for user ${userId}, creating order...`);
-      // NOTE: cartItems are stored in the session/DB at checkout initiation
-      // For a full implementation, cart items should be retrieved from Redis/DB here
-      // For now, log the intent and let the frontend call createOrder after client-side confirmation
-      console.log('Payment Intent ID:', intent.id, 'Idempotency key:', idempotencyKey);
+      // NOTE: cartItems are stored in Redis at checkout initiation (key: cart:{userId})
+      // Retrieve and create order atomically
+      const { redis } = await import('@/lib/redis');
+      const cartKey = `cart:${userId}`;
+      const cartData = await redis.get(cartKey);
+      
+      if (cartData) {
+        const cartItems = JSON.parse(cartData);
+        const { createOrder } = await import('@/app/actions/orders');
+        const addressInfo = typeof addressSnapshot === 'string' ? JSON.parse(addressSnapshot) : addressSnapshot;
+        await createOrder(
+          cartItems,
+          addressInfo,
+          'CREDIT_CARD',
+          null,
+          undefined
+        );
+        await redis.del(cartKey);
+      }
     }
 
     if (event.type === 'payment_intent.payment_failed') {
+      // Update pending order to FAILED status
       const intent = event.data.object;
-      console.error(`Payment FAILED for intent: ${intent.id}`);
-      // Could update a pending order to CANCELLED here
+      const { userId, idempotencyKey } = intent.metadata;
+      if (idempotencyKey) {
+        await prisma.order.updateMany({
+          where: { idempotencyKey, paymentStatus: 'UNPAID' },
+          data: { paymentStatus: 'FAILED' },
+        });
+      }
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
 
-  } catch (error: any) {
-    console.error('Webhook Error:', error);
+  } catch {
     return NextResponse.json({ message: 'Webhook handler failed' }, { status: 500 });
   }
 }

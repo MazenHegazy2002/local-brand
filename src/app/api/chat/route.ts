@@ -8,7 +8,34 @@ export async function POST(req: Request) {
     const { message, productId, orderId, history } = await req.json();
 
     const session = await getServerSession(authOptions);
-    const userId = (session?.user as any)?.id;
+    const userId = (session?.user as { id: string })?.id;
+
+    // Get or create conversation
+    let conversation;
+    if (userId) {
+      conversation = await prisma.conversation.findFirst({
+        where: { userId },
+        orderBy: { updatedAt: 'desc' },
+      });
+      
+      if (!conversation) {
+        conversation = await prisma.conversation.create({
+          data: { userId }
+        });
+      }
+    }
+
+    // Store user message
+    if (conversation && userId) {
+      await prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          senderId: userId,
+          role: 'USER',
+          content: message,
+        }
+      });
+    }
 
     const isOrderRelated = orderId || message.toLowerCase().includes('order');
     const isProductRelated = productId || message.toLowerCase().includes('product') || message.toLowerCase().includes('price');
@@ -22,7 +49,7 @@ export async function POST(req: Request) {
       response = "Hello! I'm here to help. You can ask about:\n• Order status & tracking\n• Product details & pricing\n• Returns & refunds\n• Shipping info\n• Anything else about your purchase";
     } else if (isOrderRelated) {
       if (orderId) {
-const order = await prisma.order.findUnique({
+        const order = await prisma.order.findUnique({
           where: { id: orderId },
           include: { 
             items: { 
@@ -99,6 +126,24 @@ const order = await prisma.order.findUnique({
         response += "• Contact support directly\n\n";
         response += "Or describe your issue in more detail.";
       }
+    }
+
+    // Store assistant response
+    if (conversation && userId) {
+      await prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          senderId: 'ASSISTANT',
+          role: 'ASSISTANT',
+          content: response,
+        }
+      });
+
+      // Update conversation timestamp
+      await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: { updatedAt: new Date() }
+      });
     }
 
     return NextResponse.json({ response }, { status: 200 });

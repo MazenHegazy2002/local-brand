@@ -65,7 +65,7 @@ export async function mergeGuestCartToUser(guestId: string, userId: string) {
     await redis.del(`cart:${guestId}`);
 
   } catch (error) {
-    console.error('Cart merge error:', error);
+    return { success: false, error };
   }
 }
 
@@ -76,14 +76,15 @@ export async function mergeGuestCartToUser(guestId: string, userId: string) {
 export async function processEscrowPayouts() {
   try {
     const { prisma } = await import('@/lib/prisma');
+    const { ESCROW_HOLD_DAYS } = await import('./constants');
 
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const escrowDaysAgo = new Date(Date.now() - ESCROW_HOLD_DAYS * 24 * 60 * 60 * 1000);
 
-    // Find orders delivered more than 7 days ago that haven't been paid out
+    // Find orders delivered more than ESCROW_HOLD_DAYS days ago that haven't been paid out
     const eligibleOrders = await prisma.order.findMany({
       where: {
         status: 'DELIVERED',
-        updatedAt: { lte: sevenDaysAgo },
+        updatedAt: { lte: escrowDaysAgo },
         // payoutProcessed: false  // Add this field to Order schema for production
       },
       include: {
@@ -116,7 +117,6 @@ export async function processEscrowPayouts() {
 
     return { processed: payoutsProcessed };
   } catch (error) {
-    console.error('Escrow payout error:', error);
     return { processed: 0, error };
   }
 }
