@@ -37,13 +37,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Category pages
     const categories = await prisma.category.findMany({
-      where: { deletedAt: null },
-      select: { slug: true, updatedAt: true },
+      select: { slug: true },
     });
 
     const categoryRoutes = categories.map(c => ({
       url: `${baseUrl}/category/${c.slug}`,
-      lastModified: c.updatedAt,
+      lastModified: now,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }));
@@ -51,11 +50,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Brand pages
     const sellers = await prisma.sellerProfile.findMany({
       where: { status: 'ACTIVE', deletedAt: null },
-      select: { storeSlug: true, updatedAt: true },
+      select: { storeName: true, updatedAt: true },
     });
 
     const brandRoutes = sellers.map(s => ({
-      url: `${baseUrl}/brand/${s.storeSlug}`,
+      url: `${baseUrl}/brand/${s.storeName.toLowerCase().replace(/ /g, '-')}`,
       lastModified: s.updatedAt,
       changeFrequency: 'weekly' as const,
       priority: 0.7,

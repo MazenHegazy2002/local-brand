@@ -13,6 +13,7 @@ export const useRecentlyViewedStore = create<RecentlyViewedStore>()(
   persist(
     (set, get) => ({
       productIds: [],
+      maxItems: 20,
 
       addProduct: (id) =>
         set((state) => {

@@ -237,6 +237,7 @@ interface ProductData {
   categoryId: string;
   flashSalePrice?: number;
   flashSaleEndsAt?: string;
+  published?: boolean;
   variants?: {
     color?: string;
     price?: number;

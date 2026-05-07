@@ -14,7 +14,7 @@ type LegacyProduct = {
   price?: number;
 };
 
-type ProductCardProduct = Partial<Product> & LegacyProduct;
+type ProductCardProduct = Omit<Partial<Product>, 'id' | 'category' | 'tags'> & LegacyProduct;
 
 export default function ProductCard({ product, index }: { product: ProductCardProduct, index?: number }) {
   const displayId = String(product.id);
@@ -35,14 +35,17 @@ export default function ProductCard({ product, index }: { product: ProductCardPr
           className="object-cover transition-transform duration-700 group-hover:scale-110"
         />
         <div className="absolute top-4 right-4 z-20">
-          <WishlistButton product={product as Parameters<typeof WishlistButton>[0]['product']} />
+          <WishlistButton product={product as any} />
         </div>
         <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-10">
-          {productTags.slice(0, 2).map((tag: string) => (
-            <Badge key={tag} size="sm" variant="default">
-              {tag}
-            </Badge>
-          ))}
+          {productTags.slice(0, 2).map((tag: string | Tag) => {
+            const tagName = typeof tag === 'string' ? tag : tag.name;
+            return (
+              <Badge key={tagName} size="sm" variant="default">
+                {tagName}
+              </Badge>
+            );
+          })}
         </div>
       </Link>
       <div className="p-6 flex flex-col flex-1 justify-between">

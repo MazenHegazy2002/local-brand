@@ -180,7 +180,7 @@ export default function SellerHub() {
       const res = await createProduct({
         ...newProduct,
         basePrice: Number(newProduct.basePrice),
-        flashSalePrice: newProduct.flashSalePrice > 0 ? Number(newProduct.flashSalePrice) : null,
+        flashSalePrice: newProduct.flashSalePrice > 0 ? Number(newProduct.flashSalePrice) : undefined,
         variants: variants.map(v => ({
            ...v,
            stock: Number(v.stock),

@@ -25,7 +25,7 @@ export function SearchInput({
 }: SearchInputProps) {
   const [internalValue, setInternalValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const value = controlledValue ?? internalValue;
 

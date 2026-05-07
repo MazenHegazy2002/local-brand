@@ -14,6 +14,7 @@ export const useCompareStore = create<CompareStore>()(
   persist(
     (set, get) => ({
       productIds: [],
+      maxProducts: 4,
 
       addProduct: (id) =>
         set((state) => {

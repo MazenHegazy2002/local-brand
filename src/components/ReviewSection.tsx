@@ -20,7 +20,7 @@ export default function ReviewSection({ productId, initialReviews }: { productId
     setSubmitting(true);
     try {
       const res = await submitReview(productId, rating, comment);
-      if (res.success) {
+      if (res.success && res.review) {
         setReviews([res.review, ...reviews]);
         setComment('');
         setRating(5);
