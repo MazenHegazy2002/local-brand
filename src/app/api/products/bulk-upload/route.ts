@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
       data.push({
         title: row.getCell(1).value?.toString(),
         description: row.getCell(2).value?.toString(),
-        basePrice: row.getCell(3).value,
-        stockCount: row.getCell(4).value,
+        basePrice: row.getCell(3).value as string | number | undefined,
+        stockCount: row.getCell(4).value as string | number | undefined,
         category: row.getCell(5).value?.toString(),
         sizes: row.getCell(6).value?.toString(),
         colors: row.getCell(7).value?.toString(),

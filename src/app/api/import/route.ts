@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       if (rowNumber === 1) return; // Skip header row
       data.push({
         Title: row.getCell(1).value?.toString(),
-        'Base Price': row.getCell(2).value,
+        'Base Price': row.getCell(2).value as string | number | undefined,
         Category: row.getCell(3).value?.toString(),
         Seller: row.getCell(4).value?.toString(),
         Description: row.getCell(5).value?.toString(),
