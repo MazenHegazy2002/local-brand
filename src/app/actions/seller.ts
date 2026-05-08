@@ -4,19 +4,15 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
-import { OrderStatus, SellerStatus, OrderItemStatus } from '@/generated/client';
+import { OrderStatus, SellerStatus, OrderItemStatus, Role } from '@/generated/client';
 import bcrypt from 'bcryptjs';
 
 import type { Session } from 'next-auth';
-import type { Role, Product, Review } from '@/types';
+import type { Product, Review, SessionUser } from '@/types';
 
 async function getRealUserId(session: Session | null) {
   if (!session?.user) return null;
   let userId = (session.user as { id: string }).id;
-  if (userId && userId.startsWith('debug-')) {
-    const dbUser = await prisma.user.findUnique({ where: { email: session.user.email! } });
-    if (dbUser) return dbUser.id;
-  }
   return userId;
 }
 
@@ -27,7 +23,7 @@ export async function getDashboardStats() {
 
     const userId = await getRealUserId(session);
     if (!userId) return { error: "Unauthorized" };
-    const role = (session.user as any).role;
+    const role = (session.user as SessionUser).role;
 
     if (role === 'BUYER') {
       const orders = await prisma.order.findMany({
@@ -75,12 +71,120 @@ export async function getDashboardStats() {
         orderBy: { createdAt: 'desc' }
       });
 
+      // Real Daily Revenue Aggregation (last 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const productIds = seller.products.map(p => p.id);
+
+      const dailyStats = await prisma.order.groupBy({
+        by: ['createdAt'],
+        where: {
+          createdAt: { gte: sevenDaysAgo },
+          items: { some: { variant: { productId: { in: productIds } } } }
+        },
+        _sum: { totalAmount: true }
+      });
+
+      // Map to 7-day array
+      const dailyRevenue = new Array(7).fill(0);
+      const today = new Date();
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - (6 - i));
+        const dayStr = d.toISOString().split('T')[0];
+
+        const match = dailyStats.find(s => s.createdAt.toISOString().split('T')[0] === dayStr);
+        dailyRevenue[i] = match?._sum?.totalAmount || 0;
+      }
+
+      // Real rating + review aggregation
+      const reviewAgg = productIds.length
+        ? await prisma.review.aggregate({
+            where: { productId: { in: productIds }, rating: { gt: 0 } },
+            _avg: { rating: true },
+            _count: { _all: true },
+          })
+        : { _avg: { rating: 0 }, _count: { _all: 0 } };
+
+      // Today's orders count
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const todayOrdersCount = productIds.length
+        ? await prisma.order.count({
+            where: {
+              createdAt: { gte: startOfToday },
+              items: { some: { variant: { productId: { in: productIds } } } }
+            }
+          })
+        : 0;
+
+      // Month-over-month revenue change
+      const startOfThisMonth = new Date();
+      startOfThisMonth.setDate(1);
+      startOfThisMonth.setHours(0, 0, 0, 0);
+      const startOfPrevMonth = new Date(startOfThisMonth);
+      startOfPrevMonth.setMonth(startOfPrevMonth.getMonth() - 1);
+      const endOfPrevMonth = new Date(startOfThisMonth);
+      endOfPrevMonth.setMilliseconds(-1);
+
+      const [thisMonthAgg, prevMonthAgg] = productIds.length
+        ? await Promise.all([
+            prisma.order.aggregate({
+              where: {
+                createdAt: { gte: startOfThisMonth },
+                items: { some: { variant: { productId: { in: productIds } } } }
+              },
+              _sum: { totalAmount: true }
+            }),
+            prisma.order.aggregate({
+              where: {
+                createdAt: { gte: startOfPrevMonth, lte: endOfPrevMonth },
+                items: { some: { variant: { productId: { in: productIds } } } }
+              },
+              _sum: { totalAmount: true }
+            })
+          ])
+        : [{ _sum: { totalAmount: 0 } }, { _sum: { totalAmount: 0 } }];
+
+      const thisMonthRevenue = thisMonthAgg._sum.totalAmount || 0;
+      const prevMonthRevenue = prevMonthAgg._sum.totalAmount || 0;
+      const monthlyChangePct = prevMonthRevenue > 0
+        ? Math.round(((thisMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100)
+        : (thisMonthRevenue > 0 ? 100 : 0);
+
+      // --- Performance Metrics Calculation ---
+      const totalSellerOrders = orders.length;
+      const cancelledOrders = orders.filter(o => o.status === 'CANCELLED').length;
+      const returnedOrders = orders.filter(o => o.status === 'RETURNED').length;
+      
+      const orderAcceptance = totalSellerOrders > 0 
+        ? Math.round(((totalSellerOrders - cancelledOrders) / totalSellerOrders) * 100) 
+        : 100;
+      
+      const returnRate = totalSellerOrders > 0 
+        ? Math.round((returnedOrders / totalSellerOrders) * 100) 
+        : 0;
+
+      // Shipping Speed (Mocked for now as we don't have shippedAt in Order easily without Shipment join)
+      const shippingSpeed = 95; 
+
       const stats = {
         totalProducts: seller.products.length,
         totalOrders: orders.length,
         balance: seller.balance,
         revenue: orders.reduce((acc, o) => acc + o.totalAmount, 0),
-        dailyRevenue: []
+        dailyRevenue,
+        avgRating: reviewAgg._avg.rating ? Number(reviewAgg._avg.rating.toFixed(1)) : 0,
+        reviewCount: reviewAgg._count._all,
+        todayOrdersCount,
+        thisMonthRevenue,
+        monthlyChangePct,
+        performance: {
+          orderAcceptance,
+          returnRate,
+          shippingSpeed
+        }
       };
 
       return { 
@@ -96,7 +200,22 @@ export async function getDashboardStats() {
 
     if (role === 'ADMIN') {
       const sellers = await prisma.sellerProfile.findMany({ include: { user: { select: { id: true, name: true, email: true, role: true, createdAt: true } } } });
-      const orders = await prisma.order.findMany({ include: { items: { include: { variant: true } }, user: { select: { id: true, name: true, email: true } } } });
+      const orders = await prisma.order.findMany({
+        include: {
+          items: {
+            include: {
+              variant: {
+                include: {
+                  product: {
+                    select: { id: true, flashSalePrice: true, categoryId: true, category: { select: { id: true, name: true } } }
+                  }
+                }
+              }
+            }
+          },
+          user: { select: { id: true, name: true, email: true } }
+        }
+      });
       const users = await prisma.user.findMany({ select: { id: true, name: true, email: true, role: true, createdAt: true } });
       const products = await prisma.product.findMany();
       const auditLogs = await prisma.auditLog.findMany({ include: { admin: { select: { name: true, email: true } } }, orderBy: { createdAt: 'desc' }, take: 50 });
@@ -106,8 +225,12 @@ export async function getDashboardStats() {
       const tags = await prisma.tag.findMany();
       const collections = await prisma.collection.findMany();
       
+      const totalRevenue = orders.reduce((acc, o) => acc + o.totalAmount, 0);
+      const totalPlatformFees = orders.reduce((acc, o) => acc + o.platformFee, 0);
+
       const stats = {
-        revenue: orders.reduce((acc, o) => acc + o.totalAmount, 0),
+        revenue: totalRevenue,
+        platformFees: totalPlatformFees,
         totalOrders: orders.length,
         totalSellers: sellers.length,
         totalUsers: users.length,
@@ -130,8 +253,9 @@ export async function getDashboardStats() {
     }
 
     return { error: "Invalid role" };
-  } catch (err: any) {
-    console.error("[getDashboardStats] Error:", err);
+} catch (err: unknown) {
+    const error = err as Error;
+    console.error("[getDashboardStats] Error:", error);
     return { error: "Database connection failed or data could not be retrieved." };
   }
 }
@@ -157,8 +281,9 @@ export async function getHomepageData() {
     });
 
     return { categories, featuredProducts, recentProducts };
-  } catch (err: any) {
-    console.error("[getHomepageData] Error:", err);
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error("[getHomepageData] Error:", error);
     return { categories: [], featuredProducts: [], recentProducts: [] };
   }
 }
@@ -166,7 +291,7 @@ export async function getHomepageData() {
 export async function updateSellerStatus(sellerId: string, status: SellerStatus) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'ADMIN') return { error: "Unauthorized" };
+    if (!session || (session.user as SessionUser).role !== 'ADMIN') return { error: "Unauthorized" };
 
     const adminId = await getRealUserId(session);
 
@@ -189,9 +314,10 @@ export async function updateSellerStatus(sellerId: string, status: SellerStatus)
 
     revalidatePath('/admin-os');
     return { success: true };
-  } catch (err: any) {
-    console.error("[updateSellerStatus] Error:", err);
-    return { error: err.message || "Failed to update status" };
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error("[updateSellerStatus] Error:", error);
+    return { error: error.message || "Failed to update status" };
   }
 }
 
@@ -208,8 +334,9 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
     revalidatePath('/dashboard');
     revalidatePath('/admin-os');
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (err: unknown) {
+    const error = err as Error;
+    return { error: error.message };
   }
 }
 
@@ -225,8 +352,9 @@ export async function updateOrderItemStatus(itemId: string, status: OrderItemSta
 
     revalidatePath('/seller-hub');
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (err: unknown) {
+    const error = err as Error;
+    return { error: error.message };
   }
 }
 
@@ -249,7 +377,7 @@ interface ProductData {
 export async function createProduct(data: ProductData): Promise<{ id?: string; error?: string } | Product> {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'SELLER') return { error: "Unauthorized" };
+    if (!session || (session.user as SessionUser).role !== 'SELLER') return { error: "Unauthorized" };
 
     const userId = await getRealUserId(session);
     if (!userId) return { error: "User not found" };
@@ -277,7 +405,7 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
         slug,
         description: rest.description || '',
         variants: {
-          create: variants?.map((v: any, idx: number) => ({
+          create: variants?.map((v: { color?: string; price?: number; stock?: number; image?: string }, idx: number) => ({
             sku: `${rest.title.substring(0,3).toUpperCase()}-${(v.color || 'STND').toUpperCase()}-${Date.now().toString().slice(-4)}-${idx}`,
             title: v.color || "Standard",
             attributes: JSON.stringify({ color: v.color || "Standard" }),
@@ -286,8 +414,8 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
           }))
         },
         images: {
-          create: variants?.filter((v: any) => v.image).map((v: any, idx: number) => ({
-            url: v.image,
+          create: variants?.filter((v: { color?: string; price?: number; stock?: number; image?: string }) => v.image).map((v: { image?: string }, idx: number) => ({
+            url: v.image!,
             isPrimary: idx === 0
           })) || []
         }
@@ -295,10 +423,11 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
     });
 
     revalidatePath('/seller-hub');
-    return product;
-  } catch (err: any) {
+    return product as unknown as Product;
+  } catch (err: unknown) {
+    const error = err as Error;
     console.error("[createProduct] Error:", err);
-    return { error: err.message || "Failed to create product" };
+    return { error: error.message || "Failed to create product" };
   }
 }
 
@@ -313,7 +442,7 @@ interface UpdateProductData {
 export async function updateProduct(productId: string, data: UpdateProductData): Promise<{ success?: boolean; error?: string } | Product> {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'SELLER') return { error: "Unauthorized" };
+    if (!session || (session.user as SessionUser).role !== 'SELLER') return { error: "Unauthorized" };
 
     const userId = await getRealUserId(session);
     if (!userId) return { error: "User not found" };
@@ -329,16 +458,17 @@ export async function updateProduct(productId: string, data: UpdateProductData):
     });
 
     revalidatePath('/seller-hub');
-    return updatedProduct;
-  } catch (err: any) {
-    return { error: err.message };
+    return updatedProduct as unknown as Product;
+  } catch (err: unknown) {
+    const error = err as Error;
+    return { error: error.message };
   }
 }
 
 export async function deleteProduct(productId: string) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'SELLER') return { error: "Unauthorized" };
+    if (!session || (session.user as SessionUser).role !== 'SELLER') return { error: "Unauthorized" };
 
     const userId = await getRealUserId(session);
     if (!userId) return { error: "User not found" };
@@ -352,8 +482,9 @@ export async function deleteProduct(productId: string) {
 
     revalidatePath('/seller-hub');
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (err: unknown) {
+    const error = err as Error;
+    return { error: error.message };
   }
 }
 
@@ -385,9 +516,10 @@ export async function submitReview(productIdOrData: string | ReviewData, rating?
     });
 
     revalidatePath(`/product/${productId}`);
-    return { success: true, review };
-  } catch (err: any) {
-    return { error: err.message };
+    return { success: true, review: review as unknown as Review };
+  } catch (err: unknown) {
+    const error = err as Error;
+    return { error: error.message };
   }
 }
 
@@ -397,7 +529,8 @@ export async function getAdminTaxonomyData() {
     const tags = await prisma.tag.findMany();
     const collections = await prisma.collection.findMany();
     return { categories, tags, collections };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err as Error;
     return { categories: [], tags: [], collections: [] };
   }
 }
@@ -411,7 +544,7 @@ interface TaxonomyData {
 export async function createTaxonomy(type: 'category' | 'tag' | 'collection', data: TaxonomyData) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'ADMIN') return { error: "Unauthorized" };
+    if (!session || (session.user as SessionUser).role !== 'ADMIN') return { error: "Unauthorized" };
 
     let result;
     const slug = data.name.toLowerCase().replace(/ /g, '-');
@@ -426,15 +559,16 @@ export async function createTaxonomy(type: 'category' | 'tag' | 'collection', da
 
     revalidatePath('/admin-os');
     return result;
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (err: unknown) {
+    const error = err as Error;
+    return { error: error.message };
   }
 }
 
 export async function deleteTaxonomy(type: 'category' | 'tag' | 'collection', id: string) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'ADMIN') return { error: "Unauthorized" };
+    if (!session || (session.user as SessionUser).role !== 'ADMIN') return { error: "Unauthorized" };
 
     if (type === 'category') {
       await prisma.category.delete({ where: { id } });
@@ -446,43 +580,44 @@ export async function deleteTaxonomy(type: 'category' | 'tag' | 'collection', id
 
     revalidatePath('/admin-os');
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (err: unknown) {
+    const error = err as Error;
+    return { error: error.message };
   }
 }
 
 export async function seedTestData() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'ADMIN') return { error: "Unauthorized" };
+    if (!session || (session.user as SessionUser).role !== 'ADMIN') return { error: "Unauthorized" };
 
     const adminId = await getRealUserId(session);
 
     // Create 3 Test Users
     const testUsers = [
-      { email: 'admin@localbrand.com', name: 'System Admin', role: 'ADMIN', pass: 'admin123' },
-      { email: 'seller@localbrand.com', name: 'Elite Seller', role: 'SELLER', pass: 'seller123' },
-      { email: 'buyer@localbrand.com', name: 'Frequent Buyer', role: 'BUYER', pass: 'buyer123' }
+      { email: 'admin@localbrand.com', name: 'System Admin', role: Role.ADMIN, pass: 'admin123' },
+      { email: 'seller@localbrand.com', name: 'Elite Seller', role: Role.SELLER, pass: 'seller123' },
+      { email: 'buyer@localbrand.com', name: 'Frequent Buyer', role: Role.BUYER, pass: 'buyer123' }
     ];
 
     for (const u of testUsers) {
       const hashedPassword = await bcrypt.hash(u.pass, 10);
       const user = await prisma.user.upsert({
         where: { email: u.email },
-        update: { role: u.role as any },
+        update: { role: u.role },
         create: { 
           email: u.email, 
           name: u.name, 
-          role: u.role as any, 
+          role: u.role, 
           passwordHash: hashedPassword 
         }
       });
 
-      if (u.role === 'SELLER') {
+      if (u.role === Role.SELLER) {
         await prisma.sellerProfile.upsert({
           where: { userId: user.id },
-          update: { status: 'ACTIVE' },
-          create: { userId: user.id, storeName: "Elite Local Goods", status: 'ACTIVE' }
+          update: { status: SellerStatus.ACTIVE },
+          create: { userId: user.id, storeName: "Elite Local Goods", status: SellerStatus.ACTIVE }
         });
       }
     }
@@ -523,9 +658,10 @@ export async function seedTestData() {
 
     revalidatePath('/admin-os');
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err as Error;
     console.error("[seedTestData] Error:", err);
-    return { error: err.message || "Failed to seed data" };
+    return { error: error.message || "Failed to seed data" };
   }
 }
 
@@ -554,8 +690,9 @@ export async function toggleWishlist(productId: string) {
     revalidatePath('/dashboard');
     revalidatePath('/product/[id]');
     return { success: true, isWishlisted: !existing };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (err: unknown) {
+    const error = err as Error;
+    return { error: error.message };
   }
 }
 
@@ -580,8 +717,9 @@ export async function updateProfile(data: ProfileData): Promise<{ success?: bool
 
     revalidatePath('/dashboard');
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (err: unknown) {
+    const error = err as Error;
+    return { error: error.message };
   }
 }
 
@@ -595,7 +733,7 @@ export async function adminCreateUser(formData: {
   try {
     const session = await getServerSession(authOptions);
     if (!session) return { error: 'Unauthorized: Session is null. Please log out and log back in.' };
-    if ((session.user as any).role !== 'ADMIN') return { error: `Unauthorized: Your role is ${(session.user as any)?.role}, but ADMIN is required.` };
+    if ((session.user as SessionUser).role !== Role.ADMIN) return { error: `Unauthorized: Your role is ${(session.user as SessionUser).role}, but ADMIN is required.` };
 
     const adminId = await getRealUserId(session);
 
@@ -610,17 +748,17 @@ export async function adminCreateUser(formData: {
         name: formData.name.trim(),
         email: formData.email.toLowerCase().trim(),
         passwordHash: hashedPassword,
-        role: formData.role,
+        role: formData.role as Role,
       }
     });
 
     // Auto-create SellerProfile for sellers
-    if (formData.role === 'SELLER') {
+    if (formData.role === Role.SELLER) {
       await prisma.sellerProfile.create({
         data: {
           userId: newUser.id,
           storeName: formData.storeName?.trim() || `${formData.name.trim()}'s Store`,
-          status: 'ACTIVE',
+          status: SellerStatus.ACTIVE,
         }
       });
     }
@@ -639,9 +777,10 @@ export async function adminCreateUser(formData: {
 
     revalidatePath('/admin-os');
     return { success: true, userId: newUser.id };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err as Error;
     console.error('[adminCreateUser] Error:', err);
-    return { error: err.message || 'Failed to create user.' };
+    return { error: error.message || 'Failed to create user.' };
   }
 }
 
@@ -649,22 +788,23 @@ export async function adminUpdateUser(userId: string, data: { name?: string; ema
   try {
     const session = await getServerSession(authOptions);
     if (!session) return { error: 'Unauthorized: Session is null. Please log out and log back in.' };
-    if ((session.user as any).role !== 'ADMIN') return { error: `Unauthorized: Your role is ${(session.user as any)?.role}, but ADMIN is required.` };
+    if ((session.user as SessionUser).role !== Role.ADMIN) return { error: `Unauthorized: Your role is ${(session.user as SessionUser).role}, but ADMIN is required.` };
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
         name: data.name?.trim(),
         email: data.email?.toLowerCase().trim(),
-        role: data.role,
+        role: data.role as Role,
       }
     });
 
     revalidatePath('/admin-os');
     return { success: true, user: updatedUser };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err as Error;
     console.error('[adminUpdateUser] Error:', err);
-    return { error: err.message || 'Failed to update user.' };
+    return { error: error.message || 'Failed to update user.' };
   }
 }
 
@@ -678,8 +818,8 @@ export async function adminDeleteUser(userId: string) {
       return { error: 'Unauthorized: No session found. Please refresh and try again.' };
     }
 
-    const userRole = (session.user as any).role;
-    if (userRole !== 'ADMIN') {
+    const userRole = (session.user as SessionUser).role;
+    if (userRole !== Role.ADMIN) {
       console.error(`[adminDeleteUser] Unauthorized access attempt by role: ${userRole}`);
       return { error: `Unauthorized: Admin role required (Current role: ${userRole})` };
     }
@@ -711,7 +851,7 @@ export async function adminDeleteUser(userId: string) {
       // If it's a seller, also deactivate profile
       await prisma.sellerProfile.updateMany({
         where: { userId },
-        data: { status: 'BANNED', deletedAt: new Date() }
+        data: { status: SellerStatus.BANNED, deletedAt: new Date() }
       });
 
       revalidatePath('/admin-os');
@@ -723,8 +863,9 @@ export async function adminDeleteUser(userId: string) {
 
     revalidatePath('/admin-os');
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err as Error;
     console.error('[adminDeleteUser] Error:', err);
-    return { error: err.message || 'Failed to delete user.' };
+    return { error: error.message || 'Failed to delete user.' };
   }
 }

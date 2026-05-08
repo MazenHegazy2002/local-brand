@@ -1,35 +1,35 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { Product } from '@/types';
 
 interface CompareStore {
-  productIds: string[];
-  addProduct: (id: string) => void;
-  removeProduct: (id: string) => void;
-  clearAll: () => void;
-  isComparing: (id: string) => boolean;
-  maxProducts: 4;
+  items: Product[];
+  addItem: (product: Product) => void;
+  removeItem: (productId: string) => void;
+  clearCompare: () => void;
 }
 
 export const useCompareStore = create<CompareStore>()(
   persist(
-    (set, get) => ({
-      productIds: [],
-      maxProducts: 4,
-
-      addProduct: (id) =>
-        set((state) => {
-          if (state.productIds.includes(id)) return state;
-          if (state.productIds.length >= state.maxProducts) return state;
-          return { productIds: [...state.productIds, id] };
-        }),
-
-      removeProduct: (id) =>
-        set((state) => ({ productIds: state.productIds.filter((pid) => pid !== id) })),
-
-      clearAll: () => set({ productIds: [] }),
-
-      isComparing: (id) => get().productIds.includes(id),
+    (set) => ({
+      items: [],
+      addItem: (product) => set((state) => {
+        if (state.items.find(i => i.id === product.id)) return state;
+        // Limit to 4 items for comparison
+        if (state.items.length >= 4) {
+          const newItems = [...state.items];
+          newItems.shift();
+          return { items: [...newItems, product] };
+        }
+        return { items: [...state.items, product] };
+      }),
+      removeItem: (productId) => set((state) => ({
+        items: state.items.filter(i => i.id !== productId)
+      })),
+      clearCompare: () => set({ items: [] }),
     }),
-    { name: 'local-brand-compare' }
+    {
+      name: 'compare-storage',
+    }
   )
 );

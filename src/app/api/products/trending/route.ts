@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { ProductVariant } from '@/types';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
   });
 
   const variantIds = trending.map((t) => t.variantId);
-  
+
   const products = await prisma.product.findMany({
     where: { 
       variants: { some: { id: { in: variantIds } } }, 
@@ -38,7 +39,7 @@ export async function GET(req: Request) {
   });
 
   const sorted = variantIds
-    .map((vid) => products.find((p) => p.variants?.some((v: any) => v.id === vid)))
+    .map((vid) => products.find((p) => p.variants?.some((v: ProductVariant) => v.id === vid)))
     .filter(Boolean);
 
   return NextResponse.json({ products: sorted });

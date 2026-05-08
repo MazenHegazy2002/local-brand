@@ -1,6 +1,6 @@
 'use client';
 
-import { SelectHTMLAttributes, forwardRef } from 'react';
+import { SelectHTMLAttributes, forwardRef, useId } from 'react';
 
 export interface SelectOption {
   value: string;
@@ -19,7 +19,8 @@ interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'chi
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ label, error, helperText, options, placeholder, required, className = '', id, ...props }, ref) => {
-    const selectId = id || `select-${Math.random().toString(36).slice(2)}`;
+    const fallbackId = useId();
+    const selectId = id || fallbackId;
 
     return (
       <div className="w-full">

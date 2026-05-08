@@ -8,6 +8,7 @@ import { useCartStore } from "@/lib/cartStore";
 import { useLanguage } from "@/providers/LanguageContext";
 import WishlistButton from "@/components/WishlistButton";
 import { ProductSkeleton, ProductGridSkeleton } from "@/components/Skeleton";
+import { Product, Category, Tag } from "@/types";
 
 interface FilterState {
   q: string;
@@ -21,6 +22,11 @@ interface FilterState {
   flashSale: boolean;
   rating: number;
   sort: string;
+}
+
+interface Brand {
+  storeSlug: string;
+  storeName: string;
 }
 
 function ShopContent() {
@@ -44,11 +50,11 @@ function ShopContent() {
     sort: 'newest',
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [brands, setBrands] = useState<any[]>([]);
-  const [tags, setTags] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
   
   const addItem = useCartStore(s => s.addItem);
@@ -99,7 +105,7 @@ function ShopContent() {
   useEffect(() => { fetchFilters(); }, []);
   useEffect(() => { fetchProducts(); }, [filters]);
 
-  const handleFilterChange = (key: keyof FilterState, value: any) => {
+  const handleFilterChange = (key: keyof FilterState, value: string | number | boolean) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
@@ -126,12 +132,12 @@ function ShopContent() {
     return sorted;
   }, [products, filters.sort]);
 
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = (product: Product) => {
     addItem({
       id: String(product.id),
       name: product.title,
       price: product.basePrice,
-      image: product.images?.[0]?.url,
+      image: product.images?.[0]?.url || '',
     });
     setAdded(prev => ({ ...prev, [product.id]: true }));
     setTimeout(() => setAdded(prev => ({ ...prev, [product.id]: false })), 1200);
@@ -148,7 +154,7 @@ function ShopContent() {
       <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8">
         <div className="flex-1">
           <h1 className="text-2xl font-black text-gray-900">
-            {filters.q ? `${t('ResultsFor')} "${filters.q}"` : filters.category !== 'all' ? categories.find((c: any) => c.slug === filters.category)?.name || 'Products' : t('AllProducts')}
+            {filters.q ? `${t('ResultsFor')} "${filters.q}"` : filters.category !== 'all' ? categories.find((c: Category) => c.slug === filters.category)?.name || 'Products' : t('AllProducts')}
           </h1>
           <p className="text-sm text-gray-500 mt-1">{sortedProducts.length} {t('Products')}</p>
         </div>
@@ -193,7 +199,7 @@ function ShopContent() {
               <select value={filters.category} onChange={e => handleFilterChange('category', e.target.value)}
                 className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm bg-white">
                 <option value="all">{t('All')}</option>
-                {categories.map((cat: any) => (
+                {categories.map((cat: Category) => (
                   <option key={cat.slug} value={cat.slug}>{cat.name}</option>
                 ))}
               </select>
@@ -204,7 +210,7 @@ function ShopContent() {
               <select value={filters.brand} onChange={e => handleFilterChange('brand', e.target.value)}
                 className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm bg-white">
                 <option value="">All Brands</option>
-                {brands.map((b: any) => (
+                {brands.map((b: Brand) => (
                   <option key={b.storeSlug} value={b.storeSlug}>{b.storeName}</option>
                 ))}
               </select>
@@ -277,7 +283,7 @@ function ShopContent() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy"
                         sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw" />
                       {product.isFeatured && <div className="absolute top-2 left-2 z-10"><span className="text-[10px] font-bold bg-[#1e3b8a] text-white px-2 py-0.5 rounded-full">Featured</span></div>}
-                      {product.flashSalePrice && new Date(product.flashSaleEndsAt) > new Date() && (
+                      {product.flashSalePrice && product.flashSaleEndsAt && new Date(product.flashSaleEndsAt) > new Date() && (
                         <div className="absolute top-2 right-2 z-10"><span className="text-[10px] font-bold bg-red-500 text-white px-2 py-0.5 rounded-full">Sale</span></div>
                       )}
                       <div className="absolute top-2 right-2 z-20"><WishlistButton product={product} /></div>

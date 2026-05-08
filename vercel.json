@@ -9,7 +9,10 @@
       "source": "/api/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store, must-revalidate" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" }
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Access-Control-Allow-Credentials", "value": "true" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,DELETE,PATCH,POST,PUT" },
+        { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version" }
       ]
     },
     {
@@ -22,14 +25,14 @@
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.stripe.com https://api.resend.com; frame-src https://js.stripe.com; frame-ancestors 'self';"
+          "value": "default-src 'self'; script-src 'self' https://js.stripe.com https://grey.paysky.io https://cube.paysky.io https://va.vercel-scripts.com https://translate.google.com https://translate.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://translate.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.stripe.com https://api.resend.com https://*.vercel-insights.com https://accept.paymob.com https://www.atfawry.com https://api.cloudinary.com https://*.public.blob.vercel-storage.com; frame-src https://js.stripe.com https://grey.paysky.io https://cube.paysky.io https://accept.paymob.com; frame-ancestors 'self';"
         }
       ]
     }
   ],
-  "rewrites": [
-    { "source": "/store", "destination": "/shop" },
-    { "source": "/products", "destination": "/shop" }
+  "redirects": [
+    { "source": "/store", "destination": "/shop", "permanent": true },
+    { "source": "/products", "destination": "/shop", "permanent": true }
   ],
   "crons": [
     {

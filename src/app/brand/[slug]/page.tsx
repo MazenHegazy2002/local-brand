@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import ProductCard from "@/components/ProductCard";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { Product, ProductImage } from "@/types";
 
 export default async function BrandPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -33,11 +34,12 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 px-4">
-          {seller.products.map((product: any, idx: number) => (
-            <ProductCard key={product.id} product={{ ...product, image: product.images[0]?.url || '' }} index={idx} />
+          {seller.products.map((product: Product & { images: ProductImage[] }, idx: number) => (
+            <ProductCard key={product.id} product={{ ...product, name: product.title, image: product.images[0]?.url || '' } as any} index={idx} />
           ))}
         </div>
       </div>
     </main>
   );
 }
+

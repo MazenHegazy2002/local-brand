@@ -4,9 +4,14 @@ import withPWA from "next-pwa";
 const nextConfig: NextConfig = {
   // ─── Turbopack Configuration ────────────────────────────────────────────────
   turbopack: {},
-  
+
   // ─── Server External Packages ───────────────────────────────────────────────
   serverExternalPackages: ['@prisma/client', '@neondatabase/serverless', 'ws', 'pg'],
+
+  // ─── Body Size Limit (Next.js 16: lives under `experimental`) ──────────────
+  experimental: {
+    proxyClientMaxBodySize: '10mb', // for image uploads
+  },
 
   // ─── Image Optimisation ───────────────────────────────────────────────────
   images: {
@@ -26,6 +31,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
 
   // ─── Security Headers ─────────────────────────────────────────────────────
+  // NOTE: Content-Security-Policy is set in `src/proxy.ts` with a per-request
+  // nonce so Next.js can auto-nonce its streaming SSR inline scripts.
+  // Setting a strict CSP here (without 'unsafe-inline' or a nonce) breaks
+  // React/Next.js streaming — the `$RS`/`$RC` scripts get blocked and the
+  // loading.tsx placeholder never gets replaced with the real page.
   async headers() {
     return [
       {
@@ -36,19 +46,6 @@ const nextConfig: NextConfig = {
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' https://js.stripe.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://api.stripe.com",
-              "frame-src https://js.stripe.com",
-              "frame-ancestors 'self'",
-            ].join('; ')
-          },
         ],
       },
     ];

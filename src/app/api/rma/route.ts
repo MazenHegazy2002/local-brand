@@ -2,19 +2,24 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { SessionUser } from '@/types';
+import { rmaSchema } from '@/lib/validation';
 
 // POST /api/rma — buyer requests a return
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    if (!session || !session.user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const userId = (session.user as any).id;
-    const { orderItemId, reason, details } = await req.json();
+    const userId = (session.user as SessionUser).id;
+    const body = await req.json();
+    const validated = rmaSchema.safeParse(body);
 
-    if (!orderItemId || !reason) {
-      return NextResponse.json({ message: 'orderItemId and reason are required' }, { status: 400 });
+    if (!validated.success) {
+      return NextResponse.json({ message: 'Invalid data', errors: validated.error.format() }, { status: 400 });
     }
+
+    const { orderItemId, reason, details } = validated.data;
 
     // Verify buyer owns the order item
     const orderItem = await prisma.orderItem.findUnique({
@@ -75,9 +80,10 @@ export async function POST(req: Request) {
       }
     }, { status: 201 });
 
-  } catch (error: any) {
-    console.error('RMA Error:', error);
-    return NextResponse.json({ message: error.message || 'Internal Server Error' }, { status: 500 });
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('RMA Error:', err);
+    return NextResponse.json({ message: err.message || 'Internal Server Error' }, { status: 500 });
   }
 }
 
@@ -85,10 +91,10 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    if (!session || !session.user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const userId = (session.user as any).id;
-    const role = (session.user as any).role;
+    const userId = (session.user as SessionUser).id;
+    const role = (session.user as SessionUser).role;
 
     let returnRequests;
 
@@ -127,8 +133,9 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ returnRequests }, { status: 200 });
 
-  } catch (error) {
-    console.error('RMA GET Error:', error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('RMA GET Error:', err);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }

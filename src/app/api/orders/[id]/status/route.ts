@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { OrderStatus } from '@/generated/client';
+import { SessionUser } from '@/types';
+import { orderStatusUpdateSchema } from '@/lib/validation';
 
 const VALID_TRANSITIONS: Record<string, OrderStatus[]> = {
   [OrderStatus.PENDING_PAYMENT]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
@@ -19,11 +21,18 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const { status } = await req.json();
+    const body = await req.json();
+    const validated = orderStatusUpdateSchema.safeParse(body);
+
+    if (!validated.success) {
+      return NextResponse.json({ message: validated.error.errors[0].message }, { status: 400 });
+    }
+
+    const { status } = validated.data;
     const params = await context.params;
     const orderId = params.id;
-    const role = (session.user as any).role;
-    const userId = (session.user as any).id;
+    const role = (session.user as SessionUser).role;
+    const userId = (session.user as SessionUser).id;
 
     // Fetch current order status
     const order = await prisma.order.findUnique({

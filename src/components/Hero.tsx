@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/providers/LanguageContext";
+import type { DictKey } from "@/lib/i18n/dicts";
 
 const HERO_IMAGES = [
   "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=2500&auto=format&fit=crop",
@@ -85,7 +86,7 @@ export default function Hero() {
               <Image src="https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=80&w=1000&auto=format&fit=crop" fill style={{ objectFit: "cover" }} alt="Sneaker" className="z-0 grayscale contrast-125" />
               <div className="absolute inset-0 z-10 bg-gradient-to-t from-gray-900/90 to-transparent" />
               <div className="absolute bottom-0 left-0 p-8 z-20 w-full">
-                <h3 className="text-white text-2xl font-bold mb-1 tracking-tight">{t("NextGenFootwear" as any) || "Next-Gen Footwear"}</h3>
+                <h3 className="text-white text-2xl font-bold mb-1 tracking-tight">{t("NextGenFootwear" as DictKey) || "Next-Gen Footwear"}</h3>
                 <span className="text-white/70 text-sm font-medium">Up to 40% Off Brands</span>
               </div>
             </Link>
@@ -96,7 +97,7 @@ export default function Hero() {
               <div className="absolute inset-0 z-10 bg-[#3a2c1f]/50 mix-blend-multiply" />
               <div className="absolute inset-0 z-15 bg-gradient-to-t from-[#2a1a0f] to-transparent" />
               <div className="absolute bottom-0 left-0 p-8 z-20 w-full">
-                <h3 className="text-white text-2xl font-bold mb-1 tracking-tight">{t("TimelessDesign" as any) || "Timeless Design"}</h3>
+                <h3 className="text-white text-2xl font-bold mb-1 tracking-tight">{t("TimelessDesign" as DictKey) || "Timeless Design"}</h3>
                 <span className="text-white/70 text-sm font-medium">Curated Accessories</span>
               </div>
             </Link>

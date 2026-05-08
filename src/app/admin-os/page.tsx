@@ -13,19 +13,47 @@ import {
   adminDeleteUser,
   adminUpdateUser,
 } from '../actions/seller';
+import { 
+  SessionUser, SellerProfile, User, Order, AuditLog, 
+  SystemSettings, Payout, Category, Tag, Collection, Role 
+} from '@/types';
+import type { SellerStatus } from '@/generated/client';
+
+interface DashboardData {
+  sellers: SellerProfile[];
+  orders: Order[];
+  users: User[];
+  auditLogs: AuditLog[];
+  systemSettings: SystemSettings[];
+  payouts: Payout[];
+  categories: Category[];
+  tags: Tag[];
+  collections: Collection[];
+  pendingSellers: SellerProfile[];
+  stats: {
+    revenue: number;
+    platformFees: number;
+    totalOrders: number;
+    totalSellers: number;
+    totalUsers: number;
+    totalProducts: number;
+  };
+  error?: string;
+  user?: SessionUser;
+}
 
 export default function AdminOS() {
   const { data: session } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Access control - redirect non-admins
   useEffect(() => {
-    const role = (session?.user as any)?.role;
+    const role = (session?.user as SessionUser)?.role;
     if (session && role !== 'ADMIN') {
       router.push('/dashboard');
     }
@@ -40,7 +68,7 @@ export default function AdminOS() {
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [createUserLoading, setCreateUserLoading] = useState(false);
   const [createUserForm, setCreateUserForm] = useState({
-    name: '', email: '', password: '', role: 'BUYER' as 'ADMIN' | 'SELLER' | 'BUYER', storeName: ''
+    name: '', email: '', password: '', role: 'BUYER' as Role, storeName: ''
   });
   const [createUserError, setCreateUserError] = useState<string | null>(null);
   
@@ -48,37 +76,39 @@ export default function AdminOS() {
   const [showEditUser, setShowEditUser] = useState(false);
   const [editUserLoading, setEditUserLoading] = useState(false);
   const [editUserForm, setEditUserForm] = useState({
-    id: '', name: '', email: '', role: 'BUYER' as 'ADMIN' | 'SELLER' | 'BUYER'
+    id: '', name: '', email: '', role: 'BUYER' as Role
   });
   const [editUserError, setEditUserError] = useState<string | null>(null);
 
   const refreshData = async () => {
     setLoading(true);
     try {
-      const res = await getDashboardStats();
+      const res = (await getDashboardStats()) as unknown as DashboardData;
       if (res?.error) {
         setError(res.error);
         return;
       }
       setData(res);
-    } catch (err: any) {
-      setError(err.message || "Unauthorized");
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || "Unauthorized");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusUpdate = async (sellerId: string, status: string) => {
+  const handleStatusUpdate = async (sellerId: string, status: SellerStatus) => {
     setActionLoading(sellerId);
     try {
-      const res = await updateSellerStatus(sellerId, status as any) as any;
+      const res = await updateSellerStatus(sellerId, status) as { error?: string };
       if (res?.error) {
         alert(res.error);
         return;
       }
       await refreshData();
-    } catch (err: any) {
-      alert(err.message || "Failed to update status");
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message || "Failed to update status");
     } finally {
       setActionLoading(null);
     }
@@ -87,41 +117,44 @@ export default function AdminOS() {
   const handleCreateTaxonomy = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await createTaxonomy(taxType, { name: taxName }) as any;
+      const res = await createTaxonomy(taxType, { name: taxName }) as { error?: string };
       if (res?.error) {
         alert(res.error);
         return;
       }
       setTaxName('');
       await refreshData();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message);
     }
   };
 
-  const handleDeleteTaxonomy = async (type: any, id: string) => {
+  const handleDeleteTaxonomy = async (type: 'category' | 'tag' | 'collection', id: string) => {
     if (!confirm("Are you sure?")) return;
     try {
-      const res = await deleteTaxonomy(type, id) as any;
+      const res = await deleteTaxonomy(type, id) as { error?: string };
       if (res?.error) {
         alert(res.error);
         return;
       }
       await refreshData();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message);
     }
   };
 
   const handleSeed = async () => {
     setSeedLoading(true);
     try {
-      const res = await seedTestData() as any;
+      const res = await seedTestData() as { error?: string };
       if (res?.error) { alert(res.error); return; }
       await refreshData();
       alert("System seeded with full operational data.");
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message);
     } finally {
       setSeedLoading(false);
     }
@@ -132,13 +165,14 @@ export default function AdminOS() {
     setCreateUserLoading(true);
     setCreateUserError(null);
     try {
-      const res = await adminCreateUser(createUserForm) as any;
+      const res = await adminCreateUser(createUserForm) as { error?: string };
       if (res?.error) { setCreateUserError(res.error); return; }
       setShowCreateUser(false);
       setCreateUserForm({ name: '', email: '', password: '', role: 'BUYER', storeName: '' });
       await refreshData();
-    } catch (err: any) {
-      setCreateUserError(err.message || 'Failed to create user.');
+    } catch (err: unknown) {
+      const error = err as Error;
+      setCreateUserError(error.message || 'Failed to create user.');
     } finally {
       setCreateUserLoading(false);
     }
@@ -147,16 +181,17 @@ export default function AdminOS() {
   const handleDeleteUser = async (userId: string, email: string) => {
     if (!confirm(`Delete account "${email}"? This cannot be undone.`)) return;
     try {
-      const res = await adminDeleteUser(userId) as any;
+      const res = await adminDeleteUser(userId) as { error?: string; message?: string };
       if (res?.error) { alert(res.error); return; }
       if (res?.message) alert(res.message);
       await refreshData();
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete user.');
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message || 'Failed to delete user.');
     }
   };
 
-  const handleEditClick = (user: any) => {
+  const handleEditClick = (user: User) => {
     setEditUserForm({
       id: user.id,
       name: user.name,
@@ -176,12 +211,13 @@ export default function AdminOS() {
         name: editUserForm.name,
         email: editUserForm.email,
         role: editUserForm.role
-      }) as any;
+      }) as { error?: string };
       if (res?.error) { setEditUserError(res.error); return; }
       setShowEditUser(false);
       await refreshData();
-    } catch (err: any) {
-      setEditUserError(err.message || 'Failed to update user.');
+    } catch (err: unknown) {
+      const error = err as Error;
+      setEditUserError(error.message || 'Failed to update user.');
     } finally {
       setEditUserLoading(false);
     }
@@ -193,8 +229,6 @@ export default function AdminOS() {
 
   if (loading && !data) return <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#1a1a2e] font-medium">Initializing AdminOS...</div>;
   if (error) return <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-red-600 font-bold">{error}</div>;
-
-  const stats = data?.stats || {};
 
   return (
     <div className="db">
@@ -239,14 +273,14 @@ export default function AdminOS() {
         </div>
 
         <div className="tab-content animate-fadeIn">
-          {activeTab === 'overview' && <OverviewTab data={data} handleStatusUpdate={handleStatusUpdate} actionLoading={actionLoading} />}
-          {activeTab === 'sellers' && <SellersTab data={data} handleStatusUpdate={handleStatusUpdate} actionLoading={actionLoading} />}
-          {activeTab === 'users' && <UsersTab data={data} onDelete={handleDeleteUser} onEdit={handleEditClick} onCreateClick={() => setShowCreateUser(true)} />}
-          {activeTab === 'orders' && <OrdersTab data={data} />}
-          {activeTab === 'payouts' && <PayoutsTab data={data} />}
-          {activeTab === 'analytics' && <AnalyticsTab data={data} />}
-          {activeTab === 'taxonomy' && <TaxonomyTab data={data} onTypeChange={setTaxType} currentType={taxType} onNameChange={setTaxName} nameValue={taxName} onCreate={handleCreateTaxonomy} onDelete={handleDeleteTaxonomy} />}
-          {activeTab === 'settings' && <SettingsTab data={data} />}
+          {activeTab === 'overview' && data && <OverviewTab data={data} handleStatusUpdate={handleStatusUpdate} actionLoading={actionLoading} />}
+          {activeTab === 'sellers' && data && <SellersTab data={data} handleStatusUpdate={handleStatusUpdate} actionLoading={actionLoading} />}
+          {activeTab === 'users' && data && <UsersTab data={data} onDelete={handleDeleteUser} onEdit={handleEditClick} onCreateClick={() => setShowCreateUser(true)} />}
+          {activeTab === 'orders' && data && <OrdersTab data={data} />}
+          {activeTab === 'payouts' && data && <PayoutsTab data={data} />}
+          {activeTab === 'analytics' && data && <AnalyticsTab data={data} />}
+          {activeTab === 'taxonomy' && data && <TaxonomyTab data={data} onTypeChange={setTaxType} currentType={taxType} onNameChange={setTaxName} nameValue={taxName} onCreate={handleCreateTaxonomy} onDelete={handleDeleteTaxonomy} />}
+          {activeTab === 'settings' && data && <SettingsTab data={data} />}
         </div>
       </div>
 
@@ -254,7 +288,7 @@ export default function AdminOS() {
       {showCreateUser && (
         <CreateUserModal
           form={createUserForm}
-          onChange={(f: any) => setCreateUserForm(f)}
+          onChange={(f: typeof createUserForm) => setCreateUserForm(f)}
           onSubmit={handleCreateUser}
           onClose={() => { setShowCreateUser(false); setCreateUserError(null); }}
           loading={createUserLoading}
@@ -266,7 +300,7 @@ export default function AdminOS() {
       {showEditUser && (
         <EditUserModal
           form={editUserForm}
-          onChange={(f: any) => setEditUserForm(f)}
+          onChange={(f: typeof editUserForm) => setEditUserForm(f)}
           onSubmit={handleUpdateUser}
           onClose={() => { setShowEditUser(false); setEditUserError(null); }}
           loading={editUserLoading}
@@ -358,7 +392,14 @@ const TITLES: Record<string, string> = {
   settings: 'System configuration'
 };
 
-function NavItem({ active, onClick, label, icon }: any) {
+interface NavItemProps {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  icon: React.ReactNode;
+}
+
+function NavItem({ active, onClick, label, icon }: NavItemProps) {
   return (
     <div onClick={onClick} className={`nav-item ${active ? 'active' : ''}`}>
       <div className="nav-icon">{icon}</div>
@@ -367,7 +408,13 @@ function NavItem({ active, onClick, label, icon }: any) {
   );
 }
 
-function OverviewTab({ data, handleStatusUpdate, actionLoading }: any) {
+interface OverviewTabProps {
+  data: DashboardData;
+  handleStatusUpdate: (id: string, status: SellerStatus) => Promise<void>;
+  actionLoading: string | null;
+}
+
+function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabProps) {
   const stats = data?.stats || {};
   return (
     <>
@@ -379,8 +426,8 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: any) {
         </div>
         <div className="stat">
           <div className="stat-label">Platform revenue</div>
-          <div className="stat-val" style={{color:'#534AB7'}}>{(stats.revenue * 0.08 || 0).toLocaleString()}</div>
-          <div className="stat-sub" style={{color:'var(--color-text-secondary)'}}>EGP (8% avg)</div>
+          <div className="stat-val" style={{color:'#534AB7'}}>{(stats.platformFees || 0).toLocaleString()}</div>
+          <div className="stat-sub" style={{color:'var(--color-text-secondary)'}}>EGP (Net Fees)</div>
         </div>
         <div className="stat">
           <div className="stat-label">Active sellers</div>
@@ -397,7 +444,7 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: any) {
       <div className="grid2">
         <div className="card">
           <div className="card-header"><div className="card-title">Recent Audit Log</div></div>
-          {data?.auditLogs?.slice(0, 5).map((log: any) => (
+          {data?.auditLogs?.slice(0, 5).map((log: AuditLog) => (
             <div key={log.id} className="row-item" style={{fontSize:'11px'}}>
                <div style={{width:'6px',height:'6px',borderRadius:'50%',background:log.action.includes('SUSPENDED') ? '#E24B4A' : '#1D9E75'}} />
                <div style={{flex:1}}>
@@ -412,7 +459,7 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: any) {
         </div>
         <div className="card">
           <div className="card-header"><div className="card-title">Pending Approvals</div></div>
-          {data?.pendingSellers?.slice(0,3).map((s: any) => (
+          {data?.pendingSellers?.slice(0,3).map((s: SellerProfile) => (
             <div key={s.id} className="row-item">
               <div style={{flex:1}}>
                 <div style={{fontSize:'12px',fontWeight:500}}>{s.storeName}</div>
@@ -431,7 +478,13 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: any) {
   );
 }
 
-function SellersTab({ data, handleStatusUpdate, actionLoading }: any) {
+interface SellersTabProps {
+  data: DashboardData;
+  handleStatusUpdate: (id: string, status: SellerStatus) => Promise<void>;
+  actionLoading: string | null;
+}
+
+function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps) {
   return (
     <div className="card">
       <div className="card-header"><div className="card-title">All Sellers</div></div>
@@ -441,7 +494,7 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: any) {
          <span className="w-32 text-right">Balance</span>
          <span className="w-24"></span>
       </div>
-      {data?.sellers?.map((s: any) => (
+      {data?.sellers?.map((s: SellerProfile) => (
         <div key={s.id} className="row-item">
           <div style={{flex:1}}>
             <div style={{fontSize:'12px',fontWeight:500}}>{s.storeName}</div>
@@ -462,7 +515,14 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: any) {
   );
 }
 
-function UsersTab({ data, onDelete, onEdit, onCreateClick }: any) {
+interface UsersTabProps {
+  data: DashboardData;
+  onDelete: (id: string, email: string) => Promise<void>;
+  onEdit: (user: User) => void;
+  onCreateClick: () => void;
+}
+
+function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
   return (
     <div className="card">
       <div className="card-header">
@@ -478,7 +538,7 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: any) {
         <div style={{width:100,textAlign:'right'}}>Joined</div>
         <div style={{width:60}} />
       </div>
-      {data?.users?.map((u: any) => (
+      {data?.users?.map((u: User) => (
         <div key={u.id} className="row-item">
           <div className="avatar-sm" style={{background: u.role==='ADMIN' ? '#EEEDFE' : u.role==='SELLER' ? '#E1F5EE' : '#FFF7ED', color: u.role==='ADMIN' ? '#534AB7' : u.role==='SELLER' ? '#085041' : '#92400E'}}>{(u.name||'?')[0].toUpperCase()}</div>
           <div style={{flex:1}}>
@@ -500,11 +560,15 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: any) {
   );
 }
 
-function OrdersTab({ data }: any) {
+interface OrdersTabProps {
+  data: DashboardData;
+}
+
+function OrdersTab({ data }: OrdersTabProps) {
   return (
     <div className="card">
       <div className="card-header"><div className="card-title">Platform Orders</div></div>
-      {data?.orders?.map((o: any) => (
+      {data?.orders?.map((o: Order) => (
         <div key={o.id} className="row-item">
           <div style={{flex:1}}>
             <div style={{fontSize:'12px',fontWeight:600}}>#ORD-{o.id.substring(0,8)}</div>
@@ -521,11 +585,15 @@ function OrdersTab({ data }: any) {
   );
 }
 
-function PayoutsTab({ data }: any) {
+interface PayoutsTabProps {
+  data: DashboardData;
+}
+
+function PayoutsTab({ data }: PayoutsTabProps) {
   return (
     <div className="card">
        <div className="card-header"><div className="card-title">Pending Payout Requests</div></div>
-       {data?.payouts?.map((p: any) => (
+       {data?.payouts?.map((p: Payout) => (
          <div key={p.id} className="row-item">
             <div style={{flex:1}}>
                <div style={{fontSize:'12px',fontWeight:600}}>{p.seller?.storeName}</div>
@@ -540,38 +608,89 @@ function PayoutsTab({ data }: any) {
   );
 }
 
-function AnalyticsTab({ data }: any) {
+interface AnalyticsTabProps {
+  data: DashboardData;
+}
+
+function AnalyticsTab({ data }: AnalyticsTabProps) {
+  // Real volume distribution from orders
+  const orders = data?.orders || [];
+  const totalOrders = orders.length || 1;
+  const flashSaleOrders = orders.filter(o =>
+    o.items?.some(i => {
+      const variant = (i as { variant?: { product?: { flashSalePrice?: number | null } } }).variant;
+      return variant?.product?.flashSalePrice != null;
+    })
+  ).length;
+  const couponOrders = orders.filter(o => o.couponId != null).length;
+  const flashPct = Math.round((flashSaleOrders / totalOrders) * 100);
+  const couponPct = Math.round((couponOrders / totalOrders) * 100);
+  const directPct = Math.max(0, 100 - flashPct - couponPct);
+
+  // Real category aggregation from orders → variants → products → categories
+  const categoryCounts = new Map<string, { name: string; units: number }>();
+  for (const order of orders) {
+    for (const item of order.items || []) {
+      const variant = (item as { variant?: { product?: { category?: { id: string; name: string } | null; categoryId?: string } } }).variant;
+      const cat = variant?.product?.category;
+      if (cat) {
+        const existing = categoryCounts.get(cat.id);
+        categoryCounts.set(cat.id, {
+          name: cat.name,
+          units: (existing?.units || 0) + (item.quantity || 0),
+        });
+      }
+    }
+  }
+  const topCategories = Array.from(categoryCounts.values())
+    .sort((a, b) => b.units - a.units)
+    .slice(0, 5);
+
   return (
     <div className="grid grid-cols-2 gap-6">
        <div className="card">
           <div className="card-title mb-4">Volume Distribution</div>
           <div className="flex flex-col gap-4">
-             <MetricBar label="Direct Sales" value={65} color="#534AB7" />
-             <MetricBar label="Flash Sales" value={25} color="#E24B4A" />
-             <MetricBar label="Partner Referrals" value={10} color="#1D9E75" />
+             <MetricBar label="Direct Sales" value={directPct} color="#534AB7" />
+             <MetricBar label="Flash Sales" value={flashPct} color="#E24B4A" />
+             <MetricBar label="Coupon Orders" value={couponPct} color="#1D9E75" />
           </div>
        </div>
        <div className="card">
           <div className="card-title mb-4">Top Categories</div>
-          {data?.categories?.slice(0,5).map((c: any) => (
-             <div key={c.id} className="flex justify-between items-center py-2 border-bottom border-slate-50">
+          {topCategories.length === 0 ? (
+            <div className="py-6 text-center text-xs text-slate-400">No order data yet.</div>
+          ) : (
+            topCategories.map(c => (
+              <div key={c.name} className="flex justify-between items-center py-2 border-bottom border-slate-50">
                 <span className="text-xs text-slate-600">{c.name}</span>
-                <span className="text-xs font-bold">{Math.floor(Math.random() * 500) + 100} units</span>
-             </div>
-          ))}
+                <span className="text-xs font-bold">{c.units} units</span>
+              </div>
+            ))
+          )}
        </div>
     </div>
   );
 }
 
-function TaxonomyTab({ data, currentType, onTypeChange, onNameChange, nameValue, onCreate, onDelete }: any) {
+interface TaxonomyTabProps {
+  data: DashboardData;
+  currentType: 'category' | 'tag' | 'collection';
+  onTypeChange: (type: 'category' | 'tag' | 'collection') => void;
+  onNameChange: (name: string) => void;
+  nameValue: string;
+  onCreate: (e: React.FormEvent) => Promise<void>;
+  onDelete: (type: 'category' | 'tag' | 'collection', id: string) => Promise<void>;
+}
+
+function TaxonomyTab({ data, currentType, onTypeChange, onNameChange, nameValue, onCreate, onDelete }: TaxonomyTabProps) {
   const items = currentType === 'category' ? data.categories : currentType === 'tag' ? data.tags : data.collections;
   return (
     <div className="grid grid-cols-3 gap-6">
        <div className="card col-span-1">
           <div className="card-title mb-4">Add Taxonomy</div>
           <form onSubmit={onCreate} className="flex flex-col gap-4">
-             <select value={currentType} onChange={(e:any) => onTypeChange(e.target.value)} className="input-tax bg-white">
+             <select value={currentType} onChange={(e) => onTypeChange(e.target.value as any)} className="input-tax bg-white">
                 <option value="category">Category</option>
                 <option value="tag">Tag</option>
                 <option value="collection">Collection</option>
@@ -583,7 +702,7 @@ function TaxonomyTab({ data, currentType, onTypeChange, onNameChange, nameValue,
        <div className="card col-span-2">
           <div className="card-title mb-4">Existing {currentType}s</div>
           <div className="flex flex-col gap-1">
-             {items?.map((item: any) => (
+             {items?.map((item: Category | Tag | Collection) => (
                 <div key={item.id} className="row-item">
                    <div className="flex-1 text-xs font-medium">{item.name}</div>
                    <div className="text-[10px] text-slate-400 mr-4">slug: {item.slug}</div>
@@ -597,11 +716,15 @@ function TaxonomyTab({ data, currentType, onTypeChange, onNameChange, nameValue,
   );
 }
 
-function SettingsTab({ data }: any) {
+interface SettingsTabProps {
+  data: DashboardData;
+}
+
+function SettingsTab({ data }: SettingsTabProps) {
   return (
     <div className="card max-w-xl">
        <div className="card-title mb-6">Global Platform Settings</div>
-       {data?.systemSettings?.map((s: any) => (
+       {data?.systemSettings?.map((s: SystemSettings) => (
           <div key={s.key} className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-100">
              <div className="flex justify-between items-center mb-1">
                 <span className="text-[11px] font-bold text-slate-400 uppercase">{s.key}</span>
@@ -619,7 +742,13 @@ function SettingsTab({ data }: any) {
   );
 }
 
-function MetricBar({ label, value, color }: any) {
+interface MetricBarProps {
+  label: string;
+  value: number;
+  color: string;
+}
+
+function MetricBar({ label, value, color }: MetricBarProps) {
    return (
       <div>
          <div className="flex justify-between text-[11px] mb-1">
@@ -643,8 +772,17 @@ function AnalyticsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" 
 function ModerationIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".6"/><path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".8"/></svg>; }
 function SettingsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".7"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3" stroke="currentColor" strokeWidth="1.2" stroke-linecap="round" fill="none" opacity=".5"/></svg>; }
 
-function EditUserModal({ form, onChange, onSubmit, onClose, loading, error }: any) {
-  const update = (field: string, val: string) => onChange({ ...form, [field]: val });
+interface EditUserModalProps {
+  form: { id: string; name: string; email: string; role: Role };
+  onChange: (form: { id: string; name: string; email: string; role: Role }) => void;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
+  onClose: () => void;
+  loading: boolean;
+  error: string | null;
+}
+
+function EditUserModal({ form, onChange, onSubmit, onClose, loading, error }: EditUserModalProps) {
+  const update = (field: string, val: string) => onChange({ ...form, [field]: val as any });
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>
@@ -684,8 +822,17 @@ function EditUserModal({ form, onChange, onSubmit, onClose, loading, error }: an
   );
 }
 
-function CreateUserModal({ form, onChange, onSubmit, onClose, loading, error }: any) {
-  const update = (field: string, val: string) => onChange({ ...form, [field]: val });
+interface CreateUserModalProps {
+  form: { name: string; email: string; password: string; role: Role; storeName: string };
+  onChange: (form: { name: string; email: string; password: string; role: Role; storeName: string }) => void;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
+  onClose: () => void;
+  loading: boolean;
+  error: string | null;
+}
+
+function CreateUserModal({ form, onChange, onSubmit, onClose, loading, error }: CreateUserModalProps) {
+  const update = (field: string, val: string) => onChange({ ...form, [field]: val as any });
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>

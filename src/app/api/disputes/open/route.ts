@@ -3,19 +3,24 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { notifyUser } from '@/lib/notification-helpers';
+import { disputeSchema } from '@/lib/validation';
+import { SessionUser } from '@/types';
 
 // POST /api/disputes/open — buyer opens a dispute
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    if (!session || !session.user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const { orderId, reason, description } = await req.json();
-    const userId = (session.user as { id: string }).id;
+    const body = await req.json();
+    const validated = disputeSchema.safeParse(body);
 
-    if (!orderId || !reason) {
-      return NextResponse.json({ message: 'orderId and reason required' }, { status: 400 });
+    if (!validated.success) {
+      return NextResponse.json({ message: 'Invalid data', errors: validated.error.format() }, { status: 400 });
     }
+
+    const { orderId, reason, description } = validated.data;
+    const userId = (session.user as SessionUser).id;
 
     // Verify the order belongs to this buyer
     const order = await prisma.order.findUnique({ where: { id: orderId } });

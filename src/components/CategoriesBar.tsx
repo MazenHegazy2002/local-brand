@@ -3,21 +3,64 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/providers/LanguageContext';
-import { ElectronicsIcon, FashionIcon, HomeIcon, HealthIcon, SportsIcon, GroceryIcon } from './icons';
+import {
+  ElectronicsIcon, FashionIcon, HomeIcon, HealthIcon, SportsIcon, GroceryIcon,
+  AccessoriesIcon, AppliancesIcon, AutoIcon, BeautyIcon, BooksIcon, FootwearIcon,
+  FurnitureIcon, GardenIcon, JewelryIcon, KidsIcon, MenIcon, PetsIcon, PharmaIcon,
+  ToysIcon, WomenIcon,
+} from './icons';
+import type { Category } from '@/types';
 
 function getCategoryIcon(name: string) {
-  const lower = name.toLowerCase();
-  if (lower.includes('electronic') || lower.includes('phone') || lower.includes('laptop') || lower.includes('computer')) return <ElectronicsIcon />;
-  if (lower.includes('fashion') || lower.includes('clothing') || lower.includes('apparel') || lower.includes('dress') || lower.includes(' shoes') || lower.includes('watch')) return <FashionIcon />;
-  if (lower.includes('home') || lower.includes('furniture') || lower.includes('decor') || lower.includes('kitchen')) return <HomeIcon />;
-  if (lower.includes('health') || lower.includes('beauty') || lower.includes('beauty')) return <HealthIcon />;
-  if (lower.includes('sport') || lower.includes('fitness') || lower.includes('gym')) return <SportsIcon />;
-  if (lower.includes('grocery') || lower.includes('food') || lower.includes('supermarket')) return <GroceryIcon />;
-  return <ElectronicsIcon />;
+  const lower = name.toLowerCase().trim();
+  // Exact-name matches first (covers the 20 standard categories)
+  if (lower === 'accessories')                              return <AccessoriesIcon />;
+  if (lower === 'appliances')                               return <AppliancesIcon />;
+  if (lower === 'auto')                                     return <AutoIcon />;
+  if (lower === 'beauty')                                   return <BeautyIcon />;
+  if (lower === 'books')                                    return <BooksIcon />;
+  if (lower === 'electronics')                              return <ElectronicsIcon />;
+  if (lower === 'footwear')                                 return <FootwearIcon />;
+  if (lower === 'furniture')                                return <FurnitureIcon />;
+  if (lower === 'garden')                                   return <GardenIcon />;
+  if (lower === 'groceries' || lower === 'grocery')         return <GroceryIcon />;
+  if (lower === 'health')                                   return <HealthIcon />;
+  if (lower === 'home')                                     return <HomeIcon />;
+  if (lower === 'jewelry' || lower === 'jewellery')         return <JewelryIcon />;
+  if (lower === 'kids')                                     return <KidsIcon />;
+  if (lower === 'men')                                      return <MenIcon />;
+  if (lower === 'pets')                                     return <PetsIcon />;
+  if (lower === 'pharma' || lower === 'pharmacy')           return <PharmaIcon />;
+  if (lower === 'sports' || lower === 'sport')              return <SportsIcon />;
+  if (lower === 'toys')                                     return <ToysIcon />;
+  if (lower === 'women')                                    return <WomenIcon />;
+  // Keyword fallbacks for custom / translated category names
+  if (lower.includes('accessor') || lower.includes('watch') || lower.includes('bag')) return <AccessoriesIcon />;
+  if (lower.includes('applian') || lower.includes('machine'))                          return <AppliancesIcon />;
+  if (lower.includes('auto') || lower.includes('car') || lower.includes('vehicle'))   return <AutoIcon />;
+  if (lower.includes('beaut') || lower.includes('cosmetic') || lower.includes('makeup')) return <BeautyIcon />;
+  if (lower.includes('book') || lower.includes('novel') || lower.includes('magazine')) return <BooksIcon />;
+  if (lower.includes('electron') || lower.includes('phone') || lower.includes('laptop')) return <ElectronicsIcon />;
+  if (lower.includes('footwear') || lower.includes('shoe') || lower.includes('boot') || lower.includes('sandal')) return <FootwearIcon />;
+  if (lower.includes('furni') || lower.includes('sofa') || lower.includes('chair'))   return <FurnitureIcon />;
+  if (lower.includes('garden') || lower.includes('plant') || lower.includes('flower')) return <GardenIcon />;
+  if (lower.includes('grocer') || lower.includes('food') || lower.includes('supermarket')) return <GroceryIcon />;
+  if (lower.includes('health') || lower.includes('wellness') || lower.includes('fitness')) return <HealthIcon />;
+  if (lower.includes('home') || lower.includes('decor') || lower.includes('kitchen'))  return <HomeIcon />;
+  if (lower.includes('jewel') || lower.includes('ring') || lower.includes('necklace')) return <JewelryIcon />;
+  if (lower.includes('kid') || lower.includes('child') || lower.includes('baby'))      return <KidsIcon />;
+  if (lower.includes('men') || lower.includes('shirt') || lower.includes('trouser'))   return <MenIcon />;
+  if (lower.includes('pet') || lower.includes('dog') || lower.includes('cat'))         return <PetsIcon />;
+  if (lower.includes('pharm') || lower.includes('medicine') || lower.includes('drug')) return <PharmaIcon />;
+  if (lower.includes('sport') || lower.includes('gym') || lower.includes('exercise'))  return <SportsIcon />;
+  if (lower.includes('toy') || lower.includes('game') || lower.includes('play'))       return <ToysIcon />;
+  if (lower.includes('women') || lower.includes('woman') || lower.includes('lady') || lower.includes('dress')) return <WomenIcon />;
+  // Final fallback
+  return <GroceryIcon />;
 }
 
 export default function CategoriesBar() {
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const { t } = useLanguage();
 
@@ -60,7 +103,7 @@ export default function CategoriesBar() {
     <div className="w-full bg-white border-b border-gray-100 sticky top-[65px] z-40 shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex gap-1 md:gap-2 py-2.5 overflow-x-auto scrollbar-hide">
-          {categories.map((category: any) => (
+          {categories.map((category: Category & { _count?: { products: number } }) => (
             <Link
               key={category.id}
               href={`/category/${category.slug}`}
@@ -70,9 +113,9 @@ export default function CategoriesBar() {
                 {getCategoryIcon(category.name)}
               </span>
               <span>{category.name}</span>
-              {category._count?.products > 0 && (
+              {(category._count?.products ?? 0) > 0 && (
                 <span className="text-[10px] text-gray-400 group-hover:text-white/70">
-                  ({category._count.products})
+                  ({category._count?.products})
                 </span>
               )}
             </Link>

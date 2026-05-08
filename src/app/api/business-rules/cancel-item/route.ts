@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { OrderItemStatus, OrderStatus } from '@/generated/client';
+import { VAT_RATE } from '@/lib/constants';
+import type { SessionUser } from '@/types';
 
 /**
  * Business rule enforcement middleware helpers
@@ -81,7 +83,7 @@ export async function cancelOrderItem(orderId: string, orderItemId: string, user
   // Recalculate order total
   const remaining = order.items.filter(i => i.id !== orderItemId && i.status !== OrderItemStatus.CANCELLED);
   const newTotal = remaining.reduce((sum, i) => sum + i.priceAtPurchase * i.quantity, 0);
-  const vatAmount = newTotal * 0.14;
+  const vatAmount = newTotal * VAT_RATE;
   const shippingFee = remaining.length > 0 ? 50 : 0;
 
   // If all items cancelled, cancel entire order
@@ -107,13 +109,14 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const userId = (session.user as any).id;
+    const userId = (session.user as SessionUser).id;
     const { orderId, orderItemId } = await req.json();
     if (!orderId || !orderItemId) return NextResponse.json({ message: 'orderId and orderItemId required' }, { status: 400 });
 
     const result = await cancelOrderItem(orderId, orderItemId, userId);
     return NextResponse.json(result, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ message: error.message || 'Internal Server Error' }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ message }, { status: 500 });
   }
 }

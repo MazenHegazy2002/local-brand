@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { SessionUser, Product } from '@/types';
 
 export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -12,7 +13,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     const limit = Math.min(20, parseInt(searchParams.get('limit') || '12'));
 
     const session = await getServerSession(authOptions);
-    let userId = (session?.user as any)?.id;
+    let userId = (session?.user as SessionUser)?.id;
 
     const targetProduct = await prisma.product.findUnique({
       where: { id: productId },
@@ -21,22 +22,24 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
     if (!targetProduct) return NextResponse.json({ message: 'Product not found' }, { status: 404 });
 
-    let recommendations: any[] = [];
+    let recommendations: Product[] = [];
 
     switch (type) {
       case 'trending':
-        recommendations = await getTrending(limit);
+        recommendations = await getTrending(limit) as unknown as Product[];
         break;
       case 'personalized':
-        if (!userId) recommendations = await getTrending(limit);
-        else {
+        if (!userId) {
+          recommendations = await getTrending(limit) as unknown as Product[];
+        } else {
           const wishlist = await prisma.wishlist.findMany({
             where: { userId },
             select: { productId: true },
           });
           const wishlistIds = wishlist.map(w => w.productId);
-          if (wishlistIds.length === 0) recommendations = await getTrending(limit);
-          else {
+          if (wishlistIds.length === 0) {
+            recommendations = await getTrending(limit) as unknown as Product[];
+          } else {
             const products = await prisma.product.findMany({
               where: { id: { in: wishlistIds } },
               select: { categoryId: true },
@@ -47,12 +50,12 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
               take: limit,
               include: { images: { where: { isPrimary: true } }, seller: { select: { storeName: true } } },
               orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-            });
+            }) as unknown as Product[];
           }
         }
         break;
       default:
-        recommendations = await getSimilar(targetProduct, productId, limit);
+        recommendations = await getSimilar(targetProduct as unknown as Product, productId, limit) as unknown as Product[];
     }
 
     return NextResponse.json({ recommendations, type }, { status: 200 });
@@ -62,7 +65,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   }
 }
 
-async function getSimilar(product: any, productId: string, limit: number) {
+async function getSimilar(product: Product, productId: string, limit: number) {
   return prisma.product.findMany({
     where: {
       categoryId: product.categoryId,

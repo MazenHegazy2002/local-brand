@@ -2,11 +2,12 @@ import { prisma } from '@/lib/prisma';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { getDictionary } from '@/lib/i18n/server';
-import WishlistButton from '@/components/WishlistButton';
 import ReviewSection from '@/components/ReviewSection';
 import ProductDetails from './ProductDetails';
+import RelatedProducts from '@/components/RelatedProducts';
+import RecentlyViewed from '@/components/RecentlyViewed';
 import { PLATFORM_URL } from '@/lib/constants';
-import type { Review } from '@/types';
+import type { Product as ProductType, Review } from '@/types';
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -143,7 +144,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
             <div className="h-px w-full bg-gray-100 mb-8" />
 
-            <ProductDetails product={product} />
+            <ProductDetails product={product as unknown as ProductType} />
 
             {/* Tags */}
             <div className="flex flex-wrap gap-2 mt-4">
@@ -169,6 +170,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
           </div>
         </div>
+
+        {/* Related Products */}
+        <RelatedProducts productId={product.id} heading="You may also like" type="similar" limit={6} />
+
+        {/* Recently Viewed */}
+        <RecentlyViewed trackId={product.id} excludeId={product.id} limit={6} />
 
         {/* Reviews Section */}
         <ReviewSection productId={product.id} initialReviews={product.reviews as unknown as Review[]} />

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useCartStore } from '@/lib/cartStore';
 import Link from 'next/link';
+import { ShoppingCart, Trash2 } from 'lucide-react';
 import { Drawer, Button, QuantitySelector } from '@/components/ui';
 
 interface CartDrawerProps {
@@ -30,7 +31,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     <Drawer open={isOpen} onClose={onClose} title="Your Cart" position="right" width="420px">
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full gap-4 py-12">
-          <span className="text-6xl opacity-30">🛒</span>
+          <ShoppingCart size={64} className="opacity-20" />
           <p className="text-gray-500 text-center">Your cart is empty</p>
           <Button onClick={onClose} variant="outline">
             Continue Shopping
@@ -42,8 +43,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             {items.map((item, index) => (
               <div 
                 key={item.id} 
-                className="flex gap-4 py-4 border-b border-gray-100"
-                style={{ animation: 'slideIn 0.3s ease-out', animationFillMode: 'both', animationDelay: `${index * 0.05}s` }}
+                className="flex gap-4 py-4 border-b border-gray-100 animate-slide-in-right"
+                style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
               >
                 <div className="w-20 h-20 rounded-xl bg-gray-100 flex items-center justify-center text-2xl overflow-hidden shrink-0">
                   {item.image && item.image.startsWith('http') ? (
@@ -67,9 +68,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     />
                     <button 
                       onClick={() => removeItem(item.id)}
-                      className="text-red-500 text-sm font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                      className="text-red-500 text-sm font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors flex items-center gap-1"
                     >
-                      Remove
+                      <Trash2 size={14} /> Remove
                     </button>
                   </div>
                 </div>

@@ -8,18 +8,46 @@ import { Suspense } from 'react';
 
 const SOCIAL_PROVIDERS = ['google', 'facebook', 'twitter'] as const;
 
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+  OAuthAccountNotLinked: 'This email is already registered with a different sign-in method. Please sign in with your password instead.',
+  OAuthCallback: 'We couldn\'t complete sign-in with that provider. Please try again.',
+  OAuthSignin: 'There was a problem starting sign-in with that provider.',
+  OAuthCreateAccount: 'We couldn\'t create your account from this provider. Try using email instead.',
+  EmailCreateAccount: 'We couldn\'t create your account with this email. Please try again.',
+  Callback: 'There was a problem during authentication. Please try again.',
+  EmailSignin: 'Failed to send the sign-in email. Please try again later.',
+  CredentialsSignin: 'Invalid email or password.',
+  SessionRequired: 'You must sign in to access this page.',
+  AccessDenied: 'Access denied. Your account may not have permission.',
+  Default: 'Authentication failed. Please try again.',
+};
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
   const urlError = searchParams.get('error');
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => {
+    // Restore "Remember me" email from localStorage
+    if (typeof window === 'undefined') return '';
+    try {
+      return localStorage.getItem('local-brand-remember-email') || '';
+    } catch {
+      return '';
+    }
+  });
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return !!localStorage.getItem('local-brand-remember-email');
+    } catch {
+      return false;
+    }
+  });
   const [error, setError] = useState(
-    urlError === 'OAuthAccountNotLinked'
-      ? 'This email is already registered. Please sign in with your password.'
-      : urlError ? 'Authentication failed. Please try again.' : ''
+    urlError ? (OAUTH_ERROR_MESSAGES[urlError] || OAUTH_ERROR_MESSAGES.Default) : ''
   );
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
@@ -28,13 +56,21 @@ function LoginForm() {
   const handleSocialSignIn = async (provider: string) => {
     setLoadingProvider(provider);
     setError('');
-    await signIn(provider, { callbackUrl: '/dashboard' });
+    await signIn(provider, { callbackUrl });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+
+    // Persist email locally if Remember Me is checked
+    try {
+      if (rememberMe) localStorage.setItem('local-brand-remember-email', email);
+      else localStorage.removeItem('local-brand-remember-email');
+    } catch {
+      // ignore storage errors
+    }
 
     const res = await signIn('credentials', {
       redirect: false,
@@ -187,7 +223,13 @@ function LoginForm() {
 
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <input id="remember-me" type="checkbox" className="h-4 w-4 text-[#1e3b8a] focus:ring-[#1e3b8a] border-gray-300 rounded" />
+                <input
+                  id="remember-me"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 text-[#1e3b8a] focus:ring-[#1e3b8a] border-gray-300 rounded"
+                />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">Remember me</label>
               </div>
               <div className="text-sm">

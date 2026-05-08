@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
+import { SessionUser, Product, Order, User } from '@/types';
 
 // Tax configuration
 export async function updateTaxSettings(formData: FormData) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user as any)?.role !== 'ADMIN') throw new Error("Unauthorized");
+  if (!session || (session.user as SessionUser).role !== 'ADMIN') throw new Error("Unauthorized");
 
   const vatRate = parseFloat(formData.get('vatRate') as string) || 14;
   const platformFee = parseFloat(formData.get('platformFee') as string) || 15;
@@ -45,18 +46,18 @@ export async function getTaxSettings() {
 // Data export/import
 export async function exportData(type: 'products' | 'orders' | 'users') {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user as any)?.role !== 'ADMIN') throw new Error("Unauthorized");
+  if (!session || (session.user as SessionUser).role !== 'ADMIN') throw new Error("Unauthorized");
 
-  let data: any[] = [];
+  let data: Product[] | Order[] | User[] = [];
   switch (type) {
     case 'products':
-      data = await prisma.product.findMany({ include: { seller: true, category: true, variants: true } });
+      data = await prisma.product.findMany({ include: { seller: true, category: true, variants: true } }) as unknown as Product[];
       break;
     case 'orders':
-      data = await prisma.order.findMany({ include: { items: true, user: true } });
+      data = await prisma.order.findMany({ include: { items: true, user: true } }) as unknown as Order[];
       break;
     case 'users':
-      data = await prisma.user.findMany({ include: { sellerProfile: true } });
+      data = await prisma.user.findMany({ include: { sellerProfile: true } }) as unknown as User[];
       break;
   }
 
@@ -65,7 +66,7 @@ export async function exportData(type: 'products' | 'orders' | 'users') {
 
 export async function importProducts(formData: FormData) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user as any)?.role !== 'ADMIN') throw new Error("Unauthorized");
+  if (!session || (session.user as SessionUser).role !== 'ADMIN') throw new Error("Unauthorized");
 
   const file = formData.get('file') as File;
   if (!file) throw new Error("No file provided");
@@ -91,7 +92,7 @@ export async function importProducts(formData: FormData) {
 
       if (p.variants?.length > 0) {
         await prisma.productVariant.createMany({
-          data: p.variants.map((v: any) => ({
+          data: p.variants.map((v: { sku?: string; title?: string; attributes?: Record<string, unknown>; price?: number; stock?: number }) => ({
             productId: product.id,
             sku: v.sku || `SKU-${Date.now()}`,
             title: v.title || 'Standard',

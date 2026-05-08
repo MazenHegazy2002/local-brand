@@ -3,6 +3,7 @@ import { redis } from '@/lib/redis';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { SessionUser } from '@/types';
 
 export async function GET(req: Request) {
   try {
@@ -12,7 +13,7 @@ export async function GET(req: Request) {
 
     // 1. Authenticated User Cart
     if (session) {
-      const userId = (session.user as any).id;
+      const userId = (session.user as SessionUser).id;
       const dbCart = await prisma.cartItem.findMany({
         where: { userId },
         include: { variant: { include: { product: true } } }
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
 
     // 1. Authenticated User Cart Update
     if (session) {
-      const userId = (session.user as any).id;
+      const userId = (session.user as SessionUser).id;
       
       const cartItem = await prisma.cartItem.upsert({
         where: { userId_variantId: { userId, variantId } },

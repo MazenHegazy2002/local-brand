@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { STRIPE_API_VERSION } from '@/lib/constants';
 
 let stripeInstance: Stripe | null = null;
 
@@ -10,7 +11,7 @@ export function getStripe(): Stripe | null {
   
   if (!stripeInstance) {
     stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-      apiVersion: '2026-03-25.dahlia' as any,
+      apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
     });
   }
   

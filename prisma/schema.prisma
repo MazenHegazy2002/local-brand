@@ -257,8 +257,16 @@ model Order {
   status              OrderStatus @default(PENDING_PAYMENT)
   paymentMethod       PaymentMethod
   paymentStatus       PaymentStatus @default(UNPAID)
-  paymentId           String?  // Gateway ID (Stripe/Paymob)
+  paymentId           String?  // Gateway ID (Stripe/Paymob/PaySky SystemReference)
+  paymentChannel      String?  // Network used (e.g. Card / Tahweel / mVisa / Meeza)
+  paymentNetworkRef   String?  // Network-side reference (e.g. PaySky NetworkReference)
+  paymentMaskedPan    String?  // Masked card / wallet account for receipts
   idempotencyKey      String?  @unique
+  payoutProcessedAt   DateTime? // Guard against double-payout
+
+  // Customer checkout options
+  orderNotes          String?  // Optional buyer instructions (max 500 chars)
+  giftWrapping        Boolean  @default(false)
   
   // Snapshots for historical integrity
   shippingAddressSnapshot String  // JSON string of address
@@ -270,6 +278,11 @@ model Order {
   coupon              Coupon?  @relation(fields: [couponId], references: [id])
   items               OrderItem[]
   shipments           Shipment[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -315,6 +328,9 @@ enum PaymentMethod {
   CREDIT_CARD
   MOBILE_WALLET
   CASH_ON_DELIVERY
+  PAYMOB
+  FAWRY
+  PAYSKY
 }
 
 enum PaymentStatus {
@@ -351,6 +367,7 @@ model Review {
   productId           String
   rating              Int      // 1-5
   comment             String?
+  images              String[] @default([])
   verifiedPurchase    Boolean  @default(false)
   sellerResponseText  String?
   createdAt           DateTime @default(now())
@@ -531,4 +548,56 @@ model Message {
 enum ConversationStatus {
   ACTIVE
   CLOSED
+}
+
+// ============================================
+// SUPPORT TICKETS
+// ============================================
+
+model SupportTicket {
+  id          String        @id @default(uuid())
+  ticketId    String        @unique // Short human-readable reference
+  userId      String?
+  name        String
+  email       String
+  subject     String
+  category    String        @default("general")
+  message     String
+  status      TicketStatus  @default(OPEN)
+  priority    String        @default("normal")
+  adminReply  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+// ============================================
+// CMS: HOMEPAGE BANNERS
+// ============================================
+
+model HomepageBanner {
+  id          String   @id @default(uuid())
+  title       String
+  subtitle    String?
+  imageUrl    String
+  linkUrl     String
+  ctaLabel    String?
+  position    Int      @default(0)
+  isActive    Boolean  @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, position])
 }

@@ -20,7 +20,6 @@ export async function POST(req: Request) {
     });
 
     if (!shipment) {
-      console.log(`Shipment not found for tracking: ${trackingNumber}`);
       return NextResponse.json({ 
         message: 'Shipment not found',
         received: true
@@ -70,8 +69,6 @@ export async function POST(req: Request) {
         data: { status: newOrderStatus },
       });
     }
-
-    console.log(`Tracking webhook processed: ${trackingNumber} -> ${eventStatus}`);
 
     return NextResponse.json({
       received: true,

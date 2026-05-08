@@ -2,10 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { SessionUser } from '@/types';
+
+interface ImportVariant {
+  sku?: string;
+  title?: string;
+  attributes?: Record<string, any>;
+  price?: number;
+  stock?: number;
+}
+
+interface ImportProduct {
+  title: string;
+  description?: string;
+  basePrice?: number;
+  price?: number;
+  category?: string;
+  sellerId: string;
+  variants?: ImportVariant[];
+}
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user as any)?.role !== 'ADMIN') {
+  if (!session || (session.user as SessionUser)?.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -19,7 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     const text = await file.text();
-    const data = JSON.parse(text);
+    const data = JSON.parse(text) as ImportProduct[];
 
     if (type === 'products') {
       for (const item of data) {
@@ -44,9 +63,9 @@ export async function POST(req: NextRequest) {
             }
           });
 
-          if (item.variants?.length > 0) {
+          if (item.variants && item.variants.length > 0) {
             await prisma.productVariant.createMany({
-              data: item.variants.map((v: any) => ({
+              data: item.variants.map((v: ImportVariant) => ({
                 productId: product.id,
                 sku: v.sku || `SKU-${Date.now()}`,
                 title: v.title || 'Standard',

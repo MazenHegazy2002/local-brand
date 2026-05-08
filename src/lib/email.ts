@@ -1,6 +1,7 @@
 // Email notification utility
 // For production, integrate with SendGrid, Resend, AWS SES, or similar
 
+import { CONTACT_PHONE, SUPPORT_EMAIL } from '@/lib/constants';
 import type { Order, User, OrderItem } from '@/types';
 
 interface EmailOptions {
@@ -34,7 +35,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   }
 }
 
-export function generateOrderConfirmationEmail(order: any, user: any): string {
+export function generateOrderConfirmationEmail(order: Order, user: User | null): string {
   const itemsList = order.items?.map((item: OrderItem) => `
     <tr>
       <td style="padding: 12px; border-bottom: 1px solid #eee;">
@@ -127,7 +128,7 @@ export function generateOrderConfirmationEmail(order: any, user: any): string {
       <!-- Help -->
       <div style="background: #f0f9ff; border-radius: 8px; padding: 20px; margin-top: 30px; text-align: center;">
         <p style="margin: 0; color: #1e3b8a; font-weight: 600;">Need help?</p>
-        <p style="margin: 8px 0 0; color: #666;">Contact us at support@localbrand.com or call +20 123 456 7890</p>
+        <p style="margin: 8px 0 0; color: #666;">Contact us at ${SUPPORT_EMAIL} or call ${CONTACT_PHONE}</p>
       </div>
     </div>
 
@@ -142,7 +143,7 @@ export function generateOrderConfirmationEmail(order: any, user: any): string {
   `;
 }
 
-export function generateShippingNotificationEmail(order: any, user: any, trackingNumber?: string): string {
+export function generateShippingNotificationEmail(order: Order, user: User | null, trackingNumber?: string): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -159,6 +160,82 @@ export function generateShippingNotificationEmail(order: any, user: any, trackin
       <p>Great news! Your order is on its way.</p>
       ${trackingNumber ? `<p><strong>Tracking Number:</strong> ${trackingNumber}</p>` : ''}
       <p>You can track your order status at: <a href="${process.env.NEXT_PUBLIC_APP_URL}/track/${order.id}">Track Order</a></p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
+export function generateOrderCancelledEmail(order: Order, user: User | null, reason?: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9f9f9; padding: 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden;">
+    <div style="background: #DC2626; color: white; padding: 30px; text-align: center;">
+      <h1 style="margin: 0;">Order Cancelled</h1>
+    </div>
+    <div style="padding: 30px;">
+      <p>Hi ${user?.name || 'Customer'},</p>
+      <p>Your order <strong>#${order.id.slice(0, 8)}</strong> has been cancelled as requested.</p>
+      ${reason ? `<p><em>Reason: ${reason}</em></p>` : ''}
+      <p>If the order was already paid, a refund of <strong>${order.totalAmount.toLocaleString()} EGP</strong> will be processed back to your original payment method within 5-7 business days.</p>
+      <p>If you believe this cancellation is an error, please contact us at ${SUPPORT_EMAIL}.</p>
+      <hr>
+      <p style="color: #666; font-size: 13px;">— Local Brand</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
+export function generateDeliveryConfirmationEmail(order: Order, user: User | null): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9f9f9; padding: 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden;">
+    <div style="background: #10B981; color: white; padding: 30px; text-align: center;">
+      <h1 style="margin: 0;">Delivered! 🎉</h1>
+    </div>
+    <div style="padding: 30px;">
+      <p>Hi ${user?.name || 'Customer'},</p>
+      <p>Your order <strong>#${order.id.slice(0, 8)}</strong> has been delivered.</p>
+      <p>We hope you love it! You have 14 days to return it if you're not 100% satisfied.</p>
+      <p>
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/orders/${order.id}" style="display:inline-block;padding:12px 24px;background:#10B981;color:white;text-decoration:none;border-radius:8px;font-weight:bold;">Leave a Review</a>
+      </p>
+      <hr>
+      <p style="color: #666; font-size: 13px;">Need help? Contact ${SUPPORT_EMAIL}</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
+export function generateRefundProcessedEmail(order: Order, user: User | null, refundAmount: number): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9f9f9; padding: 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden;">
+    <div style="background: #3B82F6; color: white; padding: 30px; text-align: center;">
+      <h1 style="margin: 0;">Refund Processed 💰</h1>
+    </div>
+    <div style="padding: 30px;">
+      <p>Hi ${user?.name || 'Customer'},</p>
+      <p>Your refund of <strong>${refundAmount.toLocaleString()} EGP</strong> for order <strong>#${order.id.slice(0, 8)}</strong> has been processed.</p>
+      <p>Depending on your payment method, it may take 5-7 business days to appear in your account.</p>
+      <hr>
+      <p style="color: #666; font-size: 13px;">Questions? Contact ${SUPPORT_EMAIL}</p>
     </div>
   </div>
 </body>

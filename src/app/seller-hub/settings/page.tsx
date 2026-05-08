@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { SessionUser } from '@/types';
 
 interface SellerProfile {
   storeName: string;
@@ -32,7 +33,7 @@ export default function SellerSettingsPage() {
     if (status === 'unauthenticated') {
       router.push('/login?callbackUrl=/seller-hub');
     } else if (status === 'authenticated') {
-      const role = (session?.user as any)?.role;
+      const role = (session?.user as SessionUser)?.role;
       if (role !== 'SELLER') router.push('/dashboard');
     }
   }, [status, session, router]);

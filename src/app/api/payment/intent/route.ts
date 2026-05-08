@@ -3,18 +3,21 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { DiscountType } from '@/generated/client';
-import { VAT_RATE } from '@/lib/constants';
+import { VAT_RATE, STRIPE_API_VERSION } from '@/lib/constants';
+import { SessionUser, ProductImage } from '@/types';
+import type Stripe from 'stripe';
+import crypto from 'crypto';
 
 // Stripe mock integration — real keys provided via env
 // Set STRIPE_SECRET_KEY in .env to enable live mode
-let stripe: any = null;
+let stripe: Stripe | null = null;
 
 async function getStripe() {
   if (!stripe) {
     if (!process.env.STRIPE_SECRET_KEY) return null;
     const Stripe = (await import('stripe')).default;
     stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-      apiVersion: '2026-03-25.dahlia' as any,
+      apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
     });
   }
   return stripe;
@@ -23,40 +26,72 @@ async function getStripe() {
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    if (!session || !session.user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
     const { cartItems, addressInfo, couponId } = await req.json();
-    const userId = (session.user as any).id;
+    const userId = (session.user as SessionUser).id;
 
     // 1. Server-side price re-calculation (anti-tamper)
     let subtotal = 0;
     const lineItems = [];
 
     for (const item of cartItems) {
-      const product = await prisma.product.findUnique({
+      // Look up by variantId first (item.id)
+      const variant = await prisma.productVariant.findUnique({
         where: { id: item.id },
-        include: { variants: true, images: { where: { isPrimary: true } } }
+        include: { 
+          product: { 
+            include: { images: { where: { isPrimary: true } } } 
+          } 
+        }
       });
-      if (!product) throw new Error(`Product ${item.name} not found`);
 
-      const variant = product.variants[0];
-      if (!variant || variant.stockCount < item.qty) {
-        throw new Error(`${product.title} is out of stock`);
-      }
+      if (!variant) {
+        // Fallback to productId lookup if variantId not found (legacy or mis-typed)
+        const product = await prisma.product.findUnique({
+          where: { id: item.id },
+          include: { variants: true, images: { where: { isPrimary: true } } }
+        });
+        
+        if (!product) throw new Error(`Product ${item.name} not found`);
+        
+        const fallbackVariant = product.variants[0];
+        if (!fallbackVariant || fallbackVariant.stockCount < item.qty) {
+          throw new Error(`${product.title} is out of stock`);
+        }
 
-      subtotal += product.basePrice * item.qty;
-
-      lineItems.push({
-        price_data: {
-          currency: 'egp',
-          product_data: {
-            name: product.title,
-            images: product.images.map((i: any) => i.url),
+        subtotal += product.basePrice * item.qty;
+        lineItems.push({
+          price_data: {
+            currency: 'egp',
+            product_data: {
+              name: product.title,
+              images: product.images.map((i: ProductImage) => i.url),
+            },
+            unit_amount: Math.round(product.basePrice * 100),
           },
-          unit_amount: Math.round(product.basePrice * 100), // Stripe expects cents/piastres
-        },
-        quantity: item.qty,
-      });
+          quantity: item.qty,
+        });
+      } else {
+        if (variant.stockCount < item.qty) {
+          throw new Error(`${variant.product.title} is out of stock`);
+        }
+
+        const price = variant.price || variant.product.basePrice;
+        subtotal += price * item.qty;
+
+        lineItems.push({
+          price_data: {
+            currency: 'egp',
+            product_data: {
+              name: variant.product.title,
+              images: variant.product.images.map((i: ProductImage) => i.url),
+            },
+            unit_amount: Math.round(price * 100),
+          },
+          quantity: item.qty,
+        });
+      }
     }
 
     // 2. Apply coupon discount
@@ -73,12 +108,13 @@ export async function POST(req: Request) {
       }
     }
 
-    const shippingFee = 50; // Standard flat-rate shipping in EGP
-    const vatAmount = subtotal * 0.14; // 14% Egypt VAT
+    const { getShippingRate } = await import('@/lib/constants');
+    const shippingFee = addressInfo?.governorate ? getShippingRate(addressInfo.governorate) : 50;
+    const vatAmount = subtotal * VAT_RATE; // 14% Egypt VAT
     const total = Math.max(0, subtotal + vatAmount + shippingFee - discountAmount);
 
     // 3. Generate idempotency key to prevent double-charge on retry
-    const idempotencyKey = `${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const idempotencyKey = `${userId}-${crypto.randomUUID()}`;
 
     // 4. Stripe Payment Intent (if Stripe key available, else return mock)
     const stripeInstance = await getStripe();
@@ -91,6 +127,7 @@ export async function POST(req: Request) {
           metadata: {
             userId,
             idempotencyKey,
+            addressId: addressInfo?.id || '',
             addressSnapshot: JSON.stringify(addressInfo),
           },
         },
@@ -124,8 +161,9 @@ export async function POST(req: Request) {
       }
     }, { status: 200 });
 
-  } catch (error: any) {
-    console.error('Payment Intent Error:', error);
-    return NextResponse.json({ message: error.message || 'Payment failed' }, { status: 500 });
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Payment Intent Error:', err);
+    return NextResponse.json({ message: err.message || 'Payment failed' }, { status: 500 });
   }
 }

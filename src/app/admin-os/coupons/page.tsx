@@ -1,8 +1,21 @@
 "use client";
 import { useState, useEffect } from 'react';
 
+interface Coupon {
+  id: string;
+  code: string;
+  discountType: 'PERCENTAGE' | 'FIXED';
+  discountValue: number;
+  minOrderValue: number | null;
+  maxDiscount: number | null;
+  usageLimit: number | null;
+  usedCount: number;
+  expiryDate: string;
+  isActive: boolean;
+}
+
 export default function AdminCouponsPage() {
-  const [coupons, setCoupons] = useState<any[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
 

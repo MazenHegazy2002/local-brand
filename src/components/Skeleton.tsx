@@ -1,12 +1,14 @@
-export { 
-  ProductSkeleton, 
-  ProductGridSkeleton, 
-  CategorySkeleton, 
-  CategoryGridSkeleton,
+// Re-export everything from the UI Skeleton for import compatibility across the app.
+export {
   Skeleton,
   SkeletonText,
   SkeletonAvatar,
   SkeletonButton,
   SkeletonCard,
-  SkeletonInput
-} from '@/components/ui/Skeleton';
+  SkeletonInput,
+  ProductSkeleton,
+  ProductGridSkeleton,
+  CategorySkeleton,
+  CategoryGridSkeleton,
+  default,
+} from './ui/Skeleton';

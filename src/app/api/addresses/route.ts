@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { SessionUser } from '@/types';
+import { addressSchema, updateAddressSchema } from '@/lib/validation';
 
 // GET /api/addresses — fetch user's saved addresses
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-  const userId = (session.user as any).id;
+  const userId = (session.user as SessionUser).id;
 
   const addresses = await prisma.address.findMany({
     where: { userId },
@@ -22,12 +24,15 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-  const userId = (session.user as any).id;
-  const { street, city, governorate, postalCode, isDefault } = await req.json();
+  const userId = (session.user as SessionUser).id;
+  const body = await req.json();
+  const validated = addressSchema.safeParse(body);
 
-  if (!street || !city || !governorate) {
-    return NextResponse.json({ message: 'street, city, and governorate are required' }, { status: 400 });
+  if (!validated.success) {
+    return NextResponse.json({ message: validated.error.errors[0].message }, { status: 400 });
   }
+
+  const { street, city, governorate, postalCode, isDefault } = validated.data;
 
   // If new address is default, remove default from others
   if (isDefault) {
@@ -57,7 +62,7 @@ export async function DELETE(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-  const userId = (session.user as any).id;
+  const userId = (session.user as SessionUser).id;
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
 
@@ -77,10 +82,18 @@ export async function PUT(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-  const userId = (session.user as any).id;
-  const { id, street, city, governorate, postalCode, isDefault } = await req.json();
+  const userId = (session.user as SessionUser).id;
+  const body = await req.json();
+  const { id, ...rest } = body;
 
   if (!id) return NextResponse.json({ message: 'Address ID required' }, { status: 400 });
+
+  const validated = updateAddressSchema.safeParse(rest);
+  if (!validated.success) {
+    return NextResponse.json({ message: validated.error.errors[0].message }, { status: 400 });
+  }
+
+  const { street, city, governorate, postalCode, isDefault } = validated.data;
 
   const existing = await prisma.address.findUnique({ where: { id } });
   if (!existing || existing.userId !== userId) {

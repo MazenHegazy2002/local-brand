@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { SessionUser } from '@/types';
 
 interface ReturnRequest {
   id: string;
@@ -38,7 +39,7 @@ export default function ReturnsPage() {
     if (status === 'unauthenticated') {
       router.push('/login?callbackUrl=/seller-hub');
     } else if (status === 'authenticated') {
-      const role = (session?.user as any)?.role;
+      const role = (session?.user as SessionUser)?.role;
       if (role !== 'SELLER') router.push('/dashboard');
     }
   }, [status, session, router]);
@@ -48,7 +49,7 @@ export default function ReturnsPage() {
       const res = await fetch('/api/rma');
       if (res.ok) {
         const data = await res.json();
-        setReturns(data.returns || []);
+        setReturns(data.returnRequests || []);
       }
     } catch (e) {
       console.error(e);
@@ -64,18 +65,22 @@ export default function ReturnsPage() {
   const updateStatus = async (id: string, newStatus: string) => {
     setProcessing(true);
     try {
-      const res = await fetch('/api/rma', {
-        method: 'PUT',
+      const res = await fetch(`/api/rma/${id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status: newStatus, notes })
+        body: JSON.stringify({ status: newStatus, adminNotes: notes || undefined })
       });
       if (res.ok) {
         await fetchReturns();
         setSelectedReturn(null);
         setNotes('');
+      } else {
+        const data = await res.json();
+        alert(data.message || 'Failed to update return');
       }
     } catch (e) {
       console.error(e);
+      alert('Failed to update return request');
     } finally {
       setProcessing(false);
     }

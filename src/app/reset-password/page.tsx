@@ -51,9 +51,9 @@ function ResetPasswordForm() {
         router.push('/login');
       }, 3000);
       
-    } catch (err: any) {
+    } catch (error: unknown) {
       setStatus('error');
-      setMsg(err.message);
+      setMsg((error as Error).message);
     }
   };
 

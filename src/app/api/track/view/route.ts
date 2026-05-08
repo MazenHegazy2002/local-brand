@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { SessionUser } from '@/types';
 
 // Track product views — POST /api/track/view
 export async function POST(req: Request) {
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
     const { redis } = await import('@/lib/redis');
 
     if (session) {
-      const userId = (session.user as any).id;
+      const userId = (session.user as SessionUser).id;
       const key = `recent:${userId}`;
       // Store as sorted set with timestamp as score for expiry/ordering
       await redis.zadd(key, Date.now(), productId);
@@ -37,7 +38,7 @@ export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ products: [] });
 
-    const userId = (session.user as any).id;
+    const userId = (session.user as SessionUser).id;
     const { redis } = await import('@/lib/redis');
 
     const key = `recent:${userId}`;

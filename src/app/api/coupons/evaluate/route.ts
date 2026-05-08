@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { couponEvaluateSchema } from '@/lib/validation';
 
 export async function POST(req: Request) {
   try {
-    const { code, cartTotal } = await req.json();
+    const body = await req.json();
+    const validated = couponEvaluateSchema.safeParse(body);
 
-    if (!code || cartTotal === undefined) {
-      return NextResponse.json({ message: 'Coupon code and cartTotal required' }, { status: 400 });
+    if (!validated.success) {
+      return NextResponse.json({ message: 'Invalid data', errors: validated.error.format() }, { status: 400 });
     }
+
+    const { code, orderValue: cartTotal } = validated.data;
 
     const coupon = await prisma.coupon.findUnique({
       where: { code: code.toUpperCase() }

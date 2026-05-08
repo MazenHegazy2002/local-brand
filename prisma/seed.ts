@@ -7,6 +7,16 @@ async function main() {
   console.log('🌱 Seeding database...');
 
   // Clean up first
+  await prisma.message.deleteMany();
+  await prisma.conversation.deleteMany();
+  await prisma.dispute.deleteMany();
+  await prisma.auditLog.deleteMany();
+  await prisma.payout.deleteMany();
+  await prisma.returnRequest.deleteMany();
+  await prisma.supportTicket.deleteMany();
+  await prisma.homepageBanner.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.productQA.deleteMany();
   await prisma.cartItem.deleteMany();
   await prisma.review.deleteMany();
   await prisma.wishlist.deleteMany();

@@ -68,8 +68,8 @@ export default function TrackOrderPage() {
       }
       const data = await res.json();
       setOrder(data.order);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error: unknown) {
+      setError((error as Error).message);
     } finally {
       setLoading(false);
     }

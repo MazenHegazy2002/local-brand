@@ -2,10 +2,33 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@/generated/client';
 
-// GET /api/products?page=1&limit=12&category=&q=&minPrice=&maxPrice=&sort=&brand=&rating=&tags=&condition=&inStock=&flashSale=
+// GET /api/products?page=1&limit=12&category=&q=&minPrice=&maxPrice=&sort=&brand=&rating=&tags=&condition=&inStock=&flashSale=&ids=id1,id2,...
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
+
+    // Special-case: batch fetch by explicit ids (used by RecentlyViewed and compare).
+    const idsParam = searchParams.get('ids');
+    if (idsParam) {
+      const ids = idsParam
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean)
+        .slice(0, 50); // hard cap to prevent abuse
+      if (ids.length === 0) {
+        return NextResponse.json({ products: [] }, { status: 200 });
+      }
+      const products = await prisma.product.findMany({
+        where: { id: { in: ids }, published: true, deletedAt: null },
+        include: {
+          images: { where: { isPrimary: true } },
+          seller: { select: { storeName: true } },
+          category: { select: { name: true, slug: true } },
+        },
+      });
+      return NextResponse.json({ products }, { status: 200 });
+    }
+
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(48, parseInt(searchParams.get('limit') || '12'));
     const skip = (page - 1) * limit;

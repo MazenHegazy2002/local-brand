@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import WishlistButton from "./WishlistButton";
+import WishlistButton, { WishlistProduct } from "./WishlistButton";
 import { Badge, PriceDisplay } from "@/components/ui";
 import type { Product, Tag } from "@/types";
 
@@ -35,7 +35,7 @@ export default function ProductCard({ product, index }: { product: ProductCardPr
           className="object-cover transition-transform duration-700 group-hover:scale-110"
         />
         <div className="absolute top-4 right-4 z-20">
-          <WishlistButton product={product as any} />
+          <WishlistButton product={product as unknown as WishlistProduct} />
         </div>
         <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-10">
           {productTags.slice(0, 2).map((tag: string | Tag) => {

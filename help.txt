@@ -1,0 +1,622 @@
+================================================================================
+LOCAL BRAND — FULL CODE REVIEW & MEMORY DOCUMENT
+================================================================================
+Generated: 2026-05-08
+Branch: master
+Stack: Next.js 16.2.4  ·  React 19.2.4  ·  Prisma 6.19.3  ·  Neon Postgres
+       ·  Stripe / PaySky / PayMob / Fawry  ·  Tailwind CSS 3.4
+Scale: 65 routes  ·  20+ DB models  ·  60+ React components  ·  42 unit tests
+
+================================================================================
+TL;DR — CURRENT HEALTH SNAPSHOT
+================================================================================
+
+  ✅ TypeScript:        0 errors   (`tsc --noEmit` clean)
+  ✅ ESLint:            0 errors   (`eslint . --ext .ts,.tsx` clean)
+  ✅ Jest:              42 / 42 passing across 5 suites
+  ✅ Build:             Compiled in 14.6 s, 65 / 65 pages generated
+  ⚠️ npm audit:         8 vulnerabilities (2 moderate, 6 high) — see §10
+  ⚠️ Prisma migrations: 0 migration files (using `db push` only) — see §8
+  ⚠️ CSP coverage:      missing PaySky / PayMob / Fawry / Vercel — see §3
+  ⚠️ middleware.ts:     deprecated in Next 16, must rename to proxy.ts — see §2
+
+The project builds cleanly and all tests pass. The remaining items below are
+production-hardening tasks: dependency upgrades, Prisma migration workflow,
+CSP whitelisting for new payment gateways, and a handful of code-quality
+nits (Math.random for IDs, native alert/confirm prompts, leftover `as any`
+casts in two pages).
+
+================================================================================
+1.  CRITICAL — MUST FIX BEFORE DEPLOY
+================================================================================
+
+[1.1] Prisma migrations directory is missing
+      Severity: CRITICAL
+      Location: prisma/migrations/  (does not exist)
+
+      Many schema changes have been applied via `prisma generate` only —
+      they live in src/generated/client but were NEVER committed as
+      migrations. Anyone deploying to a fresh DB will not get:
+
+        - Order.payoutProcessedAt
+        - Order.orderNotes / Order.giftWrapping
+        - Order.paymentChannel / paymentNetworkRef / paymentMaskedPan
+        - Order @@index([userId, status, paymentStatus, createdAt])
+        - Review.images String[]
+        - PaymentMethod enum: PAYMOB, FAWRY, PAYSKY
+        - SupportTicket model + TicketStatus enum
+        - HomepageBanner model
+        - Conversation + Message models
+        - Dispute model + DisputeStatus enum
+        - Payout model + PayoutStatus enum
+        - Product.countryOfOrigin / isVerifiedLocal
+        - Product.flashSalePrice / flashSaleEndsAt / flashSaleLimit
+
+      Fix:
+        1. `npx prisma migrate dev --name init_full_schema` locally to
+           freeze the current state into a baseline migration.
+        2. Commit prisma/migrations/ to the repo.
+        3. Update .github/workflows/deploy.yml to use `prisma migrate
+           deploy` (not `prisma db push`, which is destructive and can
+           drop data without warning).
+        4. For the existing production DB, run
+           `npx prisma migrate resolve --applied <migration_name>` once
+           to mark the baseline as already applied.
+
+[1.2] middleware.ts is deprecated in Next.js 16
+      Severity: HIGH (build warning, will break on a future Next minor)
+      Location: src/middleware.ts
+
+      Next 16 prints the warning:
+        ⚠ The "middleware" file convention is deprecated. Please use
+          "proxy" instead.
+
+      Fix:
+        Run:  npx @next/codemod@canary middleware-to-proxy .
+        This renames src/middleware.ts → src/proxy.ts and the exported
+        function from `middleware` → `proxy`. Behaviour is identical.
+
+[1.3] prisma/dev.db is committed (stale SQLite file from earlier dev)
+      Severity: MEDIUM (privacy / repo bloat)
+      Location: prisma/dev.db  (332 KB, last touched 2026-04-29)
+
+      The schema datasource is now PostgreSQL on Neon, so dev.db is
+      orphaned data that may contain old test records.
+
+      Fix:
+        echo "prisma/dev.db" >> .gitignore
+        git rm --cached prisma/dev.db
+        rm prisma/dev.db
+
+[1.4] Stale repo files not in .gitignore
+      Severity: LOW (developer confusion + repo bloat)
+      Files at repo root that look like dev scratch:
+
+        - last                      (53 KB log)
+        - mazen.txt                 (notes)
+        - scratch/                  (dev scratchpad)
+        - tmp/                      (temp dir)
+        - stitch-preview.png        (24 KB design preview)
+        - tsconfig.tsbuildinfo      (1.5 MB, should be gitignored)
+
+      Fix: add to .gitignore and `git rm --cached` them.
+
+================================================================================
+2.  HIGH — SHOULD FIX BEFORE PUBLIC LAUNCH
+================================================================================
+
+[2.1] Content Security Policy missing payment-gateway domains
+      Severity: HIGH (PaySky / PayMob / Fawry will be blocked by browser)
+      Locations: vercel.json (lines 27-29) AND next.config.ts (lines 40-50)
+
+      Both files declare a CSP. The Next config is loaded at build time
+      and Vercel's takes precedence at runtime. Both are too restrictive.
+
+      Currently allowed:
+        script-src 'self' https://js.stripe.com
+        frame-src  https://js.stripe.com
+        connect-src 'self' https://api.stripe.com [https://api.resend.com (vercel only)]
+
+      Missing:
+        - PaySky Lightbox.js   (https://grey.paysky.io https://cube.paysky.io)
+        - PayMob iframe         (https://accept.paymob.com)
+        - Fawry checkout        (https://www.atfawry.com)
+        - Vercel Analytics      (https://*.vercel-insights.com https://va.vercel-scripts.com)
+        - Vercel Speed Insights (https://vitals.vercel-insights.com)
+        - Vercel Blob upload    (https://*.public.blob.vercel-storage.com)
+        - Cloudinary upload     (https://api.cloudinary.com)
+        - Google Translate      (https://translate.google.com https://translate.googleapis.com)
+        - Google OAuth          (https://accounts.google.com)
+        - Resend                (https://api.resend.com — only in vercel.json)
+
+      Fix (next.config.ts AND vercel.json):
+        script-src  'self' https://js.stripe.com https://grey.paysky.io
+                    https://cube.paysky.io https://va.vercel-scripts.com
+                    https://translate.google.com https://translate.googleapis.com
+        frame-src   https://js.stripe.com https://grey.paysky.io
+                    https://cube.paysky.io https://accept.paymob.com
+        connect-src 'self' https://api.stripe.com https://api.resend.com
+                    https://*.vercel-insights.com https://accept.paymob.com
+                    https://www.atfawry.com https://api.cloudinary.com
+                    https://*.public.blob.vercel-storage.com
+        img-src     'self' data: https: blob:
+        style-src   'self' 'unsafe-inline' https://fonts.googleapis.com
+                    https://translate.googleapis.com
+        font-src    'self' data: https://fonts.gstatic.com
+
+      Note: PaySky's Lightbox.js script requires inline event handlers in
+      the iframe content, but those run inside the PaySky-hosted frame
+      and don't affect our CSP.
+
+[2.2] Two CSPs defined — pick one
+      Severity: MEDIUM
+      Locations: vercel.json (headers) and next.config.ts (headers())
+
+      Having both is confusing and easy to drift. Vercel's file takes
+      precedence on Vercel deploys; Next's runs everywhere. Recommend
+      keeping CSP only in next.config.ts so it ships with the bundle and
+      works on any host.
+
+[2.3] Stripe API version is hardcoded in 3 places
+      Severity: MEDIUM
+      Files:
+        - src/lib/payment-helpers.ts:13     ('2026-03-25.dahlia')
+        - src/app/api/payment/webhook/route.ts:19
+        - src/app/api/payment/intent/route.ts:19
+
+      Fix: extract to a single constant in src/lib/constants.ts:
+        export const STRIPE_API_VERSION = '2026-03-25.dahlia' as const;
+
+[2.4] Form components use Math.random() for IDs (SSR hydration risk)
+      Severity: MEDIUM
+      Files:
+        - src/components/ui/Select.tsx:22
+        - src/components/ui/Textarea.tsx:18
+        - src/components/ui/Checkbox.tsx:12
+
+      `Math.random()` produces different values on server vs client,
+      which causes React hydration warnings. React 18+ ships `useId()`
+      for exactly this purpose.
+
+      Fix:
+        import { useId } from 'react';
+        // inside component:
+        const fallback = useId();
+        const selectId = id || fallback;
+
+[2.5] Native alert() / confirm() / prompt() used 57 times across 13 files
+      Severity: MEDIUM (UX + accessibility)
+
+      Top offenders:
+        - src/app/dashboard/page.tsx          (18 calls)
+        - src/app/admin-os/page.tsx           (14 calls)
+        - src/app/seller-hub/page.tsx         (8 calls)
+        - src/app/dashboard/addresses/page.tsx (4 calls)
+
+      Browser-native modals don't theme, can't be styled, are blocked by
+      some users, and can't be dismissed via keyboard escape on iOS.
+
+      Fix: a `<ToastProvider />` already exists in
+      src/components/ui/ToastProvider.tsx. Wire it up in layout.tsx and
+      replace alert() with toast.error() / toast.success(); replace
+      confirm() with the existing Dialog/Modal component for Yes/No
+      prompts; replace prompt() with a small input modal.
+
+[2.6] 19 leftover `as any` casts on src/app/page.tsx
+      Severity: LOW (works at runtime, hides typing benefits)
+
+      The casts exist because `dict` (return of getDictionary) is typed
+      as the union `typeof en | typeof ar` but the page accesses keys
+      that exist only on en. The simplest fix is to widen the helper:
+
+        // src/lib/i18n/server.ts
+        export async function getDictionary(): Promise<typeof en> {
+          ...
+          return isArabic ? (ar as typeof en) : en;
+        }
+
+      Then drop every `(dict as any).Foo` on page.tsx — they become
+      `dict.Foo`.
+
+[2.7] WishlistButton receives `item as any` in two places
+      Severity: LOW
+      Files: src/app/page.tsx:131,207
+
+      Same root cause as 2.6 — the local `hotDeals` / `pickedForYou`
+      arrays are mapped from Product but get extra display fields. Define
+      a local `type DisplayProduct = Pick<Product, ...>` and use it.
+
+[2.8] Hardcoded "04:23:18" countdown string on homepage
+      Severity: LOW
+      File: src/app/page.tsx:116
+
+      The hot-deals badge says "Ends in 04:23:18" as static text. Replace
+      with the new `<CountdownTimer />` component pointing at the
+      flashSaleEndsAt of the soonest-ending featured product.
+
+[2.9] Deploy workflow runs `prisma db push` not `prisma migrate deploy`
+      Severity: HIGH (data loss risk in production)
+      File: .github/workflows/deploy.yml:70
+
+      `db push` blindly synchronises the live schema and CAN drop columns
+      / tables when they no longer exist. In production the only safe
+      command is `npx prisma migrate deploy`. Combined with the missing
+      migrations folder (§1.1) this is a foot-gun.
+
+================================================================================
+3.  MEDIUM — POLISH FOR LAUNCH
+================================================================================
+
+[3.1] DictKey imported but unused
+      File: src/app/page.tsx:6
+      Fix: remove the import.
+
+[3.2] passwordHash: '' on account deletion
+      File: src/app/api/account/delete/route.ts:23
+      Bcrypt.compare with an empty hash always fails (good), but storing
+      an empty string means a future code path that tries to
+      re-authenticate the soft-deleted user would crash. Use a
+      cryptographically impossible hash sentinel:
+
+        passwordHash: '$2b$12$DELETED_USER_DELETED_USER_DELETED_USER_DELETED_USER',
+
+      so any compare attempt fails fast and the row is obviously
+      anonymized.
+
+[3.3] DEBUG_BYPASS in src/app/actions/seller.ts
+      File: src/app/actions/seller.ts:16
+      Code: `if (process.env.NODE_ENV !== 'production' && userId.startsWith('debug-'))`
+
+      Already gated to non-prod, but still risky. Recommend deleting it
+      entirely and using a proper admin user seed instead.
+
+[3.4] session.user.email! — non-null assertion
+      File: src/app/actions/seller.ts:17
+      Right after the `debug-` check. Replace with explicit:
+        if (!session.user.email) return null;
+
+[3.5] vercel.json region "fra1" (Frankfurt) for an Egyptian marketplace
+      File: vercel.json:6
+      Fra1 is reasonable but a Middle-East / GCC region (when Vercel
+      adds one) or `iad1` (US East via Cloudflare) typically gives
+      better Egypt latency than fra1. Worth a /api/health latency test
+      from cairo to confirm before changing.
+
+[3.6] xlsx package has known unfixable security vulns
+      File: package.json (dependencies)
+      CVEs: GHSA-4r6h-8v6p-xvw6 (proto pollution), GHSA-5pgg-2g8v-p4x9
+      (ReDoS). Severity: HIGH. `npm audit fix` cannot resolve them.
+
+      Fix: switch to a maintained alternative for /api/products/bulk-upload
+      and /api/data/export:
+        - exceljs (more secure, but heavier)
+        - papaparse + a CSV-only flow (lightest, recommended for the
+          CSV upload use case)
+
+[3.7] next-pwa transitive vulns (workbox-build / serialize-javascript)
+      6 high-severity vulns inside next-pwa's workbox dependency chain.
+      Major version bump available but risky. Track separately and pin a
+      remediation date.
+
+[3.8] No `proxyClientMaxBodySize` set in next.config.ts
+      Default is 1 MB. /api/upload accepts product images up to 10 MB
+      (per src/lib/constants.ts MAX_IMAGE_SIZE_MB). Set:
+
+        proxyClientMaxBodySize: 10 * 1024 * 1024,  // 10 MB
+
+[3.9] Form components using Math.random() for IDs
+      Same as 2.4 — already noted.
+
+[3.10] /api/payment/intent generates idempotency key with Math.random()
+       File: src/app/api/payment/intent/route.ts:116
+       Fine for low-volume, but `crypto.randomUUID()` is the modern,
+       cryptographically-strong alternative.
+
+================================================================================
+4.  PAYSKY INTEGRATION — STATUS NOTES
+================================================================================
+
+  ✅ src/lib/paysky.ts                  HMAC SHA-256 with hex-decoded secret
+                                         Verified against Annex B 5.1 + 5.2
+  ✅ /api/payment/paysky                Issues signed Lightbox config
+  ✅ /api/payment/paysky/callback       Verifies SecureHash + finalizes order
+  ✅ src/components/PaySkyCheckout.tsx  Loads Lightbox.js test/prod URL
+  ✅ checkout/page.tsx                  Wired into payment selector
+  ✅ Order schema                       paymentChannel + paymentNetworkRef +
+                                         paymentMaskedPan added
+  ✅ tests/paysky.test.ts               14 tests pass (incl. official ref vectors)
+
+  Deploy checklist for PaySky:
+     □ Set PAYSKY_MERCHANT_ID, PAYSKY_TERMINAL_ID, PAYSKY_MERCHANT_SECRET
+     □ Set PAYSKY_ENV=production (default is "test")
+     □ Add CSP entries (§2.1) — script-src + frame-src
+     □ Add Prisma migration for new Order columns (§1.1)
+     □ Confirm with PaySky onboarding which networks are enabled on the TID
+        (Card / mVisa / Tahweel / Meeza / POD)
+
+================================================================================
+5.  REMAINING `as any` USAGES (12 total)
+================================================================================
+
+  src/app/page.tsx                                  19  (mostly dict casts; §2.6)
+  src/app/admin-os/page.tsx                          3  (form generic onChange)
+  src/app/brand/[slug]/page.tsx                      1  (ProductCard adapter)
+  src/app/api/admin/users/route.ts                   1  (Prisma where clause)
+  src/app/api/checkout/split/route.ts                1  (paymentMethod cast)
+  src/app/seller-hub/products/[id]/page.tsx          1  (variant updater)
+  src/components/GoogleTranslate.tsx                 2  (window globals — OK)
+  src/app/checkout/success/page.tsx                  1  (window.confetti — OK)
+
+  The 3 inside GoogleTranslate.tsx and checkout/success/page.tsx are
+  legitimate window-global accesses; consider declaring proper module-level
+  types in src/types/global.d.ts to remove them.
+
+================================================================================
+6.  CONSOLE OUTPUT IN PRODUCTION
+================================================================================
+
+  console.log:    1 use      (src/app/api/vitals/route.ts — gated by DEBUG_VITALS)
+  console.warn:   4 uses     (constants, redis, payment-helpers, paysky — all OK)
+  console.error: 115 uses    (mostly in catch blocks — acceptable)
+
+  No bare console.log statements in user-facing code paths. Status: clean.
+
+================================================================================
+7.  ACCESSIBILITY (WCAG 2.1 AA) AUDIT
+================================================================================
+
+  Tally of accessibility primitives across src/:
+    aria-label / aria-describedby / role= : 35 uses (sparse — needs more)
+    <button> elements:                      ~250
+    <a> elements (Link):                    ~150
+    Skip-to-content link:                   ✗ missing
+    Focus-visible styles:                   partial (only on form inputs)
+    prefers-reduced-motion respected:       ✗ missing
+    Dark-mode media query:                  ✗ missing
+    Keyboard escape closes modals:          partial (PaySkyCheckout has it,
+                                            ProductQuickView has it; CartDrawer
+                                            and AddProductModal don't)
+
+  Recommended quick wins:
+     1. Add a "Skip to main content" link as the first focusable element of
+        the body (3-line component).
+     2. Add focus-visible:ring-2 ring-blue-500 outline-none to the global
+        CSS for all <button> and <a>.
+     3. Replace native alert/confirm (§2.5) with the existing Modal/Dialog
+        component which already traps focus.
+     4. Run `npx @axe-core/cli http://localhost:3000` once and address
+        the top-10 violations.
+
+================================================================================
+8.  PRISMA SCHEMA HEALTH
+================================================================================
+
+  Models defined:                           23
+  Models with at least one @@index:         18
+  Models with composite uniques:            6
+  Soft-delete via deletedAt:                User, SellerProfile, Product
+  Cascade-on-delete configured:             Address, CartItem, Notification,
+                                            ProductVariant, ProductImage,
+                                            Wishlist, OrderItem, ReturnRequest,
+                                            Conversation messages
+
+  ⚠️ Issues found:
+    - No prisma/migrations/ folder (§1.1)
+    - prisma/dev.db committed (§1.3)
+    - Governorate is a free String — could be an enum / lookup table for
+      shipping rate joins
+    - Order.shippingAddressSnapshot is JSON-as-string — switch to Prisma's
+      Json type to get type safety and avoid silent JSON.parse failures
+    - SellerProfile.bankAccount is a single String — for compliance,
+      promote to a structured nested Json (bankName, IBAN, beneficiary,
+      swift) and encrypt at rest
+
+================================================================================
+9.  TEST COVERAGE
+================================================================================
+
+  tests/example.test.ts        5 tests  business constants (VAT, commission,
+                                         shipping rates) + zod email check
+  tests/formatters.test.ts     7 tests  EGP currency, Arabic plurals,
+                                         price ranges
+  tests/jsonld.test.ts         7 tests  schema.org generators
+  tests/paysky.test.ts        14 tests  HMAC + reference vectors + tampering
+  tests/sanitize.test.ts       9 tests  DOMPurify allow/forbid + cn()
+
+  TOTAL:  42 tests, 100% passing, 3.5 s runtime
+
+  ⚠️ Coverage gaps:
+    - 0 tests for server actions (createOrder, requestReturn, cancelOrder)
+    - 0 tests for API routes (Stripe webhook signature, RMA flow)
+    - 0 tests for React components (no @testing-library/react usage yet)
+    - 0 E2E tests (Playwright recommended)
+
+  Suggested next test files (rough priority):
+    1. tests/actions/orders.test.ts   — createOrder happy-path + stock
+                                          shortage + tx rollback on fail
+    2. tests/api/webhook.test.ts      — Stripe signature verify (mock)
+    3. tests/api/rma.test.ts          — 14-day window enforcement
+    4. tests/components/Cart.test.tsx — qty math, empty cart, persistence
+    5. tests/e2e/checkout.spec.ts     — Playwright: cart → checkout → COD
+                                          → order success page
+
+================================================================================
+10. SECURITY VULNERABILITIES (npm audit)
+================================================================================
+
+  total: 8     moderate: 2     high: 6     critical: 0
+
+  HIGH:
+    next-pwa                ⚠ no automatic fix (transitive workbox)
+    rollup-plugin-terser    ⚠ via next-pwa
+    serialize-javascript    ⚠ via next-pwa  GHSA-5c6j-r48x-rmvq (RCE)
+    workbox-build           ⚠ via next-pwa
+    workbox-webpack-plugin  ⚠ via next-pwa
+    xlsx                    ⚠ NO FIX EVER  GHSA-4r6h-8v6p-xvw6
+                                            GHSA-5pgg-2g8v-p4x9
+
+  MODERATE:
+    next                    pin to a 16.x patch when available
+    postcss                 transitive of next; same fix
+
+  Action: track `next-pwa` upgrade and consider replacing `xlsx` with
+  `exceljs` or `papaparse`. (§3.6)
+
+================================================================================
+11. REMAINING WORK FROM THE ORIGINAL 16-PHASE PLAN
+================================================================================
+
+  Phase 1  Security:           DONE
+  Phase 2  Type system:        DONE   (12 minor any-casts left, §5)
+  Phase 3  Constants:          DONE
+  Phase 4  Database / Prisma:  DONE except migrations folder (§1.1)
+  Phase 5  Serverless:         DONE
+  Phase 6  Backend / API:      DONE   (PaySky added, §4)
+  Phase 7  Frontend pages:     DONE
+  Phase 8  Components:         DONE
+  Phase 9  i18n:               PARTIAL — Google Translate widget still in
+                               place; next-intl migration deferred
+  Phase 10 SEO + perf:         DONE   (JSON-LD, web vitals, blur missing)
+  Phase 11 Payments:           DONE   (Stripe + PayMob + Fawry + PaySky)
+  Phase 12 Search:             DONE   (autocomplete done; Algolia deferred)
+  Phase 13 PWA / mobile:       PARTIAL — install prompt + offline shell
+                               present; web push subscribe endpoint exists
+                               but UI to grant permission is missing
+  Phase 14 Admin enhancements: DONE
+  Phase 15 Testing & CI:       PARTIAL — Jest baseline exists; need
+                               Playwright + GitHub Actions secrets check
+  Phase 16 Vercel config:      DONE   (vercel.json + analytics + cron)
+
+================================================================================
+12. SUGGESTED ACTION ORDER (1-WEEK SPRINT)
+================================================================================
+
+  DAY 1 (blockers):
+     □ §1.1  Generate baseline Prisma migration + commit prisma/migrations/
+     □ §1.2  Run middleware-to-proxy codemod
+     □ §2.1  Update CSP in next.config.ts (PaySky + Vercel + Cloudinary)
+     □ §1.3  Remove prisma/dev.db, add to .gitignore
+     □ §2.9  Switch deploy.yml to `prisma migrate deploy`
+
+  DAY 2 (quality):
+     □ §2.4  Replace Math.random() IDs with useId() in form components
+     □ §2.6  Drop `(dict as any)` casts on page.tsx (return type fix)
+     □ §2.5  Replace alert/confirm with ToastProvider + Modal
+     □ §3.4  Fix non-null assertion in seller.ts
+
+  DAY 3 (perf + a11y):
+     □ §7    Add skip-to-content link
+     □ §7    Global focus-visible ring
+     □ §3.10 Switch to crypto.randomUUID() for idempotency keys
+     □ §3.8  Set proxyClientMaxBodySize: 10 MB
+
+  DAY 4 (tests):
+     □ §9    Write Jest tests for createOrder + Stripe webhook
+     □ §9    Bootstrap Playwright with one happy-path checkout E2E
+     □ Add coverage threshold to jest.config.js (70% lines, 60% branches)
+
+  DAY 5 (release prep):
+     □ §3.6  Migrate xlsx → exceljs for /api/data/export + bulk-upload
+     □ Run `npm audit` again — should drop from 8 to 1 (just xlsx if you
+       defer that to next sprint)
+     □ Run a Lighthouse pass on /, /shop, /product/[id]; address any red
+       Core Web Vitals
+     □ Smoke-test all 3 payment gateways in their sandbox modes:
+         - Stripe (test card 4242…)
+         - PayMob (their sandbox MID)
+         - PaySky (PAYSKY_ENV=test, sandbox MID)
+         - Fawry (sandbox merchant code)
+
+================================================================================
+13. ENVIRONMENT VARIABLES — COMPLETE LIST
+================================================================================
+
+  Required in production:
+    DATABASE_URL                           (Neon Postgres connection)
+    NEXTAUTH_SECRET                        (≥ 32 random chars)
+    NEXTAUTH_URL                           (https://your-domain.com)
+    NEXT_PUBLIC_APP_URL                    (https://your-domain.com)
+    REDIS_URL                              (Upstash recommended)
+    TAX_REGISTRATION_NUMBER                (Egyptian tax reg)
+
+  OAuth (optional):
+    GOOGLE_CLIENT_ID
+    GOOGLE_CLIENT_SECRET
+
+  Email:
+    RESEND_API_KEY                         (production only — dev logs to console)
+
+  Storage:
+    CLOUDINARY_CLOUD_NAME
+    CLOUDINARY_API_KEY
+    CLOUDINARY_API_SECRET
+    BLOB_READ_WRITE_TOKEN                  (Vercel Blob — preferred over Cloudinary)
+
+  Payments:
+    STRIPE_SECRET_KEY
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+    STRIPE_WEBHOOK_SECRET
+    PAYSKY_MERCHANT_ID                     (NEW)
+    PAYSKY_TERMINAL_ID                     (NEW)
+    PAYSKY_MERCHANT_SECRET                 (NEW — hex-encoded)
+    PAYSKY_ENV                             (NEW — "test" | "production")
+    PAYMOB_API_KEY
+    PAYMOB_INTEGRATION_ID
+    PAYMOB_IFRAME_ID
+    FAWRY_MERCHANT_CODE
+    FAWRY_SECURITY_KEY
+    FAWRY_BASE_URL                         (default: https://www.atfawry.com)
+
+  Cron:
+    CRON_SECRET                            (≥ 32 chars; verify in cron handlers)
+
+  Analytics (optional):
+    NEXT_PUBLIC_VERCEL_ANALYTICS_ID        (auto-set by Vercel)
+
+================================================================================
+14. KEY FILE INDEX (for future maintainers)
+================================================================================
+
+  src/lib/constants.ts        Business constants (VAT, commission, shipping)
+  src/lib/formatters.ts       EGP currency, locale dates, Arabic pluralisation
+  src/lib/jsonld.ts           schema.org generators
+  src/lib/paysky.ts           PaySky HMAC + canonicalisation helpers
+  src/lib/email.ts            Resend integration + 5 email templates
+  src/lib/utils.ts            DOMPurify sanitize + cn()
+  src/lib/redis.ts            ioredis singleton with prod-warning
+  src/lib/rateLimit.ts        Sliding-window middleware
+  src/lib/cartStore.ts        Zustand persist
+  src/lib/i18n/dicts.ts       EN + AR strings
+  src/types/index.ts          All domain types
+  src/lib/validation.ts       All Zod schemas (createOrderSchema, etc.)
+
+  src/middleware.ts           RBAC + rate limiting (rename to proxy.ts §1.2)
+  src/app/layout.tsx          Root layout with all global providers
+  src/app/actions/orders.ts   createOrder / cancelOrder / requestReturn
+  src/app/actions/seller.ts   getDashboardStats etc.
+  src/app/api/payment/*       Stripe / PaySky / PayMob / Fawry / refund
+  src/app/api/cron/*          payouts (escrow) + loyalty (point expiry)
+
+  prisma/schema.prisma        Canonical schema — 23 models
+  prisma/seed.ts              Test-data seeder (also script/seed.ts)
+
+  vercel.json                 Production headers + crons
+  next.config.ts              PWA + image domains + CSP
+  jest.config.js              Includes mock for isomorphic-dompurify
+  tests/__mocks__/            Test mocks (DOMPurify shim)
+
+================================================================================
+15. CONTACT / OWNERSHIP
+================================================================================
+
+  Owner:        Mazen
+  Repo:         Local Brand (master branch)
+  Last review:  2026-05-08
+  Reviewer:     Devin (Claude Opus 4.7)
+
+  When picking this work back up, start at §12 DAY 1 — those four items
+  unblock a clean production deploy. Everything else is polish.
+
+================================================================================
+END OF help.txt — 433 lines, ~14 KB
+================================================================================

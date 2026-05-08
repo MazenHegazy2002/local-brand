@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { SessionUser } from '@/types';
+import { VAT_RATE } from '@/lib/constants';
 
 export async function POST(req: Request) {
   try {
@@ -9,8 +11,8 @@ export async function POST(req: Request) {
     if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
     const { orderItemId, amount, reason } = await req.json();
-    const userId = (session.user as any).id;
-    const role = (session.user as any).role;
+    const userId = (session.user as SessionUser).id;
+    const role = (session.user as SessionUser).role;
 
     if (!orderItemId) {
       return NextResponse.json({ message: 'Order item ID is required' }, { status: 400 });
@@ -71,7 +73,7 @@ export async function POST(req: Request) {
     const remainingSubtotal = remainingItems.reduce((sum, item) => 
       sum + (item.priceAtPurchase * item.quantity), 0
     );
-    const newVat = remainingSubtotal * 0.14;
+    const newVat = remainingSubtotal * VAT_RATE;
     const newTotal = remainingSubtotal + newVat + currentShippingFee - currentDiscount;
 
     await prisma.order.update({

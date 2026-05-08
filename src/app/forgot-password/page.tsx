@@ -26,9 +26,9 @@ export default function ForgotPasswordPage() {
       
       setStatus('success');
       setMsg('Check your email for a reset link. We have sent you a temporary token link valid for 1 hour.');
-    } catch (err: any) {
+    } catch (error: unknown) {
       setStatus('error');
-      setMsg(err.message);
+      setMsg((error as Error).message);
     }
   };
 

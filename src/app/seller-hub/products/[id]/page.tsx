@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { SessionUser } from '@/types';
 
 interface Product {
   id: string;
@@ -11,6 +12,7 @@ interface Product {
   description: string;
   basePrice: number;
   category: { id: string; name: string };
+  categoryId: string;
   condition: string;
   weightGrams: number;
   images: { url: string; isPrimary: boolean }[];
@@ -20,6 +22,15 @@ interface Product {
   flashSaleEndsAt: string | null;
   flashSaleLimit: number | null;
   published: boolean;
+}
+
+interface LocalVariant {
+  id?: string;
+  title: string;
+  stockCount: number;
+  price: number;
+  color: string;
+  image?: string;
 }
 
 export default function EditProductPage() {
@@ -43,7 +54,7 @@ export default function EditProductPage() {
     flashSaleLimit: null as number | null,
     published: true
   });
-  const [variants, setVariants] = useState<any[]>([]);
+  const [variants, setVariants] = useState<LocalVariant[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
 
@@ -51,7 +62,7 @@ export default function EditProductPage() {
     if (status === 'unauthenticated') {
       router.push('/login?callbackUrl=/seller-hub');
     } else if (status === 'authenticated') {
-      const role = (session?.user as any)?.role;
+      const role = (session?.user as SessionUser)?.role;
       if (role !== 'SELLER') {
         router.push('/dashboard');
       }
@@ -82,14 +93,14 @@ export default function EditProductPage() {
           flashSaleLimit: data.flashSaleLimit || null,
           published: data.published ?? true
         });
-        setVariants(data.variants?.map((v: any) => ({
+        setVariants(data.variants?.map((v: { id: string; title?: string; stockCount?: number; price?: number; color?: string }) => ({
           id: v.id,
           title: v.title || '',
           stockCount: v.stockCount || 0,
           price: v.price || data.basePrice,
           color: v.color || ''
         })) || []);
-        setTags(data.tags?.map((t: any) => t.name) || []);
+        setTags(data.tags?.map((t: { name: string }) => t.name) || []);
       }
     } catch (e) {
       console.error(e);
@@ -158,9 +169,9 @@ export default function EditProductPage() {
     setVariants([...variants, { title: '', stockCount: 0, price: form.basePrice, color: '' }]);
   };
 
-  const updateVariant = (index: number, field: string, value: any) => {
+  const updateVariant = (index: number, field: keyof LocalVariant, value: string | number) => {
     const updated = [...variants];
-    updated[index][field] = value;
+    (updated[index] as any)[field] = value;
     setVariants(updated);
   };
 

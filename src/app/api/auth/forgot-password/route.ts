@@ -1,14 +1,18 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
+import { forgotPasswordSchema } from '@/lib/validation';
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
+    const body = await req.json();
+    const validated = forgotPasswordSchema.safeParse(body);
 
-    if (!email) {
-      return NextResponse.json({ message: 'Email is required' }, { status: 400 });
+    if (!validated.success) {
+      return NextResponse.json({ message: validated.error.errors[0].message }, { status: 400 });
     }
+
+    const { email } = validated.data;
 
     const user = await prisma.user.findUnique({
       where: { email },

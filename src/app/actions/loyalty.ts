@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
+import type { SessionUser } from '@/types';
 
 // Loyalty points: 1 point per 10 EGP spent
 const POINTS_RATIO = 10;
@@ -29,7 +30,7 @@ export async function getUserPoints(userId: string) {
 
 export async function redeemLoyaltyPoints(userId: string, pointsToRedeem: number) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user as any)?.id !== userId) throw new Error("Unauthorized");
+  if (!session || (session.user as SessionUser).id !== userId) throw new Error("Unauthorized");
 
   const user = await prisma.user.findUnique({
     where: { id: userId },

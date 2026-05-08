@@ -167,7 +167,13 @@ export interface CartItem {
 
 export type OrderStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'RETURNED';
 export type OrderItemStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'RETURN_REQUESTED' | 'RETURNED' | 'REFUNDED' | 'CANCELLED';
-export type PaymentMethod = 'CREDIT_CARD' | 'MOBILE_WALLET' | 'CASH_ON_DELIVERY';
+export type PaymentMethod =
+  | 'CREDIT_CARD'
+  | 'MOBILE_WALLET'
+  | 'CASH_ON_DELIVERY'
+  | 'PAYMOB'
+  | 'FAWRY'
+  | 'PAYSKY';
 export type PaymentStatus = 'UNPAID' | 'AUTHORIZED' | 'PAID' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED';
 
 export interface Order {
@@ -184,7 +190,13 @@ export interface Order {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   paymentId: string | null;
+  paymentChannel?: string | null;
+  paymentNetworkRef?: string | null;
+  paymentMaskedPan?: string | null;
   idempotencyKey: string | null;
+  payoutProcessedAt?: Date | null;
+  orderNotes?: string | null;
+  giftWrapping?: boolean;
   shippingAddressSnapshot: string;
   createdAt: Date;
   updatedAt: Date;

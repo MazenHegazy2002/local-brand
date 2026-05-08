@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { SessionUser } from '@/types';
+import { Prisma } from '@prisma/client';
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user as { role: string }).role !== 'ADMIN') {
+  if (!session || (session.user as SessionUser).role !== 'ADMIN') {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
@@ -16,10 +18,10 @@ export async function GET(req: Request) {
   const search = searchParams.get('search') || '';
   const role = searchParams.get('role') || '';
 
-  const where: any = {
+  const where: Prisma.UserWhereInput = {
     deletedAt: null,
-    ...(search && { OR: [{ name: { contains: search, mode: 'insensitive' } }, { email: { contains: search, mode: 'insensitive' } }] }),
-    ...(role && { role }),
+    ...(search ? { OR: [{ name: { contains: search } }, { email: { contains: search } }] } : {}),
+    ...(role ? { role: role as any } : {}),
   };
 
   const [users, total] = await Promise.all([

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import type { Session } from '@/types';
 
-type WishlistProduct = {
+export type WishlistProduct = {
   id: string;
   title: string;
   basePrice: number;

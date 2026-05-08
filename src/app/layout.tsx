@@ -67,8 +67,13 @@ export const metadata: Metadata = {
 };
 
 import { LanguageProvider } from "@/providers/LanguageContext";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import BottomNavigation from '@/components/BottomNavigation';
+import CookieConsent from '@/components/CookieConsent';
+import WebVitalsReporter from '@/components/WebVitalsReporter';
+import InstallPrompt from '@/components/InstallPrompt';
 
 export default async function RootLayout({
   children,
@@ -84,13 +89,24 @@ export default async function RootLayout({
   return (
     <html lang="en" dir={dir}>
       <body className={`${inter.variable} ${outfit.variable} ${cairo.variable} bg-[hsl(var(--background))] text-[hsl(var(--foreground))] antialiased`}>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[hsl(var(--primary))] focus:text-white focus:rounded-md focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+        >
+          Skip to main content
+        </a>
         <LanguageProvider>
           <GoogleTranslate />
           <AuthProvider>
             {children}
             <BottomNavigation />
+            <CookieConsent />
+            <InstallPrompt />
           </AuthProvider>
         </LanguageProvider>
+        <Analytics />
+        <SpeedInsights />
+        <WebVitalsReporter />
       </body>
     </html>
   );

@@ -71,7 +71,7 @@ export function DataTable<T extends Record<string, unknown>>({
       setSelectedRows(new Set());
       onSelectionChange?.([]);
     } else {
-      const allIds = new Set(data.map((row) => row.id as any));
+      const allIds = new Set(data.map((row) => row.id));
       setSelectedRows(allIds);
       onSelectionChange?.(data);
     }
@@ -85,7 +85,7 @@ export function DataTable<T extends Record<string, unknown>>({
       newSelected.add(id);
     }
     setSelectedRows(newSelected);
-    onSelectionChange?.(data.filter((row) => newSelected.has(row.id as any)));
+    onSelectionChange?.(data.filter((row) => newSelected.has(row.id)));
   }, [selectedRows, data, onSelectionChange]);
 
   let filteredData = data;
@@ -97,8 +97,8 @@ export function DataTable<T extends Record<string, unknown>>({
 
   if (sortKey) {
     filteredData = [...filteredData].sort((a, b) => {
-      const aVal = a[sortKey] as any;
-      const bVal = b[sortKey] as any;
+      const aVal = a[sortKey as keyof T];
+      const bVal = b[sortKey as keyof T];
       if (aVal === bVal) return 0;
       const comparison = aVal < bVal ? -1 : 1;
       return sortOrder === 'asc' ? comparison : -comparison;

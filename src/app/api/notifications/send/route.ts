@@ -3,14 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NOTIFICATION_TYPES } from '@/lib/constants';
-
-interface SendNotificationRequest {
-  userId?: string;
-  title: string;
-  message: string;
-  link?: string;
-  targetAudience?: 'all' | 'sellers' | 'buyers';
-}
+import { sendNotificationSchema } from '@/lib/validation';
+import { SessionUser } from '@/types';
 
 export async function POST(req: Request) {
   try {
@@ -19,12 +13,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: (session.user as { id: string }).id },
-      include: { sellerProfile: true },
-    });
+    const body = await req.json();
+    const validated = sendNotificationSchema.safeParse(body);
 
-    const { userId, title, message, link, targetAudience } = await req.json() as SendNotificationRequest;
+    if (!validated.success) {
+      return NextResponse.json({ message: 'Invalid data', errors: validated.error.format() }, { status: 400 });
+    }
+
+    const { userId, title, message, link, targetAudience } = validated.data;
 
     let userIds: string[] = [];
 
@@ -53,7 +49,7 @@ export async function POST(req: Request) {
         userId: id,
         title,
         message,
-        link,
+        link: link || null,
         type: NOTIFICATION_TYPES.SYSTEM_ANNOUNCEMENT,
       })),
     });

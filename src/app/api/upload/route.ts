@@ -1,13 +1,21 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { SessionUser } from '@/types';
+import { put } from '@vercel/blob';
 
-// Cloudinary upload handler
-// Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET in .env
+interface CloudinaryUploadResult {
+  secure_url: string;
+  public_id: string;
+  width: number;
+  height: number;
+}
+
+// Upload handler supporting Vercel Blob and Cloudinary
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !['SELLER', 'ADMIN'].includes((session.user as any).role)) {
+    if (!session || !session.user || !['SELLER', 'ADMIN'].includes((session.user as SessionUser).role)) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
@@ -29,19 +37,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'File too large. Maximum 10MB allowed.' }, { status: 400 });
     }
 
+    // Priority 1: Vercel Blob
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      const blob = await put(`localbrand/products/${Date.now()}-${file.name}`, file, {
+        access: 'public',
+      });
+      return NextResponse.json({
+        url: blob.url,
+        publicId: blob.pathname,
+        mockMode: false,
+      }, { status: 200 });
+    }
+
+    // Priority 2: Cloudinary
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY;
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
     if (cloudName && apiKey && apiSecret) {
-      // Live mode: upload to Cloudinary
       const cloudinary = (await import('cloudinary')).v2;
       cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
 
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      const result = await new Promise<any>((resolve, reject) => {
+      const result = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
         cloudinary.uploader.upload_stream(
           {
             folder: 'localbrand/products',
@@ -52,7 +72,7 @@ export async function POST(req: Request) {
           },
           (err, result) => {
             if (err) reject(err);
-            else resolve(result);
+            else resolve(result as CloudinaryUploadResult);
           }
         ).end(buffer);
       });
@@ -65,15 +85,16 @@ export async function POST(req: Request) {
       }, { status: 200 });
     }
 
-    // Dev mode: return a mock URL so seller hub doesn't break without cloud keys
+    // Dev mode: return a mock URL
     return NextResponse.json({
       url: `https://picsum.photos/seed/${Date.now()}/800/800`,
       publicId: `mock-${Date.now()}`,
       mockMode: true,
     }, { status: 200 });
 
-  } catch (error: any) {
-    console.error('Upload Error:', error);
-    return NextResponse.json({ message: error.message || 'Upload failed' }, { status: 500 });
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Upload Error:', err);
+    return NextResponse.json({ message: err.message || 'Upload failed' }, { status: 500 });
   }
 }

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n/server";
 import { Suspense } from "react";
 import { ProductGridSkeleton } from "@/components/Skeleton";
+import { Category, Product, ProductImage } from "@/types";
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -59,7 +60,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           <div className="mb-8">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Subcategories</h2>
             <div className="flex flex-wrap gap-2">
-              {category.children.map((child: any) => (
+              {category.children.map((child: Category) => (
                 <Link 
                   key={child.id}
                   href={`/category/${child.slug}`}
@@ -76,7 +77,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         <Suspense fallback={<ProductGridSkeleton count={category.products.length || 12} />}>
           {category.products.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {category.products.map((product: any) => (
+              {category.products.map((product: Product & { images: ProductImage[] }) => (
                 <Link key={product.id} href={`/product/${product.id}`} className="group">
                   <div className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
                     <div className="aspect-square relative overflow-hidden bg-gray-50">
@@ -110,3 +111,4 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     </main>
   );
 }
+

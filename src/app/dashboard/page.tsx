@@ -4,20 +4,29 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { getDashboardStats, toggleWishlist, updateProfile } from '../actions/seller';
+import { cancelOrder, requestReturn } from '../actions/orders';
 import Link from 'next/link';
+import { User, Order, OrderItem, WishlistItem, Notification, SessionUser, Product } from '@/types';
+
+interface DashboardData {
+  user: User;
+  myOrders: Order[];
+  wishlist: (WishlistItem & { product: Product })[]; // product is included in wishlist
+  notifications: Notification[];
+}
 
 export default function CustomerDashboard() {
   const { data: session } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Access control - redirect admins/sellers to their dashboards
   useEffect(() => {
-    const role = (session?.user as any)?.role;
+    const role = (session?.user as SessionUser | undefined)?.role;
     if (session && role === 'ADMIN') {
       router.push('/admin');
     } else if (session && role === 'SELLER') {
@@ -28,10 +37,11 @@ export default function CustomerDashboard() {
   const refreshData = async () => {
     setLoading(true);
     try {
-      const res = await getDashboardStats();
+      const res = await getDashboardStats() as unknown as DashboardData;
       setData(res);
-    } catch (err: any) {
-      setError(err.message || "Unauthorized");
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || "Unauthorized");
     } finally {
       setLoading(false);
     }
@@ -41,8 +51,9 @@ export default function CustomerDashboard() {
     try {
       await toggleWishlist(id);
       await refreshData();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message);
     }
   };
 
@@ -55,10 +66,63 @@ export default function CustomerDashboard() {
       await updateProfile(payload);
       alert("Profile updated successfully!");
       await refreshData();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message);
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    if (!confirm('Cancel this order? This cannot be undone.')) return;
+    try {
+      const res = await cancelOrder(orderId);
+      if (res.error) {
+        alert(res.error);
+        return;
+      }
+      alert('Order cancelled successfully.');
+      await refreshData();
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message);
+    }
+  };
+
+  const handleRequestReturn = async (orderItemId: string) => {
+    const reason = prompt('Reason for return (e.g. Damaged, Wrong size):');
+    if (!reason) return;
+    const details = prompt('Additional details (optional):') || undefined;
+    try {
+      const res = await requestReturn(orderItemId, reason, details);
+      if (res.error) {
+        alert(res.error);
+        return;
+      }
+      alert('Return requested. Our team will review it shortly.');
+      await refreshData();
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message);
+    }
+  };
+
+  const handleReorder = async (order: Order) => {
+    if (!order.items?.length) return;
+    try {
+      for (const item of order.items) {
+        await fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ variantId: item.variantId, quantity: item.quantity }),
+        });
+      }
+      alert('Items added to your cart!');
+      router.push('/checkout');
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message);
     }
   };
 
@@ -111,11 +175,11 @@ export default function CustomerDashboard() {
 
         <div className="tab-content animate-fadeIn">
           {activeTab === 'overview' && <OverviewTab data={data} wishlist={wishlist} myOrders={myOrders} />}
-          {activeTab === 'orders' && <OrdersTab orders={myOrders} />}
+          {activeTab === 'orders' && <OrdersTab orders={myOrders} onCancel={handleCancelOrder} onReturn={handleRequestReturn} onReorder={handleReorder} />}
           {activeTab === 'wishlist' && <WishlistTab items={wishlist} onToggle={handleToggleWishlist} />}
           {activeTab === 'notifications' && <NotificationsTab items={notifications} />}
-          {activeTab === 'wallet' && <WalletTab user={data.user} />}
-          {activeTab === 'settings' && <SettingsTab user={data.user} onUpdate={handleUpdateProfile} isUpdating={isUpdating} />}
+          {activeTab === 'wallet' && <WalletTab user={data?.user} />}
+          {activeTab === 'settings' && <SettingsTab user={data?.user} onUpdate={handleUpdateProfile} isUpdating={isUpdating} />}
         </div>
       </div>
 
@@ -179,7 +243,14 @@ const TITLES: Record<string, string> = {
   settings: 'Profile management'
 };
 
-function NavItem({ active, onClick, label, icon }: any) {
+interface NavItemProps {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  icon: React.ReactNode;
+}
+
+function NavItem({ active, onClick, label, icon }: NavItemProps) {
   return (
     <div onClick={onClick} className={`nav-item ${active ? 'active' : ''}`}>
       <div className="nav-icon">{icon}</div>
@@ -188,18 +259,27 @@ function NavItem({ active, onClick, label, icon }: any) {
   );
 }
 
-function OverviewTab({ data, wishlist, myOrders }: any) {
+interface TabProps {
+  data?: DashboardData | null;
+  wishlist?: (WishlistItem & { product: Product })[];
+  myOrders?: Order[];
+}
+
+function OverviewTab({ data, wishlist, myOrders }: TabProps) {
+  const orders = myOrders || [];
+  const items = wishlist || [];
+  
   return (
     <>
       <div className="stats">
         <div className="stat">
           <div className="stat-label">Orders</div>
-          <div className="stat-val">{myOrders.length}</div>
+          <div className="stat-val">{orders.length}</div>
           <div className="stat-sub" style={{color:'#1D9E75'}}>Total purchases</div>
         </div>
         <div className="stat">
           <div className="stat-label">Wishlist</div>
-          <div className="stat-val">{wishlist.length}</div>
+          <div className="stat-val">{items.length}</div>
           <div className="stat-sub" style={{color:'#534AB7'}}>Saved items</div>
         </div>
         <div className="stat">
@@ -217,7 +297,7 @@ function OverviewTab({ data, wishlist, myOrders }: any) {
       <div className="grid2">
         <div className="card">
           <div className="card-header"><div className="card-title">Recent Orders</div></div>
-          {myOrders.slice(0,3).map((o: any) => (
+          {orders.slice(0,3).map((o) => (
             <div key={o.id} className="row-item">
               <div style={{flex:1}}>
                 <div style={{fontSize:'12px',fontWeight:600}}>ORD-{o.id.substring(0,8)}</div>
@@ -226,78 +306,118 @@ function OverviewTab({ data, wishlist, myOrders }: any) {
               <span className="badge b-active">{o.status}</span>
             </div>
           ))}
-          {!myOrders.length && <div className="py-10 text-center text-xs text-slate-400">No orders yet.</div>}
+          {!orders.length && <div className="py-10 text-center text-xs text-slate-400">No orders yet.</div>}
         </div>
         <div className="card">
           <div className="card-header"><div className="card-title">Wishlist Preview</div></div>
-          {wishlist.slice(0,3).map((w: any) => (
+          {items.slice(0,3).map((w) => (
             <div key={w.productId} className="row-item">
                <div className="avatar-sm" style={{borderRadius:'4px', overflow:'hidden', background:'#f1f5f9'}}>
-                  {w.product?.images?.[0] && <img src={w.product.images[0].url} className="w-full h-full object-cover" />}
+                  {w.product?.images?.[0] && <img src={w.product.images[0].url} className="w-full h-full object-cover" alt="" />}
                </div>
                <span style={{fontSize:'12px',fontWeight:500}} className="truncate flex-1">{w.product?.title}</span>
                <div style={{fontSize:'12px',fontWeight:600}}>{w.product?.basePrice} EGP</div>
             </div>
           ))}
-          {!wishlist.length && <div className="py-10 text-center text-xs text-slate-400">Wishlist empty.</div>}
+          {!items.length && <div className="py-10 text-center text-xs text-slate-400">Wishlist empty.</div>}
         </div>
       </div>
     </>
   );
 }
 
-function OrdersTab({ orders }: any) {
+function OrdersTab({
+  orders,
+  onCancel,
+  onReturn,
+  onReorder,
+}: {
+  orders: Order[];
+  onCancel: (id: string) => void;
+  onReturn: (itemId: string) => void;
+  onReorder: (order: Order) => void;
+}) {
+  const canCancel = (status: string) =>
+    ['PENDING_PAYMENT', 'CONFIRMED', 'PROCESSING'].includes(status);
+
   return (
     <div className="card">
-       <div className="card-header"><div className="card-title">Full Purchase History</div></div>
-       {orders.map((o: any) => (
-         <div key={o.id} className="row-item" style={{flexDirection:'column', alignItems:'stretch', padding:'15px 0'}}>
-            <div className="flex justify-between items-start mb-4">
-               <div>
-                  <div style={{fontSize:'13px',fontWeight:700}}>Order #ORD-{o.id.substring(0,8)}</div>
-                  <div style={{fontSize:'11px',color:'#64748b'}}>Placed on {new Date(o.createdAt).toLocaleString()}</div>
-               </div>
-               <div className="text-right">
-                  <div style={{fontSize:'15px',fontWeight:700}}>{o.totalAmount?.toLocaleString()} EGP</div>
-                  <span className="badge b-active">{o.status}</span>
-               </div>
+      <div className="card-header"><div className="card-title">Full Purchase History</div></div>
+      {orders.map((o) => (
+        <div key={o.id} className="row-item" style={{ flexDirection: 'column', alignItems: 'stretch', padding: '15px 0' }}>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 700 }}>Order #ORD-{o.id.substring(0, 8)}</div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>Placed on {new Date(o.createdAt).toLocaleString()}</div>
             </div>
-            {/* Tracking Step UI */}
-            <div className="flex items-center gap-2 mb-4 px-2">
-               <TrackStep active={true} label="Ordered" />
-               <TrackLine active={['PROCESSING','SHIPPED','DELIVERED'].includes(o.status)} />
-               <TrackStep active={['PROCESSING','SHIPPED','DELIVERED'].includes(o.status)} label="Processing" />
-               <TrackLine active={['SHIPPED','DELIVERED'].includes(o.status)} />
-               <TrackStep active={['SHIPPED','DELIVERED'].includes(o.status)} label="Shipped" />
-               <TrackLine active={o.status === 'DELIVERED'} />
-               <TrackStep active={o.status === 'DELIVERED'} label="Delivered" />
+            <div className="text-right">
+              <div style={{ fontSize: '15px', fontWeight: 700 }}>{o.totalAmount?.toLocaleString()} EGP</div>
+              <span className="badge b-active">{o.status}</span>
             </div>
-            {o.items?.map((item:any) => (
-               <div key={item.id} className="flex gap-3 mt-2 p-2 bg-slate-50 rounded">
-                  <div className="w-10 h-10 rounded bg-white overflow-hidden shrink-0">
-                     {item.variant?.product?.images?.[0] && <img src={item.variant.product.images[0].url} className="w-full h-full object-cover" />}
-                  </div>
-                  <div style={{flex:1}}>
-                     <div style={{fontSize:'11px',fontWeight:600}}>{item.productTitleSnapshot}</div>
-                     <div style={{fontSize:'10px',color:'#64748b'}}>Qty: {item.quantity} · Variant: {item.variant?.title}</div>
-                  </div>
-               </div>
-            ))}
-         </div>
-       ))}
-       {!orders.length && <div className="py-20 text-center text-xs text-slate-400">No orders found.</div>}
+          </div>
+          {/* Tracking Step UI */}
+          <div className="flex items-center gap-2 mb-4 px-2">
+            <TrackStep active={true} label="Ordered" />
+            <TrackLine active={['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(o.status)} />
+            <TrackStep active={['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(o.status)} label="Processing" />
+            <TrackLine active={['SHIPPED', 'DELIVERED'].includes(o.status)} />
+            <TrackStep active={['SHIPPED', 'DELIVERED'].includes(o.status)} label="Shipped" />
+            <TrackLine active={o.status === 'DELIVERED'} />
+            <TrackStep active={o.status === 'DELIVERED'} label="Delivered" />
+          </div>
+
+          {o.items?.map((item: OrderItem) => (
+            <div key={item.id} className="flex gap-3 mt-2 p-2 bg-slate-50 rounded items-center">
+              <div className="w-10 h-10 rounded bg-white overflow-hidden shrink-0">
+                {item.variant?.product?.images?.[0] && (
+                  <img src={item.variant.product.images[0].url} className="w-full h-full object-cover" alt="" />
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '11px', fontWeight: 600 }}>{item.productTitleSnapshot}</div>
+                <div style={{ fontSize: '10px', color: '#64748b' }}>Qty: {item.quantity} · Variant: {item.variant?.title}</div>
+              </div>
+              {item.status === 'DELIVERED' && (
+                <button
+                  onClick={() => onReturn(item.id)}
+                  className="action-btn"
+                  style={{ borderColor: '#F59E0B', color: '#B45309' }}
+                >
+                  Return
+                </button>
+              )}
+            </div>
+          ))}
+
+          {/* Action buttons per order */}
+          <div className="flex gap-2 mt-3">
+            {canCancel(o.status) && (
+              <button
+                onClick={() => onCancel(o.id)}
+                className="action-btn"
+                style={{ borderColor: '#A32D2D', color: '#791F1F' }}
+              >
+                Cancel Order
+              </button>
+            )}
+            <button onClick={() => onReorder(o)} className="action-btn">Buy Again</button>
+            <Link href={`/dashboard/orders/${o.id}`} className="action-btn">View Details</Link>
+          </div>
+        </div>
+      ))}
+      {!orders.length && <div className="py-20 text-center text-xs text-slate-400">No orders found.</div>}
     </div>
   );
 }
 
-function WishlistTab({ items, onToggle }: any) {
+function WishlistTab({ items, onToggle }: { items: (WishlistItem & { product: Product })[], onToggle: (id: string) => void }) {
   return (
     <div className="card">
        <div className="card-header"><div className="card-title">My Saved Items</div></div>
-       {items.map((w: any) => (
+       {items.map((w) => (
          <div key={w.productId} className="row-item">
             <div className="w-12 h-12 rounded bg-slate-50 overflow-hidden shrink-0 border border-slate-100">
-               {w.product?.images?.[0] && <img src={w.product.images[0].url} className="w-full h-full object-cover" />}
+               {w.product?.images?.[0] && <img src={w.product.images[0].url} className="w-full h-full object-cover" alt="" />}
             </div>
             <div style={{flex:1}}>
                <div style={{fontSize:'13px',fontWeight:500}}>{w.product?.title}</div>
@@ -317,11 +437,11 @@ function WishlistTab({ items, onToggle }: any) {
   );
 }
 
-function NotificationsTab({ items }: any) {
+function NotificationsTab({ items }: { items: Notification[] }) {
   return (
     <div className="card">
        <div className="card-header"><div className="card-title">System Alerts</div></div>
-       {items.map((n: any) => (
+       {items.map((n) => (
          <div key={n.id} className="row-item">
             <div className="w-2 h-2 rounded-full shrink-0" style={{background: n.isRead ? '#cbd5e1' : '#534AB7'}} />
             <div style={{flex:1}}>
@@ -336,43 +456,168 @@ function NotificationsTab({ items }: any) {
   );
 }
 
-function WalletTab({ user }: any) {
+function WalletTab({ user }: { user?: User }) {
+  const points = user?.loyaltyPoints || 0;
+  // Tier tiering: Bronze < 1000, Silver 1000-4999, Gold 5000+
+  const tier = points >= 5000 ? 'Gold' : points >= 1000 ? 'Silver' : 'Bronze';
+  const tierColor = tier === 'Gold' ? '#F59E0B' : tier === 'Silver' ? '#94A3B8' : '#A16207';
+  const nextTier = tier === 'Bronze' ? 'Silver' : tier === 'Silver' ? 'Gold' : null;
+  const nextTierPoints = tier === 'Bronze' ? 1000 : tier === 'Silver' ? 5000 : 0;
+  const progress = nextTierPoints ? Math.min(100, (points / nextTierPoints) * 100) : 100;
+
   return (
-    <div className="card max-w-xl mx-auto py-10 text-center">
-       <div style={{fontSize:'10px',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'10px'}}>Total Available Credits</div>
-       <div style={{fontSize:'42px',fontWeight:800,color:'#534AB7'}}>{((user?.loyaltyPoints || 0) * 0.1).toFixed(2)} <span style={{fontSize:'20px'}}>EGP</span></div>
-       <div style={{fontSize:'12px',color:'#64748b',marginTop:'10px'}}>Earned via platform activity and loyalty programs.</div>
-       <button className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-full text-xs font-bold uppercase tracking-wider">Redeem for Coupon</button>
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* Balance card */}
+      <div className="card text-center py-10">
+        <div style={{fontSize:'10px',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'10px'}}>Loyalty Balance</div>
+        <div style={{fontSize:'42px',fontWeight:800,color:'#534AB7'}}>{points.toLocaleString()} <span style={{fontSize:'20px',color:'#94a3b8'}}>pts</span></div>
+        <div style={{fontSize:'13px',color:'#64748b',marginTop:'8px'}}>
+          Worth <strong>{points.toLocaleString()} EGP</strong> at checkout (1 pt = 1 EGP)
+        </div>
+        <div className="mt-6 pt-6 border-t border-slate-100">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs font-bold uppercase" style={{color: tierColor}}>{tier} Member</div>
+            {nextTier && (
+              <div className="text-[10px] text-slate-400">
+                {(nextTierPoints - points).toLocaleString()} pts to {nextTier}
+              </div>
+            )}
+          </div>
+          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full rounded-full transition-all" style={{width: `${progress}%`, backgroundColor: tierColor}} />
+          </div>
+        </div>
+      </div>
+
+      {/* How to earn */}
+      <div className="card">
+        <div className="card-title mb-4">How to earn points</div>
+        <div className="space-y-3 text-sm text-slate-600">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-purple-50 text-[#534AB7] flex items-center justify-center text-sm">🛍️</div>
+            <div>
+              <div className="font-bold text-slate-900">Shop purchases</div>
+              <div className="text-[11px] text-slate-400">1 point for every 10 EGP spent</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-purple-50 text-[#534AB7] flex items-center justify-center text-sm">⭐</div>
+            <div>
+              <div className="font-bold text-slate-900">Write reviews</div>
+              <div className="text-[11px] text-slate-400">Earn 10 points per verified purchase review</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-purple-50 text-[#534AB7] flex items-center justify-center text-sm">👥</div>
+            <div>
+              <div className="font-bold text-slate-900">Refer friends</div>
+              <div className="text-[11px] text-slate-400">50 points when a friend completes their first order</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-function SettingsTab({ user, onUpdate, isUpdating }: any) {
+function SettingsTab({ user, onUpdate, isUpdating }: { user?: User, onUpdate: (e: React.FormEvent) => void, isUpdating: boolean }) {
+  const [avatar, setAvatar] = useState(user?.avatarUrl || '');
+  const [uploading, setUploading] = useState(false);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const d = await res.json();
+      if (d.url) {
+        setAvatar(d.url);
+      }
+    } catch (err) {
+      console.error('Avatar upload failed', err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm('Delete your account? This anonymizes your data and cannot be undone.')) return;
+    try {
+      const res = await fetch('/api/account/delete', { method: 'POST' });
+      if (res.ok) {
+        alert('Account deleted. Signing you out…');
+        window.location.href = '/api/auth/signout';
+      } else {
+        const d = await res.json();
+        alert(d.message || 'Failed to delete account');
+      }
+    } catch (err: unknown) {
+      const e = err as Error;
+      alert(e.message);
+    }
+  };
+
   return (
     <div className="card max-w-xl">
-       <div className="card-title mb-6">Profile Management</div>
-       <form onSubmit={onUpdate}>
-          <div>
-             <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">Full Name</label>
-             <input name="name" defaultValue={user?.name} className="input-profile" />
+      <div className="card-title mb-6">Profile Management</div>
+      <form onSubmit={onUpdate}>
+        {/* Avatar */}
+        <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+          <div className="w-16 h-16 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center text-2xl">
+            {avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatar} alt={user?.name} className="w-full h-full object-cover" />
+            ) : (
+              <span>👤</span>
+            )}
           </div>
           <div>
-             <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">Email Address</label>
-             <input name="email" defaultValue={user?.email} className="input-profile" readOnly style={{background:'#f8fafc', color:'#94a3b8'}} />
+            <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">Profile Photo</label>
+            <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploading} className="text-xs" />
+            {uploading && <div className="text-[10px] text-slate-400 mt-1">Uploading…</div>}
+            <input type="hidden" name="avatarUrl" value={avatar} />
           </div>
-          <div>
-             <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">Phone Number</label>
-             <input name="phone" defaultValue={user?.phone} className="input-profile" placeholder="+20 1XX XXX XXXX" />
-          </div>
-          <button disabled={isUpdating} type="submit" className="w-full py-3 bg-[#534AB7] text-white rounded font-bold mt-4 disabled:opacity-50">
-             {isUpdating ? 'Updating...' : 'Save Changes'}
+        </div>
+        <div>
+          <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">Full Name</label>
+          <input name="name" defaultValue={user?.name} className="input-profile" />
+        </div>
+        <div>
+          <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">Email Address</label>
+          <input name="email" defaultValue={user?.email} className="input-profile" readOnly style={{background:'#f8fafc', color:'#94a3b8'}} />
+        </div>
+        <div>
+          <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">Phone Number</label>
+          <input name="phone" defaultValue={user?.phone || ''} className="input-profile" placeholder="+20 1XX XXX XXXX" />
+        </div>
+        <button disabled={isUpdating} type="submit" className="w-full py-3 bg-[#534AB7] text-white rounded font-bold mt-4 disabled:opacity-50">
+          {isUpdating ? 'Updating...' : 'Save Changes'}
+        </button>
+
+        {/* Danger zone */}
+        <div className="mt-8 pt-6 border-t border-slate-100">
+          <div className="text-[11px] text-red-600 uppercase font-bold mb-2">Danger Zone</div>
+          <p className="text-xs text-slate-500 mb-3">
+            Deleting your account will anonymize your personal data in compliance with Egyptian PDPL law.
+            Your order history is retained for legal/tax reasons but will no longer be linked to your identity.
+          </p>
+          <button
+            type="button"
+            onClick={handleDeleteAccount}
+            className="w-full py-2.5 border border-red-200 text-red-600 rounded font-bold text-xs hover:bg-red-50"
+          >
+            Delete My Account
           </button>
+        </div>
        </form>
     </div>
   );
 }
 
-function TrackStep({ active, label }: any) {
+function TrackStep({ active, label }: { active: boolean, label: string }) {
    return (
       <div className="flex flex-col items-center gap-1 shrink-0">
          <div className={`w-3 h-3 rounded-full ${active ? 'bg-[#534AB7]' : 'bg-slate-200'}`} />
@@ -381,7 +626,7 @@ function TrackStep({ active, label }: any) {
    );
 }
 
-function TrackLine({ active }: any) {
+function TrackLine({ active }: { active: boolean }) {
    return <div className={`h-[2px] flex-1 ${active ? 'bg-[#534AB7]' : 'bg-slate-100'}`} />;
 }
 

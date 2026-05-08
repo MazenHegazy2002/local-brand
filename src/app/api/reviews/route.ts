@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { SessionUser } from '@/types';
+import { createReviewSchema } from '@/lib/validation';
 
 export async function POST(req: Request) {
   try {
@@ -10,12 +12,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    const { productId, rating, comment } = await req.json();
-    const userId = (session.user as any).id;
+    const body = await req.json();
+    const validated = createReviewSchema.safeParse(body);
 
-    if (!rating || rating < 1 || rating > 5) {
-      return NextResponse.json({ message: 'Invalid rating. Must be 1-5.' }, { status: 400 });
+    if (!validated.success) {
+      return NextResponse.json({ message: validated.error.errors[0].message }, { status: 400 });
     }
+
+    const { productId, rating, comment } = validated.data;
+    const userId = (session.user as SessionUser).id;
 
     // 1. Verify Purchase (Only allow reviews if the user bought and received it)
     const orderHistory = await prisma.order.findFirst({

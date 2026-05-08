@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { SessionUser } from '@/types';
 
 // GET /api/seller/[id]/performance — admin/seller health score
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -9,8 +10,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const role = (session.user as any).role;
-    const currentUserId = (session.user as any).id;
+    const role = (session.user as SessionUser).role;
+    const currentUserId = (session.user as SessionUser).id;
     const resolvedParams = await params;
     const sellerId = resolvedParams.id;
 

@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { useCartStore } from '@/lib/cartStore';
 import { useLanguage } from '@/providers/LanguageContext';
 import WishlistButton from '@/components/WishlistButton';
+import { Product, ProductVariant, ProductImage } from "@/types";
 
-export default function ProductDetails({ product }: { product: any }) {
+export default function ProductDetails({ product }: { product: Product & { variants?: ProductVariant[], images?: ProductImage[] } }) {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
-  const [selectedVariant, setSelectedVariant] = useState<any>(null);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const { t } = useLanguage();
   const addItem = useCartStore(s => s.addItem);
 
@@ -16,10 +17,10 @@ export default function ProductDetails({ product }: { product: any }) {
   const hasVariants = variants.length > 1;
   
   const stockCount = hasVariants 
-    ? variants.reduce((acc: number, v: any) => acc + v.stockCount, 0)
+    ? variants.reduce((acc: number, v: ProductVariant) => acc + v.stockCount, 0)
     : (product.variants?.[0]?.stockCount || 0);
   
-  const primaryImage = product.images?.find((i: any) => i.isPrimary)?.url || product.images?.[0]?.url || '/placeholder.png';
+  const primaryImage = product.images?.find((i: ProductImage) => i.isPrimary)?.url || product.images?.[0]?.url || '/placeholder.png';
 
   const selectedPrice = selectedVariant?.price || product.basePrice;
   const availableStock = selectedVariant?.stockCount || stockCount;
@@ -51,7 +52,7 @@ export default function ProductDetails({ product }: { product: any }) {
             Select Option
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {variants.map((variant: any) => {
+            {variants.map((variant: ProductVariant) => {
               const isSelected = selectedVariant?.id === variant.id;
               const isAvailable = variant.stockCount > 0;
               

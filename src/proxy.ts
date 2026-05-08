@@ -1,0 +1,140 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { getToken } from 'next-auth/jwt';
+import { rateLimit } from '@/lib/rateLimit';
+
+// ─── Content Security Policy ────────────────────────────────────────────────
+// Built per-request so Next.js can attach the nonce to its streaming SSR
+// inline scripts (`$RS`, `$RC`, RSC payload chunks, etc). Without a nonce
+// these inline scripts are blocked by CSP and the loading.tsx Suspense
+// fallback never gets replaced with the real page.
+function buildCsp(nonce: string, isDev: boolean): string {
+  // `'unsafe-eval'` is only needed in dev (React uses eval for error stacks).
+  const scriptSrc = [
+    "'self'",
+    `'nonce-${nonce}'`,
+    "'strict-dynamic'",
+    isDev ? "'unsafe-eval'" : '',
+    'https://js.stripe.com',
+    'https://grey.paysky.io',
+    'https://cube.paysky.io',
+    'https://va.vercel-scripts.com',
+    'https://translate.google.com',
+    'https://translate.googleapis.com',
+  ].filter(Boolean).join(' ');
+
+  return [
+    "default-src 'self'",
+    `script-src ${scriptSrc}`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://translate.googleapis.com https://www.gstatic.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "img-src 'self' data: https: blob:",
+    "connect-src 'self' https://api.stripe.com https://api.resend.com https://*.vercel-insights.com https://accept.paymob.com https://www.atfawry.com https://api.cloudinary.com https://*.public.blob.vercel-storage.com https://translate.googleapis.com https://www.gstatic.com",
+    "frame-src https://js.stripe.com https://grey.paysky.io https://cube.paysky.io https://accept.paymob.com",
+    "frame-ancestors 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ');
+}
+
+function attachCsp(req: NextRequest, res: NextResponse): NextResponse {
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const isDev = process.env.NODE_ENV === 'development';
+  const csp = buildCsp(nonce, isDev);
+
+  // Next.js reads `x-nonce` from the *request* headers during SSR and
+  // automatically stamps it onto its inline scripts.
+  req.headers.set('x-nonce', nonce);
+  res.headers.set('x-nonce', nonce);
+  res.headers.set('Content-Security-Policy', csp);
+  return res;
+}
+
+export async function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // 1. Rate Limiting for API routes
+  if (pathname.startsWith('/api') && !pathname.startsWith('/api/auth/session')) {
+    const result = await rateLimit(req);
+    if (result.limited) {
+      return NextResponse.json(
+        { message: 'Too many requests' },
+        { 
+          status: 429, 
+          headers: { 
+            'X-RateLimit-Limit': '60', // Simplified for now, or get from config
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': result.reset.toString()
+          } 
+        }
+      );
+    }
+  }
+
+  // Allow public routes (but still let Next.js serve them normally)
+  if (
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/static') ||
+    pathname.includes('.') // static files
+  ) {
+    return NextResponse.next();
+  }
+
+  // Get session token
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+
+  // Define role-based route protection
+  const adminRoutes = pathname.startsWith('/admin') || pathname.startsWith('/admin-os');
+  const sellerRoutes = pathname.startsWith('/seller') || pathname.startsWith('/sell') || pathname === '/seller-hub';
+  const dashboardRoutes = pathname.startsWith('/dashboard');
+
+  // If no user is logged in, redirect to login (except for public shop pages)
+  if (!token) {
+    if (adminRoutes || sellerRoutes || dashboardRoutes) {
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    return attachCsp(req, NextResponse.next({ request: { headers: req.headers } }));
+  }
+
+  // Get user role from token
+  const role = token.role || 'BUYER';
+
+  // Admin Routes Protection
+  if (adminRoutes && role !== 'ADMIN') {
+    // Redirect non-admins away from admin panel
+    if (role === 'SELLER') {
+      return NextResponse.redirect(new URL('/seller-hub', req.url));
+    }
+    return NextResponse.redirect(new URL('/dashboard', req.url));
+  }
+
+  // Seller Routes Protection (SellerHub, /sell, /seller/*)
+  if (sellerRoutes && role !== 'SELLER' && role !== 'ADMIN') {
+    // If trying to access seller area as buyer, go to customer dashboard
+    return NextResponse.redirect(new URL('/dashboard', req.url));
+  }
+
+  // Customer Dashboard Protection (Block Buyers from Seller areas)
+  if ((sellerRoutes || adminRoutes) && role === 'BUYER') {
+    return NextResponse.redirect(new URL('/dashboard', req.url));
+  }
+
+  return attachCsp(req, NextResponse.next({ request: { headers: req.headers } }));
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/auth (auth endpoints)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder files
+     */
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\..*$).*)',
+  ],
+};

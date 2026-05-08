@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { SessionUser } from '@/types';
 
 /**
  * User activity event tracking
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
 
     if (!eventType) return NextResponse.json({ ok: false }, { status: 400 });
 
-    const userId = session ? (session.user as any).id : null;
+    const userId = session ? (session.user as SessionUser).id : null;
 
     // Store events in Redis for hot-path tracking (no DB write per event)
     const { redis } = await import('@/lib/redis');
@@ -54,7 +55,7 @@ export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ events: [] });
 
-    const userId = (session.user as any).id;
+    const userId = (session.user as SessionUser).id;
     const { redis } = await import('@/lib/redis');
 
     const raw = await redis.lrange(`events:user:${userId}`, 0, 49);

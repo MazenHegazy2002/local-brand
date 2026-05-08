@@ -79,10 +79,15 @@ export const createOrderSchema = z.object({
   addressId: z.string().uuid().optional(),
   guestEmail: z.string().email().optional(),
   couponCode: z.string().optional(),
+  paymentMethod: z
+    .enum(['CASH_ON_DELIVERY', 'CREDIT_CARD', 'MOBILE_WALLET', 'PAYMOB', 'FAWRY', 'PAYSKY'])
+    .default('CASH_ON_DELIVERY'),
   items: z.array(z.object({
     variantId: z.string().uuid(),
     quantity: z.number().int().positive('Quantity must be a positive integer'),
   })).min(1, 'At least one item is required'),
+  orderNotes: z.string().max(500).optional(),
+  giftWrapping: z.boolean().optional(),
 });
 
 export const orderStatusUpdateSchema = z.object({
@@ -166,6 +171,7 @@ export const sendNotificationSchema = z.object({
   userId: z.string().uuid().optional(),
   title: z.string().min(1, 'Title is required'),
   message: z.string().min(1, 'Message is required'),
+  link: z.string().url().optional().or(z.string().startsWith('/')).or(z.string().length(0)),
   targetAudience: z.enum(['all', 'sellers', 'buyers']).optional(),
 });
 

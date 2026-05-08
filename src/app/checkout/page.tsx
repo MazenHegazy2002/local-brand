@@ -6,6 +6,21 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { createOrder } from '@/app/actions/orders';
 import Navbar from '@/components/Navbar';
+import PaySkyCheckout from '@/components/PaySkyCheckout';
+import { SessionUser } from '@/types';
+import { VAT_RATE } from '@/lib/constants';
+
+interface PaySkyInitData {
+  lightboxUrl: string;
+  lightboxConfig: {
+    MID: string;
+    TID: string;
+    AmountTrxn: string;
+    MerchantReference: string;
+    TrxDateTime: string;
+    SecureHash: string;
+  };
+}
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCartStore();
@@ -23,11 +38,17 @@ export default function CheckoutPage() {
     governorate: '',
   });
   
-  const [paymentMethod, setPaymentMethod] = useState<'CASH_ON_DELIVERY' | 'CREDIT_CARD'>('CASH_ON_DELIVERY');
+  const [paymentMethod, setPaymentMethod] = useState<
+    'CASH_ON_DELIVERY' | 'CREDIT_CARD' | 'MOBILE_WALLET' | 'PAYSKY'
+  >('CASH_ON_DELIVERY');
+
+  // PaySky session state — populated after we hit /api/payment/paysky
+  const [paySkyInit, setPaySkyInit] = useState<PaySkyInitData | null>(null);
+  const [paySkyMockMessage, setPaySkyMockMessage] = useState<string>('');
   
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
-  const [couponApplied, setCouponApplied] = useState<{id: string, amount: number} | null>(null);
+  const [couponApplied, setCouponApplied] = useState<{id: string, code?: string, amount: number} | null>(null);
   const [couponError, setCouponError] = useState('');
   const [applyingCoupon, setApplyingCoupon] = useState(false);
 
@@ -46,12 +67,12 @@ export default function CheckoutPage() {
     if (session?.user) {
       fetch('/api/loyalty')
         .then(res => res.json())
-        .then(data => {
+        .then((data: { points?: number }) => {
           if (data.points !== undefined) {
             setLoyaltyPoints(data.points);
           }
         })
-        .catch(console.error);
+        .catch((error: unknown) => console.error(error));
     }
   }, [session]);
 
@@ -62,7 +83,7 @@ export default function CheckoutPage() {
   const afterDiscount = subtotal - couponDiscount - pointsDiscount;
   const shipping = 50;
   const giftWrapFee = giftWrapping ? 25 : 0;
-  const vatRate = 0.14;
+  const vatRate = VAT_RATE;
   const vatAmount = Math.max(0, afterDiscount * vatRate);
   const grandTotal = Math.max(0, afterDiscount + shipping + vatAmount + giftWrapFee);
 
@@ -77,7 +98,7 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: couponCode, cartTotal: subtotal - pointsDiscount })
       });
-      const data = await res.json();
+      const data: { message?: string; couponId: string; discountAmount: number } = await res.json();
       
       if (!res.ok) {
         setCouponError(data.message || 'Invalid coupon');
@@ -85,7 +106,7 @@ export default function CheckoutPage() {
       }
       
       setCouponApplied({ id: data.couponId, amount: data.discountAmount });
-    } catch (err) {
+    } catch (err: unknown) {
       setCouponError('Failed to apply coupon');
     } finally {
       setApplyingCoupon(false);
@@ -124,30 +145,95 @@ export default function CheckoutPage() {
     if (items.length === 0) return;
     setIsLoading(true);
     setError('');
+    setPaySkyMockMessage('');
 
     try {
+      // ── PaySky branch — skip createOrder for now, finalize on callback ──
+      if (paymentMethod === 'PAYSKY') {
+        const res = await fetch('/api/payment/paysky', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cartItems: items.map((item) => ({ id: item.id, qty: item.qty })),
+            addressInfo: {
+              fullName: address.fullName,
+              phone: address.phone,
+              street: address.address,
+              city: address.city,
+              governorate: address.governorate,
+            },
+            couponId: couponApplied?.id,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed to initiate PaySky payment');
+
+        if (data.mockMode) {
+          setPaySkyMockMessage(
+            data.message ||
+              'PaySky env vars are not set on the server. Configure PAYSKY_MERCHANT_ID, PAYSKY_TERMINAL_ID, and PAYSKY_MERCHANT_SECRET to enable real payments.'
+          );
+          setIsLoading(false);
+          return;
+        }
+
+        setPaySkyInit({
+          lightboxUrl: data.lightboxUrl,
+          lightboxConfig: data.lightboxConfig,
+        });
+        // PaySkyCheckout component takes over from here.
+        return;
+      }
+
       // Deduct loyalty points if used
       if (pointsToUse > 0 && session?.user) {
         try {
           const { redeemLoyaltyPoints } = await import('@/app/actions/loyalty');
-          const userId = (session.user as any).id;
+          const userId = (session.user as SessionUser).id;
           await redeemLoyaltyPoints(userId, pointsToUse);
-        } catch (err) {
+        } catch (err: unknown) {
           console.error('Failed to redeem points:', err);
         }
       }
 
-      const res = await createOrder(items, address, paymentMethod, couponApplied?.id || null);
+      const res = await createOrder({
+        items: items.map(item => ({ variantId: item.id, quantity: item.qty })),
+        addressId: undefined,
+        paymentMethod,
+        couponCode: couponApplied?.code || undefined,
+        orderNotes: orderNotes.trim() || undefined,
+        giftWrapping,
+      });
       if (res.success) {
         clearCart();
         setCouponApplied(null);
         setPointsToUse(0);
         router.push(`/checkout/success?orderId=${res.orderId}`);
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to place order");
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || "Failed to place order");
       setIsLoading(false);
     }
+  };
+
+  const handlePaySkySuccess = (orderId: string) => {
+    clearCart();
+    setCouponApplied(null);
+    setPointsToUse(0);
+    setPaySkyInit(null);
+    router.push(`/checkout/success?orderId=${orderId}`);
+  };
+
+  const handlePaySkyError = (message: string) => {
+    setError(message);
+    setPaySkyInit(null);
+    setIsLoading(false);
+  };
+
+  const handlePaySkyCancel = () => {
+    setPaySkyInit(null);
+    setIsLoading(false);
   };
 
   return (
@@ -352,6 +438,56 @@ export default function CheckoutPage() {
                     </div>
                     <div className="text-3xl">💳</div>
                   </label>
+
+                  <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${paymentMethod === 'MOBILE_WALLET' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="MOBILE_WALLET"
+                      checked={paymentMethod === 'MOBILE_WALLET'}
+                      onChange={() => { setPaymentMethod('MOBILE_WALLET'); setShowInstallments(false); }}
+                      className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
+                    />
+                    <div className="flex-1">
+                      <div className="font-bold text-gray-900">Mobile Wallet</div>
+                      <div className="text-sm text-gray-500">Pay via Vodafone Cash, Orange Money, Etisalat Cash</div>
+                    </div>
+                    <div className="text-3xl">📱</div>
+                  </label>
+
+                  <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${paymentMethod === 'PAYSKY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="PAYSKY"
+                      checked={paymentMethod === 'PAYSKY'}
+                      onChange={() => { setPaymentMethod('PAYSKY'); setShowInstallments(false); }}
+                      className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
+                    />
+                    <div className="flex-1">
+                      <div className="font-bold text-gray-900">PaySky PayForm</div>
+                      <div className="text-sm text-gray-500">Visa / Mastercard / Meeza / Tahweel / mVISA — secure Egyptian gateway</div>
+                    </div>
+                    <div className="text-3xl">🇪🇬</div>
+                  </label>
+
+                  {/* PaySky Lightbox renders here when active */}
+                  {paySkyInit && (
+                    <div className="border border-emerald-200 rounded-xl p-4 bg-emerald-50/30">
+                      <PaySkyCheckout
+                        initData={paySkyInit}
+                        onSuccess={handlePaySkySuccess}
+                        onError={handlePaySkyError}
+                        onCancel={handlePaySkyCancel}
+                      />
+                    </div>
+                  )}
+
+                  {paySkyMockMessage && (
+                    <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-xs">
+                      <strong className="font-bold">PaySky in mock mode:</strong> {paySkyMockMessage}
+                    </div>
+                  )}
 
                   {/* Express Payment Buttons */}
                   {paymentMethod === 'CREDIT_CARD' && (

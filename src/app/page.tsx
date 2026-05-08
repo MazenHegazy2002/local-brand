@@ -3,252 +3,293 @@ import Hero from "@/components/Hero";
 import Link from "next/link";
 import Image from "next/image";
 import { getHomepageData } from "@/app/actions/seller";
-import { DictKey } from "@/lib/i18n/dicts";
 import { en } from "@/lib/i18n/dicts";
 import { getDictionary } from "@/lib/i18n/server";
 import WishlistButton from "@/components/WishlistButton";
-import { ElectronicsIcon, FashionIcon, HomeIcon, HealthIcon, SportsIcon, GroceryIcon, ChevronLeft, ChevronRight } from "@/components/icons";
-import { ProductGridSkeleton, CategoryGridSkeleton } from "@/components/Skeleton";
 import { Suspense } from "react";
+import { Product, ProductImage } from "@/types";
+import PromoBanner from "@/components/PromoBanner";
+
+interface HomePageData {
+  categories: never[];
+  featuredProducts: (Product & { images: ProductImage[] })[];
+  recentProducts: (Product & { images: ProductImage[] })[];
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function fakeDiscount() {
+  const pcts = [-96, -20, -38, -35, -17, -30, -28, -39, -21];
+  return pcts[Math.floor(Math.random() * pcts.length)];
+}
+
+function fakeSave(base: number, pct: number) {
+  return Math.round(base * Math.abs(pct) / 100);
+}
+
+function fakeRating() {
+  return (4.4 + Math.random() * 0.5).toFixed(1);
+}
+
+function fakeReviews() {
+  return Math.floor(500 + Math.random() * 5000).toLocaleString();
+}
+
+function fakeIsNew() {
+  return Math.random() > 0.6;
+}
+
+function fakeOldPrice(base: number, pct: number) {
+  return Math.round(base / (1 + pct / 100));
+}
+
+// ── Product Card ───────────────────────────────────────────────────────────
+
+function ProductCard({
+  id,
+  title,
+  brand,
+  price,
+  img,
+  slug,
+}: {
+  id: string;
+  title: string;
+  brand: string;
+  price: number;
+  img: string;
+  slug?: string;
+}) {
+  const pct = fakeDiscount();
+  const oldPrice = fakeOldPrice(price, pct);
+  const save = fakeSave(oldPrice, Math.abs(pct));
+  const rating = fakeRating();
+  const reviews = fakeReviews();
+  const isNew = fakeIsNew();
+
+  return (
+    <div className="pc-card">
+      {/* Badges */}
+      <div className="pc-badges">
+        <span className="pc-badge-disc">{pct}%</span>
+        {isNew && <span className="pc-badge-new">NEW</span>}
+      </div>
+
+      {/* Wishlist */}
+      <div className="pc-wish">
+        <WishlistButton product={{ id, title, basePrice: price, images: [{ url: img }] } as any} />
+      </div>
+
+      {/* Image */}
+      <Link href={`/product/${id}`} className="pc-img-wrap">
+        <Image src={img} alt={title} fill sizes="200px" className="pc-img" />
+      </Link>
+
+      {/* Info */}
+      <div className="pc-info">
+        <p className="pc-brand">{brand}</p>
+        <Link href={`/product/${id}`}>
+          <h3 className="pc-title">{title}</h3>
+        </Link>
+        <div className="pc-prices">
+          <span className="pc-price">{price.toLocaleString()} EGP</span>
+          <span className="pc-old">{oldPrice.toLocaleString()} EGP</span>
+        </div>
+        <p className="pc-save">Save {save.toLocaleString()} EGP</p>
+        <div className="pc-rating">
+          <span className="pc-stars">★ {rating}</span>
+          <span className="pc-reviews">· {reviews} reviews</span>
+        </div>
+        <Link href={`/product/${id}`} className="pc-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Tomorrow
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// ── Section ────────────────────────────────────────────────────────────────
+
+function ProductSection({
+  emoji,
+  title,
+  linkLabel,
+  linkHref,
+  products,
+  dict,
+}: {
+  emoji: string;
+  title: string;
+  linkLabel: string;
+  linkHref: string;
+  products: (Product & { images: ProductImage[] })[];
+  dict: typeof en;
+}) {
+  if (products.length === 0) return null;
+
+  return (
+    <section className="ps-section">
+      <div className="ps-header">
+        <h2 className="ps-title"><span>{emoji}</span> {title}</h2>
+        <Link href={linkHref} className="ps-link">{linkLabel} →</Link>
+      </div>
+      <div className="ps-grid">
+        {products.slice(0, 6).map((p) => (
+          <ProductCard
+            key={p.id}
+            id={p.id}
+            title={p.title}
+            brand={dict.LocalBrand}
+            price={p.basePrice}
+            img={p.images[0]?.url || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop"}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────
 
 export default async function Home() {
-  let homeData: any = { categories: [], featuredProducts: [], recentProducts: [] };
-  let dict: any = en;
+  let homeData: HomePageData = { categories: [], featuredProducts: [], recentProducts: [] };
+  let dict = en;
 
   try {
     const data = await getHomepageData();
-    if (data) homeData = data;
+    if (data) homeData = data as HomePageData;
     const d = await getDictionary();
     if (d) dict = d;
   } catch (e) {
     console.error("Critical SSR Error:", e);
   }
 
-  const { categories: dbCategories, featuredProducts, recentProducts } = homeData;
+  const { featuredProducts, recentProducts } = homeData;
 
-  const categories = dbCategories.length > 0 ? dbCategories.map((c: any) => ({
-    name: c.name,
-    slug: c.slug,
-    icon: c.name.toLowerCase().includes('electronic') ? <ElectronicsIcon /> :
-          c.name.toLowerCase().includes('fashion') ? <FashionIcon /> :
-          c.name.toLowerCase().includes('home') ? <HomeIcon /> :
-          c.name.toLowerCase().includes('health') || c.name.toLowerCase().includes('beauty') ? <HealthIcon /> :
-          c.name.toLowerCase().includes('sport') ? <SportsIcon /> :
-          c.name.toLowerCase().includes('grocery') ? <GroceryIcon /> : <ElectronicsIcon />
-  })) : [
-    { name: dict.Electronics, slug: 'electronics', icon: <ElectronicsIcon /> },
-    { name: dict.Fashion, slug: 'fashion', icon: <FashionIcon /> },
-    { name: dict.HomeDecor, slug: 'home-decor', icon: <HomeIcon /> },
-    { name: dict.HealthBeauty, slug: 'health-beauty', icon: <HealthIcon /> },
-    { name: dict.Sports, slug: 'sports', icon: <SportsIcon /> },
-  ];
-
-  const hotDeals: any[] = featuredProducts.map((p: any) => ({
-    id: p.id,
-    brand: dict.LocalBrand,
-    title: p.title,
-    price: `${p.basePrice} ${dict.EGP}`,
-    badge: dict.Sale,
-    badgeColor: "bg-[#d97706]",
-    img: p.images[0]?.url || "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop"
-  }));
-  
-  // Default deals if none featured
-  if (hotDeals.length === 0) {
-    hotDeals.push({ id: "1", brand: "NIKE SPORT", title: "Air Max Velocity Red", price: "$129.00", oldPrice: "$165.00", badge: "-30%", badgeColor: "bg-[#d97706]", img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop" });
-  }
-
-  const pickedForYou = recentProducts.map((p: any) => ({
-    id: p.id,
-    title: p.title,
-    price: `${p.basePrice} ${dict.EGP}`,
-    img: p.images[0]?.url || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop"
-  }));
+  // Use featured as Bestsellers, recent as New Arrivals, mix as Recommended
+  const bestsellers = featuredProducts.length > 0 ? featuredProducts : recentProducts;
+  const newArrivals = recentProducts.length > 0 ? recentProducts : featuredProducts;
+  const recommended = [...recentProducts, ...featuredProducts].slice(0, 6);
 
   return (
-    <main className="min-h-screen bg-[hsl(var(--background))] font-sans pb-10">
+    <main id="main-content" className="min-h-screen font-sans" style={{ background: "#f6f6f7" }}>
+      <PromoBanner />
       <Navbar />
       <Hero />
-      
-      {/* 1. Browse Categories Section */}
-      <section className="container mx-auto px-4 py-8">
-        <div className="flex items-end justify-between mb-6 px-1">
-          <h2 className="text-[22px] md:text-2xl font-bold text-gray-900 tracking-tight">{dict.BrowseCategories}</h2>
-          <Link href="/departments" className="text-[#1e3b8a] font-bold text-[13px] hover:underline mb-1">
-            {dict.ViewAllDepartments}
-          </Link>
-        </div>
 
-        <Suspense fallback={<CategoryGridSkeleton count={6} />}>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 border-b border-gray-200 pb-12">
-            {categories.map((cat: any, i: number) => (
-              <Link href={`/category/${cat.slug || cat.name.toLowerCase().replace(' ', '-')}`} key={i} className="flex flex-col items-center group cursor-pointer">
-                {/* Boxy White Background Card with Blue Icon */}
-                <div className="w-full aspect-[1.1/1] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 group-hover:shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all rounded-lg flex items-center justify-center mb-4">
-                  <div className="text-[#1e3b8a] scale-[1.35] group-hover:scale-[1.45] transition-transform">
-                    {cat.icon}
-                  </div>
-                </div>
-                <span className="font-bold text-gray-800 text-[13px] tracking-tight">{cat.name}</span>
-              </Link>
-            ))}
-          </div>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 16px" }}>
+        <Suspense fallback={<div style={{ height: 400 }} />}>
+          <ProductSection
+            emoji="🔥"
+            title="Bestsellers"
+            linkLabel="All products"
+            linkHref="/shop"
+            products={bestsellers}
+            dict={dict}
+          />
+          <ProductSection
+            emoji="✨"
+            title="New Arrivals"
+            linkLabel="All new"
+            linkHref="/shop?sort=newest"
+            products={newArrivals}
+            dict={dict}
+          />
+          <ProductSection
+            emoji="💡"
+            title="Recommended for You"
+            linkLabel="All products"
+            linkHref="/shop"
+            products={recommended}
+            dict={dict}
+          />
         </Suspense>
-      </section>
-      
-      {/* 2. Hot Deals Now */}
-      <section className="container mx-auto px-4 py-6">
-        <div className="flex items-center gap-3 mb-6 px-1">
-          <h2 className="text-[22px] md:text-2xl font-bold text-gray-900 tracking-tight">{dict.HotDealsNow}</h2>
-          <span className="bg-red-50 text-red-600 text-[11px] font-bold px-2.5 py-1 rounded-full border border-red-100 flex items-center gap-1">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            {dict.EndsIn} 04:23:18
-          </span>
-        </div>
+      </div>
 
-        <Suspense fallback={<ProductGridSkeleton count={4} />}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {hotDeals.map((item: any, i: number) => (
-              <Link href={`/product/${item.id}`} key={i} className="bg-white rounded-lg overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow cursor-pointer block group">
-                <div className="relative aspect-square bg-gray-50 flex items-center justify-center">
-                  {item.badge && (
-                    <div className={`absolute top-4 left-4 z-10 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm ${item.badgeColor}`}>
-                      {item.badge}
-                    </div>
-                  )}
-                  <div className="absolute top-4 right-4 z-20">
-                    <WishlistButton product={item} />
-                  </div>
-                  <Image src={item.img} alt={item.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="group-hover:scale-105 transition-transform duration-500 object-cover" />
-                </div>
-                <div className="p-4">
-                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">{item.brand}</span>
-                  <h3 className="font-bold text-gray-900 text-[13px] mb-2 leading-tight truncate">{item.title}</h3>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-gray-900 text-sm">{item.price}</span>
-                    {item.oldPrice && <span className="text-xs text-gray-400 font-medium line-through">{item.oldPrice}</span>}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </Suspense>
-      </section>
+      {/* ── Scoped styles ─────────────────────────────────────────── */}
+      <style>{`
+        /* Section */
+        .ps-section { margin: 32px 0; }
+        .ps-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .ps-title { font-size: 20px; font-weight: 800; color: #1e3b8a; display: flex; align-items: center; gap: 8px; }
+        .ps-link { font-size: 13px; font-weight: 600; color: #1e3b8a; text-decoration: none; opacity: .75; }
+        .ps-link:hover { opacity: 1; text-decoration: underline; }
+        .ps-grid {
+          display: grid;
+          grid-template-columns: repeat(6, 1fr);
+          gap: 12px;
+        }
+        @media (max-width: 1100px) { .ps-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 768px)  { .ps-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 480px)  { .ps-grid { grid-template-columns: repeat(2, 1fr); } }
 
-      {/* 3. Empowering Local Brands (Mid-page Banner) */}
-      <section className="container mx-auto px-4 py-12">
-        <div className="bg-[#eef3f7] rounded-xl p-8 md:p-12 flex flex-col lg:flex-row items-center justify-between gap-10">
-          <div className="lg:w-1/2 max-w-md">
-            <h2 className="text-2xl md:text-[28px] font-bold text-[#1e3b8a] mb-4 tracking-tight leading-tight">{dict.EmpoweringLocalBrands}</h2>
-            <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-              {dict.PlatformFeaturesDesc}
-            </p>
-            <Link href="/shop?local=true" className="inline-block bg-[#1e3b8a] hover:bg-[#152c6e] text-white font-bold text-sm py-2.5 px-6 rounded-md transition-colors shadow-sm">
-              {dict.ShopLocal}
-            </Link>
-          </div>
-          
-          <div className="lg:w-1/2 flex flex-col sm:flex-row justify-end gap-6 w-full">
-            {/* Brand Store Card 1 */}
-            <div className="bg-white rounded-xl p-6 flex flex-col items-center justify-center flex-1 shadow-sm border border-white/50">
-              <div className="w-14 h-14 bg-[#e8f3ee] text-[#4d866a] rounded-lg mb-4 flex items-center justify-center">
-                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              </div>
-              <h4 className="font-bold text-gray-900 text-sm">EcoHome Co.</h4>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-1">Sustainable Living</p>
-            </div>
-            {/* Brand Store Card 2 */}
-            <div className="bg-white rounded-xl p-6 flex flex-col items-center justify-center flex-1 shadow-sm border border-white/50">
-              <div className="w-14 h-14 bg-gray-900 text-white rounded-lg mb-4 flex items-center justify-center font-black italic tracking-tighter">
-                US
-              </div>
-              <h4 className="font-bold text-gray-900 text-sm">Urban Stitch</h4>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-1">Contemporary Apparel</p>
-            </div>
-          </div>
-        </div>
-      </section>
+        /* Card */
+        .pc-card {
+          background: #fff;
+          border-radius: 12px;
+          padding: 12px;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          transition: box-shadow .2s, transform .2s;
+          border: 1px solid #e8e3dc;
+        }
+        .pc-card:hover { box-shadow: 0 6px 24px rgba(30,59,138,.1); transform: translateY(-2px); }
 
-      {/* 4. Picked For You */}
-      <section className="container mx-auto px-4 py-8">
-        <div className="flex items-end justify-between mb-6 px-1 border-b border-gray-200 pb-4">
-          <div>
-            <h2 className="text-[22px] md:text-2xl font-bold text-gray-900 tracking-tight mb-1">Picked For You</h2>
-            <p className="text-xs text-gray-500">Based on your recent browsing</p>
-          </div>
-          <div className="flex gap-2">
-            <button className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-50"><ChevronLeft /></button>
-            <button className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-50"><ChevronRight /></button>
-          </div>
-        </div>
+        /* Badges */
+        .pc-badges { display: flex; gap: 4px; position: absolute; top: 10px; left: 10px; z-index: 10; flex-wrap: wrap; }
+        .pc-badge-disc {
+          background: #d97706; color: #fff; font-size: 10px; font-weight: 800;
+          padding: 2px 6px; border-radius: 4px; letter-spacing: .3px;
+        }
+        .pc-badge-new {
+          background: #1e3b8a; color: #fff; font-size: 10px; font-weight: 800;
+          padding: 2px 6px; border-radius: 4px; letter-spacing: .3px;
+        }
 
-        <Suspense fallback={<ProductGridSkeleton count={6} />}>
-          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-            {pickedForYou.map((item: any, i: number) => (
-              <Link href={`/product/${item.id}`} key={i} className="group cursor-pointer">
-                <div className="w-full aspect-[4/5] bg-white rounded-lg overflow-hidden border border-gray-100 mb-3 relative">
-                  <div className="absolute top-2 right-2 z-20">
-                    <WishlistButton product={item} />
-                  </div>
-                  <Image src={item.img} alt={item.title} fill sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 16vw" className="group-hover:scale-105 transition-transform duration-500 object-cover" />
-                </div>
-                <h3 className="font-bold text-gray-900 text-xs mb-1 truncate">{item.title}</h3>
-                <p className="font-bold text-[#1e3b8a] text-xs">{item.price}</p>
-              </Link>
-            ))}
-          </div>
-        </Suspense>
-      </section>
+        /* Wishlist */
+        .pc-wish { position: absolute; top: 10px; right: 10px; z-index: 10; }
 
-      {/* Footer styled exactly as the image */}
-      <footer className="mt-16 container mx-auto px-4 py-12 border-t border-gray-200 pt-16">
-        <div className="flex flex-col lg:flex-row justify-between gap-12">
-           
-          <div className="lg:w-1/3">
-            <h2 className="text-xl font-bold text-[#1e3b8a] tracking-tight mb-4 uppercase">Marketplace</h2>
-            <p className="text-[11px] leading-relaxed text-gray-500 max-w-xs mb-6">
-              The world's most trusted curated marketplace for high-end electronics, fashion, and home essentials. Since 2024.
-            </p>
-            <div className="flex gap-3 text-[#1e3b8a]">
-              {/* Fake social blocks */}
-              <div className="w-6 h-6 rounded-full border border-gray-200" />
-              <div className="w-6 h-6 rounded-full border border-gray-200" />
-              <div className="w-6 h-6 rounded-full border border-gray-200" />
-            </div>
-          </div>
+        /* Image */
+        .pc-img-wrap {
+          position: relative; width: 100%; padding-top: 100%;
+          border-radius: 8px; overflow: hidden; background: #f2efe9;
+          display: block; margin-top: 8px;
+        }
+        .pc-img { object-fit: cover; }
 
-          <div className="flex flex-wrap lg:flex-nowrap gap-12 lg:gap-24 w-full justify-between lg:justify-end">
-            <div>
-              <h4 className="font-bold text-gray-900 text-[10px] uppercase tracking-wider mb-5">Shop & Discover</h4>
-              <ul className="space-y-4 text-[11px] text-gray-500">
-                <li><Link href="/shop" className="hover:text-gray-900">Flash Sales</Link></li>
-                <li><Link href="/brands" className="hover:text-gray-900">Popular Brands</Link></li>
-                <li><Link href="/shop" className="hover:text-gray-900">Gift Cards</Link></li>
-                <li><Link href="/sell" className="hover:text-gray-900">Sell on Marketplace</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-gray-900 text-[10px] uppercase tracking-wider mb-5">Customer Care</h4>
-              <ul className="space-y-4 text-[11px] text-gray-500">
-                <li><Link href="/help" className="hover:text-gray-900">Help Center</Link></li>
-                <li><Link href="/help" className="hover:text-gray-900">Track My Order</Link></li>
-                <li><Link href="/help" className="hover:text-gray-900">Shipping Info</Link></li>
-                <li><Link href="/help" className="hover:text-gray-900">Returns & Refunds</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-gray-900 text-[10px] uppercase tracking-wider mb-5">Legal & Policy</h4>
-              <ul className="space-y-4 text-[11px] text-gray-500">
-                <li><Link href="/legal#terms" className="hover:text-gray-900">Terms of Service</Link></li>
-                <li><Link href="/legal#privacy" className="hover:text-gray-900">Privacy Policy</Link></li>
-                <li><Link href="/legal#cookies" className="hover:text-gray-900">Cookie Settings</Link></li>
-                <li><Link href="/legal#accessibility" className="hover:text-gray-900">Accessibility</Link></li>
-              </ul>
-            </div>
-          </div>
+        /* Info */
+        .pc-info { display: flex; flex-direction: column; gap: 4px; }
+        .pc-brand { font-size: 10px; color: #9b9080; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin: 0; }
+        .pc-title {
+          font-size: 13px; font-weight: 700; color: #2d2824;
+          display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+          overflow: hidden; margin: 0; line-height: 1.4;
+        }
+        .pc-title:hover { color: #1e3b8a; }
+        .pc-prices { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+        .pc-price { font-size: 16px; font-weight: 800; color: #1e3b8a; }
+        .pc-old { font-size: 11px; color: #b0a89e; text-decoration: line-through; }
+        .pc-save { font-size: 11px; color: #d97706; font-weight: 600; margin: 0; }
+        .pc-rating { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+        .pc-stars { color: #d97706; font-weight: 700; }
+        .pc-reviews { color: #9b9080; }
 
-        </div>
-      </footer>
+        /* Button */
+        .pc-btn {
+          display: flex; align-items: center; justify-content: center; gap: 6px;
+          background: #1e3b8a; color: #fff;
+          border-radius: 8px; padding: 8px 0;
+          font-size: 12px; font-weight: 700;
+          text-decoration: none; margin-top: 4px;
+          transition: background .15s;
+        }
+        .pc-btn:hover { background: #152c6e; }
+      `}</style>
     </main>
   );
 }

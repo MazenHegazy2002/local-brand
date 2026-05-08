@@ -1,14 +1,18 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { resetPasswordSchema } from '@/lib/validation';
 
 export async function POST(req: Request) {
   try {
-    const { token, password } = await req.json();
+    const body = await req.json();
+    const validated = resetPasswordSchema.safeParse(body);
 
-    if (!token || !password) {
-      return NextResponse.json({ message: 'Token and new password required' }, { status: 400 });
+    if (!validated.success) {
+      return NextResponse.json({ message: validated.error.errors[0].message }, { status: 400 });
     }
+
+    const { token, password } = validated.data;
 
     // Find valid token
     const tokenRecord = await prisma.passwordResetToken.findUnique({

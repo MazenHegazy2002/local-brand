@@ -6,12 +6,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useLanguage } from '@/providers/LanguageContext';
 import { debounce } from 'lodash';
+import type { Product } from '@/types';
 
 const RECENT_SEARCHES_KEY = 'recentSearches';
 
 export default function LiveSearch() {
   const [search, setSearch] = useState('');
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<Partial<Product>[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -162,7 +163,7 @@ export default function LiveSearch() {
                           fill
                           sizes="48px"
                           className="object-cover"
-                          alt={product.title} 
+                          alt={product.title || 'Product'} 
                         />
                       </div>
                       <div className="flex-1 min-w-0">

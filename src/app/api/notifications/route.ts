@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { SessionUser } from '@/types';
+import type { Prisma } from '@/generated/client';
 
 export async function GET(req: Request) {
   try {
@@ -10,11 +12,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = (session.user as any).id;
+    const userId = (session.user as SessionUser).id;
     const { searchParams } = new URL(req.url);
     const unreadOnly = searchParams.get('unread') === 'true';
 
-    const where: any = { userId };
+    const where: Prisma.NotificationWhereInput = { userId };
     if (unreadOnly) {
       where.isRead = false;
     }
@@ -43,7 +45,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = (session.user as any).id;
+    const userId = (session.user as SessionUser).id;
     const { notificationId, markAllRead } = await req.json();
 
     if (markAllRead) {

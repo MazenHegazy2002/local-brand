@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { SessionUser } from '@/types';
 
 // GET /api/products/[id]/qa
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -29,7 +30,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: 'Login required to ask a question' }, { status: 401 });
 
-    const userId = (session.user as any).id;
+    const userId = (session.user as SessionUser).id;
     const resolvedParams = await params;
     const productId = resolvedParams.id;
     const { question } = await req.json();
@@ -59,7 +60,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'SELLER') {
+    if (!session || (session.user as SessionUser).role !== 'SELLER') {
       return NextResponse.json({ message: 'Seller account required' }, { status: 403 });
     }
 

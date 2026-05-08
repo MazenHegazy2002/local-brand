@@ -2,8 +2,30 @@
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
+interface SellerStat {
+  id: string;
+  storeName: string;
+  sales: number;
+  revenue: number;
+  rating: number | null;
+}
+
+interface RevenueChartPoint {
+  date: string;
+  revenue: number;
+}
+
+interface AnalyticsData {
+  totalRevenue: number;
+  totalOrders: number;
+  newUsers: number;
+  conversionRate: number;
+  revenueChart: RevenueChartPoint[];
+  topSellers: SellerStat[];
+}
+
 export default function AdminAnalyticsPage() {
-  const [data, setData] = useState<any>({});
+  const [data, setData] = useState<Partial<AnalyticsData>>({});
   const [period, setPeriod] = useState('30d');
   const [loading, setLoading] = useState(true);
 
@@ -68,7 +90,7 @@ export default function AdminAnalyticsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(data.topSellers || []).map((seller: any, i: number) => (
+                  {(data.topSellers || []).map((seller: SellerStat) => (
                     <tr key={seller.id} className="border-t">
                       <td className="py-3">{seller.storeName}</td>
                       <td>{seller.sales}</td>
@@ -87,6 +109,7 @@ export default function AdminAnalyticsPage() {
     </div>
   );
 }
+
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (

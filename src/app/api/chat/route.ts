@@ -2,13 +2,23 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { CONTACT_PHONE, SUPPORT_EMAIL } from '@/lib/constants';
+import { chatMessageSchema } from '@/lib/validation';
+import { SessionUser } from '@/types';
 
 export async function POST(req: Request) {
   try {
-    const { message, productId, orderId, history } = await req.json();
+    const body = await req.json();
+    const validated = chatMessageSchema.safeParse(body);
+
+    if (!validated.success) {
+      return NextResponse.json({ message: 'Invalid data', errors: validated.error.format() }, { status: 400 });
+    }
+
+    const { message, productId, orderId } = validated.data;
 
     const session = await getServerSession(authOptions);
-    const userId = (session?.user as { id: string })?.id;
+    const userId = (session?.user as SessionUser)?.id;
 
     // Get or create conversation
     let conversation;
@@ -17,7 +27,7 @@ export async function POST(req: Request) {
         where: { userId },
         orderBy: { updatedAt: 'desc' },
       });
-      
+
       if (!conversation) {
         conversation = await prisma.conversation.create({
           data: { userId }
@@ -109,8 +119,8 @@ export async function POST(req: Request) {
       response += "Start a return at /help or provide your order ID";
     } else if (message.toLowerCase().includes('contact') || message.toLowerCase().includes('support')) {
       response = "📞 Contact Support:\n\n";
-      response += "• Email: support@localbrand.com\n";
-      response += "• Phone: +20 123 456 7890\n";
+      response += `• Email: ${SUPPORT_EMAIL}\n`;
+      response += `• Phone: ${CONTACT_PHONE}\n`;
       response += "• Hours: Sun-Thu, 9AM-6PM EGT";
     } else if (message.length < 3) {
       response = "Please tell us more about how we can help.";

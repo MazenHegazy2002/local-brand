@@ -2,23 +2,28 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { SessionUser } from '@/types';
+import { rmaUpdateSchema } from '@/lib/validation';
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    if (!session || !session.user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const role = (session.user as any).role;
+    const role = (session.user as SessionUser).role;
     if (role !== 'ADMIN' && role !== 'SELLER') {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
     const resolvedParams = await params;
-    const { status, adminNotes } = await req.json();
+    const body = await req.json();
+    const validated = rmaUpdateSchema.safeParse(body);
 
-    if (!status || !['APPROVED', 'REJECTED', 'COMPLETED'].includes(status)) {
-      return NextResponse.json({ message: 'Invalid status' }, { status: 400 });
+    if (!validated.success) {
+      return NextResponse.json({ message: 'Invalid data', errors: validated.error.format() }, { status: 400 });
     }
+
+    const { status, adminNotes } = validated.data;
 
     const returnRequest = await prisma.returnRequest.findUnique({
       where: { id: resolvedParams.id },
@@ -56,8 +61,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       returnRequest: updated
     }, { status: 200 });
 
-  } catch (error: any) {
-    console.error('RMA Update Error:', error);
-    return NextResponse.json({ message: error.message || 'Internal Server Error' }, { status: 500 });
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('RMA Update Error:', err);
+    return NextResponse.json({ message: err.message || 'Internal Server Error' }, { status: 500 });
   }
 }

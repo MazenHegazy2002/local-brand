@@ -67,5 +67,5 @@ jobs:
             cd /opt/localbrand
             docker-compose pull
             docker-compose up -d --remove-orphans
-            docker-compose exec app npx prisma db push
+            docker-compose exec app npx prisma migrate deploy
             echo "✅ Deployed successfully"

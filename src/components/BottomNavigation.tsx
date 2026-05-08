@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/providers/LanguageContext';
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import type { DictKey } from '@/lib/i18n/dicts';
 
 export default function BottomNavigation() {
   const pathname = usePathname();
@@ -28,10 +29,10 @@ export default function BottomNavigation() {
   }, [session]);
 
   const navItems = [
-    { href: '/', icon: <HomeIcon />, label: t('Home' as any) || 'Home' },
-    { href: '/shop', icon: <CategoryIcon />, label: t('Categories' as any) || 'Categories' },
-    { href: '/shop?local=true', icon: <LocalIcon />, label: t('Local' as any) || 'Local' },
-    { href: '#', icon: <ProfileIcon />, label: t('Profile' as any) || 'Profile', hasSubmenu: true },
+    { href: '/', icon: <HomeIcon />, label: t('Home' as DictKey) || 'Home' },
+    { href: '/shop', icon: <CategoryIcon />, label: t('Categories' as DictKey) || 'Categories' },
+    { href: '/shop?local=true', icon: <LocalIcon />, label: t('Local' as DictKey) || 'Local' },
+    { href: '#', icon: <ProfileIcon />, label: t('Profile' as DictKey) || 'Profile', hasSubmenu: true },
   ];
 
   const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {

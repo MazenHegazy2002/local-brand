@@ -10,6 +10,10 @@ const customJestConfig = {
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    // Mock isomorphic-dompurify which ships ESM-only nested deps that Jest
+    // can't transform in the Next.js pipeline. The mock implements the
+    // subset of DOMPurify we use.
+    '^isomorphic-dompurify$': '<rootDir>/tests/__mocks__/isomorphic-dompurify.ts',
   },
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/'],
   collectCoverageFrom: [

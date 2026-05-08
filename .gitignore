@@ -41,4 +41,14 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# Local SQLite from earlier dev (project now uses Postgres on Neon)
+prisma/dev.db
+prisma/*.db-journal
+
+# Dev scratch / notes / preview assets
+/scratch
+/tmp
+last
+mazen.txt
+stitch-preview.png
+

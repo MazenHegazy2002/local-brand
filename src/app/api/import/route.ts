@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import * as XLSX from 'xlsx';
+import { SessionUser } from '@/types';
+import ExcelJS from 'exceljs';
+
+interface ImportRow {
+  Title?: string;
+  'Base Price'?: string | number;
+  Category?: string;
+  Seller?: string;
+  Description?: string;
+  Published?: string | boolean;
+}
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user as any)?.role !== 'ADMIN') {
+  if (!session || (session.user as SessionUser)?.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -19,17 +29,30 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json(worksheet);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer);
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) {
+      return NextResponse.json({ error: 'No worksheet found' }, { status: 400 });
+    }
+    const data: ImportRow[] = [];
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return; // Skip header row
+      data.push({
+        Title: row.getCell(1).value?.toString(),
+        'Base Price': row.getCell(2).value,
+        Category: row.getCell(3).value?.toString(),
+        Seller: row.getCell(4).value?.toString(),
+        Description: row.getCell(5).value?.toString(),
+        Published: row.getCell(6).value?.toString(),
+      });
+    });
 
     const results = { success: 0, failed: 0, errors: [] as string[] };
     
     for (const row of data) {
       try {
-        const typedRow = row as any;
-        if (!typedRow.Title || !typedRow['Base Price']) {
+        if (!row.Title || !row['Base Price']) {
           results.failed++;
           results.errors.push(`Skipped row: missing Title or Base Price`);
           continue;
@@ -37,43 +60,45 @@ export async function POST(req: NextRequest) {
 
         // Find or create category
         let categoryId = '';
-        if (typedRow.Category) {
+        if (row.Category) {
           const category = await prisma.category.findFirst({
-            where: { name: typedRow.Category }
+            where: { name: row.Category }
           });
           if (category) categoryId = category.id;
         }
 
         // Find seller by store name
         let sellerId = '';
-        if (typedRow.Seller) {
+        if (row.Seller) {
           const sellerProfile = await prisma.sellerProfile.findFirst({
-            where: { storeName: typedRow.Seller }
+            where: { storeName: row.Seller }
           });
           if (sellerProfile) sellerId = sellerProfile.id;
         }
 
         await prisma.product.create({
           data: {
-            title: typedRow.Title,
-            description: typedRow.Description || '',
-            basePrice: parseFloat(typedRow['Base Price']),
+            title: row.Title,
+            description: row.Description || '',
+            basePrice: typeof row['Base Price'] === 'string' ? parseFloat(row['Base Price']) : (row['Base Price'] as number),
             sellerId: sellerId,
             categoryId: categoryId,
-            published: typedRow.Published !== 'false',
-            slug: typedRow.Title.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
+            published: row.Published !== 'false' && row.Published !== false,
+            slug: row.Title.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
           }
         });
 
         results.success++;
-      } catch (err: any) {
+      } catch (err: unknown) {
         results.failed++;
-        results.errors.push(`Error: ${err.message}`);
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        results.errors.push(`Error: ${message}`);
       }
     }
 
     return NextResponse.json(results);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Import failed';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

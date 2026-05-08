@@ -3,6 +3,13 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { VAT_RATE, TAX_REG_NUMBER } from '@/lib/constants';
+import { SessionUser, Order, OrderItem, Coupon, User } from '@/types';
+
+type OrderWithDetails = Order & {
+  items: OrderItem[];
+  user: User | null;
+  coupon: Coupon | null;
+};
 
 export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -11,8 +18,8 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
     const params = await context.params;
     const orderId = params.id;
-    const userId = (session.user as any).id;
-    const role = (session.user as any).role;
+    const userId = (session.user as SessionUser).id;
+    const role = (session.user as SessionUser).role;
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -23,7 +30,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
         user: true,
         coupon: true
       }
-    });
+    }) as OrderWithDetails | null;
 
     if (!order) return NextResponse.json({ message: 'Order not found' }, { status: 404 });
 
@@ -51,8 +58,26 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   }
 }
 
-function generateInvoiceHTML({ order, address, subtotal, vatAmount, shippingFee }: any): string {
-  const itemsHTML = order.items.map((item: any, i: number) => `
+interface InvoiceAddress {
+  fullName?: string;
+  phone?: string;
+  street?: string;
+  city?: string;
+  governorate?: string;
+  postalCode?: string;
+  country?: string;
+}
+
+interface InvoiceParams {
+  order: OrderWithDetails;
+  address: InvoiceAddress;
+  subtotal: number;
+  vatAmount: number;
+  shippingFee: number;
+}
+
+function generateInvoiceHTML({ order, address, subtotal, vatAmount, shippingFee }: InvoiceParams): string {
+  const itemsHTML = order.items.map((item: OrderItem, i: number) => `
     <tr>
       <td style="padding: 12px; border-bottom: 1px solid #eee;">${i + 1}</td>
       <td style="padding: 12px; border-bottom: 1px solid #eee;">

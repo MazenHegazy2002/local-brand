@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { SessionUser } from '@/types';
 
 // POST /api/account/delete — GDPR/PDPL-compliant account deletion
 export async function POST(req: Request) {
@@ -9,7 +10,7 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const userId = (session.user as any).id;
+    const userId = (session.user as SessionUser).id;
 
     // Soft delete: set deletedAt timestamp, anonymize PII
     // We do NOT hard delete because order history is legally required
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
         deletedAt: new Date(),
         email: `deleted_${userId}@localbrand.invalid`, // anonymize
         name: 'Deleted User',
-        passwordHash: '',
+        passwordHash: '$2b$12$DELETED_USER_DELETED_USER_DELETED_USER_DELETED_USER', // cryptographically impossible hash sentinel
         phone: null,
         avatarUrl: null,
       }
@@ -53,7 +54,7 @@ export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const userId = (session.user as any).id;
+    const userId = (session.user as SessionUser).id;
 
     const user = await prisma.user.findUnique({
       where: { id: userId },

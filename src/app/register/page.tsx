@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import PasswordStrength from '@/components/PasswordStrength';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -45,8 +46,8 @@ export default function RegisterPage() {
       router.push('/dashboard');
       router.refresh();
 
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error: unknown) {
+      setError((error as Error).message);
       setIsLoading(false);
     }
   };
@@ -119,8 +120,9 @@ export default function RegisterPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700">Password</label>
               <div className="mt-1">
-                <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#1e3b8a] focus:border-[#1e3b8a] sm:text-sm" />
+                <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#1e3b8a] focus:border-[#1e3b8a] sm:text-sm" />
               </div>
+              <PasswordStrength password={password} />
             </div>
 
             <div>

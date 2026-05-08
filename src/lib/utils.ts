@@ -1,20 +1,39 @@
 /**
- * XSS Sanitization utility
- * Used before inserting any user-generated rich text into DB (product descriptions, Q&A)
- * In production: npm install isomorphic-dompurify
- * In dev/server: we use a regex strip as a safe fallback
+ * XSS Sanitization utility using isomorphic-dompurify.
+ * Used before inserting any user-generated rich text into DB (product descriptions, Q&A).
+ * Works server-side (Node) via JSDOM, and client-side natively.
  */
+import DOMPurify from 'isomorphic-dompurify';
 
 export function sanitizeHtml(dirty: string): string {
   if (!dirty) return '';
 
-  // Strip script tags and event handlers (server-safe regex approach)
-  return dirty
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
-    .replace(/javascript:/gi, '')
-    .replace(/data:/gi, '')
-    .trim();
+  return DOMPurify.sanitize(dirty, {
+    ALLOWED_TAGS: [
+      'b', 'i', 'em', 'strong', 'u', 's', 'a',
+      'p', 'br', 'ul', 'ol', 'li',
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'blockquote', 'code', 'pre',
+    ],
+    ALLOWED_ATTR: ['href', 'title', 'target', 'rel'],
+    // Drop all inline event handlers and unsafe protocols.
+    ALLOW_DATA_ATTR: false,
+    FORBID_ATTR: [
+      'onerror', 'onload', 'onclick', 'onmouseover', 'onmouseout',
+      'onfocus', 'onblur', 'onchange', 'onsubmit', 'style',
+    ],
+    FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form'],
+  });
+}
+
+/**
+ * Lightweight className helper used by some UI primitives.
+ * Filters out falsy values and joins the rest with a space.
+ */
+export function cn(
+  ...inputs: Array<string | number | false | null | undefined>
+): string {
+  return inputs.filter(Boolean).join(' ');
 }
 
 /**
@@ -85,7 +104,7 @@ export async function processEscrowPayouts() {
       where: {
         status: 'DELIVERED',
         updatedAt: { lte: escrowDaysAgo },
-        // payoutProcessed: false  // Add this field to Order schema for production
+        payoutProcessedAt: null // Only orders not yet processed
       },
       include: {
         items: {
@@ -100,19 +119,38 @@ export async function processEscrowPayouts() {
     let payoutsProcessed = 0;
 
     for (const order of eligibleOrders) {
-      for (const item of order.items) {
-        const seller = item.variant.product.seller;
-        const gross = item.priceAtPurchase * item.quantity;
-        const commission = gross * seller.commissionRate;
-        const payout = gross - commission;
+      await prisma.$transaction(async (tx) => {
+        for (const item of order.items) {
+          const seller = item.variant.product.seller;
+          const gross = item.priceAtPurchase * item.quantity;
+          const commission = gross * seller.commissionRate;
+          const payout = gross - commission;
 
-        await prisma.sellerProfile.update({
-          where: { id: seller.id },
-          data: { balance: { increment: payout } }
+          await tx.sellerProfile.update({
+            where: { id: seller.id },
+            data: { balance: { increment: payout } }
+          });
+
+          // Create payout record
+          await tx.payout.create({
+            data: {
+              sellerId: seller.id,
+              amount: payout,
+              status: 'PAID',
+              processedAt: new Date(),
+              bankDetails: seller.bankAccount || 'Internal Wallet'
+            }
+          });
+        }
+
+        // Mark order as processed
+        await tx.order.update({
+          where: { id: order.id },
+          data: { payoutProcessedAt: new Date() }
         });
+      });
 
-        payoutsProcessed++;
-      }
+      payoutsProcessed++;
     }
 
     return { processed: payoutsProcessed };

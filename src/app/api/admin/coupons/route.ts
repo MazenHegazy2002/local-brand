@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { createCouponSchema } from '@/lib/validation';
+import { SessionUser } from '@/types';
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user as { role: string }).role !== 'ADMIN') {
+  if (!session || (session.user as SessionUser).role !== 'ADMIN') {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
@@ -16,22 +18,29 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user as { role: string }).role !== 'ADMIN') {
+  if (!session || (session.user as SessionUser).role !== 'ADMIN') {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  const data = await req.json();
+  const body = await req.json();
+  const validated = createCouponSchema.safeParse(body);
+
+  if (!validated.success) {
+    return NextResponse.json({ message: 'Invalid data', errors: validated.error.format() }, { status: 400 });
+  }
+
+  const data = validated.data;
 
   const coupon = await prisma.coupon.create({
     data: {
       code: data.code,
       discountType: data.discountType,
-      discountValue: parseFloat(data.discountValue),
-      minOrderValue: data.minOrderValue ? parseFloat(data.minOrderValue) : null,
-      maxDiscount: data.maxDiscount ? parseFloat(data.maxDiscount) : null,
-      usageLimit: data.usageLimit ? parseInt(data.usageLimit) : null,
+      discountValue: data.discountValue,
+      minOrderValue: data.minOrderValue ?? null,
+      maxDiscount: data.maxDiscount ?? null,
+      usageLimit: data.usageLimit ?? null,
       expiryDate: new Date(data.expiryDate),
-      isActive: true,
+      isActive: data.isActive,
     },
   });
 

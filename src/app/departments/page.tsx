@@ -2,6 +2,13 @@ import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 
+type CategoryWithProducts = {
+  id: string;
+  name: string;
+  slug: string;
+  products: { id: string }[];
+};
+
 export default async function DepartmentsPage() {
   const categories = await prisma.category.findMany({
     include: { 
@@ -29,7 +36,7 @@ export default async function DepartmentsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {categories.map((cat: any) => (
+          {categories.map((cat: CategoryWithProducts) => (
             <Link
               key={cat.id}
               href={`/category/${cat.slug}`}

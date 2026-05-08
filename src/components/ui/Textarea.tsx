@@ -1,6 +1,6 @@
 'use client';
 
-import { TextareaHTMLAttributes, forwardRef, useEffect, useRef, useState } from 'react';
+import { TextareaHTMLAttributes, forwardRef, useEffect, useId, useRef, useState } from 'react';
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
@@ -15,7 +15,8 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ label, error, helperText, autoResize, showCharCount, maxLength, required, className = '', id, value, ...props }, ref) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const selectId = id || `textarea-${Math.random().toString(36).slice(2)}`;
+    const fallbackId = useId();
+    const selectId = id || fallbackId;
     const [localValue, setLocalValue] = useState(value as string || '');
 
     useEffect(() => {

@@ -15,34 +15,13 @@ export const MAX_REVIEW_COMMENT_LENGTH = 2000;
 export const REVIEW_MIN_LENGTH = 10;
 export const QA_MIN_LENGTH = 5;
 
-// ============================================================
-// SHIPPING RATES (EGP) — Governorate-based
-// ============================================================
-export const SHIPPING_RATES: Record<string, number> = {
-  'cairo': 40,
-  'giza': 40,
-  'alexandria': 55,
-  'aswan': 80,
-  'luxor': 80,
-  'portsaid': 60,
-  'suez': 65,
-  'ismailia': 65,
-  'faiyum': 50,
-  'beni suef': 50,
-  'minya': 55,
-  'assiut': 60,
-  'sohag': 65,
-  'qena': 70,
-  'new valley': 90,
-  'red sea': 100,
-  'north sinai': 110,
-  'south sinai': 120,
-  'marsa matrouh': 120,
-};
-export const DEFAULT_SHIPPING_RATE = 75;
-export const FREE_SHIPPING_THRESHOLD = 500; // Free shipping above 500 EGP
-export const WEIGHT_SURCHARGE_THRESHOLD = 1000; // grams
-export const WEIGHT_SURCHARGE_PER_500G = 10; // EGP per additional 500g
+import { 
+  SHIPPING_RATES, 
+  DEFAULT_SHIPPING_RATE, 
+  FREE_SHIPPING_THRESHOLD,
+  WEIGHT_SURCHARGE_THRESHOLD,
+  WEIGHT_SURCHARGE_PER_500G
+} from './shipping-rates';
 
 // ============================================================
 // PAGINATION
@@ -96,8 +75,54 @@ export const MAX_IMAGES_PER_PRODUCT = 10;
 export const PLATFORM_NAME = 'Local Brand';
 export const PLATFORM_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://localbrand-egypt.com';
 export const SUPPORT_EMAIL = 'support@localbrand.com';
-export const CONTACT_PHONE = process.env.CONTACT_PHONE || '+20 123 456 789';
-export const TAX_REG_NUMBER = process.env.TAX_REGISTRATION_NUMBER || 'XXX-XXX-XXX';
+export const CONTACT_PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE || '+20 123 456 789';
+
+// ============================================================
+// PAYMENT GATEWAYS
+// ============================================================
+/**
+ * Stripe API version used by every Stripe client constructor in the app.
+ * Centralised so version bumps are a single-line change.
+ */
+export const STRIPE_API_VERSION = '2026-03-25.dahlia' as const;
+
+// Tax registration number is legally required on Egyptian invoices.
+// In production we warn during build but only throw at runtime when actually
+// accessed — this avoids blocking the build and still fails loudly if missing
+// on a live request.
+const rawTaxReg = process.env.TAX_REGISTRATION_NUMBER;
+if (
+  process.env.NODE_ENV === 'production' &&
+  !rawTaxReg &&
+  // Next.js sets NEXT_PHASE during build/page data collection
+  process.env.NEXT_PHASE !== 'phase-production-build'
+) {
+  console.warn(
+    '[constants] TAX_REGISTRATION_NUMBER is not set. Invoices in production ' +
+      'will display the development placeholder. Set it in your deployment env vars.'
+  );
+}
+
+export const TAX_REG_NUMBER = rawTaxReg || 'XXX-XXX-XXX-DEV';
+
+/**
+ * Returns the production-grade tax registration number, throwing if it is
+ * missing in production. Use this from server-only code paths that actually
+ * need to render invoices.
+ */
+export function getTaxRegistrationNumber(): string {
+  const value = process.env.TAX_REGISTRATION_NUMBER;
+  if (!value) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'TAX_REGISTRATION_NUMBER environment variable is required in production. ' +
+          'Set it in your deployment env vars before launching.'
+      );
+    }
+    return 'XXX-XXX-XXX-DEV';
+  }
+  return value;
+}
 
 // ============================================================
 // HELPER FUNCTIONS
