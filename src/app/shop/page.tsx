@@ -133,10 +133,14 @@ function ShopContent() {
   }, [products, filters.sort]);
 
   const handleAddToCart = (product: Product) => {
+    // Prefer the product's default variant id — that's the id the cart and
+    // order pipeline actually expect. Fall back to the product id (the cart
+    // validation endpoint can rewrite that for us on the next open).
+    const variant = product.variants?.[0];
     addItem({
-      id: String(product.id),
+      id: String(variant?.id ?? product.id),
       name: product.title,
-      price: product.basePrice,
+      price: variant?.price ?? product.basePrice,
       image: product.images?.[0]?.url || '',
     });
     setAdded(prev => ({ ...prev, [product.id]: true }));

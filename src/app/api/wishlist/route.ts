@@ -15,8 +15,14 @@ export async function GET(req: Request) {
       where: { userId },
       include: {
         product: {
-          include: { images: true }
-        }
+          include: {
+            images: true,
+            variants: {
+              select: { id: true, stockCount: true, price: true },
+              orderBy: { stockCount: 'desc' },
+            },
+          },
+        },
       },
       orderBy: { addedAt: 'desc' }
     });

@@ -15,6 +15,7 @@ interface WishlistItem {
     basePrice: number;
     images: { url: string }[];
     category: { name: string };
+    variants?: { id: string; stockCount: number; price: number }[];
   };
 }
 
@@ -63,11 +64,14 @@ export default function WishlistPage() {
     }
   };
 
+  const variantIdFor = (item: WishlistItem) => item.product.variants?.[0]?.id || String(item.productId);
+
   const moveToCart = async (item: WishlistItem) => {
+    const variant = item.product.variants?.[0];
     addItem({
-      id: String(item.productId),
+      id: variantIdFor(item),
       name: item.product.title,
-      price: item.product.basePrice,
+      price: variant?.price ?? item.product.basePrice,
       image: item.product.images[0]?.url,
     });
     setAddedToCart(prev => ({ ...prev, [item.productId]: true }));
@@ -76,10 +80,11 @@ export default function WishlistPage() {
   };
 
   const addToCart = async (item: WishlistItem) => {
+    const variant = item.product.variants?.[0];
     addItem({
-      id: String(item.productId),
+      id: variantIdFor(item),
       name: item.product.title,
-      price: item.product.basePrice,
+      price: variant?.price ?? item.product.basePrice,
       image: item.product.images[0]?.url,
     });
     setAddedToCart(prev => ({ ...prev, [item.productId]: true }));

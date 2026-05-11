@@ -25,7 +25,7 @@ interface PaySkyInitData {
 }
 
 export default function CheckoutPage() {
-  const { items, total, clearCart, removeItem } = useCartStore();
+  const { items, total, clearCart, removeItem, rewriteId } = useCartStore();
   const router = useRouter();
   const { data: session } = useSession();
   const { lang } = useLanguage();
@@ -80,9 +80,11 @@ export default function CheckoutPage() {
     }
   }, [session]);
 
-  // Validate the cart against the database — silently drop items whose
-  // variant has been deleted (e.g. after a re-seed) so the user isn't
-  // blocked by a "variant not found" error at checkout.
+  // Reconcile the cart against the database:
+  //   1. Rewrite legacy Product-id entries to their default Variant id so
+  //      the order can actually ship.
+  //   2. Drop entries whose variant has been deleted (e.g. after a
+  //      re-seed), and tell the user which items went away.
   useEffect(() => {
     if (items.length === 0) return;
     let cancelled = false;
@@ -94,8 +96,14 @@ export default function CheckoutPage() {
           body: JSON.stringify({ variantIds: items.map((i) => i.id) }),
         });
         if (!res.ok) return;
-        const data: { invalid?: string[] } = await res.json();
-        if (cancelled || !data.invalid?.length) return;
+        const data: { invalid?: string[]; rewrites?: Record<string, string> } = await res.json();
+        if (cancelled) return;
+        if (data.rewrites) {
+          for (const [oldId, newId] of Object.entries(data.rewrites)) {
+            rewriteId(oldId, newId);
+          }
+        }
+        if (!data.invalid?.length) return;
         const removedNames: string[] = [];
         for (const id of data.invalid) {
           const it = items.find((i) => i.id === id);

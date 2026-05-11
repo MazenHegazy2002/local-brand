@@ -130,7 +130,8 @@ export async function GET(req: Request) {
           select: { rating: true },
         },
         variants: {
-          select: { stockCount: true },
+          select: { id: true, stockCount: true, price: true },
+          orderBy: { stockCount: 'desc' },
         },
       }
     });

@@ -15,6 +15,13 @@ interface CartStore {
   addItem: (item: Omit<CartItem, 'qty'> & { qty?: number }) => void;
   removeItem: (id: string) => void;
   updateQty: (id: string, qty: number) => void;
+  /**
+   * Replace a cart item's id (e.g. when /api/cart/validate tells us an
+   * item was saved with the Product id but should actually point at the
+   * default ProductVariant id). If an item with the new id already
+   * exists, their quantities are merged.
+   */
+  rewriteId: (oldId: string, newId: string) => void;
   clearCart: () => void;
   total: () => number;
   count: () => number;
@@ -51,6 +58,26 @@ export const useCartStore = create<CartStore>()(
               ? state.items.filter((i) => i.id !== id)
               : state.items.map((i) => (i.id === id ? { ...i, qty } : i)),
         })),
+
+      rewriteId: (oldId, newId) =>
+        set((state) => {
+          if (oldId === newId) return state;
+          const source = state.items.find((i) => i.id === oldId);
+          if (!source) return state;
+          const destination = state.items.find((i) => i.id === newId);
+          const withoutOld = state.items.filter((i) => i.id !== oldId);
+          if (destination) {
+            // Merge quantities if an item with the target id already exists.
+            return {
+              items: withoutOld.map((i) =>
+                i.id === newId ? { ...i, qty: i.qty + source.qty } : i,
+              ),
+            };
+          }
+          return {
+            items: [...withoutOld, { ...source, id: newId }],
+          };
+        }),
 
       clearCart: () => set({ items: [] }),
 

@@ -12,7 +12,7 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const { items, removeItem, updateQty, total, clearCart } = useCartStore();
+  const { items, removeItem, updateQty, total, clearCart, rewriteId } = useCartStore();
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -25,9 +25,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     return () => { document.body.style.overflow = 'unset'; };
   }, [isOpen]);
 
-  // Whenever the drawer opens, drop any cart items whose variant has been
-  // deleted on the server so the user never sees a confusing "variant not
-  // found" error at checkout. Runs once per open.
+  // Whenever the drawer opens, reconcile the cart against the server:
+  //   - legacy entries saved with a Product id get rewritten to the
+  //     proper ProductVariant id (so they check out cleanly),
+  //   - entries whose variant was deleted are silently dropped.
   useEffect(() => {
     if (!isOpen || items.length === 0) return;
     let cancelled = false;
@@ -39,9 +40,16 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           body: JSON.stringify({ variantIds: items.map((i) => i.id) }),
         });
         if (!res.ok) return;
-        const data: { invalid?: string[] } = await res.json();
-        if (cancelled || !data.invalid?.length) return;
-        for (const id of data.invalid) removeItem(id);
+        const data: { invalid?: string[]; rewrites?: Record<string, string> } = await res.json();
+        if (cancelled) return;
+        if (data.rewrites) {
+          for (const [oldId, newId] of Object.entries(data.rewrites)) {
+            rewriteId(oldId, newId);
+          }
+        }
+        if (data.invalid?.length) {
+          for (const id of data.invalid) removeItem(id);
+        }
       } catch {
         /* network error — leave cart alone */
       }
