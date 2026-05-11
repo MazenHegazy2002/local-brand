@@ -19,10 +19,24 @@ import {
 } from '@/types';
 import type { SellerStatus } from '@/generated/client';
 
+// Lightweight version of Product used by the admin Products tab. We don't
+// extend the canonical Product type because the admin query returns a
+// reduced shape (only the fields we need for the listing).
+interface AdminProduct {
+  id: string;
+  title: string;
+  basePrice: number;
+  seller?: { id: string; storeName: string } | null;
+  category?: { id: string; name: string } | null;
+  images?: { url: string; isPrimary?: boolean }[];
+  variants?: { id: string; stockCount: number; price: number }[];
+}
+
 interface DashboardData {
   sellers: SellerProfile[];
   orders: Order[];
   users: User[];
+  products?: AdminProduct[];
   auditLogs: AuditLog[];
   systemSettings: SystemSettings[];
   payouts: Payout[];
@@ -240,6 +254,7 @@ export default function AdminOS() {
         <NavItem active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} label="Overview" icon={<OverviewIcon />} />
         <NavItem active={activeTab === 'sellers'} onClick={() => setActiveTab('sellers')} label="Sellers" icon={<SellersIcon />} />
         <NavItem active={activeTab === 'users'} onClick={() => setActiveTab('users')} label="Users" icon={<UsersIcon />} />
+        <NavItem active={activeTab === 'products'} onClick={() => setActiveTab('products')} label="Products" icon={<ProductsIcon />} />
         <NavItem active={activeTab === 'orders'} onClick={() => setActiveTab('orders')} label="Orders" icon={<OrdersIcon />} />
         
         <div className="nav-section">Finance</div>
@@ -276,6 +291,7 @@ export default function AdminOS() {
           {activeTab === 'overview' && data && <OverviewTab data={data} handleStatusUpdate={handleStatusUpdate} actionLoading={actionLoading} />}
           {activeTab === 'sellers' && data && <SellersTab data={data} handleStatusUpdate={handleStatusUpdate} actionLoading={actionLoading} />}
           {activeTab === 'users' && data && <UsersTab data={data} onDelete={handleDeleteUser} onEdit={handleEditClick} onCreateClick={() => setShowCreateUser(true)} />}
+          {activeTab === 'products' && data && <ProductsTab data={data} />}
           {activeTab === 'orders' && data && <OrdersTab data={data} />}
           {activeTab === 'payouts' && data && <PayoutsTab data={data} />}
           {activeTab === 'analytics' && data && <AnalyticsTab data={data} />}
@@ -493,17 +509,52 @@ interface SellersTabProps {
   actionLoading: string | null;
 }
 
+/**
+ * Reusable search input used by every list-style admin tab so admins can
+ * type a few characters and instantly narrow the table.
+ */
+function SearchInput({ value, onChange, placeholder, count }: { value: string; onChange: (v: string) => void; placeholder: string; count: string }) {
+  return (
+    <div className="flex items-center gap-3 mb-3">
+      <div className="relative flex-1">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+          <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          type="search"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="w-full pl-8 pr-7 py-1.5 rounded-md border border-slate-200 bg-white text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
+        />
+        {value && (
+          <button type="button" onClick={() => onChange('')} aria-label="Clear search" className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 px-1">×</button>
+        )}
+      </div>
+      <span className="text-[11px] text-slate-400 whitespace-nowrap">{count}</span>
+    </div>
+  );
+}
+
 function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps) {
+  const [search, setSearch] = useState('');
+  const q = search.trim().toLowerCase();
+  const sellers = (data?.sellers || []).filter((s: SellerProfile) => {
+    if (!q) return true;
+    return `${s.storeName || ''} ${s.user?.name || ''} ${s.user?.email || ''} ${s.status || ''}`.toLowerCase().includes(q);
+  });
+
   return (
     <div className="card">
       <div className="card-header"><div className="card-title">All Sellers</div></div>
+      <SearchInput value={search} onChange={setSearch} placeholder="Search sellers by store, owner, email or status…" count={`${sellers.length} / ${data?.sellers?.length || 0}`} />
       <div className="row-item font-bold text-[11px] text-slate-400 uppercase">
          <span className="flex-1">Store Name / Owner</span>
          <span className="w-32 text-center">Status</span>
          <span className="w-32 text-right">Balance</span>
          <span className="w-24"></span>
       </div>
-      {data?.sellers?.map((s: SellerProfile) => (
+      {sellers.map((s: SellerProfile) => (
         <div key={s.id} className="row-item">
           <div style={{flex:1}}>
             <div style={{fontSize:'12px',fontWeight:500}}>{s.storeName}</div>
@@ -520,6 +571,7 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps
           </div>
         </div>
       ))}
+      {sellers.length === 0 && <div className="py-10 text-center text-xs text-slate-400">{q ? `No sellers match "${search}".` : 'No sellers yet.'}</div>}
     </div>
   );
 }
@@ -532,6 +584,15 @@ interface UsersTabProps {
 }
 
 function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'BUYER' | 'SELLER' | 'ADMIN'>('all');
+  const q = search.trim().toLowerCase();
+  const users = (data?.users || []).filter((u: User) => {
+    if (roleFilter !== 'all' && u.role !== roleFilter) return false;
+    if (!q) return true;
+    return `${u.name || ''} ${u.email || ''}`.toLowerCase().includes(q);
+  });
+
   return (
     <div className="card">
       <div className="card-header">
@@ -540,6 +601,34 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
           + Create Account
         </button>
       </div>
+      <div className="flex items-center gap-3 mb-3">
+        <div className="relative flex-1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search users by name or email…"
+            className="w-full pl-8 pr-7 py-1.5 rounded-md border border-slate-200 bg-white text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
+          />
+          {search && (
+            <button type="button" onClick={() => setSearch('')} aria-label="Clear search" className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 px-1">×</button>
+          )}
+        </div>
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value as typeof roleFilter)}
+          className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
+        >
+          <option value="all">All roles</option>
+          <option value="BUYER">Buyers</option>
+          <option value="SELLER">Sellers</option>
+          <option value="ADMIN">Admins</option>
+        </select>
+        <span className="text-[11px] text-slate-400 whitespace-nowrap">{users.length} / {data?.users?.length || 0}</span>
+      </div>
       <div className="row-item" style={{fontSize:'10px',color:'#94a3b8',fontWeight:600,textTransform:'uppercase'}}>
         <div style={{width:28}} />
         <div style={{flex:1}}>Name / Email</div>
@@ -547,7 +636,7 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
         <div style={{width:100,textAlign:'right'}}>Joined</div>
         <div style={{width:60}} />
       </div>
-      {data?.users?.map((u: User) => (
+      {users.map((u: User) => (
         <div key={u.id} className="row-item">
           <div className="avatar-sm" style={{background: u.role==='ADMIN' ? '#EEEDFE' : u.role==='SELLER' ? '#E1F5EE' : '#FFF7ED', color: u.role==='ADMIN' ? '#534AB7' : u.role==='SELLER' ? '#085041' : '#92400E'}}>{(u.name||'?')[0].toUpperCase()}</div>
           <div style={{flex:1}}>
@@ -564,7 +653,7 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
           </div>
         </div>
       ))}
-      {!data?.users?.length && <div className="py-10 text-center text-xs text-slate-400">No users found.</div>}
+      {users.length === 0 && <div className="py-10 text-center text-xs text-slate-400">{q || roleFilter !== 'all' ? 'No users match the current filters.' : 'No users found.'}</div>}
     </div>
   );
 }
@@ -574,10 +663,50 @@ interface OrdersTabProps {
 }
 
 function OrdersTab({ data }: OrdersTabProps) {
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const q = search.trim().toLowerCase();
+  const orders = (data?.orders || []).filter((o: Order) => {
+    if (statusFilter !== 'all' && o.status !== statusFilter) return false;
+    if (!q) return true;
+    return `${o.id} ${o.user?.name || ''} ${o.user?.email || ''} ${o.paymentMethod || ''}`.toLowerCase().includes(q);
+  });
+
   return (
     <div className="card">
       <div className="card-header"><div className="card-title">Platform Orders</div></div>
-      {data?.orders?.map((o: Order) => (
+      <div className="flex items-center gap-3 mb-3">
+        <div className="relative flex-1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search orders by ID, customer or payment method…"
+            className="w-full pl-8 pr-7 py-1.5 rounded-md border border-slate-200 bg-white text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
+          />
+          {search && (
+            <button type="button" onClick={() => setSearch('')} aria-label="Clear search" className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 px-1">×</button>
+          )}
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
+        >
+          <option value="all">All status</option>
+          <option value="PENDING_PAYMENT">Pending payment</option>
+          <option value="CONFIRMED">Confirmed</option>
+          <option value="PROCESSING">Processing</option>
+          <option value="SHIPPED">Shipped</option>
+          <option value="DELIVERED">Delivered</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+        <span className="text-[11px] text-slate-400 whitespace-nowrap">{orders.length} / {data?.orders?.length || 0}</span>
+      </div>
+      {orders.map((o: Order) => (
         <div key={o.id} className="row-item">
           <div style={{flex:1}}>
             <div style={{fontSize:'12px',fontWeight:600}}>#ORD-{o.id.substring(0,8)}</div>
@@ -590,6 +719,102 @@ function OrdersTab({ data }: OrdersTabProps) {
           <span className="badge b-active">{o.status}</span>
         </div>
       ))}
+      {orders.length === 0 && <div className="py-10 text-center text-xs text-slate-400">{q || statusFilter !== 'all' ? 'No orders match the current filters.' : 'No orders yet.'}</div>}
+    </div>
+  );
+}
+
+interface ProductsTabProps { data: DashboardData; }
+
+function ProductsTab({ data }: ProductsTabProps) {
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [stockFilter, setStockFilter] = useState<'all' | 'in' | 'out' | 'low'>('all');
+
+  const products = data?.products || [];
+  const q = search.trim().toLowerCase();
+  const filtered = products.filter((p) => {
+    if (categoryFilter !== 'all' && p.category?.id !== categoryFilter) return false;
+    const stock = (p.variants || []).reduce((a, b) => a + (b.stockCount || 0), 0);
+    if (stockFilter === 'in'  && stock <= 0)            return false;
+    if (stockFilter === 'out' && stock !== 0)           return false;
+    if (stockFilter === 'low' && (stock === 0 || stock > 5)) return false;
+    if (!q) return true;
+    return `${p.title || ''} ${p.id || ''} ${p.category?.name || ''} ${p.seller?.storeName || ''}`.toLowerCase().includes(q);
+  });
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <div className="card-title">All Products</div>
+        <span className="text-[11px] text-slate-400">{filtered.length} / {products.length}</span>
+      </div>
+      <div className="flex flex-col md:flex-row md:items-center gap-3 mb-3">
+        <div className="relative flex-1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search products by name, store, category or ID…"
+            className="w-full pl-8 pr-7 py-1.5 rounded-md border border-slate-200 bg-white text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
+          />
+          {search && (
+            <button type="button" onClick={() => setSearch('')} aria-label="Clear search" className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 px-1">×</button>
+          )}
+        </div>
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
+        >
+          <option value="all">All categories</option>
+          {data?.categories?.map((c: Category) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+        <select
+          value={stockFilter}
+          onChange={(e) => setStockFilter(e.target.value as typeof stockFilter)}
+          className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
+        >
+          <option value="all">All stock</option>
+          <option value="in">In stock</option>
+          <option value="low">Low (≤5)</option>
+          <option value="out">Out of stock</option>
+        </select>
+      </div>
+      <div className="row-item" style={{fontSize:'10px',color:'#94a3b8',fontWeight:600,textTransform:'uppercase'}}>
+        <div style={{width:40}} />
+        <div style={{flex:1}}>Title / Category</div>
+        <div style={{width:160}}>Seller</div>
+        <div style={{width:90,textAlign:'right'}}>Price</div>
+        <div style={{width:80,textAlign:'right'}}>Stock</div>
+      </div>
+      {filtered.map((p) => {
+        const stock = (p.variants || []).reduce((a, b) => a + (b.stockCount || 0), 0);
+        const img = p.images?.find((i) => i.isPrimary)?.url || p.images?.[0]?.url || '';
+        return (
+          <div key={p.id} className="row-item">
+            <div style={{width:40,height:40,borderRadius:6,overflow:'hidden',background:'#f1f5f9',flexShrink:0}}>
+              {img ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={img} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} />
+              ) : null}
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:'12px',fontWeight:500,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{p.title}</div>
+              <div style={{fontSize:'11px',color:'#64748b'}}>{p.category?.name || '—'}</div>
+            </div>
+            <div style={{width:160,fontSize:'11px',color:'#64748b',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{p.seller?.storeName || '—'}</div>
+            <div style={{width:90,textAlign:'right',fontSize:'12px',fontWeight:600}}>{p.basePrice?.toLocaleString()} EGP</div>
+            <div style={{width:80,textAlign:'right',fontSize:'11px',fontWeight:600,color: stock === 0 ? '#ef4444' : stock <= 5 ? '#f59e0b' : '#64748b'}}>{stock}</div>
+          </div>
+        );
+      })}
+      {filtered.length === 0 && <div className="py-10 text-center text-xs text-slate-400">{q || categoryFilter !== 'all' || stockFilter !== 'all' ? 'No products match the current filters.' : 'No products yet.'}</div>}
     </div>
   );
 }
@@ -776,6 +1001,7 @@ function OverviewIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" f
 function SellersIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="3" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".7"/><path d="M1 14c0-2.8 2.2-5 5-5" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".6"/><path d="M11 9l1.5 1.5L15 8" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".8"/></svg>; }
 function UsersIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.1" fill="none" opacity=".6"/><circle cx="11" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.1" fill="none" opacity=".6"/><path d="M1 14c0-2.5 1.8-4 4-4M7 14c0-2.5 1.8-4 4-4s4 1.5 4 4" stroke="currentColor" strokeWidth="1.1" fill="none" opacity=".5"/></svg>; }
 function OrdersIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="12" height="14" rx="2" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".7"/><rect x="5" y="5" width="6" height="1" rx=".5" fill="currentColor" opacity=".5"/><rect x="5" y="8" width="4" height="1" rx=".5" fill="currentColor" opacity=".4"/></svg>; }
+function ProductsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 5l6-3 6 3-6 3-6-3z" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".7"/><path d="M2 5v6l6 3M14 5v6l-6 3" stroke="currentColor" strokeWidth="1.1" fill="none" opacity=".6"/></svg>; }
 function PayoutsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="4" width="14" height="9" rx="2" fill="currentColor" opacity=".5"/><rect x="1" y="4" width="14" height="3" rx="1" fill="currentColor" opacity=".7"/><circle cx="11.5" cy="9.5" r="1.5" fill="#7F77DD"/></svg>; }
 function AnalyticsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><polyline points="1,12 5,7 8,10 11,4 15,8" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".7"/></svg>; }
 function ModerationIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".6"/><path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".8"/></svg>; }

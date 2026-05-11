@@ -217,7 +217,15 @@ export async function getDashboardStats() {
         }
       });
       const users = await prisma.user.findMany({ select: { id: true, name: true, email: true, role: true, createdAt: true } });
-      const products = await prisma.product.findMany();
+      const products = await prisma.product.findMany({
+        include: {
+          images: true,
+          variants: { select: { id: true, stockCount: true, price: true } },
+          category: { select: { id: true, name: true } },
+          seller: { select: { id: true, storeName: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
       const auditLogs = await prisma.auditLog.findMany({ include: { admin: { select: { name: true, email: true } } }, orderBy: { createdAt: 'desc' }, take: 50 });
       const systemSettings = await prisma.systemSettings.findMany();
       const payouts = await prisma.payout.findMany({ include: { seller: true }, orderBy: { createdAt: 'desc' } });
@@ -237,10 +245,11 @@ export async function getDashboardStats() {
         totalProducts: products.length
       };
       
-      return { 
-        sellers, 
-        orders, 
+      return {
+        sellers,
+        orders,
         users,
+        products,
         auditLogs,
         systemSettings,
         payouts,
@@ -248,7 +257,7 @@ export async function getDashboardStats() {
         tags,
         collections,
         pendingSellers: sellers.filter(s => s.status === 'PENDING_APPROVAL'),
-        stats 
+        stats
       };
     }
 

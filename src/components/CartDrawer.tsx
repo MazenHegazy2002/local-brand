@@ -25,6 +25,33 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     return () => { document.body.style.overflow = 'unset'; };
   }, [isOpen]);
 
+  // Whenever the drawer opens, drop any cart items whose variant has been
+  // deleted on the server so the user never sees a confusing "variant not
+  // found" error at checkout. Runs once per open.
+  useEffect(() => {
+    if (!isOpen || items.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/cart/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ variantIds: items.map((i) => i.id) }),
+        });
+        if (!res.ok) return;
+        const data: { invalid?: string[] } = await res.json();
+        if (cancelled || !data.invalid?.length) return;
+        for (const id of data.invalid) removeItem(id);
+      } catch {
+        /* network error — leave cart alone */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
   if (!isOpen && !isAnimating) return null;
 
   return (

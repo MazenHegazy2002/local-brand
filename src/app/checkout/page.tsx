@@ -25,13 +25,14 @@ interface PaySkyInitData {
 }
 
 export default function CheckoutPage() {
-  const { items, total, clearCart } = useCartStore();
+  const { items, total, clearCart, removeItem } = useCartStore();
   const router = useRouter();
   const { data: session } = useSession();
   const { lang } = useLanguage();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [cartNotice, setCartNotice] = useState('');
   
   const [address, setAddress] = useState({
     fullName: '',
@@ -78,6 +79,47 @@ export default function CheckoutPage() {
         .catch((error: unknown) => console.error(error));
     }
   }, [session]);
+
+  // Validate the cart against the database — silently drop items whose
+  // variant has been deleted (e.g. after a re-seed) so the user isn't
+  // blocked by a "variant not found" error at checkout.
+  useEffect(() => {
+    if (items.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/cart/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ variantIds: items.map((i) => i.id) }),
+        });
+        if (!res.ok) return;
+        const data: { invalid?: string[] } = await res.json();
+        if (cancelled || !data.invalid?.length) return;
+        const removedNames: string[] = [];
+        for (const id of data.invalid) {
+          const it = items.find((i) => i.id === id);
+          if (it) removedNames.push(it.name);
+          removeItem(id);
+        }
+        if (removedNames.length) {
+          setCartNotice(
+            `Removed ${removedNames.length} item${removedNames.length === 1 ? '' : 's'} that ${
+              removedNames.length === 1 ? 'is' : 'are'
+            } no longer available: ${removedNames.join(', ')}`,
+          );
+        }
+      } catch (err) {
+        console.warn('Cart validation failed (non-fatal):', err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // We deliberately only run when the items length changes — running on
+    // every items reference change would loop after each removal.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length]);
 
   // Calculations
   const subtotal = total();
@@ -312,9 +354,24 @@ export default function CheckoutPage() {
           
           {/* Left Column - Forms */}
           <div className="w-full lg:w-2/3 space-y-6">
+            {cartNotice && (
+              <div className="bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-200 font-medium flex items-start justify-between gap-3">
+                <span>{cartNotice}</span>
+                <button type="button" onClick={() => setCartNotice('')} aria-label="Dismiss" className="text-amber-700 hover:text-amber-900">×</button>
+              </div>
+            )}
             {error && (
-              <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 font-medium">
-                {error}
+              <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 font-medium flex items-start justify-between gap-3">
+                <span>{error}</span>
+                {(/^Product variant .* not found/i.test(error) || /no longer available/i.test(error)) && (
+                  <button
+                    type="button"
+                    onClick={() => { clearCart(); setError(''); router.push('/shop'); }}
+                    className="shrink-0 px-3 py-1 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700"
+                  >
+                    Clear cart
+                  </button>
+                )}
               </div>
             )}
             

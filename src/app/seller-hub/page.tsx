@@ -667,28 +667,96 @@ function OrdersTab({ orders, onFulfill }: { orders: Order[], onFulfill: (id: str
 }
 
 function ProductsTab({ products, onDelete, onAdd, onEdit }: { products: Product[], onDelete: (id: string) => void, onAdd: () => void, onEdit: (p: Product) => void }) {
+  const [search, setSearch] = useState('');
+  const [stockFilter, setStockFilter] = useState<'all' | 'in' | 'out' | 'low'>('all');
+
+  const q = search.trim().toLowerCase();
+  const filtered = products.filter((p) => {
+    if (q) {
+      const hay = `${p.title || ''} ${p.id || ''} ${p.category?.name || ''}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    const stock = (p.variants || []).reduce((a, b) => a + (b.stockCount || 0), 0);
+    if (stockFilter === 'in'  && stock <= 0)            return false;
+    if (stockFilter === 'out' && stock !== 0)           return false;
+    if (stockFilter === 'low' && (stock === 0 || stock > 5)) return false;
+    return true;
+  });
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {products.map(product => (
-        <div key={product.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 group">
-          <div className="aspect-square rounded-xl bg-slate-50 mb-4 overflow-hidden relative">
-             <img src={product.images?.[0]?.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-             <div className="absolute top-2 right-2 flex gap-1">
-                <button onClick={() => onEdit(product)} className="w-8 h-8 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-blue-500 hover:bg-white"><Settings size={14} /></button>
-                <button onClick={() => onDelete(product.id)} className="w-8 h-8 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-red-500 hover:bg-white"><Trash2 size={14} /></button>
-             </div>
-          </div>
-          <h4 className="font-bold text-sm text-slate-900 mb-1 truncate">{product.title}</h4>
-          <div className="flex justify-between items-center text-xs">
-            <span className="font-black text-emerald-600">{product.basePrice} EGP</span>
-            <span className="text-slate-400 font-bold">{product.variants?.reduce((a, b) => a + b.stockCount, 0)} in stock</span>
-          </div>
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-3">
+        <div className="relative flex-1">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by product name, category or ID…"
+            className="w-full pl-9 pr-9 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-base px-1"
+            >×</button>
+          )}
         </div>
-      ))}
-      <button onClick={onAdd} className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center p-8 text-slate-400 hover:border-emerald-300 hover:bg-emerald-50 transition-all gap-2">
-         <Plus size={32} />
-         <span className="text-sm font-bold">Add Product</span>
-      </button>
+        <select
+          value={stockFilter}
+          onChange={(e) => setStockFilter(e.target.value as typeof stockFilter)}
+          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        >
+          <option value="all">All stock</option>
+          <option value="in">In stock</option>
+          <option value="low">Low stock (≤5)</option>
+          <option value="out">Out of stock</option>
+        </select>
+        <div className="text-xs text-slate-500 whitespace-nowrap px-1">
+          {filtered.length} / {products.length}
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-12 text-center text-slate-400">
+          {q ? `No products match "${search}".` : 'No products yet — add your first one.'}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filtered.map((product) => {
+            const stock = (product.variants || []).reduce((a, b) => a + (b.stockCount || 0), 0);
+            return (
+              <div key={product.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 group">
+                <div className="aspect-square rounded-xl bg-slate-50 mb-4 overflow-hidden relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+                  <img src={product.images?.[0]?.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <button onClick={() => onEdit(product)} aria-label="Edit product" className="w-8 h-8 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-blue-500 hover:bg-white"><Settings size={14} /></button>
+                    <button onClick={() => onDelete(product.id)} aria-label="Delete product" className="w-8 h-8 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-red-500 hover:bg-white"><Trash2 size={14} /></button>
+                  </div>
+                  {stock === 0 && (
+                    <span className="absolute bottom-2 left-2 text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-md uppercase">Out of stock</span>
+                  )}
+                </div>
+                <h4 className="font-bold text-sm text-slate-900 mb-1 truncate">{product.title}</h4>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-black text-emerald-600">{product.basePrice} EGP</span>
+                  <span className={`font-bold ${stock === 0 ? 'text-red-500' : stock <= 5 ? 'text-amber-500' : 'text-slate-400'}`}>{stock} in stock</span>
+                </div>
+              </div>
+            );
+          })}
+          <button onClick={onAdd} className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center p-8 text-slate-400 hover:border-emerald-300 hover:bg-emerald-50 transition-all gap-2 min-h-[200px]">
+            <Plus size={32} />
+            <span className="text-sm font-bold">Add Product</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

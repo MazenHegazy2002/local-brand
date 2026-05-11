@@ -79,10 +79,15 @@ export async function createOrder(
         where: { id: itemInput.variantId },
         include: { product: { include: { seller: true } } }
       });
-      
-      if (!variant) throw new Error(`Product variant ${itemInput.variantId} not found`);
+
+      if (!variant) {
+        return {
+          error:
+            'One or more items in your cart are no longer available. Please refresh your cart and try again.',
+        };
+      }
       if (variant.stockCount < itemInput.quantity) {
-        throw new Error(`Out of stock: ${variant.product.title}`);
+        return { error: `Out of stock: ${variant.product.title}` };
       }
 
       const price = variant.price || variant.product.basePrice;

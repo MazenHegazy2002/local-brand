@@ -52,3 +52,8 @@ last
 mazen.txt
 stitch-preview.png
 
+
+# Reserved Windows filename that occasionally gets created by stray
+# stdout redirections (`> nul`). It cannot be removed on Windows so we
+# just keep it out of the index.
+nul
