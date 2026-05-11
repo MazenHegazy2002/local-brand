@@ -354,8 +354,8 @@ export default function SellerHub() {
     <div className="db">
       {/* Sidebar */}
       <div className="sidebar">
-        <div className="logo flex items-center gap-2 px-4 py-6 text-white font-black text-lg">
-          <ShoppingBag size={24} />
+        <div className="logo flex items-center gap-2 px-4 py-4 text-white font-black text-base">
+          <ShoppingBag size={20} />
           <span>SellerHub</span>
         </div>
         
@@ -376,11 +376,11 @@ export default function SellerHub() {
       </div>
 
       {/* Main Area */}
-      <div className="main flex-1 p-8 min-h-screen pb-20">
-        <div className="topbar flex items-center justify-between mb-8">
-          <div className="page-title text-2xl font-black text-slate-900">{TITLES[activeTab] || 'Dashboard'}</div>
-          <button className="add-product-btn bg-[#0F6E56] text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-900/10 hover:opacity-90 transition-all" onClick={() => setShowAddModal(true)}>
-            <Plus size={18} /> Add product
+      <div className="main flex-1 p-6 overflow-y-auto">
+        <div className="topbar flex items-center justify-between mb-4">
+          <div className="page-title text-xl font-black text-slate-900">{TITLES[activeTab] || 'Dashboard'}</div>
+          <button className="add-product-btn bg-[#0F6E56] text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-900/10 hover:opacity-90 transition-all text-sm" onClick={() => setShowAddModal(true)}>
+            <Plus size={16} /> Add product
           </button>
         </div>
 
@@ -450,10 +450,11 @@ export default function SellerHub() {
       )}
 
       <style jsx global>{`
-        .db { display: flex; min-height: 100vh; background: #f8fafc; }
-        .sidebar { width: 220px; min-width: 220px; background: #0F6E56; min-height: 100vh; max-height: 100vh; position: sticky; top: 0; align-self: flex-start; display: flex; flex-direction: column; overflow-y: auto; }
-        @media (max-width: 768px) { .db { flex-direction: column; } .sidebar { width: 100%; min-width: 0; min-height: auto; max-height: none; position: static; flex-direction: row; flex-wrap: wrap; padding: 8px; gap: 4px; overflow-x: auto; } .sidebar .nav-item { padding: 6px 10px; font-size: 12px; } .main { padding: 16px !important; } }
-        .nav-item { padding: 12px 20px; color: #fff; opacity: 0.7; transition: 0.2s; cursor: pointer; display: flex; align-items: center; gap: 12px; font-weight: 500; font-size: 14px; }
+        .db { display: flex; height: 100vh; overflow: hidden; background: #f8fafc; }
+        .sidebar { width: 200px; min-width: 200px; background: #0F6E56; height: 100vh; position: sticky; top: 0; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+        .main { flex: 1; overflow-y: auto; padding: 24px; height: 100vh; box-sizing: border-box; }
+        @media (max-width: 900px) { .db { flex-direction: column; height: auto; overflow: auto; } .sidebar { width: 100%; min-width: 0; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 8px; gap: 4px; overflow-x: auto; } .sidebar .nav-item { padding: 6px 10px; font-size: 12px; } .main { height: auto; padding: 16px; } }
+        .nav-item { padding: 10px 16px; color: #fff; opacity: 0.7; transition: 0.2s; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 500; font-size: 13px; }
         .nav-item:hover { opacity: 1; background: rgba(255,255,255,0.05); }
         .nav-item.active { opacity: 1; background: rgba(255,255,255,0.1); font-weight: 700; border-right: 4px solid #4ADE80; }
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
@@ -483,9 +484,9 @@ function NavItem({ active, onClick, label, icon }: { active: boolean, onClick: (
 
 function OverviewTab({ stats, myOrders, myProducts, data }: OverviewTabProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* Top Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard 
           label="Total Revenue" 
           value={`${stats.revenue.toLocaleString()} EGP`} 
@@ -516,18 +517,18 @@ function OverviewTab({ stats, myOrders, myProducts, data }: OverviewTabProps) {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Main Chart Section */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-8 border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="font-black text-lg">Weekly Performance</h3>
+        <div className="lg:col-span-2 bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-black text-base">Weekly Performance</h3>
             <div className="flex gap-2">
                <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
                   <div className="w-2 h-2 rounded-full bg-emerald-500"></div> Revenue
                </div>
             </div>
           </div>
-          <div className="flex items-end gap-3 h-[200px]">
+          <div className="flex items-end gap-3 h-[120px]">
             {stats.dailyRevenue.map((val, i) => {
               const max = Math.max(...stats.dailyRevenue, 1);
               const height = (val / max) * 100;
@@ -548,9 +549,9 @@ function OverviewTab({ stats, myOrders, myProducts, data }: OverviewTabProps) {
         </div>
 
         {/* Performance Metrics Section */}
-        <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm space-y-6">
-          <h3 className="font-black text-lg">Operational Health</h3>
-          <div className="space-y-6">
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+          <h3 className="font-black text-base">Operational Health</h3>
+          <div className="space-y-3">
              <MetricRow label="Order Acceptance" value={stats.performance.orderAcceptance} color="#0F6E56" icon={<CheckCircle2 size={16} />} />
              <MetricRow label="Shipping Speed" value={stats.performance.shippingSpeed} color="#3B82F6" icon={<Clock size={16} />} />
              <MetricRow label="Return Rate" value={stats.performance.returnRate} color="#EF4444" inverse icon={<XCircle size={16} />} />
@@ -572,17 +573,17 @@ function OverviewTab({ stats, myOrders, myProducts, data }: OverviewTabProps) {
 
 function StatCard({ label, value, subText, trend, icon }: { label: string, value: string, subText: string, trend: 'up' | 'down' | 'neutral', icon: React.ReactNode }) {
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm group hover:shadow-md transition-all">
-      <div className="flex justify-between items-start mb-4">
-        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform">{icon}</div>
+    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm group hover:shadow-md transition-all">
+      <div className="flex justify-between items-start mb-2">
+        <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform">{icon}</div>
         {trend !== 'neutral' && (
           <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${trend === 'up' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
             {trend === 'up' ? '▲' : '▼'}
           </span>
         )}
       </div>
-      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{label}</div>
-      <div className="text-2xl font-black text-slate-900 mb-2">{value}</div>
+      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{label}</div>
+      <div className="text-xl font-black text-slate-900 mb-1">{value}</div>
       <div className="text-[11px] font-medium text-slate-400">{subText}</div>
     </div>
   );
