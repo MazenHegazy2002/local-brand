@@ -169,6 +169,10 @@ function CustomerDashboard() {
           {data?.user?.name?.split(' ')[0] || 'My'}
           <span> {data?.user?.name?.split(' ').slice(1).join(' ') || 'Account'}</span>
         </div>
+        <a href="/" className="home-link">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Back to Shop
+        </a>
         
         <div className="nav-section">Personal</div>
         <NavItem active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} label="Overview" icon={<OverviewIcon />} />
@@ -200,7 +204,7 @@ function CustomerDashboard() {
           </div>
         </div>
 
-        <div className="tab-content animate-fadeIn">
+        <div className="tab-content animate-fadeIn" key={activeTab}>
           {activeTab === 'overview' && <OverviewTab data={data} wishlist={wishlist} myOrders={myOrders} />}
           {activeTab === 'orders' && <OrdersTab orders={myOrders} onCancel={handleCancelOrder} onReturn={handleRequestReturn} onReorder={handleReorder} />}
           {activeTab === 'wishlist' && <WishlistTab items={wishlist} onToggle={handleToggleWishlist} />}
@@ -225,36 +229,40 @@ function CustomerDashboard() {
           --brandy-accent-soft: rgba(245,158,11,.12);
         }
         *{box-sizing:border-box}
-        /* Whole dashboard scrolls naturally; sidebar stays in view via
-           position: sticky so the user can always see the nav while reading
-           further down the page. */
-        .db{display:flex;min-height:100vh;background:var(--color-background-secondary);font-family: 'Inter', sans-serif;}
-        .sidebar{width:200px;min-width:200px;background:linear-gradient(180deg, var(--brandy-primary) 0%, var(--brandy-primary-dark) 100%);padding:16px 0;display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;align-self:flex-start;max-height:100vh;overflow-y:auto;color:#fff}
+        html,body{height:100%;margin:0}
+        /* Full-viewport layout: sidebar fixed, main scrolls internally */
+        .db{display:flex;height:100dvh;overflow:hidden;background:var(--color-background-secondary);font-family:'Inter',sans-serif;}
+        .sidebar{width:200px;min-width:200px;background:linear-gradient(180deg,var(--brandy-primary) 0%,var(--brandy-primary-dark) 100%);padding:16px 0;display:flex;flex-direction:column;flex-shrink:0;height:100dvh;overflow-y:auto;color:#fff}
+        .main{flex:1;min-width:0;display:flex;flex-direction:column;height:100dvh;overflow:hidden;background:var(--color-background-secondary)}
+        .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;flex-shrink:0;border-bottom:1px solid rgba(0,0,0,0.06)}
+        .tab-content{flex:1;min-height:0;overflow-y:auto;padding:16px 18px 40px}
+        .home-link{display:flex;align-items:center;gap:6px;margin:0 12px 8px;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.65);background:rgba(255,255,255,0.06);text-decoration:none;transition:all 0.15s;border:1px solid rgba(255,255,255,0.1)}
+        .home-link:hover{color:#fff;background:rgba(255,255,255,0.12)}
         @media (max-width: 900px){
-          .db{flex-direction:column}
-          .sidebar{width:100%;min-width:0;max-height:none;position:static;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px;overflow-x:auto;overflow-y:visible}
+          .db{flex-direction:column;height:auto;overflow:auto}
+          .sidebar{width:100%;min-width:0;height:auto;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px;overflow-x:auto;overflow-y:visible}
           .sidebar .nav-section{display:none}
           .sidebar .logo{padding:8px 12px;font-size:14px;flex-basis:100%}
+          .sidebar .home-link{margin:4px;padding:5px 8px}
           .sidebar .nav-item{padding:6px 10px !important;font-size:12px !important}
-          .main{padding:16px !important}
+          .main{height:auto}
+          .tab-content{overflow:visible;padding:12px}
           .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
         }
-        .logo{padding:0 16px 20px;font-size:15px;font-weight:700;color:#fff}
+        .logo{padding:0 16px 16px;font-size:15px;font-weight:700;color:#fff}
         .logo span{color:var(--brandy-accent);font-weight:700}
         .nav-section{font-size:10px;font-weight:600;color:rgba(255,255,255,.45);letter-spacing:.08em;padding:10px 16px 4px;text-transform:uppercase}
         .nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;font-size:12.5px;color:rgba(255,255,255,.7);transition:all .15s;border-left:3px solid transparent}
         .nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
         .nav-item.active{background:rgba(245,158,11,.12);color:#fff;border-left-color:var(--brandy-accent)}
         .nav-icon{width:15px;height:15px;flex-shrink:0}
-        .main{flex:1;min-width:0;padding:18px;background:var(--color-background-secondary);padding-bottom:80px}
-        .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
         .page-title{font-size:17px;font-weight:600;color:var(--color-text-primary)}
-        .user-label { font-size: 11px; color: rgba(255,255,255,.7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight:600; }
-        .signout-btn { font-size: 11px; color: rgba(252,165,165,0.85); margin-top: 4px; background: none; border: none; cursor: pointer; display: block; padding:0 }
-        .signout-btn:hover { color: #fca5a5; text-decoration: underline; }
-        .tier-badge { display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-secondary); }
-        .refresh-btn { width:34px;height:34px;border-radius:8px;background:rgba(30,59,138,.08);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--brandy-primary); }
-        .refresh-btn:hover { background:rgba(30,59,138,.14); }
+        .user-label{font-size:11px;color:rgba(255,255,255,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+        .signout-btn{font-size:11px;color:rgba(252,165,165,0.85);margin-top:4px;background:none;border:none;cursor:pointer;display:block;padding:0}
+        .signout-btn:hover{color:#fca5a5;text-decoration:underline}
+        .tier-badge{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-secondary)}
+        .refresh-btn{width:34px;height:34px;border-radius:8px;background:rgba(30,59,138,.08);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--brandy-primary)}
+        .refresh-btn:hover{background:rgba(30,59,138,.14)}
         .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
         @media (max-width: 768px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
         .stat{background:var(--color-background-primary);border-radius:12px;padding:14px;border:1px solid var(--color-border-tertiary)}
@@ -274,10 +282,11 @@ function CustomerDashboard() {
         .row-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--color-border-tertiary)}
         .row-item:last-child{border-bottom:none}
         .avatar-sm{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0}
-        .input-profile { width:100%; border:1px solid #e2e8f0; padding:9px 12px; border-radius:8px; font-size:13px; outline:none; margin-bottom:10px; transition:border-color .15s }
-        .input-profile:focus { border-color: var(--brandy-primary); box-shadow: 0 0 0 3px rgba(30,59,138,.1); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        .input-profile{width:100%;border:1px solid #e2e8f0;padding:9px 12px;border-radius:8px;font-size:13px;outline:none;margin-bottom:10px;transition:border-color .15s}
+        .input-profile:focus{border-color:var(--brandy-primary);box-shadow:0 0 0 3px rgba(30,59,138,.1)}
+        .top-actions{display:flex;align-items:center;gap:8px}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+        .animate-fadeIn{animation:fadeIn 0.3s ease-out}
       `}</style>
     </div>
   );

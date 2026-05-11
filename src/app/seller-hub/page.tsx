@@ -452,31 +452,33 @@ export default function SellerHub() {
 
       <style jsx global>{`
         * { box-sizing: border-box; }
-        /* Whole page scrolls naturally — sidebar stays in view via position:sticky,
-           main content grows as tall as it needs to. */
-        .db { display: flex; min-height: 100vh; background: #f8fafc; }
-        .sidebar { width: 200px; min-width: 200px; background: #0F6E56; padding: 0; display: flex; flex-direction: column; flex-shrink: 0; position: sticky; top: 0; align-self: flex-start; max-height: 100vh; overflow-y: auto; }
-        .main { flex: 1; min-width: 0; display: flex; flex-direction: column; padding-bottom: 32px; }
-        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 12px; border-bottom: 1px solid #f1f5f9; background: #f8fafc; position: sticky; top: 0; z-index: 5; }
+        html, body { height: 100%; margin: 0; }
+        /* Full-viewport locked layout: sidebar fixed, main scrolls internally */
+        .db { display: flex; height: 100dvh; overflow: hidden; background: #f8fafc; }
+        .sidebar { width: 200px; min-width: 200px; background: #0F6E56; height: 100dvh; display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
+        .main { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 12px; flex-shrink: 0; border-bottom: 1px solid #f1f5f9; background: #f8fafc; }
         .page-title { font-size: 18px; font-weight: 900; color: #0f172a; }
         .add-product-btn { background: #0F6E56; color: #fff; padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 6px; border: none; cursor: pointer; }
         .add-product-btn:hover { opacity: 0.9; }
-        .tab-content { display: flex; flex-direction: column; padding: 16px 20px 16px; gap: 12px; }
-        .overview-wrap { display: flex; flex-direction: column; gap: 12px; }
-        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .bottom-row { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
-        .chart-card { background: #fff; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.04); padding: 16px; display: flex; flex-direction: column; }
-        .chart-bars { display: flex; align-items: flex-end; gap: 6px; min-height: 180px; }
-        .health-card { background: #fff; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.04); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+        .tab-content { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 16px 20px; gap: 12px; }
+        .overview-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 12px; }
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-shrink: 0; }
+        .bottom-row { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; flex: 1; min-height: 0; }
+        .chart-card { background: #fff; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.04); padding: 16px; display: flex; flex-direction: column; min-height: 0; }
+        .chart-bars { display: flex; align-items: flex-end; gap: 6px; flex: 1; min-height: 0; }
+        .health-card { background: #fff; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.04); padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
         @media (max-width: 900px) {
-          .db { flex-direction: column; }
-          .sidebar { width: 100%; min-width: 0; max-height: none; position: static; flex-direction: row; flex-wrap: wrap; padding: 8px; gap: 4px; overflow-x: auto; overflow-y: visible; }
+          .db { flex-direction: column; height: auto; overflow: auto; }
+          .sidebar { width: 100%; height: auto; min-width: 0; flex-direction: row; flex-wrap: wrap; padding: 8px; gap: 4px; overflow-x: auto; overflow-y: visible; }
           .sidebar .nav-item { padding: 6px 10px !important; font-size: 12px !important; }
           .sidebar .logo { padding: 8px 12px !important; }
-          .topbar { position: static; }
+          .main { height: auto; }
+          .tab-content { overflow: visible; flex: none; }
+          .overview-wrap { flex: none; }
+          .bottom-row { flex: none; grid-template-columns: 1fr; }
+          .chart-bars { min-height: 140px; flex: none; }
           .stats-row { grid-template-columns: repeat(2, 1fr); }
-          .bottom-row { grid-template-columns: 1fr; }
-          .chart-bars { min-height: 140px; }
         }
         .nav-item { padding: 10px 16px; color: #fff; opacity: 0.7; transition: 0.2s; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 500; font-size: 13px; }
         .nav-item:hover { opacity: 1; background: rgba(255,255,255,0.05); }
