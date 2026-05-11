@@ -444,7 +444,8 @@ export default function SellerHub() {
       )}
 
       <style jsx global>{`
-        .sidebar { width: 220px; background: #0F6E56; height: 100vh; position: sticky; top: 0; }
+        .db { display: flex; min-height: 100vh; background: #f8fafc; }
+        .sidebar { width: 220px; min-width: 220px; background: #0F6E56; height: 100vh; position: sticky; top: 0; display: flex; flex-direction: column; }
         .nav-item { padding: 12px 20px; color: #fff; opacity: 0.7; transition: 0.2s; cursor: pointer; display: flex; align-items: center; gap: 12px; font-weight: 500; font-size: 14px; }
         .nav-item:hover { opacity: 1; background: rgba(255,255,255,0.05); }
         .nav-item.active { opacity: 1; background: rgba(255,255,255,0.1); font-weight: 700; border-right: 4px solid #4ADE80; }
