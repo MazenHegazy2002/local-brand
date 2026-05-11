@@ -376,10 +376,10 @@ export default function SellerHub() {
       </div>
 
       {/* Main Area */}
-      <div className="main flex-1 p-6 overflow-y-auto">
-        <div className="topbar flex items-center justify-between mb-4">
-          <div className="page-title text-xl font-black text-slate-900">{TITLES[activeTab] || 'Dashboard'}</div>
-          <button className="add-product-btn bg-[#0F6E56] text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-900/10 hover:opacity-90 transition-all text-sm" onClick={() => setShowAddModal(true)}>
+      <div className="main">
+        <div className="topbar">
+          <div className="page-title">{TITLES[activeTab] || 'Dashboard'}</div>
+          <button className="add-product-btn" onClick={() => setShowAddModal(true)}>
             <Plus size={16} /> Add product
           </button>
         </div>
@@ -450,15 +450,38 @@ export default function SellerHub() {
       )}
 
       <style jsx global>{`
-        .db { display: flex; height: 100vh; overflow: hidden; background: #f8fafc; }
-        .sidebar { width: 200px; min-width: 200px; background: #0F6E56; height: 100vh; position: sticky; top: 0; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
-        .main { flex: 1; overflow-y: auto; padding: 24px; height: 100vh; box-sizing: border-box; }
-        @media (max-width: 900px) { .db { flex-direction: column; height: auto; overflow: auto; } .sidebar { width: 100%; min-width: 0; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 8px; gap: 4px; overflow-x: auto; } .sidebar .nav-item { padding: 6px 10px; font-size: 12px; } .main { height: auto; padding: 16px; } }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; margin: 0; }
+        .db { display: flex; height: 100dvh; overflow: hidden; background: #f8fafc; }
+        .sidebar { width: 190px; min-width: 190px; background: #0F6E56; height: 100dvh; display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
+        .main { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 12px; flex-shrink: 0; border-bottom: 1px solid #f1f5f9; background: #f8fafc; }
+        .page-title { font-size: 18px; font-weight: 900; color: #0f172a; }
+        .add-product-btn { background: #0F6E56; color: #fff; padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 6px; border: none; cursor: pointer; }
+        .add-product-btn:hover { opacity: 0.9; }
+        .tab-content { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; padding: 16px 20px 16px; }
+        .overview-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 12px; }
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-shrink: 0; }
+        .bottom-row { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; flex: 1; min-height: 0; }
+        .chart-card { background: #fff; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.04); padding: 16px; display: flex; flex-direction: column; min-height: 0; }
+        .chart-bars { display: flex; align-items: flex-end; gap: 6px; flex: 1; min-height: 0; }
+        .health-card { background: #fff; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.04); padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+        @media (max-width: 900px) {
+          .db { flex-direction: column; height: auto; overflow: auto; }
+          .sidebar { width: 100%; height: auto; min-width: 0; flex-direction: row; flex-wrap: wrap; padding: 8px; gap: 4px; overflow-x: auto; }
+          .sidebar .nav-item { padding: 6px 10px !important; font-size: 12px !important; }
+          .sidebar .logo { padding: 8px 12px !important; }
+          .main { height: auto; }
+          .tab-content { overflow: visible; }
+          .stats-row { grid-template-columns: repeat(2, 1fr); }
+          .bottom-row { grid-template-columns: 1fr; }
+          .chart-bars { min-height: 120px; }
+        }
         .nav-item { padding: 10px 16px; color: #fff; opacity: 0.7; transition: 0.2s; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 500; font-size: 13px; }
         .nav-item:hover { opacity: 1; background: rgba(255,255,255,0.05); }
         .nav-item.active { opacity: 1; background: rgba(255,255,255,0.1); font-weight: 700; border-right: 4px solid #4ADE80; }
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
     </div>
   );
@@ -484,86 +507,84 @@ function NavItem({ active, onClick, label, icon }: { active: boolean, onClick: (
 
 function OverviewTab({ stats, myOrders, myProducts, data }: OverviewTabProps) {
   return (
-    <div className="space-y-4">
-      {/* Top Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard 
-          label="Total Revenue" 
-          value={`${stats.revenue.toLocaleString()} EGP`} 
+    <div className="overview-wrap">
+      {/* Top Stats Row */}
+      <div className="stats-row">
+        <StatCard
+          label="Total Revenue"
+          value={`${stats.revenue.toLocaleString()} EGP`}
           subText={`${stats.monthlyChangePct > 0 ? '+' : ''}${stats.monthlyChangePct}% from last month`}
           trend={stats.monthlyChangePct >= 0 ? 'up' : 'down'}
-          icon={<TrendingUp className="text-emerald-500" />}
+          icon={<TrendingUp className="text-emerald-500" size={16} />}
         />
-        <StatCard 
-          label="Orders" 
-          value={stats.totalOrders.toString()} 
+        <StatCard
+          label="Orders"
+          value={stats.totalOrders.toString()}
           subText={`${stats.todayOrdersCount} today`}
           trend="neutral"
-          icon={<ShoppingBag className="text-blue-500" />}
+          icon={<ShoppingBag className="text-blue-500" size={16} />}
         />
-        <StatCard 
-          label="Available Balance" 
-          value={`${stats.balance.toLocaleString()} EGP`} 
+        <StatCard
+          label="Available Balance"
+          value={`${stats.balance.toLocaleString()} EGP`}
           subText="Ready for withdrawal"
           trend="neutral"
-          icon={<Wallet className="text-orange-500" />}
+          icon={<Wallet className="text-orange-500" size={16} />}
         />
-        <StatCard 
-          label="Store Rating" 
-          value={stats.avgRating > 0 ? stats.avgRating.toFixed(1) : 'New'} 
+        <StatCard
+          label="Store Rating"
+          value={stats.avgRating > 0 ? stats.avgRating.toFixed(1) : 'New'}
           subText={`${stats.reviewCount} total reviews`}
           trend="up"
-          icon={<Star className="text-yellow-500 fill-yellow-500" />}
+          icon={<Star className="text-yellow-500 fill-yellow-500" size={16} />}
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Main Chart Section */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-black text-base">Weekly Performance</h3>
-            <div className="flex gap-2">
-               <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div> Revenue
-               </div>
-            </div>
+      {/* Bottom stretch row */}
+      <div className="bottom-row">
+        {/* Chart */}
+        <div className="chart-card">
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10,flexShrink:0}}>
+            <span style={{fontWeight:900,fontSize:14}}>Weekly Performance</span>
+            <span style={{display:'flex',alignItems:'center',gap:6,fontSize:11,fontWeight:700,color:'#94a3b8'}}>
+              <span style={{width:8,height:8,borderRadius:'50%',background:'#10b981',display:'inline-block'}}></span>Revenue
+            </span>
           </div>
-          <div className="flex items-end gap-3 h-[120px]">
+          <div className="chart-bars">
             {stats.dailyRevenue.map((val, i) => {
               const max = Math.max(...stats.dailyRevenue, 1);
-              const height = (val / max) * 100;
+              const pct = (val / max) * 100;
               return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-3">
-                  <div className="w-full bg-emerald-50 rounded-lg relative group transition-all" style={{height: '100%'}}>
-                    <div className="absolute bottom-0 left-0 w-full bg-emerald-500 rounded-lg group-hover:bg-emerald-600 transition-all" style={{height: `${height}%`}}>
-                       <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-all whitespace-nowrap z-10">
-                          {val.toLocaleString()} EGP
-                       </div>
+                <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4,minWidth:0,height:'100%'}}>
+                  <div style={{width:'100%',flex:1,background:'#ecfdf5',borderRadius:8,position:'relative',minHeight:20}} className="group">
+                    <div style={{position:'absolute',bottom:0,left:0,width:'100%',height:`${pct}%`,background:'#10b981',borderRadius:8,transition:'height 0.6s ease'}} />
+                    <div style={{position:'absolute',top:-28,left:'50%',transform:'translateX(-50%)',background:'#0f172a',color:'#fff',fontSize:9,padding:'2px 6px',borderRadius:4,whiteSpace:'nowrap',pointerEvents:'none',opacity:0}} className="group-hover:opacity-100 transition-opacity">
+                      {val.toLocaleString()} EGP
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][(new Date().getDay() + i + 1) % 7]}</span>
+                  <span style={{fontSize:9,fontWeight:700,color:'#94a3b8',textTransform:'uppercase'}}>{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][(new Date().getDay() + i + 1) % 7]}</span>
                 </div>
-              )
+              );
             })}
           </div>
         </div>
 
-        {/* Performance Metrics Section */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
-          <h3 className="font-black text-base">Operational Health</h3>
-          <div className="space-y-3">
-             <MetricRow label="Order Acceptance" value={stats.performance.orderAcceptance} color="#0F6E56" icon={<CheckCircle2 size={16} />} />
-             <MetricRow label="Shipping Speed" value={stats.performance.shippingSpeed} color="#3B82F6" icon={<Clock size={16} />} />
-             <MetricRow label="Return Rate" value={stats.performance.returnRate} color="#EF4444" inverse icon={<XCircle size={16} />} />
+        {/* Operational Health */}
+        <div className="health-card">
+          <span style={{fontWeight:900,fontSize:14,flexShrink:0}}>Operational Health</span>
+          <div style={{display:'flex',flexDirection:'column',gap:10,flex:1}}>
+            <MetricRow label="Order Acceptance" value={stats.performance.orderAcceptance} color="#0F6E56" icon={<CheckCircle2 size={14} />} />
+            <MetricRow label="Shipping Speed" value={stats.performance.shippingSpeed} color="#3B82F6" icon={<Clock size={14} />} />
+            <MetricRow label="Return Rate" value={stats.performance.returnRate} color="#EF4444" inverse icon={<XCircle size={14} />} />
           </div>
-          <div className="mt-6 pt-6 border-t border-slate-50">
-             <div className="flex items-center justify-between text-xs text-gray-400 font-bold mb-2">
-                <span>Account Status</span>
-                <span className="text-emerald-500 uppercase">{data.currentSeller?.status}</span>
-             </div>
-             <div className="w-full h-1.5 bg-slate-50 rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-500" style={{width: '100%'}}></div>
-             </div>
+          <div style={{paddingTop:12,borderTop:'1px solid #f8fafc',flexShrink:0}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:11,fontWeight:700,color:'#94a3b8',marginBottom:6}}>
+              <span>Account Status</span>
+              <span style={{color:'#10b981',textTransform:'uppercase'}}>{data.currentSeller?.status}</span>
+            </div>
+            <div style={{width:'100%',height:6,background:'#f8fafc',borderRadius:99,overflow:'hidden'}}>
+              <div style={{height:'100%',width:'100%',background:'#10b981'}} />
+            </div>
           </div>
         </div>
       </div>
@@ -573,18 +594,18 @@ function OverviewTab({ stats, myOrders, myProducts, data }: OverviewTabProps) {
 
 function StatCard({ label, value, subText, trend, icon }: { label: string, value: string, subText: string, trend: 'up' | 'down' | 'neutral', icon: React.ReactNode }) {
   return (
-    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm group hover:shadow-md transition-all">
-      <div className="flex justify-between items-start mb-2">
-        <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform">{icon}</div>
+    <div style={{background:'#fff',padding:'12px 14px',borderRadius:16,border:'1px solid #f1f5f9',boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+        <div style={{width:28,height:28,borderRadius:10,background:'#f8fafc',display:'flex',alignItems:'center',justifyContent:'center'}}>{icon}</div>
         {trend !== 'neutral' && (
-          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${trend === 'up' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+          <span style={{fontSize:9,fontWeight:900,padding:'2px 7px',borderRadius:99,background:trend==='up'?'#ecfdf5':'#fef2f2',color:trend==='up'?'#10b981':'#ef4444'}}>
             {trend === 'up' ? '▲' : '▼'}
           </span>
         )}
       </div>
-      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{label}</div>
-      <div className="text-xl font-black text-slate-900 mb-1">{value}</div>
-      <div className="text-[11px] font-medium text-slate-400">{subText}</div>
+      <div style={{fontSize:9,fontWeight:700,color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:2}}>{label}</div>
+      <div style={{fontSize:16,fontWeight:900,color:'#0f172a',marginBottom:2,lineHeight:1.2}}>{value}</div>
+      <div style={{fontSize:10,color:'#94a3b8',fontWeight:500}}>{subText}</div>
     </div>
   );
 }
