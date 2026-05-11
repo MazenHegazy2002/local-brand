@@ -10,6 +10,23 @@ import { rateLimit } from '@/lib/rateLimit';
 // fallback never gets replaced with the real page.
 function buildCsp(nonce: string, isDev: boolean): string {
   // `'unsafe-eval'` is only needed in dev (React uses eval for error stacks).
+  const pluginScriptHosts = [
+    // Google Analytics + Tag Manager
+    'https://www.googletagmanager.com',
+    'https://www.google-analytics.com',
+    'https://ssl.google-analytics.com',
+    // Crisp live chat
+    'https://client.crisp.chat',
+    // Tawk.to live chat
+    'https://embed.tawk.to',
+    'https://*.tawk.to',
+    // Hotjar
+    'https://static.hotjar.com',
+    'https://script.hotjar.com',
+    // Meta (Facebook) Pixel
+    'https://connect.facebook.net',
+  ];
+
   const scriptSrc = [
     "'self'",
     `'nonce-${nonce}'`,
@@ -21,16 +38,42 @@ function buildCsp(nonce: string, isDev: boolean): string {
     'https://va.vercel-scripts.com',
     'https://translate.google.com',
     'https://translate.googleapis.com',
+    ...pluginScriptHosts,
   ].filter(Boolean).join(' ');
+
+  const connectHosts = [
+    'https://api.stripe.com',
+    'https://api.resend.com',
+    'https://*.vercel-insights.com',
+    'https://accept.paymob.com',
+    'https://www.atfawry.com',
+    'https://api.cloudinary.com',
+    'https://*.public.blob.vercel-storage.com',
+    'https://translate.googleapis.com',
+    'https://www.gstatic.com',
+    // Plugin telemetry endpoints
+    'https://www.google-analytics.com',
+    'https://*.google-analytics.com',
+    'https://*.analytics.google.com',
+    'https://*.googletagmanager.com',
+    'https://*.crisp.chat',
+    'wss://*.relay.crisp.chat',
+    'https://*.tawk.to',
+    'wss://*.tawk.to',
+    'https://*.hotjar.com',
+    'wss://*.hotjar.com',
+    'https://connect.facebook.net',
+    'https://*.facebook.com',
+  ];
 
   return [
     "default-src 'self'",
     `script-src ${scriptSrc}`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://translate.googleapis.com https://www.gstatic.com",
-    "font-src 'self' data: https://fonts.gstatic.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://translate.googleapis.com https://www.gstatic.com https://client.crisp.chat https://*.tawk.to https://*.hotjar.com",
+    "font-src 'self' data: https://fonts.gstatic.com https://client.crisp.chat https://*.tawk.to https://*.hotjar.com",
     "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://api.stripe.com https://api.resend.com https://*.vercel-insights.com https://accept.paymob.com https://www.atfawry.com https://api.cloudinary.com https://*.public.blob.vercel-storage.com https://translate.googleapis.com https://www.gstatic.com",
-    "frame-src https://js.stripe.com https://grey.paysky.io https://cube.paysky.io https://accept.paymob.com",
+    `connect-src ${["'self'", ...connectHosts].join(' ')}`,
+    "frame-src https://js.stripe.com https://grey.paysky.io https://cube.paysky.io https://accept.paymob.com https://*.tawk.to https://*.hotjar.com",
     "frame-ancestors 'self'",
     "base-uri 'self'",
     "form-action 'self'",

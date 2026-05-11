@@ -19,11 +19,12 @@ import {
   Star,
   Users
 } from 'lucide-react';
-import { 
-  getDashboardStats, 
-  createProduct, 
-  deleteProduct, 
-  updateOrderItemStatus 
+import {
+  getDashboardStats,
+  createProduct,
+  deleteProduct,
+  updateOrderItemStatus,
+  toggleProductPublished,
 } from '../actions/seller';
 import { 
   Product, 
@@ -387,7 +388,7 @@ export default function SellerHub() {
         <div className="tab-content animate-fadeIn">
           {activeTab === 'overview' && <OverviewTab stats={stats} myOrders={myOrders} myProducts={myProducts} data={data!} />}
           {activeTab === 'orders' && <OrdersTab orders={myOrders} onFulfill={handleFulfill} />}
-          {activeTab === 'products' && <ProductsTab products={myProducts} onDelete={handleDeleteProduct} onAdd={() => setShowAddModal(true)} onEdit={handleEditProduct} />}
+          {activeTab === 'products' && <ProductsTab products={myProducts} onDelete={handleDeleteProduct} onAdd={() => setShowAddModal(true)} onEdit={handleEditProduct} onAfterRefresh={refreshData} />}
           {activeTab === 'analytics' && <AnalyticsTab stats={stats} orders={myOrders} />}
           {activeTab === 'wallet' && <WalletTab data={data!} />}
           {activeTab === 'settings' && <SettingsTab data={data!} />}
@@ -666,9 +667,14 @@ function OrdersTab({ orders, onFulfill }: { orders: Order[], onFulfill: (id: str
   );
 }
 
-function ProductsTab({ products, onDelete, onAdd, onEdit }: { products: Product[], onDelete: (id: string) => void, onAdd: () => void, onEdit: (p: Product) => void }) {
+function ProductsTab({ products, onDelete, onAdd, onEdit, onAfterRefresh }: { products: Product[], onDelete: (id: string) => void, onAdd: () => void, onEdit: (p: Product) => void, onAfterRefresh: () => Promise<void> }) {
   const [search, setSearch] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'in' | 'out' | 'low'>('all');
+  const [publishFilter, setPublishFilter] = useState<'all' | 'published' | 'draft'>('all');
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkResult, setBulkResult] = useState<{
+    success: number; drafts?: number; published?: number; failed: number; errors?: string[];
+  } | null>(null);
 
   const q = search.trim().toLowerCase();
   const filtered = products.filter((p) => {
@@ -680,12 +686,109 @@ function ProductsTab({ products, onDelete, onAdd, onEdit }: { products: Product[
     if (stockFilter === 'in'  && stock <= 0)            return false;
     if (stockFilter === 'out' && stock !== 0)           return false;
     if (stockFilter === 'low' && (stock === 0 || stock > 5)) return false;
+    if (publishFilter === 'published' && !p.published)  return false;
+    if (publishFilter === 'draft'     && p.published)   return false;
     return true;
   });
 
+  const downloadTemplate = () => {
+    // Trigger a download by navigating; the API sends Content-Disposition.
+    window.location.href = '/api/products/bulk-upload';
+  };
+
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBulkUploading(true);
+    setBulkResult(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/products/bulk-upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) {
+        setBulkResult({ success: 0, failed: 0, errors: [data.error || 'Upload failed'] });
+      } else {
+        setBulkResult(data);
+        await onAfterRefresh();
+      }
+    } catch (err) {
+      setBulkResult({ success: 0, failed: 0, errors: [(err as Error).message] });
+    } finally {
+      setBulkUploading(false);
+      // reset the file input so the seller can upload the same file again
+      e.target.value = '';
+    }
+  };
+
+  const handlePublishToggle = async (id: string, publish: boolean) => {
+    const res = await toggleProductPublished(id, publish);
+    if ('error' in res && res.error) {
+      alert(res.error);
+      return;
+    }
+    await onAfterRefresh();
+  };
+
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
+      {/* Bulk import banner */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-bold text-slate-900">Bulk import via Excel</div>
+          <div className="text-xs text-slate-500 mt-0.5">
+            Download the template, fill in your products, then upload it back here. Products without an image stay as drafts until you add one.
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={downloadTemplate}
+          className="text-xs font-bold text-[#0F6E56] border border-emerald-200 hover:bg-emerald-50 px-3 py-2 rounded-lg whitespace-nowrap"
+        >
+          Download template
+        </button>
+        <label className="text-xs font-bold text-white bg-[#0F6E56] hover:opacity-90 px-3 py-2 rounded-lg cursor-pointer whitespace-nowrap inline-flex items-center gap-2">
+          {bulkUploading ? 'Uploading…' : 'Upload filled file'}
+          <input
+            type="file"
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            onChange={handleBulkUpload}
+            disabled={bulkUploading}
+            className="hidden"
+          />
+        </label>
+      </div>
+
+      {bulkResult && (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="font-bold text-slate-900">Bulk import result</div>
+              <div className="text-xs text-slate-500 mt-1">
+                <span className="text-emerald-600 font-semibold">{bulkResult.success}</span> imported
+                {typeof bulkResult.drafts === 'number' && (
+                  <> — <span className="text-amber-600 font-semibold">{bulkResult.drafts}</span> drafts (need an image)</>
+                )}
+                {typeof bulkResult.published === 'number' && bulkResult.published > 0 && (
+                  <> — <span className="text-emerald-600 font-semibold">{bulkResult.published}</span> published</>
+                )}
+                {bulkResult.failed > 0 && (
+                  <> — <span className="text-red-600 font-semibold">{bulkResult.failed}</span> failed</>
+                )}
+              </div>
+            </div>
+            <button onClick={() => setBulkResult(null)} aria-label="Dismiss" className="text-slate-400 hover:text-slate-700 text-lg">×</button>
+          </div>
+          {bulkResult.errors && bulkResult.errors.length > 0 && (
+            <ul className="mt-3 max-h-32 overflow-y-auto text-xs text-red-600 list-disc pl-5 space-y-1">
+              {bulkResult.errors.slice(0, 50).map((e, i) => <li key={i}>{e}</li>)}
+              {bulkResult.errors.length > 50 && <li>+ {bulkResult.errors.length - 50} more…</li>}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {/* Search/filter toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-3">
         <div className="relative flex-1">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -707,6 +810,15 @@ function ProductsTab({ products, onDelete, onAdd, onEdit }: { products: Product[
             >×</button>
           )}
         </div>
+        <select
+          value={publishFilter}
+          onChange={(e) => setPublishFilter(e.target.value as typeof publishFilter)}
+          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        >
+          <option value="all">All status</option>
+          <option value="published">Published</option>
+          <option value="draft">Drafts</option>
+        </select>
         <select
           value={stockFilter}
           onChange={(e) => setStockFilter(e.target.value as typeof stockFilter)}
@@ -730,24 +842,57 @@ function ProductsTab({ products, onDelete, onAdd, onEdit }: { products: Product[
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filtered.map((product) => {
             const stock = (product.variants || []).reduce((a, b) => a + (b.stockCount || 0), 0);
+            const hasImage = (product.images?.length ?? 0) > 0;
+            const isPublished = product.published === true;
             return (
               <div key={product.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 group">
                 <div className="aspect-square rounded-xl bg-slate-50 mb-4 overflow-hidden relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-                  <img src={product.images?.[0]?.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  {hasImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+                    <img src={product.images?.[0]?.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 gap-1">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <polyline points="21 15 16 10 5 21" />
+                      </svg>
+                      <span className="text-[10px] font-bold uppercase tracking-wider">No image</span>
+                    </div>
+                  )}
                   <div className="absolute top-2 right-2 flex gap-1">
                     <button onClick={() => onEdit(product)} aria-label="Edit product" className="w-8 h-8 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-blue-500 hover:bg-white"><Settings size={14} /></button>
                     <button onClick={() => onDelete(product.id)} aria-label="Delete product" className="w-8 h-8 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-red-500 hover:bg-white"><Trash2 size={14} /></button>
                   </div>
-                  {stock === 0 && (
-                    <span className="absolute bottom-2 left-2 text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-md uppercase">Out of stock</span>
-                  )}
+                  <div className="absolute bottom-2 left-2 flex gap-1">
+                    {!isPublished && (
+                      <span className="text-[10px] font-black bg-amber-500 text-white px-2 py-0.5 rounded-md uppercase">Draft</span>
+                    )}
+                    {stock === 0 && (
+                      <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-md uppercase">Out of stock</span>
+                    )}
+                  </div>
                 </div>
                 <h4 className="font-bold text-sm text-slate-900 mb-1 truncate">{product.title}</h4>
-                <div className="flex justify-between items-center text-xs">
+                <div className="flex justify-between items-center text-xs mb-2">
                   <span className="font-black text-emerald-600">{product.basePrice} EGP</span>
                   <span className={`font-bold ${stock === 0 ? 'text-red-500' : stock <= 5 ? 'text-amber-500' : 'text-slate-400'}`}>{stock} in stock</span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => handlePublishToggle(product.id, !isPublished)}
+                  disabled={!hasImage && !isPublished}
+                  className={`w-full text-[11px] font-bold py-1.5 rounded-lg border ${
+                    isPublished
+                      ? 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      : hasImage
+                        ? 'border-emerald-200 text-emerald-600 hover:bg-emerald-50'
+                        : 'border-slate-100 text-slate-300 cursor-not-allowed'
+                  }`}
+                  title={!hasImage && !isPublished ? 'Add an image before publishing' : undefined}
+                >
+                  {isPublished ? 'Unpublish' : hasImage ? 'Publish' : 'Add image to publish'}
+                </button>
               </div>
             );
           })}
@@ -1093,10 +1238,24 @@ function SettingsTab({ data }: { data: DashboardData }) {
               <span className="text-2xl text-slate-300">🏪</span>
             )}
           </div>
-          <div>
+          <div className="flex-1">
             <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">Store Logo</label>
-            <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={isUploading} className="text-xs" />
-            {isUploading && <div className="text-[10px] text-slate-400 mt-1">Uploading…</div>}
+            <div className="flex items-center gap-2 flex-wrap">
+              <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-semibold text-slate-700">
+                {form.logoUrl ? 'Replace logo' : 'Upload logo'}
+                <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={isUploading} className="hidden" />
+              </label>
+              {form.logoUrl && !isUploading && (
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, logoUrl: '' }))}
+                  className="text-xs font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-md hover:bg-red-50"
+                >
+                  Remove
+                </button>
+              )}
+              {isUploading && <span className="text-[11px] text-slate-400">Uploading…</span>}
+            </div>
           </div>
         </div>
 
@@ -1296,17 +1455,29 @@ function AddProductModal({
                     min="1"
                     className="col-span-3 px-3 py-2 bg-white border border-slate-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
                   />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(i, e)}
-                    className="col-span-3 text-[10px]"
-                  />
+                  <label
+                    className="col-span-3 flex items-center justify-center gap-1 px-2 py-2 rounded-lg border border-dashed border-slate-300 bg-white hover:bg-slate-50 cursor-pointer text-[10px] text-slate-600 font-semibold"
+                    title={v.image ? 'Replace image' : 'Choose image'}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    {v.image ? 'Replace' : 'Upload'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(i, e)}
+                      className="hidden"
+                    />
+                  </label>
                   <button
                     type="button"
                     onClick={() => setVariants(variants.filter((_, idx) => idx !== i))}
                     disabled={variants.length === 1}
                     className="col-span-1 text-red-500 disabled:opacity-30"
+                    aria-label="Remove variant"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -1318,13 +1489,22 @@ function AddProductModal({
                         alt={`Variant ${i + 1} preview`}
                         className="h-16 w-16 rounded-lg object-cover border border-slate-200"
                       />
-                      <div className="text-xs">
+                      <div className="text-xs flex-1">
                         {v.uploading ? (
                           <span className="text-amber-600 font-semibold">Uploading…</span>
                         ) : (
                           <span className="text-emerald-600 font-semibold">✓ Image ready</span>
                         )}
                       </div>
+                      {!v.uploading && (
+                        <button
+                          type="button"
+                          onClick={() => updateVariant(i, 'image', '')}
+                          className="text-[11px] font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-md hover:bg-red-50"
+                        >
+                          Remove image
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

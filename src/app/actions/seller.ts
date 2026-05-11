@@ -497,6 +497,52 @@ export async function deleteProduct(productId: string) {
   }
 }
 
+/**
+ * Toggle a product's published status.
+ *
+ * Business rule: A product must have at least one image before it can be
+ * published. Drafts without images stay drafts, even if the seller asks to
+ * publish them — this matches what the bulk-upload flow promises.
+ */
+export async function toggleProductPublished(productId: string, publish: boolean) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as SessionUser).role !== 'SELLER') {
+      return { error: 'Unauthorized' };
+    }
+
+    const userId = await getRealUserId(session);
+    if (!userId) return { error: 'User not found' };
+    const seller = await prisma.sellerProfile.findUnique({ where: { userId } });
+    if (!seller) return { error: 'Seller profile not found' };
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: { images: { take: 1 } },
+    });
+    if (!product || product.sellerId !== seller.id) {
+      return { error: 'Unauthorized to update this product' };
+    }
+
+    if (publish && product.images.length === 0) {
+      return {
+        error: 'Add at least one image before publishing this product.',
+      };
+    }
+
+    await prisma.product.update({
+      where: { id: productId },
+      data: { published: publish },
+    });
+
+    revalidatePath('/seller-hub');
+    return { success: true, published: publish };
+  } catch (err: unknown) {
+    const error = err as Error;
+    return { error: error.message };
+  }
+}
+
 interface ReviewData {
   productId: string;
   rating: number;

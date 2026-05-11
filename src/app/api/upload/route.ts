@@ -85,11 +85,20 @@ export async function POST(req: Request) {
       }, { status: 200 });
     }
 
-    // Dev mode: return a mock URL
+    // Dev / unconfigured mode: return the file itself as a base64 data URL
+    // so the user actually sees what they uploaded (instead of a random
+    // picsum image they can't relate to). This is fine for local dev and
+    // small previews; production should always have BLOB_READ_WRITE_TOKEN
+    // or Cloudinary credentials configured.
+    const bytes = await file.arrayBuffer();
+    const base64 = Buffer.from(bytes).toString('base64');
+    const dataUrl = `data:${file.type};base64,${base64}`;
     return NextResponse.json({
-      url: `https://picsum.photos/seed/${Date.now()}/800/800`,
+      url: dataUrl,
       publicId: `mock-${Date.now()}`,
       mockMode: true,
+      message:
+        'Stored as a data URL — configure BLOB_READ_WRITE_TOKEN or Cloudinary env vars in production for proper hosted images.',
     }, { status: 200 });
 
   } catch (error: unknown) {

@@ -625,10 +625,24 @@ function SettingsTab({ user, onUpdate, isUpdating }: { user?: User, onUpdate: (e
               <span>👤</span>
             )}
           </div>
-          <div>
-            <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">Profile Photo</label>
-            <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploading} className="text-xs" />
-            {uploading && <div className="text-[10px] text-slate-400 mt-1">Uploading…</div>}
+          <div className="flex-1">
+            <label className="text-[11px] text-slate-400 uppercase font-bold block mb-2">Profile Photo</label>
+            <div className="flex items-center gap-2 flex-wrap">
+              <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-semibold text-slate-700">
+                {avatar ? 'Replace photo' : 'Upload photo'}
+                <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploading} className="hidden" />
+              </label>
+              {avatar && !uploading && (
+                <button
+                  type="button"
+                  onClick={() => setAvatar('')}
+                  className="text-xs font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-md hover:bg-red-50"
+                >
+                  Remove
+                </button>
+              )}
+              {uploading && <span className="text-[11px] text-slate-400">Uploading…</span>}
+            </div>
             <input type="hidden" name="avatarUrl" value={avatar} />
           </div>
         </div>

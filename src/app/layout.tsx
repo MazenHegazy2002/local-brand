@@ -82,6 +82,7 @@ import BottomNavigation from '@/components/BottomNavigation';
 import CookieConsent from '@/components/CookieConsent';
 import WebVitalsReporter from '@/components/WebVitalsReporter';
 import InstallPrompt from '@/components/InstallPrompt';
+import Plugins from '@/components/Plugins';
 
 export default async function RootLayout({
   children,
@@ -113,6 +114,7 @@ export default async function RootLayout({
             <InstallPrompt />
           </AuthProvider>
         </LanguageProvider>
+        <Plugins />
         <Analytics />
         <SpeedInsights />
         <WebVitalsReporter />
