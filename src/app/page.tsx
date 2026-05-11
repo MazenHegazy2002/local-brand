@@ -180,7 +180,7 @@ export default async function Home() {
       <Navbar />
       <Hero />
 
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 16px" }}>
+      <div className="home-shell">
         <Suspense fallback={<div style={{ height: 400 }} />}>
           <ProductSection
             emoji="🔥"
@@ -211,20 +211,31 @@ export default async function Home() {
 
       {/* ── Scoped styles ─────────────────────────────────────────── */}
       <style>{`
+        /* Page shell — clamp to ~1280px on big screens, snug on phones. */
+        .home-shell {
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 0 16px;
+        }
+        @media (max-width: 480px) { .home-shell { padding: 0 12px; } }
         /* Section */
-        .ps-section { margin: 32px 0; }
-        .ps-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-        .ps-title { font-size: 20px; font-weight: 800; color: #1e3b8a; display: flex; align-items: center; gap: 8px; }
-        .ps-link { font-size: 13px; font-weight: 600; color: #1e3b8a; text-decoration: none; opacity: .75; }
+        .ps-section { margin: 24px 0; }
+        @media (min-width: 768px) { .ps-section { margin: 32px 0; } }
+        .ps-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
+        @media (min-width: 768px) { .ps-header { margin-bottom: 16px; } }
+        .ps-title { font-size: 17px; font-weight: 800; color: #1e3b8a; display: flex; align-items: center; gap: 8px; }
+        @media (min-width: 768px) { .ps-title { font-size: 20px; } }
+        .ps-link { font-size: 12px; font-weight: 600; color: #1e3b8a; text-decoration: none; opacity: .75; white-space: nowrap; }
+        @media (min-width: 768px) { .ps-link { font-size: 13px; } }
         .ps-link:hover { opacity: 1; text-decoration: underline; }
         .ps-grid {
           display: grid;
-          grid-template-columns: repeat(6, 1fr);
-          gap: 12px;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
         }
-        @media (max-width: 1100px) { .ps-grid { grid-template-columns: repeat(4, 1fr); } }
-        @media (max-width: 768px)  { .ps-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 480px)  { .ps-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 640px)  { .ps-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
+        @media (min-width: 1024px) { .ps-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+        @media (min-width: 1280px) { .ps-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 
         /* Card */
         .pc-card {

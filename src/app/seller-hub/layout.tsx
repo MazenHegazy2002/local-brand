@@ -1,13 +1,6 @@
 export default function SellerHubLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{
-      minHeight: '100vh',
-      width: '100%',
-      overflowX: 'hidden',
-      overflowY: 'auto',
-      display: 'flex',
-    }}>
-      {children}
-    </div>
-  );
+  // The seller hub page sets its own `height: 100dvh; display: flex` layout.
+  // We keep this wrapper transparent so it doesn't introduce a second
+  // scrolling container.
+  return <>{children}</>;
 }

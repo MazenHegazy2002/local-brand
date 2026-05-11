@@ -30,7 +30,7 @@ export default function Hero() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-auto lg:h-[480px]">
           
           {/* Main Hero Card (Left) with Slider */}
-          <div className="relative w-full h-[480px] lg:col-span-2 rounded-xl overflow-hidden bg-[#032094]">
+          <div className="relative w-full h-[280px] sm:h-[360px] lg:h-[480px] lg:col-span-2 rounded-xl overflow-hidden bg-[#032094]">
             {HERO_IMAGES.map((src, idx) => (
               <Image 
                 key={src}
@@ -58,12 +58,12 @@ export default function Hero() {
             </div>
             
             {/* Content */}
-            <div className="absolute inset-0 z-30 flex flex-col justify-center px-10 md:px-14 text-white pointer-events-none">
+            <div className="absolute inset-0 z-30 flex flex-col justify-center px-5 sm:px-8 md:px-14 text-white pointer-events-none">
               <div className="pointer-events-auto">
-                <span className="text-[11px] md:text-xs tracking-[0.1em] font-medium text-white/80 mb-3 uppercase block">
+                <span className="text-[10px] sm:text-[11px] md:text-xs tracking-[0.1em] font-medium text-white/80 mb-2 sm:mb-3 uppercase block">
                   {t("HeroSubtitle") || "Premium Collection"}
                 </span>
-                <h1 className="text-5xl md:text-[64px] font-bold tracking-tight mb-8 max-w-xl leading-[1.05]">
+                <h1 className="text-3xl sm:text-4xl md:text-[56px] lg:text-[64px] font-bold tracking-tight mb-4 sm:mb-6 md:mb-8 max-w-xl leading-[1.05]">
                   {t("HeroTitle") || "Discover Authentic Brands"}
                 </h1>
                 
@@ -80,7 +80,7 @@ export default function Hero() {
           </div>
 
           {/* Right Side Stacked Cards */}
-          <div className="flex flex-col gap-4 lg:col-span-1 h-[480px]">
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:col-span-1 h-[180px] sm:h-[220px] lg:h-[480px]">
             {/* Top Right Card */}
             <Link href="/shoes" className="relative flex-1 rounded-xl overflow-hidden group block cursor-pointer">
               <Image src="https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=80&w=1000&auto=format&fit=crop" fill style={{ objectFit: "cover" }} alt="Sneaker" className="z-0 grayscale contrast-125" />

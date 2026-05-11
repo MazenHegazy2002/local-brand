@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Outfit, Cairo } from "next/font/google";
 
 export const dynamic = 'force-dynamic';
@@ -64,6 +64,14 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, "max-video-preview": -1, "max-image-preview": "large", "max-snippet": -1 },
   },
   verification: { google: "google-site-verification-code" },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: "#1e3b8a",
 };
 
 import { LanguageProvider } from "@/providers/LanguageContext";

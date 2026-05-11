@@ -75,9 +75,18 @@ html {
   top: 0 !important;
 }
 
+/* Reserve space for the mobile bottom navigation. The nav is `position:fixed`
+   so we use scroll-padding-bottom on the document so anchors / focus don't
+   get hidden behind it, plus a safe-area-aware spacer at the very bottom of
+   `<main>` content. We avoid putting padding-bottom on `body` because it
+   breaks pages that use `height: 100dvh` for a fit-to-viewport layout. */
 @media (max-width: 768px) {
-  body {
-    padding-bottom: 64px;
+  html {
+    scroll-padding-bottom: 80px;
+  }
+  body > main,
+  main[id="main-content"] {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
 }
 

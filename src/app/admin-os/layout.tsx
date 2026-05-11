@@ -1,12 +1,6 @@
 export default function AdminOsLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{
-      minHeight: '100vh',
-      width: '100%',
-      overflowX: 'hidden',
-      overflowY: 'auto',
-    }}>
-      {children}
-    </div>
-  );
+  // The admin-os page sets its own `height: 100dvh; display: flex` layout.
+  // We keep this wrapper transparent so it doesn't introduce a second
+  // scrolling container.
+  return <>{children}</>;
 }
