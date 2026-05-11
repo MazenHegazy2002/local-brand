@@ -1,6 +1,6 @@
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  // The dashboard page (/dashboard/page.tsx) sets its own `height: 100dvh`
-  // viewport-fit layout. We just keep this wrapper transparent so it
-  // doesn't add any extra scroll containers or padding.
+  // The dashboard page owns its own flex layout (sticky sidebar + scrollable
+  // content). We keep this wrapper transparent so it doesn't introduce an
+  // extra scroll container.
   return <>{children}</>;
 }

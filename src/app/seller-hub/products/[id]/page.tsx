@@ -430,7 +430,7 @@ export default function EditProductPage() {
 
       <style jsx global>{`
         .db { display: flex; min-height: 100vh; background: #f8fafc; font-family: 'Inter', sans-serif; }
-        .sidebar { width: 186px; flex-shrink: 0; background: #0F6E56; padding: 16px 0; display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0; }
+        .sidebar { width: 186px; flex-shrink: 0; background: #0F6E56; padding: 16px 0; display: flex; flex-direction: column; max-height: 100vh; overflow-y: auto; position: sticky; top: 0; align-self: flex-start; }
         .logo { padding: 0 16px 20px; font-size: 17px; font-weight: 500; color: #fff; }
         .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.7); transition: all 0.2s; }
         .nav-item:hover { color: #fff; background: rgba(255,255,255,0.05); }

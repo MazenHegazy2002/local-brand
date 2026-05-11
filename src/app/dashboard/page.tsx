@@ -225,18 +225,18 @@ function CustomerDashboard() {
           --brandy-accent-soft: rgba(245,158,11,.12);
         }
         *{box-sizing:border-box}
-        html, body { height: 100%; margin: 0; }
-        /* Customer dashboard fills the viewport on desktop, with the
-           inner content area scrolling — matches the seller hub layout. */
-        .db{display:flex;height:100dvh;overflow:hidden;background:var(--color-background-secondary);font-family: 'Inter', sans-serif;}
-        .sidebar{width:200px;min-width:200px;background:linear-gradient(180deg, var(--brandy-primary) 0%, var(--brandy-primary-dark) 100%);padding:16px 0;display:flex;flex-direction:column;height:100dvh;flex-shrink:0;overflow-y:auto;color:#fff}
+        /* Whole dashboard scrolls naturally; sidebar stays in view via
+           position: sticky so the user can always see the nav while reading
+           further down the page. */
+        .db{display:flex;min-height:100vh;background:var(--color-background-secondary);font-family: 'Inter', sans-serif;}
+        .sidebar{width:200px;min-width:200px;background:linear-gradient(180deg, var(--brandy-primary) 0%, var(--brandy-primary-dark) 100%);padding:16px 0;display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;align-self:flex-start;max-height:100vh;overflow-y:auto;color:#fff}
         @media (max-width: 900px){
-          .db{flex-direction:column;height:auto;overflow:auto}
-          .sidebar{width:100%;height:auto;min-width:0;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px;overflow-x:auto}
+          .db{flex-direction:column}
+          .sidebar{width:100%;min-width:0;max-height:none;position:static;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px;overflow-x:auto;overflow-y:visible}
           .sidebar .nav-section{display:none}
           .sidebar .logo{padding:8px 12px;font-size:14px;flex-basis:100%}
           .sidebar .nav-item{padding:6px 10px !important;font-size:12px !important}
-          .main{height:auto !important;padding:16px !important}
+          .main{padding:16px !important}
           .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
         }
         .logo{padding:0 16px 20px;font-size:15px;font-weight:700;color:#fff}
@@ -246,7 +246,7 @@ function CustomerDashboard() {
         .nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
         .nav-item.active{background:rgba(245,158,11,.12);color:#fff;border-left-color:var(--brandy-accent)}
         .nav-icon{width:15px;height:15px;flex-shrink:0}
-        .main{flex:1;min-width:0;padding:18px;background:var(--color-background-secondary);height:100dvh;overflow-y:auto;overflow-x:hidden;padding-bottom:80px}
+        .main{flex:1;min-width:0;padding:18px;background:var(--color-background-secondary);padding-bottom:80px}
         .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
         .page-title{font-size:17px;font-weight:600;color:var(--color-text-primary)}
         .user-label { font-size: 11px; color: rgba(255,255,255,.7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight:600; }

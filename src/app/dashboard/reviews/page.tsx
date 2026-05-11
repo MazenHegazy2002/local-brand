@@ -232,7 +232,7 @@ export default function ReviewsPage() {
 
       <style jsx global>{`
         .db { display: flex; min-height: 100vh; background: #f8fafc; font-family: 'Inter', sans-serif; }
-        .sidebar { width: 186px; flex-shrink: 0; background: #1a1a2e; padding: 16px 0; display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0; }
+        .sidebar { width: 186px; flex-shrink: 0; background: #1a1a2e; padding: 16px 0; display: flex; flex-direction: column; max-height: 100vh; overflow-y: auto; position: sticky; top: 0; align-self: flex-start; }
         .logo { padding: 0 16px 20px; font-size: 15px; font-weight: 500; color: #fff; }
         .logo span { color: #7F77DD; }
         .nav-section { font-size: 10px; font-weight: 500; color: #64748b; letter-spacing: 0.08em; padding: 10px 16px 4px; text-transform: uppercase; }
