@@ -119,7 +119,7 @@ export default function ShippingPolicyPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100">Contact Shipping Support</h2>
           <p className="text-gray-600 mb-4">Have questions about your delivery? Contact us:</p>
           <div className="space-y-2 text-sm">
-            <p><strong>Email:</strong> shipping@localbrand.eg</p>
+            <p><strong>Email:</strong> shipping@brandy.eg</p>
             <p><strong>Phone:</strong> 16171 (Daily 9 AM - 9 PM)</p>
             <p><strong>WhatsApp:</strong> +20 100 000 0000</p>
           </div>

@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getDashboardStats, toggleWishlist, updateProfile } from '../actions/seller';
 import { cancelOrder, requestReturn } from '../actions/orders';
 import Link from 'next/link';
 import { User, Order, OrderItem, WishlistItem, Notification, SessionUser, Product } from '@/types';
+
+const VALID_TABS = ['overview', 'orders', 'wishlist', 'notifications', 'wallet', 'settings'] as const;
+type DashboardTab = typeof VALID_TABS[number];
 
 interface DashboardData {
   user: User;
@@ -15,10 +18,31 @@ interface DashboardData {
   notifications: Notification[];
 }
 
-export default function CustomerDashboard() {
+export default function CustomerDashboardPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#1e3b8a] font-medium">Loading dashboard…</div>}>
+      <CustomerDashboard />
+    </Suspense>
+  );
+}
+
+function CustomerDashboard() {
   const { data: session } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('overview');
+  const searchParams = useSearchParams();
+  const initialTab = (() => {
+    const t = searchParams.get('tab');
+    return (VALID_TABS as readonly string[]).includes(t || '') ? (t as DashboardTab) : 'overview';
+  })();
+  const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab);
+
+  // Keep tab in sync if the URL changes (e.g. via the bottom nav).
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t && (VALID_TABS as readonly string[]).includes(t)) {
+      setActiveTab(t as DashboardTab);
+    }
+  }, [searchParams]);
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -141,7 +165,10 @@ export default function CustomerDashboard() {
     <div className="db">
       {/* Sidebar */}
       <div className="sidebar">
-        <div className="logo">My<span>LB</span></div>
+        <div className="logo" title={data?.user?.name || 'My Account'}>
+          {data?.user?.name?.split(' ')[0] || 'My'}
+          <span> {data?.user?.name?.split(' ').slice(1).join(' ') || 'Account'}</span>
+        </div>
         
         <div className="nav-section">Personal</div>
         <NavItem active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} label="Overview" icon={<OverviewIcon />} />
@@ -166,9 +193,9 @@ export default function CustomerDashboard() {
         <div className="topbar">
           <div className="page-title">{TITLES[activeTab] || 'Dashboard'}</div>
           <div className="top-actions">
-            <div className="tier-badge">Member Tier: <span className="badge b-new">PREMIUM</span></div>
+            <div className="tier-badge">Member Tier: <span className="badge b-new">{(data?.user?.loyaltyPoints || 0) >= 5000 ? 'GOLD' : (data?.user?.loyaltyPoints || 0) >= 1000 ? 'SILVER' : 'BRONZE'}</span></div>
             <div onClick={refreshData} className="refresh-btn">
-               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={loading ? 'animate-spin' : ''}><path d="M8 1.5A4.5 4.5 0 003.5 6c0 1.5-.5 3-1.5 4h12c-1-1-1.5-2.5-1.5-4A4.5 4.5 0 008 1.5z" fill="#534AB7" opacity=".8"/><path d="M6.5 13.5a1.5 1.5 0 003 0" stroke="#534AB7" strokeWidth="1.2" fill="none"/></svg>
+               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={loading ? 'animate-spin' : ''}><path d="M8 1.5A4.5 4.5 0 003.5 6c0 1.5-.5 3-1.5 4h12c-1-1-1.5-2.5-1.5-4A4.5 4.5 0 008 1.5z" fill="#1e3b8a" opacity=".8"/><path d="M6.5 13.5a1.5 1.5 0 003 0" stroke="#1e3b8a" strokeWidth="1.2" fill="none"/></svg>
             </div>
           </div>
         </div>
@@ -191,42 +218,53 @@ export default function CustomerDashboard() {
           --color-text-secondary: #64748b;
           --color-text-tertiary: #94a3b8;
           --color-border-tertiary: rgba(0,0,0,0.08);
+          --brandy-primary: #1e3b8a;
+          --brandy-primary-dark: #152c6e;
+          --brandy-primary-light: #3b5fbf;
+          --brandy-accent: #f59e0b;
+          --brandy-accent-soft: rgba(245,158,11,.12);
         }
-        *{box-sizing:border-box;margin:0;padding:0}
+        *{box-sizing:border-box}
         .db{display:flex;min-height:100vh;background:var(--color-background-secondary);font-family: 'Inter', sans-serif;}
-        .sidebar{width:186px;flex-shrink:0;background:#1a1a2e;padding:16px 0;display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
-        .logo{padding:0 16px 20px;font-size:15px;font-weight:500;color:#fff}
-        .logo span{color:#7F77DD}
-        .nav-section{font-size:10px;font-weight:500;color:#444;letter-spacing:.08em;padding:10px 16px 4px;text-transform:uppercase}
-        .nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;cursor:pointer;font-size:12px;color:#888;transition:all .12s}
-        .nav-item:hover{background:rgba(255,255,255,.05);color:#ccc}
-        .nav-item.active{background:rgba(127,119,221,.15);color:#AFA9EC}
+        .sidebar{width:200px;flex-shrink:0;background:linear-gradient(180deg, var(--brandy-primary) 0%, var(--brandy-primary-dark) 100%);padding:16px 0;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;align-self:flex-start;max-height:100vh;overflow-y:auto;color:#fff}
+        @media (max-width: 768px){.db{flex-direction:column}.sidebar{width:100%;height:auto;min-height:auto;max-height:none;position:static;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px}.sidebar .nav-section{display:none}.sidebar .logo{padding:0 8px;font-size:14px;flex-basis:100%}.sidebar .nav-item{padding:6px 10px;font-size:11px}.main{padding:12px}}
+        .logo{padding:0 16px 20px;font-size:15px;font-weight:700;color:#fff}
+        .logo span{color:var(--brandy-accent);font-weight:700}
+        .nav-section{font-size:10px;font-weight:600;color:rgba(255,255,255,.45);letter-spacing:.08em;padding:10px 16px 4px;text-transform:uppercase}
+        .nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;font-size:12.5px;color:rgba(255,255,255,.7);transition:all .15s;border-left:3px solid transparent}
+        .nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+        .nav-item.active{background:rgba(245,158,11,.12);color:#fff;border-left-color:var(--brandy-accent)}
         .nav-icon{width:15px;height:15px;flex-shrink:0}
-        .main{flex:1;min-width:0;padding:18px;background:var(--color-background-secondary);overflow:auto}
+        .main{flex:1;min-width:0;padding:18px;background:var(--color-background-secondary);min-height:100vh;padding-bottom:80px}
         .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-        .page-title{font-size:17px;font-weight:500;color:var(--color-text-primary)}
-        .user-label { font-size: 10px; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .signout-btn { font-size: 10px; color: rgba(239,68,68,0.6); margin-top: 4px; background: none; border: none; cursor: pointer; display: block; }
+        .page-title{font-size:17px;font-weight:600;color:var(--color-text-primary)}
+        .user-label { font-size: 11px; color: rgba(255,255,255,.7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight:600; }
+        .signout-btn { font-size: 11px; color: rgba(252,165,165,0.85); margin-top: 4px; background: none; border: none; cursor: pointer; display: block; padding:0 }
+        .signout-btn:hover { color: #fca5a5; text-decoration: underline; }
         .tier-badge { display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-secondary); }
-        .refresh-btn { width:34px;height:34px;borderRadius:6px;background:#EEEDFE;display:flex;align-items:center;justify-content:center;cursor:pointer; }
-        .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px}
-        .stat{background:var(--color-background-primary);border-radius:8px;padding:12px;border:1px solid var(--color-border-tertiary)}
-        .stat-label{font-size:10px;color:var(--color-text-secondary);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
-        .stat-val{font-size:20px;font-weight:500;color:var(--color-text-primary);line-height:1}
+        .refresh-btn { width:34px;height:34px;border-radius:8px;background:rgba(30,59,138,.08);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--brandy-primary); }
+        .refresh-btn:hover { background:rgba(30,59,138,.14); }
+        .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+        @media (max-width: 768px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        .stat{background:var(--color-background-primary);border-radius:12px;padding:14px;border:1px solid var(--color-border-tertiary)}
+        .stat-label{font-size:10px;color:var(--color-text-secondary);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+        .stat-val{font-size:22px;font-weight:700;color:var(--color-text-primary);line-height:1}
         .stat-sub{font-size:11px;margin-top:4px}
-        .card{background:var(--color-background-primary);border-radius:12px;border:1px solid var(--color-border-tertiary);padding:14px;margin-bottom:11px}
+        .card{background:var(--color-background-primary);border-radius:12px;border:1px solid var(--color-border-tertiary);padding:16px;margin-bottom:11px}
         .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
-        .card-title{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+        .card-title{font-size:13px;font-weight:600;color:var(--color-text-primary)}
         .grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
-        .badge{font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px;flex-shrink:0}
+        @media (max-width: 768px){.grid2{grid-template-columns:1fr}}
+        .badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;flex-shrink:0}
         .b-active{background:#E1F5EE;color:#085041}
-        .b-new{background:#EEEDFE;color:#3C3489}
-        .action-btn{font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;border:1px solid #e2e8f0;background:transparent;color:var(--color-text-secondary);transition:all .15s}
+        .b-new{background:rgba(245,158,11,.16);color:var(--brandy-accent)}
+        .action-btn{font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;border:1px solid #e2e8f0;background:transparent;color:var(--color-text-secondary);transition:all .15s;font-weight:500}
+        .action-btn:hover{border-color:var(--brandy-primary);color:var(--brandy-primary)}
         .row-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--color-border-tertiary)}
         .row-item:last-child{border-bottom:none}
         .avatar-sm{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0}
-        .input-profile { width:100%; border:1px solid #e2e8f0; padding:8px 12px; border-radius:6px; font-size:12px; outline:none; margin-bottom:10px; }
-        .input-profile:focus { border-color: #534AB7; }
+        .input-profile { width:100%; border:1px solid #e2e8f0; padding:9px 12px; border-radius:8px; font-size:13px; outline:none; margin-bottom:10px; transition:border-color .15s }
+        .input-profile:focus { border-color: var(--brandy-primary); box-shadow: 0 0 0 3px rgba(30,59,138,.1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
       `}</style>
@@ -280,17 +318,17 @@ function OverviewTab({ data, wishlist, myOrders }: TabProps) {
         <div className="stat">
           <div className="stat-label">Wishlist</div>
           <div className="stat-val">{items.length}</div>
-          <div className="stat-sub" style={{color:'#534AB7'}}>Saved items</div>
+          <div className="stat-sub" style={{color:'#1e3b8a'}}>Saved items</div>
         </div>
         <div className="stat">
           <div className="stat-label">Loyalty Points</div>
-          <div className="stat-val" style={{color:'#534AB7'}}>{data?.user?.loyaltyPoints || 0}</div>
+          <div className="stat-val" style={{color:'#1e3b8a'}}>{(data?.user?.loyaltyPoints || 0).toLocaleString()}</div>
           <div className="stat-sub">Redeemable credits</div>
         </div>
         <div className="stat">
-          <div className="stat-label">Wallet</div>
-          <div className="stat-val">0.00</div>
-          <div className="stat-sub">EGP available</div>
+          <div className="stat-label">Wallet (Points × EGP)</div>
+          <div className="stat-val" style={{color:'#f59e0b'}}>{(data?.user?.loyaltyPoints || 0).toLocaleString()}</div>
+          <div className="stat-sub">EGP equivalent</div>
         </div>
       </div>
 
@@ -443,7 +481,7 @@ function NotificationsTab({ items }: { items: Notification[] }) {
        <div className="card-header"><div className="card-title">System Alerts</div></div>
        {items.map((n) => (
          <div key={n.id} className="row-item">
-            <div className="w-2 h-2 rounded-full shrink-0" style={{background: n.isRead ? '#cbd5e1' : '#534AB7'}} />
+            <div className="w-2 h-2 rounded-full shrink-0" style={{background: n.isRead ? '#cbd5e1' : '#1e3b8a'}} />
             <div style={{flex:1}}>
                <div style={{fontSize:'12px',fontWeight:600}}>{n.title}</div>
                <div style={{fontSize:'11px',color:'#64748b'}}>{n.message}</div>
@@ -470,7 +508,7 @@ function WalletTab({ user }: { user?: User }) {
       {/* Balance card */}
       <div className="card text-center py-10">
         <div style={{fontSize:'10px',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'10px'}}>Loyalty Balance</div>
-        <div style={{fontSize:'42px',fontWeight:800,color:'#534AB7'}}>{points.toLocaleString()} <span style={{fontSize:'20px',color:'#94a3b8'}}>pts</span></div>
+        <div style={{fontSize:'42px',fontWeight:800,color:'#1e3b8a'}}>{points.toLocaleString()} <span style={{fontSize:'20px',color:'#94a3b8'}}>pts</span></div>
         <div style={{fontSize:'13px',color:'#64748b',marginTop:'8px'}}>
           Worth <strong>{points.toLocaleString()} EGP</strong> at checkout (1 pt = 1 EGP)
         </div>
@@ -494,21 +532,21 @@ function WalletTab({ user }: { user?: User }) {
         <div className="card-title mb-4">How to earn points</div>
         <div className="space-y-3 text-sm text-slate-600">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-purple-50 text-[#534AB7] flex items-center justify-center text-sm">🛍️</div>
+            <div className="w-8 h-8 rounded-full bg-amber-50 text-[#1e3b8a] flex items-center justify-center text-sm">🛍️</div>
             <div>
               <div className="font-bold text-slate-900">Shop purchases</div>
               <div className="text-[11px] text-slate-400">1 point for every 10 EGP spent</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-purple-50 text-[#534AB7] flex items-center justify-center text-sm">⭐</div>
+            <div className="w-8 h-8 rounded-full bg-amber-50 text-[#1e3b8a] flex items-center justify-center text-sm">⭐</div>
             <div>
               <div className="font-bold text-slate-900">Write reviews</div>
               <div className="text-[11px] text-slate-400">Earn 10 points per verified purchase review</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-purple-50 text-[#534AB7] flex items-center justify-center text-sm">👥</div>
+            <div className="w-8 h-8 rounded-full bg-amber-50 text-[#1e3b8a] flex items-center justify-center text-sm">👥</div>
             <div>
               <div className="font-bold text-slate-900">Refer friends</div>
               <div className="text-[11px] text-slate-400">50 points when a friend completes their first order</div>
@@ -527,15 +565,17 @@ function SettingsTab({ user, onUpdate, isUpdating }: { user?: User, onUpdate: (e
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Show an immediate local preview so the user knows the file was picked.
+    const localPreview = URL.createObjectURL(file);
+    setAvatar(localPreview);
     setUploading(true);
     try {
       const fd = new FormData();
       fd.append('file', file);
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const d = await res.json();
-      if (d.url) {
-        setAvatar(d.url);
-      }
+      if (d.url) setAvatar(d.url);
+      else throw new Error(d.message || 'Upload failed');
     } catch (err) {
       console.error('Avatar upload failed', err);
     } finally {
@@ -593,7 +633,7 @@ function SettingsTab({ user, onUpdate, isUpdating }: { user?: User, onUpdate: (e
           <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">Phone Number</label>
           <input name="phone" defaultValue={user?.phone || ''} className="input-profile" placeholder="+20 1XX XXX XXXX" />
         </div>
-        <button disabled={isUpdating} type="submit" className="w-full py-3 bg-[#534AB7] text-white rounded font-bold mt-4 disabled:opacity-50">
+        <button disabled={isUpdating} type="submit" className="w-full py-3 bg-[#1e3b8a] text-white rounded font-bold mt-4 disabled:opacity-50">
           {isUpdating ? 'Updating...' : 'Save Changes'}
         </button>
 
@@ -620,14 +660,14 @@ function SettingsTab({ user, onUpdate, isUpdating }: { user?: User, onUpdate: (e
 function TrackStep({ active, label }: { active: boolean, label: string }) {
    return (
       <div className="flex flex-col items-center gap-1 shrink-0">
-         <div className={`w-3 h-3 rounded-full ${active ? 'bg-[#534AB7]' : 'bg-slate-200'}`} />
-         <span className={`text-[9px] font-bold uppercase ${active ? 'text-[#534AB7]' : 'text-slate-300'}`}>{label}</span>
+         <div className={`w-3 h-3 rounded-full ${active ? 'bg-[#1e3b8a]' : 'bg-slate-200'}`} />
+         <span className={`text-[9px] font-bold uppercase ${active ? 'text-[#1e3b8a]' : 'text-slate-300'}`}>{label}</span>
       </div>
    );
 }
 
 function TrackLine({ active }: { active: boolean }) {
-   return <div className={`h-[2px] flex-1 ${active ? 'bg-[#534AB7]' : 'bg-slate-100'}`} />;
+   return <div className={`h-[2px] flex-1 ${active ? 'bg-[#1e3b8a]' : 'bg-slate-100'}`} />;
 }
 
 // SVGs

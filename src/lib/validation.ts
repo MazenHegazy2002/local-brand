@@ -75,9 +75,22 @@ export const productImageSchema = z.object({
 // ORDER SCHEMAS
 // ============================================
 
+export const shippingAddressInlineSchema = z.object({
+  fullName: z.string().min(2).max(100),
+  phone: z.string().min(6).max(40),
+  street: z.string().min(2).max(300),
+  city: z.string().min(2).max(120),
+  governorate: z.string().min(2).max(120),
+  postalCode: z.string().max(20).optional(),
+  country: z.string().max(80).optional().default('Egypt'),
+});
+
 export const createOrderSchema = z.object({
   addressId: z.string().uuid().optional(),
   guestEmail: z.string().email().optional(),
+  // For users that don't have a saved address yet, allow passing the
+  // shipping address inline. The action will persist it as a snapshot.
+  shippingAddress: shippingAddressInlineSchema.optional(),
   couponCode: z.string().optional(),
   paymentMethod: z
     .enum(['CASH_ON_DELIVERY', 'CREDIT_CARD', 'MOBILE_WALLET', 'PAYMOB', 'FAWRY', 'PAYSKY'])
@@ -88,6 +101,9 @@ export const createOrderSchema = z.object({
   })).min(1, 'At least one item is required'),
   orderNotes: z.string().max(500).optional(),
   giftWrapping: z.boolean().optional(),
+  // Allow caller to inform the action that points were redeemed (so we can
+  // attach this metadata to the order for refunds on cancellation).
+  pointsRedeemed: z.number().int().min(0).optional(),
 });
 
 export const orderStatusUpdateSchema = z.object({

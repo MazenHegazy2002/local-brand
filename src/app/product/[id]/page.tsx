@@ -64,7 +64,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       availability: product.variants.some(v => v.stockCount > 0)
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
-      seller: { '@type': 'Organization', name: 'Local Brand' },
+      seller: { '@type': 'Organization', name: 'Brandy' },
     },
     aggregateRating: product.reviews.length > 0 ? {
       '@type': 'AggregateRating',
@@ -161,7 +161,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               </div>
               <div>
-                <h4 className="font-bold text-gray-900 text-sm mb-1">{t.LocalBrandGuarantee}</h4>
+                <h4 className="font-bold text-gray-900 text-sm mb-1">{t.BrandyGuarantee}</h4>
                 <p className="text-xs text-gray-500 leading-relaxed">
                   {t.GuaranteeText}
                 </p>

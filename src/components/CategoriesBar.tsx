@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/providers/LanguageContext';
 import {
@@ -13,7 +13,6 @@ import type { Category } from '@/types';
 
 function getCategoryIcon(name: string) {
   const lower = name.toLowerCase().trim();
-  // Exact-name matches first (covers the 20 standard categories)
   if (lower === 'accessories')                              return <AccessoriesIcon />;
   if (lower === 'appliances')                               return <AppliancesIcon />;
   if (lower === 'auto')                                     return <AutoIcon />;
@@ -34,7 +33,6 @@ function getCategoryIcon(name: string) {
   if (lower === 'sports' || lower === 'sport')              return <SportsIcon />;
   if (lower === 'toys')                                     return <ToysIcon />;
   if (lower === 'women')                                    return <WomenIcon />;
-  // Keyword fallbacks for custom / translated category names
   if (lower.includes('accessor') || lower.includes('watch') || lower.includes('bag')) return <AccessoriesIcon />;
   if (lower.includes('applian') || lower.includes('machine'))                          return <AppliancesIcon />;
   if (lower.includes('auto') || lower.includes('car') || lower.includes('vehicle'))   return <AutoIcon />;
@@ -55,14 +53,45 @@ function getCategoryIcon(name: string) {
   if (lower.includes('sport') || lower.includes('gym') || lower.includes('exercise'))  return <SportsIcon />;
   if (lower.includes('toy') || lower.includes('game') || lower.includes('play'))       return <ToysIcon />;
   if (lower.includes('women') || lower.includes('woman') || lower.includes('lady') || lower.includes('dress')) return <WomenIcon />;
-  // Final fallback
-  return <GroceryIcon />;
+  return <FashionIcon />;
+}
+
+// Distinct accent color per category so the bar feels alive on PC.
+function getCategoryColor(name: string): string {
+  const lower = name.toLowerCase().trim();
+  if (lower === 'electronics' || lower.includes('electron'))                         return '#0ea5e9';
+  if (lower === 'fashion' || lower.includes('fashion'))                              return '#ec4899';
+  if (lower === 'home' || lower.includes('home'))                                    return '#a16207';
+  if (lower === 'health' || lower.includes('health'))                                return '#10b981';
+  if (lower === 'sports' || lower === 'sport' || lower.includes('sport'))            return '#f59e0b';
+  if (lower === 'groceries' || lower === 'grocery' || lower.includes('grocer'))      return '#84cc16';
+  if (lower === 'accessories' || lower.includes('accessor'))                         return '#8b5cf6';
+  if (lower === 'appliances' || lower.includes('applian'))                           return '#0891b2';
+  if (lower === 'auto' || lower.includes('auto'))                                    return '#475569';
+  if (lower === 'beauty' || lower.includes('beaut'))                                 return '#f43f5e';
+  if (lower === 'books' || lower.includes('book'))                                   return '#6366f1';
+  if (lower === 'footwear' || lower.includes('footwear') || lower.includes('shoe'))  return '#7c3aed';
+  if (lower === 'furniture' || lower.includes('furni'))                              return '#92400e';
+  if (lower === 'garden' || lower.includes('garden'))                                return '#22c55e';
+  if (lower === 'jewelry' || lower === 'jewellery' || lower.includes('jewel'))       return '#d97706';
+  if (lower === 'kids' || lower.includes('kid'))                                     return '#06b6d4';
+  if (lower === 'men' || lower.includes('men'))                                      return '#1e3b8a';
+  if (lower === 'pets' || lower.includes('pet'))                                     return '#ea580c';
+  if (lower === 'pharma' || lower === 'pharmacy' || lower.includes('pharm'))         return '#dc2626';
+  if (lower === 'toys' || lower.includes('toy'))                                     return '#facc15';
+  if (lower === 'women' || lower.includes('women'))                                  return '#db2777';
+  return '#1e3b8a';
 }
 
 export default function CategoriesBar() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const { t } = useLanguage();
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // Underscore prefix because we don't currently use the dictionary in this component
+  // but we may want to localise category names later.
+  const _lang = useLanguage();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -81,13 +110,37 @@ export default function CategoriesBar() {
     fetchCategories();
   }, []);
 
+  const updateArrows = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setShowLeftArrow(scrollLeft > 8);
+    setShowRightArrow(scrollLeft + clientWidth < scrollWidth - 8);
+  }, []);
+
+  useEffect(() => {
+    updateArrows();
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', updateArrows, { passive: true });
+    window.addEventListener('resize', updateArrows);
+    return () => {
+      el.removeEventListener('scroll', updateArrows);
+      window.removeEventListener('resize', updateArrows);
+    };
+  }, [updateArrows, categories]);
+
+  const scrollBy = (delta: number) => {
+    scrollRef.current?.scrollBy({ left: delta, behavior: 'smooth' });
+  };
+
   if (loading) {
     return (
       <div className="w-full bg-white border-b border-gray-100">
         <div className="container mx-auto px-4">
           <div className="flex gap-8 py-3 overflow-x-auto">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-6 w-20 bg-gray-100 animate-pulse rounded" />
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="h-7 w-20 bg-gray-100 animate-pulse rounded-full" />
             ))}
           </div>
         </div>
@@ -101,35 +154,65 @@ export default function CategoriesBar() {
 
   return (
     <div className="w-full bg-white border-b border-gray-100 sticky top-[65px] z-40 shadow-sm">
-      <div className="container mx-auto px-4">
-        <div className="flex gap-1 md:gap-2 py-2.5 overflow-x-auto scrollbar-hide">
-          {categories.map((category: Category & { _count?: { products: number } }) => (
-            <Link
-              key={category.id}
-              href={`/category/${category.slug}`}
-              className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#f0f4f8] hover:bg-[#1e3b8a] hover:text-white text-gray-700 text-xs md:text-sm font-semibold transition-all whitespace-nowrap border border-transparent hover:border-[#1e3b8a]/20"
-            >
-              <span className="text-[#1e3b8a] group-hover:text-white transition-colors">
-                {getCategoryIcon(category.name)}
-              </span>
-              <span>{category.name}</span>
-              {(category._count?.products ?? 0) > 0 && (
-                <span className="text-[10px] text-gray-400 group-hover:text-white/70">
-                  ({category._count?.products})
+      <div className="container mx-auto px-4 relative">
+        {/* Left arrow — only visible when there's content scrolled past */}
+        <button
+          type="button"
+          onClick={() => scrollBy(-280)}
+          aria-label="Scroll categories left"
+          className={`hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 items-center justify-center text-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white transition-all ${
+            showLeftArrow ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+
+        {/* Right arrow */}
+        <button
+          type="button"
+          onClick={() => scrollBy(280)}
+          aria-label="Scroll categories right"
+          className={`hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 items-center justify-center text-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white transition-all ${
+            showRightArrow ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+
+        <div
+          ref={scrollRef}
+          className="flex gap-1 md:gap-2 py-2.5 overflow-x-auto scrollbar-hide md:px-10 scroll-smooth"
+        >
+          {categories.map((category: Category & { _count?: { products: number } }) => {
+            const color = getCategoryColor(category.name);
+            return (
+              <Link
+                key={category.id}
+                href={`/category/${category.slug}`}
+                className="group flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-700 text-xs md:text-sm font-semibold transition-all whitespace-nowrap border bg-[#f0f4f8] border-transparent hover:bg-[var(--cat-color)] hover:text-white hover:border-[var(--cat-color)]"
+                style={{ ['--cat-color' as string]: color }}
+              >
+                <span style={{ color }} className="group-hover:text-white transition-colors">
+                  {getCategoryIcon(category.name)}
                 </span>
-              )}
-            </Link>
-          ))}
+                <span>{category.name}</span>
+                {(category._count?.products ?? 0) > 0 && (
+                  <span className="text-[10px] text-gray-400 group-hover:text-white/80">
+                    ({category._count?.products})
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </div>
       </div>
       <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );

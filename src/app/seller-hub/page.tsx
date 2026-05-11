@@ -198,38 +198,44 @@ export default function SellerHub() {
   const handleImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const updatedVariants = [...variants];
-      updatedVariants[index].image = reader.result as string;
-      updatedVariants[index].uploading = true;
-      setVariants(updatedVariants);
-    };
-    reader.readAsDataURL(file);
+
+    // Show an immediate preview using a local object URL — much cheaper than
+    // base64 and avoids the FileReader race condition.
+    const previewUrl = URL.createObjectURL(file);
+    setVariants((prev) => {
+      const next = [...prev];
+      if (next[index]) next[index] = { ...next[index], image: previewUrl, uploading: true };
+      return next;
+    });
 
     try {
       const formData = new FormData();
       formData.append('file', file);
-      
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      const data = await res.json();
-      
-      if (data.url) {
-        const updatedVariants = [...variants];
-        updatedVariants[index].image = data.url;
-        updatedVariants[index].uploading = false;
-        setVariants(updatedVariants);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json().catch(() => ({} as { url?: string; message?: string }));
+
+      if (!res.ok || !data.url) {
+        throw new Error(data.message || 'Upload failed');
       }
+
+      // Swap the local preview for the uploaded URL.
+      setVariants((prev) => {
+        const next = [...prev];
+        if (next[index]) next[index] = { ...next[index], image: data.url, uploading: false };
+        return next;
+      });
     } catch (err) {
       console.error('Upload failed:', err);
-      const updatedVariants = [...variants];
-      updatedVariants[index].uploading = false;
-      setVariants(updatedVariants);
+      // Mark as not uploading but keep the local preview so the user can
+      // re-upload without losing what they already selected.
+      setVariants((prev) => {
+        const next = [...prev];
+        if (next[index]) next[index] = { ...next[index], uploading: false };
+        return next;
+      });
+    } finally {
+      // The object URL is kept alive while the preview is shown; it'll be
+      // garbage-collected when the component unmounts.
     }
   };
 
@@ -370,7 +376,7 @@ export default function SellerHub() {
       </div>
 
       {/* Main Area */}
-      <div className="main flex-1 p-8 overflow-y-auto">
+      <div className="main flex-1 p-8 min-h-screen pb-20">
         <div className="topbar flex items-center justify-between mb-8">
           <div className="page-title text-2xl font-black text-slate-900">{TITLES[activeTab] || 'Dashboard'}</div>
           <button className="add-product-btn bg-[#0F6E56] text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-900/10 hover:opacity-90 transition-all" onClick={() => setShowAddModal(true)}>
@@ -445,7 +451,8 @@ export default function SellerHub() {
 
       <style jsx global>{`
         .db { display: flex; min-height: 100vh; background: #f8fafc; }
-        .sidebar { width: 220px; min-width: 220px; background: #0F6E56; height: 100vh; position: sticky; top: 0; display: flex; flex-direction: column; }
+        .sidebar { width: 220px; min-width: 220px; background: #0F6E56; min-height: 100vh; max-height: 100vh; position: sticky; top: 0; align-self: flex-start; display: flex; flex-direction: column; overflow-y: auto; }
+        @media (max-width: 768px) { .db { flex-direction: column; } .sidebar { width: 100%; min-width: 0; min-height: auto; max-height: none; position: static; flex-direction: row; flex-wrap: wrap; padding: 8px; gap: 4px; overflow-x: auto; } .sidebar .nav-item { padding: 6px 10px; font-size: 12px; } .main { padding: 16px !important; } }
         .nav-item { padding: 12px 20px; color: #fff; opacity: 0.7; transition: 0.2s; cursor: pointer; display: flex; align-items: center; gap: 12px; font-weight: 500; font-size: 14px; }
         .nav-item:hover { opacity: 1; background: rgba(255,255,255,0.05); }
         .nav-item.active { opacity: 1; background: rgba(255,255,255,0.1); font-weight: 700; border-right: 4px solid #4ADE80; }
@@ -1214,8 +1221,20 @@ function AddProductModal({
                     <Trash2 size={14} />
                   </button>
                   {v.image && (
-                    <div className="col-span-12 pt-2">
-                      <img src={v.image} alt="" className="h-12 w-12 rounded-lg object-cover inline-block" />
+                    <div className="col-span-12 pt-2 flex items-center gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={v.image}
+                        alt={`Variant ${i + 1} preview`}
+                        className="h-16 w-16 rounded-lg object-cover border border-slate-200"
+                      />
+                      <div className="text-xs">
+                        {v.uploading ? (
+                          <span className="text-amber-600 font-semibold">Uploading…</span>
+                        ) : (
+                          <span className="text-emerald-600 font-semibold">✓ Image ready</span>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

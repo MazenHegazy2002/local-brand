@@ -164,7 +164,7 @@ export async function POST(req: Request) {
     const billingData: Record<string, string> = {
       first_name: (addressInfo?.fullName || 'Customer').split(' ')[0] || 'Customer',
       last_name: (addressInfo?.fullName || 'Customer').split(' ').slice(1).join(' ') || 'User',
-      email: session.user.email || 'noemail@localbrand.com',
+      email: session.user.email || 'noemail@brandy.com',
       phone_number: addressInfo?.phone || '+201000000000',
       street: addressInfo?.street || 'NA',
       city: addressInfo?.city || 'Cairo',

@@ -64,7 +64,7 @@ export default function InstallPrompt() {
           📱
         </div>
         <div className="flex-1">
-          <h3 className="font-black text-gray-900 text-sm">Install Local Brand</h3>
+          <h3 className="font-black text-gray-900 text-sm">Install Brandy</h3>
           <p className="text-xs text-gray-500 mt-1 leading-relaxed">
             Get faster checkout, exclusive deals, and push notifications — installs like a native app.
           </p>

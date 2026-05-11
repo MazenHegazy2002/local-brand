@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       where: { id: userId },
       data: {
         deletedAt: new Date(),
-        email: `deleted_${userId}@localbrand.invalid`, // anonymize
+        email: `deleted_${userId}@brandy.invalid`, // anonymize
         name: 'Deleted User',
         passwordHash: '$2b$12$DELETED_USER_DELETED_USER_DELETED_USER_DELETED_USER', // cryptographically impossible hash sentinel
         phone: null,
@@ -87,7 +87,7 @@ export async function GET(req: Request) {
     return NextResponse.json(dataExport, { 
       status: 200,
       headers: {
-        'Content-Disposition': 'attachment; filename="localbrand-data-export.json"'
+        'Content-Disposition': 'attachment; filename="brandy-data-export.json"'
       }
     });
 

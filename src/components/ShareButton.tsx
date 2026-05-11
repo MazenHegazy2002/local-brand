@@ -9,7 +9,7 @@ import { MOCK_PRODUCTS } from '@/lib/data';
 // Share utility
 function getShareLinks(productId: string, productName: string) {
   const url = `${window.location.origin}/product/${productId}`;
-  const text = `Check out ${productName} on LocalBrand Egypt! 🛍️`;
+  const text = `Check out ${productName} on Brandy Egypt! 🛍️`;
   return {
     whatsapp: `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
@@ -45,7 +45,7 @@ export function ShareButton({ productId, productName }: { productId: string; pro
       {open && (
         <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl border border-gray-100 shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
           <a
-            href={`https://wa.me/?text=${encodeURIComponent(`Check out ${productName} on LocalBrand! ${window.location.origin}/product/${productId}`)}`}
+            href={`https://wa.me/?text=${encodeURIComponent(`Check out ${productName} on Brandy! ${window.location.origin}/product/${productId}`)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 px-4 py-3 hover:bg-green-50 text-sm text-gray-700 transition-colors"

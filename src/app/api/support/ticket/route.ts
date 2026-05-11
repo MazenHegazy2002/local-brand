@@ -49,14 +49,14 @@ export async function POST(req: Request) {
     import('@/lib/email').then((m) => {
       m.sendEmail({
         to: parsed.data.email,
-        subject: `[${ticketId}] We received your message — Local Brand Support`,
+        subject: `[${ticketId}] We received your message — Brandy Support`,
         html: `
 <p>Hi ${parsed.data.name},</p>
 <p>Thanks for reaching out. Your ticket <strong>#${ticketId}</strong> has been logged and our team will get back to you within 24 hours (Sun-Thu).</p>
 <p><strong>Subject:</strong> ${parsed.data.subject}</p>
 <hr />
-<p style="color:#666"><em>For urgent matters, you can also email us directly at support@localbrand.com.</em></p>
-<p>— Local Brand Support Team</p>
+<p style="color:#666"><em>For urgent matters, you can also email us directly at support@brandy.com.</em></p>
+<p>— Brandy Support Team</p>
         `,
       }).catch(() => { /* dev-mode console fallback handles this */ });
     }).catch(() => { /* ignore */ });

@@ -24,7 +24,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     const { Resend } = await import('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
-      from: 'Local Brand <orders@localbrand.com>',
+      from: 'Brandy <orders@brandy.com>',
       to,
       subject,
       html,
@@ -61,7 +61,7 @@ export function generateOrderConfirmationEmail(order: Order, user: User | null):
   <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden;">
     <!-- Header -->
     <div style="background: #1e3b8a; color: white; padding: 30px; text-align: center;">
-      <h1 style="margin: 0; font-size: 24px;">LOCAL BRAND</h1>
+      <h1 style="margin: 0; font-size: 24px;">BRANDY</h1>
       <p style="margin: 8px 0 0; opacity: 0.8;">Order Confirmation</p>
     </div>
 
@@ -134,7 +134,7 @@ export function generateOrderConfirmationEmail(order: Order, user: User | null):
 
     <!-- Footer -->
     <div style="background: #333; color: white; padding: 20px; text-align: center; font-size: 12px;">
-      <p style="margin: 0;">© 2026 Local Brand. All rights reserved.</p>
+      <p style="margin: 0;">© 2026 Brandy. All rights reserved.</p>
       <p style="margin: 8px 0 0; opacity: 0.7;">This is an automated email. Please do not reply.</p>
     </div>
   </div>
@@ -186,7 +186,7 @@ export function generateOrderCancelledEmail(order: Order, user: User | null, rea
       <p>If the order was already paid, a refund of <strong>${order.totalAmount.toLocaleString()} EGP</strong> will be processed back to your original payment method within 5-7 business days.</p>
       <p>If you believe this cancellation is an error, please contact us at ${SUPPORT_EMAIL}.</p>
       <hr>
-      <p style="color: #666; font-size: 13px;">— Local Brand</p>
+      <p style="color: #666; font-size: 13px;">— Brandy</p>
     </div>
   </div>
 </body>

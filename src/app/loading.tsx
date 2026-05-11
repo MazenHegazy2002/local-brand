@@ -8,7 +8,7 @@ export default function Loading() {
           <div className="absolute h-16 w-16 animate-spin rounded-full border-4 border-emerald-500/20 border-t-emerald-600"></div>
           <div className="absolute h-16 w-16 animate-ping rounded-full border-4 border-emerald-500/10"></div>
         </div>
-        <p className="animate-pulse font-medium text-emerald-700">Loading Local Brand...</p>
+        <p className="animate-pulse font-medium text-emerald-700">Loading Brandy...</p>
       </div>
     </div>
   );

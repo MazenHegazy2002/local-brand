@@ -122,9 +122,9 @@ function generateInvoiceHTML({ order, address, subtotal, vatAmount, shippingFee 
 <div class="container">
   <div class="header">
     <div class="company">
-      <h1>LOCAL BRAND</h1>
-      <p>Egyptian Marketplace for Local Brands</p>
-      <p>support@localbrand.com</p>
+      <h1>BRANDY</h1>
+      <p>Egyptian Marketplace for Local Sellers</p>
+      <p>support@brandy.com</p>
     </div>
     <div class="invoice-info">
       <div class="invoice-title">INVOICE</div>
@@ -180,8 +180,8 @@ function generateInvoiceHTML({ order, address, subtotal, vatAmount, shippingFee 
   <div class="footer">
     <p><strong>Tax Registration Number:</strong> ${TAX_REG_NUMBER}</p>
     <p><strong>Payment Method:</strong> ${order.paymentMethod?.replace(/_/g, ' ') || 'N/A'} | <strong>Payment Status:</strong> ${order.paymentStatus}</p>
-    <p style="margin-top: 20px;">Thank you for shopping with Local Brand! Questions? Contact support@localbrand.com</p>
-    <p>© ${new Date().getFullYear()} Local Brand. All rights reserved.</p>
+    <p style="margin-top: 20px;">Thank you for shopping with Brandy! Questions? Contact support@brandy.com</p>
+    <p>© ${new Date().getFullYear()} Brandy. All rights reserved.</p>
   </div>
 </div>
 </body>

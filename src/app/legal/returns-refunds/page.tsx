@@ -141,7 +141,7 @@ export default function ReturnsRefundsPage() {
               <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">💳</div>
               <div>
                 <h3 className="font-bold text-gray-900 mb-1">Day 5-7: Refund Issued</h3>
-                <p className="text-gray-600 text-sm">Refund credited to original payment method or LocalBrand wallet</p>
+                <p className="text-gray-600 text-sm">Refund credited to original payment method or Brandy wallet</p>
               </div>
             </div>
           </div>
@@ -176,7 +176,7 @@ export default function ReturnsRefundsPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100">Contact Returns Support</h2>
           <p className="text-gray-600 mb-4">Need help with a return? Contact us:</p>
           <div className="space-y-2 text-sm">
-            <p><strong>Email:</strong> returns@localbrand.eg</p>
+            <p><strong>Email:</strong> returns@brandy.eg</p>
             <p><strong>Phone:</strong> 16171 (Daily 9 AM - 9 PM)</p>
             <p><strong>WhatsApp:</strong> +20 100 000 0000</p>
           </div>

@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     // Priority 1: Vercel Blob
     if (process.env.BLOB_READ_WRITE_TOKEN) {
-      const blob = await put(`localbrand/products/${Date.now()}-${file.name}`, file, {
+      const blob = await put(`brandy/products/${Date.now()}-${file.name}`, file, {
         access: 'public',
       });
       return NextResponse.json({
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
       const result = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
         cloudinary.uploader.upload_stream(
           {
-            folder: 'localbrand/products',
+            folder: 'brandy/products',
             transformation: [
               { width: 1200, height: 1200, crop: 'limit' },
               { quality: 'auto', fetch_format: 'auto' }

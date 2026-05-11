@@ -11,7 +11,7 @@ export default function SellPage() {
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-6">
             Grow Your Brand<br />
-            <span className="text-[#facc15]">With Local Brand</span>
+            <span className="text-[#facc15]">With Brandy</span>
           </h1>
           <p className="text-lg text-white/70 max-w-xl mx-auto mb-10">
             Join thousands of Egyptian sellers reaching millions of customers. 
@@ -67,7 +67,7 @@ export default function SellPage() {
       <section className="bg-[#1e3b8a] text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-black mb-4">Ready to start selling?</h2>
-          <p className="text-white/60 mb-8">Join Egypt's fastest-growing marketplace for local brands.</p>
+          <p className="text-white/60 mb-8">Join Egypt&apos;s fastest-growing marketplace for local sellers.</p>
           <Link href="/register?role=seller" className="inline-block bg-[#facc15] text-[#1e3b8a] font-black py-3 px-10 rounded-lg text-sm hover:bg-yellow-300 transition-colors">
             Apply to Join — Free
           </Link>

@@ -99,7 +99,7 @@ export default function SearchAutocomplete({ className = '' }: { className?: str
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setOpen(true)}
-            placeholder="Search Local Brand..."
+            placeholder="Search Brandy..."
             className="w-full px-4 py-2.5 pl-10 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#1e3b8a] focus:ring-2 focus:ring-[#1e3b8a]/20 outline-none text-sm transition-all"
             autoComplete="off"
           />

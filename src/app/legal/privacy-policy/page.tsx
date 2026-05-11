@@ -18,14 +18,14 @@ export default function PrivacyPolicyPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100">Data Controller Information</h2>
           <div className="space-y-4">
             <p className="text-gray-600">
-              <strong>LocalBrand Egypt</strong> (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) operates the LocalBrand marketplace platform. 
+              <strong>Brandy Egypt</strong> (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) operates the Brandy marketplace platform. 
               We are committed to protecting your personal data in compliance with Egypt&apos;s Personal Data Protection Law (Law No. 151 of 2020).
             </p>
             <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-sm"><strong>Registered Entity:</strong> LocalBrand Egypt LLC</p>
+              <p className="text-sm"><strong>Registered Entity:</strong> Brandy Egypt LLC</p>
               <p className="text-sm"><strong>Registration No.:</strong> 12345/2024</p>
               <p className="text-sm"><strong>Address:</strong> Cairo, Egypt</p>
-              <p className="text-sm"><strong>Data Protection Officer:</strong> dpo@localbrand.eg</p>
+              <p className="text-sm"><strong>Data Protection Officer:</strong> dpo@brandy.eg</p>
             </div>
           </div>
         </div>
@@ -221,7 +221,7 @@ export default function PrivacyPolicyPage() {
               </li>
             </ul>
             <p className="text-gray-600 text-sm mt-4">
-              To exercise any of these rights, contact <strong>dpo@localbrand.eg</strong> or use the Data Export feature in your dashboard.
+              To exercise any of these rights, contact <strong>dpo@brandy.eg</strong> or use the Data Export feature in your dashboard.
             </p>
           </div>
         </div>
@@ -231,9 +231,9 @@ export default function PrivacyPolicyPage() {
           <div className="space-y-4">
             <p className="text-gray-600">For data protection inquiries or to exercise your rights:</p>
             <div className="space-y-2 text-sm">
-              <p><strong>Email:</strong> dpo@localbrand.eg</p>
+              <p><strong>Email:</strong> dpo@brandy.eg</p>
               <p><strong>Phone:</strong> 16171</p>
-              <p><strong>Address:</strong> Data Protection Officer, LocalBrand Egypt, Cairo, Egypt</p>
+              <p><strong>Address:</strong> Data Protection Officer, Brandy Egypt, Cairo, Egypt</p>
             </div>
             <p className="text-gray-600 text-sm">
               We will respond to your request within <strong>30 days</strong> as required by PDPL.

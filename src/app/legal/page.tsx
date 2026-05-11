@@ -1,16 +1,15 @@
 'use client';
 
-import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
 const sections = [
   {
     title: 'Terms of Service',
     id: 'terms',
-    content: `Welcome to LocalBrand Egypt. By accessing or using our marketplace, you agree to be bound by these Terms of Service and all applicable Egyptian laws and regulations.
+    content: `Welcome to Brandy Egypt. By accessing or using our marketplace, you agree to be bound by these Terms of Service and all applicable Egyptian laws and regulations.
 
 **1. Acceptance of Terms**
-By creating an account or making a purchase on LocalBrand, you agree to these terms and our Privacy Policy.
+By creating an account or making a purchase on Brandy, you agree to these terms and our Privacy Policy.
 
 **2. User Accounts**
 You are responsible for maintaining the security of your account. You may not share your credentials or register multiple accounts.
@@ -19,7 +18,7 @@ You are responsible for maintaining the security of your account. You may not sh
 Users may not list counterfeit goods, engage in price manipulation, or misrepresent product descriptions.
 
 **4. Dispute Resolution**
-All disputes between buyers and sellers shall be mediated by LocalBrand. Our decision is final and binding per Egyptian Commercial Law.
+All disputes between buyers and sellers shall be mediated by Brandy. Our decision is final and binding per Egyptian Commercial Law.
 
 **5. Governing Law**
 These terms are governed by the laws of the Arab Republic of Egypt.`
@@ -27,7 +26,7 @@ These terms are governed by the laws of the Arab Republic of Egypt.`
   {
     title: 'Privacy Policy',
     id: 'privacy',
-    content: `LocalBrand Egypt is committed to protecting your personal data in compliance with Egypt's Personal Data Protection Law (Law No. 151 of 2020).
+    content: `Brandy Egypt is committed to protecting your personal data in compliance with Egypt's Personal Data Protection Law (Law No. 151 of 2020).
 
 **Data We Collect**
 - Account information (name, email, phone)
@@ -63,26 +62,26 @@ Customized, personalized, or hygiene-sensitive products are not eligible for ret
 5. Refund processed within 5-7 business days of seller confirmation
 
 **Refund Method**
-Refunds are returned to the original payment method or credited to your LocalBrand wallet.`
+Refunds are returned to the original payment method or credited to your Brandy wallet.`
   },
   {
     title: 'Seller Agreement',
     id: 'seller-agreement',
     content: `**Seller Obligations**
-By becoming a LocalBrand seller, you agree to:
+By becoming a Brandy seller, you agree to:
 - List only authentic, accurately described products
 - Fulfill orders within 2 business days of confirmation
-- Accept returns per LocalBrand's return policy
+- Accept returns per Brandy's return policy
 - Maintain a seller rating above 3.5 stars
 
 **Commission Structure**
-LocalBrand charges a 15% commission on every successful sale. Payouts are processed 7-14 days post-delivery.
+Brandy charges a 15% commission on every successful sale. Payouts are processed 7-14 days post-delivery.
 
 **Prohibited Listings**
 Counterfeit goods, hazardous materials, and items banned under Egyptian law are strictly prohibited.
 
 **Account Suspension**
-LocalBrand reserves the right to suspend seller accounts for policy violations, poor performance metrics, or fraudulent activity.
+Brandy reserves the right to suspend seller accounts for policy violations, poor performance metrics, or fraudulent activity.
 
 **Tax Obligations**
 Sellers are responsible for declaring income and paying applicable taxes under Egyptian tax law.`
@@ -95,7 +94,7 @@ export default function LegalPage() {
       <Navbar />
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <h1 className="text-4xl font-black text-gray-900 mb-2">Legal</h1>
-        <p className="text-gray-500 mb-10">LocalBrand Egypt — Legal documents governing our marketplace.</p>
+        <p className="text-gray-500 mb-10">Brandy Egypt — Legal documents governing our marketplace.</p>
 
         {/* Quick Nav */}
         <div className="flex flex-wrap gap-3 mb-12">
@@ -122,7 +121,7 @@ export default function LegalPage() {
         </div>
 
         <div className="mt-12 text-center text-sm text-gray-400">
-          Last updated: April 2026 — Questions? Contact <a href="mailto:legal@localbrand.eg" className="text-[hsl(var(--accent))] hover:underline">legal@localbrand.eg</a>
+          Last updated: April 2026 — Questions? Contact <a href="mailto:legal@brandy.eg" className="text-[hsl(var(--accent))] hover:underline">legal@brandy.eg</a>
         </div>
       </div>
     </div>

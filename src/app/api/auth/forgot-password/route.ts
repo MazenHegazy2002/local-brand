@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     const { sendEmail } = await import('@/lib/email');
     await sendEmail({
       to: user.email,
-      subject: 'LocalBrand Password Reset',
+      subject: 'Brandy Password Reset',
       html: `<p>Click <a href="${resetLink}">here</a> to reset your password. This link expires in 1 hour.</p>`,
     });
 

@@ -64,7 +64,7 @@ export default function Hero() {
                   {t("HeroSubtitle") || "Premium Collection"}
                 </span>
                 <h1 className="text-5xl md:text-[64px] font-bold tracking-tight mb-8 max-w-xl leading-[1.05]">
-                  {t("HeroTitle") || "Discover Authentic Local Brands"}
+                  {t("HeroTitle") || "Discover Authentic Brands"}
                 </h1>
                 
                 <div className="flex flex-col sm:flex-row gap-4">

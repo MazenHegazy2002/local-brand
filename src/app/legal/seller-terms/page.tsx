@@ -1,8 +1,8 @@
 import Navbar from '@/components/Navbar';
 
 export const metadata = {
-  title: 'Seller Terms & Conditions | Local Brand',
-  description: 'Terms and conditions for sellers on Local Brand marketplace',
+  title: 'Seller Terms & Conditions | Brandy',
+  description: 'Terms and conditions for sellers on Brandy marketplace',
 };
 
 export default function SellerTermsPage() {
@@ -16,7 +16,7 @@ export default function SellerTermsPage() {
         <div className="prose prose-slate max-w-none space-y-8">
           <Section title="1. Acceptance of Terms">
             <p>
-              By registering as a seller on Local Brand (&ldquo;the Platform&rdquo;), you agree to be bound by these
+              By registering as a seller on Brandy (&ldquo;the Platform&rdquo;), you agree to be bound by these
               Terms and Conditions. If you do not agree, you must not use the Platform as a seller.
             </p>
           </Section>
@@ -110,7 +110,7 @@ export default function SellerTermsPage() {
           <Section title="12. Contact">
             <p>
               Questions about these Terms can be directed to{' '}
-              <a href="mailto:sellers@localbrand.com" className="text-[#1e3b8a] underline">sellers@localbrand.com</a>.
+              <a href="mailto:sellers@brandy.com" className="text-[#1e3b8a] underline">sellers@brandy.com</a>.
             </p>
           </Section>
         </div>

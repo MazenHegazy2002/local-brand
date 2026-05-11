@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
 export default function ContactPage() {
@@ -49,9 +50,9 @@ export default function ContactPage() {
             <p className="text-sm text-gray-500 mb-6">
               We&apos;ll reply to <strong>{form.email}</strong> within 24 hours.
             </p>
-            <a href="/" className="inline-block px-6 py-3 bg-[#1e3b8a] text-white rounded-xl font-bold">
+            <Link href="/" className="inline-block px-6 py-3 bg-[#1e3b8a] text-white rounded-xl font-bold">
               Back to home
-            </a>
+            </Link>
           </div>
         </div>
       </main>
@@ -146,8 +147,8 @@ export default function ContactPage() {
             {status === 'error' && (
               <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">
                 Something went wrong submitting your ticket. Please try again or email us directly at{' '}
-                <a href="mailto:support@localbrand.com" className="underline">
-                  support@localbrand.com
+                <a href="mailto:support@brandy.com" className="underline">
+                  support@brandy.com
                 </a>
                 .
               </div>
@@ -166,8 +167,8 @@ export default function ContactPage() {
             <div className="bg-white rounded-2xl p-5 border border-gray-100">
               <div className="text-2xl mb-2">📧</div>
               <div className="font-bold text-gray-900">Email</div>
-              <a href="mailto:support@localbrand.com" className="text-sm text-[#1e3b8a] underline">
-                support@localbrand.com
+              <a href="mailto:support@brandy.com" className="text-sm text-[#1e3b8a] underline">
+                support@brandy.com
               </a>
             </div>
             <div className="bg-white rounded-2xl p-5 border border-gray-100">

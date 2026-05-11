@@ -26,6 +26,7 @@ export async function createOrder(
       items: cartItemsInput,
       addressId,
       guestEmail,
+      shippingAddress,
       couponCode,
       paymentMethod,
       orderNotes,
@@ -36,14 +37,32 @@ export async function createOrder(
       return { error: 'Unauthorized. Please log in or provide guest email.' };
     }
 
-    // ── 2. Fetch Address & Products ───────────────────────────────────────────
-    const address = addressId 
+    // ── 2. Resolve shipping address ───────────────────────────────────────────
+    // Either an existing saved address or an inline one supplied by the form.
+    const address = addressId
       ? await prisma.address.findUnique({ where: { id: addressId } })
       : null;
-    
-    // If no addressId but we have address info in formData (for guests), we'd handle that here.
-    // For now, following the schema's assumption of addressId.
+
     if (addressId && !address) return { error: 'Address not found' };
+
+    // We need *some* address info to ship the order to.
+    const resolvedAddress = address
+      ? {
+          fullName: undefined as string | undefined,
+          phone: undefined as string | undefined,
+          street: address.street,
+          city: address.city,
+          governorate: address.governorate,
+          postalCode: address.postalCode || undefined,
+          country: address.country,
+        }
+      : shippingAddress
+        ? { ...shippingAddress }
+        : null;
+
+    if (!resolvedAddress) {
+      return { error: 'A shipping address is required to place an order.' };
+    }
 
     let subtotal = 0;
     const orderItemsData: {
@@ -103,7 +122,7 @@ export async function createOrder(
 
     const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
     const vatAmount = subtotalAfterDiscount * VAT_RATE;
-    const shippingFee = address ? getShippingRate(address.governorate) : 50;
+    const shippingFee = getShippingRate(resolvedAddress.governorate);
     const finalTotal = subtotalAfterDiscount + vatAmount + shippingFee;
 
     // ── 4. Execute Transaction ───────────────────────────────────────────────
@@ -128,7 +147,7 @@ export async function createOrder(
           paymentMethod: paymentMethod as PaymentMethod,
           paymentStatus: PaymentStatus.UNPAID,
           status: OrderStatus.PENDING_PAYMENT,
-          shippingAddressSnapshot: JSON.stringify(address || {}),
+          shippingAddressSnapshot: JSON.stringify(resolvedAddress),
           orderNotes: orderNotes || null,
           giftWrapping: giftWrapping || false,
           items: { create: orderItemsData }
@@ -145,29 +164,35 @@ export async function createOrder(
       return newOrder;
     });
 
-    // ── 5. Post-Order Actions (Async) ────────────────────────────────────────
+    // ── 5. Post-Order Actions ────────────────────────────────────────────────
     if (userId) {
-      // Award loyalty points
-      import('./loyalty').then(m => m.addLoyaltyPoints(userId, subtotal)).catch(console.error);
-      
-      // Send Email
-      prisma.user.findUnique({ where: { id: userId } }).then(user => {
+      // Award the flat 10-points-per-order bonus. This is intentionally awaited
+      // so the user sees their balance change immediately on the next page.
+      try {
+        const loyaltyMod = await import('./loyalty');
+        await loyaltyMod.addLoyaltyPoints(userId, subtotal);
+      } catch (err) {
+        console.error('Failed to award loyalty points:', err);
+      }
+
+      // Email is best-effort — don't block the order on it.
+      prisma.user.findUnique({ where: { id: userId } }).then((user) => {
         if (user?.email) {
-          import('@/lib/email').then(async m => {
+          import('@/lib/email').then(async (m) => {
             const orderWithItems = await prisma.order.findUnique({
               where: { id: order.id },
-              include: { items: true }
+              include: { items: true },
             });
             if (orderWithItems) {
               await m.sendEmail({
                 to: user.email,
                 subject: `Order Confirmation - ${order.id.slice(0, 8)}`,
-                html: m.generateOrderConfirmationEmail(orderWithItems, user)
+                html: m.generateOrderConfirmationEmail(orderWithItems, user),
               });
             }
-          });
+          }).catch((err: unknown) => console.error('Order confirmation email failed:', err));
         }
-      }).catch(console.error);
+      }).catch((err: unknown) => console.error('Order confirmation lookup failed:', err));
     }
 
     revalidatePath('/dashboard');

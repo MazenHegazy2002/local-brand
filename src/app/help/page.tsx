@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
 export const metadata = {
-  title: 'Help Center | Local Brand',
+  title: 'Help Center | Brandy',
   description: 'Find answers to common questions or contact our support team.',
 };
 
@@ -14,7 +14,7 @@ export default function HelpPage() {
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-3">Help Center</h1>
           <p className="text-gray-500 text-lg">
-            Find answers, get in touch, or learn how Local Brand works.
+            Find answers, get in touch, or learn how Brandy works.
           </p>
         </div>
 

@@ -72,9 +72,9 @@ export const MAX_IMAGES_PER_PRODUCT = 10;
 // ============================================================
 // PLATFORM
 // ============================================================
-export const PLATFORM_NAME = 'Local Brand';
-export const PLATFORM_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://localbrand-egypt.com';
-export const SUPPORT_EMAIL = 'support@localbrand.com';
+export const PLATFORM_NAME = 'Brandy';
+export const PLATFORM_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://brandy-egypt.com';
+export const SUPPORT_EMAIL = 'support@brandy.com';
 export const CONTACT_PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE || '+20 123 456 789';
 
 // ============================================================

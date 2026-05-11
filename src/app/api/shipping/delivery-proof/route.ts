@@ -132,7 +132,7 @@ export async function POST(req: Request) {
 <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/orders/${orderItem.orderId}">View order</a></p>
 <hr />
 ${notes ? `<p><em>Courier note:</em> ${notes}</p>` : ''}
-<p>— Local Brand</p>
+<p>— Brandy</p>
             `,
           }).catch(() => { /* dev fallback */ });
         }).catch(() => { /* ignore */ });

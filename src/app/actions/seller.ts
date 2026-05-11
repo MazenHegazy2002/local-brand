@@ -595,9 +595,9 @@ export async function seedTestData() {
 
     // Create 3 Test Users
     const testUsers = [
-      { email: 'admin@localbrand.com', name: 'System Admin', role: Role.ADMIN, pass: 'admin123' },
-      { email: 'seller@localbrand.com', name: 'Elite Seller', role: Role.SELLER, pass: 'seller123' },
-      { email: 'buyer@localbrand.com', name: 'Frequent Buyer', role: Role.BUYER, pass: 'buyer123' }
+      { email: 'admin@brandy.com', name: 'System Admin', role: Role.ADMIN, pass: 'admin123' },
+      { email: 'seller@brandy.com', name: 'Elite Seller', role: Role.SELLER, pass: 'seller123' },
+      { email: 'buyer@brandy.com', name: 'Frequent Buyer', role: Role.BUYER, pass: 'buyer123' }
     ];
 
     for (const u of testUsers) {
@@ -842,7 +842,7 @@ export async function adminDeleteUser(userId: string) {
         where: { id: userId },
         data: {
           deletedAt: new Date(),
-          email: `deleted_${userId.substring(0, 8)}@localbrand.invalid`, // anonymize
+          email: `deleted_${userId.substring(0, 8)}@brandy.invalid`, // anonymize
           name: 'Deleted User',
           passwordHash: 'DELETED',
         }

@@ -102,15 +102,18 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-[hsl(var(--background))] via-white to-[hsl(var(--accent)/0.08)] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <Link href="/" className="text-4xl font-black tracking-tighter text-gray-900 mx-auto text-center block">
-          LOCAL<span className="text-[#1e3b8a]">BRAND</span>
+        <Link href="/" className="mx-auto text-center block group">
+          <span className="text-4xl font-black tracking-tighter inline-flex items-center gap-1">
+            <span className="text-[hsl(var(--primary))]">BRAND</span>
+            <span className="text-[hsl(var(--accent))]">Y</span>
+          </span>
         </Link>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-[hsl(var(--foreground))]">
           Welcome Back
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-[hsl(var(--muted-foreground))]">
           Sign in to continue your journey
         </p>
       </div>
@@ -182,7 +185,7 @@ function LoginForm() {
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1e3b8a] focus:border-[#1e3b8a] sm:text-sm transition-all"
+                  className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm transition-all"
                   placeholder="you@example.com"
                 />
               </div>
@@ -198,7 +201,7 @@ function LoginForm() {
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1e3b8a] focus:border-[#1e3b8a] sm:text-sm pr-10 transition-all"
+                  className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm pr-10 transition-all"
                   placeholder="Enter your password"
                 />
                 <button
@@ -228,12 +231,12 @@ function LoginForm() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-[#1e3b8a] focus:ring-[#1e3b8a] border-gray-300 rounded"
+                  className="h-4 w-4 text-[hsl(var(--primary))] focus:ring-[hsl(var(--ring))] border-gray-300 rounded"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">Remember me</label>
               </div>
               <div className="text-sm">
-                <Link href="/forgot-password" className="font-medium text-[#1e3b8a] hover:text-blue-800">
+                <Link href="/forgot-password" className="font-medium text-[hsl(var(--primary))] hover:text-[hsl(var(--primary-dark))]">
                   Forgot password?
                 </Link>
               </div>
@@ -243,7 +246,7 @@ function LoginForm() {
               id="signin-submit-btn"
               type="submit"
               disabled={isLoading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:bg-gray-400 transition-all"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-dark))] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(var(--ring))] disabled:bg-gray-400 transition-all"
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
@@ -260,8 +263,8 @@ function LoginForm() {
 
           {/* Register link */}
           <p className="mt-6 text-center text-sm text-gray-600">
-            Don't have an account?{' '}
-            <Link href="/register" className="font-medium text-[#1e3b8a] hover:text-blue-800">
+            Don&apos;t have an account?{' '}
+            <Link href="/register" className="font-medium text-[hsl(var(--primary))] hover:text-[hsl(var(--primary-dark))]">
               Create one now
             </Link>
           </p>

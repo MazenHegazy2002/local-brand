@@ -14,20 +14,20 @@ export async function generateMetadata(
 
   if (!product) {
     return {
-      title: 'Product Not Found | Local Brand',
+      title: 'Product Not Found | Brandy',
     };
   }
 
   const previousImages = (await parent).openGraph?.images || [];
 
   return {
-    title: `${product.name} | Local Brand Egypt`,
+    title: `${product.name} | Brandy Egypt`,
     description: product.description.substring(0, 160),
     openGraph: {
       title: product.name,
       description: product.description.substring(0, 160),
-      url: `https://localbrand-egypt.com/product/${id}`,
-      siteName: 'LocalBrand',
+      url: `https://brandy-egypt.com/product/${id}`,
+      siteName: 'Brandy',
       images: [
         {
           url: product.image,

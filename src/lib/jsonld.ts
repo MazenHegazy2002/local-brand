@@ -74,9 +74,9 @@ export function organizationJsonLd() {
     url: PLATFORM_URL,
     logo: `${PLATFORM_URL}/logo.png`,
     sameAs: [
-      'https://www.facebook.com/localbrand',
-      'https://www.instagram.com/localbrand',
-      'https://www.twitter.com/localbrand',
+      'https://www.facebook.com/brandy',
+      'https://www.instagram.com/brandy',
+      'https://www.twitter.com/brandy',
     ],
     contactPoint: {
       '@type': 'ContactPoint',

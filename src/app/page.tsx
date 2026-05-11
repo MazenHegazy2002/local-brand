@@ -142,7 +142,7 @@ function ProductSection({
             key={p.id}
             id={p.id}
             title={p.title}
-            brand={dict.LocalBrand}
+            brand={dict.Brandy}
             price={p.basePrice}
             img={p.images[0]?.url || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop"}
           />

@@ -9,6 +9,8 @@ import Navbar from '@/components/Navbar';
 import PaySkyCheckout from '@/components/PaySkyCheckout';
 import { SessionUser } from '@/types';
 import { VAT_RATE } from '@/lib/constants';
+import { GOVERNORATES } from '@/lib/governorates';
+import { useLanguage } from '@/providers/LanguageContext';
 
 interface PaySkyInitData {
   lightboxUrl: string;
@@ -26,6 +28,7 @@ export default function CheckoutPage() {
   const { items, total, clearCart } = useCartStore();
   const router = useRouter();
   const { data: session } = useSession();
+  const { lang } = useLanguage();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -143,11 +146,43 @@ export default function CheckoutPage() {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) return;
+
+    // Basic client-side validation
+    if (!address.fullName.trim() || !address.phone.trim() || !address.address.trim() || !address.city.trim() || !address.governorate) {
+      setError('Please fill in all shipping address fields.');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
     setPaySkyMockMessage('');
 
     try {
+      // ── 1. Persist the address (so orders are linked to a real Address row) ──
+      let addressId: string | undefined;
+      if (session?.user) {
+        try {
+          const addrRes = await fetch('/api/addresses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fullName: address.fullName,
+              phone: address.phone,
+              street: address.address,
+              city: address.city,
+              governorate: address.governorate,
+              isDefault: false,
+            }),
+          });
+          if (addrRes.ok) {
+            const addrJson = await addrRes.json();
+            addressId = addrJson?.id || addrJson?.address?.id;
+          }
+        } catch (err) {
+          console.warn('Address save failed, continuing without addressId:', err);
+        }
+      }
+
       // ── PaySky branch — skip createOrder for now, finalize on callback ──
       if (paymentMethod === 'PAYSKY') {
         const res = await fetch('/api/payment/paysky', {
@@ -181,38 +216,68 @@ export default function CheckoutPage() {
           lightboxUrl: data.lightboxUrl,
           lightboxConfig: data.lightboxConfig,
         });
-        // PaySkyCheckout component takes over from here.
         return;
       }
 
-      // Deduct loyalty points if used
+      // ── 2. Deduct loyalty points if used ─────────────────────────────────────
       if (pointsToUse > 0 && session?.user) {
         try {
           const { redeemLoyaltyPoints } = await import('@/app/actions/loyalty');
           const userId = (session.user as SessionUser).id;
           await redeemLoyaltyPoints(userId, pointsToUse);
         } catch (err: unknown) {
-          console.error('Failed to redeem points:', err);
+          const error = err as Error;
+          setError(error.message || 'Failed to redeem points');
+          setIsLoading(false);
+          return;
         }
       }
 
+      // ── 3. Create the order ──────────────────────────────────────────────────
       const res = await createOrder({
-        items: items.map(item => ({ variantId: item.id, quantity: item.qty })),
-        addressId: undefined,
+        items: items.map((item) => ({ variantId: item.id, quantity: item.qty })),
+        addressId,
+        // Always send the inline shipping address as a fallback in case the
+        // address row couldn't be persisted (e.g. for guest checkout).
+        shippingAddress: {
+          fullName: address.fullName,
+          phone: address.phone,
+          street: address.address,
+          city: address.city,
+          governorate: address.governorate,
+        },
         paymentMethod,
         couponCode: couponApplied?.code || undefined,
         orderNotes: orderNotes.trim() || undefined,
         giftWrapping,
+        pointsRedeemed: pointsToUse || undefined,
       });
-      if (res.success) {
+
+      if (res.success && res.orderId) {
         clearCart();
         setCouponApplied(null);
         setPointsToUse(0);
         router.push(`/checkout/success?orderId=${res.orderId}`);
+        return;
       }
+
+      // ── 4. Order action returned a structured error — surface it & stop ──────
+      const message = res.error || 'Failed to place order';
+      // Refund any redeemed points so the user isn't charged for a failed order.
+      if (pointsToUse > 0 && session?.user) {
+        try {
+          const { refundLoyaltyPoints } = await import('@/app/actions/loyalty');
+          const userId = (session.user as SessionUser).id;
+          await refundLoyaltyPoints(userId, pointsToUse);
+        } catch (err) {
+          console.error('Failed to refund redeemed points:', err);
+        }
+      }
+      setError(message);
+      setIsLoading(false);
     } catch (err: unknown) {
       const error = err as Error;
-      setError(error.message || "Failed to place order");
+      setError(error.message || 'Failed to place order');
       setIsLoading(false);
     }
   };
@@ -316,10 +381,11 @@ export default function CheckoutPage() {
                       className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#1e3b8a] outline-none bg-white"
                     >
                       <option value="">Select Governorate</option>
-                      <option value="Cairo">Cairo</option>
-                      <option value="Giza">Giza</option>
-                      <option value="Alexandria">Alexandria</option>
-                      <option value="Other">Other</option>
+                      {GOVERNORATES.map((g) => (
+                        <option key={g.value} value={g.value}>
+                          {lang === 'ar' ? g.ar : g.en}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>

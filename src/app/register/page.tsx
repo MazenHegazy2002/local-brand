@@ -53,20 +53,23 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-[hsl(var(--background))] via-white to-[hsl(var(--accent)/0.08)] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <Link href="/" className="text-4xl font-black tracking-tighter text-gray-900 mx-auto text-center block">
-          LOCAL<span className="text-[#1e3b8a]">BRAND</span>
+        <Link href="/" className="mx-auto text-center block group">
+          <span className="text-4xl font-black tracking-tighter inline-flex items-center gap-1">
+            <span className="text-[hsl(var(--primary))]">BRAND</span>
+            <span className="text-[hsl(var(--accent))]">Y</span>
+          </span>
         </Link>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-[hsl(var(--foreground))]">
           {role === 'SELLER' ? 'Become a Seller' : 'Join the Movement'}
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-[hsl(var(--muted-foreground))]">
           {role === 'SELLER' 
             ? 'Start selling your products to thousands of customers' 
             : 'Already have an account? '}
           {role !== 'SELLER' && (
-            <Link href="/login" className="font-medium text-[#1e3b8a] hover:text-blue-700">
+            <Link href="/login" className="font-medium text-[hsl(var(--primary))] hover:text-[hsl(var(--primary-dark))]">
               Sign in
             </Link>
           )}
@@ -90,37 +93,37 @@ export default function RegisterPage() {
               <button 
                 type="button" 
                 onClick={() => setRole('BUYER')}
-                className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-colors ${role === 'BUYER' ? 'bg-white shadow border border-gray-200 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-colors ${role === 'BUYER' ? 'bg-white shadow border border-gray-200 text-[hsl(var(--primary))]' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 Customer
               </button>
               <button 
                 type="button" 
                 onClick={() => setRole('SELLER')}
-                className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-colors ${role === 'SELLER' ? 'bg-white shadow border border-gray-200 text-[#1e3b8a]' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-colors ${role === 'SELLER' ? 'bg-white shadow border border-gray-200 text-[hsl(var(--primary))]' : 'text-gray-500 hover:text-gray-700'}`}
               >
-                Local Seller
+                Seller
               </button>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Full Name</label>
               <div className="mt-1">
-                <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#1e3b8a] focus:border-[#1e3b8a] sm:text-sm" />
+                <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm" />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Email address</label>
               <div className="mt-1">
-                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#1e3b8a] focus:border-[#1e3b8a] sm:text-sm" />
+                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm" />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Password</label>
               <div className="mt-1">
-                <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#1e3b8a] focus:border-[#1e3b8a] sm:text-sm" />
+                <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm" />
               </div>
               <PasswordStrength password={password} />
             </div>
@@ -129,14 +132,14 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-colors ${role === 'SELLER' ? 'bg-[#1e3b8a] hover:bg-[#152c6e]' : 'bg-gray-900 hover:bg-gray-800'} disabled:opacity-50`}
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-colors bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-dark))] disabled:opacity-50"
               >
                 {isLoading ? 'Creating account...' : `Create ${role === 'SELLER' ? 'Seller' : 'Customer'} Account`}
               </button>
             </div>
             
             <p className="text-xs text-gray-500 text-center mt-4">
-              By creating an account, you agree to LocalBrand's Conditions of Use and Privacy Notice.
+              By creating an account, you agree to Brandy&apos;s Conditions of Use and Privacy Notice.
             </p>
           </form>
         </div>

@@ -320,7 +320,8 @@ export default function AdminOS() {
         }
         *{box-sizing:border-box;margin:0;padding:0}
         .db{display:flex;min-height:100vh;background:var(--color-background-secondary);font-family: 'Inter', sans-serif;}
-        .sidebar{width:186px;flex-shrink:0;background:#1a1a2e;padding:16px 0;display:flex;flex-direction:column;height:100vh;position:sticky;top:0}
+        .sidebar{width:186px;flex-shrink:0;background:#1a1a2e;padding:16px 0;display:flex;flex-direction:column;min-height:100vh;max-height:100vh;position:sticky;top:0;align-self:flex-start;overflow-y:auto}
+        @media (max-width: 768px){.db{flex-direction:column}.sidebar{width:100%;height:auto;min-height:auto;max-height:none;position:static;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px}.sidebar .nav-section{display:none}.sidebar .nav-item{padding:6px 10px;font-size:11px}.main{padding:12px !important}}
         .logo{padding:0 16px 20px;font-size:15px;font-weight:500;color:#fff}
         .logo span{color:#7F77DD}
         .nav-section{font-size:10px;font-weight:500;color:#444;letter-spacing:.08em;padding:10px 16px 4px;text-transform:uppercase}
@@ -328,7 +329,7 @@ export default function AdminOS() {
         .nav-item:hover{background:rgba(255,255,255,.05);color:#ccc}
         .nav-item.active{background:rgba(127,119,221,.15);color:#AFA9EC}
         .nav-icon{width:15px;height:15px;flex-shrink:0}
-        .main{flex:1;min-width:0;padding:18px;background:var(--color-background-secondary);overflow:auto}
+        .main{flex:1;min-width:0;padding:18px;background:var(--color-background-secondary);min-height:100vh;padding-bottom:80px}
         .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
         .page-title{font-size:17px;font-weight:500;color:var(--color-text-primary)}
         .seed-btn { text-[10px]; text-white/40; hover:text-white; bg:white/5; py:1.5; rounded:4px; transition:all 0.2s; border:none; cursor:pointer; }

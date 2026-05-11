@@ -12,7 +12,7 @@ const CATEGORIES: { id: Category; label: string; icon: string }[] = [
   { id: 'returns', label: 'Returns & Refunds', icon: '↩️' },
   { id: 'payments', label: 'Payments', icon: '💳' },
   { id: 'account', label: 'My Account', icon: '👤' },
-  { id: 'sellers', label: 'Selling on Local Brand', icon: '🏪' },
+  { id: 'sellers', label: 'Selling on Brandy', icon: '🏪' },
 ];
 
 const FAQ_DATA: Record<Category, Array<{ q: string; a: string }>> = {

@@ -1,11 +1,11 @@
 export default function SellerHubLayout({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      position: 'fixed',
-      inset: 0,
-      overflow: 'hidden',
-      margin: 0,
-      padding: 0,
+      minHeight: '100vh',
+      width: '100%',
+      overflowX: 'hidden',
+      overflowY: 'auto',
+      display: 'flex',
     }}>
       {children}
     </div>

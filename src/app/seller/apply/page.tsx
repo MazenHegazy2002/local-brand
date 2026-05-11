@@ -45,7 +45,7 @@ export default function SellerApplicationPage() {
               </div>
               <h1 className="text-3xl font-bold text-gray-900 mb-4">Application Submitted!</h1>
               <p className="text-gray-600 mb-8 text-lg">
-                Thank you for applying to become a seller on Local Brand. Our team will review your application within 2-3 business days. We'll send an email with the next steps once approved.
+                Thank you for applying to become a seller on Brandy. Our team will review your application within 2-3 business days. We&apos;ll send an email with the next steps once approved.
               </p>
               <Link href="/dashboard">
                 <Button className="w-full text-lg h-14">Return to Dashboard</Button>

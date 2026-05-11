@@ -76,7 +76,7 @@ export default function ComparePage() {
                   <td className="p-6 font-semibold text-gray-700 border-r border-b border-gray-100 bg-gray-50">Brand</td>
                   {items.map((item) => (
                     <td key={item.id} className="p-6 text-gray-600 border-r border-b border-gray-100">
-                      {item.seller?.storeName || 'Local Brand'}
+                      {item.seller?.storeName || 'Brandy'}
                     </td>
                   ))}
                 </tr>
