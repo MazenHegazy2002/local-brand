@@ -26,9 +26,13 @@ async function main() {
   await prisma.productImage.deleteMany();
   await prisma.productVariant.deleteMany();
   await prisma.product.deleteMany();
+  await prisma.tag.deleteMany();
+  await prisma.collection.deleteMany();
   await prisma.category.deleteMany();
   await prisma.sellerProfile.deleteMany();
   await prisma.address.deleteMany();
+  await prisma.passwordResetToken.deleteMany();
+  await prisma.verificationToken.deleteMany();
   await prisma.user.deleteMany();
 
   // Create categories
