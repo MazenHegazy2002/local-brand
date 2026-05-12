@@ -421,7 +421,7 @@ export default function AdminOS() {
             />
           )}
           {activeTab === 'products' && data && <ProductsTab data={data} />}
-          {activeTab === 'orders' && data && <OrdersTab data={data} />}
+          {activeTab === 'orders' && data && <OrdersTab data={data} onRefresh={refreshData} />}
           {activeTab === 'payouts' && data && <PayoutsTab data={data} />}
           {activeTab === 'analytics' && data && <AnalyticsTab data={data} />}
           {activeTab === 'taxonomy' && data && (
@@ -480,26 +480,39 @@ export default function AdminOS() {
         }
         *{box-sizing:border-box;margin:0;padding:0}
         /* Whole admin dashboard scrolls naturally; sidebar stays in view via
-           position: sticky so the nav stays accessible while you scroll. */
-        .db{display:flex;min-height:100vh;background:var(--color-background-secondary);font-family: 'Inter', sans-serif;}
-        .sidebar{width:200px;min-width:200px;background:#1a1a2e;padding:16px 0;display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;align-self:flex-start;max-height:100vh;overflow-y:auto}
+           position: sticky so the nav stays accessible while you scroll. The
+           layout is intentionally compact so a typical 13"/14" laptop
+           (~1280-1440px wide, 720-900px tall) shows full content without
+           feeling cramped. */
+        .db{display:flex;min-height:100dvh;background:var(--color-background-secondary);font-family: 'Inter', sans-serif;}
+        .sidebar{width:180px;min-width:180px;background:#1a1a2e;padding:14px 0;display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;align-self:flex-start;max-height:100dvh;overflow-y:auto}
+        /* Laptops in the 1280-1440px range get a slightly tighter sidebar +
+           main padding so the 4-column stats grid never wraps. */
+        @media (min-width: 901px) and (max-width: 1440px){
+          .sidebar{width:168px;min-width:168px}
+          .main{padding:14px 16px 60px !important}
+          .stats{gap:8px !important}
+          .stat{padding:10px !important}
+          .stat-val{font-size:18px !important}
+        }
         @media (max-width: 900px){
           .db{flex-direction:column}
           .sidebar{width:100%;min-width:0;max-height:none;position:static;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px;overflow-x:auto;overflow-y:visible}
           .sidebar .nav-section{display:none}
           .sidebar .nav-item{padding:6px 10px !important;font-size:11px !important}
-          .main{padding:16px !important}
+          .main{padding:14px !important}
+          .stats{grid-template-columns:repeat(2,1fr) !important}
         }
-        .logo{padding:0 16px 20px;font-size:15px;font-weight:500;color:#fff}
+        .logo{padding:0 14px 18px;font-size:14px;font-weight:500;color:#fff}
         .logo span{color:#7F77DD}
-        .nav-section{font-size:10px;font-weight:500;color:#444;letter-spacing:.08em;padding:10px 16px 4px;text-transform:uppercase}
-        .nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;cursor:pointer;font-size:12px;color:#888;transition:all .12s}
+        .nav-section{font-size:10px;font-weight:500;color:#444;letter-spacing:.08em;padding:10px 14px 4px;text-transform:uppercase}
+        .nav-item{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;font-size:12px;color:#888;transition:all .12s}
         .nav-item:hover{background:rgba(255,255,255,.05);color:#ccc}
         .nav-item.active{background:rgba(127,119,221,.15);color:#AFA9EC}
-        .nav-icon{width:15px;height:15px;flex-shrink:0}
-        .main{flex:1;min-width:0;padding:18px;background:var(--color-background-secondary);padding-bottom:80px}
-        .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-        .page-title{font-size:17px;font-weight:500;color:var(--color-text-primary)}
+        .nav-icon{width:14px;height:14px;flex-shrink:0}
+        .main{flex:1;min-width:0;padding:16px 18px;background:var(--color-background-secondary);padding-bottom:60px}
+        .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+        .page-title{font-size:16px;font-weight:500;color:var(--color-text-primary)}
         .seed-btn { text-[10px]; text-white/40; hover:text-white; bg:white/5; py:1.5; rounded:4px; transition:all 0.2s; border:none; cursor:pointer; }
         .user-label { font-size: 10px; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .signout-btn { text-align: left; font-size: 10px; color: rgba(239,68,68,0.6); background: none; border: none; cursor: pointer; }
@@ -966,11 +979,48 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
 
 interface OrdersTabProps {
   data: DashboardData;
+  onRefresh: () => Promise<void>;
 }
 
-function OrdersTab({ data }: OrdersTabProps) {
+const ADMIN_ORDER_STATUSES = [
+  'PENDING_PAYMENT',
+  'CONFIRMED',
+  'PROCESSING',
+  'SHIPPED',
+  'DELIVERED',
+  'CANCELLED',
+  'RETURNED',
+] as const;
+
+type OrderStatusValue = (typeof ADMIN_ORDER_STATUSES)[number];
+
+interface ShippingSnapshot {
+  fullName?: string;
+  phone?: string;
+  street?: string;
+  city?: string;
+  governorate?: string;
+  postalCode?: string;
+  country?: string;
+  email?: string;
+}
+
+function safeParseSnapshot(raw: string | null | undefined): ShippingSnapshot {
+  if (!raw) return {};
+  try {
+    const v = JSON.parse(raw);
+    return typeof v === 'object' && v !== null ? (v as ShippingSnapshot) : {};
+  } catch {
+    return {};
+  }
+}
+
+function OrdersTab({ data, onRefresh }: OrdersTabProps) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+
   const q = search.trim().toLowerCase();
   const orders = (data?.orders || []).filter((o: Order) => {
     if (statusFilter !== 'all' && o.status !== statusFilter) return false;
@@ -980,13 +1030,76 @@ function OrdersTab({ data }: OrdersTabProps) {
       .includes(q);
   });
 
+  const sendUpdate = async (
+    orderId: string,
+    body: Record<string, unknown>,
+    successLabel: string
+  ) => {
+    setBusyOrderId(orderId);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(payload?.message || `Failed to ${successLabel}`);
+        return false;
+      }
+      await onRefresh();
+      return true;
+    } catch (err) {
+      console.error('[admin/orders] update failed:', err);
+      alert(`Failed to ${successLabel}`);
+      return false;
+    } finally {
+      setBusyOrderId(null);
+    }
+  };
+
+  const cancelOrder = async (o: Order) => {
+    if (o.status === 'CANCELLED' || o.status === 'RETURNED') return;
+    if (
+      !confirm(
+        `Cancel order #ORD-${o.id.substring(0, 8)}? This will mark all live items as cancelled.`
+      )
+    )
+      return;
+    await sendUpdate(o.id, { status: 'CANCELLED' }, 'cancel order');
+  };
+
+  const deleteOrder = async (o: Order) => {
+    if (
+      !confirm(
+        `Permanently delete order #ORD-${o.id.substring(0, 8)}? This cannot be undone. Stock for live items will be returned.`
+      )
+    )
+      return;
+    setBusyOrderId(o.id);
+    try {
+      const res = await fetch(`/api/admin/orders/${o.id}`, { method: 'DELETE' });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(payload?.message || 'Failed to delete order');
+        return;
+      }
+      await onRefresh();
+    } catch (err) {
+      console.error('[admin/orders] delete failed:', err);
+      alert('Failed to delete order');
+    } finally {
+      setBusyOrderId(null);
+    }
+  };
+
   return (
     <div className="card">
       <div className="card-header">
         <div className="card-title">Platform Orders</div>
       </div>
-      <div className="flex items-center gap-3 mb-3">
-        <div className="relative flex-1">
+      <div className="flex items-center gap-3 mb-3 flex-wrap">
+        <div className="relative flex-1 min-w-[220px]">
           <svg
             width="14"
             height="14"
@@ -1023,12 +1136,11 @@ function OrdersTab({ data }: OrdersTabProps) {
           className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
         >
           <option value="all">All status</option>
-          <option value="PENDING_PAYMENT">Pending payment</option>
-          <option value="CONFIRMED">Confirmed</option>
-          <option value="PROCESSING">Processing</option>
-          <option value="SHIPPED">Shipped</option>
-          <option value="DELIVERED">Delivered</option>
-          <option value="CANCELLED">Cancelled</option>
+          {ADMIN_ORDER_STATUSES.map(s => (
+            <option key={s} value={s}>
+              {s.replace(/_/g, ' ').toLowerCase()}
+            </option>
+          ))}
         </select>
         <span className="text-[11px] text-slate-400 whitespace-nowrap">
           {orders.length} / {data?.orders?.length || 0}
@@ -1037,9 +1149,11 @@ function OrdersTab({ data }: OrdersTabProps) {
       {orders.map((o: Order) => {
         const contactEmail = o.user?.email || o.guestEmail;
         const customerLabel = o.user?.name || 'Guest';
+        const isCancelled = o.status === 'CANCELLED' || o.status === 'RETURNED';
+        const busy = busyOrderId === o.id;
         return (
-          <div key={o.id} className="row-item">
-            <div style={{ flex: 1 }}>
+          <div key={o.id} className="row-item flex-wrap gap-2">
+            <div style={{ flex: 1, minWidth: 180 }}>
               <div style={{ fontSize: '12px', fontWeight: 600 }}>#ORD-{o.id.substring(0, 8)}</div>
               <div style={{ fontSize: '11px', color: '#64748b' }}>
                 {customerLabel} · {o.items?.length || 0} items
@@ -1051,13 +1165,51 @@ function OrdersTab({ data }: OrdersTabProps) {
                 </div>
               )}
             </div>
-            <div className="text-right mr-8">
+            <div className="text-right">
               <div style={{ fontSize: '12px', fontWeight: 600 }}>
                 {o.totalAmount?.toLocaleString()} EGP
               </div>
               <div style={{ fontSize: '10px', color: '#94a3b8' }}>{o.paymentMethod}</div>
             </div>
-            <span className="badge b-active">{o.status}</span>
+            <select
+              value={o.status}
+              disabled={busy}
+              onChange={e => sendUpdate(o.id, { status: e.target.value }, 'change status')}
+              className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
+            >
+              {ADMIN_ORDER_STATUSES.map(s => (
+                <option key={s} value={s}>
+                  {s.replace(/_/g, ' ')}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setEditingOrder(o)}
+              disabled={busy}
+              className="action-btn"
+              style={{ borderColor: '#3C3489', color: '#3C3489' }}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => cancelOrder(o)}
+              disabled={busy || isCancelled}
+              className="action-btn"
+              style={{ borderColor: '#A32D2D', color: '#791F1F', opacity: isCancelled ? 0.4 : 1 }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => deleteOrder(o)}
+              disabled={busy}
+              className="action-btn"
+              style={{ borderColor: '#E24B4A', color: '#E24B4A' }}
+            >
+              Delete
+            </button>
           </div>
         );
       })}
@@ -1066,6 +1218,188 @@ function OrdersTab({ data }: OrdersTabProps) {
           {q || statusFilter !== 'all' ? 'No orders match the current filters.' : 'No orders yet.'}
         </div>
       )}
+
+      {editingOrder && (
+        <EditOrderModal
+          order={editingOrder}
+          onClose={() => setEditingOrder(null)}
+          onSaved={async () => {
+            setEditingOrder(null);
+            await onRefresh();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+interface EditOrderModalProps {
+  order: Order;
+  onClose: () => void;
+  onSaved: () => Promise<void>;
+}
+
+function EditOrderModal({ order, onClose, onSaved }: EditOrderModalProps) {
+  const initialSnap = safeParseSnapshot(order.shippingAddressSnapshot);
+  const [status, setStatus] = useState<OrderStatusValue>(order.status as OrderStatusValue);
+  const [shipping, setShipping] = useState<ShippingSnapshot>({
+    fullName: initialSnap.fullName || '',
+    phone: initialSnap.phone || '',
+    street: initialSnap.street || '',
+    city: initialSnap.city || '',
+    governorate: initialSnap.governorate || '',
+    postalCode: initialSnap.postalCode || '',
+    country: initialSnap.country || 'Egypt',
+    email: initialSnap.email || '',
+  });
+  const [orderNotes, setOrderNotes] = useState<string>(order.orderNotes || '');
+  const [giftWrapping, setGiftWrapping] = useState<boolean>(Boolean(order.giftWrapping));
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSubmitting(true);
+    try {
+      const body: Record<string, unknown> = { status };
+      // Only send shipping fields that were actually filled in.
+      const shippingPayload: Record<string, string> = {};
+      for (const [k, v] of Object.entries(shipping)) {
+        if (typeof v === 'string' && v.trim()) shippingPayload[k] = v.trim();
+      }
+      if (Object.keys(shippingPayload).length) body.shipping = shippingPayload;
+      body.orderNotes = orderNotes.trim() || null;
+      body.giftWrapping = giftWrapping;
+
+      const res = await fetch(`/api/admin/orders/${order.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(payload?.message || 'Failed to update order');
+        return;
+      }
+      await onSaved();
+    } catch (err) {
+      console.error('[admin/orders] save failed:', err);
+      setError('Failed to update order');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 560 }}>
+        <div className="modal-title">Edit order #{order.id.substring(0, 8)}</div>
+        {error && <div className="error-banner">{error}</div>}
+        <form onSubmit={onSubmit}>
+          <div className="form-group">
+            <label className="form-label">Status</label>
+            <select
+              className="form-input role-select"
+              value={status}
+              onChange={e => setStatus(e.target.value as OrderStatusValue)}
+            >
+              {ADMIN_ORDER_STATUSES.map(s => (
+                <option key={s} value={s}>
+                  {s.replace(/_/g, ' ')}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="form-group">
+              <label className="form-label">Full name</label>
+              <input
+                className="form-input"
+                value={shipping.fullName || ''}
+                onChange={e => setShipping({ ...shipping, fullName: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Phone</label>
+              <input
+                className="form-input"
+                value={shipping.phone || ''}
+                onChange={e => setShipping({ ...shipping, phone: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label className="form-label">Street</label>
+              <input
+                className="form-input"
+                value={shipping.street || ''}
+                onChange={e => setShipping({ ...shipping, street: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">City</label>
+              <input
+                className="form-input"
+                value={shipping.city || ''}
+                onChange={e => setShipping({ ...shipping, city: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Governorate</label>
+              <input
+                className="form-input"
+                value={shipping.governorate || ''}
+                onChange={e => setShipping({ ...shipping, governorate: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Postal code</label>
+              <input
+                className="form-input"
+                value={shipping.postalCode || ''}
+                onChange={e => setShipping({ ...shipping, postalCode: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Email (guest)</label>
+              <input
+                type="email"
+                className="form-input"
+                value={shipping.email || ''}
+                onChange={e => setShipping({ ...shipping, email: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Order notes</label>
+            <textarea
+              rows={3}
+              className="form-input"
+              value={orderNotes}
+              onChange={e => setOrderNotes(e.target.value)}
+              style={{ resize: 'vertical' }}
+            />
+          </div>
+
+          <label className="flex items-center gap-2 mb-4 text-xs text-slate-600">
+            <input
+              type="checkbox"
+              checked={giftWrapping}
+              onChange={e => setGiftWrapping(e.target.checked)}
+            />
+            Gift wrapping
+          </label>
+
+          <button type="submit" disabled={submitting} className="btn-primary">
+            {submitting ? 'Saving...' : 'Save changes'}
+          </button>
+          <button type="button" onClick={onClose} className="btn-ghost">
+            Cancel
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

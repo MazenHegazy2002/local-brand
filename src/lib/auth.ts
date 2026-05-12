@@ -73,6 +73,39 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+    // Passwordless "magic link" flow. POST /api/auth/magic-link emails a
+    // single-use token that the client posts here via
+    // signIn('magic-link', { token }). We reuse the PasswordResetToken table
+    // because the shape (single-use, time-bound, identified by email) is
+    // identical — adding a parallel table would just be schema churn.
+    CredentialsProvider({
+      id: 'magic-link',
+      name: 'MagicLink',
+      credentials: {
+        token: { label: 'Token', type: 'text' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.token) return null;
+        const token = credentials.token.trim();
+        try {
+          const tokenRecord = await prisma.passwordResetToken.findUnique({ where: { token } });
+          if (!tokenRecord) return null;
+          if (tokenRecord.expires < new Date()) {
+            // Garbage-collect expired tokens opportunistically.
+            await prisma.passwordResetToken.delete({ where: { token } }).catch(() => {});
+            return null;
+          }
+          const user = await prisma.user.findUnique({ where: { email: tokenRecord.email } });
+          if (!user || user.deletedAt) return null;
+          // Single-use: consume the token now so it can't be replayed.
+          await prisma.passwordResetToken.delete({ where: { token } }).catch(() => {});
+          return { id: user.id, name: user.name, email: user.email, role: user.role };
+        } catch (error) {
+          console.error('[AUTH] Magic link error:', error);
+          return null;
+        }
+      },
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {
