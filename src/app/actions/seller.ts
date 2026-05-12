@@ -324,7 +324,12 @@ export async function getDashboardStats() {
   } catch (err: unknown) {
     const error = err as Error;
     console.error('[getDashboardStats] Error:', error);
-    return { error: 'Database connection failed or data could not be retrieved.' };
+    // In production we keep the message generic to avoid leaking schema /
+    // connection details. In development we surface the underlying message
+    // so the developer can fix the root cause without grepping logs.
+    const detail =
+      process.env.NODE_ENV === 'development' && error?.message ? ` (${error.message})` : '';
+    return { error: `Database connection failed or data could not be retrieved.${detail}` };
   }
 }
 

@@ -28,78 +28,88 @@ const PAYOUT_OUTSTANDING_STATUSES: PayoutStatus[] = [
   PayoutStatus.PAID,
 ];
 
+const EMPTY_EARNINGS: SellerEarnings = {
+  available: 0,
+  held: 0,
+  totalEarned: 0,
+  totalPaidOut: 0,
+  commissionRate: 0.15,
+  nextReleaseAt: null,
+};
+
 export async function computeSellerEarnings(sellerId: string): Promise<SellerEarnings> {
-  const seller = await prisma.sellerProfile.findUnique({
-    where: { id: sellerId },
-    select: { commissionRate: true },
-  });
-  if (!seller) {
-    return {
-      available: 0,
-      held: 0,
-      totalEarned: 0,
-      totalPaidOut: 0,
-      commissionRate: 0.15,
-      nextReleaseAt: null,
-    };
-  }
+  // The helper is called from every seller dashboard / wallet read. A failure
+  // here used to take down the entire `getDashboardStats` action and leave
+  // sellers staring at a generic "Database connection failed" banner. We
+  // catch and log instead, returning zeros so the rest of the dashboard
+  // still renders. The real error is in the server console for debugging.
+  try {
+    const seller = await prisma.sellerProfile.findUnique({
+      where: { id: sellerId },
+      select: { commissionRate: true },
+    });
+    if (!seller) return EMPTY_EARNINGS;
 
-  // Pull every "earned" line item (delivered + parent order is delivered +
-  // not refunded/returned/cancelled). We compute escrow per item rather
-  // than per order so partial returns/refunds shrink the seller's share
-  // correctly.
-  const eligibleItems = await prisma.orderItem.findMany({
-    where: {
-      variant: { product: { sellerId } },
-      status: { in: ITEM_EARNING_STATUSES },
-      order: { status: OrderStatus.DELIVERED },
-    },
-    select: {
-      priceAtPurchase: true,
-      quantity: true,
-      order: { select: { deliveredAt: true, updatedAt: true } },
-    },
-  });
+    // Pull every "earned" line item (delivered + parent order is delivered +
+    // not refunded/returned/cancelled). We compute escrow per item rather
+    // than per order so partial returns/refunds shrink the seller's share
+    // correctly.
+    const eligibleItems = await prisma.orderItem.findMany({
+      where: {
+        variant: { product: { sellerId } },
+        status: { in: ITEM_EARNING_STATUSES },
+        order: { status: OrderStatus.DELIVERED },
+      },
+      select: {
+        priceAtPurchase: true,
+        quantity: true,
+        order: { select: { deliveredAt: true, updatedAt: true } },
+      },
+    });
 
-  const cutoff = new Date(Date.now() - ESCROW_MS);
+    const cutoff = new Date(Date.now() - ESCROW_MS);
 
-  let availableGross = 0;
-  let held = 0;
-  let nextReleaseAt: Date | null = null;
+    let availableGross = 0;
+    let held = 0;
+    let nextReleaseAt: Date | null = null;
 
-  for (const item of eligibleItems) {
-    const gross = item.priceAtPurchase * item.quantity;
-    const net = gross * (1 - seller.commissionRate);
-    // Prefer the explicit deliveredAt; fall back to updatedAt for orders
-    // that were delivered before deliveredAt was added to the schema.
-    const delivered = item.order.deliveredAt ?? item.order.updatedAt;
-    if (delivered <= cutoff) {
-      availableGross += net;
-    } else {
-      held += net;
-      const releaseAt = new Date(delivered.getTime() + ESCROW_MS);
-      if (!nextReleaseAt || releaseAt < nextReleaseAt) nextReleaseAt = releaseAt;
+    for (const item of eligibleItems) {
+      const gross = item.priceAtPurchase * item.quantity;
+      const net = gross * (1 - seller.commissionRate);
+      // Prefer the explicit deliveredAt; fall back to updatedAt for orders
+      // that were delivered before deliveredAt was added to the schema.
+      const delivered = item.order.deliveredAt ?? item.order.updatedAt;
+      if (delivered <= cutoff) {
+        availableGross += net;
+      } else {
+        held += net;
+        const releaseAt = new Date(delivered.getTime() + ESCROW_MS);
+        if (!nextReleaseAt || releaseAt < nextReleaseAt) nextReleaseAt = releaseAt;
+      }
     }
+
+    // Subtract any payouts already requested or paid. CANCELLED payouts are
+    // ignored — the seller can request that money again.
+    const payoutAgg = await prisma.payout.aggregate({
+      where: { sellerId, status: { in: PAYOUT_OUTSTANDING_STATUSES } },
+      _sum: { amount: true },
+    });
+    const totalPaidOut = payoutAgg._sum.amount ?? 0;
+
+    const available = Math.max(0, availableGross - totalPaidOut);
+
+    return {
+      available: round(available),
+      held: round(held),
+      totalEarned: round(availableGross + held),
+      totalPaidOut: round(totalPaidOut),
+      commissionRate: seller.commissionRate,
+      nextReleaseAt,
+    };
+  } catch (err) {
+    console.error('[seller-earnings] computeSellerEarnings failed:', err);
+    return EMPTY_EARNINGS;
   }
-
-  // Subtract any payouts already requested or paid. CANCELLED payouts are
-  // ignored — the seller can request that money again.
-  const payoutAgg = await prisma.payout.aggregate({
-    where: { sellerId, status: { in: PAYOUT_OUTSTANDING_STATUSES } },
-    _sum: { amount: true },
-  });
-  const totalPaidOut = payoutAgg._sum.amount ?? 0;
-
-  const available = Math.max(0, availableGross - totalPaidOut);
-
-  return {
-    available: round(available),
-    held: round(held),
-    totalEarned: round(availableGross + held),
-    totalPaidOut: round(totalPaidOut),
-    commissionRate: seller.commissionRate,
-    nextReleaseAt,
-  };
 }
 
 function round(n: number): number {
