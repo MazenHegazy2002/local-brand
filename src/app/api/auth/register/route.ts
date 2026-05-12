@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
     });
 
     if (existingUser) {
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
         email,
         passwordHash: hashedPassword,
         role: userRole,
-      }
+      },
     });
 
     // If role is SELLER, initialize empty SellerProfile
@@ -45,15 +45,32 @@ export async function POST(req: Request) {
         data: {
           userId: user.id,
           storeName: `${name}'s Store`, // Default starter name
-        }
+        },
       });
     }
 
-    return NextResponse.json({ 
-      message: 'User created successfully', 
-      user: { id: user.id, name: user.name, email: user.email, role: user.role } 
-    }, { status: 201 });
+    // Claim any previous guest orders placed against this email so the new
+    // account immediately sees its order history on the dashboard. Best-effort
+    // — a failure here must not block registration.
+    let claimedOrders = 0;
+    try {
+      const claimed = await prisma.order.updateMany({
+        where: { userId: null, guestEmail: email },
+        data: { userId: user.id, guestEmail: null },
+      });
+      claimedOrders = claimed.count;
+    } catch (err) {
+      console.error('Failed to claim guest orders on registration:', err);
+    }
 
+    return NextResponse.json(
+      {
+        message: 'User created successfully',
+        user: { id: user.id, name: user.name, email: user.email, role: user.role },
+        claimedOrders,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Registration Error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });

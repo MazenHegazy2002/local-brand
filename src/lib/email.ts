@@ -12,31 +12,45 @@ interface EmailOptions {
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   const { to, subject, html } = options;
-  
-  if (process.env.NODE_ENV === 'development') {
-    return true;
+
+  // Real sending requires Resend. We always attempt it when the key is present
+  // — including in development — so devs can opt in to live testing simply by
+  // setting RESEND_API_KEY in .env.local. Without the key we still log a
+  // preview so it's obvious what would have gone out (and to which address).
+  if (!process.env.RESEND_API_KEY) {
+    console.log(
+      `[email] No RESEND_API_KEY set — would have sent to ${to}: "${subject}". ` +
+        `Set RESEND_API_KEY to enable real delivery.`
+    );
+    return false;
   }
 
   try {
-    if (!process.env.RESEND_API_KEY) {
-      return false;
-    }
     const { Resend } = await import('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: 'Brandy <orders@brandy.com>',
+    const fromAddress = process.env.RESEND_FROM_ADDRESS || 'Brandy <orders@brandy.com>';
+    const { error } = await resend.emails.send({
+      from: fromAddress,
       to,
       subject,
       html,
     });
+    if (error) {
+      console.error('[email] Resend rejected the message:', error);
+      return false;
+    }
     return true;
-  } catch {
+  } catch (err) {
+    console.error('[email] Failed to send via Resend:', err);
     return false;
   }
 }
 
 export function generateOrderConfirmationEmail(order: Order, user: User | null): string {
-  const itemsList = order.items?.map((item: OrderItem) => `
+  const itemsList =
+    order.items
+      ?.map(
+        (item: OrderItem) => `
     <tr>
       <td style="padding: 12px; border-bottom: 1px solid #eee;">
         <strong>${item.productTitleSnapshot}</strong><br>
@@ -46,7 +60,9 @@ export function generateOrderConfirmationEmail(order: Order, user: User | null):
         <strong>${(item.priceAtPurchase * item.quantity).toLocaleString()} EGP</strong>
       </td>
     </tr>
-  `).join('') || '';
+  `
+      )
+      .join('') || '';
 
   const address = order.shippingAddressSnapshot ? JSON.parse(order.shippingAddressSnapshot) : {};
 
@@ -103,12 +119,16 @@ export function generateOrderConfirmationEmail(order: Order, user: User | null):
           <span>Shipping:</span>
           <span>${order.shippingFee} EGP</span>
         </div>
-        ${order.discountAmount > 0 ? `
+        ${
+          order.discountAmount > 0
+            ? `
         <div style="display: flex; justify-content: space-between; margin: 8px 0; color: green;">
           <span>Discount:</span>
           <span>-${order.discountAmount} EGP</span>
         </div>
-        ` : ''}
+        `
+            : ''
+        }
         <div style="display: flex; justify-content: space-between; margin: 12px 0 0; padding-top: 12px; border-top: 1px solid #eee; font-size: 18px; font-weight: bold;">
           <span>Total:</span>
           <span style="color: #1e3b8a;">${order.totalAmount.toLocaleString()} EGP</span>
@@ -143,7 +163,11 @@ export function generateOrderConfirmationEmail(order: Order, user: User | null):
   `;
 }
 
-export function generateShippingNotificationEmail(order: Order, user: User | null, trackingNumber?: string): string {
+export function generateShippingNotificationEmail(
+  order: Order,
+  user: User | null,
+  trackingNumber?: string
+): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -167,7 +191,11 @@ export function generateShippingNotificationEmail(order: Order, user: User | nul
   `;
 }
 
-export function generateOrderCancelledEmail(order: Order, user: User | null, reason?: string): string {
+export function generateOrderCancelledEmail(
+  order: Order,
+  user: User | null,
+  reason?: string
+): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -220,7 +248,11 @@ export function generateDeliveryConfirmationEmail(order: Order, user: User | nul
   `;
 }
 
-export function generateRefundProcessedEmail(order: Order, user: User | null, refundAmount: number): string {
+export function generateRefundProcessedEmail(
+  order: Order,
+  user: User | null,
+  refundAmount: number
+): string {
   return `
 <!DOCTYPE html>
 <html>

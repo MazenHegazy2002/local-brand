@@ -3,11 +3,19 @@
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Suspense, useEffect } from 'react';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
+  const { data: session } = useSession();
+  const isGuest = !session?.user;
+  // Logged-in customers land on their dashboard; guests get the public
+  // tracking page with the order ID pre-filled.
+  const trackHref = isGuest
+    ? `/track/${encodeURIComponent(orderId || '')}`
+    : '/dashboard?tab=orders';
 
   useEffect(() => {
     // Fire simple confetti effect if available, or just ignore
@@ -77,7 +85,7 @@ function SuccessContent() {
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link
-          href="/dashboard"
+          href={trackHref}
           className="bg-[#1e3b8a] text-white font-bold py-4 px-8 rounded-xl hover:bg-[#152c6e] shadow-lg shadow-[#1e3b8a]/20 transition-all"
         >
           Track My Order
@@ -89,6 +97,22 @@ function SuccessContent() {
           Continue Shopping
         </Link>
       </div>
+
+      {isGuest && (
+        <div className="mt-10 bg-blue-50 border border-blue-100 rounded-2xl p-6 text-left">
+          <h3 className="font-bold text-gray-900 mb-1">Save this order to your account</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Create an account with the same email you used at checkout — this order will be linked
+            automatically and you&apos;ll be able to track it without re-entering the ID.
+          </p>
+          <Link
+            href="/register"
+            className="inline-block bg-white border border-[#1e3b8a] text-[#1e3b8a] font-bold py-2.5 px-5 rounded-lg hover:bg-[#1e3b8a] hover:text-white transition-colors text-sm"
+          >
+            Create an account
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
