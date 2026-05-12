@@ -85,6 +85,9 @@ interface VariantState {
   stock: number;
   price: string | number;
   image: string;
+  // Optional inventory codes — sku is auto-generated server-side when blank.
+  sku?: string;
+  upc?: string;
   uploading?: boolean;
 }
 
@@ -274,7 +277,7 @@ export default function SellerHub() {
   };
 
   const addVariant = () => {
-    setVariants([...variants, { color: '', stock: 0, price: 0, image: '' }]);
+    setVariants([...variants, { color: '', stock: 0, price: 0, image: '', sku: '', upc: '' }]);
   };
 
   const updateVariant = <K extends keyof VariantState>(
@@ -1197,6 +1200,13 @@ function OrdersTab({ orders, onFulfill }: { orders: Order[]; onFulfill: (id: str
                 <div className="text-[11px] text-slate-400">
                   {new Date(item.date).toLocaleDateString()}
                 </div>
+                {(item.variant?.sku || item.variant?.upc) && (
+                  <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                    {item.variant.sku && <>SKU: {item.variant.sku}</>}
+                    {item.variant.sku && item.variant.upc && <span className="mx-1">·</span>}
+                    {item.variant.upc && <>UPC: {item.variant.upc}</>}
+                  </div>
+                )}
               </td>
               <td className="px-6 py-4 text-xs font-mono text-slate-500">
                 #{item.orderId.slice(0, 8)}
@@ -2292,6 +2302,30 @@ function AddProductModal({
                   >
                     <Trash2 size={14} />
                   </button>
+                  {/* Optional inventory codes — collapsed onto a second row so
+                      the main grid stays readable. SKU is auto-generated when
+                      blank; UPC is the public barcode and only filled when
+                      the seller actually has one from GS1. */}
+                  <input
+                    type="text"
+                    value={v.sku || ''}
+                    onChange={e => updateVariant(i, 'sku', e.target.value)}
+                    placeholder="SKU (auto if blank)"
+                    className="col-span-6 px-3 py-2 bg-white border border-slate-100 rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-emerald-500"
+                    autoComplete="off"
+                  />
+                  <input
+                    type="text"
+                    value={v.upc || ''}
+                    onChange={e =>
+                      updateVariant(i, 'upc', e.target.value.replace(/\D/g, '').slice(0, 14))
+                    }
+                    placeholder="UPC / barcode (optional, 8-14 digits)"
+                    className="col-span-6 px-3 py-2 bg-white border border-slate-100 rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-emerald-500"
+                    inputMode="numeric"
+                    pattern="\d*"
+                    autoComplete="off"
+                  />
                   {v.image && (
                     <div className="col-span-12 pt-2 flex items-center gap-3">
                       {/* eslint-disable-next-line @next/next/no-img-element */}

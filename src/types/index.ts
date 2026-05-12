@@ -137,6 +137,9 @@ export interface ProductVariant {
   id: string;
   productId: string;
   sku: string;
+  // Optional Universal Product Code / EAN / GTIN. 8-14 digits, set only
+  // when the seller has a real barcode from GS1 / the manufacturer.
+  upc?: string | null;
   title: string;
   attributes: string;
   price: number;
@@ -165,8 +168,23 @@ export interface CartItem {
 // ORDER TYPES
 // ============================================
 
-export type OrderStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'RETURNED';
-export type OrderItemStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'RETURN_REQUESTED' | 'RETURNED' | 'REFUNDED' | 'CANCELLED';
+export type OrderStatus =
+  | 'PENDING_PAYMENT'
+  | 'CONFIRMED'
+  | 'PROCESSING'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'CANCELLED'
+  | 'RETURNED';
+export type OrderItemStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'RETURN_REQUESTED'
+  | 'RETURNED'
+  | 'REFUNDED'
+  | 'CANCELLED';
 export type PaymentMethod =
   | 'CREDIT_CARD'
   | 'MOBILE_WALLET'
@@ -174,7 +192,13 @@ export type PaymentMethod =
   | 'PAYMOB'
   | 'FAWRY'
   | 'PAYSKY';
-export type PaymentStatus = 'UNPAID' | 'AUTHORIZED' | 'PAID' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED';
+export type PaymentStatus =
+  | 'UNPAID'
+  | 'AUTHORIZED'
+  | 'PAID'
+  | 'FAILED'
+  | 'REFUNDED'
+  | 'PARTIALLY_REFUNDED';
 
 export interface Order {
   id: string;

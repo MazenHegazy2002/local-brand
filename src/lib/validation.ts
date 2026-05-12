@@ -5,9 +5,15 @@ import { z } from 'zod';
 // ============================================
 
 export const registerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters'),
+  name: z
+    .string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name must be less than 100 characters'),
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters').max(100, 'Password must be less than 100 characters'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(100, 'Password must be less than 100 characters'),
   role: z.enum(['BUYER', 'SELLER']).optional().default('BUYER'),
 });
 
@@ -22,7 +28,10 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Token is required'),
-  password: z.string().min(8, 'Password must be at least 8 characters').max(100, 'Password must be less than 100 characters'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(100, 'Password must be less than 100 characters'),
 });
 
 export const updateProfileSchema = z.object({
@@ -36,7 +45,10 @@ export const updateProfileSchema = z.object({
 // ============================================
 
 export const createProductSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters').max(200, 'Title must be less than 200 characters'),
+  title: z
+    .string()
+    .min(3, 'Title must be at least 3 characters')
+    .max(200, 'Title must be less than 200 characters'),
   slug: z.string().min(3).max(200),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   basePrice: z.number().positive('Price must be positive'),
@@ -58,7 +70,16 @@ export const bulkProductSchema = z.object({
 });
 
 export const productVariantSchema = z.object({
-  sku: z.string().optional(),
+  // SKU is auto-generated from the product slug when blank, so it's
+  // optional from the seller's perspective.
+  sku: z.string().min(1).max(64).optional(),
+  // UPC / EAN / GTIN. Numeric-only check is intentionally loose — we
+  // accept 8/12/13/14 digit codes (UPC-E / UPC-A / EAN-13 / GTIN-14).
+  upc: z
+    .string()
+    .regex(/^\d{8,14}$/, 'UPC must be 8-14 digits')
+    .optional()
+    .or(z.literal('')),
   title: z.string().min(1).max(100),
   attributes: z.string().optional(),
   price: z.number().positive(),
@@ -95,10 +116,14 @@ export const createOrderSchema = z.object({
   paymentMethod: z
     .enum(['CASH_ON_DELIVERY', 'CREDIT_CARD', 'MOBILE_WALLET', 'PAYMOB', 'FAWRY', 'PAYSKY'])
     .default('CASH_ON_DELIVERY'),
-  items: z.array(z.object({
-    variantId: z.string().uuid(),
-    quantity: z.number().int().positive('Quantity must be a positive integer'),
-  })).min(1, 'At least one item is required'),
+  items: z
+    .array(
+      z.object({
+        variantId: z.string().uuid(),
+        quantity: z.number().int().positive('Quantity must be a positive integer'),
+      })
+    )
+    .min(1, 'At least one item is required'),
   orderNotes: z.string().max(500).optional(),
   giftWrapping: z.boolean().optional(),
   // Allow caller to inform the action that points were redeemed (so we can
@@ -113,7 +138,16 @@ export const orderStatusUpdateSchema = z.object({
 });
 
 export const orderItemStatusUpdateSchema = z.object({
-  status: z.enum(['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED', 'CANCELLED']),
+  status: z.enum([
+    'PENDING',
+    'CONFIRMED',
+    'SHIPPED',
+    'DELIVERED',
+    'RETURN_REQUESTED',
+    'RETURNED',
+    'REFUNDED',
+    'CANCELLED',
+  ]),
 });
 
 // ============================================
@@ -144,9 +178,18 @@ export const updateCartItemSchema = z.object({
 // ============================================
 
 export const addressSchema = z.object({
-  street: z.string().min(5, 'Street must be at least 5 characters').max(200, 'Street must be less than 200 characters'),
-  city: z.string().min(2, 'City must be at least 2 characters').max(100, 'City must be less than 100 characters'),
-  governorate: z.string().min(2, 'Governorate must be at least 2 characters').max(100, 'Governorate must be less than 100 characters'),
+  street: z
+    .string()
+    .min(5, 'Street must be at least 5 characters')
+    .max(200, 'Street must be less than 200 characters'),
+  city: z
+    .string()
+    .min(2, 'City must be at least 2 characters')
+    .max(100, 'City must be less than 100 characters'),
+  governorate: z
+    .string()
+    .min(2, 'Governorate must be at least 2 characters')
+    .max(100, 'Governorate must be less than 100 characters'),
   postalCode: z.string().max(20).optional(),
   country: z.string().default('Egypt'),
   isDefault: z.boolean().default(false),
@@ -172,11 +215,15 @@ export const createCouponSchema = z.object({
 export const couponEvaluateSchema = z.object({
   code: z.string().min(1),
   orderValue: z.number().min(0),
-  items: z.array(z.object({
-    variantId: z.string(),
-    price: z.number(),
-    quantity: z.number(),
-  })).optional(),
+  items: z
+    .array(
+      z.object({
+        variantId: z.string(),
+        price: z.number(),
+        quantity: z.number(),
+      })
+    )
+    .optional(),
 });
 
 // ============================================
@@ -196,7 +243,10 @@ export const sendNotificationSchema = z.object({
 // ============================================
 
 export const chatMessageSchema = z.object({
-  message: z.string().min(1, 'Message is required').max(2000, 'Message must be less than 2000 characters'),
+  message: z
+    .string()
+    .min(1, 'Message is required')
+    .max(2000, 'Message must be less than 2000 characters'),
   productId: z.string().uuid().optional(),
   orderId: z.string().uuid().optional(),
 });
@@ -208,7 +258,10 @@ export const chatMessageSchema = z.object({
 export const disputeSchema = z.object({
   orderId: z.string().uuid('Invalid order ID'),
   orderItemId: z.string().uuid('Invalid order item ID').optional(),
-  reason: z.string().min(10, 'Reason must be at least 10 characters').max(1000, 'Reason must be less than 1000 characters'),
+  reason: z
+    .string()
+    .min(10, 'Reason must be at least 10 characters')
+    .max(1000, 'Reason must be less than 1000 characters'),
   description: z.string().max(2000, 'Description must be less than 2000 characters').optional(),
 });
 
@@ -218,7 +271,10 @@ export const disputeSchema = z.object({
 
 export const rmaSchema = z.object({
   orderItemId: z.string().uuid('Invalid order item ID'),
-  reason: z.string().min(10, 'Reason must be at least 10 characters').max(1000, 'Reason must be less than 1000 characters'),
+  reason: z
+    .string()
+    .min(10, 'Reason must be at least 10 characters')
+    .max(1000, 'Reason must be less than 1000 characters'),
   details: z.string().max(2000, 'Details must be less than 2000 characters').optional(),
 });
 
@@ -234,10 +290,14 @@ export const rmaUpdateSchema = z.object({
 export const shippingCalculateSchema = z.object({
   governorate: z.string().min(1, 'Governorate is required'),
   weightGrams: z.number().min(0).optional(),
-  items: z.array(z.object({
-    quantity: z.number().int().positive(),
-    weightGrams: z.number(),
-  })).optional(),
+  items: z
+    .array(
+      z.object({
+        quantity: z.number().int().positive(),
+        weightGrams: z.number(),
+      })
+    )
+    .optional(),
 });
 
 // ============================================

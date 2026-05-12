@@ -445,7 +445,55 @@ interface ProductData {
     price?: number;
     stock?: number;
     image?: string;
+    sku?: string;
+    upc?: string;
   }[];
+}
+
+// Allocate a SKU for a brand-new variant. Sellers can pass one in; if they
+// don't, we build a slug-based candidate and add a -2/-3/... suffix until
+// we find one that's actually free in the DB. This avoids the previous
+// `Date.now().slice(-4)` collisions and gives a more readable code.
+async function resolveSku(
+  preferred: string | undefined,
+  productSlug: string,
+  variantHint: string,
+  index: number
+): Promise<string> {
+  const sanitize = (s: string) =>
+    s
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
+  if (preferred && preferred.trim()) {
+    const trimmed = preferred.trim().toUpperCase();
+    const existing = await prisma.productVariant.findUnique({ where: { sku: trimmed } });
+    if (!existing) return trimmed;
+    // Seller picked something already taken — append a numeric suffix
+    // rather than failing the entire create. Most sellers prefer a
+    // working product over a duplicate-SKU error.
+    let counter = 2;
+    while (counter < 1000) {
+      const candidate = `${trimmed}-${counter}`;
+      const taken = await prisma.productVariant.findUnique({ where: { sku: candidate } });
+      if (!taken) return candidate;
+      counter++;
+    }
+  }
+
+  const base = `${sanitize(productSlug)}-${sanitize(variantHint || 'STD')}`;
+  let candidate = `${base}-${index + 1}`;
+  let counter = 1;
+  while (counter < 1000) {
+    const taken = await prisma.productVariant.findUnique({ where: { sku: candidate } });
+    if (!taken) return candidate;
+    counter++;
+    candidate = `${base}-${index + 1}-${counter}`;
+  }
+  // Fallback — extremely unlikely. Tag with a timestamp so it's still
+  // readable but guaranteed unique.
+  return `${base}-${index + 1}-${Date.now().toString().slice(-6)}`;
 }
 
 export async function createProduct(
@@ -478,6 +526,14 @@ export async function createProduct(
       slug = `${baseSlug}-${counter}`;
     }
 
+    // Pre-allocate SKUs in order so we can include them in the nested
+    // `create` payload below. This keeps the whole product+variants
+    // creation in a single Prisma call.
+    const variantList = variants || [];
+    const resolvedSkus = await Promise.all(
+      variantList.map((v, idx) => resolveSku(v.sku, slug, v.color || 'std', idx))
+    );
+
     const product = await prisma.product.create({
       data: {
         ...rest,
@@ -485,29 +541,22 @@ export async function createProduct(
         slug,
         description: rest.description || '',
         variants: {
-          create: variants?.map(
-            (
-              v: { color?: string; price?: number; stock?: number; image?: string },
-              idx: number
-            ) => ({
-              sku: `${rest.title.substring(0, 3).toUpperCase()}-${(v.color || 'STND').toUpperCase()}-${Date.now().toString().slice(-4)}-${idx}`,
-              title: v.color || 'Standard',
-              attributes: JSON.stringify({ color: v.color || 'Standard' }),
-              price: v.price || rest.basePrice,
-              stockCount: v.stock || 0,
-            })
-          ),
+          create: variantList.map((v, idx) => ({
+            sku: resolvedSkus[idx],
+            upc: v.upc?.trim() || null,
+            title: v.color || 'Standard',
+            attributes: JSON.stringify({ color: v.color || 'Standard' }),
+            price: v.price || rest.basePrice,
+            stockCount: v.stock || 0,
+          })),
         },
         images: {
-          create:
-            variants
-              ?.filter(
-                (v: { color?: string; price?: number; stock?: number; image?: string }) => v.image
-              )
-              .map((v: { image?: string }, idx: number) => ({
-                url: v.image!,
-                isPrimary: idx === 0,
-              })) || [],
+          create: variantList
+            .filter(v => v.image)
+            .map((v, idx) => ({
+              url: v.image!,
+              isPrimary: idx === 0,
+            })),
         },
       },
     });

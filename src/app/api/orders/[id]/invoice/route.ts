@@ -3,10 +3,15 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { VAT_RATE, TAX_REG_NUMBER } from '@/lib/constants';
-import { SessionUser, Order, OrderItem, Coupon, User } from '@/types';
+import { SessionUser, Order, OrderItem, Coupon, User, ProductVariant } from '@/types';
+
+// The invoice query joins the variant in so we can render its SKU/UPC.
+type InvoiceItem = OrderItem & {
+  variant?: (ProductVariant & { product?: { title: string } }) | null;
+};
 
 type OrderWithDetails = Order & {
-  items: OrderItem[];
+  items: InvoiceItem[];
   user: User | null;
   coupon: Coupon | null;
 };
@@ -21,16 +26,16 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     const userId = (session.user as SessionUser).id;
     const role = (session.user as SessionUser).role;
 
-    const order = await prisma.order.findUnique({
+    const order = (await prisma.order.findUnique({
       where: { id: orderId },
       include: {
         items: {
-          include: { variant: { include: { product: { include: { seller: true } } } } }
+          include: { variant: { include: { product: { include: { seller: true } } } } },
         },
         user: true,
-        coupon: true
-      }
-    }) as OrderWithDetails | null;
+        coupon: true,
+      },
+    })) as OrderWithDetails | null;
 
     if (!order) return NextResponse.json({ message: 'Order not found' }, { status: 404 });
 
@@ -39,19 +44,21 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     }
 
     const address = order.shippingAddressSnapshot ? JSON.parse(order.shippingAddressSnapshot) : {};
-    const subtotal = order.items.reduce((sum, item) => sum + (item.priceAtPurchase * item.quantity), 0);
+    const subtotal = order.items.reduce(
+      (sum, item) => sum + item.priceAtPurchase * item.quantity,
+      0
+    );
     const vatAmount = Math.round(subtotal * VAT_RATE * 100) / 100;
     const shippingFee = order.shippingFee;
 
     const html = generateInvoiceHTML({ order, address, subtotal, vatAmount, shippingFee });
-    
+
     return new NextResponse(html, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Content-Disposition': `inline; filename="invoice-${order.id}.html"`,
       },
     });
-
   } catch (error) {
     console.error('Invoice Generation Error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
@@ -76,19 +83,36 @@ interface InvoiceParams {
   shippingFee: number;
 }
 
-function generateInvoiceHTML({ order, address, subtotal, vatAmount, shippingFee }: InvoiceParams): string {
-  const itemsHTML = order.items.map((item: OrderItem, i: number) => `
+function generateInvoiceHTML({
+  order,
+  address,
+  subtotal,
+  vatAmount,
+  shippingFee,
+}: InvoiceParams): string {
+  const itemsHTML = order.items
+    .map((item: InvoiceItem, i: number) => {
+      const codes: string[] = [];
+      if (item.variant?.sku) codes.push(`SKU: ${item.variant.sku}`);
+      if (item.variant?.upc) codes.push(`UPC: ${item.variant.upc}`);
+      const codeLine = codes.length
+        ? `<br><span style="font-size: 11px; color: #999; font-family: monospace;">${codes.join(' · ')}</span>`
+        : '';
+      return `
     <tr>
       <td style="padding: 12px; border-bottom: 1px solid #eee;">${i + 1}</td>
       <td style="padding: 12px; border-bottom: 1px solid #eee;">
         <strong>${item.productTitleSnapshot}</strong>
         ${item.sellerNameSnapshot ? `<br><span style="font-size: 12px; color: #666;">Seller: ${item.sellerNameSnapshot}</span>` : ''}
+        ${codeLine}
       </td>
       <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
       <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${item.priceAtPurchase.toLocaleString()} EGP</td>
       <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${(item.priceAtPurchase * item.quantity).toLocaleString()} EGP</td>
     </tr>
-  `).join('');
+  `;
+    })
+    .join('');
 
   return `<!DOCTYPE html>
 <html>

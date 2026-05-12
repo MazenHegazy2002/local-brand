@@ -14,17 +14,40 @@ interface BulkProductRow {
   sizes?: string;
   colors?: string;
   imageUrl?: string;
+  sku?: string;
+  upc?: string;
 }
 
-const COLUMNS: Array<{ key: keyof BulkProductRow; header: string; width: number; required?: boolean; example?: string }> = [
-  { key: 'title',       header: 'Title',         width: 32, required: true,  example: 'Cotton T-Shirt' },
-  { key: 'description', header: 'Description',   width: 48, required: false, example: 'Premium combed cotton, regular fit.' },
-  { key: 'basePrice',   header: 'Price (EGP)',   width: 14, required: true,  example: '299' },
-  { key: 'stockCount',  header: 'Stock',         width: 12, required: false, example: '25' },
-  { key: 'category',    header: 'Category',      width: 18, required: false, example: 'Men' },
-  { key: 'sizes',       header: 'Sizes (csv)',   width: 18, required: false, example: 'S, M, L, XL' },
-  { key: 'colors',      header: 'Colors (csv)',  width: 18, required: false, example: 'Black, White' },
-  { key: 'imageUrl',    header: 'Image URL',     width: 50, required: false, example: 'https://example.com/img.jpg' },
+const COLUMNS: Array<{
+  key: keyof BulkProductRow;
+  header: string;
+  width: number;
+  required?: boolean;
+  example?: string;
+}> = [
+  { key: 'title', header: 'Title', width: 32, required: true, example: 'Cotton T-Shirt' },
+  {
+    key: 'description',
+    header: 'Description',
+    width: 48,
+    required: false,
+    example: 'Premium combed cotton, regular fit.',
+  },
+  { key: 'basePrice', header: 'Price (EGP)', width: 14, required: true, example: '299' },
+  { key: 'stockCount', header: 'Stock', width: 12, required: false, example: '25' },
+  { key: 'category', header: 'Category', width: 18, required: false, example: 'Men' },
+  { key: 'sizes', header: 'Sizes (csv)', width: 18, required: false, example: 'S, M, L, XL' },
+  { key: 'colors', header: 'Colors (csv)', width: 18, required: false, example: 'Black, White' },
+  {
+    key: 'imageUrl',
+    header: 'Image URL',
+    width: 50,
+    required: false,
+    example: 'https://example.com/img.jpg',
+  },
+  // Optional inventory codes — skipped for sellers who don't have them.
+  { key: 'sku', header: 'SKU', width: 20, required: false, example: 'TEE-BLACK-M-001' },
+  { key: 'upc', header: 'UPC (8-14 digits)', width: 20, required: false, example: '012345678905' },
 ];
 
 /**
@@ -43,7 +66,11 @@ export async function GET() {
   wb.created = new Date();
 
   const ws = wb.addWorksheet('Products');
-  ws.columns = COLUMNS.map((c) => ({ header: c.header + (c.required ? ' *' : ''), key: c.key, width: c.width }));
+  ws.columns = COLUMNS.map(c => ({
+    header: c.header + (c.required ? ' *' : ''),
+    key: c.key,
+    width: c.width,
+  }));
 
   // Style header row
   const header = ws.getRow(1);
@@ -53,7 +80,7 @@ export async function GET() {
   header.height = 22;
 
   // Example row (greyed)
-  const example = ws.addRow(Object.fromEntries(COLUMNS.map((c) => [c.key, c.example || ''])));
+  const example = ws.addRow(Object.fromEntries(COLUMNS.map(c => [c.key, c.example || ''])));
   example.font = { italic: true, color: { argb: 'FF94A3B8' } };
 
   // Add 50 blank rows so the seller has plenty of space
@@ -72,17 +99,34 @@ export async function GET() {
   inst.mergeCells('A1:B1');
 
   const lines = [
-    ['Required',     'Title and Price are required for every row.'],
-    ['Stock',        'Defaults to 0 if left blank.'],
-    ['Category',     'Must match an existing category name (Women, Men, Kids, Electronics, etc).'],
-    ['Image URL',    'Optional. Products without an image can NEVER be published — you must add an image from the seller hub before they go live.'],
+    ['Required', 'Title and Price are required for every row.'],
+    ['Stock', 'Defaults to 0 if left blank.'],
+    ['Category', 'Must match an existing category name (Women, Men, Kids, Electronics, etc).'],
+    [
+      'Image URL',
+      'Optional. Products without an image can NEVER be published — you must add an image from the seller hub before they go live.',
+    ],
     ['Sizes/Colors', 'Comma-separated lists. Each combination becomes its own variant.'],
-    ['Sheet 1',      'Fill in the "Products" sheet then upload it from Seller Hub → Inventory → Bulk import.'],
-    ['',             ''],
-    ['Limit',        'Maximum 500 rows per upload.'],
-    ['Result',       'You\'ll see a per-row import report after upload — successful rows are kept as drafts until they have an image attached.'],
+    [
+      'SKU',
+      'Optional. Your internal stock code. Auto-generated from the product slug if you leave it blank. Duplicates get a -2/-3 suffix.',
+    ],
+    [
+      'UPC',
+      'Optional. Universal Product Code / EAN / GTIN — 8-14 digits. Only fill this if you have a real barcode from GS1 or the manufacturer.',
+    ],
+    [
+      'Sheet 1',
+      'Fill in the "Products" sheet then upload it from Seller Hub → Inventory → Bulk import.',
+    ],
+    ['', ''],
+    ['Limit', 'Maximum 500 rows per upload.'],
+    [
+      'Result',
+      "You'll see a per-row import report after upload — successful rows are kept as drafts until they have an image attached.",
+    ],
   ];
-  lines.forEach((row) => {
+  lines.forEach(row => {
     const r = inst.addRow(row);
     r.getCell(1).font = { bold: true };
     r.getCell(2).alignment = { wrapText: true };
@@ -126,7 +170,10 @@ export async function POST(req: NextRequest) {
     await workbook.xlsx.load(buffer);
     const worksheet = workbook.getWorksheet('Products') ?? workbook.worksheets[0];
     if (!worksheet) {
-      return NextResponse.json({ error: 'No worksheet found in the uploaded file.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'No worksheet found in the uploaded file.' },
+        { status: 400 }
+      );
     }
 
     const data: BulkProductRow[] = [];
@@ -147,11 +194,16 @@ export async function POST(req: NextRequest) {
         sizes: row.getCell(6).value?.toString(),
         colors: row.getCell(7).value?.toString(),
         imageUrl: row.getCell(8).value?.toString(),
+        sku: row.getCell(9).value?.toString(),
+        upc: row.getCell(10).value?.toString(),
       });
     });
 
     if (data.length > 500) {
-      return NextResponse.json({ error: 'Up to 500 rows can be imported per file.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Up to 500 rows can be imported per file.' },
+        { status: 400 }
+      );
     }
 
     const profile = await prisma.sellerProfile.findUnique({
@@ -179,7 +231,8 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        const basePrice = typeof row.basePrice === 'string' ? parseFloat(row.basePrice) : row.basePrice;
+        const basePrice =
+          typeof row.basePrice === 'string' ? parseFloat(row.basePrice) : row.basePrice;
         if (!Number.isFinite(basePrice) || basePrice <= 0) {
           results.failed++;
           results.errors.push(`Row ${rowNumber}: invalid price "${row.basePrice}".`);
@@ -187,7 +240,9 @@ export async function POST(req: NextRequest) {
         }
 
         const category = row.category
-          ? await prisma.category.findFirst({ where: { name: { equals: row.category, mode: 'insensitive' } } })
+          ? await prisma.category.findFirst({
+              where: { name: { equals: row.category, mode: 'insensitive' } },
+            })
           : null;
 
         if (row.category && !category) {
@@ -224,11 +279,34 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        const stockCount = typeof row.stockCount === 'string' ? parseInt(row.stockCount, 10) : (row.stockCount || 0);
+        const stockCount =
+          typeof row.stockCount === 'string' ? parseInt(row.stockCount, 10) : row.stockCount || 0;
+
+        // Resolve a unique SKU. Prefer the seller-supplied value, fall back
+        // to a slug-based candidate, append -2/-3 if the chosen one is
+        // already taken so a duplicate doesn't fail the entire row.
+        const desiredSku = row.sku?.trim();
+        let sku: string;
+        if (desiredSku) {
+          let candidate = desiredSku.toUpperCase();
+          let suffix = 2;
+          while (await prisma.productVariant.findUnique({ where: { sku: candidate } })) {
+            candidate = `${desiredSku.toUpperCase()}-${suffix++}`;
+            if (suffix > 50) break;
+          }
+          sku = candidate;
+        } else {
+          sku = `${product.slug.toUpperCase().slice(0, 24)}-${Date.now().toString().slice(-5)}-${index}`;
+        }
+
+        const upcRaw = row.upc?.toString().trim();
+        const upc = upcRaw && /^\d{8,14}$/.test(upcRaw) ? upcRaw : null;
+
         await prisma.productVariant.create({
           data: {
             productId: product.id,
-            sku: `SKU-${Date.now()}-${Math.floor(Math.random() * 1000)}-${index}`,
+            sku,
+            upc,
             title: 'Default',
             attributes: JSON.stringify({}),
             price: basePrice,

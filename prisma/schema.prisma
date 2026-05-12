@@ -182,7 +182,13 @@ model Collection {
 model ProductVariant {
   id          String    @id @default(uuid())
   productId   String
+  // Internal stock-keeping unit chosen by the seller (or auto-generated
+  // from the product slug when blank). Unique across the whole catalogue.
   sku         String    @unique
+  // Optional Universal Product Code / EAN / GTIN — the public barcode on
+  // the package. Sellers usually only have this if they carry branded
+  // goods or rented numbers from GS1, so we never auto-generate it.
+  upc         String?
   title       String    // e.g. "Red - Medium"
   attributes  String    // JSON string for colors/sizes
   price       Float     // Specific variant price overriding basePrice if needed
@@ -191,6 +197,8 @@ model ProductVariant {
   product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   cartItems   CartItem[]
   orderItems  OrderItem[]
+
+  @@index([upc])
 }
 
 model ProductImage {
