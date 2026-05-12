@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { 
-  getDashboardStats, 
-  updateSellerStatus, 
+import {
+  getDashboardStats,
+  updateSellerStatus,
   seedTestData,
   createTaxonomy,
   deleteTaxonomy,
@@ -13,9 +13,18 @@ import {
   adminDeleteUser,
   adminUpdateUser,
 } from '../actions/seller';
-import { 
-  SessionUser, SellerProfile, User, Order, AuditLog, 
-  SystemSettings, Payout, Category, Tag, Collection, Role 
+import {
+  SessionUser,
+  SellerProfile,
+  User,
+  Order,
+  AuditLog,
+  SystemSettings,
+  Payout,
+  Category,
+  Tag,
+  Collection,
+  Role,
 } from '@/types';
 import type { SellerStatus } from '@/generated/client';
 
@@ -82,15 +91,22 @@ export default function AdminOS() {
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [createUserLoading, setCreateUserLoading] = useState(false);
   const [createUserForm, setCreateUserForm] = useState({
-    name: '', email: '', password: '', role: 'BUYER' as Role, storeName: ''
+    name: '',
+    email: '',
+    password: '',
+    role: 'BUYER' as Role,
+    storeName: '',
   });
   const [createUserError, setCreateUserError] = useState<string | null>(null);
-  
+
   // Edit User Modal State
   const [showEditUser, setShowEditUser] = useState(false);
   const [editUserLoading, setEditUserLoading] = useState(false);
   const [editUserForm, setEditUserForm] = useState({
-    id: '', name: '', email: '', role: 'BUYER' as Role
+    id: '',
+    name: '',
+    email: '',
+    role: 'BUYER' as Role,
   });
   const [editUserError, setEditUserError] = useState<string | null>(null);
 
@@ -105,7 +121,7 @@ export default function AdminOS() {
       setData(res);
     } catch (err: unknown) {
       const error = err as Error;
-      setError(error.message || "Unauthorized");
+      setError(error.message || 'Unauthorized');
     } finally {
       setLoading(false);
     }
@@ -114,7 +130,7 @@ export default function AdminOS() {
   const handleStatusUpdate = async (sellerId: string, status: SellerStatus) => {
     setActionLoading(sellerId);
     try {
-      const res = await updateSellerStatus(sellerId, status) as { error?: string };
+      const res = (await updateSellerStatus(sellerId, status)) as { error?: string };
       if (res?.error) {
         alert(res.error);
         return;
@@ -122,7 +138,7 @@ export default function AdminOS() {
       await refreshData();
     } catch (err: unknown) {
       const error = err as Error;
-      alert(error.message || "Failed to update status");
+      alert(error.message || 'Failed to update status');
     } finally {
       setActionLoading(null);
     }
@@ -131,7 +147,7 @@ export default function AdminOS() {
   const handleCreateTaxonomy = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await createTaxonomy(taxType, { name: taxName }) as { error?: string };
+      const res = (await createTaxonomy(taxType, { name: taxName })) as { error?: string };
       if (res?.error) {
         alert(res.error);
         return;
@@ -145,9 +161,9 @@ export default function AdminOS() {
   };
 
   const handleDeleteTaxonomy = async (type: 'category' | 'tag' | 'collection', id: string) => {
-    if (!confirm("Are you sure?")) return;
+    if (!confirm('Are you sure?')) return;
     try {
-      const res = await deleteTaxonomy(type, id) as { error?: string };
+      const res = (await deleteTaxonomy(type, id)) as { error?: string };
       if (res?.error) {
         alert(res.error);
         return;
@@ -162,10 +178,13 @@ export default function AdminOS() {
   const handleSeed = async () => {
     setSeedLoading(true);
     try {
-      const res = await seedTestData() as { error?: string };
-      if (res?.error) { alert(res.error); return; }
+      const res = (await seedTestData()) as { error?: string };
+      if (res?.error) {
+        alert(res.error);
+        return;
+      }
       await refreshData();
-      alert("System seeded with full operational data.");
+      alert('System seeded with full operational data.');
     } catch (err: unknown) {
       const error = err as Error;
       alert(error.message);
@@ -179,8 +198,11 @@ export default function AdminOS() {
     setCreateUserLoading(true);
     setCreateUserError(null);
     try {
-      const res = await adminCreateUser(createUserForm) as { error?: string };
-      if (res?.error) { setCreateUserError(res.error); return; }
+      const res = (await adminCreateUser(createUserForm)) as { error?: string };
+      if (res?.error) {
+        setCreateUserError(res.error);
+        return;
+      }
       setShowCreateUser(false);
       setCreateUserForm({ name: '', email: '', password: '', role: 'BUYER', storeName: '' });
       await refreshData();
@@ -195,8 +217,11 @@ export default function AdminOS() {
   const handleDeleteUser = async (userId: string, email: string) => {
     if (!confirm(`Delete account "${email}"? This cannot be undone.`)) return;
     try {
-      const res = await adminDeleteUser(userId) as { error?: string; message?: string };
-      if (res?.error) { alert(res.error); return; }
+      const res = (await adminDeleteUser(userId)) as { error?: string; message?: string };
+      if (res?.error) {
+        alert(res.error);
+        return;
+      }
       if (res?.message) alert(res.message);
       await refreshData();
     } catch (err: unknown) {
@@ -210,7 +235,7 @@ export default function AdminOS() {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
     });
     setEditUserError(null);
     setShowEditUser(true);
@@ -221,12 +246,15 @@ export default function AdminOS() {
     setEditUserLoading(true);
     setEditUserError(null);
     try {
-      const res = await adminUpdateUser(editUserForm.id, {
+      const res = (await adminUpdateUser(editUserForm.id, {
         name: editUserForm.name,
         email: editUserForm.email,
-        role: editUserForm.role
-      }) as { error?: string };
-      if (res?.error) { setEditUserError(res.error); return; }
+        role: editUserForm.role,
+      })) as { error?: string };
+      if (res?.error) {
+        setEditUserError(res.error);
+        return;
+      }
       setShowEditUser(false);
       await refreshData();
     } catch (err: unknown) {
@@ -241,34 +269,98 @@ export default function AdminOS() {
     refreshData();
   }, []);
 
-  if (loading && !data) return <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#1a1a2e] font-medium">Initializing AdminOS...</div>;
-  if (error) return <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-red-600 font-bold">{error}</div>;
+  if (loading && !data)
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#1a1a2e] font-medium">
+        Initializing AdminOS...
+      </div>
+    );
+  if (error)
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-red-600 font-bold">
+        {error}
+      </div>
+    );
 
   return (
     <div className="db">
       {/* Sidebar */}
       <div className="sidebar">
-        <div className="logo">Admin<span>OS</span></div>
-        
+        <div className="logo">
+          Admin<span>OS</span>
+        </div>
+
         <div className="nav-section">Main</div>
-        <NavItem active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} label="Overview" icon={<OverviewIcon />} />
-        <NavItem active={activeTab === 'sellers'} onClick={() => setActiveTab('sellers')} label="Sellers" icon={<SellersIcon />} />
-        <NavItem active={activeTab === 'users'} onClick={() => setActiveTab('users')} label="Users" icon={<UsersIcon />} />
-        <NavItem active={activeTab === 'products'} onClick={() => setActiveTab('products')} label="Products" icon={<ProductsIcon />} />
-        <NavItem active={activeTab === 'orders'} onClick={() => setActiveTab('orders')} label="Orders" icon={<OrdersIcon />} />
-        
+        <NavItem
+          active={activeTab === 'overview'}
+          onClick={() => setActiveTab('overview')}
+          label="Overview"
+          icon={<OverviewIcon />}
+        />
+        <NavItem
+          active={activeTab === 'sellers'}
+          onClick={() => setActiveTab('sellers')}
+          label="Sellers"
+          icon={<SellersIcon />}
+        />
+        <NavItem
+          active={activeTab === 'users'}
+          onClick={() => setActiveTab('users')}
+          label="Users"
+          icon={<UsersIcon />}
+        />
+        <NavItem
+          active={activeTab === 'products'}
+          onClick={() => setActiveTab('products')}
+          label="Products"
+          icon={<ProductsIcon />}
+        />
+        <NavItem
+          active={activeTab === 'orders'}
+          onClick={() => setActiveTab('orders')}
+          label="Orders"
+          icon={<OrdersIcon />}
+        />
+
         <div className="nav-section">Finance</div>
-        <NavItem active={activeTab === 'payouts'} onClick={() => setActiveTab('payouts')} label="Payouts" icon={<PayoutsIcon />} />
-        <NavItem active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} label="Analytics" icon={<AnalyticsIcon />} />
-        
+        <NavItem
+          active={activeTab === 'payouts'}
+          onClick={() => setActiveTab('payouts')}
+          label="Payouts"
+          icon={<PayoutsIcon />}
+        />
+        <NavItem
+          active={activeTab === 'analytics'}
+          onClick={() => setActiveTab('analytics')}
+          label="Analytics"
+          icon={<AnalyticsIcon />}
+        />
+
         <div className="nav-section">System</div>
-        <NavItem active={activeTab === 'taxonomy'} onClick={() => setActiveTab('taxonomy')} label="Taxonomy" icon={<ModerationIcon />} />
-        <NavItem active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} label="Settings" icon={<SettingsIcon />} />
+        <NavItem
+          active={activeTab === 'taxonomy'}
+          onClick={() => setActiveTab('taxonomy')}
+          label="Taxonomy"
+          icon={<ModerationIcon />}
+        />
+        <NavItem
+          active={activeTab === 'settings'}
+          onClick={() => setActiveTab('settings')}
+          label="Settings"
+          icon={<SettingsIcon />}
+        />
 
         <div className="mt-auto px-4 pb-4 flex flex-col gap-2">
-           <button onClick={handleSeed} disabled={seedLoading} className="seed-btn">{seedLoading ? 'Seeding...' : 'Seed Data'}</button>
-           <div className="user-label">{data?.user?.email}</div>
-           <button onClick={() => window.location.href='/api/auth/signout'} className="signout-btn">Sign out</button>
+          <button onClick={handleSeed} disabled={seedLoading} className="seed-btn">
+            {seedLoading ? 'Seeding...' : 'Seed Data'}
+          </button>
+          <div className="user-label">{data?.user?.email}</div>
+          <button
+            onClick={() => (window.location.href = '/api/auth/signout')}
+            className="signout-btn"
+          >
+            Sign out
+          </button>
         </div>
       </div>
 
@@ -282,20 +374,67 @@ export default function AdminOS() {
               {data?.pendingSellers?.length || 0} pending
             </div>
             <div onClick={refreshData} className="refresh-btn">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={loading ? 'animate-spin' : ''}><path d="M8 1.5A4.5 4.5 0 003.5 6c0 1.5-.5 3-1.5 4h12c-1-1-1.5-2.5-1.5-4A4.5 4.5 0 008 1.5z" fill="#534AB7" opacity=".8"/><path d="M6.5 13.5a1.5 1.5 0 003 0" stroke="#534AB7" strokeWidth="1.2" fill="none"/></svg>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                className={loading ? 'animate-spin' : ''}
+              >
+                <path
+                  d="M8 1.5A4.5 4.5 0 003.5 6c0 1.5-.5 3-1.5 4h12c-1-1-1.5-2.5-1.5-4A4.5 4.5 0 008 1.5z"
+                  fill="#534AB7"
+                  opacity=".8"
+                />
+                <path
+                  d="M6.5 13.5a1.5 1.5 0 003 0"
+                  stroke="#534AB7"
+                  strokeWidth="1.2"
+                  fill="none"
+                />
+              </svg>
             </div>
           </div>
         </div>
 
         <div className="tab-content animate-fadeIn">
-          {activeTab === 'overview' && data && <OverviewTab data={data} handleStatusUpdate={handleStatusUpdate} actionLoading={actionLoading} />}
-          {activeTab === 'sellers' && data && <SellersTab data={data} handleStatusUpdate={handleStatusUpdate} actionLoading={actionLoading} />}
-          {activeTab === 'users' && data && <UsersTab data={data} onDelete={handleDeleteUser} onEdit={handleEditClick} onCreateClick={() => setShowCreateUser(true)} />}
+          {activeTab === 'overview' && data && (
+            <OverviewTab
+              data={data}
+              handleStatusUpdate={handleStatusUpdate}
+              actionLoading={actionLoading}
+            />
+          )}
+          {activeTab === 'sellers' && data && (
+            <SellersTab
+              data={data}
+              handleStatusUpdate={handleStatusUpdate}
+              actionLoading={actionLoading}
+            />
+          )}
+          {activeTab === 'users' && data && (
+            <UsersTab
+              data={data}
+              onDelete={handleDeleteUser}
+              onEdit={handleEditClick}
+              onCreateClick={() => setShowCreateUser(true)}
+            />
+          )}
           {activeTab === 'products' && data && <ProductsTab data={data} />}
           {activeTab === 'orders' && data && <OrdersTab data={data} />}
           {activeTab === 'payouts' && data && <PayoutsTab data={data} />}
           {activeTab === 'analytics' && data && <AnalyticsTab data={data} />}
-          {activeTab === 'taxonomy' && data && <TaxonomyTab data={data} onTypeChange={setTaxType} currentType={taxType} onNameChange={setTaxName} nameValue={taxName} onCreate={handleCreateTaxonomy} onDelete={handleDeleteTaxonomy} />}
+          {activeTab === 'taxonomy' && data && (
+            <TaxonomyTab
+              data={data}
+              onTypeChange={setTaxType}
+              currentType={taxType}
+              onNameChange={setTaxName}
+              nameValue={taxName}
+              onCreate={handleCreateTaxonomy}
+              onDelete={handleDeleteTaxonomy}
+            />
+          )}
           {activeTab === 'settings' && data && <SettingsTab data={data} />}
         </div>
       </div>
@@ -306,24 +445,29 @@ export default function AdminOS() {
           form={createUserForm}
           onChange={(f: typeof createUserForm) => setCreateUserForm(f)}
           onSubmit={handleCreateUser}
-          onClose={() => { setShowCreateUser(false); setCreateUserError(null); }}
+          onClose={() => {
+            setShowCreateUser(false);
+            setCreateUserError(null);
+          }}
           loading={createUserLoading}
           error={createUserError}
         />
       )}
-      
+
       {/* Edit User Modal */}
       {showEditUser && (
         <EditUserModal
           form={editUserForm}
           onChange={(f: typeof editUserForm) => setEditUserForm(f)}
           onSubmit={handleUpdateUser}
-          onClose={() => { setShowEditUser(false); setEditUserError(null); }}
+          onClose={() => {
+            setShowEditUser(false);
+            setEditUserError(null);
+          }}
           loading={editUserLoading}
           error={editUserError}
         />
       )}
-
 
       <style jsx global>{`
         :root {
@@ -414,7 +558,7 @@ const TITLES: Record<string, string> = {
   payouts: 'Financial settlements',
   analytics: 'Revenue analytics',
   taxonomy: 'Classification systems',
-  settings: 'System configuration'
+  settings: 'System configuration',
 };
 
 interface NavItemProps {
@@ -451,8 +595,12 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabPro
         </div>
         <div className="stat">
           <div className="stat-label">Platform revenue</div>
-          <div className="stat-val" style={{color:'#534AB7'}}>{(stats.platformFees || 0).toLocaleString()}</div>
-          <div className="stat-sub" style={{color:'var(--color-text-secondary)'}}>EGP (Net Fees)</div>
+          <div className="stat-val" style={{ color: '#534AB7' }}>
+            {(stats.platformFees || 0).toLocaleString()}
+          </div>
+          <div className="stat-sub" style={{ color: 'var(--color-text-secondary)' }}>
+            EGP (Net Fees)
+          </div>
         </div>
         <div className="stat">
           <div className="stat-label">Active sellers</div>
@@ -468,35 +616,74 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabPro
 
       <div className="grid2">
         <div className="card">
-          <div className="card-header"><div className="card-title">Recent Audit Log</div></div>
+          <div className="card-header">
+            <div className="card-title">Recent Audit Log</div>
+          </div>
           {data?.auditLogs?.slice(0, 5).map((log: AuditLog) => (
-            <div key={log.id} className="row-item" style={{fontSize:'11px'}}>
-               <div style={{width:'6px',height:'6px',borderRadius:'50%',background:log.action.includes('SUSPENDED') ? '#E24B4A' : '#1D9E75'}} />
-               <div style={{flex:1}}>
-                  <span style={{fontWeight:600}}>{log.admin?.name}</span>
-                  <span style={{color:'#64748b'}}> {log.action.replace(/_/g, ' ').toLowerCase()} </span>
-                  <span style={{fontWeight:500}}>{log.details}</span>
-               </div>
-               <div style={{color:'#94a3b8'}}>{new Date(log.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+            <div key={log.id} className="row-item" style={{ fontSize: '11px' }}>
+              <div
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: log.action.includes('SUSPENDED') ? '#E24B4A' : '#1D9E75',
+                }}
+              />
+              <div style={{ flex: 1 }}>
+                <span style={{ fontWeight: 600 }}>{log.admin?.name}</span>
+                <span style={{ color: '#64748b' }}>
+                  {' '}
+                  {log.action.replace(/_/g, ' ').toLowerCase()}{' '}
+                </span>
+                <span style={{ fontWeight: 500 }}>{log.details}</span>
+              </div>
+              <div style={{ color: '#94a3b8' }}>
+                {new Date(log.createdAt).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </div>
             </div>
           ))}
-          {!data?.auditLogs?.length && <div className="py-10 text-center text-xs text-slate-400">No logs yet. Seed data to test.</div>}
+          {!data?.auditLogs?.length && (
+            <div className="py-10 text-center text-xs text-slate-400">
+              No logs yet. Seed data to test.
+            </div>
+          )}
         </div>
         <div className="card">
-          <div className="card-header"><div className="card-title">Pending Approvals</div></div>
-          {data?.pendingSellers?.slice(0,3).map((s: SellerProfile) => (
+          <div className="card-header">
+            <div className="card-title">Pending Approvals</div>
+          </div>
+          {data?.pendingSellers?.slice(0, 3).map((s: SellerProfile) => (
             <div key={s.id} className="row-item">
-              <div style={{flex:1}}>
-                <div style={{fontSize:'12px',fontWeight:500}}>{s.storeName}</div>
-                <div style={{fontSize:'11px',color:'#64748b'}}>{s.user?.email}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '12px', fontWeight: 500 }}>{s.storeName}</div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>{s.user?.email}</div>
               </div>
-              <div style={{display:'flex',gap:'5px'}}>
-                <button disabled={actionLoading === s.id} onClick={() => handleStatusUpdate(s.id, 'ACTIVE')} className="action-btn" style={{borderColor:'#0F6E56',color:'#085041'}}>Approve</button>
-                <button disabled={actionLoading === s.id} onClick={() => handleStatusUpdate(s.id, 'SUSPENDED')} className="action-btn" style={{borderColor:'#A32D2D',color:'#791F1F'}}>Reject</button>
+              <div style={{ display: 'flex', gap: '5px' }}>
+                <button
+                  disabled={actionLoading === s.id}
+                  onClick={() => handleStatusUpdate(s.id, 'ACTIVE')}
+                  className="action-btn"
+                  style={{ borderColor: '#0F6E56', color: '#085041' }}
+                >
+                  Approve
+                </button>
+                <button
+                  disabled={actionLoading === s.id}
+                  onClick={() => handleStatusUpdate(s.id, 'SUSPENDED')}
+                  className="action-btn"
+                  style={{ borderColor: '#A32D2D', color: '#791F1F' }}
+                >
+                  Reject
+                </button>
               </div>
             </div>
           ))}
-          {!data?.pendingSellers?.length && <div className="py-10 text-center text-xs text-slate-400">Queue clear.</div>}
+          {!data?.pendingSellers?.length && (
+            <div className="py-10 text-center text-xs text-slate-400">Queue clear.</div>
+          )}
         </div>
       </div>
     </>
@@ -513,22 +700,48 @@ interface SellersTabProps {
  * Reusable search input used by every list-style admin tab so admins can
  * type a few characters and instantly narrow the table.
  */
-function SearchInput({ value, onChange, placeholder, count }: { value: string; onChange: (v: string) => void; placeholder: string; count: string }) {
+function SearchInput({
+  value,
+  onChange,
+  placeholder,
+  count,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  count: string;
+}) {
   return (
     <div className="flex items-center gap-3 mb-3">
       <div className="relative flex-1">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-          <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
         <input
           type="search"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           className="w-full pl-8 pr-7 py-1.5 rounded-md border border-slate-200 bg-white text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
         />
         {value && (
-          <button type="button" onClick={() => onChange('')} aria-label="Clear search" className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 px-1">×</button>
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            aria-label="Clear search"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 px-1"
+          >
+            ×
+          </button>
         )}
       </div>
       <span className="text-[11px] text-slate-400 whitespace-nowrap">{count}</span>
@@ -541,37 +754,62 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps
   const q = search.trim().toLowerCase();
   const sellers = (data?.sellers || []).filter((s: SellerProfile) => {
     if (!q) return true;
-    return `${s.storeName || ''} ${s.user?.name || ''} ${s.user?.email || ''} ${s.status || ''}`.toLowerCase().includes(q);
+    return `${s.storeName || ''} ${s.user?.name || ''} ${s.user?.email || ''} ${s.status || ''}`
+      .toLowerCase()
+      .includes(q);
   });
 
   return (
     <div className="card">
-      <div className="card-header"><div className="card-title">All Sellers</div></div>
-      <SearchInput value={search} onChange={setSearch} placeholder="Search sellers by store, owner, email or status…" count={`${sellers.length} / ${data?.sellers?.length || 0}`} />
+      <div className="card-header">
+        <div className="card-title">All Sellers</div>
+      </div>
+      <SearchInput
+        value={search}
+        onChange={setSearch}
+        placeholder="Search sellers by store, owner, email or status…"
+        count={`${sellers.length} / ${data?.sellers?.length || 0}`}
+      />
       <div className="row-item font-bold text-[11px] text-slate-400 uppercase">
-         <span className="flex-1">Store Name / Owner</span>
-         <span className="w-32 text-center">Status</span>
-         <span className="w-32 text-right">Balance</span>
-         <span className="w-24"></span>
+        <span className="flex-1">Store Name / Owner</span>
+        <span className="w-32 text-center">Status</span>
+        <span className="w-32 text-right">Balance</span>
+        <span className="w-24"></span>
       </div>
       {sellers.map((s: SellerProfile) => (
         <div key={s.id} className="row-item">
-          <div style={{flex:1}}>
-            <div style={{fontSize:'12px',fontWeight:500}}>{s.storeName}</div>
-            <div style={{fontSize:'11px',color:'#64748b'}}>{s.user?.name}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '12px', fontWeight: 500 }}>{s.storeName}</div>
+            <div style={{ fontSize: '11px', color: '#64748b' }}>{s.user?.name}</div>
           </div>
           <div className="w-32 flex justify-center">
-             <span className={`badge ${s.status === 'ACTIVE' ? 'b-active' : s.status === 'PENDING_APPROVAL' ? 'b-pending' : 'b-banned'}`}>{s.status}</span>
+            <span
+              className={`badge ${s.status === 'ACTIVE' ? 'b-active' : s.status === 'PENDING_APPROVAL' ? 'b-pending' : 'b-banned'}`}
+            >
+              {s.status}
+            </span>
           </div>
-          <div className="w-32 text-right text-sm font-medium">{s.balance?.toLocaleString()} EGP</div>
+          <div className="w-32 text-right text-sm font-medium">
+            {s.balance?.toLocaleString()} EGP
+          </div>
           <div className="w-24 text-right">
-             <button disabled={actionLoading === s.id} onClick={() => handleStatusUpdate(s.id, s.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE')} className="action-btn">
-                {s.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
-             </button>
+            <button
+              disabled={actionLoading === s.id}
+              onClick={() =>
+                handleStatusUpdate(s.id, s.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE')
+              }
+              className="action-btn"
+            >
+              {s.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+            </button>
           </div>
         </div>
       ))}
-      {sellers.length === 0 && <div className="py-10 text-center text-xs text-slate-400">{q ? `No sellers match "${search}".` : 'No sellers yet.'}</div>}
+      {sellers.length === 0 && (
+        <div className="py-10 text-center text-xs text-slate-400">
+          {q ? `No sellers match "${search}".` : 'No sellers yet.'}
+        </div>
+      )}
     </div>
   );
 }
@@ -597,29 +835,57 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
     <div className="card">
       <div className="card-header">
         <div className="card-title">User Registry</div>
-        <button onClick={onCreateClick} style={{background:'#534AB7',color:'#fff',fontSize:'11px',fontWeight:600,padding:'6px 14px',borderRadius:'6px',border:'none',cursor:'pointer'}}>
+        <button
+          onClick={onCreateClick}
+          style={{
+            background: '#534AB7',
+            color: '#fff',
+            fontSize: '11px',
+            fontWeight: 600,
+            padding: '6px 14px',
+            borderRadius: '6px',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
           + Create Account
         </button>
       </div>
       <div className="flex items-center gap-3 mb-3">
         <div className="relative flex-1">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
             type="search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             placeholder="Search users by name or email…"
             className="w-full pl-8 pr-7 py-1.5 rounded-md border border-slate-200 bg-white text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
           />
           {search && (
-            <button type="button" onClick={() => setSearch('')} aria-label="Clear search" className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 px-1">×</button>
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              aria-label="Clear search"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 px-1"
+            >
+              ×
+            </button>
           )}
         </div>
         <select
           value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value as typeof roleFilter)}
+          onChange={e => setRoleFilter(e.target.value as typeof roleFilter)}
           className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
         >
           <option value="all">All roles</option>
@@ -627,33 +893,73 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
           <option value="SELLER">Sellers</option>
           <option value="ADMIN">Admins</option>
         </select>
-        <span className="text-[11px] text-slate-400 whitespace-nowrap">{users.length} / {data?.users?.length || 0}</span>
+        <span className="text-[11px] text-slate-400 whitespace-nowrap">
+          {users.length} / {data?.users?.length || 0}
+        </span>
       </div>
-      <div className="row-item" style={{fontSize:'10px',color:'#94a3b8',fontWeight:600,textTransform:'uppercase'}}>
-        <div style={{width:28}} />
-        <div style={{flex:1}}>Name / Email</div>
-        <div style={{width:80,textAlign:'center'}}>Role</div>
-        <div style={{width:100,textAlign:'right'}}>Joined</div>
-        <div style={{width:60}} />
+      <div
+        className="row-item"
+        style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}
+      >
+        <div style={{ width: 28 }} />
+        <div style={{ flex: 1 }}>Name / Email</div>
+        <div style={{ width: 80, textAlign: 'center' }}>Role</div>
+        <div style={{ width: 100, textAlign: 'right' }}>Joined</div>
+        <div style={{ width: 60 }} />
       </div>
       {users.map((u: User) => (
         <div key={u.id} className="row-item">
-          <div className="avatar-sm" style={{background: u.role==='ADMIN' ? '#EEEDFE' : u.role==='SELLER' ? '#E1F5EE' : '#FFF7ED', color: u.role==='ADMIN' ? '#534AB7' : u.role==='SELLER' ? '#085041' : '#92400E'}}>{(u.name||'?')[0].toUpperCase()}</div>
-          <div style={{flex:1}}>
-            <div style={{fontSize:'12px',fontWeight:500}}>{u.name}</div>
-            <div style={{fontSize:'11px',color:'#64748b'}}>{u.email}</div>
+          <div
+            className="avatar-sm"
+            style={{
+              background:
+                u.role === 'ADMIN' ? '#EEEDFE' : u.role === 'SELLER' ? '#E1F5EE' : '#FFF7ED',
+              color: u.role === 'ADMIN' ? '#534AB7' : u.role === 'SELLER' ? '#085041' : '#92400E',
+            }}
+          >
+            {(u.name || '?')[0].toUpperCase()}
           </div>
-          <div style={{width:80,textAlign:'center'}}>
-            <span className={`badge ${u.role==='ADMIN' ? 'b-new' : u.role==='SELLER' ? 'b-active' : 'b-pending'}`}>{u.role}</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '12px', fontWeight: 500 }}>{u.name}</div>
+            <div style={{ fontSize: '11px', color: '#64748b' }}>{u.email}</div>
           </div>
-          <div style={{fontSize:'11px',color:'#94a3b8',width:100,textAlign:'right'}}>{new Date(u.createdAt).toLocaleDateString()}</div>
-          <div style={{width:80,textAlign:'right',display:'flex',gap:8,justifyContent:'flex-end'}}>
-            <button className="action-btn" onClick={() => onEdit(u)} style={{fontSize:'10px',padding:'2px 6px'}}>Edit</button>
-            <button className="del-btn" onClick={() => onDelete(u.id, u.email)}>Delete</button>
+          <div style={{ width: 80, textAlign: 'center' }}>
+            <span
+              className={`badge ${u.role === 'ADMIN' ? 'b-new' : u.role === 'SELLER' ? 'b-active' : 'b-pending'}`}
+            >
+              {u.role}
+            </span>
+          </div>
+          <div style={{ fontSize: '11px', color: '#94a3b8', width: 100, textAlign: 'right' }}>
+            {new Date(u.createdAt).toLocaleDateString()}
+          </div>
+          <div
+            style={{
+              width: 80,
+              textAlign: 'right',
+              display: 'flex',
+              gap: 8,
+              justifyContent: 'flex-end',
+            }}
+          >
+            <button
+              className="action-btn"
+              onClick={() => onEdit(u)}
+              style={{ fontSize: '10px', padding: '2px 6px' }}
+            >
+              Edit
+            </button>
+            <button className="del-btn" onClick={() => onDelete(u.id, u.email)}>
+              Delete
+            </button>
           </div>
         </div>
       ))}
-      {users.length === 0 && <div className="py-10 text-center text-xs text-slate-400">{q || roleFilter !== 'all' ? 'No users match the current filters.' : 'No users found.'}</div>}
+      {users.length === 0 && (
+        <div className="py-10 text-center text-xs text-slate-400">
+          {q || roleFilter !== 'all' ? 'No users match the current filters.' : 'No users found.'}
+        </div>
+      )}
     </div>
   );
 }
@@ -669,31 +975,51 @@ function OrdersTab({ data }: OrdersTabProps) {
   const orders = (data?.orders || []).filter((o: Order) => {
     if (statusFilter !== 'all' && o.status !== statusFilter) return false;
     if (!q) return true;
-    return `${o.id} ${o.user?.name || ''} ${o.user?.email || ''} ${o.paymentMethod || ''}`.toLowerCase().includes(q);
+    return `${o.id} ${o.user?.name || ''} ${o.user?.email || ''} ${o.guestEmail || ''} ${o.paymentMethod || ''}`
+      .toLowerCase()
+      .includes(q);
   });
 
   return (
     <div className="card">
-      <div className="card-header"><div className="card-title">Platform Orders</div></div>
+      <div className="card-header">
+        <div className="card-title">Platform Orders</div>
+      </div>
       <div className="flex items-center gap-3 mb-3">
         <div className="relative flex-1">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
             type="search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search orders by ID, customer or payment method…"
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search orders by ID, customer, email or payment method…"
             className="w-full pl-8 pr-7 py-1.5 rounded-md border border-slate-200 bg-white text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
           />
           {search && (
-            <button type="button" onClick={() => setSearch('')} aria-label="Clear search" className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 px-1">×</button>
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              aria-label="Clear search"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 px-1"
+            >
+              ×
+            </button>
           )}
         </div>
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={e => setStatusFilter(e.target.value)}
           className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
         >
           <option value="all">All status</option>
@@ -704,27 +1030,49 @@ function OrdersTab({ data }: OrdersTabProps) {
           <option value="DELIVERED">Delivered</option>
           <option value="CANCELLED">Cancelled</option>
         </select>
-        <span className="text-[11px] text-slate-400 whitespace-nowrap">{orders.length} / {data?.orders?.length || 0}</span>
+        <span className="text-[11px] text-slate-400 whitespace-nowrap">
+          {orders.length} / {data?.orders?.length || 0}
+        </span>
       </div>
-      {orders.map((o: Order) => (
-        <div key={o.id} className="row-item">
-          <div style={{flex:1}}>
-            <div style={{fontSize:'12px',fontWeight:600}}>#ORD-{o.id.substring(0,8)}</div>
-            <div style={{fontSize:'11px',color:'#64748b'}}>{o.user?.name || 'Guest'} · {o.items?.length || 0} items</div>
+      {orders.map((o: Order) => {
+        const contactEmail = o.user?.email || o.guestEmail;
+        const customerLabel = o.user?.name || 'Guest';
+        return (
+          <div key={o.id} className="row-item">
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '12px', fontWeight: 600 }}>#ORD-{o.id.substring(0, 8)}</div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>
+                {customerLabel} · {o.items?.length || 0} items
+              </div>
+              {contactEmail && (
+                <div style={{ fontSize: '10px', color: '#94a3b8' }}>
+                  {contactEmail}
+                  {!o.user && ' (guest)'}
+                </div>
+              )}
+            </div>
+            <div className="text-right mr-8">
+              <div style={{ fontSize: '12px', fontWeight: 600 }}>
+                {o.totalAmount?.toLocaleString()} EGP
+              </div>
+              <div style={{ fontSize: '10px', color: '#94a3b8' }}>{o.paymentMethod}</div>
+            </div>
+            <span className="badge b-active">{o.status}</span>
           </div>
-          <div className="text-right mr-8">
-             <div style={{fontSize:'12px',fontWeight:600}}>{o.totalAmount?.toLocaleString()} EGP</div>
-             <div style={{fontSize:'10px',color:'#94a3b8'}}>{o.paymentMethod}</div>
-          </div>
-          <span className="badge b-active">{o.status}</span>
+        );
+      })}
+      {orders.length === 0 && (
+        <div className="py-10 text-center text-xs text-slate-400">
+          {q || statusFilter !== 'all' ? 'No orders match the current filters.' : 'No orders yet.'}
         </div>
-      ))}
-      {orders.length === 0 && <div className="py-10 text-center text-xs text-slate-400">{q || statusFilter !== 'all' ? 'No orders match the current filters.' : 'No orders yet.'}</div>}
+      )}
     </div>
   );
 }
 
-interface ProductsTabProps { data: DashboardData; }
+interface ProductsTabProps {
+  data: DashboardData;
+}
 
 function ProductsTab({ data }: ProductsTabProps) {
   const [search, setSearch] = useState('');
@@ -733,51 +1081,73 @@ function ProductsTab({ data }: ProductsTabProps) {
 
   const products = data?.products || [];
   const q = search.trim().toLowerCase();
-  const filtered = products.filter((p) => {
+  const filtered = products.filter(p => {
     if (categoryFilter !== 'all' && p.category?.id !== categoryFilter) return false;
     const stock = (p.variants || []).reduce((a, b) => a + (b.stockCount || 0), 0);
-    if (stockFilter === 'in'  && stock <= 0)            return false;
-    if (stockFilter === 'out' && stock !== 0)           return false;
+    if (stockFilter === 'in' && stock <= 0) return false;
+    if (stockFilter === 'out' && stock !== 0) return false;
     if (stockFilter === 'low' && (stock === 0 || stock > 5)) return false;
     if (!q) return true;
-    return `${p.title || ''} ${p.id || ''} ${p.category?.name || ''} ${p.seller?.storeName || ''}`.toLowerCase().includes(q);
+    return `${p.title || ''} ${p.id || ''} ${p.category?.name || ''} ${p.seller?.storeName || ''}`
+      .toLowerCase()
+      .includes(q);
   });
 
   return (
     <div className="card">
       <div className="card-header">
         <div className="card-title">All Products</div>
-        <span className="text-[11px] text-slate-400">{filtered.length} / {products.length}</span>
+        <span className="text-[11px] text-slate-400">
+          {filtered.length} / {products.length}
+        </span>
       </div>
       <div className="flex flex-col md:flex-row md:items-center gap-3 mb-3">
         <div className="relative flex-1">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
             type="search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             placeholder="Search products by name, store, category or ID…"
             className="w-full pl-8 pr-7 py-1.5 rounded-md border border-slate-200 bg-white text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
           />
           {search && (
-            <button type="button" onClick={() => setSearch('')} aria-label="Clear search" className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 px-1">×</button>
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              aria-label="Clear search"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 px-1"
+            >
+              ×
+            </button>
           )}
         </div>
         <select
           value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
+          onChange={e => setCategoryFilter(e.target.value)}
           className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
         >
           <option value="all">All categories</option>
           {data?.categories?.map((c: Category) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
           ))}
         </select>
         <select
           value={stockFilter}
-          onChange={(e) => setStockFilter(e.target.value as typeof stockFilter)}
+          onChange={e => setStockFilter(e.target.value as typeof stockFilter)}
           className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
         >
           <option value="all">All stock</option>
@@ -786,35 +1156,90 @@ function ProductsTab({ data }: ProductsTabProps) {
           <option value="out">Out of stock</option>
         </select>
       </div>
-      <div className="row-item" style={{fontSize:'10px',color:'#94a3b8',fontWeight:600,textTransform:'uppercase'}}>
-        <div style={{width:40}} />
-        <div style={{flex:1}}>Title / Category</div>
-        <div style={{width:160}}>Seller</div>
-        <div style={{width:90,textAlign:'right'}}>Price</div>
-        <div style={{width:80,textAlign:'right'}}>Stock</div>
+      <div
+        className="row-item"
+        style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}
+      >
+        <div style={{ width: 40 }} />
+        <div style={{ flex: 1 }}>Title / Category</div>
+        <div style={{ width: 160 }}>Seller</div>
+        <div style={{ width: 90, textAlign: 'right' }}>Price</div>
+        <div style={{ width: 80, textAlign: 'right' }}>Stock</div>
       </div>
-      {filtered.map((p) => {
+      {filtered.map(p => {
         const stock = (p.variants || []).reduce((a, b) => a + (b.stockCount || 0), 0);
-        const img = p.images?.find((i) => i.isPrimary)?.url || p.images?.[0]?.url || '';
+        const img = p.images?.find(i => i.isPrimary)?.url || p.images?.[0]?.url || '';
         return (
           <div key={p.id} className="row-item">
-            <div style={{width:40,height:40,borderRadius:6,overflow:'hidden',background:'#f1f5f9',flexShrink:0}}>
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 6,
+                overflow: 'hidden',
+                background: '#f1f5f9',
+                flexShrink: 0,
+              }}
+            >
               {img ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={img} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                <img
+                  src={img}
+                  alt=""
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
               ) : null}
             </div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:'12px',fontWeight:500,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{p.title}</div>
-              <div style={{fontSize:'11px',color:'#64748b'}}>{p.category?.name || '—'}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {p.title}
+              </div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>{p.category?.name || '—'}</div>
             </div>
-            <div style={{width:160,fontSize:'11px',color:'#64748b',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{p.seller?.storeName || '—'}</div>
-            <div style={{width:90,textAlign:'right',fontSize:'12px',fontWeight:600}}>{p.basePrice?.toLocaleString()} EGP</div>
-            <div style={{width:80,textAlign:'right',fontSize:'11px',fontWeight:600,color: stock === 0 ? '#ef4444' : stock <= 5 ? '#f59e0b' : '#64748b'}}>{stock}</div>
+            <div
+              style={{
+                width: 160,
+                fontSize: '11px',
+                color: '#64748b',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {p.seller?.storeName || '—'}
+            </div>
+            <div style={{ width: 90, textAlign: 'right', fontSize: '12px', fontWeight: 600 }}>
+              {p.basePrice?.toLocaleString()} EGP
+            </div>
+            <div
+              style={{
+                width: 80,
+                textAlign: 'right',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: stock === 0 ? '#ef4444' : stock <= 5 ? '#f59e0b' : '#64748b',
+              }}
+            >
+              {stock}
+            </div>
           </div>
         );
       })}
-      {filtered.length === 0 && <div className="py-10 text-center text-xs text-slate-400">{q || categoryFilter !== 'all' || stockFilter !== 'all' ? 'No products match the current filters.' : 'No products yet.'}</div>}
+      {filtered.length === 0 && (
+        <div className="py-10 text-center text-xs text-slate-400">
+          {q || categoryFilter !== 'all' || stockFilter !== 'all'
+            ? 'No products match the current filters.'
+            : 'No products yet.'}
+        </div>
+      )}
     </div>
   );
 }
@@ -826,18 +1251,28 @@ interface PayoutsTabProps {
 function PayoutsTab({ data }: PayoutsTabProps) {
   return (
     <div className="card">
-       <div className="card-header"><div className="card-title">Pending Payout Requests</div></div>
-       {data?.payouts?.map((p: Payout) => (
-         <div key={p.id} className="row-item">
-            <div style={{flex:1}}>
-               <div style={{fontSize:'12px',fontWeight:600}}>{p.seller?.storeName}</div>
-               <div style={{fontSize:'11px',color:'#64748b'}}>{new Date(p.createdAt).toLocaleDateString()}</div>
+      <div className="card-header">
+        <div className="card-title">Pending Payout Requests</div>
+      </div>
+      {data?.payouts?.map((p: Payout) => (
+        <div key={p.id} className="row-item">
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '12px', fontWeight: 600 }}>{p.seller?.storeName}</div>
+            <div style={{ fontSize: '11px', color: '#64748b' }}>
+              {new Date(p.createdAt).toLocaleDateString()}
             </div>
-            <div style={{fontSize:'14px',fontWeight:600,marginRight:'20px'}}>{p.amount?.toLocaleString()} EGP</div>
-            <button className="action-btn" style={{borderColor:'#0F6E56',color:'#085041'}}>Release Payment</button>
-         </div>
-       ))}
-       {!data?.payouts?.length && <div className="py-20 text-center text-xs text-slate-400">No payout requests in queue.</div>}
+          </div>
+          <div style={{ fontSize: '14px', fontWeight: 600, marginRight: '20px' }}>
+            {p.amount?.toLocaleString()} EGP
+          </div>
+          <button className="action-btn" style={{ borderColor: '#0F6E56', color: '#085041' }}>
+            Release Payment
+          </button>
+        </div>
+      ))}
+      {!data?.payouts?.length && (
+        <div className="py-20 text-center text-xs text-slate-400">No payout requests in queue.</div>
+      )}
     </div>
   );
 }
@@ -865,7 +1300,13 @@ function AnalyticsTab({ data }: AnalyticsTabProps) {
   const categoryCounts = new Map<string, { name: string; units: number }>();
   for (const order of orders) {
     for (const item of order.items || []) {
-      const variant = (item as { variant?: { product?: { category?: { id: string; name: string } | null; categoryId?: string } } }).variant;
+      const variant = (
+        item as {
+          variant?: {
+            product?: { category?: { id: string; name: string } | null; categoryId?: string };
+          };
+        }
+      ).variant;
       const cat = variant?.product?.category;
       if (cat) {
         const existing = categoryCounts.get(cat.id);
@@ -882,27 +1323,30 @@ function AnalyticsTab({ data }: AnalyticsTabProps) {
 
   return (
     <div className="grid grid-cols-2 gap-6">
-       <div className="card">
-          <div className="card-title mb-4">Volume Distribution</div>
-          <div className="flex flex-col gap-4">
-             <MetricBar label="Direct Sales" value={directPct} color="#534AB7" />
-             <MetricBar label="Flash Sales" value={flashPct} color="#E24B4A" />
-             <MetricBar label="Coupon Orders" value={couponPct} color="#1D9E75" />
-          </div>
-       </div>
-       <div className="card">
-          <div className="card-title mb-4">Top Categories</div>
-          {topCategories.length === 0 ? (
-            <div className="py-6 text-center text-xs text-slate-400">No order data yet.</div>
-          ) : (
-            topCategories.map(c => (
-              <div key={c.name} className="flex justify-between items-center py-2 border-bottom border-slate-50">
-                <span className="text-xs text-slate-600">{c.name}</span>
-                <span className="text-xs font-bold">{c.units} units</span>
-              </div>
-            ))
-          )}
-       </div>
+      <div className="card">
+        <div className="card-title mb-4">Volume Distribution</div>
+        <div className="flex flex-col gap-4">
+          <MetricBar label="Direct Sales" value={directPct} color="#534AB7" />
+          <MetricBar label="Flash Sales" value={flashPct} color="#E24B4A" />
+          <MetricBar label="Coupon Orders" value={couponPct} color="#1D9E75" />
+        </div>
+      </div>
+      <div className="card">
+        <div className="card-title mb-4">Top Categories</div>
+        {topCategories.length === 0 ? (
+          <div className="py-6 text-center text-xs text-slate-400">No order data yet.</div>
+        ) : (
+          topCategories.map(c => (
+            <div
+              key={c.name}
+              className="flex justify-between items-center py-2 border-bottom border-slate-50"
+            >
+              <span className="text-xs text-slate-600">{c.name}</span>
+              <span className="text-xs font-bold">{c.units} units</span>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
@@ -917,35 +1361,70 @@ interface TaxonomyTabProps {
   onDelete: (type: 'category' | 'tag' | 'collection', id: string) => Promise<void>;
 }
 
-function TaxonomyTab({ data, currentType, onTypeChange, onNameChange, nameValue, onCreate, onDelete }: TaxonomyTabProps) {
-  const items = currentType === 'category' ? data.categories : currentType === 'tag' ? data.tags : data.collections;
+function TaxonomyTab({
+  data,
+  currentType,
+  onTypeChange,
+  onNameChange,
+  nameValue,
+  onCreate,
+  onDelete,
+}: TaxonomyTabProps) {
+  const items =
+    currentType === 'category'
+      ? data.categories
+      : currentType === 'tag'
+        ? data.tags
+        : data.collections;
   return (
     <div className="grid grid-cols-3 gap-6">
-       <div className="card col-span-1">
-          <div className="card-title mb-4">Add Taxonomy</div>
-          <form onSubmit={onCreate} className="flex flex-col gap-4">
-             <select value={currentType} onChange={(e) => onTypeChange(e.target.value as any)} className="input-tax bg-white">
-                <option value="category">Category</option>
-                <option value="tag">Tag</option>
-                <option value="collection">Collection</option>
-             </select>
-             <input required placeholder="Name" value={nameValue} onChange={(e) => onNameChange(e.target.value)} className="input-tax" />
-             <button type="submit" className="action-btn bg-slate-900 text-white hover:bg-slate-800 py-2 border-none">Create Entry</button>
-          </form>
-       </div>
-       <div className="card col-span-2">
-          <div className="card-title mb-4">Existing {currentType}s</div>
-          <div className="flex flex-col gap-1">
-             {items?.map((item: Category | Tag | Collection) => (
-                <div key={item.id} className="row-item">
-                   <div className="flex-1 text-xs font-medium">{item.name}</div>
-                   <div className="text-[10px] text-slate-400 mr-4">slug: {item.slug}</div>
-                   <button onClick={() => onDelete(currentType, item.id)} className="text-red-400 hover:text-red-600">✕</button>
-                </div>
-             ))}
-             {!items?.length && <div className="py-10 text-center text-xs text-slate-400">Empty set.</div>}
-          </div>
-       </div>
+      <div className="card col-span-1">
+        <div className="card-title mb-4">Add Taxonomy</div>
+        <form onSubmit={onCreate} className="flex flex-col gap-4">
+          <select
+            value={currentType}
+            onChange={e => onTypeChange(e.target.value as 'category' | 'tag' | 'collection')}
+            className="input-tax bg-white"
+          >
+            <option value="category">Category</option>
+            <option value="tag">Tag</option>
+            <option value="collection">Collection</option>
+          </select>
+          <input
+            required
+            placeholder="Name"
+            value={nameValue}
+            onChange={e => onNameChange(e.target.value)}
+            className="input-tax"
+          />
+          <button
+            type="submit"
+            className="action-btn bg-slate-900 text-white hover:bg-slate-800 py-2 border-none"
+          >
+            Create Entry
+          </button>
+        </form>
+      </div>
+      <div className="card col-span-2">
+        <div className="card-title mb-4">Existing {currentType}s</div>
+        <div className="flex flex-col gap-1">
+          {items?.map((item: Category | Tag | Collection) => (
+            <div key={item.id} className="row-item">
+              <div className="flex-1 text-xs font-medium">{item.name}</div>
+              <div className="text-[10px] text-slate-400 mr-4">slug: {item.slug}</div>
+              <button
+                onClick={() => onDelete(currentType, item.id)}
+                className="text-red-400 hover:text-red-600"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          {!items?.length && (
+            <div className="py-10 text-center text-xs text-slate-400">Empty set.</div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -957,21 +1436,27 @@ interface SettingsTabProps {
 function SettingsTab({ data }: SettingsTabProps) {
   return (
     <div className="card max-w-xl">
-       <div className="card-title mb-6">Global Platform Settings</div>
-       {data?.systemSettings?.map((s: SystemSettings) => (
-          <div key={s.key} className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-100">
-             <div className="flex justify-between items-center mb-1">
-                <span className="text-[11px] font-bold text-slate-400 uppercase">{s.key}</span>
-                <span className="text-[10px] text-slate-300">Updated {new Date(s.updatedAt).toLocaleDateString()}</span>
-             </div>
-             <div className="flex gap-4 items-center">
-                <input defaultValue={s.value} className="input-tax flex-1" />
-                <button className="action-btn bg-white">Save</button>
-             </div>
-             <div className="text-[11px] text-slate-500 mt-2">{s.description}</div>
+      <div className="card-title mb-6">Global Platform Settings</div>
+      {data?.systemSettings?.map((s: SystemSettings) => (
+        <div key={s.key} className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-100">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[11px] font-bold text-slate-400 uppercase">{s.key}</span>
+            <span className="text-[10px] text-slate-300">
+              Updated {new Date(s.updatedAt).toLocaleDateString()}
+            </span>
           </div>
-       ))}
-       {!data?.systemSettings?.length && <div className="py-10 text-center text-xs text-slate-400">No settings found. Seed data to initialize.</div>}
+          <div className="flex gap-4 items-center">
+            <input defaultValue={s.value} className="input-tax flex-1" />
+            <button className="action-btn bg-white">Save</button>
+          </div>
+          <div className="text-[11px] text-slate-500 mt-2">{s.description}</div>
+        </div>
+      ))}
+      {!data?.systemSettings?.length && (
+        <div className="py-10 text-center text-xs text-slate-400">
+          No settings found. Seed data to initialize.
+        </div>
+      )}
     </div>
   );
 }
@@ -983,29 +1468,192 @@ interface MetricBarProps {
 }
 
 function MetricBar({ label, value, color }: MetricBarProps) {
-   return (
-      <div>
-         <div className="flex justify-between text-[11px] mb-1">
-            <span>{label}</span>
-            <span className="font-bold">{value}%</span>
-         </div>
-         <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full" style={{width:`${value}%`, background:color}}></div>
-         </div>
+  return (
+    <div>
+      <div className="flex justify-between text-[11px] mb-1">
+        <span>{label}</span>
+        <span className="font-bold">{value}%</span>
       </div>
-   );
+      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-full" style={{ width: `${value}%`, background: color }}></div>
+      </div>
+    </div>
+  );
 }
 
 // SVGs matched from mockup
-function OverviewIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".9"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".6"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".6"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".3"/></svg>; }
-function SellersIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="3" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".7"/><path d="M1 14c0-2.8 2.2-5 5-5" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".6"/><path d="M11 9l1.5 1.5L15 8" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".8"/></svg>; }
-function UsersIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.1" fill="none" opacity=".6"/><circle cx="11" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.1" fill="none" opacity=".6"/><path d="M1 14c0-2.5 1.8-4 4-4M7 14c0-2.5 1.8-4 4-4s4 1.5 4 4" stroke="currentColor" strokeWidth="1.1" fill="none" opacity=".5"/></svg>; }
-function OrdersIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="12" height="14" rx="2" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".7"/><rect x="5" y="5" width="6" height="1" rx=".5" fill="currentColor" opacity=".5"/><rect x="5" y="8" width="4" height="1" rx=".5" fill="currentColor" opacity=".4"/></svg>; }
-function ProductsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 5l6-3 6 3-6 3-6-3z" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".7"/><path d="M2 5v6l6 3M14 5v6l-6 3" stroke="currentColor" strokeWidth="1.1" fill="none" opacity=".6"/></svg>; }
-function PayoutsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="4" width="14" height="9" rx="2" fill="currentColor" opacity=".5"/><rect x="1" y="4" width="14" height="3" rx="1" fill="currentColor" opacity=".7"/><circle cx="11.5" cy="9.5" r="1.5" fill="#7F77DD"/></svg>; }
-function AnalyticsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><polyline points="1,12 5,7 8,10 11,4 15,8" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".7"/></svg>; }
-function ModerationIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".6"/><path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".8"/></svg>; }
-function SettingsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".7"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3" stroke="currentColor" strokeWidth="1.2" stroke-linecap="round" fill="none" opacity=".5"/></svg>; }
+function OverviewIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".9" />
+      <rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".6" />
+      <rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".6" />
+      <rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".3" />
+    </svg>
+  );
+}
+function SellersIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <circle
+        cx="6"
+        cy="5"
+        r="3"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".7"
+      />
+      <path
+        d="M1 14c0-2.8 2.2-5 5-5"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".6"
+      />
+      <path
+        d="M11 9l1.5 1.5L15 8"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        fill="none"
+        opacity=".8"
+      />
+    </svg>
+  );
+}
+function UsersIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <circle
+        cx="5"
+        cy="5"
+        r="2.5"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        fill="none"
+        opacity=".6"
+      />
+      <circle
+        cx="11"
+        cy="5"
+        r="2.5"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        fill="none"
+        opacity=".6"
+      />
+      <path
+        d="M1 14c0-2.5 1.8-4 4-4M7 14c0-2.5 1.8-4 4-4s4 1.5 4 4"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        fill="none"
+        opacity=".5"
+      />
+    </svg>
+  );
+}
+function OrdersIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <rect
+        x="2"
+        y="1"
+        width="12"
+        height="14"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".7"
+      />
+      <rect x="5" y="5" width="6" height="1" rx=".5" fill="currentColor" opacity=".5" />
+      <rect x="5" y="8" width="4" height="1" rx=".5" fill="currentColor" opacity=".4" />
+    </svg>
+  );
+}
+function ProductsIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M2 5l6-3 6 3-6 3-6-3z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".7"
+      />
+      <path
+        d="M2 5v6l6 3M14 5v6l-6 3"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        fill="none"
+        opacity=".6"
+      />
+    </svg>
+  );
+}
+function PayoutsIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <rect x="1" y="4" width="14" height="9" rx="2" fill="currentColor" opacity=".5" />
+      <rect x="1" y="4" width="14" height="3" rx="1" fill="currentColor" opacity=".7" />
+      <circle cx="11.5" cy="9.5" r="1.5" fill="#7F77DD" />
+    </svg>
+  );
+}
+function AnalyticsIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <polyline
+        points="1,12 5,7 8,10 11,4 15,8"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        fill="none"
+        opacity=".7"
+      />
+    </svg>
+  );
+}
+function ModerationIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <rect
+        x="2"
+        y="2"
+        width="12"
+        height="12"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".6"
+      />
+      <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.3" fill="none" opacity=".8" />
+    </svg>
+  );
+}
+function SettingsIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <circle
+        cx="8"
+        cy="8"
+        r="2.5"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".7"
+      />
+      <path
+        d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        stroke-linecap="round"
+        fill="none"
+        opacity=".5"
+      />
+    </svg>
+  );
+}
 
 interface EditUserModalProps {
   form: { id: string; name: string; email: string; role: Role };
@@ -1017,10 +1665,11 @@ interface EditUserModalProps {
 }
 
 function EditUserModal({ form, onChange, onSubmit, onClose, loading, error }: EditUserModalProps) {
-  const update = (field: string, val: string) => onChange({ ...form, [field]: val as any });
+  const update = (field: keyof typeof form, val: string) =>
+    onChange({ ...form, [field]: val } as typeof form);
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-title">Edit User Account</div>
 
         {error && <div className="error-banner">{error}</div>}
@@ -1028,25 +1677,44 @@ function EditUserModal({ form, onChange, onSubmit, onClose, loading, error }: Ed
         <form onSubmit={onSubmit}>
           <div className="form-group">
             <label className="form-label">Full Name</label>
-            <input required className="form-input" placeholder="e.g. Ahmed Hassan" value={form.name} onChange={e => update('name', e.target.value)} />
+            <input
+              required
+              className="form-input"
+              placeholder="e.g. Ahmed Hassan"
+              value={form.name}
+              onChange={e => update('name', e.target.value)}
+            />
           </div>
 
           <div className="form-group">
             <label className="form-label">Email Address</label>
-            <input required type="email" className="form-input" placeholder="user@example.com" value={form.email} onChange={e => update('email', e.target.value)} />
+            <input
+              required
+              type="email"
+              className="form-input"
+              placeholder="user@example.com"
+              value={form.email}
+              onChange={e => update('email', e.target.value)}
+            />
           </div>
 
           <div className="form-group">
             <label className="form-label">Account Role</label>
-            <select className="form-input role-select" value={form.role} onChange={e => update('role', e.target.value)}>
+            <select
+              className="form-input role-select"
+              value={form.role}
+              onChange={e => update('role', e.target.value)}
+            >
               <option value="BUYER">🛍️ Buyer (Customer)</option>
               <option value="SELLER">🏪 Seller (Merchant)</option>
               <option value="ADMIN">🛡️ Admin (Staff)</option>
             </select>
           </div>
 
-          <div style={{display:'flex',gap:10,marginTop:20}}>
-            <button type="button" className="btn-ghost" onClick={onClose}>Cancel</button>
+          <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+            <button type="button" className="btn-ghost" onClick={onClose}>
+              Cancel
+            </button>
             <button type="submit" className="btn-primary" disabled={loading}>
               {loading ? 'Saving...' : 'Save Changes'}
             </button>
@@ -1059,18 +1727,32 @@ function EditUserModal({ form, onChange, onSubmit, onClose, loading, error }: Ed
 
 interface CreateUserModalProps {
   form: { name: string; email: string; password: string; role: Role; storeName: string };
-  onChange: (form: { name: string; email: string; password: string; role: Role; storeName: string }) => void;
+  onChange: (form: {
+    name: string;
+    email: string;
+    password: string;
+    role: Role;
+    storeName: string;
+  }) => void;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   onClose: () => void;
   loading: boolean;
   error: string | null;
 }
 
-function CreateUserModal({ form, onChange, onSubmit, onClose, loading, error }: CreateUserModalProps) {
-  const update = (field: string, val: string) => onChange({ ...form, [field]: val as any });
+function CreateUserModal({
+  form,
+  onChange,
+  onSubmit,
+  onClose,
+  loading,
+  error,
+}: CreateUserModalProps) {
+  const update = (field: keyof typeof form, val: string) =>
+    onChange({ ...form, [field]: val } as typeof form);
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-title">Create New Account</div>
 
         {error && <div className="error-banner">{error}</div>}
@@ -1078,22 +1760,47 @@ function CreateUserModal({ form, onChange, onSubmit, onClose, loading, error }: 
         <form onSubmit={onSubmit}>
           <div className="form-group">
             <label className="form-label">Full Name</label>
-            <input required className="form-input" placeholder="e.g. Ahmed Hassan" value={form.name} onChange={e => update('name', e.target.value)} />
+            <input
+              required
+              className="form-input"
+              placeholder="e.g. Ahmed Hassan"
+              value={form.name}
+              onChange={e => update('name', e.target.value)}
+            />
           </div>
 
           <div className="form-group">
             <label className="form-label">Email Address</label>
-            <input required type="email" className="form-input" placeholder="user@example.com" value={form.email} onChange={e => update('email', e.target.value)} />
+            <input
+              required
+              type="email"
+              className="form-input"
+              placeholder="user@example.com"
+              value={form.email}
+              onChange={e => update('email', e.target.value)}
+            />
           </div>
 
           <div className="form-group">
             <label className="form-label">Password</label>
-            <input required type="password" className="form-input" placeholder="Min. 8 characters" minLength={8} value={form.password} onChange={e => update('password', e.target.value)} />
+            <input
+              required
+              type="password"
+              className="form-input"
+              placeholder="Min. 8 characters"
+              minLength={8}
+              value={form.password}
+              onChange={e => update('password', e.target.value)}
+            />
           </div>
 
           <div className="form-group">
             <label className="form-label">Account Role</label>
-            <select className="form-input role-select" value={form.role} onChange={e => update('role', e.target.value)}>
+            <select
+              className="form-input role-select"
+              value={form.role}
+              onChange={e => update('role', e.target.value)}
+            >
               <option value="BUYER">🛍️ Buyer (Customer)</option>
               <option value="SELLER">🏪 Seller (Merchant)</option>
               <option value="ADMIN">🛡️ Admin (Staff)</option>
@@ -1103,15 +1810,26 @@ function CreateUserModal({ form, onChange, onSubmit, onClose, loading, error }: 
           {form.role === 'SELLER' && (
             <div className="form-group">
               <label className="form-label">Store Name</label>
-              <input className="form-input" placeholder="e.g. Ahmed's Electronics" value={form.storeName} onChange={e => update('storeName', e.target.value)} />
-              <div style={{fontSize:'10px',color:'#94a3b8',marginTop:4}}>Leave blank to auto-generate from name</div>
+              <input
+                className="form-input"
+                placeholder="e.g. Ahmed's Electronics"
+                value={form.storeName}
+                onChange={e => update('storeName', e.target.value)}
+              />
+              <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: 4 }}>
+                Leave blank to auto-generate from name
+              </div>
             </div>
           )}
 
-          <div style={{display:'flex',gap:10,marginTop:20}}>
-            <button type="button" className="btn-ghost" onClick={onClose}>Cancel</button>
+          <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+            <button type="button" className="btn-ghost" onClick={onClose}>
+              Cancel
+            </button>
             <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Creating...' : `Create ${form.role === 'BUYER' ? 'Customer' : form.role === 'SELLER' ? 'Seller' : 'Admin'} Account`}
+              {loading
+                ? 'Creating...'
+                : `Create ${form.role === 'BUYER' ? 'Customer' : form.role === 'SELLER' ? 'Seller' : 'Admin'} Account`}
             </button>
           </div>
         </form>

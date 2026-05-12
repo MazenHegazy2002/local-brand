@@ -12,34 +12,36 @@ import type { Product, Review, SessionUser } from '@/types';
 
 async function getRealUserId(session: Session | null) {
   if (!session?.user) return null;
-  let userId = (session.user as { id: string }).id;
+  const userId = (session.user as { id: string }).id;
   return userId;
 }
 
 export async function getDashboardStats() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return { error: "Unauthorized" };
+    if (!session) return { error: 'Unauthorized' };
 
     const userId = await getRealUserId(session);
-    if (!userId) return { error: "Unauthorized" };
+    if (!userId) return { error: 'Unauthorized' };
     const role = (session.user as SessionUser).role;
 
     if (role === 'BUYER') {
       const orders = await prisma.order.findMany({
         where: { userId },
-        include: { items: { include: { variant: { include: { product: { include: { images: true } } } } } } },
-        orderBy: { createdAt: 'desc' }
+        include: {
+          items: { include: { variant: { include: { product: { include: { images: true } } } } } },
+        },
+        orderBy: { createdAt: 'desc' },
       });
 
       const wishlist = await prisma.wishlist.findMany({
         where: { userId },
-        include: { product: { include: { images: true } } }
+        include: { product: { include: { images: true } } },
       });
 
       const notifications = await prisma.notification.findMany({
         where: { userId },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       });
 
       return {
@@ -48,27 +50,43 @@ export async function getDashboardStats() {
         notifications,
         stats: {
           totalOrders: orders.length,
-          wishlistCount: wishlist.length
-        }
+          wishlistCount: wishlist.length,
+        },
       };
     }
 
     if (role === 'SELLER') {
       const seller = await prisma.sellerProfile.findUnique({
         where: { userId },
-        include: { 
-          products: { 
-            include: { images: true, variants: true, category: true, tags: true, collections: true } 
-          } 
-        }
+        include: {
+          products: {
+            include: {
+              images: true,
+              variants: true,
+              category: true,
+              tags: true,
+              collections: true,
+            },
+          },
+        },
       });
 
-      if (!seller) return { error: "Seller profile not found. Please contact support or complete your registration." };
+      if (!seller)
+        return {
+          error: 'Seller profile not found. Please contact support or complete your registration.',
+        };
 
       const orders = await prisma.order.findMany({
-        where: { items: { some: { variant: { productId: { in: seller.products.map(p => p.id) } } } } },
-        include: { items: { include: { variant: true } } },
-        orderBy: { createdAt: 'desc' }
+        where: {
+          items: { some: { variant: { productId: { in: seller.products.map(p => p.id) } } } },
+        },
+        include: {
+          items: { include: { variant: true } },
+          // Include the buyer so the seller hub can surface their name/email
+          // for logged-in customers; guests rely on Order.guestEmail directly.
+          user: { select: { id: true, name: true, email: true } },
+        },
+        orderBy: { createdAt: 'desc' },
       });
 
       // Real Daily Revenue Aggregation (last 7 days)
@@ -81,9 +99,9 @@ export async function getDashboardStats() {
         by: ['createdAt'],
         where: {
           createdAt: { gte: sevenDaysAgo },
-          items: { some: { variant: { productId: { in: productIds } } } }
+          items: { some: { variant: { productId: { in: productIds } } } },
         },
-        _sum: { totalAmount: true }
+        _sum: { totalAmount: true },
       });
 
       // Map to 7-day array
@@ -114,8 +132,8 @@ export async function getDashboardStats() {
         ? await prisma.order.count({
             where: {
               createdAt: { gte: startOfToday },
-              items: { some: { variant: { productId: { in: productIds } } } }
-            }
+              items: { some: { variant: { productId: { in: productIds } } } },
+            },
           })
         : 0;
 
@@ -133,41 +151,44 @@ export async function getDashboardStats() {
             prisma.order.aggregate({
               where: {
                 createdAt: { gte: startOfThisMonth },
-                items: { some: { variant: { productId: { in: productIds } } } }
+                items: { some: { variant: { productId: { in: productIds } } } },
               },
-              _sum: { totalAmount: true }
+              _sum: { totalAmount: true },
             }),
             prisma.order.aggregate({
               where: {
                 createdAt: { gte: startOfPrevMonth, lte: endOfPrevMonth },
-                items: { some: { variant: { productId: { in: productIds } } } }
+                items: { some: { variant: { productId: { in: productIds } } } },
               },
-              _sum: { totalAmount: true }
-            })
+              _sum: { totalAmount: true },
+            }),
           ])
         : [{ _sum: { totalAmount: 0 } }, { _sum: { totalAmount: 0 } }];
 
       const thisMonthRevenue = thisMonthAgg._sum.totalAmount || 0;
       const prevMonthRevenue = prevMonthAgg._sum.totalAmount || 0;
-      const monthlyChangePct = prevMonthRevenue > 0
-        ? Math.round(((thisMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100)
-        : (thisMonthRevenue > 0 ? 100 : 0);
+      const monthlyChangePct =
+        prevMonthRevenue > 0
+          ? Math.round(((thisMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100)
+          : thisMonthRevenue > 0
+            ? 100
+            : 0;
 
       // --- Performance Metrics Calculation ---
       const totalSellerOrders = orders.length;
       const cancelledOrders = orders.filter(o => o.status === 'CANCELLED').length;
       const returnedOrders = orders.filter(o => o.status === 'RETURNED').length;
-      
-      const orderAcceptance = totalSellerOrders > 0 
-        ? Math.round(((totalSellerOrders - cancelledOrders) / totalSellerOrders) * 100) 
-        : 100;
-      
-      const returnRate = totalSellerOrders > 0 
-        ? Math.round((returnedOrders / totalSellerOrders) * 100) 
-        : 0;
+
+      const orderAcceptance =
+        totalSellerOrders > 0
+          ? Math.round(((totalSellerOrders - cancelledOrders) / totalSellerOrders) * 100)
+          : 100;
+
+      const returnRate =
+        totalSellerOrders > 0 ? Math.round((returnedOrders / totalSellerOrders) * 100) : 0;
 
       // Shipping Speed (Mocked for now as we don't have shippedAt in Order easily without Shipment join)
-      const shippingSpeed = 95; 
+      const shippingSpeed = 95;
 
       const stats = {
         totalProducts: seller.products.length,
@@ -183,23 +204,27 @@ export async function getDashboardStats() {
         performance: {
           orderAcceptance,
           returnRate,
-          shippingSpeed
-        }
+          shippingSpeed,
+        },
       };
 
-      return { 
-        currentSeller: seller, 
-        myProducts: seller.products, 
+      return {
+        currentSeller: seller,
+        myProducts: seller.products,
         myOrders: orders,
         stats,
         categories: await prisma.category.findMany(),
         tags: await prisma.tag.findMany(),
-        collections: await prisma.collection.findMany()
+        collections: await prisma.collection.findMany(),
       };
     }
 
     if (role === 'ADMIN') {
-      const sellers = await prisma.sellerProfile.findMany({ include: { user: { select: { id: true, name: true, email: true, role: true, createdAt: true } } } });
+      const sellers = await prisma.sellerProfile.findMany({
+        include: {
+          user: { select: { id: true, name: true, email: true, role: true, createdAt: true } },
+        },
+      });
       const orders = await prisma.order.findMany({
         include: {
           items: {
@@ -207,16 +232,23 @@ export async function getDashboardStats() {
               variant: {
                 include: {
                   product: {
-                    select: { id: true, flashSalePrice: true, categoryId: true, category: { select: { id: true, name: true } } }
-                  }
-                }
-              }
-            }
+                    select: {
+                      id: true,
+                      flashSalePrice: true,
+                      categoryId: true,
+                      category: { select: { id: true, name: true } },
+                    },
+                  },
+                },
+              },
+            },
           },
-          user: { select: { id: true, name: true, email: true } }
-        }
+          user: { select: { id: true, name: true, email: true } },
+        },
       });
-      const users = await prisma.user.findMany({ select: { id: true, name: true, email: true, role: true, createdAt: true } });
+      const users = await prisma.user.findMany({
+        select: { id: true, name: true, email: true, role: true, createdAt: true },
+      });
       const products = await prisma.product.findMany({
         include: {
           images: true,
@@ -226,13 +258,20 @@ export async function getDashboardStats() {
         },
         orderBy: { createdAt: 'desc' },
       });
-      const auditLogs = await prisma.auditLog.findMany({ include: { admin: { select: { name: true, email: true } } }, orderBy: { createdAt: 'desc' }, take: 50 });
+      const auditLogs = await prisma.auditLog.findMany({
+        include: { admin: { select: { name: true, email: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      });
       const systemSettings = await prisma.systemSettings.findMany();
-      const payouts = await prisma.payout.findMany({ include: { seller: true }, orderBy: { createdAt: 'desc' } });
+      const payouts = await prisma.payout.findMany({
+        include: { seller: true },
+        orderBy: { createdAt: 'desc' },
+      });
       const categories = await prisma.category.findMany({ include: { children: true } });
       const tags = await prisma.tag.findMany();
       const collections = await prisma.collection.findMany();
-      
+
       const totalRevenue = orders.reduce((acc, o) => acc + o.totalAmount, 0);
       const totalPlatformFees = orders.reduce((acc, o) => acc + o.platformFee, 0);
 
@@ -242,9 +281,9 @@ export async function getDashboardStats() {
         totalOrders: orders.length,
         totalSellers: sellers.length,
         totalUsers: users.length,
-        totalProducts: products.length
+        totalProducts: products.length,
       };
-      
+
       return {
         sellers,
         orders,
@@ -257,15 +296,15 @@ export async function getDashboardStats() {
         tags,
         collections,
         pendingSellers: sellers.filter(s => s.status === 'PENDING_APPROVAL'),
-        stats
+        stats,
       };
     }
 
-    return { error: "Invalid role" };
-} catch (err: unknown) {
+    return { error: 'Invalid role' };
+  } catch (err: unknown) {
     const error = err as Error;
-    console.error("[getDashboardStats] Error:", error);
-    return { error: "Database connection failed or data could not be retrieved." };
+    console.error('[getDashboardStats] Error:', error);
+    return { error: 'Database connection failed or data could not be retrieved.' };
   }
 }
 
@@ -273,26 +312,26 @@ export async function getHomepageData() {
   try {
     const categories = await prisma.category.findMany({
       take: 6,
-      where: { parentId: null }
+      where: { parentId: null },
     });
 
     const featuredProducts = await prisma.product.findMany({
       where: { isFeatured: true, published: true },
       include: { images: { where: { isPrimary: true } } },
-      take: 4
+      take: 4,
     });
 
     const recentProducts = await prisma.product.findMany({
       where: { published: true },
       include: { images: { where: { isPrimary: true } } },
       orderBy: { createdAt: 'desc' },
-      take: 8
+      take: 8,
     });
 
     return { categories, featuredProducts, recentProducts };
   } catch (err: unknown) {
     const error = err as Error;
-    console.error("[getHomepageData] Error:", error);
+    console.error('[getHomepageData] Error:', error);
     return { categories: [], featuredProducts: [], recentProducts: [] };
   }
 }
@@ -300,13 +339,14 @@ export async function getHomepageData() {
 export async function updateSellerStatus(sellerId: string, status: SellerStatus) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as SessionUser).role !== 'ADMIN') return { error: "Unauthorized" };
+    if (!session || (session.user as SessionUser).role !== 'ADMIN')
+      return { error: 'Unauthorized' };
 
     const adminId = await getRealUserId(session);
 
     await prisma.sellerProfile.update({
       where: { id: sellerId },
-      data: { status }
+      data: { status },
     });
 
     // Log action
@@ -316,8 +356,8 @@ export async function updateSellerStatus(sellerId: string, status: SellerStatus)
           adminId,
           action: status === 'ACTIVE' ? 'APPROVED_SELLER' : 'SUSPENDED_SELLER',
           targetId: sellerId,
-          details: `Status changed to ${status}`
-        }
+          details: `Status changed to ${status}`,
+        },
       });
     }
 
@@ -325,19 +365,19 @@ export async function updateSellerStatus(sellerId: string, status: SellerStatus)
     return { success: true };
   } catch (err: unknown) {
     const error = err as Error;
-    console.error("[updateSellerStatus] Error:", error);
-    return { error: error.message || "Failed to update status" };
+    console.error('[updateSellerStatus] Error:', error);
+    return { error: error.message || 'Failed to update status' };
   }
 }
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return { error: "Unauthorized" };
+    if (!session) return { error: 'Unauthorized' };
 
     await prisma.order.update({
       where: { id: orderId },
-      data: { status }
+      data: { status },
     });
 
     revalidatePath('/dashboard');
@@ -352,11 +392,11 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
 export async function updateOrderItemStatus(itemId: string, status: OrderItemStatus) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return { error: "Unauthorized" };
+    if (!session) return { error: 'Unauthorized' };
 
     await prisma.orderItem.update({
       where: { id: itemId },
-      data: { status }
+      data: { status },
     });
 
     revalidatePath('/seller-hub');
@@ -383,23 +423,29 @@ interface ProductData {
   }[];
 }
 
-export async function createProduct(data: ProductData): Promise<{ id?: string; error?: string } | Product> {
+export async function createProduct(
+  data: ProductData
+): Promise<{ id?: string; error?: string } | Product> {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as SessionUser).role !== 'SELLER') return { error: "Unauthorized" };
+    if (!session || (session.user as SessionUser).role !== 'SELLER')
+      return { error: 'Unauthorized' };
 
     const userId = await getRealUserId(session);
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
     const seller = await prisma.sellerProfile.findUnique({ where: { userId } });
-    if (!seller) return { error: "Seller profile not found" };
+    if (!seller) return { error: 'Seller profile not found' };
 
     const { variants, ...rest } = data;
 
     // Generate unique slug
-    let baseSlug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const baseSlug = data.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
     let slug = baseSlug;
     let counter = 0;
-    
+
     while (true) {
       const existing = await prisma.product.findUnique({ where: { slug } });
       if (!existing) break;
@@ -414,29 +460,39 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
         slug,
         description: rest.description || '',
         variants: {
-          create: variants?.map((v: { color?: string; price?: number; stock?: number; image?: string }, idx: number) => ({
-            sku: `${rest.title.substring(0,3).toUpperCase()}-${(v.color || 'STND').toUpperCase()}-${Date.now().toString().slice(-4)}-${idx}`,
-            title: v.color || "Standard",
-            attributes: JSON.stringify({ color: v.color || "Standard" }),
-            price: v.price || rest.basePrice,
-            stockCount: v.stock || 0
-          }))
+          create: variants?.map(
+            (
+              v: { color?: string; price?: number; stock?: number; image?: string },
+              idx: number
+            ) => ({
+              sku: `${rest.title.substring(0, 3).toUpperCase()}-${(v.color || 'STND').toUpperCase()}-${Date.now().toString().slice(-4)}-${idx}`,
+              title: v.color || 'Standard',
+              attributes: JSON.stringify({ color: v.color || 'Standard' }),
+              price: v.price || rest.basePrice,
+              stockCount: v.stock || 0,
+            })
+          ),
         },
         images: {
-          create: variants?.filter((v: { color?: string; price?: number; stock?: number; image?: string }) => v.image).map((v: { image?: string }, idx: number) => ({
-            url: v.image!,
-            isPrimary: idx === 0
-          })) || []
-        }
-      }
+          create:
+            variants
+              ?.filter(
+                (v: { color?: string; price?: number; stock?: number; image?: string }) => v.image
+              )
+              .map((v: { image?: string }, idx: number) => ({
+                url: v.image!,
+                isPrimary: idx === 0,
+              })) || [],
+        },
+      },
     });
 
     revalidatePath('/seller-hub');
     return product as unknown as Product;
   } catch (err: unknown) {
     const error = err as Error;
-    console.error("[createProduct] Error:", err);
-    return { error: error.message || "Failed to create product" };
+    console.error('[createProduct] Error:', err);
+    return { error: error.message || 'Failed to create product' };
   }
 }
 
@@ -448,22 +504,27 @@ interface UpdateProductData {
   published?: boolean;
 }
 
-export async function updateProduct(productId: string, data: UpdateProductData): Promise<{ success?: boolean; error?: string } | Product> {
+export async function updateProduct(
+  productId: string,
+  data: UpdateProductData
+): Promise<{ success?: boolean; error?: string } | Product> {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as SessionUser).role !== 'SELLER') return { error: "Unauthorized" };
+    if (!session || (session.user as SessionUser).role !== 'SELLER')
+      return { error: 'Unauthorized' };
 
     const userId = await getRealUserId(session);
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
     const seller = await prisma.sellerProfile.findUnique({ where: { userId } });
-    if (!seller) return { error: "Seller profile not found" };
+    if (!seller) return { error: 'Seller profile not found' };
 
     const product = await prisma.product.findUnique({ where: { id: productId } });
-    if (!product || product.sellerId !== seller.id) return { error: "Unauthorized to update this product" };
+    if (!product || product.sellerId !== seller.id)
+      return { error: 'Unauthorized to update this product' };
 
     const updatedProduct = await prisma.product.update({
       where: { id: productId },
-      data
+      data,
     });
 
     revalidatePath('/seller-hub');
@@ -477,15 +538,17 @@ export async function updateProduct(productId: string, data: UpdateProductData):
 export async function deleteProduct(productId: string) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as SessionUser).role !== 'SELLER') return { error: "Unauthorized" };
+    if (!session || (session.user as SessionUser).role !== 'SELLER')
+      return { error: 'Unauthorized' };
 
     const userId = await getRealUserId(session);
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
     const seller = await prisma.sellerProfile.findUnique({ where: { userId } });
-    if (!seller) return { error: "Seller profile not found" };
+    if (!seller) return { error: 'Seller profile not found' };
 
     const product = await prisma.product.findUnique({ where: { id: productId } });
-    if (!product || product.sellerId !== seller.id) return { error: "Unauthorized to delete this product" };
+    if (!product || product.sellerId !== seller.id)
+      return { error: 'Unauthorized to delete this product' };
 
     await prisma.product.delete({ where: { id: productId } });
 
@@ -549,15 +612,20 @@ interface ReviewData {
   comment?: string;
 }
 
-export async function submitReview(productIdOrData: string | ReviewData, rating?: number, comment?: string): Promise<{ success?: boolean; review?: Review; error?: string }> {
+export async function submitReview(
+  productIdOrData: string | ReviewData,
+  rating?: number,
+  comment?: string
+): Promise<{ success?: boolean; review?: Review; error?: string }> {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return { error: "Unauthorized" };
+    if (!session) return { error: 'Unauthorized' };
 
     const userId = await getRealUserId(session);
-    if (!userId) return { error: "Unauthorized" };
+    if (!userId) return { error: 'Unauthorized' };
 
-    const productId = typeof productIdOrData === 'string' ? productIdOrData : productIdOrData.productId;
+    const productId =
+      typeof productIdOrData === 'string' ? productIdOrData : productIdOrData.productId;
     const reviewRating = typeof productIdOrData === 'string' ? rating! : productIdOrData.rating;
     const reviewComment = typeof productIdOrData === 'string' ? comment : productIdOrData.comment;
 
@@ -567,7 +635,7 @@ export async function submitReview(productIdOrData: string | ReviewData, rating?
         rating: reviewRating,
         comment: reviewComment,
         userId,
-      }
+      },
     });
 
     revalidatePath(`/product/${productId}`);
@@ -599,7 +667,8 @@ interface TaxonomyData {
 export async function createTaxonomy(type: 'category' | 'tag' | 'collection', data: TaxonomyData) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as SessionUser).role !== 'ADMIN') return { error: "Unauthorized" };
+    if (!session || (session.user as SessionUser).role !== 'ADMIN')
+      return { error: 'Unauthorized' };
 
     let result;
     const slug = data.name.toLowerCase().replace(/ /g, '-');
@@ -623,7 +692,8 @@ export async function createTaxonomy(type: 'category' | 'tag' | 'collection', da
 export async function deleteTaxonomy(type: 'category' | 'tag' | 'collection', id: string) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as SessionUser).role !== 'ADMIN') return { error: "Unauthorized" };
+    if (!session || (session.user as SessionUser).role !== 'ADMIN')
+      return { error: 'Unauthorized' };
 
     if (type === 'category') {
       await prisma.category.delete({ where: { id } });
@@ -644,7 +714,8 @@ export async function deleteTaxonomy(type: 'category' | 'tag' | 'collection', id
 export async function seedTestData() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as SessionUser).role !== 'ADMIN') return { error: "Unauthorized" };
+    if (!session || (session.user as SessionUser).role !== 'ADMIN')
+      return { error: 'Unauthorized' };
 
     const adminId = await getRealUserId(session);
 
@@ -652,7 +723,7 @@ export async function seedTestData() {
     const testUsers = [
       { email: 'admin@brandy.com', name: 'System Admin', role: Role.ADMIN, pass: 'admin123' },
       { email: 'seller@brandy.com', name: 'Elite Seller', role: Role.SELLER, pass: 'seller123' },
-      { email: 'buyer@brandy.com', name: 'Frequent Buyer', role: Role.BUYER, pass: 'buyer123' }
+      { email: 'buyer@brandy.com', name: 'Frequent Buyer', role: Role.BUYER, pass: 'buyer123' },
     ];
 
     for (const u of testUsers) {
@@ -660,43 +731,43 @@ export async function seedTestData() {
       const user = await prisma.user.upsert({
         where: { email: u.email },
         update: { role: u.role },
-        create: { 
-          email: u.email, 
-          name: u.name, 
-          role: u.role, 
-          passwordHash: hashedPassword 
-        }
+        create: {
+          email: u.email,
+          name: u.name,
+          role: u.role,
+          passwordHash: hashedPassword,
+        },
       });
 
       if (u.role === Role.SELLER) {
         await prisma.sellerProfile.upsert({
           where: { userId: user.id },
           update: { status: SellerStatus.ACTIVE },
-          create: { userId: user.id, storeName: "Elite Local Goods", status: SellerStatus.ACTIVE }
+          create: { userId: user.id, storeName: 'Elite Local Goods', status: SellerStatus.ACTIVE },
         });
       }
     }
 
     // Create some categories
-    const catNames = ["Electronics", "Fashion", "Home & Kitchen", "Beauty"];
+    const catNames = ['Electronics', 'Fashion', 'Home & Kitchen', 'Beauty'];
     for (const name of catNames) {
       await prisma.category.upsert({
         where: { name },
         update: {},
-        create: { name, slug: name.toLowerCase().replace(/ /g, '-') }
+        create: { name, slug: name.toLowerCase().replace(/ /g, '-') },
       });
     }
 
     // Create system settings
     const settings = [
-      { key: "VAT_RATE", value: "14.0", description: "Value Added Tax percentage" },
-      { key: "COMMISSION_BASE", value: "15.0", description: "Base platform commission" }
+      { key: 'VAT_RATE', value: '14.0', description: 'Value Added Tax percentage' },
+      { key: 'COMMISSION_BASE', value: '15.0', description: 'Base platform commission' },
     ];
     for (const s of settings) {
       await prisma.systemSettings.upsert({
         where: { key: s.key },
         update: {},
-        create: s
+        create: s,
       });
     }
 
@@ -705,9 +776,9 @@ export async function seedTestData() {
       await prisma.auditLog.create({
         data: {
           adminId,
-          action: "SYSTEM_SEED",
-          details: "Populated platform with initial test data and primary test accounts"
-        }
+          action: 'SYSTEM_SEED',
+          details: 'Populated platform with initial test data and primary test accounts',
+        },
       });
     }
 
@@ -715,30 +786,30 @@ export async function seedTestData() {
     return { success: true };
   } catch (err: unknown) {
     const error = err as Error;
-    console.error("[seedTestData] Error:", err);
-    return { error: error.message || "Failed to seed data" };
+    console.error('[seedTestData] Error:', err);
+    return { error: error.message || 'Failed to seed data' };
   }
 }
 
 export async function toggleWishlist(productId: string) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return { error: "Unauthorized" };
+    if (!session) return { error: 'Unauthorized' };
 
     const userId = await getRealUserId(session);
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
 
     const existing = await prisma.wishlist.findUnique({
-      where: { userId_productId: { userId, productId } }
+      where: { userId_productId: { userId, productId } },
     });
 
     if (existing) {
       await prisma.wishlist.delete({
-        where: { userId_productId: { userId, productId } }
+        where: { userId_productId: { userId, productId } },
       });
     } else {
       await prisma.wishlist.create({
-        data: { userId, productId }
+        data: { userId, productId },
       });
     }
 
@@ -757,17 +828,19 @@ interface ProfileData {
   avatar?: string;
 }
 
-export async function updateProfile(data: ProfileData): Promise<{ success?: boolean; error?: string }> {
+export async function updateProfile(
+  data: ProfileData
+): Promise<{ success?: boolean; error?: string }> {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return { error: "Unauthorized" };
+    if (!session) return { error: 'Unauthorized' };
 
     const userId = await getRealUserId(session);
-    if (!userId) return { error: "User not found" };
+    if (!userId) return { error: 'User not found' };
 
     await prisma.user.update({
       where: { id: userId },
-      data
+      data,
     });
 
     revalidatePath('/dashboard');
@@ -787,13 +860,19 @@ export async function adminCreateUser(formData: {
 }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return { error: 'Unauthorized: Session is null. Please log out and log back in.' };
-    if ((session.user as SessionUser).role !== Role.ADMIN) return { error: `Unauthorized: Your role is ${(session.user as SessionUser).role}, but ADMIN is required.` };
+    if (!session)
+      return { error: 'Unauthorized: Session is null. Please log out and log back in.' };
+    if ((session.user as SessionUser).role !== Role.ADMIN)
+      return {
+        error: `Unauthorized: Your role is ${(session.user as SessionUser).role}, but ADMIN is required.`,
+      };
 
     const adminId = await getRealUserId(session);
 
     // Check for duplicate email
-    const existing = await prisma.user.findUnique({ where: { email: formData.email.toLowerCase().trim() } });
+    const existing = await prisma.user.findUnique({
+      where: { email: formData.email.toLowerCase().trim() },
+    });
     if (existing) return { error: `An account with email "${formData.email}" already exists.` };
 
     const hashedPassword = await bcrypt.hash(formData.password, 10);
@@ -804,7 +883,7 @@ export async function adminCreateUser(formData: {
         email: formData.email.toLowerCase().trim(),
         passwordHash: hashedPassword,
         role: formData.role as Role,
-      }
+      },
     });
 
     // Auto-create SellerProfile for sellers
@@ -814,7 +893,7 @@ export async function adminCreateUser(formData: {
           userId: newUser.id,
           storeName: formData.storeName?.trim() || `${formData.name.trim()}'s Store`,
           status: SellerStatus.ACTIVE,
-        }
+        },
       });
     }
 
@@ -826,7 +905,7 @@ export async function adminCreateUser(formData: {
           action: 'CREATED_USER',
           targetId: newUser.id,
           details: `Created ${formData.role} account for ${formData.email}`,
-        }
+        },
       });
     }
 
@@ -839,11 +918,18 @@ export async function adminCreateUser(formData: {
   }
 }
 
-export async function adminUpdateUser(userId: string, data: { name?: string; email?: string; role?: 'ADMIN' | 'SELLER' | 'BUYER' }) {
+export async function adminUpdateUser(
+  userId: string,
+  data: { name?: string; email?: string; role?: 'ADMIN' | 'SELLER' | 'BUYER' }
+) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return { error: 'Unauthorized: Session is null. Please log out and log back in.' };
-    if ((session.user as SessionUser).role !== Role.ADMIN) return { error: `Unauthorized: Your role is ${(session.user as SessionUser).role}, but ADMIN is required.` };
+    if (!session)
+      return { error: 'Unauthorized: Session is null. Please log out and log back in.' };
+    if ((session.user as SessionUser).role !== Role.ADMIN)
+      return {
+        error: `Unauthorized: Your role is ${(session.user as SessionUser).role}, but ADMIN is required.`,
+      };
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
@@ -851,7 +937,7 @@ export async function adminUpdateUser(userId: string, data: { name?: string; ema
         name: data.name?.trim(),
         email: data.email?.toLowerCase().trim(),
         role: data.role as Role,
-      }
+      },
     });
 
     revalidatePath('/admin-os');
@@ -866,7 +952,7 @@ export async function adminUpdateUser(userId: string, data: { name?: string; ema
 export async function adminDeleteUser(userId: string) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Debug logging for session
     if (!session) {
       console.error('[adminDeleteUser] No session found');
@@ -884,14 +970,19 @@ export async function adminDeleteUser(userId: string) {
       where: { id: userId },
       include: {
         _count: {
-          select: { orders: true, reviews: true, auditLogs: true, productQAs: true }
-        }
-      }
+          select: { orders: true, reviews: true, auditLogs: true, productQAs: true },
+        },
+      },
     });
 
     if (!user) return { error: 'User not found.' };
 
-    if (user._count.orders > 0 || user._count.reviews > 0 || user._count.auditLogs > 0 || user._count.productQAs > 0) {
+    if (
+      user._count.orders > 0 ||
+      user._count.reviews > 0 ||
+      user._count.auditLogs > 0 ||
+      user._count.productQAs > 0
+    ) {
       // If user has records, perform a "Soft Delete" instead of hard delete to preserve data integrity
       await prisma.user.update({
         where: { id: userId },
@@ -900,13 +991,13 @@ export async function adminDeleteUser(userId: string) {
           email: `deleted_${userId.substring(0, 8)}@brandy.invalid`, // anonymize
           name: 'Deleted User',
           passwordHash: 'DELETED',
-        }
+        },
       });
-      
+
       // If it's a seller, also deactivate profile
       await prisma.sellerProfile.updateMany({
         where: { userId },
-        data: { status: SellerStatus.BANNED, deletedAt: new Date() }
+        data: { status: SellerStatus.BANNED, deletedAt: new Date() },
       });
 
       revalidatePath('/admin-os');

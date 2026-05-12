@@ -4,7 +4,13 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
-import { OrderStatus, OrderItemStatus, DiscountType, PaymentStatus, PaymentMethod } from '@/generated/client';
+import {
+  OrderStatus,
+  OrderItemStatus,
+  DiscountType,
+  PaymentStatus,
+  PaymentMethod,
+} from '@/generated/client';
 import type { SessionUser } from '@/types';
 import { VAT_RATE, getShippingRate } from '@/lib/constants';
 import { createOrderSchema } from '@/lib/validation';
@@ -64,6 +70,10 @@ export async function createOrder(
       return { error: 'A shipping address is required to place an order.' };
     }
 
+    // Persist the guest contact email inside the address snapshot too, so
+    // admin/seller views that already render the snapshot pick it up for free.
+    const addressSnapshot = userId ? resolvedAddress : { ...resolvedAddress, email: guestEmail };
+
     let subtotal = 0;
     const orderItemsData: {
       variantId: string;
@@ -77,7 +87,7 @@ export async function createOrder(
     for (const itemInput of cartItemsInput) {
       const variant = await prisma.productVariant.findUnique({
         where: { id: itemInput.variantId },
-        include: { product: { include: { seller: true } } }
+        include: { product: { include: { seller: true } } },
       });
 
       if (!variant) {
@@ -99,7 +109,7 @@ export async function createOrder(
         sellerNameSnapshot: variant.product.seller.storeName,
         priceAtPurchase: price,
         quantity: itemInput.quantity,
-        status: OrderItemStatus.PENDING
+        status: OrderItemStatus.PENDING,
       });
     }
 
@@ -131,12 +141,12 @@ export async function createOrder(
     const finalTotal = subtotalAfterDiscount + vatAmount + shippingFee;
 
     // ── 4. Execute Transaction ───────────────────────────────────────────────
-    const order = await prisma.$transaction(async (tx) => {
+    const order = await prisma.$transaction(async tx => {
       // Stock decrement
       for (const item of cartItemsInput) {
         const updated = await tx.productVariant.updateMany({
           where: { id: item.variantId, stockCount: { gte: item.quantity } },
-          data: { stockCount: { decrement: item.quantity } }
+          data: { stockCount: { decrement: item.quantity } },
         });
         if (updated.count === 0) throw new Error(`Stock error for variant ${item.variantId}`);
       }
@@ -152,17 +162,17 @@ export async function createOrder(
           paymentMethod: paymentMethod as PaymentMethod,
           paymentStatus: PaymentStatus.UNPAID,
           status: OrderStatus.PENDING_PAYMENT,
-          shippingAddressSnapshot: JSON.stringify(resolvedAddress),
+          shippingAddressSnapshot: JSON.stringify(addressSnapshot),
           orderNotes: orderNotes || null,
           giftWrapping: giftWrapping || false,
-          items: { create: orderItemsData }
-        }
+          items: { create: orderItemsData },
+        },
       });
 
       if (couponId) {
         await tx.coupon.update({
           where: { id: couponId },
-          data: { usedCount: { increment: 1 } }
+          data: { usedCount: { increment: 1 } },
         });
       }
 
@@ -179,30 +189,45 @@ export async function createOrder(
       } catch (err) {
         console.error('Failed to award loyalty points:', err);
       }
-
-      // Email is best-effort — don't block the order on it.
-      prisma.user.findUnique({ where: { id: userId } }).then((user) => {
-        if (user?.email) {
-          import('@/lib/email').then(async (m) => {
-            const orderWithItems = await prisma.order.findUnique({
-              where: { id: order.id },
-              include: { items: true },
-            });
-            if (orderWithItems) {
-              await m.sendEmail({
-                to: user.email,
-                subject: `Order Confirmation - ${order.id.slice(0, 8)}`,
-                html: m.generateOrderConfirmationEmail(orderWithItems, user),
-              });
-            }
-          }).catch((err: unknown) => console.error('Order confirmation email failed:', err));
-        }
-      }).catch((err: unknown) => console.error('Order confirmation lookup failed:', err));
     }
+
+    // Order confirmation email — fires for logged-in users (via their saved
+    // email) AND for guests (via the email captured at checkout). Best-effort:
+    // failures here must never block the order, so we don't await the chain.
+    (async () => {
+      try {
+        const m = await import('@/lib/email');
+        const orderWithItems = await prisma.order.findUnique({
+          where: { id: order.id },
+          include: { items: true },
+        });
+        if (!orderWithItems) return;
+
+        if (userId) {
+          const user = await prisma.user.findUnique({ where: { id: userId } });
+          if (user?.email) {
+            await m.sendEmail({
+              to: user.email,
+              subject: `Order Confirmation - ${order.id.slice(0, 8)}`,
+              html: m.generateOrderConfirmationEmail(orderWithItems, user),
+            });
+          }
+        } else if (guestEmail) {
+          // Generate the same confirmation template; the helper accepts a
+          // null user and falls back to "Customer" for the greeting.
+          await m.sendEmail({
+            to: guestEmail,
+            subject: `Order Confirmation - ${order.id.slice(0, 8)}`,
+            html: m.generateOrderConfirmationEmail(orderWithItems, null),
+          });
+        }
+      } catch (err) {
+        console.error('Order confirmation email failed:', err);
+      }
+    })();
 
     revalidatePath('/dashboard');
     return { success: true, orderId: order.id };
-
   } catch (error: unknown) {
     const err = error as Error;
     console.error('Create Order Action Error:', err);
@@ -217,22 +242,26 @@ export async function cancelOrder(orderId: string): Promise<{ success?: boolean;
     if (!userId) return { error: 'Unauthorized' };
 
     const order = await prisma.order.findUnique({
-      where: { id: orderId, userId }
+      where: { id: orderId, userId },
     });
 
     if (!order) return { error: 'Order not found' };
-    if (order.status !== OrderStatus.PENDING_PAYMENT && order.status !== OrderStatus.CONFIRMED && order.status !== OrderStatus.PROCESSING) {
+    if (
+      order.status !== OrderStatus.PENDING_PAYMENT &&
+      order.status !== OrderStatus.CONFIRMED &&
+      order.status !== OrderStatus.PROCESSING
+    ) {
       return { error: 'Order cannot be cancelled at this stage' };
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async tx => {
       await tx.order.update({
         where: { id: orderId },
-        data: { status: OrderStatus.CANCELLED }
+        data: { status: OrderStatus.CANCELLED },
       });
       await tx.orderItem.updateMany({
         where: { orderId },
-        data: { status: OrderItemStatus.CANCELLED }
+        data: { status: OrderItemStatus.CANCELLED },
       });
       // Optionally refund wallet or process payment refund if paid
     });
@@ -245,7 +274,11 @@ export async function cancelOrder(orderId: string): Promise<{ success?: boolean;
   }
 }
 
-export async function requestReturn(orderItemId: string, reason: string, details?: string): Promise<{ success?: boolean; error?: string }> {
+export async function requestReturn(
+  orderItemId: string,
+  reason: string,
+  details?: string
+): Promise<{ success?: boolean; error?: string }> {
   try {
     const session = await getServerSession(authOptions);
     const userId = session ? (session.user as SessionUser).id : null;
@@ -253,7 +286,7 @@ export async function requestReturn(orderItemId: string, reason: string, details
 
     const orderItem = await prisma.orderItem.findUnique({
       where: { id: orderItemId },
-      include: { order: true }
+      include: { order: true },
     });
 
     if (!orderItem || orderItem.order?.userId !== userId) {
@@ -264,18 +297,18 @@ export async function requestReturn(orderItemId: string, reason: string, details
       return { error: 'Item must be delivered to request a return' };
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async tx => {
       await tx.returnRequest.create({
         data: {
           orderItemId,
           reason,
-          details
-        }
+          details,
+        },
       });
-      
+
       await tx.orderItem.update({
         where: { id: orderItemId },
-        data: { status: OrderItemStatus.RETURN_REQUESTED }
+        data: { status: OrderItemStatus.RETURN_REQUESTED },
       });
     });
 

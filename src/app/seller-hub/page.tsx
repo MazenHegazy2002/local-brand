@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { 
+import {
   LayoutDashboard,
   ShoppingBag,
   Package,
@@ -17,7 +17,7 @@ import {
   XCircle,
   TrendingUp,
   Star,
-  Users
+  Users,
 } from 'lucide-react';
 import {
   getDashboardStats,
@@ -26,16 +26,16 @@ import {
   updateOrderItemStatus,
   toggleProductPublished,
 } from '../actions/seller';
-import { 
-  Product, 
-  Order, 
-  Category, 
-  SellerProfile, 
+import {
+  Product,
+  Order,
+  Category,
+  SellerProfile,
   SessionUser,
   ProductVariant,
   ProductImage,
   Tag,
-  Collection
+  Collection,
 } from '@/types';
 
 interface DashboardStats {
@@ -93,7 +93,13 @@ export default function SellerHub() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [editProduct, setEditProduct] = useState<NewProductState>({ title: '', description: '', basePrice: '', flashSalePrice: '', categoryId: '' });
+  const [editProduct, setEditProduct] = useState<NewProductState>({
+    title: '',
+    description: '',
+    basePrice: '',
+    flashSalePrice: '',
+    categoryId: '',
+  });
   const [editVariants, setEditVariants] = useState<VariantState[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -114,14 +120,16 @@ export default function SellerHub() {
       description: product.description || '',
       basePrice: product.basePrice || '',
       flashSalePrice: product.flashSalePrice || '',
-      categoryId: product.categoryId || ''
+      categoryId: product.categoryId || '',
     });
-    setEditVariants(product.variants?.map((v: ProductVariant) => ({
-      color: (JSON.parse(v.attributes || '{}') as { color?: string }).color || v.title || '',
-      stock: v.stockCount || 0,
-      price: v.price || '',
-      image: (product.images?.find(img => img.isPrimary) || product.images?.[0])?.url || ''
-    })) || []);
+    setEditVariants(
+      product.variants?.map((v: ProductVariant) => ({
+        color: (JSON.parse(v.attributes || '{}') as { color?: string }).color || v.title || '',
+        stock: v.stockCount || 0,
+        price: v.price || '',
+        image: (product.images?.find(img => img.isPrimary) || product.images?.[0])?.url || '',
+      })) || []
+    );
     setShowEditModal(true);
   };
 
@@ -129,10 +137,12 @@ export default function SellerHub() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      if (!editProduct.categoryId) throw new Error("Please select a category");
-      if (!editProduct.basePrice || Number(editProduct.basePrice) <= 0) throw new Error("Base price is required");
-      if (editVariants.some((v: VariantState) => !v.price || Number(v.price) <= 0)) throw new Error("All variant prices are required");
-      
+      if (!editProduct.categoryId) throw new Error('Please select a category');
+      if (!editProduct.basePrice || Number(editProduct.basePrice) <= 0)
+        throw new Error('Base price is required');
+      if (editVariants.some((v: VariantState) => !v.price || Number(v.price) <= 0))
+        throw new Error('All variant prices are required');
+
       if (!editingProduct) return;
 
       // Call API to update
@@ -145,13 +155,13 @@ export default function SellerHub() {
           variants: editVariants.map((v: VariantState) => ({
             color: v.color,
             stock: Number(v.stock),
-            price: Number(v.price)
-          }))
-        })
+            price: Number(v.price),
+          })),
+        }),
       });
-      
-      if (!res.ok) throw new Error("Failed to update product");
-      
+
+      if (!res.ok) throw new Error('Failed to update product');
+
       setShowEditModal(false);
       setEditingProduct(null);
       await refreshData();
@@ -163,22 +173,22 @@ export default function SellerHub() {
     }
   };
 
-  const [newProduct, setNewProduct] = useState<NewProductState>({ 
-    title: '', 
-    description: '', 
-    basePrice: '', 
+  const [newProduct, setNewProduct] = useState<NewProductState>({
+    title: '',
+    description: '',
+    basePrice: '',
     flashSalePrice: '',
-    categoryId: ''
+    categoryId: '',
   });
-  
+
   const [variants, setVariants] = useState<VariantState[]>([
-    { color: 'Default', stock: 10, price: '', image: '' }
+    { color: 'Default', stock: 10, price: '', image: '' },
   ]);
 
   const refreshData = async () => {
     setLoading(true);
     try {
-      const res = await getDashboardStats() as DashboardData;
+      const res = (await getDashboardStats()) as DashboardData;
       if (!res) {
         window.location.href = '/login?callbackUrl=/seller-hub';
         return;
@@ -190,7 +200,7 @@ export default function SellerHub() {
       setData(res);
     } catch (error: unknown) {
       const err = error as Error;
-      setError(err.message || "Failed to load dashboard");
+      setError(err.message || 'Failed to load dashboard');
     } finally {
       setLoading(false);
     }
@@ -203,7 +213,7 @@ export default function SellerHub() {
     // Show an immediate preview using a local object URL — much cheaper than
     // base64 and avoids the FileReader race condition.
     const previewUrl = URL.createObjectURL(file);
-    setVariants((prev) => {
+    setVariants(prev => {
       const next = [...prev];
       if (next[index]) next[index] = { ...next[index], image: previewUrl, uploading: true };
       return next;
@@ -213,14 +223,14 @@ export default function SellerHub() {
       const formData = new FormData();
       formData.append('file', file);
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const data = await res.json().catch(() => ({} as { url?: string; message?: string }));
+      const data = await res.json().catch(() => ({}) as { url?: string; message?: string });
 
       if (!res.ok || !data.url) {
         throw new Error(data.message || 'Upload failed');
       }
 
       // Swap the local preview for the uploaded URL.
-      setVariants((prev) => {
+      setVariants(prev => {
         const next = [...prev];
         if (next[index]) next[index] = { ...next[index], image: data.url, uploading: false };
         return next;
@@ -229,7 +239,7 @@ export default function SellerHub() {
       console.error('Upload failed:', err);
       // Mark as not uploading but keep the local preview so the user can
       // re-upload without losing what they already selected.
-      setVariants((prev) => {
+      setVariants(prev => {
         const next = [...prev];
         if (next[index]) next[index] = { ...next[index], uploading: false };
         return next;
@@ -258,21 +268,24 @@ export default function SellerHub() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      if (!newProduct.categoryId) throw new Error("Please select a category");
-      if (!newProduct.basePrice || Number(newProduct.basePrice) <= 0) throw new Error("Base price is required");
-      if (variants.some((v: VariantState) => !v.price || Number(v.price) <= 0)) throw new Error("All variant prices are required");
-      
-      const res = await createProduct({
+      if (!newProduct.categoryId) throw new Error('Please select a category');
+      if (!newProduct.basePrice || Number(newProduct.basePrice) <= 0)
+        throw new Error('Base price is required');
+      if (variants.some((v: VariantState) => !v.price || Number(v.price) <= 0))
+        throw new Error('All variant prices are required');
+
+      const res = (await createProduct({
         ...newProduct,
         basePrice: Number(newProduct.basePrice),
-        flashSalePrice: Number(newProduct.flashSalePrice) > 0 ? Number(newProduct.flashSalePrice) : undefined,
+        flashSalePrice:
+          Number(newProduct.flashSalePrice) > 0 ? Number(newProduct.flashSalePrice) : undefined,
         variants: variants.map(v => ({
-           ...v,
-           stock: Number(v.stock),
-           price: Number(v.price) || Number(newProduct.basePrice)
+          ...v,
+          stock: Number(v.stock),
+          price: Number(v.price) || Number(newProduct.basePrice),
         })),
-        published: true
-      }) as { error?: string };
+        published: true,
+      })) as { error?: string };
 
       if (res?.error) {
         alert(res.error);
@@ -291,9 +304,9 @@ export default function SellerHub() {
   };
 
   const handleDeleteProduct = async (id: string) => {
-    if (!confirm("Are you sure?")) return;
+    if (!confirm('Are you sure?')) return;
     try {
-      const res = await deleteProduct(id) as { error?: string };
+      const res = (await deleteProduct(id)) as { error?: string };
       if (res?.error) {
         alert(res.error);
         return;
@@ -307,7 +320,7 @@ export default function SellerHub() {
 
   const handleFulfill = async (itemId: string) => {
     try {
-      const res = await updateOrderItemStatus(itemId, 'SHIPPED') as { error?: string };
+      const res = (await updateOrderItemStatus(itemId, 'SHIPPED')) as { error?: string };
       if (res?.error) {
         alert(res.error);
         return;
@@ -320,16 +333,32 @@ export default function SellerHub() {
   };
 
   const resetForm = () => {
-      setNewProduct({ title: '', description: '', basePrice: '', flashSalePrice: '', categoryId: '' });
-      setVariants([{ color: 'Default', stock: 10, price: '', image: '' }]);
+    setNewProduct({
+      title: '',
+      description: '',
+      basePrice: '',
+      flashSalePrice: '',
+      categoryId: '',
+    });
+    setVariants([{ color: 'Default', stock: 10, price: '', image: '' }]);
   };
 
   useEffect(() => {
     refreshData();
   }, []);
 
-  if (loading && !data) return <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#0F6E56] font-medium">Loading SellerHub...</div>;
-  if (error) return <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-red-600 font-bold">{error}</div>;
+  if (loading && !data)
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#0F6E56] font-medium">
+        Loading SellerHub...
+      </div>
+    );
+  if (error)
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-red-600 font-bold">
+        {error}
+      </div>
+    );
 
   const stats: DashboardStats = data?.stats || {
     totalProducts: 0,
@@ -345,8 +374,8 @@ export default function SellerHub() {
     performance: {
       orderAcceptance: 100,
       returnRate: 0,
-      shippingSpeed: 95
-    }
+      shippingSpeed: 95,
+    },
   };
   const myProducts = data?.myProducts || [];
   const myOrders = data?.myOrders || [];
@@ -359,20 +388,52 @@ export default function SellerHub() {
           <ShoppingBag size={20} />
           <span>SellerHub</span>
         </div>
-        
-        <NavItem active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} label="Overview" icon={<LayoutDashboard size={18} />} />
-        <NavItem active={activeTab === 'orders'} onClick={() => setActiveTab('orders')} label="Orders" icon={<Package size={18} />} />
-        <NavItem active={activeTab === 'products'} onClick={() => setActiveTab('products')} label="Inventory" icon={<ShoppingBag size={18} />} />
-        <NavItem active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} label="Analytics" icon={<BarChart3 size={18} />} />
-        <NavItem active={activeTab === 'wallet'} onClick={() => setActiveTab('wallet')} label="Wallet" icon={<Wallet size={18} />} />
-        <NavItem active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} label="Settings" icon={<Settings size={18} />} />
+
+        <NavItem
+          active={activeTab === 'overview'}
+          onClick={() => setActiveTab('overview')}
+          label="Overview"
+          icon={<LayoutDashboard size={18} />}
+        />
+        <NavItem
+          active={activeTab === 'orders'}
+          onClick={() => setActiveTab('orders')}
+          label="Orders"
+          icon={<Package size={18} />}
+        />
+        <NavItem
+          active={activeTab === 'products'}
+          onClick={() => setActiveTab('products')}
+          label="Inventory"
+          icon={<ShoppingBag size={18} />}
+        />
+        <NavItem
+          active={activeTab === 'analytics'}
+          onClick={() => setActiveTab('analytics')}
+          label="Analytics"
+          icon={<BarChart3 size={18} />}
+        />
+        <NavItem
+          active={activeTab === 'wallet'}
+          onClick={() => setActiveTab('wallet')}
+          label="Wallet"
+          icon={<Wallet size={18} />}
+        />
+        <NavItem
+          active={activeTab === 'settings'}
+          onClick={() => setActiveTab('settings')}
+          label="Settings"
+          icon={<Settings size={18} />}
+        />
 
         <div className="mt-auto px-4 pb-6">
-           <div className="store-label truncate max-w-full">{data?.currentSeller?.storeName || 'Store'}</div>
-           <div className="active-dot-row flex items-center gap-2 text-[10px] text-white/60">
-              <div className="active-dot w-2 h-2 rounded-full bg-green-400"></div>
-              Active seller
-           </div>
+          <div className="store-label truncate max-w-full">
+            {data?.currentSeller?.storeName || 'Store'}
+          </div>
+          <div className="active-dot-row flex items-center gap-2 text-[10px] text-white/60">
+            <div className="active-dot w-2 h-2 rounded-full bg-green-400"></div>
+            Active seller
+          </div>
         </div>
       </div>
 
@@ -386,9 +447,19 @@ export default function SellerHub() {
         </div>
 
         <div className="tab-content animate-fadeIn">
-          {activeTab === 'overview' && <OverviewTab stats={stats} myOrders={myOrders} myProducts={myProducts} data={data!} />}
+          {activeTab === 'overview' && (
+            <OverviewTab stats={stats} myOrders={myOrders} myProducts={myProducts} data={data!} />
+          )}
           {activeTab === 'orders' && <OrdersTab orders={myOrders} onFulfill={handleFulfill} />}
-          {activeTab === 'products' && <ProductsTab products={myProducts} onDelete={handleDeleteProduct} onAdd={() => setShowAddModal(true)} onEdit={handleEditProduct} onAfterRefresh={refreshData} />}
+          {activeTab === 'products' && (
+            <ProductsTab
+              products={myProducts}
+              onDelete={handleDeleteProduct}
+              onAdd={() => setShowAddModal(true)}
+              onEdit={handleEditProduct}
+              onAfterRefresh={refreshData}
+            />
+          )}
           {activeTab === 'analytics' && <AnalyticsTab stats={stats} orders={myOrders} />}
           {activeTab === 'wallet' && <WalletTab data={data!} />}
           {activeTab === 'settings' && <SettingsTab data={data!} />}
@@ -397,8 +468,8 @@ export default function SellerHub() {
 
       {/* Modals remain same but use Lucide for close/etc */}
       {showAddModal && (
-        <AddProductModal 
-          onClose={() => setShowAddModal(false)} 
+        <AddProductModal
+          onClose={() => setShowAddModal(false)}
           onSubmit={handleCreateProduct}
           newProduct={newProduct}
           setNewProduct={setNewProduct}
@@ -414,36 +485,83 @@ export default function SellerHub() {
 
       {/* Edit Modal truncated for brevity but assuming same logic */}
       {showEditModal && editingProduct && (
-        <div className="modal-overlay fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowEditModal(false)}>
-          <div className="modal-content bg-white w-full max-w-2xl rounded-2xl p-8 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div
+          className="modal-overlay fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+          onClick={() => setShowEditModal(false)}
+        >
+          <div
+            className="modal-content bg-white w-full max-w-2xl rounded-2xl p-8 max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-black">Edit Product</h3>
-              <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-900"><XCircle size={24} /></button>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-400 hover:text-gray-900"
+              >
+                <XCircle size={24} />
+              </button>
             </div>
             <form onSubmit={handleUpdateProduct} className="flex flex-col gap-6">
               {/* Form fields... */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Title</label>
-                  <input required type="text" value={editProduct.title} onChange={e => setEditProduct({...editProduct, title: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" />
+                  <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+                    Title
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    value={editProduct.title}
+                    onChange={e => setEditProduct({ ...editProduct, title: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Category</label>
-                  <select required value={editProduct.categoryId} onChange={e => setEditProduct({...editProduct, categoryId: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+                  <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+                    Category
+                  </label>
+                  <select
+                    required
+                    value={editProduct.categoryId}
+                    onChange={e => setEditProduct({ ...editProduct, categoryId: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                  >
                     <option value="">Select Category...</option>
                     {data?.categories?.map((c: Category) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Base Price (EGP)</label>
-                  <input required type="number" value={editProduct.basePrice} onChange={e => setEditProduct({...editProduct, basePrice: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" />
+                  <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+                    Base Price (EGP)
+                  </label>
+                  <input
+                    required
+                    type="number"
+                    value={editProduct.basePrice}
+                    onChange={e => setEditProduct({ ...editProduct, basePrice: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
                 </div>
               </div>
               <div className="flex gap-4">
-                <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 py-3 border border-gray-100 rounded-xl font-bold">Cancel</button>
-                <button type="submit" className="flex-1 py-3 bg-[#0F6E56] text-white rounded-xl font-bold">Save Changes</button>
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 py-3 border border-gray-100 rounded-xl font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 bg-[#0F6E56] text-white rounded-xl font-bold"
+                >
+                  Save Changes
+                </button>
               </div>
             </form>
           </div>
@@ -451,40 +569,207 @@ export default function SellerHub() {
       )}
 
       <style jsx global>{`
-        * { box-sizing: border-box; }
-        html, body { height: 100%; margin: 0; }
-        /* Full-viewport locked layout: sidebar fixed, main scrolls internally */
-        .db { display: flex; height: 100dvh; overflow: hidden; background: #f8fafc; }
-        .sidebar { width: 200px; min-width: 200px; background: #0F6E56; height: 100dvh; display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
-        .main { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
-        .topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 12px; flex-shrink: 0; border-bottom: 1px solid #f1f5f9; background: #f8fafc; }
-        .page-title { font-size: 18px; font-weight: 900; color: #0f172a; }
-        .add-product-btn { background: #0F6E56; color: #fff; padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 6px; border: none; cursor: pointer; }
-        .add-product-btn:hover { opacity: 0.9; }
-        .tab-content { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 16px 20px; gap: 12px; }
-        .overview-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 12px; }
-        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-shrink: 0; }
-        .bottom-row { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; flex: 1; min-height: 0; }
-        .chart-card { background: #fff; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.04); padding: 16px; display: flex; flex-direction: column; min-height: 0; }
-        .chart-bars { display: flex; align-items: flex-end; gap: 6px; flex: 1; min-height: 0; }
-        .health-card { background: #fff; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.04); padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
-        @media (max-width: 900px) {
-          .db { flex-direction: column; height: auto; overflow: auto; }
-          .sidebar { width: 100%; height: auto; min-width: 0; flex-direction: row; flex-wrap: wrap; padding: 8px; gap: 4px; overflow-x: auto; overflow-y: visible; }
-          .sidebar .nav-item { padding: 6px 10px !important; font-size: 12px !important; }
-          .sidebar .logo { padding: 8px 12px !important; }
-          .main { height: auto; }
-          .tab-content { overflow: visible; flex: none; }
-          .overview-wrap { flex: none; }
-          .bottom-row { flex: none; grid-template-columns: 1fr; }
-          .chart-bars { min-height: 140px; flex: none; }
-          .stats-row { grid-template-columns: repeat(2, 1fr); }
+        * {
+          box-sizing: border-box;
         }
-        .nav-item { padding: 10px 16px; color: #fff; opacity: 0.7; transition: 0.2s; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 500; font-size: 13px; }
-        .nav-item:hover { opacity: 1; background: rgba(255,255,255,0.05); }
-        .nav-item.active { opacity: 1; background: rgba(255,255,255,0.1); font-weight: 700; border-right: 4px solid #4ADE80; }
-        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        html,
+        body {
+          height: 100%;
+          margin: 0;
+        }
+        /* Full-viewport locked layout: sidebar fixed, main scrolls internally */
+        .db {
+          display: flex;
+          height: 100dvh;
+          overflow: hidden;
+          background: #f8fafc;
+        }
+        .sidebar {
+          width: 200px;
+          min-width: 200px;
+          background: #0f6e56;
+          height: 100dvh;
+          display: flex;
+          flex-direction: column;
+          flex-shrink: 0;
+          overflow-y: auto;
+        }
+        .main {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          height: 100dvh;
+          overflow: hidden;
+        }
+        .topbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 14px 20px 12px;
+          flex-shrink: 0;
+          border-bottom: 1px solid #f1f5f9;
+          background: #f8fafc;
+        }
+        .page-title {
+          font-size: 18px;
+          font-weight: 900;
+          color: #0f172a;
+        }
+        .add-product-btn {
+          background: #0f6e56;
+          color: #fff;
+          padding: 8px 16px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 13px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          border: none;
+          cursor: pointer;
+        }
+        .add-product-btn:hover {
+          opacity: 0.9;
+        }
+        .tab-content {
+          flex: 1;
+          min-height: 0;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          padding: 16px 20px;
+          gap: 12px;
+        }
+        .overview-wrap {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-height: 0;
+          gap: 12px;
+        }
+        .stats-row {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 10px;
+          flex-shrink: 0;
+        }
+        .bottom-row {
+          display: grid;
+          grid-template-columns: 2fr 1fr;
+          gap: 10px;
+          flex: 1;
+          min-height: 0;
+        }
+        .chart-card {
+          background: #fff;
+          border-radius: 16px;
+          border: 1px solid #f1f5f9;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+        }
+        .chart-bars {
+          display: flex;
+          align-items: flex-end;
+          gap: 6px;
+          flex: 1;
+          min-height: 0;
+        }
+        .health-card {
+          background: #fff;
+          border-radius: 16px;
+          border: 1px solid #f1f5f9;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          min-height: 0;
+        }
+        @media (max-width: 900px) {
+          .db {
+            flex-direction: column;
+            height: auto;
+            overflow: auto;
+          }
+          .sidebar {
+            width: 100%;
+            height: auto;
+            min-width: 0;
+            flex-direction: row;
+            flex-wrap: wrap;
+            padding: 8px;
+            gap: 4px;
+            overflow-x: auto;
+            overflow-y: visible;
+          }
+          .sidebar .nav-item {
+            padding: 6px 10px !important;
+            font-size: 12px !important;
+          }
+          .sidebar .logo {
+            padding: 8px 12px !important;
+          }
+          .main {
+            height: auto;
+          }
+          .tab-content {
+            overflow: visible;
+            flex: none;
+          }
+          .overview-wrap {
+            flex: none;
+          }
+          .bottom-row {
+            flex: none;
+            grid-template-columns: 1fr;
+          }
+          .chart-bars {
+            min-height: 140px;
+            flex: none;
+          }
+          .stats-row {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+        .nav-item {
+          padding: 10px 16px;
+          color: #fff;
+          opacity: 0.7;
+          transition: 0.2s;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-weight: 500;
+          font-size: 13px;
+        }
+        .nav-item:hover {
+          opacity: 1;
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .nav-item.active {
+          opacity: 1;
+          background: rgba(255, 255, 255, 0.1);
+          font-weight: 700;
+          border-right: 4px solid #4ade80;
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(4px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
       `}</style>
     </div>
   );
@@ -496,10 +781,20 @@ const TITLES: Record<string, string> = {
   orders: 'Orders',
   analytics: 'Analytics',
   wallet: 'Wallet',
-  settings: 'Store Settings'
+  settings: 'Store Settings',
 };
 
-function NavItem({ active, onClick, label, icon }: { active: boolean, onClick: () => void, label: string, icon: React.ReactNode }) {
+function NavItem({
+  active,
+  onClick,
+  label,
+  icon,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  icon: React.ReactNode;
+}) {
   return (
     <div onClick={onClick} className={`nav-item ${active ? 'active' : ''}`}>
       {icon}
@@ -547,10 +842,36 @@ function OverviewTab({ stats, myOrders, myProducts, data }: OverviewTabProps) {
       <div className="bottom-row">
         {/* Chart */}
         <div className="chart-card">
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10,flexShrink:0}}>
-            <span style={{fontWeight:900,fontSize:14}}>Weekly Performance</span>
-            <span style={{display:'flex',alignItems:'center',gap:6,fontSize:11,fontWeight:700,color:'#94a3b8'}}>
-              <span style={{width:8,height:8,borderRadius:'50%',background:'#10b981',display:'inline-block'}}></span>Revenue
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 10,
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ fontWeight: 900, fontSize: 14 }}>Weekly Performance</span>
+            <span
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 11,
+                fontWeight: 700,
+                color: '#94a3b8',
+              }}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: '#10b981',
+                  display: 'inline-block',
+                }}
+              ></span>
+              Revenue
             </span>
           </div>
           <div className="chart-bars">
@@ -558,14 +879,75 @@ function OverviewTab({ stats, myOrders, myProducts, data }: OverviewTabProps) {
               const max = Math.max(...stats.dailyRevenue, 1);
               const pct = (val / max) * 100;
               return (
-                <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4,minWidth:0,height:'100%'}}>
-                  <div style={{width:'100%',flex:1,background:'#ecfdf5',borderRadius:8,position:'relative',minHeight:20}} className="group">
-                    <div style={{position:'absolute',bottom:0,left:0,width:'100%',height:`${pct}%`,background:'#10b981',borderRadius:8,transition:'height 0.6s ease'}} />
-                    <div style={{position:'absolute',top:-28,left:'50%',transform:'translateX(-50%)',background:'#0f172a',color:'#fff',fontSize:9,padding:'2px 6px',borderRadius:4,whiteSpace:'nowrap',pointerEvents:'none',opacity:0}} className="group-hover:opacity-100 transition-opacity">
+                <div
+                  key={i}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 4,
+                    minWidth: 0,
+                    height: '100%',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '100%',
+                      flex: 1,
+                      background: '#ecfdf5',
+                      borderRadius: 8,
+                      position: 'relative',
+                      minHeight: 20,
+                    }}
+                    className="group"
+                  >
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        width: '100%',
+                        height: `${pct}%`,
+                        background: '#10b981',
+                        borderRadius: 8,
+                        transition: 'height 0.6s ease',
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: -28,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: '#0f172a',
+                        color: '#fff',
+                        fontSize: 9,
+                        padding: '2px 6px',
+                        borderRadius: 4,
+                        whiteSpace: 'nowrap',
+                        pointerEvents: 'none',
+                        opacity: 0,
+                      }}
+                      className="group-hover:opacity-100 transition-opacity"
+                    >
                       {val.toLocaleString()} EGP
                     </div>
                   </div>
-                  <span style={{fontSize:9,fontWeight:700,color:'#94a3b8',textTransform:'uppercase'}}>{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][(new Date().getDay() + i + 1) % 7]}</span>
+                  <span
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 700,
+                      color: '#94a3b8',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {
+                      ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][
+                        (new Date().getDay() + i + 1) % 7
+                      ]
+                    }
+                  </span>
                 </div>
               );
             })}
@@ -574,19 +956,55 @@ function OverviewTab({ stats, myOrders, myProducts, data }: OverviewTabProps) {
 
         {/* Operational Health */}
         <div className="health-card">
-          <span style={{fontWeight:900,fontSize:14,flexShrink:0}}>Operational Health</span>
-          <div style={{display:'flex',flexDirection:'column',gap:10,flex:1}}>
-            <MetricRow label="Order Acceptance" value={stats.performance.orderAcceptance} color="#0F6E56" icon={<CheckCircle2 size={14} />} />
-            <MetricRow label="Shipping Speed" value={stats.performance.shippingSpeed} color="#3B82F6" icon={<Clock size={14} />} />
-            <MetricRow label="Return Rate" value={stats.performance.returnRate} color="#EF4444" inverse icon={<XCircle size={14} />} />
+          <span style={{ fontWeight: 900, fontSize: 14, flexShrink: 0 }}>Operational Health</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+            <MetricRow
+              label="Order Acceptance"
+              value={stats.performance.orderAcceptance}
+              color="#0F6E56"
+              icon={<CheckCircle2 size={14} />}
+            />
+            <MetricRow
+              label="Shipping Speed"
+              value={stats.performance.shippingSpeed}
+              color="#3B82F6"
+              icon={<Clock size={14} />}
+            />
+            <MetricRow
+              label="Return Rate"
+              value={stats.performance.returnRate}
+              color="#EF4444"
+              inverse
+              icon={<XCircle size={14} />}
+            />
           </div>
-          <div style={{paddingTop:12,borderTop:'1px solid #f8fafc',flexShrink:0}}>
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:11,fontWeight:700,color:'#94a3b8',marginBottom:6}}>
+          <div style={{ paddingTop: 12, borderTop: '1px solid #f8fafc', flexShrink: 0 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: 11,
+                fontWeight: 700,
+                color: '#94a3b8',
+                marginBottom: 6,
+              }}
+            >
               <span>Account Status</span>
-              <span style={{color:'#10b981',textTransform:'uppercase'}}>{data.currentSeller?.status}</span>
+              <span style={{ color: '#10b981', textTransform: 'uppercase' }}>
+                {data.currentSeller?.status}
+              </span>
             </div>
-            <div style={{width:'100%',height:6,background:'#f8fafc',borderRadius:99,overflow:'hidden'}}>
-              <div style={{height:'100%',width:'100%',background:'#10b981'}} />
+            <div
+              style={{
+                width: '100%',
+                height: 6,
+                background: '#f8fafc',
+                borderRadius: 99,
+                overflow: 'hidden',
+              }}
+            >
+              <div style={{ height: '100%', width: '100%', background: '#10b981' }} />
             </div>
           </div>
         </div>
@@ -595,44 +1013,141 @@ function OverviewTab({ stats, myOrders, myProducts, data }: OverviewTabProps) {
   );
 }
 
-function StatCard({ label, value, subText, trend, icon }: { label: string, value: string, subText: string, trend: 'up' | 'down' | 'neutral', icon: React.ReactNode }) {
+function StatCard({
+  label,
+  value,
+  subText,
+  trend,
+  icon,
+}: {
+  label: string;
+  value: string;
+  subText: string;
+  trend: 'up' | 'down' | 'neutral';
+  icon: React.ReactNode;
+}) {
   return (
-    <div style={{background:'#fff',padding:'12px 14px',borderRadius:16,border:'1px solid #f1f5f9',boxShadow:'0 1px 3px rgba(0,0,0,0.04)'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-        <div style={{width:28,height:28,borderRadius:10,background:'#f8fafc',display:'flex',alignItems:'center',justifyContent:'center'}}>{icon}</div>
+    <div
+      style={{
+        background: '#fff',
+        padding: '12px 14px',
+        borderRadius: 16,
+        border: '1px solid #f1f5f9',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 6,
+        }}
+      >
+        <div
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 10,
+            background: '#f8fafc',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {icon}
+        </div>
         {trend !== 'neutral' && (
-          <span style={{fontSize:9,fontWeight:900,padding:'2px 7px',borderRadius:99,background:trend==='up'?'#ecfdf5':'#fef2f2',color:trend==='up'?'#10b981':'#ef4444'}}>
+          <span
+            style={{
+              fontSize: 9,
+              fontWeight: 900,
+              padding: '2px 7px',
+              borderRadius: 99,
+              background: trend === 'up' ? '#ecfdf5' : '#fef2f2',
+              color: trend === 'up' ? '#10b981' : '#ef4444',
+            }}
+          >
             {trend === 'up' ? '▲' : '▼'}
           </span>
         )}
       </div>
-      <div style={{fontSize:9,fontWeight:700,color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:2}}>{label}</div>
-      <div style={{fontSize:16,fontWeight:900,color:'#0f172a',marginBottom:2,lineHeight:1.2}}>{value}</div>
-      <div style={{fontSize:10,color:'#94a3b8',fontWeight:500}}>{subText}</div>
+      <div
+        style={{
+          fontSize: 9,
+          fontWeight: 700,
+          color: '#94a3b8',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          marginBottom: 2,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: 16,
+          fontWeight: 900,
+          color: '#0f172a',
+          marginBottom: 2,
+          lineHeight: 1.2,
+        }}
+      >
+        {value}
+      </div>
+      <div style={{ fontSize: 10, color: '#94a3b8', fontWeight: 500 }}>{subText}</div>
     </div>
   );
 }
 
-function MetricRow({ label, value, color, inverse = false, icon }: { label: string, value: number, color: string, inverse?: boolean, icon: React.ReactNode }) {
+function MetricRow({
+  label,
+  value,
+  color,
+  inverse = false,
+  icon,
+}: {
+  label: string;
+  value: number;
+  color: string;
+  inverse?: boolean;
+  icon: React.ReactNode;
+}) {
   const isGood = inverse ? value <= 5 : value >= 90;
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center text-xs">
         <div className="flex items-center gap-2 font-bold text-slate-600">
-           {icon} {label}
+          {icon} {label}
         </div>
-        <span className={`font-black ${isGood ? 'text-emerald-500' : 'text-amber-500'}`}>{value}%</span>
+        <span className={`font-black ${isGood ? 'text-emerald-500' : 'text-amber-500'}`}>
+          {value}%
+        </span>
       </div>
       <div className="w-full h-2 bg-slate-50 rounded-full overflow-hidden">
-        <div className="h-full transition-all duration-1000" style={{width: `${value}%`, backgroundColor: color}}></div>
+        <div
+          className="h-full transition-all duration-1000"
+          style={{ width: `${value}%`, backgroundColor: color }}
+        ></div>
       </div>
     </div>
   );
 }
 
 // Sub-tabs simplified for this view
-function OrdersTab({ orders, onFulfill }: { orders: Order[], onFulfill: (id: string) => void }) {
-  const orderItems = orders.flatMap(o => (o.items || []).map(i => ({...i, orderId: o.id, date: o.createdAt})));
+function OrdersTab({ orders, onFulfill }: { orders: Order[]; onFulfill: (id: string) => void }) {
+  const orderItems = orders.flatMap(o =>
+    (o.items || []).map(i => ({
+      ...i,
+      orderId: o.id,
+      date: o.createdAt,
+      // Surface buyer contact so the seller can reach out — works for both
+      // logged-in customers (via the joined user) and guest checkouts.
+      customerName: o.user?.name || null,
+      customerEmail: o.user?.email || o.guestEmail || null,
+      isGuest: !o.user,
+    }))
+  );
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
       <table className="w-full text-left">
@@ -640,56 +1155,99 @@ function OrdersTab({ orders, onFulfill }: { orders: Order[], onFulfill: (id: str
           <tr>
             <th className="px-6 py-4">Item</th>
             <th className="px-6 py-4">Order ID</th>
+            <th className="px-6 py-4">Customer</th>
             <th className="px-6 py-4">Status</th>
             <th className="px-6 py-4 text-right">Action</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-50">
-          {orderItems.map((item) => (
+          {orderItems.map(item => (
             <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
               <td className="px-6 py-4">
                 <div className="text-sm font-bold text-slate-900">{item.productTitleSnapshot}</div>
-                <div className="text-[11px] text-slate-400">{new Date(item.date).toLocaleDateString()}</div>
+                <div className="text-[11px] text-slate-400">
+                  {new Date(item.date).toLocaleDateString()}
+                </div>
               </td>
-              <td className="px-6 py-4 text-xs font-mono text-slate-500">#{item.orderId.slice(0, 8)}</td>
+              <td className="px-6 py-4 text-xs font-mono text-slate-500">
+                #{item.orderId.slice(0, 8)}
+              </td>
               <td className="px-6 py-4">
-                 <span className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase ${item.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>{item.status}</span>
+                <div className="text-xs font-semibold text-slate-700">
+                  {item.customerName || (item.isGuest ? 'Guest' : '—')}
+                </div>
+                {item.customerEmail && (
+                  <div className="text-[11px] text-slate-400 truncate max-w-[180px]">
+                    {item.customerEmail}
+                    {item.isGuest && ' (guest)'}
+                  </div>
+                )}
+              </td>
+              <td className="px-6 py-4">
+                <span
+                  className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase ${item.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}
+                >
+                  {item.status}
+                </span>
               </td>
               <td className="px-6 py-4 text-right">
                 {item.status === 'PENDING' && (
-                  <button onClick={() => onFulfill(item.id)} className="text-xs font-bold text-[#0F6E56] hover:underline">Fulfill</button>
+                  <button
+                    onClick={() => onFulfill(item.id)}
+                    className="text-xs font-bold text-[#0F6E56] hover:underline"
+                  >
+                    Fulfill
+                  </button>
                 )}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      {orderItems.length === 0 && <div className="p-20 text-center text-slate-400 text-sm">No orders to show.</div>}
+      {orderItems.length === 0 && (
+        <div className="p-20 text-center text-slate-400 text-sm">No orders to show.</div>
+      )}
     </div>
   );
 }
 
-function ProductsTab({ products, onDelete, onAdd, onEdit, onAfterRefresh }: { products: Product[], onDelete: (id: string) => void, onAdd: () => void, onEdit: (p: Product) => void, onAfterRefresh: () => Promise<void> }) {
+function ProductsTab({
+  products,
+  onDelete,
+  onAdd,
+  onEdit,
+  onAfterRefresh,
+}: {
+  products: Product[];
+  onDelete: (id: string) => void;
+  onAdd: () => void;
+  onEdit: (p: Product) => void;
+  onAfterRefresh: () => Promise<void>;
+}) {
   const [search, setSearch] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'in' | 'out' | 'low'>('all');
   const [publishFilter, setPublishFilter] = useState<'all' | 'published' | 'draft'>('all');
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkResult, setBulkResult] = useState<{
-    success: number; drafts?: number; published?: number; failed: number; errors?: string[];
+    success: number;
+    drafts?: number;
+    published?: number;
+    failed: number;
+    errors?: string[];
   } | null>(null);
 
   const q = search.trim().toLowerCase();
-  const filtered = products.filter((p) => {
+  const filtered = products.filter(p => {
     if (q) {
       const hay = `${p.title || ''} ${p.id || ''} ${p.category?.name || ''}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     const stock = (p.variants || []).reduce((a, b) => a + (b.stockCount || 0), 0);
-    if (stockFilter === 'in'  && stock <= 0)            return false;
-    if (stockFilter === 'out' && stock !== 0)           return false;
+    if (stockFilter === 'in' && stock <= 0) return false;
+    if (stockFilter === 'out' && stock !== 0) return false;
     if (stockFilter === 'low' && (stock === 0 || stock > 5)) return false;
-    if (publishFilter === 'published' && !p.published)  return false;
-    if (publishFilter === 'draft'     && p.published)   return false;
+    if (publishFilter === 'published' && !p.published) return false;
+    if (publishFilter === 'draft' && p.published) return false;
     return true;
   });
 
@@ -739,7 +1297,8 @@ function ProductsTab({ products, onDelete, onAdd, onEdit, onAfterRefresh }: { pr
         <div className="flex-1 min-w-0">
           <div className="text-sm font-bold text-slate-900">Bulk import via Excel</div>
           <div className="text-xs text-slate-500 mt-0.5">
-            Download the template, fill in your products, then upload it back here. Products without an image stay as drafts until you add one.
+            Download the template, fill in your products, then upload it back here. Products without
+            an image stay as drafts until you add one.
           </div>
         </div>
         <button
@@ -767,23 +1326,45 @@ function ProductsTab({ products, onDelete, onAdd, onEdit, onAfterRefresh }: { pr
             <div>
               <div className="font-bold text-slate-900">Bulk import result</div>
               <div className="text-xs text-slate-500 mt-1">
-                <span className="text-emerald-600 font-semibold">{bulkResult.success}</span> imported
+                <span className="text-emerald-600 font-semibold">{bulkResult.success}</span>{' '}
+                imported
                 {typeof bulkResult.drafts === 'number' && (
-                  <> — <span className="text-amber-600 font-semibold">{bulkResult.drafts}</span> drafts (need an image)</>
+                  <>
+                    {' '}
+                    — <span className="text-amber-600 font-semibold">{bulkResult.drafts}</span>{' '}
+                    drafts (need an image)
+                  </>
                 )}
                 {typeof bulkResult.published === 'number' && bulkResult.published > 0 && (
-                  <> — <span className="text-emerald-600 font-semibold">{bulkResult.published}</span> published</>
+                  <>
+                    {' '}
+                    — <span className="text-emerald-600 font-semibold">
+                      {bulkResult.published}
+                    </span>{' '}
+                    published
+                  </>
                 )}
                 {bulkResult.failed > 0 && (
-                  <> — <span className="text-red-600 font-semibold">{bulkResult.failed}</span> failed</>
+                  <>
+                    {' '}
+                    — <span className="text-red-600 font-semibold">{bulkResult.failed}</span> failed
+                  </>
                 )}
               </div>
             </div>
-            <button onClick={() => setBulkResult(null)} aria-label="Dismiss" className="text-slate-400 hover:text-slate-700 text-lg">×</button>
+            <button
+              onClick={() => setBulkResult(null)}
+              aria-label="Dismiss"
+              className="text-slate-400 hover:text-slate-700 text-lg"
+            >
+              ×
+            </button>
           </div>
           {bulkResult.errors && bulkResult.errors.length > 0 && (
             <ul className="mt-3 max-h-32 overflow-y-auto text-xs text-red-600 list-disc pl-5 space-y-1">
-              {bulkResult.errors.slice(0, 50).map((e, i) => <li key={i}>{e}</li>)}
+              {bulkResult.errors.slice(0, 50).map((e, i) => (
+                <li key={i}>{e}</li>
+              ))}
               {bulkResult.errors.length > 50 && <li>+ {bulkResult.errors.length - 50} more…</li>}
             </ul>
           )}
@@ -793,13 +1374,22 @@ function ProductsTab({ products, onDelete, onAdd, onEdit, onAfterRefresh }: { pr
       {/* Search/filter toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-3">
         <div className="relative flex-1">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
             type="search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             placeholder="Search by product name, category or ID…"
             className="w-full pl-9 pr-9 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
           />
@@ -809,12 +1399,14 @@ function ProductsTab({ products, onDelete, onAdd, onEdit, onAfterRefresh }: { pr
               onClick={() => setSearch('')}
               aria-label="Clear search"
               className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-base px-1"
-            >×</button>
+            >
+              ×
+            </button>
           )}
         </div>
         <select
           value={publishFilter}
-          onChange={(e) => setPublishFilter(e.target.value as typeof publishFilter)}
+          onChange={e => setPublishFilter(e.target.value as typeof publishFilter)}
           className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           <option value="all">All status</option>
@@ -823,7 +1415,7 @@ function ProductsTab({ products, onDelete, onAdd, onEdit, onAfterRefresh }: { pr
         </select>
         <select
           value={stockFilter}
-          onChange={(e) => setStockFilter(e.target.value as typeof stockFilter)}
+          onChange={e => setStockFilter(e.target.value as typeof stockFilter)}
           className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           <option value="all">All stock</option>
@@ -842,43 +1434,78 @@ function ProductsTab({ products, onDelete, onAdd, onEdit, onAfterRefresh }: { pr
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filtered.map((product) => {
+          {filtered.map(product => {
             const stock = (product.variants || []).reduce((a, b) => a + (b.stockCount || 0), 0);
             const hasImage = (product.images?.length ?? 0) > 0;
             const isPublished = product.published === true;
             return (
-              <div key={product.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 group">
+              <div
+                key={product.id}
+                className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 group"
+              >
                 <div className="aspect-square rounded-xl bg-slate-50 mb-4 overflow-hidden relative">
                   {hasImage ? (
                     // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-                    <img src={product.images?.[0]?.url} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    <img
+                      src={product.images?.[0]?.url}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 gap-1">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <svg
+                        width="32"
+                        height="32"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                      >
                         <rect x="3" y="3" width="18" height="18" rx="2" />
                         <circle cx="8.5" cy="8.5" r="1.5" />
                         <polyline points="21 15 16 10 5 21" />
                       </svg>
-                      <span className="text-[10px] font-bold uppercase tracking-wider">No image</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider">
+                        No image
+                      </span>
                     </div>
                   )}
                   <div className="absolute top-2 right-2 flex gap-1">
-                    <button onClick={() => onEdit(product)} aria-label="Edit product" className="w-8 h-8 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-blue-500 hover:bg-white"><Settings size={14} /></button>
-                    <button onClick={() => onDelete(product.id)} aria-label="Delete product" className="w-8 h-8 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-red-500 hover:bg-white"><Trash2 size={14} /></button>
+                    <button
+                      onClick={() => onEdit(product)}
+                      aria-label="Edit product"
+                      className="w-8 h-8 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-blue-500 hover:bg-white"
+                    >
+                      <Settings size={14} />
+                    </button>
+                    <button
+                      onClick={() => onDelete(product.id)}
+                      aria-label="Delete product"
+                      className="w-8 h-8 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-red-500 hover:bg-white"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                   <div className="absolute bottom-2 left-2 flex gap-1">
                     {!isPublished && (
-                      <span className="text-[10px] font-black bg-amber-500 text-white px-2 py-0.5 rounded-md uppercase">Draft</span>
+                      <span className="text-[10px] font-black bg-amber-500 text-white px-2 py-0.5 rounded-md uppercase">
+                        Draft
+                      </span>
                     )}
                     {stock === 0 && (
-                      <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-md uppercase">Out of stock</span>
+                      <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-md uppercase">
+                        Out of stock
+                      </span>
                     )}
                   </div>
                 </div>
                 <h4 className="font-bold text-sm text-slate-900 mb-1 truncate">{product.title}</h4>
                 <div className="flex justify-between items-center text-xs mb-2">
                   <span className="font-black text-emerald-600">{product.basePrice} EGP</span>
-                  <span className={`font-bold ${stock === 0 ? 'text-red-500' : stock <= 5 ? 'text-amber-500' : 'text-slate-400'}`}>{stock} in stock</span>
+                  <span
+                    className={`font-bold ${stock === 0 ? 'text-red-500' : stock <= 5 ? 'text-amber-500' : 'text-slate-400'}`}
+                  >
+                    {stock} in stock
+                  </span>
                 </div>
                 <button
                   type="button"
@@ -898,7 +1525,10 @@ function ProductsTab({ products, onDelete, onAdd, onEdit, onAfterRefresh }: { pr
               </div>
             );
           })}
-          <button onClick={onAdd} className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center p-8 text-slate-400 hover:border-emerald-300 hover:bg-emerald-50 transition-all gap-2 min-h-[200px]">
+          <button
+            onClick={onAdd}
+            className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center p-8 text-slate-400 hover:border-emerald-300 hover:bg-emerald-50 transition-all gap-2 min-h-[200px]"
+          >
             <Plus size={32} />
             <span className="text-sm font-bold">Add Product</span>
           </button>
@@ -908,12 +1538,10 @@ function ProductsTab({ products, onDelete, onAdd, onEdit, onAfterRefresh }: { pr
   );
 }
 
-function AnalyticsTab({ stats, orders }: { stats: DashboardStats, orders: Order[] }) {
+function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[] }) {
   // Compute product-wise top-sellers & status breakdown from real data
   const totalRevenue = stats.revenue;
-  const avgOrderValue = orders.length > 0
-    ? totalRevenue / orders.length
-    : 0;
+  const avgOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
 
   const statusBreakdown = orders.reduce<Record<string, number>>((acc, o) => {
     acc[o.status] = (acc[o.status] || 0) + 1;
@@ -921,7 +1549,7 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats, orders: Order[
   }, {});
 
   const topProducts = (() => {
-    const map = new Map<string, { title: string, count: number, revenue: number }>();
+    const map = new Map<string, { title: string; count: number; revenue: number }>();
     for (const o of orders) {
       for (const item of o.items || []) {
         const key = item.productTitleSnapshot;
@@ -931,26 +1559,39 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats, orders: Order[
         map.set(key, entry);
       }
     }
-    return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+    return Array.from(map.values())
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
   })();
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Total Revenue</div>
-          <div className="text-3xl font-black text-slate-900">{totalRevenue.toLocaleString()} EGP</div>
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+            Total Revenue
+          </div>
+          <div className="text-3xl font-black text-slate-900">
+            {totalRevenue.toLocaleString()} EGP
+          </div>
           <div className="text-[11px] text-slate-400 mt-2">
-            {stats.monthlyChangePct > 0 ? '+' : ''}{stats.monthlyChangePct}% MoM
+            {stats.monthlyChangePct > 0 ? '+' : ''}
+            {stats.monthlyChangePct}% MoM
           </div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Avg Order Value</div>
-          <div className="text-3xl font-black text-slate-900">{Math.round(avgOrderValue).toLocaleString()} EGP</div>
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+            Avg Order Value
+          </div>
+          <div className="text-3xl font-black text-slate-900">
+            {Math.round(avgOrderValue).toLocaleString()} EGP
+          </div>
           <div className="text-[11px] text-slate-400 mt-2">Across {orders.length} orders</div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Store Rating</div>
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+            Store Rating
+          </div>
           <div className="text-3xl font-black text-slate-900">
             {stats.avgRating > 0 ? stats.avgRating.toFixed(1) : 'New'}
             <span className="text-yellow-500 ml-1">★</span>
@@ -963,7 +1604,9 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats, orders: Order[
         <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm">
           <h3 className="font-black text-lg mb-6">Order Status Breakdown</h3>
           {Object.entries(statusBreakdown).length === 0 ? (
-            <div className="py-10 text-center text-sm text-slate-400">No orders to analyze yet.</div>
+            <div className="py-10 text-center text-sm text-slate-400">
+              No orders to analyze yet.
+            </div>
           ) : (
             <div className="space-y-4">
               {Object.entries(statusBreakdown).map(([status, count]) => {
@@ -972,7 +1615,9 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats, orders: Order[
                   <div key={status}>
                     <div className="flex justify-between items-center text-xs mb-1">
                       <span className="font-bold text-slate-600">{status}</span>
-                      <span className="text-slate-400">{count} orders ({pct}%)</span>
+                      <span className="text-slate-400">
+                        {count} orders ({pct}%)
+                      </span>
                     </div>
                     <div className="w-full h-2 bg-slate-50 rounded-full overflow-hidden">
                       <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }}></div>
@@ -991,13 +1636,22 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats, orders: Order[
           ) : (
             <div className="space-y-3">
               {topProducts.map((p, i) => (
-                <div key={p.title} className="flex items-center justify-between border-b border-slate-50 pb-3 last:border-0">
+                <div
+                  key={p.title}
+                  className="flex items-center justify-between border-b border-slate-50 pb-3 last:border-0"
+                >
                   <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 text-xs font-black flex items-center justify-center">{i + 1}</div>
-                    <div className="text-sm font-bold text-slate-700 truncate max-w-[200px]">{p.title}</div>
+                    <div className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 text-xs font-black flex items-center justify-center">
+                      {i + 1}
+                    </div>
+                    <div className="text-sm font-bold text-slate-700 truncate max-w-[200px]">
+                      {p.title}
+                    </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-black text-slate-900">{Math.round(p.revenue).toLocaleString()} EGP</div>
+                    <div className="text-sm font-black text-slate-900">
+                      {Math.round(p.revenue).toLocaleString()} EGP
+                    </div>
                     <div className="text-[10px] text-slate-400">{p.count} units sold</div>
                   </div>
                 </div>
@@ -1012,7 +1666,15 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats, orders: Order[
 
 function WalletTab({ data }: { data: DashboardData }) {
   const [balance, setBalance] = useState(data?.currentSeller?.balance || 0);
-  const [payouts, setPayouts] = useState<Array<{ id: string; amount: number; status: string; bankDetails: string | null; createdAt: string }>>([]);
+  const [payouts, setPayouts] = useState<
+    Array<{
+      id: string;
+      amount: number;
+      status: string;
+      bankDetails: string | null;
+      createdAt: string;
+    }>
+  >([]);
   const [bankAccount, setBankAccount] = useState(data?.currentSeller?.bankAccount || '');
   const [requestAmount, setRequestAmount] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -1036,7 +1698,9 @@ function WalletTab({ data }: { data: DashboardData }) {
     }
   };
 
-  useEffect(() => { loadPayouts(); }, []);
+  useEffect(() => {
+    loadPayouts();
+  }, []);
 
   const handleRequestPayout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1053,7 +1717,10 @@ function WalletTab({ data }: { data: DashboardData }) {
       if (!res.ok) {
         setMessage({ type: 'error', text: d.message || 'Request failed' });
       } else {
-        setMessage({ type: 'success', text: 'Payout request submitted! It will be processed shortly.' });
+        setMessage({
+          type: 'success',
+          text: 'Payout request submitted! It will be processed shortly.',
+        });
         setRequestAmount('');
         await loadPayouts();
       }
@@ -1071,8 +1738,12 @@ function WalletTab({ data }: { data: DashboardData }) {
         <div className="md:col-span-2 bg-white rounded-2xl p-8 border border-slate-100 shadow-sm">
           <div className="flex items-start justify-between mb-6">
             <div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Available Balance</div>
-              <div className="text-4xl font-black text-emerald-600">{balance.toLocaleString()} <span className="text-lg text-slate-400">EGP</span></div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                Available Balance
+              </div>
+              <div className="text-4xl font-black text-emerald-600">
+                {balance.toLocaleString()} <span className="text-lg text-slate-400">EGP</span>
+              </div>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
               <Wallet className="text-emerald-600" />
@@ -1082,11 +1753,13 @@ function WalletTab({ data }: { data: DashboardData }) {
           <form onSubmit={handleRequestPayout} className="border-t border-slate-50 pt-6 space-y-4">
             <h3 className="font-black text-sm">Request Payout</h3>
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Amount (EGP) — leave empty to withdraw full balance</label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
+                Amount (EGP) — leave empty to withdraw full balance
+              </label>
               <input
                 type="number"
                 value={requestAmount}
-                onChange={(e) => setRequestAmount(e.target.value)}
+                onChange={e => setRequestAmount(e.target.value)}
                 placeholder={`Max: ${balance.toFixed(2)}`}
                 min="1"
                 max={balance}
@@ -1095,19 +1768,27 @@ function WalletTab({ data }: { data: DashboardData }) {
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Bank Account / IBAN</label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
+                Bank Account / IBAN
+              </label>
               <input
                 type="text"
                 value={bankAccount}
-                onChange={(e) => setBankAccount(e.target.value)}
+                onChange={e => setBankAccount(e.target.value)}
                 placeholder="e.g. NBE-EG12-3456-7890..."
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
             {message && (
-              <div className={`px-4 py-3 rounded-xl text-xs font-bold ${
-                message.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
-              }`}>{message.text}</div>
+              <div
+                className={`px-4 py-3 rounded-xl text-xs font-bold ${
+                  message.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'bg-red-50 text-red-700'
+                }`}
+              >
+                {message.text}
+              </div>
             )}
             <button
               type="submit"
@@ -1126,7 +1807,8 @@ function WalletTab({ data }: { data: DashboardData }) {
           </div>
           <div className="text-xs text-slate-400 mt-1">Platform fee per order</div>
           <div className="mt-6 pt-6 border-t border-slate-50 text-[11px] text-slate-500 leading-relaxed">
-            Payouts are held in escrow for 7 days after delivery to allow for returns. After clearance, funds are available for withdrawal.
+            Payouts are held in escrow for 7 days after delivery to allow for returns. After
+            clearance, funds are available for withdrawal.
           </div>
         </div>
       </div>
@@ -1150,18 +1832,31 @@ function WalletTab({ data }: { data: DashboardData }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 text-sm">
-              {payouts.map((p) => (
+              {payouts.map(p => (
                 <tr key={p.id} className="hover:bg-slate-50/50">
-                  <td className="px-6 py-3 text-xs text-slate-500">{new Date(p.createdAt).toLocaleDateString()}</td>
-                  <td className="px-6 py-3 font-black text-slate-900">{p.amount.toLocaleString()} EGP</td>
-                  <td className="px-6 py-3 text-xs text-slate-400 truncate max-w-[160px]">{p.bankDetails || '—'}</td>
+                  <td className="px-6 py-3 text-xs text-slate-500">
+                    {new Date(p.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-3 font-black text-slate-900">
+                    {p.amount.toLocaleString()} EGP
+                  </td>
+                  <td className="px-6 py-3 text-xs text-slate-400 truncate max-w-[160px]">
+                    {p.bankDetails || '—'}
+                  </td>
                   <td className="px-6 py-3">
-                    <span className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase ${
-                      p.status === 'PAID' ? 'bg-emerald-50 text-emerald-600'
-                      : p.status === 'PENDING' ? 'bg-amber-50 text-amber-600'
-                      : p.status === 'PROCESSING' ? 'bg-blue-50 text-blue-600'
-                      : 'bg-slate-50 text-slate-500'
-                    }`}>{p.status}</span>
+                    <span
+                      className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase ${
+                        p.status === 'PAID'
+                          ? 'bg-emerald-50 text-emerald-600'
+                          : p.status === 'PENDING'
+                            ? 'bg-amber-50 text-amber-600'
+                            : p.status === 'PROCESSING'
+                              ? 'bg-blue-50 text-blue-600'
+                              : 'bg-slate-50 text-slate-500'
+                      }`}
+                    >
+                      {p.status}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -1195,7 +1890,7 @@ function SettingsTab({ data }: { data: DashboardData }) {
       fd.append('file', file);
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const d = await res.json();
-      if (d.url) setForm((f) => ({ ...f, logoUrl: d.url }));
+      if (d.url) setForm(f => ({ ...f, logoUrl: d.url }));
     } catch (err) {
       console.error('Logo upload failed:', err);
     } finally {
@@ -1229,7 +1924,10 @@ function SettingsTab({ data }: { data: DashboardData }) {
 
   return (
     <div className="max-w-3xl">
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm space-y-6"
+      >
         <h3 className="font-black text-lg">Store Settings</h3>
 
         <div className="flex items-center gap-6">
@@ -1241,16 +1939,24 @@ function SettingsTab({ data }: { data: DashboardData }) {
             )}
           </div>
           <div className="flex-1">
-            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">Store Logo</label>
+            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">
+              Store Logo
+            </label>
             <div className="flex items-center gap-2 flex-wrap">
               <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-semibold text-slate-700">
                 {form.logoUrl ? 'Replace logo' : 'Upload logo'}
-                <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={isUploading} className="hidden" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  disabled={isUploading}
+                  className="hidden"
+                />
               </label>
               {form.logoUrl && !isUploading && (
                 <button
                   type="button"
-                  onClick={() => setForm((f) => ({ ...f, logoUrl: '' }))}
+                  onClick={() => setForm(f => ({ ...f, logoUrl: '' }))}
                   className="text-xs font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-md hover:bg-red-50"
                 >
                   Remove
@@ -1262,22 +1968,26 @@ function SettingsTab({ data }: { data: DashboardData }) {
         </div>
 
         <div>
-          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Store Name</label>
+          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
+            Store Name
+          </label>
           <input
             required
             type="text"
             value={form.storeName}
-            onChange={(e) => setForm({ ...form, storeName: e.target.value })}
+            onChange={e => setForm({ ...form, storeName: e.target.value })}
             className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
           />
         </div>
 
         <div>
-          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Description</label>
+          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
+            Description
+          </label>
           <textarea
             rows={4}
             value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            onChange={e => setForm({ ...form, description: e.target.value })}
             className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none resize-none"
             placeholder="Tell customers what makes your store unique..."
           />
@@ -1285,41 +1995,55 @@ function SettingsTab({ data }: { data: DashboardData }) {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">City</label>
+            <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
+              City
+            </label>
             <input
               type="text"
               value={form.city}
-              onChange={(e) => setForm({ ...form, city: e.target.value })}
+              onChange={e => setForm({ ...form, city: e.target.value })}
               className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
             />
           </div>
           <div>
-            <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Governorate</label>
+            <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
+              Governorate
+            </label>
             <input
               type="text"
               value={form.governorate}
-              onChange={(e) => setForm({ ...form, governorate: e.target.value })}
+              onChange={e => setForm({ ...form, governorate: e.target.value })}
               className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
             />
           </div>
         </div>
 
         <div>
-          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Bank Account / IBAN for Payouts</label>
+          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
+            Bank Account / IBAN for Payouts
+          </label>
           <input
             type="text"
             value={form.bankAccount}
-            onChange={(e) => setForm({ ...form, bankAccount: e.target.value })}
+            onChange={e => setForm({ ...form, bankAccount: e.target.value })}
             placeholder="Enter your IBAN or account details"
             className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-mono text-sm"
           />
-          <div className="text-[11px] text-slate-400 mt-1">This info is stored securely and only visible to admins during payout processing.</div>
+          <div className="text-[11px] text-slate-400 mt-1">
+            This info is stored securely and only visible to admins during payout processing.
+          </div>
         </div>
 
         {message && (
-          <div className={`px-4 py-3 rounded-xl text-xs font-bold ${
-            message.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
-          }`}>{message.text}</div>
+          <div
+            className={`px-4 py-3 rounded-xl text-xs font-bold ${
+              message.type === 'success'
+                ? 'bg-emerald-50 text-emerald-700'
+                : 'bg-red-50 text-red-700'
+            }`}
+          >
+            {message.text}
+          </div>
         )}
 
         <button
@@ -1345,7 +2069,11 @@ interface AddProductModalProps {
   isSubmitting: boolean;
   handleImageUpload: (index: number, e: React.ChangeEvent<HTMLInputElement>) => void;
   addVariant: () => void;
-  updateVariant: <K extends keyof VariantState>(index: number, field: K, value: VariantState[K]) => void;
+  updateVariant: <K extends keyof VariantState>(
+    index: number,
+    field: K,
+    value: VariantState[K]
+  ) => void;
 }
 
 function AddProductModal({
@@ -1368,7 +2096,7 @@ function AddProductModal({
     >
       <div
         className="bg-white w-full max-w-2xl rounded-2xl p-8 max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-black">New Product</h3>
@@ -1384,41 +2112,49 @@ function AddProductModal({
                 required
                 type="text"
                 value={newProduct.title}
-                onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
+                onChange={e => setNewProduct({ ...newProduct, title: e.target.value })}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
             <div className="col-span-2">
-              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Description</label>
+              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+                Description
+              </label>
               <textarea
                 rows={3}
                 value={newProduct.description}
-                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                onChange={e => setNewProduct({ ...newProduct, description: e.target.value })}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none resize-none"
               />
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Category</label>
+              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+                Category
+              </label>
               <select
                 required
                 value={newProduct.categoryId}
-                onChange={(e) => setNewProduct({ ...newProduct, categoryId: e.target.value })}
+                onChange={e => setNewProduct({ ...newProduct, categoryId: e.target.value })}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
               >
                 <option value="">Select Category...</option>
-                {categories?.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                {categories?.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Base Price (EGP)</label>
+              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+                Base Price (EGP)
+              </label>
               <input
                 required
                 type="number"
                 min="1"
                 value={newProduct.basePrice}
-                onChange={(e) => setNewProduct({ ...newProduct, basePrice: e.target.value })}
+                onChange={e => setNewProduct({ ...newProduct, basePrice: e.target.value })}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
@@ -1427,24 +2163,31 @@ function AddProductModal({
           <div>
             <div className="flex justify-between items-center mb-3">
               <label className="text-xs font-bold text-gray-500 uppercase">Variants</label>
-              <button type="button" onClick={addVariant} className="text-xs font-bold text-emerald-600 hover:underline">
+              <button
+                type="button"
+                onClick={addVariant}
+                className="text-xs font-bold text-emerald-600 hover:underline"
+              >
                 + Add variant
               </button>
             </div>
             <div className="space-y-3">
               {variants.map((v, i) => (
-                <div key={i} className="grid grid-cols-12 gap-2 items-center bg-slate-50 rounded-xl p-3">
+                <div
+                  key={i}
+                  className="grid grid-cols-12 gap-2 items-center bg-slate-50 rounded-xl p-3"
+                >
                   <input
                     type="text"
                     value={v.color}
-                    onChange={(e) => updateVariant(i, 'color', e.target.value)}
+                    onChange={e => updateVariant(i, 'color', e.target.value)}
                     placeholder="Color / Variant"
                     className="col-span-3 px-3 py-2 bg-white border border-slate-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                   <input
                     type="number"
                     value={v.stock}
-                    onChange={(e) => updateVariant(i, 'stock', Number(e.target.value))}
+                    onChange={e => updateVariant(i, 'stock', Number(e.target.value))}
                     placeholder="Stock"
                     min="0"
                     className="col-span-2 px-3 py-2 bg-white border border-slate-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
@@ -1452,7 +2195,7 @@ function AddProductModal({
                   <input
                     type="number"
                     value={v.price}
-                    onChange={(e) => updateVariant(i, 'price', Number(e.target.value))}
+                    onChange={e => updateVariant(i, 'price', Number(e.target.value))}
                     placeholder="Price"
                     min="1"
                     className="col-span-3 px-3 py-2 bg-white border border-slate-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
@@ -1461,7 +2204,14 @@ function AddProductModal({
                     className="col-span-3 flex items-center justify-center gap-1 px-2 py-2 rounded-lg border border-dashed border-slate-300 bg-white hover:bg-slate-50 cursor-pointer text-[10px] text-slate-600 font-semibold"
                     title={v.image ? 'Replace image' : 'Choose image'}
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                       <polyline points="17 8 12 3 7 8" />
                       <line x1="12" y1="3" x2="12" y2="15" />
@@ -1470,7 +2220,7 @@ function AddProductModal({
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => handleImageUpload(i, e)}
+                      onChange={e => handleImageUpload(i, e)}
                       className="hidden"
                     />
                   </label>
@@ -1515,8 +2265,18 @@ function AddProductModal({
           </div>
 
           <div className="flex gap-4">
-            <button type="button" onClick={onClose} className="flex-1 py-3 border border-gray-100 rounded-xl font-bold">Cancel</button>
-            <button type="submit" disabled={isSubmitting} className="flex-1 py-3 bg-[#0F6E56] text-white rounded-xl font-bold disabled:opacity-50">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-3 border border-gray-100 rounded-xl font-bold"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 py-3 bg-[#0F6E56] text-white rounded-xl font-bold disabled:opacity-50"
+            >
               {isSubmitting ? 'Creating…' : 'Create Product'}
             </button>
           </div>

@@ -33,7 +33,7 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [cartNotice, setCartNotice] = useState('');
-  
+
   const [address, setAddress] = useState({
     fullName: '',
     phone: '',
@@ -41,7 +41,11 @@ export default function CheckoutPage() {
     city: '',
     governorate: '',
   });
-  
+
+  // Guest checkout email — required when the user isn't signed in so we can
+  // send the order confirmation and surface a contact in admin/seller views.
+  const [guestEmail, setGuestEmail] = useState('');
+
   const [paymentMethod, setPaymentMethod] = useState<
     'CASH_ON_DELIVERY' | 'CREDIT_CARD' | 'MOBILE_WALLET' | 'PAYSKY'
   >('CASH_ON_DELIVERY');
@@ -49,10 +53,14 @@ export default function CheckoutPage() {
   // PaySky session state — populated after we hit /api/payment/paysky
   const [paySkyInit, setPaySkyInit] = useState<PaySkyInitData | null>(null);
   const [paySkyMockMessage, setPaySkyMockMessage] = useState<string>('');
-  
+
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
-  const [couponApplied, setCouponApplied] = useState<{id: string, code?: string, amount: number} | null>(null);
+  const [couponApplied, setCouponApplied] = useState<{
+    id: string;
+    code?: string;
+    amount: number;
+  } | null>(null);
   const [couponError, setCouponError] = useState('');
   const [applyingCoupon, setApplyingCoupon] = useState(false);
 
@@ -93,7 +101,7 @@ export default function CheckoutPage() {
         const res = await fetch('/api/cart/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ variantIds: items.map((i) => i.id) }),
+          body: JSON.stringify({ variantIds: items.map(i => i.id) }),
         });
         if (!res.ok) return;
         const data: { invalid?: string[]; rewrites?: Record<string, string> } = await res.json();
@@ -106,7 +114,7 @@ export default function CheckoutPage() {
         if (!data.invalid?.length) return;
         const removedNames: string[] = [];
         for (const id of data.invalid) {
-          const it = items.find((i) => i.id === id);
+          const it = items.find(i => i.id === id);
           if (it) removedNames.push(it.name);
           removeItem(id);
         }
@@ -114,7 +122,7 @@ export default function CheckoutPage() {
           setCartNotice(
             `Removed ${removedNames.length} item${removedNames.length === 1 ? '' : 's'} that ${
               removedNames.length === 1 ? 'is' : 'are'
-            } no longer available: ${removedNames.join(', ')}`,
+            } no longer available: ${removedNames.join(', ')}`
           );
         }
       } catch (err) {
@@ -144,20 +152,20 @@ export default function CheckoutPage() {
     if (!couponCode.trim()) return;
     setApplyingCoupon(true);
     setCouponError('');
-    
+
     try {
       const res = await fetch('/api/coupons/evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponCode, cartTotal: subtotal - pointsDiscount })
+        body: JSON.stringify({ code: couponCode, cartTotal: subtotal - pointsDiscount }),
       });
       const data: { message?: string; couponId: string; discountAmount: number } = await res.json();
-      
+
       if (!res.ok) {
         setCouponError(data.message || 'Invalid coupon');
         return;
       }
-      
+
       setCouponApplied({ id: data.couponId, amount: data.discountAmount });
     } catch (err: unknown) {
       setCouponError('Failed to apply coupon');
@@ -185,7 +193,10 @@ export default function CheckoutPage() {
           <div className="text-6xl mb-4">🛒</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Checkout is empty</h1>
           <p className="mb-6">You need to add products to your cart before proceeding.</p>
-          <button onClick={() => router.push('/shop')} className="bg-[#1e3b8a] text-white font-bold py-3 px-8 rounded-lg">
+          <button
+            onClick={() => router.push('/shop')}
+            className="bg-[#1e3b8a] text-white font-bold py-3 px-8 rounded-lg"
+          >
             Return to Shop
           </button>
         </div>
@@ -198,9 +209,34 @@ export default function CheckoutPage() {
     if (items.length === 0) return;
 
     // Basic client-side validation
-    if (!address.fullName.trim() || !address.phone.trim() || !address.address.trim() || !address.city.trim() || !address.governorate) {
+    if (
+      !address.fullName.trim() ||
+      !address.phone.trim() ||
+      !address.address.trim() ||
+      !address.city.trim() ||
+      !address.governorate
+    ) {
       setError('Please fill in all shipping address fields.');
       return;
+    }
+
+    // Guest checkout requires a contact email for the confirmation receipt.
+    const trimmedGuestEmail = guestEmail.trim();
+    if (!session?.user) {
+      if (!trimmedGuestEmail) {
+        setError('Please enter your email address so we can send your order confirmation.');
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedGuestEmail)) {
+        setError('Please enter a valid email address.');
+        return;
+      }
+      if (paymentMethod === 'PAYSKY') {
+        setError(
+          'PaySky checkout requires a Brandy account. Please sign in or choose Cash on Delivery / Mobile Wallet.'
+        );
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -239,7 +275,7 @@ export default function CheckoutPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            cartItems: items.map((item) => ({ id: item.id, qty: item.qty })),
+            cartItems: items.map(item => ({ id: item.id, qty: item.qty })),
             addressInfo: {
               fullName: address.fullName,
               phone: address.phone,
@@ -285,7 +321,7 @@ export default function CheckoutPage() {
 
       // ── 3. Create the order ──────────────────────────────────────────────────
       const res = await createOrder({
-        items: items.map((item) => ({ variantId: item.id, quantity: item.qty })),
+        items: items.map(item => ({ variantId: item.id, quantity: item.qty })),
         addressId,
         // Always send the inline shipping address as a fallback in case the
         // address row couldn't be persisted (e.g. for guest checkout).
@@ -296,6 +332,9 @@ export default function CheckoutPage() {
           city: address.city,
           governorate: address.governorate,
         },
+        // Only attach guestEmail for guests — the server stores it on
+        // Order.guestEmail and uses it to send the confirmation receipt.
+        guestEmail: session?.user ? undefined : trimmedGuestEmail,
         paymentMethod,
         couponCode: couponApplied?.code || undefined,
         orderNotes: orderNotes.trim() || undefined,
@@ -354,27 +393,38 @@ export default function CheckoutPage() {
   return (
     <main className="min-h-screen bg-[#f9f8f6]">
       <Navbar />
-      
+
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-black text-gray-900 mb-8">Checkout</h1>
-        
+
         <div className="flex flex-col lg:flex-row gap-8 items-start">
-          
           {/* Left Column - Forms */}
           <div className="w-full lg:w-2/3 space-y-6">
             {cartNotice && (
               <div className="bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-200 font-medium flex items-start justify-between gap-3">
                 <span>{cartNotice}</span>
-                <button type="button" onClick={() => setCartNotice('')} aria-label="Dismiss" className="text-amber-700 hover:text-amber-900">×</button>
+                <button
+                  type="button"
+                  onClick={() => setCartNotice('')}
+                  aria-label="Dismiss"
+                  className="text-amber-700 hover:text-amber-900"
+                >
+                  ×
+                </button>
               </div>
             )}
             {error && (
               <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 font-medium flex items-start justify-between gap-3">
                 <span>{error}</span>
-                {(/^Product variant .* not found/i.test(error) || /no longer available/i.test(error)) && (
+                {(/^Product variant .* not found/i.test(error) ||
+                  /no longer available/i.test(error)) && (
                   <button
                     type="button"
-                    onClick={() => { clearCart(); setError(''); router.push('/shop'); }}
+                    onClick={() => {
+                      clearCart();
+                      setError('');
+                      router.push('/shop');
+                    }}
                     className="shrink-0 px-3 py-1 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700"
                   >
                     Clear cart
@@ -382,71 +432,107 @@ export default function CheckoutPage() {
                 )}
               </div>
             )}
-            
+
             <form id="checkout-form" onSubmit={handleCheckout} className="space-y-6">
-              
               {/* Shipping Address */}
               <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">1</span>
+                  <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">
+                    1
+                  </span>
                   Shipping Address
                 </h2>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {!session?.user && (
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        Email Address <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        required
+                        type="email"
+                        value={guestEmail}
+                        onChange={e => setGuestEmail(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        We&apos;ll send your order confirmation and tracking updates here.{' '}
+                        <a
+                          href="/login?callbackUrl=/checkout"
+                          className="text-[#1e3b8a] font-medium hover:underline"
+                        >
+                          Have an account? Sign in
+                        </a>
+                      </p>
+                    </div>
+                  )}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name</label>
-                    <input 
-                      required 
-                      type="text" 
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Full Name
+                    </label>
+                    <input
+                      required
+                      type="text"
                       value={address.fullName}
-                      onChange={e => setAddress({...address, fullName: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none" 
+                      onChange={e => setAddress({ ...address, fullName: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
                       placeholder="e.g. Ahmed Mohamed"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number</label>
-                    <input 
-                      required 
-                      type="tel" 
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Phone Number
+                    </label>
+                    <input
+                      required
+                      type="tel"
                       value={address.phone}
-                      onChange={e => setAddress({...address, phone: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none" 
+                      onChange={e => setAddress({ ...address, phone: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
                       placeholder="e.g. 01234567890"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Street Address</label>
-                    <input 
-                      required 
-                      type="text" 
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Street Address
+                    </label>
+                    <input
+                      required
+                      type="text"
                       value={address.address}
-                      onChange={e => setAddress({...address, address: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none" 
-                      placeholder="e.g. 12 El Nasr St, Building 4" 
+                      onChange={e => setAddress({ ...address, address: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
+                      placeholder="e.g. 12 El Nasr St, Building 4"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">City / District</label>
-                    <input 
-                      required 
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      City / District
+                    </label>
+                    <input
+                      required
                       type="text"
                       value={address.city}
-                      onChange={e => setAddress({...address, city: e.target.value})}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none" 
-                      placeholder="e.g. Maadi, New Cairo" 
+                      onChange={e => setAddress({ ...address, city: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
+                      placeholder="e.g. Maadi, New Cairo"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Governorate</label>
-                    <select 
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Governorate
+                    </label>
+                    <select
                       required
                       value={address.governorate}
-                      onChange={e => setAddress({...address, governorate: e.target.value})}
+                      onChange={e => setAddress({ ...address, governorate: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#1e3b8a] outline-none bg-white"
                     >
                       <option value="">Select Governorate</option>
-                      {GOVERNORATES.map((g) => (
+                      {GOVERNORATES.map(g => (
                         <option key={g.value} value={g.value}>
                           {lang === 'ar' ? g.ar : g.en}
                         </option>
@@ -460,13 +546,17 @@ export default function CheckoutPage() {
               {session && loyaltyPoints > 0 && (
                 <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                   <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">2</span>
+                    <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">
+                      2
+                    </span>
                     Loyalty Points
                   </h2>
-                  
+
                   <div className="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-lg p-4">
                     <div>
-                      <div className="font-bold text-purple-800">Available: {loyaltyPoints} points</div>
+                      <div className="font-bold text-purple-800">
+                        Available: {loyaltyPoints} points
+                      </div>
                       <div className="text-sm text-purple-600">1 point = 1 EGP discount</div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -489,20 +579,30 @@ export default function CheckoutPage() {
               {/* Promo Code */}
               <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">3</span>
+                  <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">
+                    3
+                  </span>
                   Promo Code
                 </h2>
-                
+
                 {couponApplied ? (
                   <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">✓</div>
+                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">
+                        ✓
+                      </div>
                       <div>
                         <div className="font-bold text-green-800">Coupon Applied</div>
-                        <div className="text-sm text-green-600">You saved {couponDiscount.toLocaleString()} EGP</div>
+                        <div className="text-sm text-green-600">
+                          You saved {couponDiscount.toLocaleString()} EGP
+                        </div>
                       </div>
                     </div>
-                    <button type="button" onClick={removeCoupon} className="text-green-700 hover:text-green-900 text-sm font-medium">
+                    <button
+                      type="button"
+                      onClick={removeCoupon}
+                      className="text-green-700 hover:text-green-900 text-sm font-medium"
+                    >
                       Remove
                     </button>
                   </div>
@@ -525,26 +625,31 @@ export default function CheckoutPage() {
                     </button>
                   </div>
                 )}
-                {couponError && (
-                  <p className="text-red-500 text-sm mt-2">{couponError}</p>
-                )}
+                {couponError && <p className="text-red-500 text-sm mt-2">{couponError}</p>}
               </div>
 
               {/* Payment Method */}
               <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">4</span>
+                  <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">
+                    4
+                  </span>
                   Payment Method
                 </h2>
-                
+
                 <div className="space-y-4">
-                  <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${paymentMethod === 'CASH_ON_DELIVERY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <input 
-                      type="radio" 
-                      name="payment" 
+                  <label
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${paymentMethod === 'CASH_ON_DELIVERY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
                       value="CASH_ON_DELIVERY"
                       checked={paymentMethod === 'CASH_ON_DELIVERY'}
-                      onChange={() => { setPaymentMethod('CASH_ON_DELIVERY'); setShowInstallments(false); }}
+                      onChange={() => {
+                        setPaymentMethod('CASH_ON_DELIVERY');
+                        setShowInstallments(false);
+                      }}
                       className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
                     />
                     <div className="flex-1">
@@ -554,13 +659,18 @@ export default function CheckoutPage() {
                     <div className="text-3xl">💵</div>
                   </label>
 
-                  <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${paymentMethod === 'CREDIT_CARD' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <input 
-                      type="radio" 
-                      name="payment" 
+                  <label
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${paymentMethod === 'CREDIT_CARD' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
                       value="CREDIT_CARD"
                       checked={paymentMethod === 'CREDIT_CARD'}
-                      onChange={() => { setPaymentMethod('CREDIT_CARD'); setShowInstallments(false); }}
+                      onChange={() => {
+                        setPaymentMethod('CREDIT_CARD');
+                        setShowInstallments(false);
+                      }}
                       className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
                     />
                     <div className="flex-1">
@@ -570,34 +680,48 @@ export default function CheckoutPage() {
                     <div className="text-3xl">💳</div>
                   </label>
 
-                  <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${paymentMethod === 'MOBILE_WALLET' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                  <label
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${paymentMethod === 'MOBILE_WALLET' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
                     <input
                       type="radio"
                       name="payment"
                       value="MOBILE_WALLET"
                       checked={paymentMethod === 'MOBILE_WALLET'}
-                      onChange={() => { setPaymentMethod('MOBILE_WALLET'); setShowInstallments(false); }}
+                      onChange={() => {
+                        setPaymentMethod('MOBILE_WALLET');
+                        setShowInstallments(false);
+                      }}
                       className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
                     />
                     <div className="flex-1">
                       <div className="font-bold text-gray-900">Mobile Wallet</div>
-                      <div className="text-sm text-gray-500">Pay via Vodafone Cash, Orange Money, Etisalat Cash</div>
+                      <div className="text-sm text-gray-500">
+                        Pay via Vodafone Cash, Orange Money, Etisalat Cash
+                      </div>
                     </div>
                     <div className="text-3xl">📱</div>
                   </label>
 
-                  <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${paymentMethod === 'PAYSKY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                  <label
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${paymentMethod === 'PAYSKY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
                     <input
                       type="radio"
                       name="payment"
                       value="PAYSKY"
                       checked={paymentMethod === 'PAYSKY'}
-                      onChange={() => { setPaymentMethod('PAYSKY'); setShowInstallments(false); }}
+                      onChange={() => {
+                        setPaymentMethod('PAYSKY');
+                        setShowInstallments(false);
+                      }}
                       className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
                     />
                     <div className="flex-1">
                       <div className="font-bold text-gray-900">PaySky PayForm</div>
-                      <div className="text-sm text-gray-500">Visa / Mastercard / Meeza / Tahweel / mVISA — secure Egyptian gateway</div>
+                      <div className="text-sm text-gray-500">
+                        Visa / Mastercard / Meeza / Tahweel / mVISA — secure Egyptian gateway
+                      </div>
                     </div>
                     <div className="text-3xl">🇪🇬</div>
                   </label>
@@ -616,7 +740,8 @@ export default function CheckoutPage() {
 
                   {paySkyMockMessage && (
                     <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-xs">
-                      <strong className="font-bold">PaySky in mock mode:</strong> {paySkyMockMessage}
+                      <strong className="font-bold">PaySky in mock mode:</strong>{' '}
+                      {paySkyMockMessage}
                     </div>
                   )}
 
@@ -625,14 +750,24 @@ export default function CheckoutPage() {
                     <div className="mt-4 pt-4 border-t border-gray-100">
                       <p className="text-xs text-gray-500 mb-3">Or express checkout with</p>
                       <div className="flex gap-3">
-                        <button type="button" disabled className="flex-1 py-2.5 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          disabled
+                          className="flex-1 py-2.5 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed flex items-center justify-center gap-2"
+                        >
                           <span>🍎</span> Apple Pay
                         </button>
-                        <button type="button" disabled className="flex-1 py-2.5 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          disabled
+                          className="flex-1 py-2.5 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed flex items-center justify-center gap-2"
+                        >
                           <span>🔷</span> Google Pay
                         </button>
                       </div>
-                      <p className="text-xs text-gray-400 mt-2">Express payment requires Stripe setup</p>
+                      <p className="text-xs text-gray-400 mt-2">
+                        Express payment requires Stripe setup
+                      </p>
                     </div>
                   )}
                 </div>
@@ -640,12 +775,12 @@ export default function CheckoutPage() {
                 {/* Installment Option */}
                 {paymentMethod === 'CREDIT_CARD' && grandTotal >= 1000 && (
                   <div className="mt-4">
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setShowInstallments(!showInstallments)}
                       className="text-sm text-[#1e3b8a] font-medium flex items-center gap-2"
                     >
-                      <span>📊</span> 
+                      <span>📊</span>
                       {showInstallments ? 'Hide' : 'Show'} installment options (valU / Tabby)
                     </button>
                     {showInstallments && (
@@ -654,14 +789,24 @@ export default function CheckoutPage() {
                           Available for orders over 1,000 EGP. Pay in 3-6 easy installments.
                         </p>
                         <div className="flex gap-2">
-                          <button type="button" disabled className="flex-1 py-2 bg-white border border-amber-300 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed">
+                          <button
+                            type="button"
+                            disabled
+                            className="flex-1 py-2 bg-white border border-amber-300 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed"
+                          >
                             valU (3-6 months)
                           </button>
-                          <button type="button" disabled className="flex-1 py-2 bg-white border border-amber-300 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed">
+                          <button
+                            type="button"
+                            disabled
+                            className="flex-1 py-2 bg-white border border-amber-300 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed"
+                          >
                             Tabby (4 payments)
                           </button>
                         </div>
-                        <p className="text-xs text-amber-600 mt-2">Installment payment integration coming soon</p>
+                        <p className="text-xs text-amber-600 mt-2">
+                          Installment payment integration coming soon
+                        </p>
                       </div>
                     )}
                   </div>
@@ -671,18 +816,22 @@ export default function CheckoutPage() {
               {/* Order Notes & Gift Wrapping */}
               <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                 <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">5</span>
+                  <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">
+                    5
+                  </span>
                   Additional Options
                 </h2>
-                
+
                 <div className="space-y-4">
                   {/* Gift Wrapping */}
-                  <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-colors ${giftWrapping ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                  <label
+                    className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-colors ${giftWrapping ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
                     <div className="flex items-center gap-3">
-                      <input 
+                      <input
                         type="checkbox"
                         checked={giftWrapping}
-                        onChange={(e) => setGiftWrapping(e.target.checked)}
+                        onChange={e => setGiftWrapping(e.target.checked)}
                         className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a] rounded"
                       />
                       <div>
@@ -695,10 +844,12 @@ export default function CheckoutPage() {
 
                   {/* Order Notes */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Order Notes (Optional)</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Order Notes (Optional)
+                    </label>
                     <textarea
                       value={orderNotes}
-                      onChange={(e) => setOrderNotes(e.target.value)}
+                      onChange={e => setOrderNotes(e.target.value)}
                       placeholder="Special instructions for your order..."
                       rows={3}
                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none resize-none"
@@ -708,29 +859,36 @@ export default function CheckoutPage() {
                   </div>
                 </div>
               </div>
-
             </form>
           </div>
-          
+
           {/* Right Column - Order Summary */}
           <div className="w-full lg:w-1/3">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
               <h2 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h2>
-              
+
               <div className="divide-y divide-gray-100 mb-6">
                 {items.map(item => (
                   <div key={item.id} className="flex gap-4 py-3">
                     <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden shrink-0">
                       {item.image && item.image.startsWith('http') ? (
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xl">📦</div>
+                        <div className="w-full h-full flex items-center justify-center text-xl">
+                          📦
+                        </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-semibold text-gray-900 truncate">{item.name}</h4>
                       <div className="text-xs text-gray-500 mt-1">Qty: {item.qty}</div>
-                      <div className="text-sm font-bold text-[#1e3b8a] mt-1">{(item.price * item.qty).toLocaleString()} EGP</div>
+                      <div className="text-sm font-bold text-[#1e3b8a] mt-1">
+                        {(item.price * item.qty).toLocaleString()} EGP
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -765,30 +923,49 @@ export default function CheckoutPage() {
                 )}
                 <div className="flex justify-between text-gray-600">
                   <span>Estimated VAT ({(vatRate * 100).toFixed(0)}%)</span>
-                  <span className="font-medium text-gray-900">{vatAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} EGP</span>
+                  <span className="font-medium text-gray-900">
+                    {vatAmount.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{' '}
+                    EGP
+                  </span>
                 </div>
                 <div className="flex justify-between text-gray-900 border-t border-gray-100 pt-3">
                   <span className="font-bold text-base">Total</span>
-                  <span className="font-black text-xl text-[#1e3b8a]">{grandTotal.toLocaleString()} EGP</span>
+                  <span className="font-black text-xl text-[#1e3b8a]">
+                    {grandTotal.toLocaleString()} EGP
+                  </span>
                 </div>
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 form="checkout-form"
                 disabled={isLoading}
                 className="w-full bg-[#1e3b8a] hover:bg-[#152c6e] text-white font-bold py-4 rounded-xl shadow-lg transition-colors disabled:opacity-50"
               >
                 {isLoading ? 'Processing...' : `Place Order — ${grandTotal.toLocaleString()} EGP`}
               </button>
-              
+
               <div className="mt-4 text-xs text-center text-gray-500 flex items-center justify-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
                 Secure 256-bit SSL encrypted payment
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </main>
