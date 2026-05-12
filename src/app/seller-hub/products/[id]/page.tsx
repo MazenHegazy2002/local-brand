@@ -52,7 +52,7 @@ export default function EditProductPage() {
     flashSalePrice: null as number | null,
     flashSaleEndsAt: '',
     flashSaleLimit: null as number | null,
-    published: true
+    published: true,
   });
   const [variants, setVariants] = useState<LocalVariant[]>([]);
   const [tags, setTags] = useState<string[]>([]);
@@ -91,15 +91,25 @@ export default function EditProductPage() {
           flashSalePrice: data.flashSalePrice || null,
           flashSaleEndsAt: data.flashSaleEndsAt ? data.flashSaleEndsAt.split('T')[0] : '',
           flashSaleLimit: data.flashSaleLimit || null,
-          published: data.published ?? true
+          published: data.published ?? true,
         });
-        setVariants(data.variants?.map((v: { id: string; title?: string; stockCount?: number; price?: number; color?: string }) => ({
-          id: v.id,
-          title: v.title || '',
-          stockCount: v.stockCount || 0,
-          price: v.price || data.basePrice,
-          color: v.color || ''
-        })) || []);
+        setVariants(
+          data.variants?.map(
+            (v: {
+              id: string;
+              title?: string;
+              stockCount?: number;
+              price?: number;
+              color?: string;
+            }) => ({
+              id: v.id,
+              title: v.title || '',
+              stockCount: v.stockCount || 0,
+              price: v.price || data.basePrice,
+              color: v.color || '',
+            })
+          ) || []
+        );
         setTags(data.tags?.map((t: { name: string }) => t.name) || []);
       }
     } catch (e) {
@@ -114,17 +124,27 @@ export default function EditProductPage() {
     if (!file) return;
 
     try {
+      // Compress phone-camera photos so the resulting URL stays small
+      // enough to round-trip through the product update server action.
+      const { compressImage } = await import('@/lib/compress-image');
+      const uploadFile = await compressImage(file);
+
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', uploadFile);
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       const data = await res.json();
-      if (data.url) {
-        const updated = [...variants];
-        updated[index].image = data.url;
-        setVariants(updated);
+      if (!res.ok || !data.url) {
+        throw new Error(data.message || 'Upload failed');
       }
+      if (data.url.startsWith('data:') && data.url.length > 700 * 1024) {
+        throw new Error('Image is too large after compression. Pick a smaller photo.');
+      }
+      const updated = [...variants];
+      updated[index].image = data.url;
+      setVariants(updated);
     } catch (e) {
       console.error(e);
+      alert((e as Error).message || 'Upload failed.');
     }
   };
 
@@ -137,9 +157,11 @@ export default function EditProductPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
-          flashSaleEndsAt: form.flashSaleEndsAt ? new Date(form.flashSaleEndsAt).toISOString() : null,
-          variants: variants
-        })
+          flashSaleEndsAt: form.flashSaleEndsAt
+            ? new Date(form.flashSaleEndsAt).toISOString()
+            : null,
+          variants: variants,
+        }),
       });
       if (res.ok) {
         router.push('/seller-hub');
@@ -171,7 +193,7 @@ export default function EditProductPage() {
 
   const updateVariant = (index: number, field: keyof LocalVariant, value: string | number) => {
     const updated = [...variants];
-    (updated[index] as any)[field] = value;
+    updated[index] = { ...updated[index], [field]: value } as LocalVariant;
     setVariants(updated);
   };
 
@@ -191,26 +213,46 @@ export default function EditProductPage() {
   };
 
   if (loading) {
-    return <div className="db"><div className="main">Loading...</div></div>;
+    return (
+      <div className="db">
+        <div className="main">Loading...</div>
+      </div>
+    );
   }
 
   return (
     <div className="db">
       <div className="sidebar">
         <div className="logo">SellerHub</div>
-        <Link href="/seller-hub" className="nav-item">Overview</Link>
-        <Link href="/seller-hub/orders" className="nav-item">Orders</Link>
-        <Link href="/seller-hub/products" className="nav-item active">Products</Link>
-        <Link href="/seller-hub/returns" className="nav-item">Returns</Link>
-        <Link href="/seller-hub/settings" className="nav-item">Settings</Link>
+        <Link href="/seller-hub" className="nav-item">
+          Overview
+        </Link>
+        <Link href="/seller-hub/orders" className="nav-item">
+          Orders
+        </Link>
+        <Link href="/seller-hub/products" className="nav-item active">
+          Products
+        </Link>
+        <Link href="/seller-hub/returns" className="nav-item">
+          Returns
+        </Link>
+        <Link href="/seller-hub/settings" className="nav-item">
+          Settings
+        </Link>
       </div>
 
       <div className="main">
         <div className="topbar">
           <div className="page-title">Edit Product</div>
           <div className="flex gap-3">
-            <Link href="/seller-hub" className="px-4 py-2 border border-slate-200 rounded text-sm">Cancel</Link>
-            <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-[#0F6E56] text-white rounded text-sm font-medium disabled:opacity-50">
+            <Link href="/seller-hub" className="px-4 py-2 border border-slate-200 rounded text-sm">
+              Cancel
+            </Link>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 bg-[#0F6E56] text-white rounded text-sm font-medium disabled:opacity-50"
+            >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
@@ -255,7 +297,9 @@ export default function EditProductPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Base Price (EGP) *</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                    Base Price (EGP) *
+                  </label>
                   <input
                     type="number"
                     value={form.basePrice}
@@ -265,7 +309,9 @@ export default function EditProductPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Weight (grams)</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                    Weight (grams)
+                  </label>
                   <input
                     type="number"
                     value={form.weightGrams}
@@ -274,7 +320,9 @@ export default function EditProductPage() {
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Description</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                    Description
+                  </label>
                   <textarea
                     value={form.description}
                     onChange={e => setForm({ ...form, description: e.target.value })}
@@ -288,7 +336,13 @@ export default function EditProductPage() {
             <div className="card">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="card-title">Variants & Stock</h3>
-                <button onClick={addVariant} type="button" className="text-xs text-[#0F6E56] font-bold">+ ADD VARIANT</button>
+                <button
+                  onClick={addVariant}
+                  type="button"
+                  className="text-xs text-[#0F6E56] font-bold"
+                >
+                  + ADD VARIANT
+                </button>
               </div>
               <div className="space-y-4">
                 {variants.map((v, i) => (
@@ -324,7 +378,12 @@ export default function EditProductPage() {
                       </div>
                     </div>
                     {variants.length > 1 && (
-                      <button onClick={() => removeVariant(i)} className="text-red-400 text-xs mt-2">Remove</button>
+                      <button
+                        onClick={() => removeVariant(i)}
+                        className="text-red-400 text-xs mt-2"
+                      >
+                        Remove
+                      </button>
                     )}
                   </div>
                 ))}
@@ -335,11 +394,18 @@ export default function EditProductPage() {
               <h3 className="card-title mb-4">Flash Sale Settings</h3>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Flash Price</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                    Flash Price
+                  </label>
                   <input
                     type="number"
                     value={form.flashSalePrice || ''}
-                    onChange={e => setForm({ ...form, flashSalePrice: e.target.value ? Number(e.target.value) : null })}
+                    onChange={e =>
+                      setForm({
+                        ...form,
+                        flashSalePrice: e.target.value ? Number(e.target.value) : null,
+                      })
+                    }
                     className="input-field"
                     placeholder="Sale price"
                   />
@@ -358,7 +424,12 @@ export default function EditProductPage() {
                   <input
                     type="number"
                     value={form.flashSaleLimit || ''}
-                    onChange={e => setForm({ ...form, flashSaleLimit: e.target.value ? Number(e.target.value) : null })}
+                    onChange={e =>
+                      setForm({
+                        ...form,
+                        flashSaleLimit: e.target.value ? Number(e.target.value) : null,
+                      })
+                    }
                     className="input-field"
                     placeholder="Max qty"
                   />
@@ -370,9 +441,17 @@ export default function EditProductPage() {
               <h3 className="card-title mb-4">Tags</h3>
               <div className="flex flex-wrap gap-2 mb-3">
                 {tags.map(tag => (
-                  <span key={tag} className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm flex items-center gap-2">
+                  <span
+                    key={tag}
+                    className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                  >
                     #{tag}
-                    <button onClick={() => removeTag(tag)} className="text-red-400 hover:text-red-600">×</button>
+                    <button
+                      onClick={() => removeTag(tag)}
+                      className="text-red-400 hover:text-red-600"
+                    >
+                      ×
+                    </button>
                   </span>
                 ))}
               </div>
@@ -385,7 +464,9 @@ export default function EditProductPage() {
                   className="input-field"
                   placeholder="Add tag..."
                 />
-                <button onClick={addTag} className="px-4 bg-slate-100 rounded">Add</button>
+                <button onClick={addTag} className="px-4 bg-slate-100 rounded">
+                  Add
+                </button>
               </div>
             </div>
           </div>
@@ -395,14 +476,22 @@ export default function EditProductPage() {
               <h3 className="card-title mb-4">Preview</h3>
               <div className="aspect-square bg-slate-50 rounded-lg overflow-hidden mb-3">
                 {product?.images?.[0] ? (
-                  <img src={product.images[0].url} alt={form.title} className="w-full h-full object-cover" />
+                  <img
+                    src={product.images[0].url}
+                    alt={form.title}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-400">No image</div>
+                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                    No image
+                  </div>
                 )}
               </div>
               <h4 className="font-bold text-sm">{form.title || 'Product Title'}</h4>
               <p className="text-[#0F6E56] font-black">{form.basePrice} EGP</p>
-              {form.flashSalePrice && <p className="text-red-500 text-sm">{form.flashSalePrice} EGP Sale!</p>}
+              {form.flashSalePrice && (
+                <p className="text-red-500 text-sm">{form.flashSalePrice} EGP Sale!</p>
+              )}
             </div>
 
             <div className="card">
@@ -420,7 +509,10 @@ export default function EditProductPage() {
 
             <div className="card">
               <h3 className="card-title mb-4 text-red-600">Danger Zone</h3>
-              <button onClick={handleDelete} className="w-full py-3 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100">
+              <button
+                onClick={handleDelete}
+                className="w-full py-3 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100"
+              >
                 Delete Product
               </button>
             </div>
@@ -429,19 +521,89 @@ export default function EditProductPage() {
       </div>
 
       <style jsx global>{`
-        .db { display: flex; min-height: 100vh; background: #f8fafc; font-family: 'Inter', sans-serif; }
-        .sidebar { width: 186px; flex-shrink: 0; background: #0F6E56; padding: 16px 0; display: flex; flex-direction: column; max-height: 100vh; overflow-y: auto; position: sticky; top: 0; align-self: flex-start; }
-        .logo { padding: 0 16px 20px; font-size: 17px; font-weight: 500; color: #fff; }
-        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.7); transition: all 0.2s; }
-        .nav-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
-        .nav-item.active { color: #fff; background: rgba(255,255,255,0.1); font-weight: 500; }
-        .main { flex: 1; min-width: 0; padding: 24px 32px; overflow: auto; }
-        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
-        .page-title { font-size: 20px; font-weight: 500; color: #1e293b; }
-        .card { background: #fff; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06); padding: 20px; }
-        .card-title { font-size: 14px; font-weight: 500; color: #1e293b; }
-        .input-field { width: 100%; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; font-size: 13px; outline: none; }
-        .input-field:focus { border-color: #0F6E56; }
+        .db {
+          display: flex;
+          min-height: 100vh;
+          background: #f8fafc;
+          font-family: 'Inter', sans-serif;
+        }
+        .sidebar {
+          width: 186px;
+          flex-shrink: 0;
+          background: #0f6e56;
+          padding: 16px 0;
+          display: flex;
+          flex-direction: column;
+          max-height: 100vh;
+          overflow-y: auto;
+          position: sticky;
+          top: 0;
+          align-self: flex-start;
+        }
+        .logo {
+          padding: 0 16px 20px;
+          font-size: 17px;
+          font-weight: 500;
+          color: #fff;
+        }
+        .nav-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 16px;
+          cursor: pointer;
+          font-size: 13px;
+          color: rgba(255, 255, 255, 0.7);
+          transition: all 0.2s;
+        }
+        .nav-item:hover {
+          color: #fff;
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .nav-item.active {
+          color: #fff;
+          background: rgba(255, 255, 255, 0.1);
+          font-weight: 500;
+        }
+        .main {
+          flex: 1;
+          min-width: 0;
+          padding: 24px 32px;
+          overflow: auto;
+        }
+        .topbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 28px;
+        }
+        .page-title {
+          font-size: 20px;
+          font-weight: 500;
+          color: #1e293b;
+        }
+        .card {
+          background: #fff;
+          border-radius: 8px;
+          border: 1px solid rgba(0, 0, 0, 0.06);
+          padding: 20px;
+        }
+        .card-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #1e293b;
+        }
+        .input-field {
+          width: 100%;
+          border: 1px solid #e2e8f0;
+          padding: 10px;
+          border-radius: 6px;
+          font-size: 13px;
+          outline: none;
+        }
+        .input-field:focus {
+          border-color: #0f6e56;
+        }
       `}</style>
     </div>
   );

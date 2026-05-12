@@ -79,11 +79,28 @@ export default function AdminBannersPage() {
     if (!file) return;
     setUploading(true);
     try {
+      // Banners can stay slightly larger (1920 max edge) since they're hero
+      // images, but still compress so phone uploads don't blow the request.
+      const { compressImage } = await import('@/lib/compress-image');
+      const uploadFile = await compressImage(file, { maxDimension: 1920 });
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', uploadFile);
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const d = await res.json();
-      if (d.url) setForm((f) => ({ ...f, imageUrl: d.url }));
+      if (!res.ok || !d.url) {
+        alert(d.message || 'Banner upload failed');
+        return;
+      }
+      if (d.url.startsWith('data:') && d.url.length > 700 * 1024) {
+        alert(
+          'Banner is too large after compression. Pick a smaller image, or configure Vercel Blob / Cloudinary on the server.'
+        );
+        return;
+      }
+      setForm(f => ({ ...f, imageUrl: d.url }));
+    } catch (err) {
+      console.error('Banner upload failed:', err);
+      alert((err as Error).message || 'Banner upload failed');
     } finally {
       setUploading(false);
     }
@@ -135,9 +152,13 @@ export default function AdminBannersPage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <Link href="/admin-os" className="text-xs text-slate-500 hover:underline">← Back to Admin</Link>
+            <Link href="/admin-os" className="text-xs text-slate-500 hover:underline">
+              ← Back to Admin
+            </Link>
             <h1 className="text-3xl font-black text-slate-900 mt-1">Homepage Banners</h1>
-            <p className="text-sm text-slate-500">Schedule promotional banners for the homepage carousel.</p>
+            <p className="text-sm text-slate-500">
+              Schedule promotional banners for the homepage carousel.
+            </p>
           </div>
           <button
             onClick={() => openForm()}
@@ -155,24 +176,40 @@ export default function AdminBannersPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {banners.map((banner) => (
-              <div key={banner.id} className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+            {banners.map(banner => (
+              <div
+                key={banner.id}
+                className="bg-white rounded-2xl border border-slate-100 overflow-hidden"
+              >
                 <div className="aspect-[16/9] bg-slate-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />
+                  <img
+                    src={banner.imageUrl}
+                    alt={banner.title}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-black text-slate-900 text-sm">{banner.title}</h3>
-                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
-                      banner.isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
-                    }`}>
+                    <span
+                      className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
+                        banner.isActive
+                          ? 'bg-emerald-50 text-emerald-600'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}
+                    >
                       {banner.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
-                  {banner.subtitle && <div className="text-xs text-slate-500 mb-2 line-clamp-1">{banner.subtitle}</div>}
+                  {banner.subtitle && (
+                    <div className="text-xs text-slate-500 mb-2 line-clamp-1">
+                      {banner.subtitle}
+                    </div>
+                  )}
                   <div className="text-[10px] text-slate-400 mb-3">
-                    Position #{banner.position} · Links to <code className="font-mono">{banner.linkUrl}</code>
+                    Position #{banner.position} · Links to{' '}
+                    <code className="font-mono">{banner.linkUrl}</code>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -203,89 +240,118 @@ export default function AdminBannersPage() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowForm(false)}>
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowForm(false)}
+        >
           <div
             className="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             <h2 className="text-xl font-black mb-4">{editing ? 'Edit Banner' : 'New Banner'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Title</label>
+                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">
+                  Title
+                </label>
                 <input
                   required
                   type="text"
                   value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  onChange={e => setForm({ ...form, title: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg"
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Subtitle</label>
+                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">
+                  Subtitle
+                </label>
                 <input
                   type="text"
                   value={form.subtitle}
-                  onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
+                  onChange={e => setForm({ ...form, subtitle: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg"
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Image</label>
+                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">
+                  Image
+                </label>
                 {form.imageUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={form.imageUrl} alt="" className="w-full h-32 object-cover rounded-lg mb-2" />
+                  <img
+                    src={form.imageUrl}
+                    alt=""
+                    className="w-full h-32 object-cover rounded-lg mb-2"
+                  />
                 )}
-                <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="text-xs" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                  className="text-xs"
+                />
                 {uploading && <div className="text-[10px] text-slate-400 mt-1">Uploading…</div>}
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Link URL</label>
+                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">
+                  Link URL
+                </label>
                 <input
                   required
                   type="text"
                   placeholder="/shop or https://…"
                   value={form.linkUrl}
-                  onChange={(e) => setForm({ ...form, linkUrl: e.target.value })}
+                  onChange={e => setForm({ ...form, linkUrl: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">CTA Label</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">
+                    CTA Label
+                  </label>
                   <input
                     type="text"
                     value={form.ctaLabel}
-                    onChange={(e) => setForm({ ...form, ctaLabel: e.target.value })}
+                    onChange={e => setForm({ ...form, ctaLabel: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Position</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">
+                    Position
+                  </label>
                   <input
                     type="number"
                     min="0"
                     value={form.position}
-                    onChange={(e) => setForm({ ...form, position: Number(e.target.value) })}
+                    onChange={e => setForm({ ...form, position: Number(e.target.value) })}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Starts</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">
+                    Starts
+                  </label>
                   <input
                     type="date"
                     value={form.startsAt}
-                    onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
+                    onChange={e => setForm({ ...form, startsAt: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Ends</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">
+                    Ends
+                  </label>
                   <input
                     type="date"
                     value={form.endsAt}
-                    onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
+                    onChange={e => setForm({ ...form, endsAt: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg"
                   />
                 </div>
@@ -294,7 +360,7 @@ export default function AdminBannersPage() {
                 <input
                   type="checkbox"
                   checked={form.isActive}
-                  onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                  onChange={e => setForm({ ...form, isActive: e.target.checked })}
                 />
                 Active
               </label>
@@ -307,7 +373,10 @@ export default function AdminBannersPage() {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="flex-1 py-2.5 bg-slate-900 text-white rounded-lg font-bold text-sm">
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-slate-900 text-white rounded-lg font-bold text-sm"
+                >
                   {editing ? 'Save changes' : 'Create banner'}
                 </button>
               </div>

@@ -8,8 +8,15 @@ import { cancelOrder, requestReturn } from '../actions/orders';
 import Link from 'next/link';
 import { User, Order, OrderItem, WishlistItem, Notification, SessionUser, Product } from '@/types';
 
-const VALID_TABS = ['overview', 'orders', 'wishlist', 'notifications', 'wallet', 'settings'] as const;
-type DashboardTab = typeof VALID_TABS[number];
+const VALID_TABS = [
+  'overview',
+  'orders',
+  'wishlist',
+  'notifications',
+  'wallet',
+  'settings',
+] as const;
+type DashboardTab = (typeof VALID_TABS)[number];
 
 interface DashboardData {
   user: User;
@@ -20,7 +27,13 @@ interface DashboardData {
 
 export default function CustomerDashboardPage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#1e3b8a] font-medium">Loading dashboard…</div>}>
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#1e3b8a] font-medium">
+          Loading dashboard…
+        </div>
+      }
+    >
       <CustomerDashboard />
     </Suspense>
   );
@@ -61,11 +74,11 @@ function CustomerDashboard() {
   const refreshData = async () => {
     setLoading(true);
     try {
-      const res = await getDashboardStats() as unknown as DashboardData;
+      const res = (await getDashboardStats()) as unknown as DashboardData;
       setData(res);
     } catch (err: unknown) {
       const error = err as Error;
-      setError(error.message || "Unauthorized");
+      setError(error.message || 'Unauthorized');
     } finally {
       setLoading(false);
     }
@@ -88,7 +101,7 @@ function CustomerDashboard() {
     const payload = Object.fromEntries(formData);
     try {
       await updateProfile(payload);
-      alert("Profile updated successfully!");
+      alert('Profile updated successfully!');
       await refreshData();
     } catch (err: unknown) {
       const error = err as Error;
@@ -154,8 +167,18 @@ function CustomerDashboard() {
     refreshData();
   }, []);
 
-  if (loading && !data) return <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#1a1a2e] font-medium">Initializing Dashboard...</div>;
-  if (error) return <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-red-600 font-bold">{error}</div>;
+  if (loading && !data)
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#1a1a2e] font-medium">
+        Initializing Dashboard...
+      </div>
+    );
+  if (error)
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-red-600 font-bold">
+        {error}
+      </div>
+    );
 
   const myOrders = data?.myOrders || [];
   const wishlist = data?.wishlist || [];
@@ -169,26 +192,71 @@ function CustomerDashboard() {
           {data?.user?.name?.split(' ')[0] || 'My'}
           <span> {data?.user?.name?.split(' ').slice(1).join(' ') || 'Account'}</span>
         </div>
-        <a href="/" className="home-link">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <Link href="/" className="home-link">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
           Back to Shop
-        </a>
-        
+        </Link>
+
         <div className="nav-section">Personal</div>
-        <NavItem active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} label="Overview" icon={<OverviewIcon />} />
-        <NavItem active={activeTab === 'orders'} onClick={() => setActiveTab('orders')} label="My Orders" icon={<OrdersIcon />} />
-        <NavItem active={activeTab === 'wishlist'} onClick={() => setActiveTab('wishlist')} label="Wishlist" icon={<WishlistIcon />} />
-        <NavItem active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')} label="Alerts" icon={<ModerationIcon />} />
-        
+        <NavItem
+          active={activeTab === 'overview'}
+          onClick={() => setActiveTab('overview')}
+          label="Overview"
+          icon={<OverviewIcon />}
+        />
+        <NavItem
+          active={activeTab === 'orders'}
+          onClick={() => setActiveTab('orders')}
+          label="My Orders"
+          icon={<OrdersIcon />}
+        />
+        <NavItem
+          active={activeTab === 'wishlist'}
+          onClick={() => setActiveTab('wishlist')}
+          label="Wishlist"
+          icon={<WishlistIcon />}
+        />
+        <NavItem
+          active={activeTab === 'notifications'}
+          onClick={() => setActiveTab('notifications')}
+          label="Alerts"
+          icon={<ModerationIcon />}
+        />
+
         <div className="nav-section">Finance</div>
-        <NavItem active={activeTab === 'wallet'} onClick={() => setActiveTab('wallet')} label="Wallet" icon={<PayoutsIcon />} />
-        
+        <NavItem
+          active={activeTab === 'wallet'}
+          onClick={() => setActiveTab('wallet')}
+          label="Wallet"
+          icon={<PayoutsIcon />}
+        />
+
         <div className="nav-section">System</div>
-        <NavItem active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} label="Settings" icon={<SettingsIcon />} />
+        <NavItem
+          active={activeTab === 'settings'}
+          onClick={() => setActiveTab('settings')}
+          label="Settings"
+          icon={<SettingsIcon />}
+        />
 
         <div className="mt-auto px-4 pb-4">
-           <div className="user-label">{data?.user?.name}</div>
-           <button onClick={() => window.location.href='/api/auth/signout'} className="signout-btn">Sign out</button>
+          <div className="user-label">{data?.user?.name}</div>
+          <button
+            onClick={() => (window.location.href = '/api/auth/signout')}
+            className="signout-btn"
+          >
+            Sign out
+          </button>
         </div>
       </div>
 
@@ -197,20 +265,60 @@ function CustomerDashboard() {
         <div className="topbar">
           <div className="page-title">{TITLES[activeTab] || 'Dashboard'}</div>
           <div className="top-actions">
-            <div className="tier-badge">Member Tier: <span className="badge b-new">{(data?.user?.loyaltyPoints || 0) >= 5000 ? 'GOLD' : (data?.user?.loyaltyPoints || 0) >= 1000 ? 'SILVER' : 'BRONZE'}</span></div>
+            <div className="tier-badge">
+              Member Tier:{' '}
+              <span className="badge b-new">
+                {(data?.user?.loyaltyPoints || 0) >= 5000
+                  ? 'GOLD'
+                  : (data?.user?.loyaltyPoints || 0) >= 1000
+                    ? 'SILVER'
+                    : 'BRONZE'}
+              </span>
+            </div>
             <div onClick={refreshData} className="refresh-btn">
-               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={loading ? 'animate-spin' : ''}><path d="M8 1.5A4.5 4.5 0 003.5 6c0 1.5-.5 3-1.5 4h12c-1-1-1.5-2.5-1.5-4A4.5 4.5 0 008 1.5z" fill="#1e3b8a" opacity=".8"/><path d="M6.5 13.5a1.5 1.5 0 003 0" stroke="#1e3b8a" strokeWidth="1.2" fill="none"/></svg>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                className={loading ? 'animate-spin' : ''}
+              >
+                <path
+                  d="M8 1.5A4.5 4.5 0 003.5 6c0 1.5-.5 3-1.5 4h12c-1-1-1.5-2.5-1.5-4A4.5 4.5 0 008 1.5z"
+                  fill="#1e3b8a"
+                  opacity=".8"
+                />
+                <path
+                  d="M6.5 13.5a1.5 1.5 0 003 0"
+                  stroke="#1e3b8a"
+                  strokeWidth="1.2"
+                  fill="none"
+                />
+              </svg>
             </div>
           </div>
         </div>
 
         <div className="tab-content animate-fadeIn" key={activeTab}>
-          {activeTab === 'overview' && <OverviewTab data={data} wishlist={wishlist} myOrders={myOrders} />}
-          {activeTab === 'orders' && <OrdersTab orders={myOrders} onCancel={handleCancelOrder} onReturn={handleRequestReturn} onReorder={handleReorder} />}
-          {activeTab === 'wishlist' && <WishlistTab items={wishlist} onToggle={handleToggleWishlist} />}
+          {activeTab === 'overview' && (
+            <OverviewTab data={data} wishlist={wishlist} myOrders={myOrders} />
+          )}
+          {activeTab === 'orders' && (
+            <OrdersTab
+              orders={myOrders}
+              onCancel={handleCancelOrder}
+              onReturn={handleRequestReturn}
+              onReorder={handleReorder}
+            />
+          )}
+          {activeTab === 'wishlist' && (
+            <WishlistTab items={wishlist} onToggle={handleToggleWishlist} />
+          )}
           {activeTab === 'notifications' && <NotificationsTab items={notifications} />}
           {activeTab === 'wallet' && <WalletTab user={data?.user} />}
-          {activeTab === 'settings' && <SettingsTab user={data?.user} onUpdate={handleUpdateProfile} isUpdating={isUpdating} />}
+          {activeTab === 'settings' && (
+            <SettingsTab user={data?.user} onUpdate={handleUpdateProfile} isUpdating={isUpdating} />
+          )}
         </div>
       </div>
 
@@ -221,72 +329,369 @@ function CustomerDashboard() {
           --color-text-primary: #1e293b;
           --color-text-secondary: #64748b;
           --color-text-tertiary: #94a3b8;
-          --color-border-tertiary: rgba(0,0,0,0.08);
+          --color-border-tertiary: rgba(0, 0, 0, 0.08);
           --brandy-primary: #1e3b8a;
           --brandy-primary-dark: #152c6e;
           --brandy-primary-light: #3b5fbf;
           --brandy-accent: #f59e0b;
-          --brandy-accent-soft: rgba(245,158,11,.12);
+          --brandy-accent-soft: rgba(245, 158, 11, 0.12);
         }
-        *{box-sizing:border-box}
-        html,body{height:100%;margin:0}
+        * {
+          box-sizing: border-box;
+        }
+        html,
+        body {
+          height: 100%;
+          margin: 0;
+        }
         /* Full-viewport layout: sidebar fixed, main scrolls internally */
-        .db{display:flex;height:100dvh;overflow:hidden;background:var(--color-background-secondary);font-family:'Inter',sans-serif;}
-        .sidebar{width:200px;min-width:200px;background:linear-gradient(180deg,var(--brandy-primary) 0%,var(--brandy-primary-dark) 100%);padding:16px 0;display:flex;flex-direction:column;flex-shrink:0;height:100dvh;overflow-y:auto;color:#fff}
-        .main{flex:1;min-width:0;display:flex;flex-direction:column;height:100dvh;overflow:hidden;background:var(--color-background-secondary)}
-        .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;flex-shrink:0;border-bottom:1px solid rgba(0,0,0,0.06)}
-        .tab-content{flex:1;min-height:0;overflow-y:auto;padding:16px 18px 40px}
-        .home-link{display:flex;align-items:center;gap:6px;margin:0 12px 8px;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.65);background:rgba(255,255,255,0.06);text-decoration:none;transition:all 0.15s;border:1px solid rgba(255,255,255,0.1)}
-        .home-link:hover{color:#fff;background:rgba(255,255,255,0.12)}
-        @media (max-width: 900px){
-          .db{flex-direction:column;height:auto;overflow:auto}
-          .sidebar{width:100%;min-width:0;height:auto;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px;overflow-x:auto;overflow-y:visible}
-          .sidebar .nav-section{display:none}
-          .sidebar .logo{padding:8px 12px;font-size:14px;flex-basis:100%}
-          .sidebar .home-link{margin:4px;padding:5px 8px}
-          .sidebar .nav-item{padding:6px 10px !important;font-size:12px !important}
-          .main{height:auto}
-          .tab-content{overflow:visible;padding:12px}
-          .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+        .db {
+          display: flex;
+          height: 100dvh;
+          overflow: hidden;
+          background: var(--color-background-secondary);
+          font-family: 'Inter', sans-serif;
         }
-        .logo{padding:0 16px 16px;font-size:15px;font-weight:700;color:#fff}
-        .logo span{color:var(--brandy-accent);font-weight:700}
-        .nav-section{font-size:10px;font-weight:600;color:rgba(255,255,255,.45);letter-spacing:.08em;padding:10px 16px 4px;text-transform:uppercase}
-        .nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;font-size:12.5px;color:rgba(255,255,255,.7);transition:all .15s;border-left:3px solid transparent}
-        .nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
-        .nav-item.active{background:rgba(245,158,11,.12);color:#fff;border-left-color:var(--brandy-accent)}
-        .nav-icon{width:15px;height:15px;flex-shrink:0}
-        .page-title{font-size:17px;font-weight:600;color:var(--color-text-primary)}
-        .user-label{font-size:11px;color:rgba(255,255,255,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
-        .signout-btn{font-size:11px;color:rgba(252,165,165,0.85);margin-top:4px;background:none;border:none;cursor:pointer;display:block;padding:0}
-        .signout-btn:hover{color:#fca5a5;text-decoration:underline}
-        .tier-badge{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-secondary)}
-        .refresh-btn{width:34px;height:34px;border-radius:8px;background:rgba(30,59,138,.08);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--brandy-primary)}
-        .refresh-btn:hover{background:rgba(30,59,138,.14)}
-        .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
-        @media (max-width: 768px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
-        .stat{background:var(--color-background-primary);border-radius:12px;padding:14px;border:1px solid var(--color-border-tertiary)}
-        .stat-label{font-size:10px;color:var(--color-text-secondary);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
-        .stat-val{font-size:22px;font-weight:700;color:var(--color-text-primary);line-height:1}
-        .stat-sub{font-size:11px;margin-top:4px}
-        .card{background:var(--color-background-primary);border-radius:12px;border:1px solid var(--color-border-tertiary);padding:16px;margin-bottom:11px}
-        .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
-        .card-title{font-size:13px;font-weight:600;color:var(--color-text-primary)}
-        .grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
-        @media (max-width: 768px){.grid2{grid-template-columns:1fr}}
-        .badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;flex-shrink:0}
-        .b-active{background:#E1F5EE;color:#085041}
-        .b-new{background:rgba(245,158,11,.16);color:var(--brandy-accent)}
-        .action-btn{font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;border:1px solid #e2e8f0;background:transparent;color:var(--color-text-secondary);transition:all .15s;font-weight:500}
-        .action-btn:hover{border-color:var(--brandy-primary);color:var(--brandy-primary)}
-        .row-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--color-border-tertiary)}
-        .row-item:last-child{border-bottom:none}
-        .avatar-sm{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0}
-        .input-profile{width:100%;border:1px solid #e2e8f0;padding:9px 12px;border-radius:8px;font-size:13px;outline:none;margin-bottom:10px;transition:border-color .15s}
-        .input-profile:focus{border-color:var(--brandy-primary);box-shadow:0 0 0 3px rgba(30,59,138,.1)}
-        .top-actions{display:flex;align-items:center;gap:8px}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-        .animate-fadeIn{animation:fadeIn 0.3s ease-out}
+        .sidebar {
+          width: 200px;
+          min-width: 200px;
+          background: linear-gradient(
+            180deg,
+            var(--brandy-primary) 0%,
+            var(--brandy-primary-dark) 100%
+          );
+          padding: 16px 0;
+          display: flex;
+          flex-direction: column;
+          flex-shrink: 0;
+          height: 100dvh;
+          overflow-y: auto;
+          color: #fff;
+        }
+        .main {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          height: 100dvh;
+          overflow: hidden;
+          background: var(--color-background-secondary);
+        }
+        .topbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 14px 18px 12px;
+          flex-shrink: 0;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .tab-content {
+          flex: 1;
+          min-height: 0;
+          overflow-y: auto;
+          padding: 16px 18px 40px;
+        }
+        .home-link {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin: 0 12px 8px;
+          padding: 6px 10px;
+          border-radius: 8px;
+          font-size: 11px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.65);
+          background: rgba(255, 255, 255, 0.06);
+          text-decoration: none;
+          transition: all 0.15s;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .home-link:hover {
+          color: #fff;
+          background: rgba(255, 255, 255, 0.12);
+        }
+        @media (max-width: 900px) {
+          .db {
+            flex-direction: column;
+            height: auto;
+            overflow: auto;
+          }
+          .sidebar {
+            width: 100%;
+            min-width: 0;
+            height: auto;
+            flex-direction: row;
+            flex-wrap: wrap;
+            padding: 8px;
+            gap: 4px;
+            overflow-x: auto;
+            overflow-y: visible;
+          }
+          .sidebar .nav-section {
+            display: none;
+          }
+          .sidebar .logo {
+            padding: 8px 12px;
+            font-size: 14px;
+            flex-basis: 100%;
+          }
+          .sidebar .home-link {
+            margin: 4px;
+            padding: 5px 8px;
+          }
+          .sidebar .nav-item {
+            padding: 6px 10px !important;
+            font-size: 12px !important;
+          }
+          .main {
+            height: auto;
+          }
+          .tab-content {
+            overflow: visible;
+            padding: 12px;
+          }
+          .stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+        .logo {
+          padding: 0 16px 16px;
+          font-size: 15px;
+          font-weight: 700;
+          color: #fff;
+        }
+        .logo span {
+          color: var(--brandy-accent);
+          font-weight: 700;
+        }
+        .nav-section {
+          font-size: 10px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.45);
+          letter-spacing: 0.08em;
+          padding: 10px 16px 4px;
+          text-transform: uppercase;
+        }
+        .nav-item {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          padding: 9px 16px;
+          cursor: pointer;
+          font-size: 12.5px;
+          color: rgba(255, 255, 255, 0.7);
+          transition: all 0.15s;
+          border-left: 3px solid transparent;
+        }
+        .nav-item:hover {
+          background: rgba(255, 255, 255, 0.06);
+          color: #fff;
+        }
+        .nav-item.active {
+          background: rgba(245, 158, 11, 0.12);
+          color: #fff;
+          border-left-color: var(--brandy-accent);
+        }
+        .nav-icon {
+          width: 15px;
+          height: 15px;
+          flex-shrink: 0;
+        }
+        .page-title {
+          font-size: 17px;
+          font-weight: 600;
+          color: var(--color-text-primary);
+        }
+        .user-label {
+          font-size: 11px;
+          color: rgba(255, 255, 255, 0.7);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          font-weight: 600;
+        }
+        .signout-btn {
+          font-size: 11px;
+          color: rgba(252, 165, 165, 0.85);
+          margin-top: 4px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          display: block;
+          padding: 0;
+        }
+        .signout-btn:hover {
+          color: #fca5a5;
+          text-decoration: underline;
+        }
+        .tier-badge {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 12px;
+          color: var(--color-text-secondary);
+        }
+        .refresh-btn {
+          width: 34px;
+          height: 34px;
+          border-radius: 8px;
+          background: rgba(30, 59, 138, 0.08);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: var(--brandy-primary);
+        }
+        .refresh-btn:hover {
+          background: rgba(30, 59, 138, 0.14);
+        }
+        .stats {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 12px;
+          margin-bottom: 14px;
+        }
+        @media (max-width: 768px) {
+          .stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+        .stat {
+          background: var(--color-background-primary);
+          border-radius: 12px;
+          padding: 14px;
+          border: 1px solid var(--color-border-tertiary);
+        }
+        .stat-label {
+          font-size: 10px;
+          color: var(--color-text-secondary);
+          margin-bottom: 5px;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          font-weight: 600;
+        }
+        .stat-val {
+          font-size: 22px;
+          font-weight: 700;
+          color: var(--color-text-primary);
+          line-height: 1;
+        }
+        .stat-sub {
+          font-size: 11px;
+          margin-top: 4px;
+        }
+        .card {
+          background: var(--color-background-primary);
+          border-radius: 12px;
+          border: 1px solid var(--color-border-tertiary);
+          padding: 16px;
+          margin-bottom: 11px;
+        }
+        .card-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 11px;
+        }
+        .card-title {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--color-text-primary);
+        }
+        .grid2 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 11px;
+          margin-bottom: 11px;
+        }
+        @media (max-width: 768px) {
+          .grid2 {
+            grid-template-columns: 1fr;
+          }
+        }
+        .badge {
+          font-size: 10px;
+          font-weight: 600;
+          padding: 2px 7px;
+          border-radius: 20px;
+          flex-shrink: 0;
+        }
+        .b-active {
+          background: #e1f5ee;
+          color: #085041;
+        }
+        .b-new {
+          background: rgba(245, 158, 11, 0.16);
+          color: var(--brandy-accent);
+        }
+        .action-btn {
+          font-size: 11px;
+          padding: 4px 10px;
+          border-radius: 6px;
+          cursor: pointer;
+          border: 1px solid #e2e8f0;
+          background: transparent;
+          color: var(--color-text-secondary);
+          transition: all 0.15s;
+          font-weight: 500;
+        }
+        .action-btn:hover {
+          border-color: var(--brandy-primary);
+          color: var(--brandy-primary);
+        }
+        .row-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 0;
+          border-bottom: 1px solid var(--color-border-tertiary);
+        }
+        .row-item:last-child {
+          border-bottom: none;
+        }
+        .avatar-sm {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          font-weight: 500;
+          flex-shrink: 0;
+        }
+        .input-profile {
+          width: 100%;
+          border: 1px solid #e2e8f0;
+          padding: 9px 12px;
+          border-radius: 8px;
+          font-size: 13px;
+          outline: none;
+          margin-bottom: 10px;
+          transition: border-color 0.15s;
+        }
+        .input-profile:focus {
+          border-color: var(--brandy-primary);
+          box-shadow: 0 0 0 3px rgba(30, 59, 138, 0.1);
+        }
+        .top-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(5px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
       `}</style>
     </div>
   );
@@ -298,7 +703,7 @@ const TITLES: Record<string, string> = {
   wishlist: 'Saved items',
   notifications: 'System alerts',
   wallet: 'Wallet balance',
-  settings: 'Profile management'
+  settings: 'Profile management',
 };
 
 interface NavItemProps {
@@ -326,58 +731,87 @@ interface TabProps {
 function OverviewTab({ data, wishlist, myOrders }: TabProps) {
   const orders = myOrders || [];
   const items = wishlist || [];
-  
+
   return (
     <>
       <div className="stats">
         <div className="stat">
           <div className="stat-label">Orders</div>
           <div className="stat-val">{orders.length}</div>
-          <div className="stat-sub" style={{color:'#1D9E75'}}>Total purchases</div>
+          <div className="stat-sub" style={{ color: '#1D9E75' }}>
+            Total purchases
+          </div>
         </div>
         <div className="stat">
           <div className="stat-label">Wishlist</div>
           <div className="stat-val">{items.length}</div>
-          <div className="stat-sub" style={{color:'#1e3b8a'}}>Saved items</div>
+          <div className="stat-sub" style={{ color: '#1e3b8a' }}>
+            Saved items
+          </div>
         </div>
         <div className="stat">
           <div className="stat-label">Loyalty Points</div>
-          <div className="stat-val" style={{color:'#1e3b8a'}}>{(data?.user?.loyaltyPoints || 0).toLocaleString()}</div>
+          <div className="stat-val" style={{ color: '#1e3b8a' }}>
+            {(data?.user?.loyaltyPoints || 0).toLocaleString()}
+          </div>
           <div className="stat-sub">Redeemable credits</div>
         </div>
         <div className="stat">
           <div className="stat-label">Wallet (Points × EGP)</div>
-          <div className="stat-val" style={{color:'#f59e0b'}}>{(data?.user?.loyaltyPoints || 0).toLocaleString()}</div>
+          <div className="stat-val" style={{ color: '#f59e0b' }}>
+            {(data?.user?.loyaltyPoints || 0).toLocaleString()}
+          </div>
           <div className="stat-sub">EGP equivalent</div>
         </div>
       </div>
 
       <div className="grid2">
         <div className="card">
-          <div className="card-header"><div className="card-title">Recent Orders</div></div>
-          {orders.slice(0,3).map((o) => (
+          <div className="card-header">
+            <div className="card-title">Recent Orders</div>
+          </div>
+          {orders.slice(0, 3).map(o => (
             <div key={o.id} className="row-item">
-              <div style={{flex:1}}>
-                <div style={{fontSize:'12px',fontWeight:600}}>ORD-{o.id.substring(0,8)}</div>
-                <div style={{fontSize:'11px',color:'#64748b'}}>{new Date(o.createdAt).toLocaleDateString()}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '12px', fontWeight: 600 }}>ORD-{o.id.substring(0, 8)}</div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>
+                  {new Date(o.createdAt).toLocaleDateString()}
+                </div>
               </div>
               <span className="badge b-active">{o.status}</span>
             </div>
           ))}
-          {!orders.length && <div className="py-10 text-center text-xs text-slate-400">No orders yet.</div>}
+          {!orders.length && (
+            <div className="py-10 text-center text-xs text-slate-400">No orders yet.</div>
+          )}
         </div>
         <div className="card">
-          <div className="card-header"><div className="card-title">Wishlist Preview</div></div>
-          {items.slice(0,3).map((w) => (
+          <div className="card-header">
+            <div className="card-title">Wishlist Preview</div>
+          </div>
+          {items.slice(0, 3).map(w => (
             <div key={w.productId} className="row-item">
-               <div className="avatar-sm" style={{borderRadius:'4px', overflow:'hidden', background:'#f1f5f9'}}>
-                  {w.product?.images?.[0] && <img src={w.product.images[0].url} className="w-full h-full object-cover" alt="" />}
-               </div>
-               <span style={{fontSize:'12px',fontWeight:500}} className="truncate flex-1">{w.product?.title}</span>
-               <div style={{fontSize:'12px',fontWeight:600}}>{w.product?.basePrice} EGP</div>
+              <div
+                className="avatar-sm"
+                style={{ borderRadius: '4px', overflow: 'hidden', background: '#f1f5f9' }}
+              >
+                {w.product?.images?.[0] && (
+                  <img
+                    src={w.product.images[0].url}
+                    className="w-full h-full object-cover"
+                    alt=""
+                  />
+                )}
+              </div>
+              <span style={{ fontSize: '12px', fontWeight: 500 }} className="truncate flex-1">
+                {w.product?.title}
+              </span>
+              <div style={{ fontSize: '12px', fontWeight: 600 }}>{w.product?.basePrice} EGP</div>
             </div>
           ))}
-          {!items.length && <div className="py-10 text-center text-xs text-slate-400">Wishlist empty.</div>}
+          {!items.length && (
+            <div className="py-10 text-center text-xs text-slate-400">Wishlist empty.</div>
+          )}
         </div>
       </div>
     </>
@@ -400,16 +834,28 @@ function OrdersTab({
 
   return (
     <div className="card">
-      <div className="card-header"><div className="card-title">Full Purchase History</div></div>
-      {orders.map((o) => (
-        <div key={o.id} className="row-item" style={{ flexDirection: 'column', alignItems: 'stretch', padding: '15px 0' }}>
+      <div className="card-header">
+        <div className="card-title">Full Purchase History</div>
+      </div>
+      {orders.map(o => (
+        <div
+          key={o.id}
+          className="row-item"
+          style={{ flexDirection: 'column', alignItems: 'stretch', padding: '15px 0' }}
+        >
           <div className="flex justify-between items-start mb-4">
             <div>
-              <div style={{ fontSize: '13px', fontWeight: 700 }}>Order #ORD-{o.id.substring(0, 8)}</div>
-              <div style={{ fontSize: '11px', color: '#64748b' }}>Placed on {new Date(o.createdAt).toLocaleString()}</div>
+              <div style={{ fontSize: '13px', fontWeight: 700 }}>
+                Order #ORD-{o.id.substring(0, 8)}
+              </div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>
+                Placed on {new Date(o.createdAt).toLocaleString()}
+              </div>
             </div>
             <div className="text-right">
-              <div style={{ fontSize: '15px', fontWeight: 700 }}>{o.totalAmount?.toLocaleString()} EGP</div>
+              <div style={{ fontSize: '15px', fontWeight: 700 }}>
+                {o.totalAmount?.toLocaleString()} EGP
+              </div>
               <span className="badge b-active">{o.status}</span>
             </div>
           </div>
@@ -417,7 +863,10 @@ function OrdersTab({
           <div className="flex items-center gap-2 mb-4 px-2">
             <TrackStep active={true} label="Ordered" />
             <TrackLine active={['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(o.status)} />
-            <TrackStep active={['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(o.status)} label="Processing" />
+            <TrackStep
+              active={['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(o.status)}
+              label="Processing"
+            />
             <TrackLine active={['SHIPPED', 'DELIVERED'].includes(o.status)} />
             <TrackStep active={['SHIPPED', 'DELIVERED'].includes(o.status)} label="Shipped" />
             <TrackLine active={o.status === 'DELIVERED'} />
@@ -428,12 +877,18 @@ function OrdersTab({
             <div key={item.id} className="flex gap-3 mt-2 p-2 bg-slate-50 rounded items-center">
               <div className="w-10 h-10 rounded bg-white overflow-hidden shrink-0">
                 {item.variant?.product?.images?.[0] && (
-                  <img src={item.variant.product.images[0].url} className="w-full h-full object-cover" alt="" />
+                  <img
+                    src={item.variant.product.images[0].url}
+                    className="w-full h-full object-cover"
+                    alt=""
+                  />
                 )}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '11px', fontWeight: 600 }}>{item.productTitleSnapshot}</div>
-                <div style={{ fontSize: '10px', color: '#64748b' }}>Qty: {item.quantity} · Variant: {item.variant?.title}</div>
+                <div style={{ fontSize: '10px', color: '#64748b' }}>
+                  Qty: {item.quantity} · Variant: {item.variant?.title}
+                </div>
               </div>
               {item.status === 'DELIVERED' && (
                 <button
@@ -458,39 +913,65 @@ function OrdersTab({
                 Cancel Order
               </button>
             )}
-            <button onClick={() => onReorder(o)} className="action-btn">Buy Again</button>
-            <Link href={`/dashboard/orders/${o.id}`} className="action-btn">View Details</Link>
+            <button onClick={() => onReorder(o)} className="action-btn">
+              Buy Again
+            </button>
+            <Link href={`/dashboard/orders/${o.id}`} className="action-btn">
+              View Details
+            </Link>
           </div>
         </div>
       ))}
-      {!orders.length && <div className="py-20 text-center text-xs text-slate-400">No orders found.</div>}
+      {!orders.length && (
+        <div className="py-20 text-center text-xs text-slate-400">No orders found.</div>
+      )}
     </div>
   );
 }
 
-function WishlistTab({ items, onToggle }: { items: (WishlistItem & { product: Product })[], onToggle: (id: string) => void }) {
+function WishlistTab({
+  items,
+  onToggle,
+}: {
+  items: (WishlistItem & { product: Product })[];
+  onToggle: (id: string) => void;
+}) {
   return (
     <div className="card">
-       <div className="card-header"><div className="card-title">My Saved Items</div></div>
-       {items.map((w) => (
-         <div key={w.productId} className="row-item">
-            <div className="w-12 h-12 rounded bg-slate-50 overflow-hidden shrink-0 border border-slate-100">
-               {w.product?.images?.[0] && <img src={w.product.images[0].url} className="w-full h-full object-cover" alt="" />}
-            </div>
-            <div style={{flex:1}}>
-               <div style={{fontSize:'13px',fontWeight:500}}>{w.product?.title}</div>
-               <div style={{fontSize:'11px',color:'#64748b'}}>{w.product?.category?.name}</div>
-            </div>
-            <div style={{textAlign:'right', padding:'0 20px'}}>
-               <div style={{fontSize:'13px',fontWeight:600}}>{w.product?.basePrice} EGP</div>
-            </div>
-            <div className="flex gap-3">
-               <Link href={`/product/${w.productId}`} className="action-btn">View</Link>
-               <button onClick={() => onToggle(w.productId)} className="action-btn" style={{borderColor:'#A32D2D',color:'#791F1F'}}>Remove</button>
-            </div>
-         </div>
-       ))}
-       {!items.length && <div className="py-20 text-center text-xs text-slate-400">Wishlist empty.</div>}
+      <div className="card-header">
+        <div className="card-title">My Saved Items</div>
+      </div>
+      {items.map(w => (
+        <div key={w.productId} className="row-item">
+          <div className="w-12 h-12 rounded bg-slate-50 overflow-hidden shrink-0 border border-slate-100">
+            {w.product?.images?.[0] && (
+              <img src={w.product.images[0].url} className="w-full h-full object-cover" alt="" />
+            )}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '13px', fontWeight: 500 }}>{w.product?.title}</div>
+            <div style={{ fontSize: '11px', color: '#64748b' }}>{w.product?.category?.name}</div>
+          </div>
+          <div style={{ textAlign: 'right', padding: '0 20px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>{w.product?.basePrice} EGP</div>
+          </div>
+          <div className="flex gap-3">
+            <Link href={`/product/${w.productId}`} className="action-btn">
+              View
+            </Link>
+            <button
+              onClick={() => onToggle(w.productId)}
+              className="action-btn"
+              style={{ borderColor: '#A32D2D', color: '#791F1F' }}
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      ))}
+      {!items.length && (
+        <div className="py-20 text-center text-xs text-slate-400">Wishlist empty.</div>
+      )}
     </div>
   );
 }
@@ -498,18 +979,27 @@ function WishlistTab({ items, onToggle }: { items: (WishlistItem & { product: Pr
 function NotificationsTab({ items }: { items: Notification[] }) {
   return (
     <div className="card">
-       <div className="card-header"><div className="card-title">System Alerts</div></div>
-       {items.map((n) => (
-         <div key={n.id} className="row-item">
-            <div className="w-2 h-2 rounded-full shrink-0" style={{background: n.isRead ? '#cbd5e1' : '#1e3b8a'}} />
-            <div style={{flex:1}}>
-               <div style={{fontSize:'12px',fontWeight:600}}>{n.title}</div>
-               <div style={{fontSize:'11px',color:'#64748b'}}>{n.message}</div>
-            </div>
-            <div style={{fontSize:'10px',color:'#94a3b8'}}>{new Date(n.createdAt).toLocaleDateString()}</div>
-         </div>
-       ))}
-       {!items.length && <div className="py-20 text-center text-xs text-slate-400">No new notifications.</div>}
+      <div className="card-header">
+        <div className="card-title">System Alerts</div>
+      </div>
+      {items.map(n => (
+        <div key={n.id} className="row-item">
+          <div
+            className="w-2 h-2 rounded-full shrink-0"
+            style={{ background: n.isRead ? '#cbd5e1' : '#1e3b8a' }}
+          />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '12px', fontWeight: 600 }}>{n.title}</div>
+            <div style={{ fontSize: '11px', color: '#64748b' }}>{n.message}</div>
+          </div>
+          <div style={{ fontSize: '10px', color: '#94a3b8' }}>
+            {new Date(n.createdAt).toLocaleDateString()}
+          </div>
+        </div>
+      ))}
+      {!items.length && (
+        <div className="py-20 text-center text-xs text-slate-400">No new notifications.</div>
+      )}
     </div>
   );
 }
@@ -527,14 +1017,28 @@ function WalletTab({ user }: { user?: User }) {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Balance card */}
       <div className="card text-center py-10">
-        <div style={{fontSize:'10px',color:'#94a3b8',textTransform:'uppercase',letterSpacing:'0.1em',marginBottom:'10px'}}>Loyalty Balance</div>
-        <div style={{fontSize:'42px',fontWeight:800,color:'#1e3b8a'}}>{points.toLocaleString()} <span style={{fontSize:'20px',color:'#94a3b8'}}>pts</span></div>
-        <div style={{fontSize:'13px',color:'#64748b',marginTop:'8px'}}>
+        <div
+          style={{
+            fontSize: '10px',
+            color: '#94a3b8',
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            marginBottom: '10px',
+          }}
+        >
+          Loyalty Balance
+        </div>
+        <div style={{ fontSize: '42px', fontWeight: 800, color: '#1e3b8a' }}>
+          {points.toLocaleString()} <span style={{ fontSize: '20px', color: '#94a3b8' }}>pts</span>
+        </div>
+        <div style={{ fontSize: '13px', color: '#64748b', marginTop: '8px' }}>
           Worth <strong>{points.toLocaleString()} EGP</strong> at checkout (1 pt = 1 EGP)
         </div>
         <div className="mt-6 pt-6 border-t border-slate-100">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-xs font-bold uppercase" style={{color: tierColor}}>{tier} Member</div>
+            <div className="text-xs font-bold uppercase" style={{ color: tierColor }}>
+              {tier} Member
+            </div>
             {nextTier && (
               <div className="text-[10px] text-slate-400">
                 {(nextTierPoints - points).toLocaleString()} pts to {nextTier}
@@ -542,7 +1046,10 @@ function WalletTab({ user }: { user?: User }) {
             )}
           </div>
           <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all" style={{width: `${progress}%`, backgroundColor: tierColor}} />
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${progress}%`, backgroundColor: tierColor }}
+            />
           </div>
         </div>
       </div>
@@ -552,24 +1059,34 @@ function WalletTab({ user }: { user?: User }) {
         <div className="card-title mb-4">How to earn points</div>
         <div className="space-y-3 text-sm text-slate-600">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-amber-50 text-[#1e3b8a] flex items-center justify-center text-sm">🛍️</div>
+            <div className="w-8 h-8 rounded-full bg-amber-50 text-[#1e3b8a] flex items-center justify-center text-sm">
+              🛍️
+            </div>
             <div>
               <div className="font-bold text-slate-900">Shop purchases</div>
               <div className="text-[11px] text-slate-400">1 point for every 10 EGP spent</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-amber-50 text-[#1e3b8a] flex items-center justify-center text-sm">⭐</div>
+            <div className="w-8 h-8 rounded-full bg-amber-50 text-[#1e3b8a] flex items-center justify-center text-sm">
+              ⭐
+            </div>
             <div>
               <div className="font-bold text-slate-900">Write reviews</div>
-              <div className="text-[11px] text-slate-400">Earn 10 points per verified purchase review</div>
+              <div className="text-[11px] text-slate-400">
+                Earn 10 points per verified purchase review
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-amber-50 text-[#1e3b8a] flex items-center justify-center text-sm">👥</div>
+            <div className="w-8 h-8 rounded-full bg-amber-50 text-[#1e3b8a] flex items-center justify-center text-sm">
+              👥
+            </div>
             <div>
               <div className="font-bold text-slate-900">Refer friends</div>
-              <div className="text-[11px] text-slate-400">50 points when a friend completes their first order</div>
+              <div className="text-[11px] text-slate-400">
+                50 points when a friend completes their first order
+              </div>
             </div>
           </div>
         </div>
@@ -578,7 +1095,15 @@ function WalletTab({ user }: { user?: User }) {
   );
 }
 
-function SettingsTab({ user, onUpdate, isUpdating }: { user?: User, onUpdate: (e: React.FormEvent) => void, isUpdating: boolean }) {
+function SettingsTab({
+  user,
+  onUpdate,
+  isUpdating,
+}: {
+  user?: User;
+  onUpdate: (e: React.FormEvent) => void;
+  isUpdating: boolean;
+}) {
   const [avatar, setAvatar] = useState(user?.avatarUrl || '');
   const [uploading, setUploading] = useState(false);
 
@@ -590,14 +1115,22 @@ function SettingsTab({ user, onUpdate, isUpdating }: { user?: User, onUpdate: (e
     setAvatar(localPreview);
     setUploading(true);
     try {
+      // Avatars are tiny — 512px max edge is plenty.
+      const { compressImage } = await import('@/lib/compress-image');
+      const uploadFile = await compressImage(file, { maxDimension: 512 });
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', uploadFile);
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const d = await res.json();
-      if (d.url) setAvatar(d.url);
-      else throw new Error(d.message || 'Upload failed');
+      if (!res.ok || !d.url) throw new Error(d.message || 'Upload failed');
+      if (d.url.startsWith('data:') && d.url.length > 700 * 1024) {
+        throw new Error('Avatar is too large after compression. Pick a smaller image.');
+      }
+      setAvatar(d.url);
     } catch (err) {
       console.error('Avatar upload failed', err);
+      alert((err as Error).message || 'Avatar upload failed.');
+      setAvatar(user?.avatarUrl || '');
     } finally {
       setUploading(false);
     }
@@ -635,11 +1168,19 @@ function SettingsTab({ user, onUpdate, isUpdating }: { user?: User, onUpdate: (e
             )}
           </div>
           <div className="flex-1">
-            <label className="text-[11px] text-slate-400 uppercase font-bold block mb-2">Profile Photo</label>
+            <label className="text-[11px] text-slate-400 uppercase font-bold block mb-2">
+              Profile Photo
+            </label>
             <div className="flex items-center gap-2 flex-wrap">
               <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-semibold text-slate-700">
                 {avatar ? 'Replace photo' : 'Upload photo'}
-                <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploading} className="hidden" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  disabled={uploading}
+                  className="hidden"
+                />
               </label>
               {avatar && !uploading && (
                 <button
@@ -656,18 +1197,39 @@ function SettingsTab({ user, onUpdate, isUpdating }: { user?: User, onUpdate: (e
           </div>
         </div>
         <div>
-          <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">Full Name</label>
+          <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">
+            Full Name
+          </label>
           <input name="name" defaultValue={user?.name} className="input-profile" />
         </div>
         <div>
-          <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">Email Address</label>
-          <input name="email" defaultValue={user?.email} className="input-profile" readOnly style={{background:'#f8fafc', color:'#94a3b8'}} />
+          <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">
+            Email Address
+          </label>
+          <input
+            name="email"
+            defaultValue={user?.email}
+            className="input-profile"
+            readOnly
+            style={{ background: '#f8fafc', color: '#94a3b8' }}
+          />
         </div>
         <div>
-          <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">Phone Number</label>
-          <input name="phone" defaultValue={user?.phone || ''} className="input-profile" placeholder="+20 1XX XXX XXXX" />
+          <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">
+            Phone Number
+          </label>
+          <input
+            name="phone"
+            defaultValue={user?.phone || ''}
+            className="input-profile"
+            placeholder="+20 1XX XXX XXXX"
+          />
         </div>
-        <button disabled={isUpdating} type="submit" className="w-full py-3 bg-[#1e3b8a] text-white rounded font-bold mt-4 disabled:opacity-50">
+        <button
+          disabled={isUpdating}
+          type="submit"
+          className="w-full py-3 bg-[#1e3b8a] text-white rounded font-bold mt-4 disabled:opacity-50"
+        >
           {isUpdating ? 'Updating...' : 'Save Changes'}
         </button>
 
@@ -675,8 +1237,9 @@ function SettingsTab({ user, onUpdate, isUpdating }: { user?: User, onUpdate: (e
         <div className="mt-8 pt-6 border-t border-slate-100">
           <div className="text-[11px] text-red-600 uppercase font-bold mb-2">Danger Zone</div>
           <p className="text-xs text-slate-500 mb-3">
-            Deleting your account will anonymize your personal data in compliance with Egyptian PDPL law.
-            Your order history is retained for legal/tax reasons but will no longer be linked to your identity.
+            Deleting your account will anonymize your personal data in compliance with Egyptian PDPL
+            law. Your order history is retained for legal/tax reasons but will no longer be linked
+            to your identity.
           </p>
           <button
             type="button"
@@ -686,28 +1249,110 @@ function SettingsTab({ user, onUpdate, isUpdating }: { user?: User, onUpdate: (e
             Delete My Account
           </button>
         </div>
-       </form>
+      </form>
     </div>
   );
 }
 
-function TrackStep({ active, label }: { active: boolean, label: string }) {
-   return (
-      <div className="flex flex-col items-center gap-1 shrink-0">
-         <div className={`w-3 h-3 rounded-full ${active ? 'bg-[#1e3b8a]' : 'bg-slate-200'}`} />
-         <span className={`text-[9px] font-bold uppercase ${active ? 'text-[#1e3b8a]' : 'text-slate-300'}`}>{label}</span>
-      </div>
-   );
+function TrackStep({ active, label }: { active: boolean; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1 shrink-0">
+      <div className={`w-3 h-3 rounded-full ${active ? 'bg-[#1e3b8a]' : 'bg-slate-200'}`} />
+      <span
+        className={`text-[9px] font-bold uppercase ${active ? 'text-[#1e3b8a]' : 'text-slate-300'}`}
+      >
+        {label}
+      </span>
+    </div>
+  );
 }
 
 function TrackLine({ active }: { active: boolean }) {
-   return <div className={`h-[2px] flex-1 ${active ? 'bg-[#1e3b8a]' : 'bg-slate-100'}`} />;
+  return <div className={`h-[2px] flex-1 ${active ? 'bg-[#1e3b8a]' : 'bg-slate-100'}`} />;
 }
 
 // SVGs
-function OverviewIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>; }
-function OrdersIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="2" width="10" height="12" rx="2"/><path d="M6 6h4M6 9h4"/></svg>; }
-function WishlistIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 14.5s-6-3.5-6-8.5a3.5 3.5 0 016-3 3.5 3.5 0 016 3c0 5-6 8.5-6 8.5z"/></svg>; }
-function PayoutsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="4" width="12" height="8" rx="2"/><circle cx="11" cy="8" r="1.5"/></svg>; }
-function ModerationIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 2v12M2 8h12"/></svg>; }
-function SettingsIcon() { return <svg className="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2"/></svg>; }
+function OverviewIcon() {
+  return (
+    <svg
+      className="nav-icon"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <rect x="2" y="2" width="5" height="5" rx="1" />
+      <rect x="9" y="2" width="5" height="5" rx="1" />
+      <rect x="2" y="9" width="5" height="5" rx="1" />
+      <rect x="9" y="9" width="5" height="5" rx="1" />
+    </svg>
+  );
+}
+function OrdersIcon() {
+  return (
+    <svg
+      className="nav-icon"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <rect x="3" y="2" width="10" height="12" rx="2" />
+      <path d="M6 6h4M6 9h4" />
+    </svg>
+  );
+}
+function WishlistIcon() {
+  return (
+    <svg
+      className="nav-icon"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path d="M8 14.5s-6-3.5-6-8.5a3.5 3.5 0 016-3 3.5 3.5 0 016 3c0 5-6 8.5-6 8.5z" />
+    </svg>
+  );
+}
+function PayoutsIcon() {
+  return (
+    <svg
+      className="nav-icon"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <rect x="2" y="4" width="12" height="8" rx="2" />
+      <circle cx="11" cy="8" r="1.5" />
+    </svg>
+  );
+}
+function ModerationIcon() {
+  return (
+    <svg
+      className="nav-icon"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path d="M8 2v12M2 8h12" />
+    </svg>
+  );
+}
+function SettingsIcon() {
+  return (
+    <svg
+      className="nav-icon"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <circle cx="8" cy="8" r="3" />
+      <path d="M8 2v2M8 12v2M2 8h2M12 8h2" />
+    </svg>
+  );
+}

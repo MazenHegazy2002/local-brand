@@ -225,13 +225,30 @@ export default function SellerHub() {
     });
 
     try {
+      // Phone photos are routinely 5-12 MB. We compress them down to a
+      // reasonable size before upload so (a) the upload itself is fast on
+      // mobile data and (b) the resulting URL — even if the server falls
+      // back to a base64 data URL — stays well under the Server Action
+      // request limit when it later flows through createProduct.
+      const { compressImage } = await import('@/lib/compress-image');
+      const uploadFile = await compressImage(file);
+
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', uploadFile);
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       const data = await res.json().catch(() => ({}) as { url?: string; message?: string });
 
       if (!res.ok || !data.url) {
         throw new Error(data.message || 'Upload failed');
+      }
+
+      // Hard guard: if the server returned a base64 data URL that's still
+      // too big to be embedded in a server-action payload, refuse the
+      // upload with a clear message instead of crashing the next render.
+      if (data.url.startsWith('data:') && data.url.length > 700 * 1024) {
+        throw new Error(
+          'Image is too large after compression. Please pick a smaller photo, or ask the platform admin to enable Vercel Blob / Cloudinary so images can be hosted externally.'
+        );
       }
 
       // Swap the local preview for the uploaded URL.
@@ -242,11 +259,12 @@ export default function SellerHub() {
       });
     } catch (err) {
       console.error('Upload failed:', err);
-      // Mark as not uploading but keep the local preview so the user can
-      // re-upload without losing what they already selected.
+      alert((err as Error).message || 'Upload failed. Please try a different photo.');
+      // Drop the broken preview so the user can pick again without the
+      // submit button silently posting a stale local-only URL.
       setVariants(prev => {
         const next = [...prev];
-        if (next[index]) next[index] = { ...next[index], uploading: false };
+        if (next[index]) next[index] = { ...next[index], image: '', uploading: false };
         return next;
       });
     } finally {
@@ -1920,13 +1938,20 @@ function SettingsTab({ data }: { data: DashboardData }) {
     if (!file) return;
     setIsUploading(true);
     try {
+      const { compressImage } = await import('@/lib/compress-image');
+      const uploadFile = await compressImage(file, { maxDimension: 800 });
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', uploadFile);
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const d = await res.json();
-      if (d.url) setForm(f => ({ ...f, logoUrl: d.url }));
+      if (!res.ok || !d.url) throw new Error(d.message || 'Upload failed');
+      if (d.url.startsWith('data:') && d.url.length > 700 * 1024) {
+        throw new Error('Logo is too large after compression. Pick a smaller image.');
+      }
+      setForm(f => ({ ...f, logoUrl: d.url }));
     } catch (err) {
       console.error('Logo upload failed:', err);
+      setMessage({ type: 'error', text: (err as Error).message || 'Logo upload failed' });
     } finally {
       setIsUploading(false);
     }

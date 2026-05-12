@@ -91,7 +91,7 @@ export default function SellerSettingsPage() {
       } else {
         setMessage({ type: 'success', text: 'Settings saved successfully.' });
         if (data.seller) {
-          setProfile((p) => ({
+          setProfile(p => ({
             ...p,
             storeName: data.seller.storeName ?? p.storeName,
             description: data.seller.description ?? p.description,
@@ -115,15 +115,24 @@ export default function SellerSettingsPage() {
     if (!file) return;
     setUploading(true);
     try {
+      const { compressImage } = await import('@/lib/compress-image');
+      const uploadFile = await compressImage(file, { maxDimension: 800 });
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', uploadFile);
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       const data = await res.json();
-      if (data.url) {
-        setProfile((p) => ({ ...p, logoUrl: data.url }));
-      } else {
+      if (!res.ok || !data.url) {
         setMessage({ type: 'error', text: data.message || 'Upload failed' });
+        return;
       }
+      if (data.url.startsWith('data:') && data.url.length > 700 * 1024) {
+        setMessage({
+          type: 'error',
+          text: 'Logo is too large after compression. Pick a smaller image.',
+        });
+        return;
+      }
+      setProfile(p => ({ ...p, logoUrl: data.url }));
     } catch (err) {
       console.error(err);
       setMessage({ type: 'error', text: 'Upload failed' });
@@ -144,11 +153,21 @@ export default function SellerSettingsPage() {
     <div className="db">
       <div className="sidebar">
         <div className="logo">SellerHub</div>
-        <Link href="/seller-hub" className="nav-item">Overview</Link>
-        <Link href="/seller-hub" className="nav-item">Orders</Link>
-        <Link href="/seller-hub" className="nav-item">Products</Link>
-        <Link href="/seller-hub/returns" className="nav-item">Returns</Link>
-        <Link href="/seller-hub/settings" className="nav-item active">Settings</Link>
+        <Link href="/seller-hub" className="nav-item">
+          Overview
+        </Link>
+        <Link href="/seller-hub" className="nav-item">
+          Orders
+        </Link>
+        <Link href="/seller-hub" className="nav-item">
+          Products
+        </Link>
+        <Link href="/seller-hub/returns" className="nav-item">
+          Returns
+        </Link>
+        <Link href="/seller-hub/settings" className="nav-item active">
+          Settings
+        </Link>
       </div>
 
       <div className="main">
@@ -170,17 +189,25 @@ export default function SellerSettingsPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Store Logo</label>
-                <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={uploading} className="text-xs" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  disabled={uploading}
+                  className="text-xs"
+                />
                 {uploading && <div className="text-[10px] text-slate-400 mt-1">Uploading…</div>}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Store Name *</label>
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  Store Name *
+                </label>
                 <input
                   type="text"
                   value={profile.storeName}
-                  onChange={(e) => setProfile({ ...profile, storeName: e.target.value })}
+                  onChange={e => setProfile({ ...profile, storeName: e.target.value })}
                   className="input-field"
                   required
                 />
@@ -190,7 +217,7 @@ export default function SellerSettingsPage() {
                 <input
                   type="text"
                   value={profile.city}
-                  onChange={(e) => setProfile({ ...profile, city: e.target.value })}
+                  onChange={e => setProfile({ ...profile, city: e.target.value })}
                   className="input-field"
                   placeholder="e.g. New Cairo, Maadi"
                 />
@@ -199,20 +226,24 @@ export default function SellerSettingsPage() {
                 <label className="block text-xs font-medium text-slate-500 mb-1">Governorate</label>
                 <select
                   value={profile.governorate}
-                  onChange={(e) => setProfile({ ...profile, governorate: e.target.value })}
+                  onChange={e => setProfile({ ...profile, governorate: e.target.value })}
                   className="input-field"
                 >
                   <option value="">Select Governorate</option>
-                  {GOVERNORATES.map((g) => (
-                    <option key={g.value} value={g.value}>{g.en}</option>
+                  {GOVERNORATES.map(g => (
+                    <option key={g.value} value={g.value}>
+                      {g.en}
+                    </option>
                   ))}
                 </select>
               </div>
               <div className="col-span-2">
-                <label className="block text-xs font-medium text-slate-500 mb-1">Store Description</label>
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  Store Description
+                </label>
                 <textarea
                   value={profile.description}
-                  onChange={(e) => setProfile({ ...profile, description: e.target.value })}
+                  onChange={e => setProfile({ ...profile, description: e.target.value })}
                   className="input-field"
                   rows={4}
                   placeholder="Tell customers about your store..."
@@ -224,45 +255,154 @@ export default function SellerSettingsPage() {
           <div className="card">
             <h3 className="card-title mb-4">Bank Account (Payouts)</h3>
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">IBAN / Account</label>
+              <label className="block text-xs font-medium text-slate-500 mb-1">
+                IBAN / Account
+              </label>
               <input
                 type="text"
                 value={profile.bankAccount}
-                onChange={(e) => setProfile({ ...profile, bankAccount: e.target.value })}
+                onChange={e => setProfile({ ...profile, bankAccount: e.target.value })}
                 className="input-field"
                 placeholder="EG00 0000 0000 0000 0000 0000"
               />
-              <p className="text-xs text-slate-400 mt-1">Payouts are processed within 5-7 business days.</p>
+              <p className="text-xs text-slate-400 mt-1">
+                Payouts are processed within 5-7 business days.
+              </p>
             </div>
           </div>
 
           {message && (
-            <div className={`px-4 py-3 rounded-xl text-sm font-medium ${
-              message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
-            }`}>{message.text}</div>
+            <div
+              className={`px-4 py-3 rounded-xl text-sm font-medium ${
+                message.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}
+            >
+              {message.text}
+            </div>
           )}
 
-          <button type="submit" disabled={saving} className="w-full py-4 bg-[#1e3b8a] text-white rounded-lg font-bold hover:bg-[#152c6e] disabled:opacity-50 transition-colors">
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full py-4 bg-[#1e3b8a] text-white rounded-lg font-bold hover:bg-[#152c6e] disabled:opacity-50 transition-colors"
+          >
             {saving ? 'Saving…' : 'Save Settings'}
           </button>
         </form>
       </div>
 
       <style jsx global>{`
-        .db { display: flex; min-height: 100vh; background: #f8fafc; font-family: 'Inter', sans-serif; }
-        .sidebar { width: 200px; flex-shrink: 0; background: linear-gradient(180deg, #1e3b8a 0%, #152c6e 100%); padding: 16px 0; display: flex; flex-direction: column; min-height: 100vh; max-height: 100vh; position: sticky; top: 0; align-self: flex-start; overflow-y: auto; }
-        .logo { padding: 0 16px 20px; font-size: 17px; font-weight: 700; color: #fff; }
-        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.7); transition: all 0.2s; border-left: 3px solid transparent; }
-        .nav-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
-        .nav-item.active { color: #fff; background: rgba(245,158,11,0.12); border-left-color: #f59e0b; font-weight: 600; }
-        .main { flex: 1; min-width: 0; padding: 24px 32px; min-height: 100vh; padding-bottom: 80px; }
-        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
-        .page-title { font-size: 20px; font-weight: 600; color: #1e293b; }
-        .card { background: #fff; border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); padding: 24px; }
-        .card-title { font-size: 14px; font-weight: 600; color: #1e293b; }
-        .input-field { width: 100%; border: 1px solid #e2e8f0; padding: 11px 13px; border-radius: 8px; font-size: 13px; outline: none; background: #fff; transition: border-color .15s, box-shadow .15s; }
-        .input-field:focus { border-color: #1e3b8a; box-shadow: 0 0 0 3px rgba(30,59,138,.1); }
-        @media (max-width: 768px) { .db { flex-direction: column; } .sidebar { width: 100%; min-height: auto; max-height: none; position: static; flex-direction: row; flex-wrap: wrap; padding: 8px; } .main { padding: 16px; } }
+        .db {
+          display: flex;
+          min-height: 100vh;
+          background: #f8fafc;
+          font-family: 'Inter', sans-serif;
+        }
+        .sidebar {
+          width: 200px;
+          flex-shrink: 0;
+          background: linear-gradient(180deg, #1e3b8a 0%, #152c6e 100%);
+          padding: 16px 0;
+          display: flex;
+          flex-direction: column;
+          min-height: 100vh;
+          max-height: 100vh;
+          position: sticky;
+          top: 0;
+          align-self: flex-start;
+          overflow-y: auto;
+        }
+        .logo {
+          padding: 0 16px 20px;
+          font-size: 17px;
+          font-weight: 700;
+          color: #fff;
+        }
+        .nav-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 16px;
+          cursor: pointer;
+          font-size: 13px;
+          color: rgba(255, 255, 255, 0.7);
+          transition: all 0.2s;
+          border-left: 3px solid transparent;
+        }
+        .nav-item:hover {
+          color: #fff;
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .nav-item.active {
+          color: #fff;
+          background: rgba(245, 158, 11, 0.12);
+          border-left-color: #f59e0b;
+          font-weight: 600;
+        }
+        .main {
+          flex: 1;
+          min-width: 0;
+          padding: 24px 32px;
+          min-height: 100vh;
+          padding-bottom: 80px;
+        }
+        .topbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 28px;
+        }
+        .page-title {
+          font-size: 20px;
+          font-weight: 600;
+          color: #1e293b;
+        }
+        .card {
+          background: #fff;
+          border-radius: 12px;
+          border: 1px solid rgba(0, 0, 0, 0.06);
+          padding: 24px;
+        }
+        .card-title {
+          font-size: 14px;
+          font-weight: 600;
+          color: #1e293b;
+        }
+        .input-field {
+          width: 100%;
+          border: 1px solid #e2e8f0;
+          padding: 11px 13px;
+          border-radius: 8px;
+          font-size: 13px;
+          outline: none;
+          background: #fff;
+          transition:
+            border-color 0.15s,
+            box-shadow 0.15s;
+        }
+        .input-field:focus {
+          border-color: #1e3b8a;
+          box-shadow: 0 0 0 3px rgba(30, 59, 138, 0.1);
+        }
+        @media (max-width: 768px) {
+          .db {
+            flex-direction: column;
+          }
+          .sidebar {
+            width: 100%;
+            min-height: auto;
+            max-height: none;
+            position: static;
+            flex-direction: row;
+            flex-wrap: wrap;
+            padding: 8px;
+          }
+          .main {
+            padding: 16px;
+          }
+        }
       `}</style>
     </div>
   );
