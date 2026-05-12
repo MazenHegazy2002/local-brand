@@ -77,10 +77,20 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       shippingAddressSnapshot?: string;
       orderNotes?: string | null;
       giftWrapping?: boolean;
+      deliveredAt?: Date | null;
     } = {};
 
     if (parsed.data.status) {
       data.status = parsed.data.status as OrderStatus;
+      // Stamp deliveredAt the first time an order enters DELIVERED, and
+      // clear it if the admin moves it back out of DELIVERED. This keeps
+      // the seller-earnings escrow honest when admins force-correct stuck
+      // orders.
+      if (parsed.data.status === 'DELIVERED' && order.status !== OrderStatus.DELIVERED) {
+        data.deliveredAt = new Date();
+      } else if (parsed.data.status !== 'DELIVERED' && order.status === OrderStatus.DELIVERED) {
+        data.deliveredAt = null;
+      }
     }
 
     if (parsed.data.shipping) {

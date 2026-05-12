@@ -43,13 +43,28 @@ export async function POST(req: Request) {
       );
     }
 
-    const requestedAmount = parsed.data.amount ?? seller.balance;
+    // Compute the seller's *available* balance from real orders + escrow
+    // window. The legacy seller.balance column is no longer authoritative.
+    const { computeSellerEarnings } = await import('@/lib/seller-earnings');
+    const earnings = await computeSellerEarnings(seller.id);
+
+    const requestedAmount = parsed.data.amount ?? earnings.available;
     if (requestedAmount <= 0) {
       return NextResponse.json({ message: 'Amount must be greater than zero' }, { status: 400 });
     }
-    if (requestedAmount > seller.balance) {
+    if (requestedAmount > earnings.available) {
       return NextResponse.json(
-        { message: `Requested amount exceeds available balance (${seller.balance.toFixed(2)} EGP)` },
+        {
+          message: `Requested amount exceeds available balance (${earnings.available.toFixed(2)} EGP). ${
+            earnings.held > 0
+              ? `${earnings.held.toFixed(2)} EGP is still in escrow until ${
+                  earnings.nextReleaseAt
+                    ? earnings.nextReleaseAt.toISOString().split('T')[0]
+                    : 'release'
+                }.`
+              : ''
+          }`,
+        },
         { status: 400 }
       );
     }
@@ -62,20 +77,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const payout = await prisma.$transaction(async (tx) => {
-      const created = await tx.payout.create({
-        data: {
-          sellerId: seller.id,
-          amount: requestedAmount,
-          status: 'PENDING',
-          bankDetails,
-        },
-      });
-      await tx.sellerProfile.update({
-        where: { id: seller.id },
-        data: { balance: { decrement: requestedAmount } },
-      });
-      return created;
+    // No need to decrement seller.balance — it's no longer the source of
+    // truth. Outstanding (PENDING/PROCESSING/PAID) payouts are subtracted
+    // from earnings on every read inside computeSellerEarnings.
+    const payout = await prisma.payout.create({
+      data: {
+        sellerId: seller.id,
+        amount: requestedAmount,
+        status: 'PENDING',
+        bankDetails,
+      },
     });
 
     return NextResponse.json({ success: true, payout }, { status: 201 });
@@ -114,8 +125,13 @@ export async function GET() {
       take: 50,
     });
 
+    const { computeSellerEarnings } = await import('@/lib/seller-earnings');
+    const earnings = await computeSellerEarnings(seller.id);
+
     return NextResponse.json({
-      balance: seller.balance,
+      balance: earnings.available,
+      heldBalance: earnings.held,
+      nextReleaseAt: earnings.nextReleaseAt ? earnings.nextReleaseAt.toISOString() : null,
       bankAccount: seller.bankAccount,
       payouts,
     });

@@ -42,6 +42,11 @@ interface DashboardStats {
   totalProducts: number;
   totalOrders: number;
   balance: number;
+  // Earnings from delivered orders that haven't cleared the 14-day escrow
+  // window yet — kept separate from `balance` so we never accidentally
+  // count held money as withdrawable.
+  heldBalance?: number;
+  nextReleaseAt?: string | null;
   revenue: number;
   dailyRevenue: number[];
   avgRating: number;
@@ -364,6 +369,8 @@ export default function SellerHub() {
     totalProducts: 0,
     totalOrders: 0,
     balance: 0,
+    heldBalance: 0,
+    nextReleaseAt: null,
     revenue: 0,
     dailyRevenue: [],
     avgRating: 0,
@@ -825,7 +832,11 @@ function OverviewTab({ stats, myOrders, myProducts, data }: OverviewTabProps) {
         <StatCard
           label="Available Balance"
           value={`${stats.balance.toLocaleString()} EGP`}
-          subText="Ready for withdrawal"
+          subText={
+            stats.heldBalance && stats.heldBalance > 0
+              ? `${stats.heldBalance.toLocaleString()} EGP in 14-day escrow`
+              : 'Ready for withdrawal'
+          }
           trend="neutral"
           icon={<Wallet className="text-orange-500" size={16} />}
         />
@@ -1665,7 +1676,11 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
 }
 
 function WalletTab({ data }: { data: DashboardData }) {
-  const [balance, setBalance] = useState(data?.currentSeller?.balance || 0);
+  // Don't seed balance from data?.currentSeller?.balance — that column is
+  // legacy/stale. Always fetch the computed value from the payouts API.
+  const [balance, setBalance] = useState(0);
+  const [heldBalance, setHeldBalance] = useState(0);
+  const [nextReleaseAt, setNextReleaseAt] = useState<string | null>(null);
   const [payouts, setPayouts] = useState<
     Array<{
       id: string;
@@ -1687,7 +1702,9 @@ function WalletTab({ data }: { data: DashboardData }) {
       const res = await fetch('/api/payouts/request');
       if (res.ok) {
         const d = await res.json();
-        setBalance(d.balance || 0);
+        setBalance(Number(d.balance) || 0);
+        setHeldBalance(Number(d.heldBalance) || 0);
+        setNextReleaseAt(d.nextReleaseAt || null);
         setPayouts(d.payouts || []);
         if (d.bankAccount) setBankAccount(d.bankAccount);
       }
@@ -1744,6 +1761,22 @@ function WalletTab({ data }: { data: DashboardData }) {
               <div className="text-4xl font-black text-emerald-600">
                 {balance.toLocaleString()} <span className="text-lg text-slate-400">EGP</span>
               </div>
+              {(heldBalance > 0 || isLoading) && (
+                <div className="mt-3 text-[12px] text-slate-500">
+                  <span className="font-semibold text-amber-600">
+                    {heldBalance.toLocaleString()} EGP
+                  </span>{' '}
+                  in escrow
+                  {nextReleaseAt && (
+                    <>
+                      {' · next release '}
+                      <span className="font-medium text-slate-700">
+                        {new Date(nextReleaseAt).toLocaleDateString()}
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
             <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
               <Wallet className="text-emerald-600" />
@@ -1807,8 +1840,9 @@ function WalletTab({ data }: { data: DashboardData }) {
           </div>
           <div className="text-xs text-slate-400 mt-1">Platform fee per order</div>
           <div className="mt-6 pt-6 border-t border-slate-50 text-[11px] text-slate-500 leading-relaxed">
-            Payouts are held in escrow for 7 days after delivery to allow for returns. After
-            clearance, funds are available for withdrawal.
+            Earnings from delivered orders are held in escrow for 14 days to allow for returns. Once
+            that window closes, your share moves into &quot;Available Balance&quot; and is ready to
+            withdraw.
           </div>
         </div>
       </div>

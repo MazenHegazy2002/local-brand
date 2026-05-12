@@ -190,10 +190,18 @@ export async function getDashboardStats() {
       // Shipping Speed (Mocked for now as we don't have shippedAt in Order easily without Shipment join)
       const shippingSpeed = 95;
 
+      // Earnings come from the dedicated computeSellerEarnings helper — the
+      // legacy seller.balance column is no longer trusted (it drifted as
+      // status flipped, admin overrides happened, and there was no escrow).
+      const { computeSellerEarnings } = await import('@/lib/seller-earnings');
+      const earnings = await computeSellerEarnings(seller.id);
+
       const stats = {
         totalProducts: seller.products.length,
         totalOrders: orders.length,
-        balance: seller.balance,
+        balance: earnings.available,
+        heldBalance: earnings.held,
+        nextReleaseAt: earnings.nextReleaseAt ? earnings.nextReleaseAt.toISOString() : null,
         revenue: orders.reduce((acc, o) => acc + o.totalAmount, 0),
         dailyRevenue,
         avgRating: reviewAgg._avg.rating ? Number(reviewAgg._avg.rating.toFixed(1)) : 0,
@@ -225,6 +233,18 @@ export async function getDashboardStats() {
           user: { select: { id: true, name: true, email: true, role: true, createdAt: true } },
         },
       });
+      // Recompute each seller's available balance on the fly so the admin
+      // sellers tab matches what the seller sees in their own hub. The old
+      // sellerProfile.balance column is no longer authoritative.
+      const { computeSellerEarnings } = await import('@/lib/seller-earnings');
+      const sellerEarnings = await Promise.all(
+        sellers.map(s => computeSellerEarnings(s.id).then(e => [s.id, e] as const))
+      );
+      const earningsById = new Map(sellerEarnings);
+      for (const s of sellers) {
+        const e = earningsById.get(s.id);
+        if (e) s.balance = e.available;
+      }
       const orders = await prisma.order.findMany({
         include: {
           items: {

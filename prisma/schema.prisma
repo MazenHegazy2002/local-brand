@@ -273,6 +273,11 @@ model Order {
   
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+  // Set when the order transitions to DELIVERED. Used to gate seller-earnings
+  // escrow: payouts are held for ESCROW_DAYS (14) after delivery so any
+  // returns/refunds don't leak through. Falls back to updatedAt when null
+  // for orders delivered before this field was added.
+  deliveredAt         DateTime?
 
   user                User?     @relation(fields: [userId], references: [id])
   coupon              Coupon?  @relation(fields: [couponId], references: [id])

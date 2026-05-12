@@ -13,7 +13,7 @@ const VALID_TRANSITIONS: Record<string, OrderStatus[]> = {
   [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED, OrderStatus.RETURNED],
   [OrderStatus.DELIVERED]: [OrderStatus.RETURNED],
   [OrderStatus.CANCELLED]: [],
-  [OrderStatus.RETURNED]: []
+  [OrderStatus.RETURNED]: [],
 };
 
 export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
@@ -36,7 +36,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
 
     // Fetch current order status
     const order = await prisma.order.findUnique({
-      where: { id: orderId }
+      where: { id: orderId },
     });
 
     if (!order) return NextResponse.json({ message: 'Order not found' }, { status: 404 });
@@ -44,48 +44,59 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     // Enforce State Machine Transitions
     const allowedNextStates = VALID_TRANSITIONS[order.status] || [];
     if (!allowedNextStates.includes(status)) {
-      return NextResponse.json({ message: `Invalid state transition from ${order.status} to ${status}` }, { status: 400 });
+      return NextResponse.json(
+        { message: `Invalid state transition from ${order.status} to ${status}` },
+        { status: 400 }
+      );
     }
 
     // Role-based constraints
     if (role === 'BUYER') {
       if (status !== OrderStatus.CANCELLED && status !== OrderStatus.RETURNED) {
-        return NextResponse.json({ message: 'Buyers can only CANCEL or RETURN orders' }, { status: 403 });
+        return NextResponse.json(
+          { message: 'Buyers can only CANCEL or RETURN orders' },
+          { status: 403 }
+        );
       }
       if (order.userId !== userId) {
         return NextResponse.json({ message: 'Unauthorized modification' }, { status: 403 });
       }
     }
 
-    // Commission Engine trigger on DELIVERED
+    // Build update payload. We stamp deliveredAt the first time an order
+    // transitions into DELIVERED so the seller-earnings escrow window has a
+    // reliable start time (instead of being fooled by later updatedAt
+    // bumps from edits/notes/etc.).
+    const data: { status: OrderStatus; deliveredAt?: Date } = { status };
     if (status === OrderStatus.DELIVERED && order.status !== OrderStatus.DELIVERED) {
-      const orderItems = await prisma.orderItem.findMany({
-        where: { orderId },
-        include: { variant: { include: { product: { include: { seller: true } } } } }
+      data.deliveredAt = new Date();
+
+      // Mirror DELIVERED onto each item so per-item earnings/escrow
+      // calculations agree with the order-level status. We only flip live
+      // items — anything already cancelled/returned stays as-is.
+      await prisma.orderItem.updateMany({
+        where: {
+          orderId,
+          status: { notIn: ['CANCELLED', 'RETURNED', 'REFUNDED', 'RETURN_REQUESTED'] },
+        },
+        data: { status: 'DELIVERED' },
       });
-      
-      // Calculate split per seller
-      for (const item of orderItems) {
-        const seller = item.variant.product.seller;
-        const totalValue = item.priceAtPurchase * item.quantity;
-        const platformCut = totalValue * seller.commissionRate;
-        const sellerPayout = totalValue - platformCut;
-        
-        await prisma.sellerProfile.update({
-          where: { id: seller.id },
-          data: { balance: { increment: sellerPayout } }
-        });
-      }
+      // NOTE: previously this incremented sellerProfile.balance per item.
+      // That column is now vestigial — earnings are always computed from
+      // the orders table via computeSellerEarnings, which gives us escrow,
+      // refund-aware reconciliation, and a single source of truth.
     }
 
     // Update order
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data: { status }
+      data,
     });
 
-    return NextResponse.json({ message: 'Order status updated', order: updatedOrder }, { status: 200 });
-
+    return NextResponse.json(
+      { message: 'Order status updated', order: updatedOrder },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Order Status Update Error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
