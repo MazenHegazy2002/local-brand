@@ -484,8 +484,8 @@ export default function AdminOS() {
            layout is intentionally compact so a typical 13"/14" laptop
            (~1280-1440px wide, 720-900px tall) shows full content without
            feeling cramped. */
-        .db{display:flex;min-height:100dvh;background:var(--color-background-secondary);font-family: 'Inter', sans-serif;}
-        .sidebar{width:180px;min-width:180px;background:#1a1a2e;padding:14px 0;display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;align-self:flex-start;max-height:100dvh;overflow-y:auto}
+        .db{display:flex;height:100dvh;overflow:hidden;background:var(--color-background-secondary);font-family: 'Inter', sans-serif;}
+        .sidebar{width:180px;min-width:180px;background:#1a1a2e;padding:14px 0;display:flex;flex-direction:column;flex-shrink:0;height:100%;overflow-y:auto}
         /* Laptops in the 1280-1440px range get a slightly tighter sidebar +
            main padding so the 4-column stats grid never wraps. */
         @media (min-width: 901px) and (max-width: 1440px){
@@ -496,11 +496,11 @@ export default function AdminOS() {
           .stat-val{font-size:18px !important}
         }
         @media (max-width: 900px){
-          .db{flex-direction:column}
-          .sidebar{width:100%;min-width:0;max-height:none;position:static;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px;overflow-x:auto;overflow-y:visible}
+          .db{flex-direction:column;height:auto;overflow:visible}
+          .sidebar{width:100%;min-width:0;height:auto;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px;overflow-x:auto;overflow-y:visible}
           .sidebar .nav-section{display:none}
           .sidebar .nav-item{padding:6px 10px !important;font-size:11px !important}
-          .main{padding:14px !important}
+          .main{height:auto;overflow-y:visible;padding:14px !important}
           .stats{grid-template-columns:repeat(2,1fr) !important}
         }
         .logo{padding:0 14px 18px;font-size:14px;font-weight:500;color:#fff}
@@ -510,7 +510,7 @@ export default function AdminOS() {
         .nav-item:hover{background:rgba(255,255,255,.05);color:#ccc}
         .nav-item.active{background:rgba(127,119,221,.15);color:#AFA9EC}
         .nav-icon{width:14px;height:14px;flex-shrink:0}
-        .main{flex:1;min-width:0;padding:16px 18px;background:var(--color-background-secondary);padding-bottom:60px}
+        .main{flex:1;min-width:0;padding:16px 18px;padding-bottom:60px;background:var(--color-background-secondary);height:100%;overflow-y:auto}
         .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
         .page-title{font-size:16px;font-weight:500;color:var(--color-text-primary)}
         .seed-btn { text-[10px]; text-white/40; hover:text-white; bg:white/5; py:1.5; rounded:4px; transition:all 0.2s; border:none; cursor:pointer; }
