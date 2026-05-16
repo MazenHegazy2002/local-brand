@@ -408,6 +408,43 @@ export default function SellerHub() {
   const myProducts = data?.myProducts || [];
   const myOrders = data?.myOrders || [];
 
+  // ── Pending approval gate ───────────────────────────────────────────────
+  if (data?.currentSeller?.status === 'PENDING_APPROVAL') {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
+          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-5">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="#d97706" strokeWidth="2" />
+              <path d="M12 6v6l4 2" stroke="#d97706" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-black text-gray-900 mb-2">Account under review</h1>
+          <p className="text-gray-500 text-sm leading-relaxed mb-5">
+            Your seller application for{' '}
+            <strong className="text-gray-800">{data.currentSeller.storeName}</strong> is being
+            reviewed by our team. You&apos;ll receive an email once it&apos;s approved — usually
+            within 1–2 business days.
+          </p>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left mb-6">
+            <p className="text-amber-800 text-xs font-semibold mb-1">While you wait:</p>
+            <ul className="text-amber-700 text-xs space-y-1 list-disc list-inside">
+              <li>Make sure you verified your email address</li>
+              <li>Prepare your product photos and descriptions</li>
+              <li>Check your inbox for updates from our team</li>
+            </ul>
+          </div>
+          <button
+            onClick={() => (window.location.href = '/api/auth/signout')}
+            className="text-sm text-red-400 hover:text-red-600 transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="db">
       {/* Sidebar */}
