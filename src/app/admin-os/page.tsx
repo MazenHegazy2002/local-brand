@@ -13,6 +13,16 @@ import {
   adminDeleteUser,
   adminUpdateUser,
 } from '../actions/seller';
+// New admin control-panel tabs — extracted into _components/ to keep the
+// main file from growing without bound. These tabs each fetch their own
+// data; they don't lean on the shared `data` state below.
+import NewSettingsTab from './_components/SettingsTab';
+import PluginsTab from './_components/PluginsTab';
+import PagesTab from './_components/PagesTab';
+import ReviewsTab from './_components/ReviewsTab';
+import MarketingTab from './_components/MarketingTab';
+import SupportTab from './_components/SupportTab';
+import MaintenanceTab from './_components/MaintenanceTab';
 import {
   SessionUser,
   SellerProfile,
@@ -336,6 +346,32 @@ export default function AdminOS() {
           icon={<AnalyticsIcon />}
         />
 
+        <div className="nav-section">Content</div>
+        <NavItem
+          active={activeTab === 'pages'}
+          onClick={() => setActiveTab('pages')}
+          label="Pages"
+          icon={<DocIcon />}
+        />
+        <NavItem
+          active={activeTab === 'reviews'}
+          onClick={() => setActiveTab('reviews')}
+          label="Reviews & Q&A"
+          icon={<ReviewIcon />}
+        />
+        <NavItem
+          active={activeTab === 'marketing'}
+          onClick={() => setActiveTab('marketing')}
+          label="Marketing"
+          icon={<MarketingIcon />}
+        />
+        <NavItem
+          active={activeTab === 'support'}
+          onClick={() => setActiveTab('support')}
+          label="Support"
+          icon={<SupportIcon />}
+        />
+
         <div className="nav-section">System</div>
         <NavItem
           active={activeTab === 'taxonomy'}
@@ -348,6 +384,18 @@ export default function AdminOS() {
           onClick={() => setActiveTab('affiliate')}
           label="Affiliate"
           icon={<AffiliateIcon />}
+        />
+        <NavItem
+          active={activeTab === 'plugins'}
+          onClick={() => setActiveTab('plugins')}
+          label="Plugins"
+          icon={<PluginIcon />}
+        />
+        <NavItem
+          active={activeTab === 'maintenance'}
+          onClick={() => setActiveTab('maintenance')}
+          label="Maintenance"
+          icon={<WrenchIcon />}
         />
         <NavItem
           active={activeTab === 'settings'}
@@ -441,7 +489,13 @@ export default function AdminOS() {
               onDelete={handleDeleteTaxonomy}
             />
           )}
-          {activeTab === 'settings' && data && <SettingsTab data={data} />}
+          {activeTab === 'settings' && <NewSettingsTab />}
+          {activeTab === 'plugins' && <PluginsTab />}
+          {activeTab === 'pages' && <PagesTab />}
+          {activeTab === 'reviews' && <ReviewsTab />}
+          {activeTab === 'marketing' && <MarketingTab />}
+          {activeTab === 'support' && <SupportTab />}
+          {activeTab === 'maintenance' && <MaintenanceTab />}
           {activeTab === 'affiliate' && <AffiliateTab />}
         </div>
       </div>
@@ -574,11 +628,18 @@ const TITLES: Record<string, string> = {
   overview: 'Platform overview',
   sellers: 'Seller management',
   users: 'User registry',
+  products: 'Product catalog',
   orders: 'Order oversight',
   payouts: 'Financial settlements',
   analytics: 'Revenue analytics',
+  pages: 'Pages CMS',
+  reviews: 'Reviews & Q&A moderation',
+  marketing: 'Marketing & campaigns',
+  support: 'Customer support inbox',
   taxonomy: 'Classification systems',
   affiliate: 'Affiliate program',
+  plugins: 'Plugins & integrations',
+  maintenance: 'Maintenance & system',
   settings: 'System configuration',
 };
 
@@ -2814,11 +2875,15 @@ function TaxonomyTab({
   );
 }
 
+// Legacy `SettingsTab` removed — its replacement lives in `_components/SettingsTab.tsx`
+// and renders the typed catalog from `lib/admin-settings-registry.ts`. Keeping
+// the prop interface around for now in case other tabs in this file still
+// reference `data.systemSettings`.
 interface SettingsTabProps {
   data: DashboardData;
 }
 
-function SettingsTab({ data }: SettingsTabProps) {
+function _LegacySettingsTab({ data }: SettingsTabProps) {
   return (
     <div className="card max-w-xl">
       <div className="card-title mb-6">Global Platform Settings</div>
@@ -3032,9 +3097,95 @@ function SettingsIcon() {
         d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3"
         stroke="currentColor"
         strokeWidth="1.2"
-        stroke-linecap="round"
+        strokeLinecap="round"
         fill="none"
         opacity=".5"
+      />
+    </svg>
+  );
+}
+
+// ─── New tab icons ──────────────────────────────────────────────────────────
+function DocIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M3 1h7l3 3v11H3V1z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".7"
+      />
+      <path d="M10 1v3h3" stroke="currentColor" strokeWidth="1.2" fill="none" opacity=".6" />
+      <path d="M5 7h6M5 9h6M5 11h4" stroke="currentColor" strokeWidth="1.2" opacity=".5" />
+    </svg>
+  );
+}
+function ReviewIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M8 2l1.5 4.5H14l-3.5 2.7L12 14l-4-3-4 3 1.5-4.8L2 6.5h4.5L8 2z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".7"
+      />
+    </svg>
+  );
+}
+function MarketingIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M3 6l9-4v12L3 10V6z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".7"
+      />
+      <path d="M3 6v4M5 10v3" stroke="currentColor" strokeWidth="1.2" opacity=".5" />
+    </svg>
+  );
+}
+function SupportIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M2 3h12v8H8l-3 3v-3H2V3z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".7"
+      />
+      <circle cx="5" cy="7" r="0.6" fill="currentColor" opacity=".6" />
+      <circle cx="8" cy="7" r="0.6" fill="currentColor" opacity=".6" />
+      <circle cx="11" cy="7" r="0.6" fill="currentColor" opacity=".6" />
+    </svg>
+  );
+}
+function PluginIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M5 1v3H3v3h2v3M11 1v3h2v3h-2v3M5 10c0 1.5 1 3 3 3s3-1.5 3-3"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".7"
+      />
+    </svg>
+  );
+}
+function WrenchIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M11 2a3 3 0 100 6 3 3 0 003-3l-2 2-2-1 1-2-1-1 1-1zM10 8L3 14l-1-1 6-7"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        fill="none"
+        opacity=".7"
       />
     </svg>
   );

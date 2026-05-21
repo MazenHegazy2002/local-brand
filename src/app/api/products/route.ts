@@ -21,7 +21,8 @@ export async function GET(req: Request) {
       const products = await prisma.product.findMany({
         where: { id: { in: ids }, published: true, deletedAt: null },
         include: {
-          images: { where: { isPrimary: true } },
+          images: true,
+          variants: true,
           seller: { select: { storeName: true } },
           category: { select: { name: true, slug: true } },
         },
@@ -62,7 +63,18 @@ export async function GET(req: Request) {
     }
 
     if (brand) {
-      where.seller = { storeName: brand };
+      const sellers = await prisma.sellerProfile.findMany({
+        where: { status: 'ACTIVE', deletedAt: null },
+        select: { id: true, storeName: true },
+      });
+      const matchedSeller = sellers.find(
+        s => s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-') === brand.toLowerCase()
+      );
+      if (matchedSeller) {
+        where.sellerId = matchedSeller.id;
+      } else {
+        where.seller = { storeName: brand };
+      }
     }
 
     if (condition) {
@@ -124,16 +136,13 @@ export async function GET(req: Request) {
         where,
         orderBy,
         include: {
-          images: { where: { isPrimary: true } },
+          images: true,
           seller: { select: { storeName: true } },
           category: { select: { name: true, slug: true } },
           tags: true,
           _count: { select: { reviews: true } },
           reviews: { select: { rating: true } },
-          variants: {
-            select: { id: true, stockCount: true, price: true },
-            orderBy: { stockCount: 'desc' },
-          },
+          variants: true,
         },
         take: 500,
       });
@@ -170,16 +179,13 @@ export async function GET(req: Request) {
         take: limit,
         orderBy,
         include: {
-          images: { where: { isPrimary: true } },
+          images: true,
           seller: { select: { storeName: true } },
           category: { select: { name: true, slug: true } },
           tags: true,
           _count: { select: { reviews: true } },
           reviews: { select: { rating: true } },
-          variants: {
-            select: { id: true, stockCount: true, price: true },
-            orderBy: { stockCount: 'desc' },
-          },
+          variants: true,
         },
       }),
       prisma.product.count({ where }),

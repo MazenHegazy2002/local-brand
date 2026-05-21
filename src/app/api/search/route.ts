@@ -10,7 +10,15 @@ export async function GET(req: Request) {
   const skip = (page - 1) * limit;
 
   if (!q || q.length < 2) {
-    return NextResponse.json({ products: [], categories: [], suggestions: [], total: 0, page, limit, totalPages: 0 });
+    return NextResponse.json({
+      products: [],
+      categories: [],
+      suggestions: [],
+      total: 0,
+      page,
+      limit,
+      totalPages: 0,
+    });
   }
 
   const searchTerm = q.toLowerCase().trim();
@@ -41,11 +49,7 @@ export async function GET(req: Request) {
 
     // Build suggestion phrases from product titles
     const suggestions = Array.from(
-      new Set(
-        products
-          .map((p) => p.title.split(/\s+/).slice(0, 3).join(' '))
-          .filter(Boolean)
-      )
+      new Set(products.map(p => p.title.split(/\s+/).slice(0, 3).join(' ')).filter(Boolean))
     ).slice(0, 5);
 
     return NextResponse.json({ products, categories, suggestions });
@@ -64,7 +68,8 @@ export async function GET(req: Request) {
         ],
       },
       include: {
-        images: { where: { isPrimary: true }, take: 1 },
+        images: true,
+        variants: true,
         seller: { select: { storeName: true, status: true } },
         reviews: { select: { rating: true } },
       },
@@ -84,11 +89,10 @@ export async function GET(req: Request) {
     }),
   ]);
 
-  const productsWithRating = products.map((p) => ({
+  const productsWithRating = products.map(p => ({
     ...p,
-    avgRating: p.reviews.length > 0
-      ? p.reviews.reduce((acc, r) => acc + r.rating, 0) / p.reviews.length
-      : 0,
+    avgRating:
+      p.reviews.length > 0 ? p.reviews.reduce((acc, r) => acc + r.rating, 0) / p.reviews.length : 0,
     reviewCount: p.reviews.length,
   }));
 

@@ -33,6 +33,29 @@ jest.mock('next-auth/react', () => ({
   signOut: jest.fn(),
 }));
 
+// Mock the Redis client globally so tests don't try to connect to a real
+// Redis server (which we don't run in CI). Each test that cares about
+// Redis behavior overrides this mock locally.
+jest.mock('@/lib/redis', () => ({
+  redis: {
+    get: jest.fn(async () => null),
+    set: jest.fn(async () => 'OK'),
+    del: jest.fn(async () => 0),
+    incr: jest.fn(async () => 1),
+    expire: jest.fn(async () => 1),
+    scan: jest.fn(async () => ['0', []]),
+    ping: jest.fn(async () => 'PONG'),
+    publish: jest.fn(async () => 0),
+    subscribe: jest.fn(),
+    on: jest.fn(),
+    quit: jest.fn(),
+    hset: jest.fn(),
+    hget: jest.fn(),
+    hgetall: jest.fn(async () => ({})),
+    hdel: jest.fn(),
+  },
+}));
+
 // Default Prisma client mock. Individual tests can call
 // `(prisma.<model>.<method> as jest.Mock).mockResolvedValue(...)` directly
 // to stub specific responses. Every model/method that any test in this

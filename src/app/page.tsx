@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { getHomepageData } from '@/app/actions/seller';
 import { en } from '@/lib/i18n/dicts';
 import { getDictionary } from '@/lib/i18n/server';
-import WishlistButton from '@/components/WishlistButton';
+import ProductCard from '@/components/ProductCard';
 import { Suspense } from 'react';
 import { Product, ProductImage } from '@/types';
 import PromoBanner from '@/components/PromoBanner';
@@ -14,111 +14,6 @@ interface HomePageData {
   categories: never[];
   featuredProducts: (Product & { images: ProductImage[] })[];
   recentProducts: (Product & { images: ProductImage[] })[];
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-
-function fakeDiscount() {
-  const pcts = [-96, -20, -38, -35, -17, -30, -28, -39, -21];
-  return pcts[Math.floor(Math.random() * pcts.length)];
-}
-
-function fakeSave(base: number, pct: number) {
-  return Math.round((base * Math.abs(pct)) / 100);
-}
-
-function fakeRating() {
-  return (4.4 + Math.random() * 0.5).toFixed(1);
-}
-
-function fakeReviews() {
-  return Math.floor(500 + Math.random() * 5000).toLocaleString();
-}
-
-function fakeIsNew() {
-  return Math.random() > 0.6;
-}
-
-function fakeOldPrice(base: number, pct: number) {
-  return Math.round(base / (1 + pct / 100));
-}
-
-// ── Product Card ───────────────────────────────────────────────────────────
-
-function ProductCard({
-  id,
-  title,
-  brand,
-  price,
-  img,
-  slug,
-}: {
-  id: string;
-  title: string;
-  brand: string;
-  price: number;
-  img: string;
-  slug?: string;
-}) {
-  const pct = fakeDiscount();
-  const oldPrice = fakeOldPrice(price, pct);
-  const save = fakeSave(oldPrice, Math.abs(pct));
-  const rating = fakeRating();
-  const reviews = fakeReviews();
-  const isNew = fakeIsNew();
-
-  return (
-    <div className="pc-card">
-      {/* Badges */}
-      <div className="pc-badges">
-        <span className="pc-badge-disc">{pct}%</span>
-        {isNew && <span className="pc-badge-new">NEW</span>}
-      </div>
-
-      {/* Wishlist */}
-      <div className="pc-wish">
-        <WishlistButton product={{ id, title, basePrice: price, images: [{ url: img }] } as any} />
-      </div>
-
-      {/* Image */}
-      <Link href={`/product/${id}`} className="pc-img-wrap">
-        <Image src={img} alt={title} fill sizes="200px" className="pc-img" />
-      </Link>
-
-      {/* Info */}
-      <div className="pc-info">
-        <p className="pc-brand">{brand}</p>
-        <Link href={`/product/${id}`}>
-          <h3 className="pc-title">{title}</h3>
-        </Link>
-        <div className="pc-prices">
-          <span className="pc-price">{price.toLocaleString()} EGP</span>
-          <span className="pc-old">{oldPrice.toLocaleString()} EGP</span>
-        </div>
-        <p className="pc-save">Save {save.toLocaleString()} EGP</p>
-        <div className="pc-rating">
-          <span className="pc-stars">★ {rating}</span>
-          <span className="pc-reviews">· {reviews} reviews</span>
-        </div>
-        <Link href={`/product/${id}`} className="pc-btn">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <rect x="3" y="4" width="18" height="18" rx="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-          Tomorrow
-        </Link>
-      </div>
-    </div>
-  );
 }
 
 // ── Section ────────────────────────────────────────────────────────────────
@@ -151,17 +46,21 @@ function ProductSection({
         </Link>
       </div>
       <div className="ps-grid">
-        {products.slice(0, 6).map(p => (
+        {products.slice(0, 6).map((p, idx) => (
           <ProductCard
             key={p.id}
-            id={p.id}
-            title={p.title}
-            brand={dict.Brandy}
-            price={p.basePrice}
-            img={
-              p.images[0]?.url ||
-              'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop'
+            product={
+              {
+                ...p,
+                name: p.title,
+                image: p.images[0]?.url,
+                brand: (p as any).seller?.storeName || dict.Brandy || 'Local Brand',
+                brandSlug: (p as any).seller?.storeName
+                  ? (p as any).seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                  : '',
+              } as any
             }
+            index={idx}
           />
         ))}
       </div>

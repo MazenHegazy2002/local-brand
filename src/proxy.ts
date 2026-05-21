@@ -2,6 +2,28 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { rateLimit } from '@/lib/rateLimit';
+import { redis } from '@/lib/redis';
+
+// ─── Maintenance-mode check ────────────────────────────────────────────────
+// We can't pull `prisma` into the edge bundle without breaking the Next
+// middleware runtime, so we read a cached Redis flag instead. The Settings
+// API writes this flag whenever the admin saves MAINTENANCE_MODE; the cache
+// has a 60s TTL, so even if a write fails to invalidate, the lag is small.
+async function isInMaintenance(isAdmin: boolean): Promise<boolean> {
+  // Admin override is the common case — short-circuit before hitting Redis.
+  try {
+    const cached = await redis.get('settings:maintenance');
+    if (cached === '1') {
+      const allowAdmin = (await redis.get('settings:maintenance:allowAdmin')) !== '0';
+      if (isAdmin && allowAdmin) return false;
+      return true;
+    }
+    return false;
+  } catch {
+    // Redis down? Fail open — better to serve traffic than block everyone.
+    return false;
+  }
+}
 
 // ─── Content Security Policy ────────────────────────────────────────────────
 // Built per-request so Next.js can attach the nonce to its streaming SSR
@@ -128,6 +150,22 @@ export async function proxy(req: NextRequest) {
 
   // Get session token
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+
+  // ── Maintenance mode gate ──────────────────────────────────────────────
+  // When MAINTENANCE_MODE is on, everyone except admins (and the admin-os
+  // surface itself) gets redirected to /maintenance. Admin login still
+  // works so the operator can flip the switch back off.
+  if (
+    !pathname.startsWith('/admin-os') &&
+    !pathname.startsWith('/api/admin') &&
+    !pathname.startsWith('/login') &&
+    !pathname.startsWith('/maintenance')
+  ) {
+    const role = (token?.role as string | undefined) ?? 'BUYER';
+    if (await isInMaintenance(role === 'ADMIN')) {
+      return NextResponse.redirect(new URL('/maintenance', req.url));
+    }
+  }
 
   // Define role-based route protection
   const adminRoutes = pathname.startsWith('/admin') || pathname.startsWith('/admin-os');

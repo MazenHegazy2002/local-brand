@@ -28,7 +28,7 @@ export default function CheckoutPage() {
   const { items, total, clearCart, removeItem, rewriteId } = useCartStore();
   const router = useRouter();
   const { data: session } = useSession();
-  const { lang } = useLanguage();
+  const { lang, isRTL, t } = useLanguage();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -216,17 +216,21 @@ export default function CheckoutPage() {
 
   if (items.length === 0 && !isLoading) {
     return (
-      <main className="min-h-screen bg-[#f9f8f6]">
+      <main className="min-h-screen bg-[#f9f8f6]" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
         <Navbar />
         <div className="container mx-auto px-4 py-32 text-center text-gray-500">
           <div className="text-6xl mb-4">🛒</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Checkout is empty</h1>
-          <p className="mb-6">You need to add products to your cart before proceeding.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('EmptyCart')}</h1>
+          <p className="mb-6">
+            {lang === 'ar'
+              ? 'يجب عليك إضافة منتجات إلى سلتك قبل المتابعة.'
+              : 'You need to add products to your cart before proceeding.'}
+          </p>
           <button
             onClick={() => router.push('/shop')}
             className="bg-[#1e3b8a] text-white font-bold py-3 px-8 rounded-lg"
           >
-            Return to Shop
+            {lang === 'ar' ? 'العودة للمتجر' : 'Return to Shop'}
           </button>
         </div>
       </main>
@@ -245,7 +249,11 @@ export default function CheckoutPage() {
       !address.city.trim() ||
       !address.governorate
     ) {
-      setError('Please fill in all shipping address fields.');
+      setError(
+        lang === 'ar'
+          ? 'يرجى ملء جميع حقول عنوان الشحن.'
+          : 'Please fill in all shipping address fields.'
+      );
       return;
     }
 
@@ -253,16 +261,24 @@ export default function CheckoutPage() {
     const trimmedGuestEmail = guestEmail.trim();
     if (!session?.user) {
       if (!trimmedGuestEmail) {
-        setError('Please enter your email address so we can send your order confirmation.');
+        setError(
+          lang === 'ar'
+            ? 'يرجى إدخال عنوان بريدك الإلكتروني حتى نتمكن من إرسال تأكيد طلبك.'
+            : 'Please enter your email address so we can send your order confirmation.'
+        );
         return;
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedGuestEmail)) {
-        setError('Please enter a valid email address.');
+        setError(
+          lang === 'ar' ? 'يرجى إدخال بريد إلكتروني صالح.' : 'Please enter a valid email address.'
+        );
         return;
       }
       if (paymentMethod === 'PAYSKY') {
         setError(
-          'PaySky checkout requires a Brandy account. Please sign in or choose Cash on Delivery / Mobile Wallet.'
+          lang === 'ar'
+            ? 'يتطلب الدفع عبر PaySky حساباً على براندي. يرجى تسجيل الدخول أو اختيار الدفع عند الاستلام / المحفظة الإلكترونية.'
+            : 'PaySky checkout requires a Brandy account. Please sign in or choose Cash on Delivery / Mobile Wallet.'
         );
         return;
       }
@@ -342,7 +358,9 @@ export default function CheckoutPage() {
           await redeemLoyaltyPoints(userId, pointsToUse);
         } catch (err: unknown) {
           const error = err as Error;
-          setError(error.message || 'Failed to redeem points');
+          setError(
+            error.message || (lang === 'ar' ? 'فشل استبدال النقاط' : 'Failed to redeem points')
+          );
           setIsLoading(false);
           return;
         }
@@ -383,7 +401,7 @@ export default function CheckoutPage() {
       }
 
       // ── 4. Order action returned a structured error — surface it & stop ──────
-      const message = res.error || 'Failed to place order';
+      const message = res.error || (lang === 'ar' ? 'فشل تقديم الطلب' : 'Failed to place order');
       // Refund any redeemed points so the user isn't charged for a failed order.
       if (pointsToUse > 0 && session?.user) {
         try {
@@ -398,7 +416,7 @@ export default function CheckoutPage() {
       setIsLoading(false);
     } catch (err: unknown) {
       const error = err as Error;
-      setError(error.message || 'Failed to place order');
+      setError(error.message || (lang === 'ar' ? 'فشل تقديم الطلب' : 'Failed to place order'));
       setIsLoading(false);
     }
   };
@@ -423,17 +441,25 @@ export default function CheckoutPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f9f8f6]">
+    <main className="min-h-screen bg-[#f9f8f6]" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-black text-gray-900 mb-8">Checkout</h1>
+        <h1
+          className="text-3xl font-black text-gray-900 mb-8"
+          style={{ textAlign: isRTL ? 'right' : 'left' }}
+        >
+          {t('Checkout')}
+        </h1>
 
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Left Column - Forms */}
           <div className="w-full lg:w-2/3 space-y-6">
             {cartNotice && (
-              <div className="bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-200 font-medium flex items-start justify-between gap-3">
+              <div
+                className="bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-200 font-medium flex items-start justify-between gap-3"
+                style={{ textAlign: isRTL ? 'right' : 'left' }}
+              >
                 <span>{cartNotice}</span>
                 <button
                   type="button"
@@ -446,7 +472,10 @@ export default function CheckoutPage() {
               </div>
             )}
             {error && (
-              <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 font-medium flex items-start justify-between gap-3">
+              <div
+                className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 font-medium flex items-start justify-between gap-3"
+                style={{ textAlign: isRTL ? 'right' : 'left' }}
+              >
                 <span>{error}</span>
                 {(/^Product variant .* not found/i.test(error) ||
                   /no longer available/i.test(error)) && (
@@ -459,7 +488,7 @@ export default function CheckoutPage() {
                     }}
                     className="shrink-0 px-3 py-1 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700"
                   >
-                    Clear cart
+                    {lang === 'ar' ? 'مسح السلة' : 'Clear cart'}
                   </button>
                 )}
               </div>
@@ -468,18 +497,21 @@ export default function CheckoutPage() {
             <form id="checkout-form" onSubmit={handleCheckout} className="space-y-6">
               {/* Shipping Address */}
               <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <h2
+                  className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2"
+                  style={{ textAlign: isRTL ? 'right' : 'left' }}
+                >
                   <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">
                     1
                   </span>
-                  Shipping Address
+                  {t('CheckoutShippingAddress')}
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {!session?.user && (
-                    <div className="md:col-span-2">
+                    <div className="md:col-span-2" style={{ textAlign: isRTL ? 'right' : 'left' }}>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">
-                        Email Address <span className="text-red-500">*</span>
+                        {t('CheckoutEmailGuest')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         required
@@ -489,21 +521,24 @@ export default function CheckoutPage() {
                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
                         placeholder="you@example.com"
                         autoComplete="email"
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        We&apos;ll send your order confirmation and tracking updates here.{' '}
+                        {lang === 'ar'
+                          ? 'سنرسل تأكيد طلبك وتحديثات التتبع هنا.'
+                          : "We'll send your order confirmation and tracking updates here."}{' '}
                         <a
                           href="/login?callbackUrl=/checkout"
                           className="text-[#1e3b8a] font-medium hover:underline"
                         >
-                          Have an account? Sign in
+                          {t('CheckoutAlreadyAccount')} {t('SignIn')}
                         </a>
                       </p>
                     </div>
                   )}
-                  <div>
+                  <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      Full Name
+                      {t('CheckoutFullName')}
                     </label>
                     <input
                       required
@@ -511,12 +546,13 @@ export default function CheckoutPage() {
                       value={address.fullName}
                       onChange={e => setAddress({ ...address, fullName: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
-                      placeholder="e.g. Ahmed Mohamed"
+                      placeholder={lang === 'ar' ? 'مثال: أحمد محمد' : 'e.g. Ahmed Mohamed'}
+                      style={{ textAlign: isRTL ? 'right' : 'left' }}
                     />
                   </div>
-                  <div>
+                  <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      Phone Number
+                      {t('CheckoutPhone')}
                     </label>
                     <input
                       required
@@ -524,12 +560,13 @@ export default function CheckoutPage() {
                       value={address.phone}
                       onChange={e => setAddress({ ...address, phone: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
-                      placeholder="e.g. 01234567890"
+                      placeholder={lang === 'ar' ? 'مثال: 01234567890' : 'e.g. 01234567890'}
+                      style={{ textAlign: isRTL ? 'right' : 'left' }}
                     />
                   </div>
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-2" style={{ textAlign: isRTL ? 'right' : 'left' }}>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      Street Address
+                      {t('CheckoutStreetAddress')}
                     </label>
                     <input
                       required
@@ -537,12 +574,17 @@ export default function CheckoutPage() {
                       value={address.address}
                       onChange={e => setAddress({ ...address, address: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
-                      placeholder="e.g. 12 El Nasr St, Building 4"
+                      placeholder={
+                        lang === 'ar'
+                          ? 'مثال: ١٢ شارع النصر، عمارة ٤'
+                          : 'e.g. 12 El Nasr St, Building 4'
+                      }
+                      style={{ textAlign: isRTL ? 'right' : 'left' }}
                     />
                   </div>
-                  <div>
+                  <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      City / District
+                      {t('CheckoutCity')}
                     </label>
                     <input
                       required
@@ -550,20 +592,27 @@ export default function CheckoutPage() {
                       value={address.city}
                       onChange={e => setAddress({ ...address, city: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
-                      placeholder="e.g. Maadi, New Cairo"
+                      placeholder={
+                        lang === 'ar' ? 'مثال: المعادي، القاهرة الجديدة' : 'e.g. Maadi, New Cairo'
+                      }
+                      style={{ textAlign: isRTL ? 'right' : 'left' }}
                     />
                   </div>
-                  <div>
+                  <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      Governorate
+                      {t('CheckoutGovernorate')}
                     </label>
                     <select
                       required
                       value={address.governorate}
                       onChange={e => setAddress({ ...address, governorate: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#1e3b8a] outline-none bg-white"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#1e3b8a] outline-none bg-white font-sans"
+                      style={{
+                        textAlign: isRTL ? 'right' : 'left',
+                        direction: isRTL ? 'rtl' : 'ltr',
+                      }}
                     >
-                      <option value="">Select Governorate</option>
+                      <option value="">{t('CheckoutSelectGovernorate')}</option>
                       {GOVERNORATES.map(g => (
                         <option key={g.value} value={g.value}>
                           {lang === 'ar' ? g.ar : g.en}
@@ -577,19 +626,28 @@ export default function CheckoutPage() {
               {/* Loyalty Points */}
               {session && loyaltyPoints > 0 && (
                 <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
-                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                  <h2
+                    className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2"
+                    style={{ textAlign: isRTL ? 'right' : 'left' }}
+                  >
                     <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">
                       2
                     </span>
-                    Loyalty Points
+                    {t('CheckoutLoyaltyPoints')}
                   </h2>
 
-                  <div className="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-purple-50 border border-purple-200 rounded-lg p-4 gap-4"
+                    style={{ textAlign: isRTL ? 'right' : 'left' }}
+                  >
                     <div>
                       <div className="font-bold text-purple-800">
-                        Available: {loyaltyPoints} points
+                        {t('CheckoutPointsAvailable').replace(
+                          '{points}',
+                          loyaltyPoints.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')
+                        )}
                       </div>
-                      <div className="text-sm text-purple-600">1 point = 1 EGP discount</div>
+                      <div className="text-sm text-purple-600">{t('CheckoutPointsRate')}</div>
                     </div>
                     <div className="flex items-center gap-2">
                       <input
@@ -598,10 +656,13 @@ export default function CheckoutPage() {
                         max={Math.min(loyaltyPoints, subtotal - couponDiscount)}
                         value={pointsToUse || ''}
                         onChange={e => handlePointsChange(parseInt(e.target.value) || 0)}
-                        placeholder="Use points"
-                        className="w-24 border border-purple-300 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-purple-500 outline-none"
+                        placeholder={t('CheckoutUsePoints')}
+                        className="w-28 border border-purple-300 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-purple-500 outline-none"
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
                       />
-                      <span className="text-sm text-purple-600">= {pointsToUse} EGP</span>
+                      <span className="text-sm text-purple-600 font-bold">
+                        = {pointsToUse.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} {t('EGP')}
+                      </span>
                     </div>
                   </div>
                   {pointsError && <p className="text-red-500 text-sm mt-2">{pointsError}</p>}
@@ -610,32 +671,41 @@ export default function CheckoutPage() {
 
               {/* Promo Code */}
               <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <h2
+                  className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2"
+                  style={{ textAlign: isRTL ? 'right' : 'left' }}
+                >
                   <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">
                     3
                   </span>
-                  Promo Code
+                  {t('CheckoutPromoCode')}
                 </h2>
 
                 {couponApplied ? (
-                  <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div
+                    className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4 animate-fade-in"
+                    style={{ textAlign: isRTL ? 'right' : 'left' }}
+                  >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">
+                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white shrink-0 font-bold">
                         ✓
                       </div>
                       <div>
-                        <div className="font-bold text-green-800">Coupon Applied</div>
-                        <div className="text-sm text-green-600">
-                          You saved {couponDiscount.toLocaleString()} EGP
+                        <div className="font-bold text-green-800">{t('CheckoutCouponApplied')}</div>
+                        <div className="text-sm text-green-600 font-semibold">
+                          {t('CheckoutYouSaved').replace(
+                            '{amount}',
+                            couponDiscount.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')
+                          )}
                         </div>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={removeCoupon}
-                      className="text-green-700 hover:text-green-900 text-sm font-medium"
+                      className="text-green-700 hover:text-green-900 text-sm font-semibold transition-colors"
                     >
-                      Remove
+                      {t('CheckoutRemove')}
                     </button>
                   </div>
                 ) : (
@@ -644,16 +714,17 @@ export default function CheckoutPage() {
                       type="text"
                       value={couponCode}
                       onChange={e => setCouponCode(e.target.value.toUpperCase())}
-                      placeholder="Enter promo code"
+                      placeholder={t('CheckoutEnterPromoCode')}
                       className="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
+                      style={{ textAlign: isRTL ? 'right' : 'left' }}
                     />
                     <button
                       type="button"
                       onClick={applyCoupon}
                       disabled={applyingCoupon || !couponCode.trim()}
-                      className="bg-[#1e3b8a] text-white font-bold px-6 py-2.5 rounded-lg hover:bg-[#152c6e] disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-[#1e3b8a] text-white font-bold px-6 py-2.5 rounded-lg hover:bg-[#152c6e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
                     >
-                      {applyingCoupon ? 'Applying...' : 'Apply'}
+                      {applyingCoupon ? t('CheckoutApplying') : t('CheckoutApply')}
                     </button>
                   </div>
                 )}
@@ -662,16 +733,20 @@ export default function CheckoutPage() {
 
               {/* Payment Method */}
               <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <h2
+                  className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2"
+                  style={{ textAlign: isRTL ? 'right' : 'left' }}
+                >
                   <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">
                     4
                   </span>
-                  Payment Method
+                  {t('CheckoutPaymentMethod')}
                 </h2>
 
                 <div className="space-y-4">
                   <label
-                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${paymentMethod === 'CASH_ON_DELIVERY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'CASH_ON_DELIVERY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                    style={{ textAlign: isRTL ? 'right' : 'left' }}
                   >
                     <input
                       type="radio"
@@ -685,14 +760,15 @@ export default function CheckoutPage() {
                       className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
                     />
                     <div className="flex-1">
-                      <div className="font-bold text-gray-900">Cash on Delivery</div>
-                      <div className="text-sm text-gray-500">Pay when your order arrives</div>
+                      <div className="font-bold text-gray-900">{t('CheckoutCashOnDelivery')}</div>
+                      <div className="text-sm text-gray-500">{t('CheckoutCodDesc')}</div>
                     </div>
-                    <div className="text-3xl">💵</div>
+                    <div className="text-3xl shrink-0">💵</div>
                   </label>
 
                   <label
-                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${paymentMethod === 'CREDIT_CARD' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'CREDIT_CARD' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                    style={{ textAlign: isRTL ? 'right' : 'left' }}
                   >
                     <input
                       type="radio"
@@ -706,14 +782,15 @@ export default function CheckoutPage() {
                       className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
                     />
                     <div className="flex-1">
-                      <div className="font-bold text-gray-900">Credit / Debit Card</div>
-                      <div className="text-sm text-gray-500">Secure payment via Stripe</div>
+                      <div className="font-bold text-gray-900">{t('CheckoutCreditCard')}</div>
+                      <div className="text-sm text-gray-500">{t('CheckoutStripeDesc')}</div>
                     </div>
-                    <div className="text-3xl">💳</div>
+                    <div className="text-3xl shrink-0">💳</div>
                   </label>
 
                   <label
-                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${paymentMethod === 'MOBILE_WALLET' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'MOBILE_WALLET' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                    style={{ textAlign: isRTL ? 'right' : 'left' }}
                   >
                     <input
                       type="radio"
@@ -727,16 +804,15 @@ export default function CheckoutPage() {
                       className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
                     />
                     <div className="flex-1">
-                      <div className="font-bold text-gray-900">Mobile Wallet</div>
-                      <div className="text-sm text-gray-500">
-                        Pay via Vodafone Cash, Orange Money, Etisalat Cash
-                      </div>
+                      <div className="font-bold text-gray-900">{t('CheckoutMobileWallet')}</div>
+                      <div className="text-sm text-gray-500">{t('CheckoutWalletDesc')}</div>
                     </div>
-                    <div className="text-3xl">📱</div>
+                    <div className="text-3xl shrink-0">📱</div>
                   </label>
 
                   <label
-                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${paymentMethod === 'PAYSKY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'PAYSKY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                    style={{ textAlign: isRTL ? 'right' : 'left' }}
                   >
                     <input
                       type="radio"
@@ -750,12 +826,10 @@ export default function CheckoutPage() {
                       className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
                     />
                     <div className="flex-1">
-                      <div className="font-bold text-gray-900">PaySky PayForm</div>
-                      <div className="text-sm text-gray-500">
-                        Visa / Mastercard / Meeza / Tahweel / mVISA — secure Egyptian gateway
-                      </div>
+                      <div className="font-bold text-gray-900">{t('CheckoutPaySky')}</div>
+                      <div className="text-sm text-gray-500">{t('CheckoutPaySkyDesc')}</div>
                     </div>
-                    <div className="text-3xl">🇪🇬</div>
+                    <div className="text-3xl shrink-0">🇪🇬</div>
                   </label>
 
                   {/* PaySky Lightbox renders here when active */}
@@ -771,54 +845,61 @@ export default function CheckoutPage() {
                   )}
 
                   {paySkyMockMessage && (
-                    <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-xs">
-                      <strong className="font-bold">PaySky in mock mode:</strong>{' '}
+                    <div
+                      className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-xs"
+                      style={{ textAlign: isRTL ? 'right' : 'left' }}
+                    >
+                      <strong className="font-bold">{t('CheckoutPaySkyMock')}:</strong>{' '}
                       {paySkyMockMessage}
                     </div>
                   )}
 
                   {/* Express Payment Buttons */}
                   {paymentMethod === 'CREDIT_CARD' && (
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                      <p className="text-xs text-gray-500 mb-3">Or express checkout with</p>
+                    <div
+                      className="mt-4 pt-4 border-t border-gray-100"
+                      style={{ textAlign: isRTL ? 'right' : 'left' }}
+                    >
+                      <p className="text-xs text-gray-500 mb-3">{t('CheckoutOrExpress')}</p>
                       <div className="flex gap-3">
                         <button
                           type="button"
                           disabled
                           className="flex-1 py-2.5 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                          <span>🍎</span> Apple Pay
+                          <span>🍎</span> {t('CheckoutApplePay')}
                         </button>
                         <button
                           type="button"
                           disabled
                           className="flex-1 py-2.5 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                          <span>🔷</span> Google Pay
+                          <span>🔷</span> {t('CheckoutGooglePay')}
                         </button>
                       </div>
-                      <p className="text-xs text-gray-400 mt-2">
-                        Express payment requires Stripe setup
-                      </p>
+                      <p className="text-xs text-gray-400 mt-2">{t('CheckoutExpressRequired')}</p>
                     </div>
                   )}
                 </div>
 
                 {/* Installment Option */}
                 {paymentMethod === 'CREDIT_CARD' && grandTotal >= 1000 && (
-                  <div className="mt-4">
+                  <div className="mt-4" style={{ textAlign: isRTL ? 'right' : 'left' }}>
                     <button
                       type="button"
                       onClick={() => setShowInstallments(!showInstallments)}
-                      className="text-sm text-[#1e3b8a] font-medium flex items-center gap-2"
+                      className="text-sm text-[#1e3b8a] font-medium flex items-center gap-2 hover:underline transition-all"
                     >
                       <span>📊</span>
-                      {showInstallments ? 'Hide' : 'Show'} installment options (valU / Tabby)
+                      {showInstallments
+                        ? t('CheckoutHideInstallments')
+                        : t('CheckoutShowInstallments')}{' '}
+                      {t('CheckoutInstallmentOptions')}
                     </button>
                     {showInstallments && (
-                      <div className="mt-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="mt-3 p-4 bg-amber-50/50 border border-amber-200 rounded-lg animate-fade-in">
                         <p className="text-sm text-amber-800 mb-3">
-                          Available for orders over 1,000 EGP. Pay in 3-6 easy installments.
+                          {t('CheckoutInstallmentLimit')}
                         </p>
                         <div className="flex gap-2">
                           <button
@@ -826,18 +907,18 @@ export default function CheckoutPage() {
                             disabled
                             className="flex-1 py-2 bg-white border border-amber-300 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed"
                           >
-                            valU (3-6 months)
+                            {t('CheckoutValuInstallment')}
                           </button>
                           <button
                             type="button"
                             disabled
                             className="flex-1 py-2 bg-white border border-amber-300 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed"
                           >
-                            Tabby (4 payments)
+                            {t('CheckoutTabbyInstallment')}
                           </button>
                         </div>
                         <p className="text-xs text-amber-600 mt-2">
-                          Installment payment integration coming soon
+                          {t('CheckoutInstallmentsSoon')}
                         </p>
                       </div>
                     )}
@@ -847,17 +928,21 @@ export default function CheckoutPage() {
 
               {/* Order Notes & Gift Wrapping */}
               <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <h2
+                  className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2"
+                  style={{ textAlign: isRTL ? 'right' : 'left' }}
+                >
                   <span className="w-8 h-8 rounded-full bg-[#1e3b8a]/10 text-[#1e3b8a] flex items-center justify-center text-sm">
                     5
                   </span>
-                  Additional Options
+                  {t('CheckoutAdditionalOptions')}
                 </h2>
 
                 <div className="space-y-4">
                   {/* Gift Wrapping */}
                   <label
-                    className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-colors ${giftWrapping ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                    className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${giftWrapping ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                    style={{ textAlign: isRTL ? 'right' : 'left' }}
                   >
                     <div className="flex items-center gap-3">
                       <input
@@ -867,27 +952,34 @@ export default function CheckoutPage() {
                         className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a] rounded"
                       />
                       <div>
-                        <div className="font-bold text-gray-900">🎁 Gift Wrapping</div>
-                        <div className="text-sm text-gray-500">Add premium gift packaging</div>
+                        <div className="font-bold text-gray-900">{t('CheckoutGiftWrapping')}</div>
+                        <div className="text-sm text-gray-500">{t('CheckoutGiftWrappingDesc')}</div>
                       </div>
                     </div>
-                    <div className="font-bold text-[#1e3b8a]">+25 EGP</div>
+                    <div className="font-bold text-[#1e3b8a]">
+                      +{giftWrapFee.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} {t('EGP')}
+                    </div>
                   </label>
 
                   {/* Order Notes */}
-                  <div>
+                  <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Order Notes (Optional)
+                      {t('CheckoutOrderNotes')}
                     </label>
                     <textarea
                       value={orderNotes}
                       onChange={e => setOrderNotes(e.target.value)}
-                      placeholder="Special instructions for your order..."
+                      placeholder={t('CheckoutOrderNotesPlaceholder')}
                       rows={3}
                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none resize-none"
                       maxLength={500}
+                      style={{ textAlign: isRTL ? 'right' : 'left' }}
                     />
-                    <p className="text-xs text-gray-400 mt-1">{orderNotes.length}/500 characters</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {orderNotes.length.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')}/
+                      {(500).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')}{' '}
+                      {t('CheckoutCharacters')}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -896,12 +988,19 @@ export default function CheckoutPage() {
 
           {/* Right Column - Order Summary */}
           <div className="w-full lg:w-1/3">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h2>
+            <div
+              className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-24"
+              style={{ textAlign: isRTL ? 'right' : 'left' }}
+            >
+              <h2 className="text-lg font-bold text-gray-900 mb-4">{t('CheckoutSummary')}</h2>
 
               <div className="divide-y divide-gray-100 mb-6">
                 {items.map(item => (
-                  <div key={item.id} className="flex gap-4 py-3">
+                  <div
+                    key={item.id}
+                    className="flex gap-4 py-3"
+                    style={{ direction: isRTL ? 'rtl' : 'ltr' }}
+                  >
                     <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden shrink-0">
                       {item.image && item.image.startsWith('http') ? (
                         <img
@@ -917,9 +1016,13 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-semibold text-gray-900 truncate">{item.name}</h4>
-                      <div className="text-xs text-gray-500 mt-1">Qty: {item.qty}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {t('CheckoutQty')}:{' '}
+                        {item.qty.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')}
+                      </div>
                       <div className="text-sm font-bold text-[#1e3b8a] mt-1">
-                        {(item.price * item.qty).toLocaleString()} EGP
+                        {(item.price * item.qty).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')}{' '}
+                        {t('EGP')}
                       </div>
                     </div>
                   </div>
@@ -928,45 +1031,65 @@ export default function CheckoutPage() {
 
               <div className="space-y-3 mb-6 text-sm">
                 <div className="flex justify-between text-gray-600">
-                  <span>Subtotal ({items.length} items)</span>
-                  <span className="font-medium text-gray-900">{subtotal.toLocaleString()} EGP</span>
+                  <span>
+                    {t('Subtotal')} (
+                    {items.length.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')}{' '}
+                    {t('CheckoutItemsCount')})
+                  </span>
+                  <span className="font-medium text-gray-900">
+                    {subtotal.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} {t('EGP')}
+                  </span>
                 </div>
                 {pointsToUse > 0 && (
                   <div className="flex justify-between text-purple-600">
-                    <span>Loyalty Points</span>
-                    <span className="font-medium">-{pointsToUse} EGP</span>
+                    <span>{t('CheckoutLoyaltyPoints')}</span>
+                    <span className="font-medium">
+                      -{pointsToUse.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} {t('EGP')}
+                    </span>
                   </div>
                 )}
                 {couponApplied && (
                   <div className="flex justify-between text-green-600">
-                    <span>Coupon Discount</span>
-                    <span className="font-medium">-{couponDiscount.toLocaleString()} EGP</span>
+                    <span>{t('CheckoutCouponApplied')}</span>
+                    <span className="font-medium">
+                      -{couponDiscount.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} {t('EGP')}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between text-gray-600">
-                  <span>Shipping Fee</span>
-                  <span className="font-medium text-gray-900">{shipping.toLocaleString()} EGP</span>
+                  <span>{t('Shipping')}</span>
+                  <span className="font-medium text-gray-900">
+                    {shipping.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} {t('EGP')}
+                  </span>
                 </div>
                 {giftWrapping && (
                   <div className="flex justify-between text-pink-600">
-                    <span>Gift Wrapping</span>
-                    <span className="font-medium">+{giftWrapFee} EGP</span>
+                    <span>{t('CheckoutGiftWrapping')}</span>
+                    <span className="font-medium">
+                      +{giftWrapFee.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} {t('EGP')}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between text-gray-600">
-                  <span>Estimated VAT ({(vatRate * 100).toFixed(0)}%)</span>
+                  <span>
+                    {t('CheckoutVat')} (
+                    {(vatRate * 100).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', {
+                      maximumFractionDigits: 0,
+                    })}
+                    %)
+                  </span>
                   <span className="font-medium text-gray-900">
-                    {vatAmount.toLocaleString(undefined, {
+                    {vatAmount.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}{' '}
-                    EGP
+                    {t('EGP')}
                   </span>
                 </div>
                 <div className="flex justify-between text-gray-900 border-t border-gray-100 pt-3">
-                  <span className="font-bold text-base">Total</span>
+                  <span className="font-bold text-base">{t('Total')}</span>
                   <span className="font-black text-xl text-[#1e3b8a]">
-                    {grandTotal.toLocaleString()} EGP
+                    {grandTotal.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} {t('EGP')}
                   </span>
                 </div>
               </div>
@@ -977,7 +1100,9 @@ export default function CheckoutPage() {
                 disabled={isLoading}
                 className="w-full bg-[#1e3b8a] hover:bg-[#152c6e] text-white font-bold py-4 rounded-xl shadow-lg transition-colors disabled:opacity-50"
               >
-                {isLoading ? 'Processing...' : `Place Order — ${grandTotal.toLocaleString()} EGP`}
+                {isLoading
+                  ? t('Processing')
+                  : `${t('PlaceOrder')} — ${grandTotal.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} ${t('EGP')}`}
               </button>
 
               <div className="mt-4 text-xs text-center text-gray-500 flex items-center justify-center gap-2">
@@ -994,7 +1119,7 @@ export default function CheckoutPage() {
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
-                Secure 256-bit SSL encrypted payment
+                {t('CheckoutSecureSSL')}
               </div>
             </div>
           </div>

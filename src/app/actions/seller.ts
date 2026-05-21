@@ -343,13 +343,21 @@ export async function getHomepageData() {
 
     const featuredProducts = await prisma.product.findMany({
       where: { isFeatured: true, published: true },
-      include: { images: { where: { isPrimary: true } } },
+      include: {
+        images: true,
+        variants: true,
+        seller: { select: { storeName: true } },
+      },
       take: 4,
     });
 
     const recentProducts = await prisma.product.findMany({
       where: { published: true },
-      include: { images: { where: { isPrimary: true } } },
+      include: {
+        images: true,
+        variants: true,
+        seller: { select: { storeName: true } },
+      },
       orderBy: { createdAt: 'desc' },
       take: 8,
     });

@@ -26,15 +26,23 @@ export async function GET() {
       _max: { basePrice: true },
     });
 
-    return NextResponse.json({
-      brands,
-      tags,
-      categories,
-      priceRange: {
-        min: priceRange._min.basePrice || 0,
-        max: priceRange._max.basePrice || 10000,
+    const formattedBrands = brands.map(b => ({
+      storeName: b.storeName,
+      storeSlug: b.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    }));
+
+    return NextResponse.json(
+      {
+        brands: formattedBrands,
+        tags,
+        categories,
+        priceRange: {
+          min: priceRange._min.basePrice || 0,
+          max: priceRange._max.basePrice || 10000,
+        },
       },
-    }, { status: 200 });
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Filters API Error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });

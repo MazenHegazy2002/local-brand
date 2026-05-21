@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useLanguage } from '@/providers/LanguageContext';
 
 const PLATFORMS = [
   'Instagram',
@@ -37,6 +38,7 @@ const PAYOUT_METHODS = [
 
 export default function SellPage() {
   const { data: session } = useSession();
+  const { t, lang, isRTL } = useLanguage();
   const [step, setStep] = useState<'landing' | 'form' | 'success'>('landing');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -57,6 +59,49 @@ export default function SellPage() {
   const [result, setResult] = useState<{ promoCode: string } | null>(null);
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const translatePlatform = (p: string) => {
+    if (lang !== 'ar') return p;
+    const arPlatforms: Record<string, string> = {
+      Instagram: 'إنستغرام',
+      TikTok: 'تيك توك',
+      YouTube: 'يوتيوب',
+      Facebook: 'فيسبوك',
+      'Twitter/X': 'تويتر/إكس',
+      'Blog/Website': 'مدونة/موقع إلكتروني',
+      Other: 'أخرى',
+    };
+    return arPlatforms[p] || p;
+  };
+
+  const translateCategory = (c: string) => {
+    if (lang !== 'ar') return c;
+    const arCategories: Record<string, string> = {
+      'Fashion & Clothing': 'الأزياء والملابس',
+      Electronics: 'الإلكترونيات',
+      'Beauty & Skincare': 'الجمال والعناية بالبشرة',
+      'Home & Furniture': 'المنزل والأثاث',
+      'Food & Groceries': 'البقالة والأغذية',
+      'Sports & Fitness': 'الرياضة واللياقة البدنية',
+      'Kids & Toys': 'الأطفال والألعاب',
+      'Health & Pharma': 'الصحة والأدوية',
+      Jewelry: 'المجوهرات',
+      Other: 'أخرى',
+    };
+    return arCategories[c] || c;
+  };
+
+  const translatePayoutMethod = (label: string) => {
+    if (lang !== 'ar') return label;
+    const arPayouts: Record<string, string> = {
+      'Vodafone Cash': 'فودافون كاش',
+      'Orange Money': 'أورنج ماني',
+      'Etisalat Cash': 'اتصالات كاش',
+      InstaPay: 'إنستا باي',
+      'Bank Transfer': 'تحويل بنكي',
+    };
+    return arPayouts[label] || label;
+  };
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -94,7 +139,15 @@ export default function SellPage() {
 
   if (step === 'success' && result) {
     return (
-      <div style={{ maxWidth: 520, margin: '0 auto', padding: '64px 16px', textAlign: 'center' }}>
+      <div
+        style={{
+          maxWidth: 520,
+          margin: '0 auto',
+          padding: '64px 16px',
+          textAlign: 'center',
+          direction: isRTL ? 'rtl' : 'ltr',
+        }}
+      >
         <div
           style={{
             width: 64,
@@ -118,11 +171,13 @@ export default function SellPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>Application submitted!</h1>
+        <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>
+          {t('AffiliateSubmitted')}
+        </h1>
         <p style={{ color: '#64748b', marginBottom: 24, lineHeight: 1.6 }}>
-          Your requested promo code is{' '}
-          <strong style={{ fontFamily: 'monospace', color: '#1e3b8a' }}>{result.promoCode}</strong>.
-          We review applications within 24–48 hours and will email you once approved.
+          {lang === 'ar'
+            ? `كود الخصم المطلوب الخاص بك هو ${result.promoCode}. سنقوم بمراجعة الطلبات في غضون 24-48 ساعة وسنرسل لك بريدًا إلكترونيًا بمجرد الموافقة.`
+            : `Your requested promo code is ${result.promoCode}. We review applications within 24–48 hours and will email you once approved.`}
         </p>
         <Link
           href="/"
@@ -136,7 +191,7 @@ export default function SellPage() {
             textDecoration: 'none',
           }}
         >
-          Back to home
+          {t('AffiliateBackHome')}
         </Link>
       </div>
     );
@@ -144,7 +199,14 @@ export default function SellPage() {
 
   if (step === 'form') {
     return (
-      <div style={{ maxWidth: 560, margin: '0 auto', padding: '48px 16px' }}>
+      <div
+        style={{
+          maxWidth: 560,
+          margin: '0 auto',
+          padding: '48px 16px',
+          direction: isRTL ? 'rtl' : 'ltr',
+        }}
+      >
         <button
           onClick={() => setStep('landing')}
           style={{
@@ -157,13 +219,30 @@ export default function SellPage() {
             display: 'flex',
             alignItems: 'center',
             gap: 4,
+            fontFamily: 'inherit',
           }}
         >
-          ← Back
+          {isRTL ? '→ رجوع' : '← Back'}
         </button>
-        <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 4 }}>Affiliate application</h1>
-        <p style={{ color: '#64748b', fontSize: 14, marginBottom: 32 }}>
-          Takes 2 minutes. We review within 48 hours.
+        <h1
+          style={{
+            fontSize: 24,
+            fontWeight: 600,
+            marginBottom: 4,
+            textAlign: isRTL ? 'right' : 'left',
+          }}
+        >
+          {t('AffiliateApplication')}
+        </h1>
+        <p
+          style={{
+            color: '#64748b',
+            fontSize: 14,
+            marginBottom: 32,
+            textAlign: isRTL ? 'right' : 'left',
+          }}
+        >
+          {t('AffiliateTakes2Min')}
         </p>
 
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -171,12 +250,20 @@ export default function SellPage() {
           {!session && (
             <>
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
-                  Full Name <span style={{ color: '#EF4444' }}>*</span>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    marginBottom: 6,
+                    textAlign: isRTL ? 'right' : 'left',
+                  }}
+                >
+                  {t('AffiliateFullName')} <span style={{ color: '#EF4444' }}>*</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Ahmed Ali"
+                  placeholder={lang === 'ar' ? 'مثال: أحمد علي' : 'e.g. Ahmed Ali'}
                   value={form.name}
                   onChange={e => set('name', e.target.value)}
                   required
@@ -189,13 +276,22 @@ export default function SellPage() {
                     outline: 'none',
                     boxSizing: 'border-box',
                     background: '#fff',
+                    textAlign: isRTL ? 'right' : 'left',
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
-                  Email Address <span style={{ color: '#EF4444' }}>*</span>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    marginBottom: 6,
+                    textAlign: isRTL ? 'right' : 'left',
+                  }}
+                >
+                  {t('AffiliateEmail')} <span style={{ color: '#EF4444' }}>*</span>
                 </label>
                 <input
                   type="email"
@@ -212,6 +308,7 @@ export default function SellPage() {
                     outline: 'none',
                     boxSizing: 'border-box',
                     background: '#fff',
+                    textAlign: isRTL ? 'right' : 'left',
                   }}
                 />
               </div>
@@ -219,9 +316,15 @@ export default function SellPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
                   <label
-                    style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}
+                    style={{
+                      display: 'block',
+                      fontSize: 13,
+                      fontWeight: 500,
+                      marginBottom: 6,
+                      textAlign: isRTL ? 'right' : 'left',
+                    }}
                   >
-                    Phone Number <span style={{ color: '#EF4444' }}>*</span>
+                    {t('AffiliatePhone')} <span style={{ color: '#EF4444' }}>*</span>
                   </label>
                   <input
                     type="tel"
@@ -238,14 +341,21 @@ export default function SellPage() {
                       outline: 'none',
                       boxSizing: 'border-box',
                       background: '#fff',
+                      textAlign: isRTL ? 'right' : 'left',
                     }}
                   />
                 </div>
                 <div>
                   <label
-                    style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}
+                    style={{
+                      display: 'block',
+                      fontSize: 13,
+                      fontWeight: 500,
+                      marginBottom: 6,
+                      textAlign: isRTL ? 'right' : 'left',
+                    }}
                   >
-                    Password <span style={{ color: '#EF4444' }}>*</span>
+                    {t('AffiliatePassword')} <span style={{ color: '#EF4444' }}>*</span>
                   </label>
                   <input
                     type="password"
@@ -263,6 +373,7 @@ export default function SellPage() {
                       outline: 'none',
                       boxSizing: 'border-box',
                       background: '#fff',
+                      textAlign: isRTL ? 'right' : 'left',
                     }}
                   />
                 </div>
@@ -271,13 +382,21 @@ export default function SellPage() {
           )}
 
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
-              Requested promo code{' '}
-              <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
+            <label
+              style={{
+                display: 'block',
+                fontSize: 13,
+                fontWeight: 500,
+                marginBottom: 6,
+                textAlign: isRTL ? 'right' : 'left',
+              }}
+            >
+              {t('AffiliateRequestedCode')}{' '}
+              <span style={{ color: '#94a3b8', fontWeight: 400 }}>({t('AffiliateOptional')})</span>
             </label>
             <input
               type="text"
-              placeholder="e.g. AHMED15"
+              placeholder={lang === 'ar' ? 'مثال: AHMED15' : 'e.g. AHMED15'}
               value={form.requestedCode}
               onChange={e =>
                 set('requestedCode', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))
@@ -292,17 +411,33 @@ export default function SellPage() {
                 fontFamily: 'monospace',
                 outline: 'none',
                 boxSizing: 'border-box',
+                textAlign: isRTL ? 'right' : 'left',
               }}
             />
-            <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>
-              Leave blank and we generate one from your name
+            <p
+              style={{
+                fontSize: 12,
+                color: '#94a3b8',
+                marginTop: 4,
+                textAlign: isRTL ? 'right' : 'left',
+              }}
+            >
+              {t('AffiliateGenerateFromName')}
             </p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
-                Main platform
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  marginBottom: 6,
+                  textAlign: isRTL ? 'right' : 'left',
+                }}
+              >
+                {t('AffiliateMainPlatform')}
               </label>
               <select
                 value={form.platform}
@@ -315,22 +450,34 @@ export default function SellPage() {
                   fontSize: 14,
                   outline: 'none',
                   background: '#fff',
+                  textAlign: isRTL ? 'right' : 'left',
+                  direction: isRTL ? 'rtl' : 'ltr',
                 }}
               >
-                <option value="">Select platform</option>
+                <option value="">{t('AffiliateSelectPlatform')}</option>
                 {PLATFORMS.map(p => (
-                  <option key={p}>{p}</option>
+                  <option key={p} value={p}>
+                    {translatePlatform(p)}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
-                Followers / subscribers
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  marginBottom: 6,
+                  textAlign: isRTL ? 'right' : 'left',
+                }}
+              >
+                {t('AffiliateFollowers')}
               </label>
               <input
                 type="number"
                 min="0"
-                placeholder="e.g. 42000"
+                placeholder={lang === 'ar' ? 'مثال: 42000' : 'e.g. 42000'}
                 value={form.platformFollowers}
                 onChange={e => set('platformFollowers', e.target.value)}
                 style={{
@@ -341,14 +488,23 @@ export default function SellPage() {
                   fontSize: 14,
                   outline: 'none',
                   boxSizing: 'border-box',
+                  textAlign: isRTL ? 'right' : 'left',
                 }}
               />
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
-              Category focus
+            <label
+              style={{
+                display: 'block',
+                fontSize: 13,
+                fontWeight: 500,
+                marginBottom: 6,
+                textAlign: isRTL ? 'right' : 'left',
+              }}
+            >
+              {t('AffiliateCategoryFocus')}
             </label>
             <select
               value={form.categoryFocus}
@@ -361,22 +517,34 @@ export default function SellPage() {
                 fontSize: 14,
                 outline: 'none',
                 background: '#fff',
+                textAlign: isRTL ? 'right' : 'left',
+                direction: isRTL ? 'rtl' : 'ltr',
               }}
             >
-              <option value="">Select category</option>
+              <option value="">{t('AffiliateSelectCategory')}</option>
               {CATEGORIES.map(c => (
-                <option key={c}>{c}</option>
+                <option key={c} value={c}>
+                  {translateCategory(c)}
+                </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
-              WhatsApp Number <span style={{ color: '#EF4444' }}>*</span>
+            <label
+              style={{
+                display: 'block',
+                fontSize: 13,
+                fontWeight: 500,
+                marginBottom: 6,
+                textAlign: isRTL ? 'right' : 'left',
+              }}
+            >
+              {t('AffiliateWhatsApp')} <span style={{ color: '#EF4444' }}>*</span>
             </label>
             <input
               type="tel"
-              placeholder="e.g. 01xxxxxxxxx"
+              placeholder={lang === 'ar' ? 'مثال: 01xxxxxxxxx' : 'e.g. 01xxxxxxxxx'}
               value={form.whatsapp}
               onChange={e => set('whatsapp', e.target.value)}
               required
@@ -388,21 +556,30 @@ export default function SellPage() {
                 fontSize: 14,
                 outline: 'none',
                 boxSizing: 'border-box',
+                textAlign: isRTL ? 'right' : 'left',
               }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
-              Tell us about your audience{' '}
-              <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
+            <label
+              style={{
+                display: 'block',
+                fontSize: 13,
+                fontWeight: 500,
+                marginBottom: 6,
+                textAlign: isRTL ? 'right' : 'left',
+              }}
+            >
+              {t('AffiliateTellAudience')}{' '}
+              <span style={{ color: '#94a3b8', fontWeight: 400 }}>({t('AffiliateOptional')})</span>
             </label>
             <textarea
               rows={3}
               value={form.applicationNote}
               onChange={e => set('applicationNote', e.target.value)}
               maxLength={1000}
-              placeholder="Where you post, what you cover, why you'd be a great fit..."
+              placeholder={t('AffiliateTellAudiencePlaceholder')}
               style={{
                 width: '100%',
                 border: '1px solid #e2e8f0',
@@ -412,18 +589,34 @@ export default function SellPage() {
                 outline: 'none',
                 resize: 'none',
                 boxSizing: 'border-box',
+                textAlign: isRTL ? 'right' : 'left',
               }}
             />
           </div>
 
           <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 20 }}>
-            <p style={{ fontSize: 14, fontWeight: 500, marginBottom: 12 }}>Payout preferences</p>
+            <p
+              style={{
+                fontSize: 14,
+                fontWeight: 500,
+                marginBottom: 12,
+                textAlign: isRTL ? 'right' : 'left',
+              }}
+            >
+              {t('AffiliatePayoutPrefs')}
+            </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    color: '#64748b',
+                    marginBottom: 6,
+                    textAlign: isRTL ? 'right' : 'left',
+                  }}
                 >
-                  Method
+                  {t('AffiliatePayoutMethod')}
                 </label>
                 <select
                   value={form.payoutMethod}
@@ -436,27 +629,35 @@ export default function SellPage() {
                     fontSize: 14,
                     outline: 'none',
                     background: '#fff',
+                    textAlign: isRTL ? 'right' : 'left',
+                    direction: isRTL ? 'rtl' : 'ltr',
                   }}
                 >
-                  <option value="">Select method</option>
+                  <option value="">{t('AffiliateSelectMethod')}</option>
                   {PAYOUT_METHODS.map(m => (
                     <option key={m.value} value={m.value}>
-                      {m.label}
+                      {translatePayoutMethod(m.label)}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
                 <label
-                  style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6 }}
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    color: '#64748b',
+                    marginBottom: 6,
+                    textAlign: isRTL ? 'right' : 'left',
+                  }}
                 >
-                  Phone number / IBAN
+                  {t('AffiliatePhoneOrIban')}
                 </label>
                 <input
                   type="text"
                   value={form.payoutDetails}
                   onChange={e => set('payoutDetails', e.target.value)}
-                  placeholder="01xxxxxxxxx"
+                  placeholder={lang === 'ar' ? 'رقم الهاتف أو الآيبان' : '01xxxxxxxxx'}
                   style={{
                     width: '100%',
                     border: '1px solid #e2e8f0',
@@ -465,6 +666,7 @@ export default function SellPage() {
                     fontSize: 14,
                     outline: 'none',
                     boxSizing: 'border-box',
+                    textAlign: isRTL ? 'right' : 'left',
                   }}
                 />
               </div>
@@ -480,6 +682,7 @@ export default function SellPage() {
                 padding: '10px 14px',
                 fontSize: 13,
                 color: '#B91C1C',
+                textAlign: isRTL ? 'right' : 'left',
               }}
             >
               {error}
@@ -501,7 +704,7 @@ export default function SellPage() {
               opacity: loading ? 0.6 : 1,
             }}
           >
-            {loading ? 'Submitting...' : 'Submit application'}
+            {loading ? t('AffiliateSubmitting') : t('AffiliateSubmitApplication')}
           </button>
         </form>
       </div>
@@ -510,7 +713,14 @@ export default function SellPage() {
 
   // ─── Landing page ───────────────────────────────────────────────────────────
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '64px 16px' }}>
+    <div
+      style={{
+        maxWidth: 900,
+        margin: '0 auto',
+        padding: '64px 16px',
+        direction: isRTL ? 'rtl' : 'ltr',
+      }}
+    >
       {/* Hero */}
       <div style={{ textAlign: 'center', marginBottom: 64 }}>
         <div
@@ -527,7 +737,7 @@ export default function SellPage() {
             marginBottom: 24,
           }}
         >
-          ✨ Earn money by sharing
+          {t('AffiliateEarnBySharing')}
         </div>
         <h1
           style={{
@@ -538,7 +748,7 @@ export default function SellPage() {
             color: '#0f172a',
           }}
         >
-          Join the Affiliate Program
+          {t('AffiliateJoinProgram')}
         </h1>
         <p
           style={{
@@ -549,8 +759,7 @@ export default function SellPage() {
             lineHeight: 1.6,
           }}
         >
-          Share your unique promo code, earn commission on every sale, and give your audience an
-          exclusive discount.
+          {t('AffiliateProgramDesc')}
         </p>
         <button
           id="sell-apply-btn"
@@ -568,7 +777,7 @@ export default function SellPage() {
             boxShadow: '0 4px 24px rgba(30,59,138,0.25)',
           }}
         >
-          Apply now — it's free
+          {t('AffiliateApplyFree')}
         </button>
       </div>
 
@@ -576,19 +785,31 @@ export default function SellPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: isRTL ? 'repeat(auto-fit, minmax(180px, 1fr))' : 'repeat(4, 1fr)',
           gap: 16,
           marginBottom: 64,
         }}
       >
         {[
-          { label: 'Commission', value: '5–12%', sub: 'per confirmed sale' },
-          { label: 'Buyer discount', value: 'Up to 30%', sub: 'applied at checkout' },
-          { label: 'Referral bonus', value: '50 EGP', sub: 'when someone joins via your link' },
-          { label: 'Joiner bonus', value: '30 EGP', sub: 'store credit when you join via a link' },
-        ].map(stat => (
+          { label: t('AffiliateCommissionSub'), value: '5–12%', sub: t('earnings') },
+          {
+            label: t('AffiliateBuyerDiscountSub'),
+            value: 'Up to 30%',
+            sub: t('AffiliateBuyerDiscount'),
+          },
+          {
+            label: t('AffiliateReferralBonusSub'),
+            value: lang === 'ar' ? '٥٠ ج.م' : '50 EGP',
+            sub: t('AffiliateReferralBonus'),
+          },
+          {
+            label: t('AffiliateJoinerBonusSub'),
+            value: lang === 'ar' ? '٣٠ ج.م' : '30 EGP',
+            sub: t('AffiliateJoinerBonus'),
+          },
+        ].map((stat, idx) => (
           <div
-            key={stat.label}
+            key={idx}
             style={{
               background: '#F8FAFF',
               border: '1px solid #EEF2FF',
@@ -601,9 +822,9 @@ export default function SellPage() {
               {stat.value}
             </div>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginBottom: 2 }}>
-              {stat.label}
+              {stat.sub}
             </div>
-            <div style={{ fontSize: 12, color: '#94a3b8' }}>{stat.sub}</div>
+            <div style={{ fontSize: 12, color: '#94a3b8' }}>{stat.label}</div>
           </div>
         ))}
       </div>
@@ -612,7 +833,7 @@ export default function SellPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: isRTL ? 'repeat(auto-fit, minmax(240px, 1fr))' : 'repeat(3, 1fr)',
           gap: 20,
           marginBottom: 64,
         }}
@@ -620,18 +841,18 @@ export default function SellPage() {
         {[
           {
             step: '1',
-            title: 'Apply in 2 minutes',
-            desc: 'Tell us about your platform and audience. We review within 48 hours.',
+            title: t('AffiliateApplyIn2Min'),
+            desc: t('AffiliateApplyIn2MinDesc'),
           },
           {
             step: '2',
-            title: 'Get your promo code',
-            desc: 'Once approved you get a personal code (e.g. AHMED15) and a referral link.',
+            title: t('AffiliateGetCode'),
+            desc: t('AffiliateGetCodeDesc'),
           },
           {
             step: '3',
-            title: 'Earn every sale',
-            desc: 'Every buyer who uses your code earns you commission. Get bonuses for new affiliates you refer.',
+            title: t('AffiliateEarnEverySale'),
+            desc: t('AffiliateEarnEverySaleDesc'),
           },
         ].map(item => (
           <div
@@ -655,8 +876,26 @@ export default function SellPage() {
             >
               {item.step}
             </div>
-            <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 8 }}>{item.title}</h3>
-            <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.6 }}>{item.desc}</p>
+            <h3
+              style={{
+                fontWeight: 600,
+                fontSize: 15,
+                marginBottom: 8,
+                textAlign: isRTL ? 'right' : 'left',
+              }}
+            >
+              {item.title}
+            </h3>
+            <p
+              style={{
+                color: '#64748b',
+                fontSize: 14,
+                lineHeight: 1.6,
+                textAlign: isRTL ? 'right' : 'left',
+              }}
+            >
+              {item.desc}
+            </p>
           </div>
         ))}
       </div>
@@ -671,9 +910,11 @@ export default function SellPage() {
           color: '#fff',
         }}
       >
-        <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 10 }}>Ready to start earning?</h2>
+        <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 10 }}>
+          {t('AffiliateReadyStart')}
+        </h2>
         <p style={{ color: 'rgba(255,255,255,0.75)', marginBottom: 28, fontSize: 16 }}>
-          Join hundreds of Egyptian affiliates already earning on Local Brand.
+          {t('AffiliateJoinHundreds')}
         </p>
         <button
           onClick={() => setStep('form')}
@@ -688,7 +929,7 @@ export default function SellPage() {
             cursor: 'pointer',
           }}
         >
-          Apply for free
+          {t('AffiliateApplyFree')}
         </button>
       </div>
     </div>

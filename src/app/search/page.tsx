@@ -5,11 +5,12 @@ import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Product } from '@/types';
 import { Skeleton } from '@/components/ui';
+import ProductCard from '@/components/ProductCard';
 
 export default function SearchResultsPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
-  
+
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,7 +31,7 @@ export default function SearchResultsPage() {
         setIsLoading(false);
       }
     }
-    
+
     if (query) {
       fetchResults();
     } else {
@@ -42,11 +43,9 @@ export default function SearchResultsPage() {
   return (
     <main className="min-h-screen bg-[#f9f8f6]">
       <Navbar />
-      
+
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-black text-gray-900 mb-2">
-          Search Results
-        </h1>
+        <h1 className="text-3xl font-black text-gray-900 mb-2">Search Results</h1>
         <p className="text-gray-600 mb-8">
           {query ? `Showing results for "${query}"` : 'Enter a search term to find products'}
         </p>
@@ -69,31 +68,29 @@ export default function SearchResultsPage() {
           </div>
         ) : products.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {products.map((product: Product) => {
-              const image = product.images?.[0]?.url || '';
-              return (
-                <div key={product.id}>
-                  {/* Assuming ProductCard is imported or we just render something basic here if not imported */}
-                  <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
-                    <div className="w-full aspect-[4/5] bg-gray-100">
-                       <img src={image} alt={product.title} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-bold text-sm truncate">{product.title}</h3>
-                      <div className="text-[#1e3b8a] font-bold text-sm">{product.basePrice} EGP</div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {products.map((product: Product, idx: number) => (
+              <ProductCard
+                key={product.id}
+                product={
+                  {
+                    ...product,
+                    name: product.title,
+                    image: product.images?.[0]?.url,
+                    brand: product.seller?.storeName || 'Local Brand',
+                    brandSlug: product.seller?.storeName
+                      ? product.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                      : '',
+                  } as any
+                }
+                index={idx}
+              />
+            ))}
           </div>
         ) : (
           <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
             <div className="text-6xl mb-4">🔍</div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">No products found</h2>
-            <p className="text-gray-500">
-              We couldn't find any products matching your search.
-            </p>
+            <p className="text-gray-500">We couldn't find any products matching your search.</p>
           </div>
         )}
       </div>

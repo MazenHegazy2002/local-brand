@@ -18,6 +18,8 @@ import {
   TrendingUp,
   Star,
   Users,
+  Copy,
+  ExternalLink,
 } from 'lucide-react';
 import {
   getDashboardStats,
@@ -97,6 +99,23 @@ export default function SellerHub() {
   const [activeTab, setActiveTab] = useState('overview');
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [storeLink, setStoreLink] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (data?.currentSeller?.storeName) {
+      const slug = data.currentSeller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      setStoreLink(`${window.location.origin}/brand/${slug}`);
+    }
+  }, [data]);
+
+  const handleCopyLink = () => {
+    if (storeLink) {
+      navigator.clipboard.writeText(storeLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -505,7 +524,35 @@ export default function SellerHub() {
       {/* Main Area */}
       <div className="main">
         <div className="topbar">
-          <div className="page-title">{TITLES[activeTab] || 'Dashboard'}</div>
+          <div className="flex flex-col md:flex-row md:items-center gap-3">
+            <div className="page-title">{TITLES[activeTab] || 'Dashboard'}</div>
+            {storeLink && (
+              <div className="flex items-center gap-2 bg-[#0F6E56]/10 text-[#0F6E56] border border-[#0F6E56]/20 rounded-full px-3 py-1 text-xs font-semibold select-none">
+                <span>Store URL:</span>
+                <a
+                  href={storeLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline opacity-85 flex items-center gap-1 font-mono text-[#0F6E56] hover:opacity-100 transition-opacity"
+                >
+                  {storeLink.replace(/^https?:\/\//, '')}
+                  <ExternalLink size={11} />
+                </a>
+                <span className="text-[#0F6E56]/30">|</span>
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className="hover:opacity-70 transition-opacity flex items-center gap-1 cursor-pointer bg-transparent border-none text-[#0F6E56] p-0 outline-none"
+                  title="Copy storefront link"
+                >
+                  <span className="font-bold text-[10px] tracking-wider uppercase">
+                    {copied ? 'Copied ✓' : 'Copy'}
+                  </span>
+                  {!copied && <Copy size={11} />}
+                </button>
+              </div>
+            )}
+          </div>
           <button className="add-product-btn" onClick={() => setShowAddModal(true)}>
             <Plus size={16} /> Add product
           </button>
