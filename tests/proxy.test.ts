@@ -92,6 +92,15 @@ describe('proxy — unauthenticated users', () => {
     expect(res.headers.get('content-security-policy')).toContain("default-src 'self'");
     expect(res.headers.get('x-nonce')).toMatch(/.+/);
   });
+
+  it('lets unauthenticated visitors browse the public affiliate page /sell', async () => {
+    getTokenMock.mockResolvedValue(null);
+
+    const res = await proxy(buildReq('/sell'));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-security-policy')).toBeTruthy();
+  });
 });
 
 describe('proxy — role enforcement', () => {
@@ -151,6 +160,14 @@ describe('proxy — role enforcement', () => {
     getTokenMock.mockResolvedValue({ role: 'BUYER', sub: 'buyer-user-id' });
 
     const res = await proxy(buildReq('/dashboard'));
+
+    expect(res.status).toBe(200);
+  });
+
+  it('lets buyer users browse the public affiliate page /sell', async () => {
+    getTokenMock.mockResolvedValue({ role: 'BUYER', sub: 'buyer-user-id' });
+
+    const res = await proxy(buildReq('/sell'));
 
     expect(res.status).toBe(200);
   });

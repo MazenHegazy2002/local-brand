@@ -39,7 +39,9 @@ function buildCsp(nonce: string, isDev: boolean): string {
     'https://translate.google.com',
     'https://translate.googleapis.com',
     ...pluginScriptHosts,
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   const connectHosts = [
     'https://api.stripe.com',
@@ -73,7 +75,7 @@ function buildCsp(nonce: string, isDev: boolean): string {
     "font-src 'self' data: https://fonts.gstatic.com https://client.crisp.chat https://*.tawk.to https://*.hotjar.com",
     "img-src 'self' data: https: blob:",
     `connect-src ${["'self'", ...connectHosts].join(' ')}`,
-    "frame-src https://js.stripe.com https://grey.paysky.io https://cube.paysky.io https://accept.paymob.com https://*.tawk.to https://*.hotjar.com",
+    'frame-src https://js.stripe.com https://grey.paysky.io https://cube.paysky.io https://accept.paymob.com https://*.tawk.to https://*.hotjar.com',
     "frame-ancestors 'self'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -102,13 +104,13 @@ export async function proxy(req: NextRequest) {
     if (result.limited) {
       return NextResponse.json(
         { message: 'Too many requests' },
-        { 
-          status: 429, 
-          headers: { 
+        {
+          status: 429,
+          headers: {
             'X-RateLimit-Limit': '60', // Simplified for now, or get from config
             'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': result.reset.toString()
-          } 
+            'X-RateLimit-Reset': result.reset.toString(),
+          },
         }
       );
     }
@@ -129,7 +131,7 @@ export async function proxy(req: NextRequest) {
 
   // Define role-based route protection
   const adminRoutes = pathname.startsWith('/admin') || pathname.startsWith('/admin-os');
-  const sellerRoutes = pathname.startsWith('/seller') || pathname.startsWith('/sell') || pathname === '/seller-hub';
+  const sellerRoutes = pathname.startsWith('/seller') || pathname === '/seller-hub';
   const dashboardRoutes = pathname.startsWith('/dashboard');
 
   // If no user is logged in, redirect to login (except for public shop pages)
