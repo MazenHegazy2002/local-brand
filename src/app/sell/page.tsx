@@ -41,6 +41,11 @@ export default function SellPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    whatsapp: '',
+    password: '',
     requestedCode: '',
     platform: '',
     platformFollowers: '',
@@ -62,6 +67,11 @@ export default function SellPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          name: !session ? form.name : undefined,
+          email: !session ? form.email : undefined,
+          phone: !session ? form.phone : undefined,
+          whatsapp: form.whatsapp || undefined,
+          password: !session ? form.password : undefined,
           requestedCode: form.requestedCode.toUpperCase() || undefined,
           platform: form.platform || undefined,
           platformFollowers: form.platformFollowers ? parseInt(form.platformFollowers) : undefined,
@@ -156,27 +166,174 @@ export default function SellPage() {
           Takes 2 minutes. We review within 48 hours.
         </p>
 
-        {!session && (
+        {!session ? (
           <div
             style={{
-              background: '#FFFBEB',
-              border: '1px solid #FDE68A',
+              background: '#EFF6FF',
+              border: '1px solid #BFDBFE',
               borderRadius: 10,
               padding: '12px 16px',
               marginBottom: 24,
               fontSize: 14,
-              color: '#92400E',
+              color: '#1E3A8A',
             }}
           >
-            You need to{' '}
-            <Link href="/login?callbackUrl=/sell" style={{ fontWeight: 600, color: '#92400E' }}>
-              sign in
+            Already have an account?{' '}
+            <Link
+              href="/login?callbackUrl=/sell"
+              style={{ fontWeight: 600, color: '#1e3b8a', textDecoration: 'underline' }}
+            >
+              Sign in
             </Link>{' '}
-            before applying.
+            to apply with your existing profile. Otherwise, fill out the form below to register and
+            apply at the same time!
           </div>
-        )}
+        ) : null}
 
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Account Details for Guest Users */}
+          {!session && (
+            <div
+              style={{
+                background: '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                borderRadius: 12,
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 16,
+              }}
+            >
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: '#0F172A', marginBottom: 2 }}>
+                Account Details
+              </h3>
+              <p style={{ color: '#64748B', fontSize: 12, marginTop: -12, marginBottom: 4 }}>
+                Enter your details to automatically register your account.
+              </p>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
+                  Full Name <span style={{ color: '#EF4444' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Ahmed Ali"
+                  value={form.name}
+                  onChange={e => set('name', e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: 8,
+                    padding: '10px 14px',
+                    fontSize: 14,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    background: '#fff',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
+                  Email Address <span style={{ color: '#EF4444' }}>*</span>
+                </label>
+                <input
+                  type="email"
+                  placeholder="name@example.com"
+                  value={form.email}
+                  onChange={e => set('email', e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: 8,
+                    padding: '10px 14px',
+                    fontSize: 14,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    background: '#fff',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div>
+                  <label
+                    style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}
+                  >
+                    Phone Number <span style={{ color: '#EF4444' }}>*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="01xxxxxxxxx"
+                    value={form.phone}
+                    onChange={e => set('phone', e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      border: '1px solid #CBD5E1',
+                      borderRadius: 8,
+                      padding: '10px 14px',
+                      fontSize: 14,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      background: '#fff',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}
+                  >
+                    WhatsApp Number <span style={{ color: '#EF4444' }}>*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="01xxxxxxxxx"
+                    value={form.whatsapp}
+                    onChange={e => set('whatsapp', e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      border: '1px solid #CBD5E1',
+                      borderRadius: 8,
+                      padding: '10px 14px',
+                      fontSize: 14,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      background: '#fff',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
+                  Password <span style={{ color: '#EF4444' }}>*</span>
+                </label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={form.password}
+                  onChange={e => set('password', e.target.value)}
+                  required
+                  minLength={8}
+                  style={{
+                    width: '100%',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: 8,
+                    padding: '10px 14px',
+                    fontSize: 14,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    background: '#fff',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
           <div>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
               Requested promo code{' '}
@@ -277,6 +434,31 @@ export default function SellPage() {
             </select>
           </div>
 
+          {/* Standalone WhatsApp Number field for authenticated users */}
+          {session && (
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
+                WhatsApp Number <span style={{ color: '#EF4444' }}>*</span>
+              </label>
+              <input
+                type="tel"
+                placeholder="e.g. 01xxxxxxxxx"
+                value={form.whatsapp}
+                onChange={e => set('whatsapp', e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 8,
+                  padding: '10px 14px',
+                  fontSize: 14,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          )}
+
           <div>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
               Tell us about your audience{' '}
@@ -373,7 +555,7 @@ export default function SellPage() {
 
           <button
             type="submit"
-            disabled={loading || !session}
+            disabled={loading}
             style={{
               padding: '14px',
               background: '#1e3b8a',
@@ -383,7 +565,7 @@ export default function SellPage() {
               fontWeight: 600,
               fontSize: 14,
               cursor: 'pointer',
-              opacity: loading || !session ? 0.6 : 1,
+              opacity: loading ? 0.6 : 1,
             }}
           >
             {loading ? 'Submitting...' : 'Submit application'}
