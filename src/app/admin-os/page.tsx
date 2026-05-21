@@ -344,6 +344,12 @@ export default function AdminOS() {
           icon={<ModerationIcon />}
         />
         <NavItem
+          active={activeTab === 'affiliate'}
+          onClick={() => setActiveTab('affiliate')}
+          label="Affiliate"
+          icon={<AffiliateIcon />}
+        />
+        <NavItem
           active={activeTab === 'settings'}
           onClick={() => setActiveTab('settings')}
           label="Settings"
@@ -436,6 +442,7 @@ export default function AdminOS() {
             />
           )}
           {activeTab === 'settings' && data && <SettingsTab data={data} />}
+          {activeTab === 'affiliate' && <AffiliateTab />}
         </div>
       </div>
 
@@ -571,8 +578,1052 @@ const TITLES: Record<string, string> = {
   payouts: 'Financial settlements',
   analytics: 'Revenue analytics',
   taxonomy: 'Classification systems',
+  affiliate: 'Affiliate program',
   settings: 'System configuration',
 };
+
+// ─── AffiliateIcon ────────────────────────────────────────────────────────────
+function AffiliateIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="8" r="4" />
+      <path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
+      <path d="M18 8h4M20 6v4" />
+    </svg>
+  );
+}
+
+// ─── AffiliateTab ─────────────────────────────────────────────────────────────
+type AdminAff = {
+  id: string;
+  promoCode: string;
+  status: string;
+  tier: string;
+  totalConversions: number;
+  totalEarnedEgp: number;
+  pendingEarningsEgp: number;
+  customCommissionPct: number | null;
+  customDiscountPct: number | null;
+  adminNote: string | null;
+  platform: string | null;
+  platformFollowers: number | null;
+  categoryFocus: string | null;
+  applicationNote: string | null;
+  payoutMethod: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+  user: { id: string; name: string; email: string; avatarUrl: string | null };
+};
+type AdminPayout = {
+  id: string;
+  affiliateName: string;
+  affiliateEmail: string;
+  promoCode: string;
+  amountEgp: number;
+  method: string;
+  payoutDetails: string;
+  status: string;
+  adminNote: string | null;
+  createdAt: string;
+  processedAt: string | null;
+};
+type AffStats = {
+  totalActive: number;
+  totalPending: number;
+  commissionsPaidEgp: number;
+  revenueFromRefsEgp: number;
+};
+type GlobalSettings = {
+  defaultDiscountPct: number;
+  maxDiscountPct: number;
+  referrerBonusEgp: number;
+  joinerBonusEgp: number;
+  bonusExpiryDays: number;
+  bonusesEnabled: boolean;
+  programEnabled: boolean;
+};
+type TierCfg = {
+  id: string;
+  tier: string;
+  name: string;
+  minConversions: number;
+  commissionPct: number;
+  isActive: boolean;
+};
+
+function AffiliateTab() {
+  const [panel, setPanel] = React.useState<'settings' | 'affiliates' | 'pending' | 'payouts'>(
+    'settings'
+  );
+  const [affiliates, setAffiliates] = React.useState<AdminAff[]>([]);
+  const [payouts, setPayouts] = React.useState<AdminPayout[]>([]);
+  const [stats, setStats] = React.useState<AffStats | null>(null);
+  const [settings, setSettings] = React.useState<GlobalSettings | null>(null);
+  const [tiers, setTiers] = React.useState<TierCfg[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [search, setSearch] = React.useState('');
+  const [editId, setEditId] = React.useState<string | null>(null);
+  const [editForm, setEditForm] = React.useState<{
+    status: string;
+    customCommissionPct: string;
+    customDiscountPct: string;
+    adminNote: string;
+    promoCode: string;
+    tier: string;
+  }>({
+    status: '',
+    customCommissionPct: '',
+    customDiscountPct: '',
+    adminNote: '',
+    promoCode: '',
+    tier: '',
+  });
+  const [settingsForm, setSettingsForm] = React.useState<Partial<GlobalSettings>>({});
+  const [savingSettings, setSavingSettings] = React.useState(false);
+  const [settingsMsg, setSettingsMsg] = React.useState('');
+
+  async function load() {
+    setLoading(true);
+    try {
+      const [affRes, payRes, setRes] = await Promise.all([
+        fetch('/api/admin/affiliate').then(r => r.json()),
+        fetch('/api/admin/affiliate/payouts').then(r => r.json()),
+        fetch('/api/admin/affiliate/settings').then(r => r.json()),
+      ]);
+      setAffiliates(affRes.affiliates ?? []);
+      setStats(affRes.stats ?? null);
+      setPayouts(payRes.payouts ?? []);
+      setSettings(setRes.settings ?? null);
+      setTiers(setRes.tiers ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  React.useEffect(() => {
+    load();
+  }, []);
+
+  async function approve(id: string) {
+    await fetch(`/api/admin/affiliate/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'ACTIVE' }),
+    });
+    load();
+  }
+
+  async function reject(id: string) {
+    await fetch(`/api/admin/affiliate/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'REJECTED' }),
+    });
+    load();
+  }
+
+  async function saveEdit() {
+    if (!editId) return;
+    await fetch(`/api/admin/affiliate/${editId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        status: editForm.status || undefined,
+        customCommissionPct: editForm.customCommissionPct
+          ? parseFloat(editForm.customCommissionPct)
+          : null,
+        customDiscountPct: editForm.customDiscountPct
+          ? parseFloat(editForm.customDiscountPct)
+          : null,
+        adminNote: editForm.adminNote || undefined,
+        promoCode: editForm.promoCode || undefined,
+        tier: editForm.tier || undefined,
+      }),
+    });
+    setEditId(null);
+    load();
+  }
+
+  async function markPayoutPaid(id: string) {
+    await fetch(`/api/admin/affiliate/payouts/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'PAID' }),
+    });
+    load();
+  }
+
+  async function saveSettings() {
+    setSavingSettings(true);
+    setSettingsMsg('');
+    try {
+      const payload: Record<string, unknown> = {};
+      if (settingsForm.defaultDiscountPct !== undefined)
+        payload.defaultDiscountPct = settingsForm.defaultDiscountPct;
+      if (settingsForm.maxDiscountPct !== undefined)
+        payload.maxDiscountPct = settingsForm.maxDiscountPct;
+      if (settingsForm.referrerBonusEgp !== undefined)
+        payload.referrerBonusEgp = settingsForm.referrerBonusEgp;
+      if (settingsForm.joinerBonusEgp !== undefined)
+        payload.joinerBonusEgp = settingsForm.joinerBonusEgp;
+      if (settingsForm.bonusesEnabled !== undefined)
+        payload.bonusesEnabled = settingsForm.bonusesEnabled;
+      if (settingsForm.programEnabled !== undefined)
+        payload.programEnabled = settingsForm.programEnabled;
+      await fetch('/api/admin/affiliate/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      // Save tiers
+      await fetch('/api/admin/affiliate/tiers', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          tiers.map(t => ({
+            tier: t.tier,
+            name: t.name,
+            minConversions: t.minConversions,
+            commissionPct: t.commissionPct,
+            isActive: t.isActive,
+          }))
+        ),
+      });
+      setSettingsMsg('Saved ✓');
+      load();
+    } finally {
+      setSavingSettings(false);
+    }
+  }
+
+  const pending = affiliates.filter(a => a.status === 'PENDING');
+  const active = affiliates.filter(a => a.status === 'ACTIVE' || a.status === 'PAUSED');
+  const filtered = active.filter(
+    a =>
+      !search ||
+      `${a.user?.name} ${a.user?.email} ${a.promoCode}`.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const tierColors: Record<string, string> = {
+    STARTER: '#64748b',
+    SILVER: '#94a3b8',
+    GOLD: '#d97706',
+    PLATINUM: '#7c3aed',
+  };
+
+  if (loading)
+    return (
+      <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+        Loading affiliate data...
+      </div>
+    );
+
+  const s = settings ?? ({} as GlobalSettings);
+
+  return (
+    <div>
+      {/* Stats bar */}
+      <div className="stats" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
+        <div className="stat">
+          <div className="stat-label">Active affiliates</div>
+          <div className="stat-val">{stats?.totalActive ?? 0}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Commissions paid</div>
+          <div className="stat-val" style={{ fontSize: 16 }}>
+            {(stats?.commissionsPaidEgp ?? 0).toLocaleString()} EGP
+          </div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Revenue from refs</div>
+          <div className="stat-val" style={{ fontSize: 16 }}>
+            {(stats?.revenueFromRefsEgp ?? 0).toLocaleString()} EGP
+          </div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Pending apps</div>
+          <div className="stat-val" style={{ color: pending.length ? '#d97706' : undefined }}>
+            {stats?.totalPending ?? 0}
+          </div>
+        </div>
+      </div>
+
+      {/* Sub-tabs */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 0,
+          borderBottom: '1px solid rgba(0,0,0,0.07)',
+          marginBottom: 14,
+        }}
+      >
+        {(['settings', 'affiliates', 'pending', 'payouts'] as const).map(p => (
+          <button
+            key={p}
+            onClick={() => setPanel(p)}
+            style={{
+              padding: '7px 14px',
+              fontSize: 12,
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              color: panel === p ? '#1e293b' : '#94a3b8',
+              borderBottom: panel === p ? '2px solid #534AB7' : '2px solid transparent',
+              fontWeight: panel === p ? 600 : 400,
+            }}
+          >
+            {p === 'pending'
+              ? `Pending (${pending.length})`
+              : p.charAt(0).toUpperCase() + p.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Global Settings ── */}
+      {panel === 'settings' && (
+        <div>
+          {/* Commission tiers */}
+          <div className="card">
+            <div className="card-header">
+              <div className="card-title">Commission tiers</div>
+            </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr 50px',
+                gap: 8,
+                fontSize: 11,
+                color: '#94a3b8',
+                padding: '0 0 6px',
+                borderBottom: '1px solid rgba(0,0,0,0.06)',
+                marginBottom: 8,
+              }}
+            >
+              <span>Tier name</span>
+              <span>Min conversions</span>
+              <span>Commission %</span>
+              <span></span>
+            </div>
+            {tiers.map((t, i) => (
+              <div
+                key={t.tier}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr 50px',
+                  gap: 8,
+                  alignItems: 'center',
+                  marginBottom: 8,
+                }}
+              >
+                <input
+                  value={t.name}
+                  onChange={e =>
+                    setTiers(ts => ts.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))
+                  }
+                  style={{
+                    fontSize: 12,
+                    padding: '5px 8px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 6,
+                    outline: 'none',
+                  }}
+                />
+                <input
+                  type="number"
+                  value={t.minConversions}
+                  onChange={e =>
+                    setTiers(ts =>
+                      ts.map((x, j) =>
+                        j === i ? { ...x, minConversions: parseInt(e.target.value) || 0 } : x
+                      )
+                    )
+                  }
+                  style={{
+                    fontSize: 12,
+                    padding: '5px 8px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 6,
+                    outline: 'none',
+                  }}
+                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input
+                    type="range"
+                    min={1}
+                    max={30}
+                    value={t.commissionPct}
+                    onChange={e =>
+                      setTiers(ts =>
+                        ts.map((x, j) =>
+                          j === i ? { ...x, commissionPct: parseFloat(e.target.value) } : x
+                        )
+                      )
+                    }
+                    style={{ flex: 1 }}
+                  />
+                  <span style={{ fontSize: 12, fontWeight: 600, minWidth: 32 }}>
+                    {t.commissionPct}%
+                  </span>
+                </div>
+                <span
+                  className="badge"
+                  style={{ background: '#E1F5EE', color: '#085041', fontSize: 10 }}
+                >
+                  {t.tier === 'PLATINUM' ? 'VIP' : 'Active'}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Buyer discount + bonuses */}
+          <div className="card">
+            <div className="card-header">
+              <div className="card-title">Buyer discount settings</div>
+            </div>
+            <div
+              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 12 }}
+            >
+              <div>
+                <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 6px' }}>
+                  Default buyer discount %
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="range"
+                    min={0}
+                    max={40}
+                    value={settingsForm.defaultDiscountPct ?? s.defaultDiscountPct ?? 15}
+                    onChange={e =>
+                      setSettingsForm(f => ({
+                        ...f,
+                        defaultDiscountPct: parseFloat(e.target.value),
+                      }))
+                    }
+                    style={{ flex: 1 }}
+                  />
+                  <span style={{ fontSize: 13, fontWeight: 600, minWidth: 32 }}>
+                    {settingsForm.defaultDiscountPct ?? s.defaultDiscountPct ?? 15}%
+                  </span>
+                </div>
+              </div>
+              <div>
+                <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 6px' }}>
+                  Max allowed discount %
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="range"
+                    min={0}
+                    max={60}
+                    value={settingsForm.maxDiscountPct ?? s.maxDiscountPct ?? 30}
+                    onChange={e =>
+                      setSettingsForm(f => ({ ...f, maxDiscountPct: parseFloat(e.target.value) }))
+                    }
+                    style={{ flex: 1 }}
+                  />
+                  <span style={{ fontSize: 13, fontWeight: 600, minWidth: 32 }}>
+                    {settingsForm.maxDiscountPct ?? s.maxDiscountPct ?? 30}%
+                  </span>
+                </div>
+              </div>
+            </div>
+            <p style={{ fontSize: 11, color: '#94a3b8' }}>
+              Affiliates can set their own discount within the max limit.
+            </p>
+          </div>
+
+          {/* Referral bonuses */}
+          <div className="card">
+            <div className="card-header">
+              <div className="card-title">Referral signup bonuses</div>
+            </div>
+            <div
+              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 12 }}
+            >
+              <div style={{ background: '#f8fafc', borderRadius: 8, padding: 12 }}>
+                <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 6px' }}>
+                  Referrer bonus (EGP)
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="range"
+                    min={0}
+                    max={500}
+                    step={5}
+                    value={settingsForm.referrerBonusEgp ?? s.referrerBonusEgp ?? 50}
+                    onChange={e =>
+                      setSettingsForm(f => ({ ...f, referrerBonusEgp: parseFloat(e.target.value) }))
+                    }
+                    style={{ flex: 1 }}
+                  />
+                  <span style={{ fontSize: 13, fontWeight: 600, minWidth: 56 }}>
+                    {settingsForm.referrerBonusEgp ?? s.referrerBonusEgp ?? 50} EGP
+                  </span>
+                </div>
+              </div>
+              <div style={{ background: '#f8fafc', borderRadius: 8, padding: 12 }}>
+                <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 6px' }}>
+                  New joiner bonus (EGP)
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="range"
+                    min={0}
+                    max={500}
+                    step={5}
+                    value={settingsForm.joinerBonusEgp ?? s.joinerBonusEgp ?? 30}
+                    onChange={e =>
+                      setSettingsForm(f => ({ ...f, joinerBonusEgp: parseFloat(e.target.value) }))
+                    }
+                    style={{ flex: 1 }}
+                  />
+                  <span style={{ fontSize: 13, fontWeight: 600, minWidth: 56 }}>
+                    {settingsForm.joinerBonusEgp ?? s.joinerBonusEgp ?? 30} EGP
+                  </span>
+                </div>
+              </div>
+            </div>
+            <p style={{ fontSize: 11, color: '#94a3b8', marginBottom: 8 }}>
+              Bonus credited as store credit, redeemable after new joiner places first order.
+            </p>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 12,
+                cursor: 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={settingsForm.bonusesEnabled ?? s.bonusesEnabled ?? true}
+                onChange={e => setSettingsForm(f => ({ ...f, bonusesEnabled: e.target.checked }))}
+              />
+              Referral bonuses enabled
+            </label>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              onClick={saveSettings}
+              disabled={savingSettings}
+              style={{
+                padding: '8px 20px',
+                background: '#534AB7',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {savingSettings ? 'Saving...' : 'Save all settings'}
+            </button>
+            {settingsMsg && (
+              <span style={{ fontSize: 12, color: '#085041', fontWeight: 600 }}>{settingsMsg}</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── All Affiliates ── */}
+      {panel === 'affiliates' && (
+        <div>
+          <input
+            placeholder="Search by name, email or code..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{
+              width: '100%',
+              border: '1px solid #e2e8f0',
+              borderRadius: 8,
+              padding: '8px 12px',
+              fontSize: 12,
+              marginBottom: 12,
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '28px 1fr 80px 70px 70px 90px 70px',
+                gap: 8,
+                padding: '8px 14px',
+                fontSize: 11,
+                color: '#94a3b8',
+                borderBottom: '1px solid rgba(0,0,0,0.06)',
+                fontWeight: 600,
+              }}
+            >
+              <span></span>
+              <span>Affiliate</span>
+              <span>Code</span>
+              <span>Tier</span>
+              <span>Conv.</span>
+              <span>Earned</span>
+              <span>Action</span>
+            </div>
+            {filtered.map(a => (
+              <div
+                key={a.id}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '28px 1fr 80px 70px 70px 90px 70px',
+                  gap: 8,
+                  padding: '8px 14px',
+                  borderBottom: '1px solid rgba(0,0,0,0.05)',
+                  alignItems: 'center',
+                  fontSize: 12,
+                }}
+              >
+                <div
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    background: '#EEEDFE',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 9,
+                    fontWeight: 600,
+                    color: '#534AB7',
+                    flexShrink: 0,
+                  }}
+                >
+                  {(a.user?.name ?? 'U').slice(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: 12 }}>{a.user?.name}</div>
+                  <div style={{ fontSize: 10, color: '#94a3b8' }}>{a.user?.email}</div>
+                </div>
+                <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: 11 }}>
+                  {a.promoCode}
+                </span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    padding: '2px 6px',
+                    borderRadius: 10,
+                    background: '#f1f5f9',
+                    color: tierColors[a.tier] ?? '#1e293b',
+                    fontWeight: 600,
+                  }}
+                >
+                  {a.tier}
+                </span>
+                <span style={{ fontWeight: 500 }}>{a.totalConversions}</span>
+                <span style={{ color: '#085041', fontWeight: 600 }}>
+                  {a.totalEarnedEgp.toLocaleString()} EGP
+                </span>
+                <button
+                  onClick={() => {
+                    setEditId(a.id);
+                    setEditForm({
+                      status: a.status,
+                      customCommissionPct: a.customCommissionPct?.toString() ?? '',
+                      customDiscountPct: a.customDiscountPct?.toString() ?? '',
+                      adminNote: a.adminNote ?? '',
+                      promoCode: a.promoCode,
+                      tier: a.tier,
+                    });
+                  }}
+                  className="action-btn"
+                >
+                  Edit
+                </button>
+              </div>
+            ))}
+            {filtered.length === 0 && (
+              <div style={{ padding: '24px', textAlign: 'center', fontSize: 12, color: '#94a3b8' }}>
+                No affiliates found.
+              </div>
+            )}
+          </div>
+
+          {/* Edit panel */}
+          {editId && (
+            <div className="card" style={{ marginTop: 12 }}>
+              <div className="card-header">
+                <div className="card-title">Edit affiliate</div>
+                <button
+                  onClick={() => setEditId(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: 18,
+                    color: '#94a3b8',
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label
+                    style={{ display: 'block', fontSize: 11, color: '#94a3b8', marginBottom: 4 }}
+                  >
+                    Custom commission % (overrides tier)
+                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="range"
+                      min={1}
+                      max={30}
+                      value={parseFloat(editForm.customCommissionPct) || 8}
+                      onChange={e =>
+                        setEditForm(f => ({ ...f, customCommissionPct: e.target.value }))
+                      }
+                      style={{ flex: 1 }}
+                    />
+                    <span style={{ fontSize: 13, fontWeight: 600, minWidth: 32 }}>
+                      {editForm.customCommissionPct || 8}%
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label
+                    style={{ display: 'block', fontSize: 11, color: '#94a3b8', marginBottom: 4 }}
+                  >
+                    Custom buyer discount % (overrides global)
+                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="range"
+                      min={0}
+                      max={50}
+                      value={parseFloat(editForm.customDiscountPct) || 15}
+                      onChange={e =>
+                        setEditForm(f => ({ ...f, customDiscountPct: e.target.value }))
+                      }
+                      style={{ flex: 1 }}
+                    />
+                    <span style={{ fontSize: 13, fontWeight: 600, minWidth: 32 }}>
+                      {editForm.customDiscountPct || 15}%
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label
+                    style={{ display: 'block', fontSize: 11, color: '#94a3b8', marginBottom: 4 }}
+                  >
+                    Override promo code
+                  </label>
+                  <input
+                    value={editForm.promoCode}
+                    onChange={e =>
+                      setEditForm(f => ({
+                        ...f,
+                        promoCode: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''),
+                      }))
+                    }
+                    style={{
+                      width: '100%',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 6,
+                      padding: '7px 10px',
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{ display: 'block', fontSize: 11, color: '#94a3b8', marginBottom: 4 }}
+                  >
+                    Status
+                  </label>
+                  <select
+                    value={editForm.status}
+                    onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 6,
+                      padding: '7px 10px',
+                      fontSize: 12,
+                      outline: 'none',
+                      background: '#fff',
+                    }}
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="PAUSED">Paused</option>
+                    <option value="BANNED">Banned</option>
+                  </select>
+                </div>
+                <div>
+                  <label
+                    style={{ display: 'block', fontSize: 11, color: '#94a3b8', marginBottom: 4 }}
+                  >
+                    Admin note
+                  </label>
+                  <input
+                    value={editForm.adminNote}
+                    onChange={e => setEditForm(f => ({ ...f, adminNote: e.target.value }))}
+                    placeholder="Internal note..."
+                    style={{
+                      width: '100%',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 6,
+                      padding: '7px 10px',
+                      fontSize: 12,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <button
+                  onClick={saveEdit}
+                  style={{
+                    padding: '7px 18px',
+                    background: '#534AB7',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Save changes
+                </button>
+                <button
+                  onClick={() => setEditId(null)}
+                  style={{
+                    padding: '7px 18px',
+                    background: 'none',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    color: '#64748b',
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Pending Applications ── */}
+      {panel === 'pending' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {pending.length === 0 && (
+            <div style={{ padding: 40, textAlign: 'center', fontSize: 12, color: '#94a3b8' }}>
+              Queue clear. No pending applications.
+            </div>
+          )}
+          {pending.map(a => (
+            <div key={a.id} className="card" style={{ marginBottom: 0 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      background: '#EEEDFE',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: '#534AB7',
+                    }}
+                  >
+                    {(a.user?.name ?? 'U').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{a.user?.name}</div>
+                    <div style={{ fontSize: 11, color: '#94a3b8' }}>
+                      {a.user?.email} · Applied {new Date(a.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+                <span
+                  style={{
+                    fontSize: 10,
+                    padding: '3px 8px',
+                    borderRadius: 20,
+                    background: '#FAEEDA',
+                    color: '#633806',
+                    fontWeight: 600,
+                  }}
+                >
+                  Pending review
+                </span>
+              </div>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr',
+                  gap: 10,
+                  marginTop: 12,
+                  fontSize: 12,
+                }}
+              >
+                <div>
+                  <span style={{ color: '#94a3b8', display: 'block', marginBottom: 2 }}>
+                    Requested code
+                  </span>
+                  <strong style={{ fontFamily: 'monospace' }}>{a.promoCode}</strong>
+                </div>
+                <div>
+                  <span style={{ color: '#94a3b8', display: 'block', marginBottom: 2 }}>
+                    Platform
+                  </span>
+                  <strong>
+                    {a.platform ?? '-'}
+                    {a.platformFollowers
+                      ? ` · ${a.platformFollowers.toLocaleString()} followers`
+                      : ''}
+                  </strong>
+                </div>
+                <div>
+                  <span style={{ color: '#94a3b8', display: 'block', marginBottom: 2 }}>
+                    Category focus
+                  </span>
+                  <strong>{a.categoryFocus ?? '-'}</strong>
+                </div>
+              </div>
+              {a.applicationNote && (
+                <div
+                  style={{
+                    marginTop: 8,
+                    padding: '8px 10px',
+                    background: '#f8fafc',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    color: '#64748b',
+                  }}
+                >
+                  &quot;{a.applicationNote}&quot;
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <button
+                  onClick={() => approve(a.id)}
+                  style={{
+                    padding: '7px 16px',
+                    background: '#1D9E75',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={() => reject(a.id)}
+                  style={{
+                    padding: '7px 16px',
+                    background: 'transparent',
+                    border: '1px solid #E24B4A',
+                    color: '#E24B4A',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Reject
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Payouts ── */}
+      {panel === 'payouts' && (
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title">Affiliate payout requests</div>
+          </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 100px 110px 80px 100px',
+              gap: 8,
+              fontSize: 11,
+              color: '#94a3b8',
+              padding: '6px 0',
+              borderBottom: '1px solid rgba(0,0,0,0.06)',
+              fontWeight: 600,
+            }}
+          >
+            <span>Affiliate</span>
+            <span>Amount</span>
+            <span>Method</span>
+            <span>Status</span>
+            <span>Action</span>
+          </div>
+          {payouts
+            .filter(p => p.status === 'REQUESTED' || p.status === 'PROCESSING')
+            .map(p => (
+              <div
+                key={p.id}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 100px 110px 80px 100px',
+                  gap: 8,
+                  padding: '10px 0',
+                  borderBottom: '1px solid rgba(0,0,0,0.05)',
+                  alignItems: 'center',
+                  fontSize: 12,
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 500 }}>{p.affiliateName}</div>
+                  <div style={{ fontSize: 10, color: '#94a3b8' }}>{p.promoCode}</div>
+                </div>
+                <span style={{ color: '#d97706', fontWeight: 600 }}>
+                  {Number(p.amountEgp).toLocaleString()} EGP
+                </span>
+                <span>{p.method?.replace(/_/g, ' ')}</span>
+                <span className="badge b-pending">{p.status}</span>
+                <button onClick={() => markPayoutPaid(p.id)} className="action-btn">
+                  Mark paid
+                </button>
+              </div>
+            ))}
+          {payouts.filter(p => p.status === 'REQUESTED' || p.status === 'PROCESSING').length ===
+            0 && (
+            <div style={{ padding: '24px', textAlign: 'center', fontSize: 12, color: '#94a3b8' }}>
+              No pending payouts.
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface NavItemProps {
   active: boolean;

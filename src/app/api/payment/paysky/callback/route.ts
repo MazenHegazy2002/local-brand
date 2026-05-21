@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
 import { getPaySkyConfig, verifyCallbackHash } from '@/lib/paysky';
+import { createOrderForUser } from '@/lib/order-creator';
 
 /**
  * POST /api/payment/paysky/callback
@@ -34,10 +35,21 @@ const callbackSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    // We deliberately do NOT require an active session here. PaySky callbacks
+    // come back from a popup / redirect that may have lost the session cookie
+    // depending on browser settings (Safari / mobile WebViews are common
+    // offenders). The pending payment record stored in Redis at /api/payment/paysky
+    // already carries the userId, and PaySky's SecureHash (verified below)
+    // proves the merchant ref came from us — so the cached userId is the
+    // safer trust root than a session that may have evaporated.
+    //
+    // The session is still consulted opportunistically as a defence-in-depth
+    // check: if the user IS logged in, we verify their userId matches the
+    // pending owner and refuse if not. If they're not logged in we trust
+    // the SecureHash + pending record alone.
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    const sessionUserId = session ? (session.user as SessionUser).id : null;
 
-    const userId = (session.user as SessionUser).id;
     const body = await req.json();
     const parsed = callbackSchema.safeParse(body);
     if (!parsed.success) {
@@ -73,7 +85,8 @@ export async function POST(req: Request) {
     if (parsed.data.NetworkReference) verifiable.NetworkReference = parsed.data.NetworkReference;
     if (parsed.data.PayerAccount) verifiable.PayerAccount = parsed.data.PayerAccount;
     if (parsed.data.PayerName) verifiable.PayerName = parsed.data.PayerName;
-    if (parsed.data.ProviderSchemeName) verifiable.ProviderSchemeName = parsed.data.ProviderSchemeName;
+    if (parsed.data.ProviderSchemeName)
+      verifiable.ProviderSchemeName = parsed.data.ProviderSchemeName;
     if (parsed.data.SystemReference) verifiable.SystemReference = parsed.data.SystemReference;
 
     const hashValid = verifyCallbackHash(config.merchantSecret, verifiable);
@@ -113,22 +126,25 @@ export async function POST(req: Request) {
       cartItems: Array<{ id: string; qty: number }>;
       addressInfo?: { id?: string };
       couponId?: string;
+      promoCode?: string;
     };
 
-    if (pending.userId !== userId) {
+    // Defence-in-depth: if a session IS present, refuse the callback when it
+    // belongs to a different user than the one in the pending record.
+    if (sessionUserId && sessionUserId !== pending.userId) {
       return NextResponse.json(
         { message: 'Payment session does not belong to this user' },
         { status: 403 }
       );
     }
 
-    // 4. Create the order via the canonical createOrder flow, then mark it PAID.
-    const { createOrder } = await import('@/app/actions/orders');
-    const result = await createOrder({
-      items: pending.cartItems.map((c) => ({ variantId: c.id, quantity: c.qty })),
+    // 4. Create the order via createOrderForUser (the session-less helper).
+    const result = await createOrderForUser(pending.userId, {
+      items: pending.cartItems.map(c => ({ variantId: c.id, quantity: c.qty })),
       addressId: pending.addressInfo?.id,
       paymentMethod: 'PAYSKY',
       couponCode: pending.couponId,
+      promoCode: pending.promoCode,
     });
 
     if (!result.success || !result.orderId) {

@@ -1,14 +1,14 @@
-import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
-import Link from "next/link";
-import Image from "next/image";
-import { getHomepageData } from "@/app/actions/seller";
-import { en } from "@/lib/i18n/dicts";
-import { getDictionary } from "@/lib/i18n/server";
-import WishlistButton from "@/components/WishlistButton";
-import { Suspense } from "react";
-import { Product, ProductImage } from "@/types";
-import PromoBanner from "@/components/PromoBanner";
+import Navbar from '@/components/Navbar';
+import Hero from '@/components/Hero';
+import Link from 'next/link';
+import Image from 'next/image';
+import { getHomepageData } from '@/app/actions/seller';
+import { en } from '@/lib/i18n/dicts';
+import { getDictionary } from '@/lib/i18n/server';
+import WishlistButton from '@/components/WishlistButton';
+import { Suspense } from 'react';
+import { Product, ProductImage } from '@/types';
+import PromoBanner from '@/components/PromoBanner';
 
 interface HomePageData {
   categories: never[];
@@ -24,7 +24,7 @@ function fakeDiscount() {
 }
 
 function fakeSave(base: number, pct: number) {
-  return Math.round(base * Math.abs(pct) / 100);
+  return Math.round((base * Math.abs(pct)) / 100);
 }
 
 function fakeRating() {
@@ -101,8 +101,18 @@ function ProductCard({
           <span className="pc-reviews">· {reviews} reviews</span>
         </div>
         <Link href={`/product/${id}`} className="pc-btn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
           Tomorrow
         </Link>
@@ -133,18 +143,25 @@ function ProductSection({
   return (
     <section className="ps-section">
       <div className="ps-header">
-        <h2 className="ps-title"><span>{emoji}</span> {title}</h2>
-        <Link href={linkHref} className="ps-link">{linkLabel} →</Link>
+        <h2 className="ps-title">
+          <span>{emoji}</span> {title}
+        </h2>
+        <Link href={linkHref} className="ps-link">
+          {linkLabel} →
+        </Link>
       </div>
       <div className="ps-grid">
-        {products.slice(0, 6).map((p) => (
+        {products.slice(0, 6).map(p => (
           <ProductCard
             key={p.id}
             id={p.id}
             title={p.title}
             brand={dict.Brandy}
             price={p.basePrice}
-            img={p.images[0]?.url || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop"}
+            img={
+              p.images[0]?.url ||
+              'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop'
+            }
           />
         ))}
       </div>
@@ -164,7 +181,7 @@ export default async function Home() {
     const d = await getDictionary();
     if (d) dict = d;
   } catch (e) {
-    console.error("Critical SSR Error:", e);
+    console.error('Critical SSR Error:', e);
   }
 
   const { featuredProducts, recentProducts } = homeData;
@@ -175,8 +192,14 @@ export default async function Home() {
   const recommended = [...recentProducts, ...featuredProducts].slice(0, 6);
 
   return (
-    <main id="main-content" className="min-h-screen font-sans" style={{ background: "#f6f6f7" }}>
+    <main id="main-content" className="min-h-screen font-sans" style={{ background: '#f6f6f7' }}>
       <PromoBanner />
+      <PromoBanner
+        id="affiliate-program"
+        message="💰 Earn up to 12% commission sharing your promo code — join our affiliate program!"
+        ctaLabel="Apply now — it's free"
+        ctaHref="/sell"
+      />
       <Navbar />
       <Hero />
 

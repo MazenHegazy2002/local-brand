@@ -1,108 +1,130 @@
-'use client';
+import Link from 'next/link';
+import Image from 'next/image';
+import { prisma } from '@/lib/prisma';
+import HeroSlider, { type HeroSlide } from './HeroSlider';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useLanguage } from "@/providers/LanguageContext";
-import type { DictKey } from "@/lib/i18n/dicts";
-
-const HERO_IMAGES = [
-  "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=2500&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=2500&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?q=80&w=2500&auto=format&fit=crop"
+// Hardcoded fallback shown when there are no active homepage banners in the
+// database. Titles/subtitles are i18n dictionary keys so default copy
+// translates correctly.
+const FALLBACK_SLIDES: HeroSlide[] = [
+  {
+    imageUrl:
+      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=2500&auto=format&fit=crop',
+    title: 'HeroTitle',
+    subtitle: 'HeroSubtitle',
+    linkUrl: '/shop',
+    ctaLabel: null,
+    isI18nKey: true,
+  },
+  {
+    imageUrl:
+      'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=2500&auto=format&fit=crop',
+    title: 'HeroTitle',
+    subtitle: 'HeroSubtitle',
+    linkUrl: '/shop',
+    ctaLabel: null,
+    isI18nKey: true,
+  },
+  {
+    imageUrl:
+      'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?q=80&w=2500&auto=format&fit=crop',
+    title: 'HeroTitle',
+    subtitle: 'HeroSubtitle',
+    linkUrl: '/shop',
+    ctaLabel: null,
+    isI18nKey: true,
+  },
 ];
 
-export default function Hero() {
-  const { t } = useLanguage();
-  const [currentSlide, setCurrentSlide] = useState(0);
+async function loadHeroSlides(): Promise<HeroSlide[]> {
+  try {
+    const now = new Date();
+    const banners = await prisma.homepageBanner.findMany({
+      where: {
+        isActive: true,
+        OR: [{ startsAt: null }, { startsAt: { lte: now } }],
+        AND: [{ OR: [{ endsAt: null }, { endsAt: { gte: now } }] }],
+      },
+      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
+      select: {
+        title: true,
+        subtitle: true,
+        imageUrl: true,
+        linkUrl: true,
+        ctaLabel: true,
+      },
+    });
+    if (banners.length === 0) return FALLBACK_SLIDES;
+    return banners.map(b => ({
+      imageUrl: b.imageUrl,
+      title: b.title,
+      subtitle: b.subtitle,
+      linkUrl: b.linkUrl,
+      ctaLabel: b.ctaLabel,
+    }));
+  } catch (err) {
+    // DB unavailable during build / dev — just render the hardcoded set.
+    console.error('[Hero] failed to load banners:', err);
+    return FALLBACK_SLIDES;
+  }
+}
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
+export default async function Hero() {
+  const slides = await loadHeroSlides();
 
   return (
     <section className="bg-[#f5f3f0] py-6 pb-2">
       <div className="container mx-auto px-4">
-        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-auto lg:h-[480px]">
-          
-          {/* Main Hero Card (Left) with Slider */}
+          {/* Main hero — slider sourced from CMS banners or fallback set. */}
           <div className="relative w-full h-[280px] sm:h-[360px] lg:h-[480px] lg:col-span-2 rounded-xl overflow-hidden bg-[#032094]">
-            {HERO_IMAGES.map((src, idx) => (
-              <Image 
-                key={src}
-                src={src} 
-                alt={`Hero Background ${idx + 1}`} 
-                fill 
-                style={{ objectFit: "cover" }} 
-                className={`z-0 mix-blend-multiply transition-opacity duration-1000 ${currentSlide === idx ? 'opacity-100' : 'opacity-0'}`}
-                priority={idx === 0}
-              />
-            ))}
-            {/* Deep Blue Overlay */}
-            <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#032094]/90 to-[#0d5eed]/70 mix-blend-multiply pointer-events-none" />
-            <div className="absolute inset-0 z-20 bg-gradient-to-tr from-[#021051] via-transparent to-transparent pointer-events-none" />
-            
-            {/* Slider Dots */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex gap-2">
-              {HERO_IMAGES.map((_, idx) => (
-                <button 
-                  key={idx}
-                  onClick={() => setCurrentSlide(idx)}
-                  className={`w-2.5 h-2.5 rounded-full transition-all ${currentSlide === idx ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/80'}`}
-                />
-              ))}
-            </div>
-            
-            {/* Content */}
-            <div className="absolute inset-0 z-30 flex flex-col justify-center px-5 sm:px-8 md:px-14 text-white pointer-events-none">
-              <div className="pointer-events-auto">
-                <span className="text-[10px] sm:text-[11px] md:text-xs tracking-[0.1em] font-medium text-white/80 mb-2 sm:mb-3 uppercase block">
-                  {t("HeroSubtitle") || "Premium Collection"}
-                </span>
-                <h1 className="text-3xl sm:text-4xl md:text-[56px] lg:text-[64px] font-bold tracking-tight mb-4 sm:mb-6 md:mb-8 max-w-xl leading-[1.05]">
-                  {t("HeroTitle") || "Discover Authentic Brands"}
-                </h1>
-                
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="/shop" className="bg-[#fa9f00] hover:bg-[#e08e00] text-[#4d2800] font-black tracking-wide py-3 px-8 rounded-lg transition-colors text-center text-sm">
-                    {t("ShopNow") || "Shop Now"}
-                  </Link>
-                  <Link href="/lookbook" className="bg-[#1e3b8a] hover:bg-[#1e3b8a]/80 text-white font-bold tracking-wide py-3 px-8 rounded-lg transition-colors text-center text-sm shadow-inner">
-                    {t("ExploreLookbook") || "Explore Lookbook"}
-                  </Link>
-                </div>
-              </div>
-            </div>
+            <HeroSlider slides={slides} />
           </div>
 
-          {/* Right Side Stacked Cards */}
+          {/* Right-hand stacked cards — static curated entry points to category
+              pages. Easier to leave hardcoded than to mix into the CMS for now. */}
           <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:col-span-1 h-[180px] sm:h-[220px] lg:h-[480px]">
-            {/* Top Right Card */}
-            <Link href="/shoes" className="relative flex-1 rounded-xl overflow-hidden group block cursor-pointer">
-              <Image src="https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=80&w=1000&auto=format&fit=crop" fill style={{ objectFit: "cover" }} alt="Sneaker" className="z-0 grayscale contrast-125" />
+            <Link
+              href="/shoes"
+              className="relative flex-1 rounded-xl overflow-hidden group block cursor-pointer"
+            >
+              <Image
+                src="https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=80&w=1000&auto=format&fit=crop"
+                fill
+                style={{ objectFit: 'cover' }}
+                alt="Sneaker"
+                className="z-0 grayscale contrast-125"
+              />
               <div className="absolute inset-0 z-10 bg-gradient-to-t from-gray-900/90 to-transparent" />
               <div className="absolute bottom-0 left-0 p-8 z-20 w-full">
-                <h3 className="text-white text-2xl font-bold mb-1 tracking-tight">{t("NextGenFootwear" as DictKey) || "Next-Gen Footwear"}</h3>
+                <h3 className="text-white text-2xl font-bold mb-1 tracking-tight">
+                  Next-Gen Footwear
+                </h3>
                 <span className="text-white/70 text-sm font-medium">Up to 40% Off Brands</span>
               </div>
             </Link>
 
-            {/* Bottom Right Card */}
-            <Link href="/watches" className="relative flex-1 rounded-xl overflow-hidden group block cursor-pointer">
-              <Image src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop" fill style={{ objectFit: "cover" }} alt="Watch" className="z-0 object-center" />
+            <Link
+              href="/watches"
+              className="relative flex-1 rounded-xl overflow-hidden group block cursor-pointer"
+            >
+              <Image
+                src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop"
+                fill
+                style={{ objectFit: 'cover' }}
+                alt="Watch"
+                className="z-0 object-center"
+              />
               <div className="absolute inset-0 z-10 bg-[#3a2c1f]/50 mix-blend-multiply" />
               <div className="absolute inset-0 z-15 bg-gradient-to-t from-[#2a1a0f] to-transparent" />
               <div className="absolute bottom-0 left-0 p-8 z-20 w-full">
-                <h3 className="text-white text-2xl font-bold mb-1 tracking-tight">{t("TimelessDesign" as DictKey) || "Timeless Design"}</h3>
+                <h3 className="text-white text-2xl font-bold mb-1 tracking-tight">
+                  Timeless Design
+                </h3>
                 <span className="text-white/70 text-sm font-medium">Curated Accessories</span>
               </div>
             </Link>
           </div>
-
         </div>
       </div>
     </section>

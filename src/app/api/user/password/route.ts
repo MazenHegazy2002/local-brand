@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { BCRYPT_COST } from '@/lib/constants';
 import type { SessionUser } from '@/types';
 
 // Sets / updates the password on the *current* user's account. Used by the
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: parsed.error.errors[0].message }, { status: 400 });
     }
 
-    const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+    const passwordHash = await bcrypt.hash(parsed.data.password, BCRYPT_COST);
     await prisma.user.update({
       where: { id: userId },
       data: { passwordHash },

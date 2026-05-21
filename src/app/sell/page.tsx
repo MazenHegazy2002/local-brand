@@ -1,78 +1,581 @@
-import Navbar from "@/components/Navbar";
-import Link from "next/link";
+'use client';
+// src/app/sell/page.tsx
+// Public "Become an Affiliate" landing page + application form
+
+import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+
+const PLATFORMS = [
+  'Instagram',
+  'TikTok',
+  'YouTube',
+  'Facebook',
+  'Twitter/X',
+  'Blog/Website',
+  'Other',
+];
+const CATEGORIES = [
+  'Fashion & Clothing',
+  'Electronics',
+  'Beauty & Skincare',
+  'Home & Furniture',
+  'Food & Groceries',
+  'Sports & Fitness',
+  'Kids & Toys',
+  'Health & Pharma',
+  'Jewelry',
+  'Other',
+];
+const PAYOUT_METHODS = [
+  { value: 'VODAFONE_CASH', label: 'Vodafone Cash' },
+  { value: 'ORANGE_MONEY', label: 'Orange Money' },
+  { value: 'ETISALAT_CASH', label: 'Etisalat Cash' },
+  { value: 'INSTAPAY', label: 'InstaPay' },
+  { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
+];
 
 export default function SellPage() {
-  return (
-    <main className="min-h-screen bg-[#f9f8f6]">
-      <Navbar />
+  const { data: session } = useSession();
+  const [step, setStep] = useState<'landing' | 'form' | 'success'>('landing');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({
+    requestedCode: '',
+    platform: '',
+    platformFollowers: '',
+    categoryFocus: '',
+    applicationNote: '',
+    payoutMethod: '',
+    payoutDetails: '',
+  });
+  const [result, setResult] = useState<{ promoCode: string } | null>(null);
 
-      {/* Hero Section */}
-      <section className="bg-[#1e3b8a] text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-6">
-            Grow Your Brand<br />
-            <span className="text-[#facc15]">With Brandy</span>
-          </h1>
-          <p className="text-lg text-white/70 max-w-xl mx-auto mb-10">
-            Join thousands of Egyptian sellers reaching millions of customers. 
-            Free to join. Keep 85% of every sale.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register?role=seller" className="bg-[#facc15] text-[#1e3b8a] font-black py-3 px-8 rounded-lg text-sm hover:bg-yellow-300 transition-colors">
-              Start Selling — Free
-            </Link>
-            <Link href="/login" className="bg-white/10 border border-white/30 text-white font-bold py-3 px-8 rounded-lg text-sm hover:bg-white/20 transition-colors">
-              Already a seller? Sign in →
-            </Link>
+  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/affiliate/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestedCode: form.requestedCode.toUpperCase() || undefined,
+          platform: form.platform || undefined,
+          platformFollowers: form.platformFollowers ? parseInt(form.platformFollowers) : undefined,
+          categoryFocus: form.categoryFocus || undefined,
+          applicationNote: form.applicationNote || undefined,
+          payoutMethod: form.payoutMethod || undefined,
+          payoutDetails: form.payoutDetails || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Something went wrong.');
+      setResult({ promoCode: data.promoCode });
+      setStep('success');
+    } catch (err: unknown) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (step === 'success' && result) {
+    return (
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '64px 16px', textAlign: 'center' }}>
+        <div
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: '50%',
+            background: '#E1F5EE',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 24px',
+          }}
+        >
+          <svg
+            width="28"
+            height="28"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="#085041"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>Application submitted!</h1>
+        <p style={{ color: '#64748b', marginBottom: 24, lineHeight: 1.6 }}>
+          Your requested promo code is{' '}
+          <strong style={{ fontFamily: 'monospace', color: '#1e3b8a' }}>{result.promoCode}</strong>.
+          We review applications within 24–48 hours and will email you once approved.
+        </p>
+        <Link
+          href="/"
+          style={{
+            display: 'inline-block',
+            padding: '12px 28px',
+            background: '#1e3b8a',
+            color: '#fff',
+            borderRadius: 10,
+            fontWeight: 500,
+            textDecoration: 'none',
+          }}
+        >
+          Back to home
+        </Link>
+      </div>
+    );
+  }
+
+  if (step === 'form') {
+    return (
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '48px 16px' }}>
+        <button
+          onClick={() => setStep('landing')}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#64748b',
+            fontSize: 14,
+            marginBottom: 24,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+          }}
+        >
+          ← Back
+        </button>
+        <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 4 }}>Affiliate application</h1>
+        <p style={{ color: '#64748b', fontSize: 14, marginBottom: 32 }}>
+          Takes 2 minutes. We review within 48 hours.
+        </p>
+
+        {!session && (
+          <div
+            style={{
+              background: '#FFFBEB',
+              border: '1px solid #FDE68A',
+              borderRadius: 10,
+              padding: '12px 16px',
+              marginBottom: 24,
+              fontSize: 14,
+              color: '#92400E',
+            }}
+          >
+            You need to{' '}
+            <Link href="/login?callbackUrl=/sell" style={{ fontWeight: 600, color: '#92400E' }}>
+              sign in
+            </Link>{' '}
+            before applying.
           </div>
-        </div>
-      </section>
+        )}
 
-      {/* Stats bar */}
-      <section className="bg-[#eef3f7] border-y border-gray-200">
-        <div className="container mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          {[
-            { value: '18,000+', label: 'Active buyers' },
-            { value: '284', label: 'Verified sellers' },
-            { value: '1.2M EGP', label: 'Monthly GMV' },
-            { value: '85%', label: 'Seller keeps' },
-          ].map((s, i) => (
-            <div key={i}>
-              <div className="text-2xl font-black text-[#1e3b8a]">{s.value}</div>
-              <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide font-semibold">{s.label}</div>
+        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
+              Requested promo code{' '}
+              <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. AHMED15"
+              value={form.requestedCode}
+              onChange={e =>
+                set('requestedCode', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))
+              }
+              maxLength={16}
+              style={{
+                width: '100%',
+                border: '1px solid #e2e8f0',
+                borderRadius: 8,
+                padding: '10px 14px',
+                fontSize: 14,
+                fontFamily: 'monospace',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+            <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>
+              Leave blank and we generate one from your name
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
+                Main platform
+              </label>
+              <select
+                value={form.platform}
+                onChange={e => set('platform', e.target.value)}
+                style={{
+                  width: '100%',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 8,
+                  padding: '10px 14px',
+                  fontSize: 14,
+                  outline: 'none',
+                  background: '#fff',
+                }}
+              >
+                <option value="">Select platform</option>
+                {PLATFORMS.map(p => (
+                  <option key={p}>{p}</option>
+                ))}
+              </select>
             </div>
-          ))}
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
+                Followers / subscribers
+              </label>
+              <input
+                type="number"
+                min="0"
+                placeholder="e.g. 42000"
+                value={form.platformFollowers}
+                onChange={e => set('platformFollowers', e.target.value)}
+                style={{
+                  width: '100%',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 8,
+                  padding: '10px 14px',
+                  fontSize: 14,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
+              Category focus
+            </label>
+            <select
+              value={form.categoryFocus}
+              onChange={e => set('categoryFocus', e.target.value)}
+              style={{
+                width: '100%',
+                border: '1px solid #e2e8f0',
+                borderRadius: 8,
+                padding: '10px 14px',
+                fontSize: 14,
+                outline: 'none',
+                background: '#fff',
+              }}
+            >
+              <option value="">Select category</option>
+              {CATEGORIES.map(c => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
+              Tell us about your audience{' '}
+              <span style={{ color: '#94a3b8', fontWeight: 400 }}>(optional)</span>
+            </label>
+            <textarea
+              rows={3}
+              value={form.applicationNote}
+              onChange={e => set('applicationNote', e.target.value)}
+              maxLength={1000}
+              placeholder="Where you post, what you cover, why you'd be a great fit..."
+              style={{
+                width: '100%',
+                border: '1px solid #e2e8f0',
+                borderRadius: 8,
+                padding: '10px 14px',
+                fontSize: 14,
+                outline: 'none',
+                resize: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
+          <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 20 }}>
+            <p style={{ fontSize: 14, fontWeight: 500, marginBottom: 12 }}>Payout preferences</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div>
+                <label
+                  style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6 }}
+                >
+                  Method
+                </label>
+                <select
+                  value={form.payoutMethod}
+                  onChange={e => set('payoutMethod', e.target.value)}
+                  style={{
+                    width: '100%',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 8,
+                    padding: '10px 14px',
+                    fontSize: 14,
+                    outline: 'none',
+                    background: '#fff',
+                  }}
+                >
+                  <option value="">Select method</option>
+                  {PAYOUT_METHODS.map(m => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label
+                  style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 6 }}
+                >
+                  Phone number / IBAN
+                </label>
+                <input
+                  type="text"
+                  value={form.payoutDetails}
+                  onChange={e => set('payoutDetails', e.target.value)}
+                  placeholder="01xxxxxxxxx"
+                  style={{
+                    width: '100%',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 8,
+                    padding: '10px 14px',
+                    fontSize: 14,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <div
+              style={{
+                background: '#FEF2F2',
+                border: '1px solid #FECACA',
+                borderRadius: 8,
+                padding: '10px 14px',
+                fontSize: 13,
+                color: '#B91C1C',
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading || !session}
+            style={{
+              padding: '14px',
+              background: '#1e3b8a',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 10,
+              fontWeight: 600,
+              fontSize: 14,
+              cursor: 'pointer',
+              opacity: loading || !session ? 0.6 : 1,
+            }}
+          >
+            {loading ? 'Submitting...' : 'Submit application'}
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  // ─── Landing page ───────────────────────────────────────────────────────────
+  return (
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '64px 16px' }}>
+      {/* Hero */}
+      <div style={{ textAlign: 'center', marginBottom: 64 }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            background: '#EFF6FF',
+            color: '#1e3b8a',
+            borderRadius: 20,
+            padding: '6px 16px',
+            fontSize: 13,
+            fontWeight: 500,
+            marginBottom: 24,
+          }}
+        >
+          ✨ Earn money by sharing
         </div>
-      </section>
+        <h1
+          style={{
+            fontSize: 42,
+            fontWeight: 700,
+            lineHeight: 1.2,
+            marginBottom: 16,
+            color: '#0f172a',
+          }}
+        >
+          Join the Affiliate Program
+        </h1>
+        <p
+          style={{
+            fontSize: 18,
+            color: '#64748b',
+            maxWidth: 560,
+            margin: '0 auto 32px',
+            lineHeight: 1.6,
+          }}
+        >
+          Share your unique promo code, earn commission on every sale, and give your audience an
+          exclusive discount.
+        </p>
+        <button
+          id="sell-apply-btn"
+          onClick={() => setStep('form')}
+          style={{
+            display: 'inline-block',
+            padding: '16px 36px',
+            background: '#1e3b8a',
+            color: '#fff',
+            borderRadius: 14,
+            fontWeight: 600,
+            fontSize: 16,
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 4px 24px rgba(30,59,138,0.25)',
+          }}
+        >
+          Apply now — it's free
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 16,
+          marginBottom: 64,
+        }}
+      >
+        {[
+          { label: 'Commission', value: '5–12%', sub: 'per confirmed sale' },
+          { label: 'Buyer discount', value: 'Up to 30%', sub: 'applied at checkout' },
+          { label: 'Referral bonus', value: '50 EGP', sub: 'when someone joins via your link' },
+          { label: 'Joiner bonus', value: '30 EGP', sub: 'store credit when you join via a link' },
+        ].map(stat => (
+          <div
+            key={stat.label}
+            style={{
+              background: '#F8FAFF',
+              border: '1px solid #EEF2FF',
+              borderRadius: 16,
+              padding: '20px',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: 26, fontWeight: 700, color: '#1e3b8a', marginBottom: 4 }}>
+              {stat.value}
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginBottom: 2 }}>
+              {stat.label}
+            </div>
+            <div style={{ fontSize: 12, color: '#94a3b8' }}>{stat.sub}</div>
+          </div>
+        ))}
+      </div>
 
       {/* How it works */}
-      <section className="container mx-auto px-4 py-16">
-        <h2 className="text-2xl font-black text-gray-900 text-center mb-12">How it works</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
-          {[
-            { num: '01', title: 'Register', desc: 'Create your seller account and submit your store for approval — takes 2 minutes.' },
-            { num: '02', title: 'List Products', desc: 'Upload your products with photos, pricing, and variants. Go live instantly.' },
-            { num: '03', title: 'Get Paid', desc: 'Receive weekly payouts directly to your bank. We handle the logistics.' },
-          ].map((step, i) => (
-            <div key={i} className="text-center">
-              <div className="w-12 h-12 rounded-full bg-[#1e3b8a] text-[#facc15] font-black text-lg flex items-center justify-center mx-auto mb-4">{step.num}</div>
-              <h3 className="font-bold text-gray-900 mb-2">{step.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 20,
+          marginBottom: 64,
+        }}
+      >
+        {[
+          {
+            step: '1',
+            title: 'Apply in 2 minutes',
+            desc: 'Tell us about your platform and audience. We review within 48 hours.',
+          },
+          {
+            step: '2',
+            title: 'Get your promo code',
+            desc: 'Once approved you get a personal code (e.g. AHMED15) and a referral link.',
+          },
+          {
+            step: '3',
+            title: 'Earn every sale',
+            desc: 'Every buyer who uses your code earns you commission. Get bonuses for new affiliates you refer.',
+          },
+        ].map(item => (
+          <div
+            key={item.step}
+            style={{ border: '1px solid #e2e8f0', borderRadius: 16, padding: '24px' }}
+          >
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: '#EFF6FF',
+                color: '#1e3b8a',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 18,
+                marginBottom: 16,
+              }}
+            >
+              {item.step}
             </div>
-          ))}
-        </div>
-      </section>
+            <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 8 }}>{item.title}</h3>
+            <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.6 }}>{item.desc}</p>
+          </div>
+        ))}
+      </div>
 
       {/* CTA */}
-      <section className="bg-[#1e3b8a] text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-black mb-4">Ready to start selling?</h2>
-          <p className="text-white/60 mb-8">Join Egypt&apos;s fastest-growing marketplace for local sellers.</p>
-          <Link href="/register?role=seller" className="inline-block bg-[#facc15] text-[#1e3b8a] font-black py-3 px-10 rounded-lg text-sm hover:bg-yellow-300 transition-colors">
-            Apply to Join — Free
-          </Link>
-        </div>
-      </section>
-    </main>
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #1e3b8a 0%, #3b5cc4 100%)',
+          borderRadius: 20,
+          padding: '48px 40px',
+          textAlign: 'center',
+          color: '#fff',
+        }}
+      >
+        <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 10 }}>Ready to start earning?</h2>
+        <p style={{ color: 'rgba(255,255,255,0.75)', marginBottom: 28, fontSize: 16 }}>
+          Join hundreds of Egyptian affiliates already earning on Local Brand.
+        </p>
+        <button
+          onClick={() => setStep('form')}
+          style={{
+            background: '#fff',
+            color: '#1e3b8a',
+            border: 'none',
+            borderRadius: 12,
+            padding: '14px 32px',
+            fontWeight: 700,
+            fontSize: 15,
+            cursor: 'pointer',
+          }}
+        >
+          Apply for free
+        </button>
+      </div>
+    </div>
   );
 }

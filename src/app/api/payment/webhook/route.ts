@@ -2,9 +2,17 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type Stripe from 'stripe';
 import { STRIPE_API_VERSION } from '@/lib/constants';
+import { createOrderForUser } from '@/lib/order-creator';
 
-// This webhook endpoint receives Stripe confirmation events
-// Set STRIPE_WEBHOOK_SECRET in .env to enable signature validation
+// Stripe webhook receiver. Verifies signature in live mode (when both
+// STRIPE_WEBHOOK_SECRET and the `stripe-signature` header are present),
+// otherwise parses the body directly (dev mode).
+//
+// On `payment_intent.succeeded` we look up the cached pending cart in Redis
+// (key: `stripe:pending:<idempotencyKey>`, written by /api/payment/intent),
+// run it through the canonical createOrder action, and flip the order to
+// PAID + CONFIRMED. The previous version read `cart:${userId}` which nothing
+// ever wrote — live Stripe payments silently failed to create the order.
 export async function POST(req: Request) {
   try {
     const body = await req.text();
@@ -14,81 +22,105 @@ export async function POST(req: Request) {
     let event: Stripe.Event;
 
     if (webhookSecret && sig) {
-      // Live mode: validate signature to prevent spoofed webhook calls
       const Stripe = (await import('stripe')).default;
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
         apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
       });
       try {
         event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-      } catch {
+      } catch (err) {
+        console.error('[stripe webhook] signature verification failed:', err);
         return NextResponse.json({ message: 'Invalid signature' }, { status: 400 });
       }
     } else {
-      // Dev mode: parse directly without validation
+      // Dev mode — parse raw body without verification
       event = JSON.parse(body) as Stripe.Event;
     }
 
-    // Handle payment success
     if (event.type === 'payment_intent.succeeded') {
       const intent = event.data.object as Stripe.PaymentIntent;
-      const { userId, idempotencyKey, addressSnapshot } = intent.metadata;
-
-      // Check idempotency - has this already been processed?
-      const existingOrder = await prisma.order.findFirst({
-        where: { idempotencyKey }
-      });
-
-      if (existingOrder) {
+      const idempotencyKey = intent.metadata?.idempotencyKey;
+      if (!idempotencyKey) {
+        console.warn('[stripe webhook] payment_intent.succeeded without idempotencyKey metadata');
         return NextResponse.json({ received: true }, { status: 200 });
       }
 
-      // NOTE: cartItems are stored in Redis at checkout initiation (key: cart:{userId})
-      // Retrieve and create order atomically
-      const { redis } = await import('@/lib/redis');
-      const cartKey = `cart:${userId}`;
-      const cartData = await redis.get(cartKey);
-      
-      if (cartData) {
-        const cartItems = JSON.parse(cartData);
-        const { createOrder } = await import('@/app/actions/orders');
-        const result = await createOrder({
-          items: cartItems,
-          addressId: intent.metadata.addressId,
-          paymentMethod: 'CREDIT_CARD',
-          guestEmail: intent.metadata.guestEmail,
-          couponCode: intent.metadata.couponCode
-        });
-
-        if (result.success && result.orderId) {
-          await prisma.order.update({
-            where: { id: result.orderId },
-            data: { 
-              paymentStatus: 'PAID', 
-              paymentId: intent.id, 
-              status: 'CONFIRMED',
-              idempotencyKey // Ensure idempotencyKey is set on the created order
-            }
-          });
-        }
-        await redis.del(cartKey);
+      // Idempotency — skip if we've already finalized this intent.
+      const existingOrder = await prisma.order.findFirst({
+        where: { idempotencyKey },
+        select: { id: true },
+      });
+      if (existingOrder) {
+        return NextResponse.json({ received: true, alreadyProcessed: true }, { status: 200 });
       }
+
+      const { redis } = await import('@/lib/redis');
+      const pendingKey = `stripe:pending:${idempotencyKey}`;
+      const pendingRaw = await redis.get(pendingKey).catch(() => null);
+      if (!pendingRaw) {
+        console.error(
+          '[stripe webhook] pending cart missing for idempotencyKey',
+          idempotencyKey,
+          '— customer may need to retry checkout'
+        );
+        return NextResponse.json({ received: true, missingPending: true }, { status: 200 });
+      }
+
+      const pending = JSON.parse(pendingRaw) as {
+        userId: string;
+        cartItems: Array<{ id: string; qty: number }>;
+        addressId?: string;
+        couponCode?: string;
+      };
+
+      // Use the session-less helper. Stripe webhooks come from Stripe's
+      // servers and don't carry a user session; the userId in the pending
+      // cart is our trust root after signature verification above.
+      const result = await createOrderForUser(pending.userId, {
+        items: pending.cartItems.map(c => ({ variantId: c.id, quantity: c.qty })),
+        addressId: pending.addressId,
+        paymentMethod: 'CREDIT_CARD',
+        couponCode: pending.couponCode,
+      });
+
+      if (result.success && result.orderId) {
+        await prisma.order.update({
+          where: { id: result.orderId },
+          data: {
+            paymentStatus: 'PAID',
+            paymentId: intent.id,
+            status: 'CONFIRMED',
+            idempotencyKey,
+          },
+        });
+      } else {
+        console.error('[stripe webhook] createOrder failed for', idempotencyKey, result.error);
+      }
+
+      // Clear the pending cache regardless — the user has already been charged
+      // by Stripe; if order creation failed, support needs to refund manually.
+      await redis.del(pendingKey).catch(() => {});
     }
 
     if (event.type === 'payment_intent.payment_failed') {
-      // Update pending order to FAILED status
       const intent = event.data.object as Stripe.PaymentIntent;
-      const { userId, idempotencyKey } = intent.metadata;
+      const idempotencyKey = intent.metadata?.idempotencyKey;
       if (idempotencyKey) {
         await prisma.order.updateMany({
           where: { idempotencyKey, paymentStatus: 'UNPAID' },
           data: { paymentStatus: 'FAILED' },
         });
+        // Clean up Redis even on failure so retries get a fresh slot.
+        try {
+          const { redis } = await import('@/lib/redis');
+          await redis.del(`stripe:pending:${idempotencyKey}`);
+        } catch {
+          // ignore
+        }
       }
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
-
   } catch (error: unknown) {
     const err = error as Error;
     console.error('Webhook Error:', err.message);

@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import { OrderStatus, SellerStatus, OrderItemStatus, Role } from '@/generated/client';
 import bcrypt from 'bcryptjs';
+import { BCRYPT_COST } from '@/lib/constants';
 
 import type { Session } from 'next-auth';
 import type { Product, Review, SessionUser } from '@/types';
@@ -637,9 +638,12 @@ export async function deleteProduct(productId: string) {
 /**
  * Toggle a product's published status.
  *
- * Business rule: A product must have at least one image before it can be
- * published. Drafts without images stay drafts, even if the seller asks to
- * publish them — this matches what the bulk-upload flow promises.
+ * Business rules:
+ *   1. A product must have at least one image before it can be published.
+ *      Drafts without images stay drafts, matching the bulk-upload flow.
+ *   2. The seller's account must have a verified email and an ACTIVE
+ *      SellerProfile status. PENDING_APPROVAL/SUSPENDED/BANNED sellers can
+ *      still own draft products but cannot push them public.
  */
 export async function toggleProductPublished(productId: string, publish: boolean) {
   try {
@@ -650,7 +654,14 @@ export async function toggleProductPublished(productId: string, publish: boolean
 
     const userId = await getRealUserId(session);
     if (!userId) return { error: 'User not found' };
-    const seller = await prisma.sellerProfile.findUnique({ where: { userId } });
+
+    const [user, seller] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { emailVerified: true },
+      }),
+      prisma.sellerProfile.findUnique({ where: { userId } }),
+    ]);
     if (!seller) return { error: 'Seller profile not found' };
 
     const product = await prisma.product.findUnique({
@@ -661,10 +672,22 @@ export async function toggleProductPublished(productId: string, publish: boolean
       return { error: 'Unauthorized to update this product' };
     }
 
-    if (publish && product.images.length === 0) {
-      return {
-        error: 'Add at least one image before publishing this product.',
-      };
+    if (publish) {
+      if (product.images.length === 0) {
+        return { error: 'Add at least one image before publishing this product.' };
+      }
+      if (!user?.emailVerified) {
+        return {
+          error:
+            'Verify your email address before publishing products. Check your inbox for the verification link.',
+        };
+      }
+      if (seller.status !== 'ACTIVE') {
+        return {
+          error:
+            'Your seller account is not active yet. Products can only go live after admin approval.',
+        };
+      }
     }
 
     await prisma.product.update({
@@ -728,6 +751,7 @@ export async function getAdminTaxonomyData() {
     return { categories, tags, collections };
   } catch (err: unknown) {
     const error = err as Error;
+    console.error('[getAdminTaxonomyData] Error:', error);
     return { categories: [], tags: [], collections: [] };
   }
 }
@@ -801,7 +825,7 @@ export async function seedTestData() {
     ];
 
     for (const u of testUsers) {
-      const hashedPassword = await bcrypt.hash(u.pass, 10);
+      const hashedPassword = await bcrypt.hash(u.pass, BCRYPT_COST);
       const user = await prisma.user.upsert({
         where: { email: u.email },
         update: { role: u.role },
@@ -899,7 +923,11 @@ export async function toggleWishlist(productId: string) {
 interface ProfileData {
   name?: string;
   phone?: string;
-  avatar?: string;
+  // The DB column is `avatarUrl` (the older `avatar` form was a silent typo
+  // that Prisma rejected). Both keys are accepted on the way in for
+  // backwards-compat with old form payloads, and we normalise to avatarUrl.
+  avatarUrl?: string | null;
+  avatar?: string | null;
 }
 
 export async function updateProfile(
@@ -912,9 +940,14 @@ export async function updateProfile(
     const userId = await getRealUserId(session);
     if (!userId) return { error: 'User not found' };
 
+    const { avatar, avatarUrl, ...rest } = data;
+    const update: { name?: string; phone?: string; avatarUrl?: string | null } = { ...rest };
+    if (avatarUrl !== undefined) update.avatarUrl = avatarUrl;
+    else if (avatar !== undefined) update.avatarUrl = avatar;
+
     await prisma.user.update({
       where: { id: userId },
-      data,
+      data: update,
     });
 
     revalidatePath('/dashboard');
@@ -949,7 +982,7 @@ export async function adminCreateUser(formData: {
     });
     if (existing) return { error: `An account with email "${formData.email}" already exists.` };
 
-    const hashedPassword = await bcrypt.hash(formData.password, 10);
+    const hashedPassword = await bcrypt.hash(formData.password, BCRYPT_COST);
 
     const newUser = await prisma.user.create({
       data: {

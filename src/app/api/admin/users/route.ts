@@ -3,7 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
-import { Prisma } from '@/generated/client';
+import { Prisma, Role } from '@/generated/client';
+
+const VALID_ROLES = new Set<Role>([Role.ADMIN, Role.SELLER, Role.BUYER]);
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -12,16 +14,24 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const page = parseInt(searchParams.get('page') || '1');
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
   const limit = 20;
   const skip = (page - 1) * limit;
-  const search = searchParams.get('search') || '';
-  const role = searchParams.get('role') || '';
+  const search = (searchParams.get('search') || '').trim();
+  const roleParam = (searchParams.get('role') || '').trim().toUpperCase();
+  const role = VALID_ROLES.has(roleParam as Role) ? (roleParam as Role) : null;
 
   const where: Prisma.UserWhereInput = {
     deletedAt: null,
-    ...(search ? { OR: [{ name: { contains: search } }, { email: { contains: search } }] } : {}),
-    ...(role ? { role: role as any } : {}),
+    ...(search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } },
+          ],
+        }
+      : {}),
+    ...(role ? { role } : {}),
   };
 
   const [users, total] = await Promise.all([

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
+import { encryptSecret, readSecret, redactBankAccount } from '@/lib/secrets';
 
 const requestPayoutSchema = z.object({
   amount: z.number().positive().optional(),
@@ -69,13 +70,22 @@ export async function POST(req: Request) {
       );
     }
 
-    const bankDetails = parsed.data.bankDetails ?? seller.bankAccount;
-    if (!bankDetails) {
+    // Resolve cleartext from either: (a) the override the seller submitted
+    // with this request, or (b) the encrypted-at-rest value on the profile.
+    // We never log or expose the cleartext beyond what's needed to write
+    // the encrypted Payout.bankDetails.
+    const cleartextBankDetails = parsed.data.bankDetails ?? readSecret(seller.bankAccount);
+    if (!cleartextBankDetails) {
       return NextResponse.json(
         { message: 'Bank details are required. Update them in Store Settings first.' },
         { status: 400 }
       );
     }
+
+    // The Payout row stores its OWN snapshot of the bank details (so an
+    // audit trail survives even if the seller later rotates their account).
+    // Encrypt that snapshot so the audit log doesn't leak account numbers.
+    const encryptedBankDetails = encryptSecret(cleartextBankDetails) ?? cleartextBankDetails;
 
     // No need to decrement seller.balance — it's no longer the source of
     // truth. Outstanding (PENDING/PROCESSING/PAID) payouts are subtracted
@@ -85,11 +95,32 @@ export async function POST(req: Request) {
         sellerId: seller.id,
         amount: requestedAmount,
         status: 'PENDING',
-        bankDetails,
+        bankDetails: encryptedBankDetails,
       },
     });
 
-    return NextResponse.json({ success: true, payout }, { status: 201 });
+    // If the seller passed override bank details that differ from what's
+    // on file, opportunistically save the new value (encrypted) back to
+    // the profile so future requests don't need to re-enter it.
+    if (parsed.data.bankDetails && parsed.data.bankDetails !== readSecret(seller.bankAccount)) {
+      await prisma.sellerProfile
+        .update({
+          where: { id: seller.id },
+          data: { bankAccount: encryptSecret(parsed.data.bankDetails) ?? parsed.data.bankDetails },
+        })
+        .catch(err => console.error('[payouts/request] failed to update bank account:', err));
+    }
+
+    // Don't echo the encrypted bank-details blob back to the client.
+    const { bankDetails: _hiddenDetails, ...safePayout } = payout;
+    void _hiddenDetails;
+    return NextResponse.json(
+      {
+        success: true,
+        payout: { ...safePayout, bankDetailsMasked: redactBankAccount(cleartextBankDetails) },
+      },
+      { status: 201 }
+    );
   } catch (error: unknown) {
     const err = error as Error;
     console.error('[payouts/request] Error:', err);
@@ -128,12 +159,25 @@ export async function GET() {
     const { computeSellerEarnings } = await import('@/lib/seller-earnings');
     const earnings = await computeSellerEarnings(seller.id);
 
+    // Redact every bank-details field on the way out — the dashboard only
+    // needs the masked tail so the seller can recognise their own account.
+    const decryptedAccount = readSecret(seller.bankAccount);
+    const safePayouts = payouts.map(p => {
+      const { bankDetails: _drop, ...rest } = p;
+      void _drop;
+      return {
+        ...rest,
+        bankDetailsMasked: redactBankAccount(readSecret(p.bankDetails)),
+      };
+    });
+
     return NextResponse.json({
       balance: earnings.available,
       heldBalance: earnings.held,
       nextReleaseAt: earnings.nextReleaseAt ? earnings.nextReleaseAt.toISOString() : null,
-      bankAccount: seller.bankAccount,
-      payouts,
+      bankAccountMasked: redactBankAccount(decryptedAccount),
+      bankAccountSet: !!decryptedAccount,
+      payouts: safePayouts,
     });
   } catch (error: unknown) {
     const err = error as Error;

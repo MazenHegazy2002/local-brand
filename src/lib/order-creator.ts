@@ -1,0 +1,277 @@
+// Internal order-creation helper used by:
+//   - The `createOrder` server action (the user-facing path that derives
+//     `userId` from the NextAuth session).
+//   - The PaySky callback (which derives `userId` from the verified
+//     `paysky:pending:<MerchantReference>` Redis record so it doesn't have
+//     to require a fresh session cookie — the SecureHash already proves the
+//     merchant ref came from us).
+//
+// Splitting this out lets server-to-server callers create an order
+// "as" a user without a cookie. The user-facing action stays the only
+// path that consults `getServerSession`.
+
+import { prisma } from '@/lib/prisma';
+import {
+  OrderStatus,
+  OrderItemStatus,
+  DiscountType,
+  PaymentStatus,
+  PaymentMethod,
+} from '@/generated/client';
+import { VAT_RATE, getShippingRate } from '@/lib/constants';
+import { createOrderSchema } from '@/lib/validation';
+
+export interface CreateOrderResult {
+  success?: boolean;
+  orderId?: string;
+  error?: string;
+}
+
+export async function createOrderForUser(
+  userId: string | null,
+  formData: unknown
+): Promise<CreateOrderResult> {
+  try {
+    // ── 1. Validate Input ─────────────────────────────────────────────────────
+    const validated = createOrderSchema.safeParse(formData);
+    if (!validated.success) {
+      return { error: 'Invalid input data' };
+    }
+
+    const {
+      items: cartItemsInput,
+      addressId,
+      guestEmail,
+      shippingAddress,
+      couponCode,
+      promoCode,
+      paymentMethod,
+      orderNotes,
+      giftWrapping,
+    } = validated.data;
+
+    if (!userId && !guestEmail) {
+      return { error: 'Unauthorized. Please log in or provide guest email.' };
+    }
+
+    // ── 2. Resolve shipping address ───────────────────────────────────────────
+    const address = addressId
+      ? await prisma.address.findUnique({ where: { id: addressId } })
+      : null;
+
+    if (addressId && !address) return { error: 'Address not found' };
+
+    const resolvedAddress = address
+      ? {
+          fullName: undefined as string | undefined,
+          phone: undefined as string | undefined,
+          street: address.street,
+          city: address.city,
+          governorate: address.governorate,
+          postalCode: address.postalCode || undefined,
+          country: address.country,
+        }
+      : shippingAddress
+        ? { ...shippingAddress }
+        : null;
+
+    if (!resolvedAddress) {
+      return { error: 'A shipping address is required to place an order.' };
+    }
+
+    // Persist the guest contact email inside the address snapshot too, so
+    // admin/seller views that already render the snapshot pick it up for free.
+    const addressSnapshot = userId ? resolvedAddress : { ...resolvedAddress, email: guestEmail };
+
+    let subtotal = 0;
+    const orderItemsData: Array<{
+      variantId: string;
+      productTitleSnapshot: string;
+      sellerNameSnapshot: string;
+      priceAtPurchase: number;
+      quantity: number;
+      status: OrderItemStatus;
+    }> = [];
+
+    for (const itemInput of cartItemsInput) {
+      const variant = await prisma.productVariant.findUnique({
+        where: { id: itemInput.variantId },
+        include: { product: { include: { seller: true } } },
+      });
+
+      if (!variant) {
+        return {
+          error:
+            'One or more items in your cart are no longer available. Please refresh your cart and try again.',
+        };
+      }
+      if (variant.stockCount < itemInput.quantity) {
+        return { error: `Out of stock: ${variant.product.title}` };
+      }
+
+      const price = variant.price || variant.product.basePrice;
+      subtotal += price * itemInput.quantity;
+
+      orderItemsData.push({
+        variantId: variant.id,
+        productTitleSnapshot: variant.product.title,
+        sellerNameSnapshot: variant.product.seller.storeName,
+        priceAtPurchase: price,
+        quantity: itemInput.quantity,
+        status: OrderItemStatus.PENDING,
+      });
+    }
+
+    // ── 3. Apply Coupon or Affiliate Promo ────────────────────────────────────
+    let discountAmount = 0;
+    let couponId: string | null = null;
+    let affiliateId: string | null = null;
+    let affiliateDiscountPct = 0;
+
+    if (couponCode) {
+      const coupon = await prisma.coupon.findUnique({
+        where: { code: couponCode.trim().toUpperCase() },
+      });
+      if (coupon && coupon.isActive && coupon.expiryDate > new Date()) {
+        const canUse = !coupon.usageLimit || coupon.usedCount < coupon.usageLimit;
+        const minMet = !coupon.minOrderValue || subtotal >= coupon.minOrderValue;
+
+        if (canUse && minMet) {
+          couponId = coupon.id;
+          if (coupon.discountType === DiscountType.PERCENTAGE) {
+            discountAmount = subtotal * (coupon.discountValue / 100);
+            if (coupon.maxDiscount) discountAmount = Math.min(discountAmount, coupon.maxDiscount);
+          } else {
+            discountAmount = Math.min(coupon.discountValue, subtotal);
+          }
+        }
+      }
+    } else if (promoCode) {
+      try {
+        const { applyPromoToCheckout } = await import('@/lib/checkout-affiliate');
+        const promoResult = await applyPromoToCheckout({
+          promoCode,
+          orderTotalEgp: subtotal,
+          buyerId: userId || '',
+        });
+        if (promoResult.affiliateId) {
+          discountAmount = promoResult.discountAmountEgp;
+          affiliateId = promoResult.affiliateId;
+          affiliateDiscountPct = promoResult.discountPct;
+        }
+      } catch (err) {
+        console.error('Failed to apply affiliate promo code:', err);
+      }
+    }
+
+    const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
+    const vatAmount = subtotalAfterDiscount * VAT_RATE;
+    const shippingFee = getShippingRate(resolvedAddress.governorate);
+    const finalTotal = subtotalAfterDiscount + vatAmount + shippingFee;
+
+    // ── 4. Execute Transaction ───────────────────────────────────────────────
+    const order = await prisma.$transaction(async tx => {
+      // Stock decrement
+      for (const item of cartItemsInput) {
+        const updated = await tx.productVariant.updateMany({
+          where: { id: item.variantId, stockCount: { gte: item.quantity } },
+          data: { stockCount: { decrement: item.quantity } },
+        });
+        if (updated.count === 0) throw new Error(`Stock error for variant ${item.variantId}`);
+      }
+
+      const newOrder = await tx.order.create({
+        data: {
+          userId,
+          guestEmail: userId ? null : guestEmail,
+          couponId,
+          totalAmount: finalTotal,
+          discountAmount,
+          shippingFee,
+          paymentMethod: paymentMethod as PaymentMethod,
+          paymentStatus: PaymentStatus.UNPAID,
+          status: OrderStatus.PENDING_PAYMENT,
+          shippingAddressSnapshot: JSON.stringify(addressSnapshot),
+          orderNotes: orderNotes || null,
+          giftWrapping: giftWrapping || false,
+          items: { create: orderItemsData },
+        },
+      });
+
+      if (couponId) {
+        await tx.coupon.update({
+          where: { id: couponId },
+          data: { usedCount: { increment: 1 } },
+        });
+      }
+
+      return newOrder;
+    });
+
+    // ── 5. Post-Order Actions ────────────────────────────────────────────────
+    if (affiliateId && userId) {
+      try {
+        const { recordAffiliateSale } = await import('@/lib/checkout-affiliate');
+        await recordAffiliateSale({
+          orderId: order.id,
+          affiliateId,
+          buyerId: userId,
+          orderTotalBeforeDiscountEgp: subtotal,
+          orderTotalAfterDiscountEgp: subtotalAfterDiscount,
+          discountPct: affiliateDiscountPct,
+          discountAmountEgp: discountAmount,
+        });
+      } catch (err) {
+        console.error('Failed to record affiliate sale:', err);
+      }
+    }
+
+    if (userId) {
+      // Award the flat 10-points-per-order bonus. Awaited so the user sees
+      // their balance change on the next page render.
+      try {
+        const loyaltyMod = await import('@/app/actions/loyalty');
+        await loyaltyMod.addLoyaltyPoints(userId, subtotal);
+      } catch (err) {
+        console.error('Failed to award loyalty points:', err);
+      }
+    }
+
+    // Best-effort confirmation email. Failures here MUST NOT block the order.
+    void (async () => {
+      try {
+        const m = await import('@/lib/email');
+        const orderWithItems = await prisma.order.findUnique({
+          where: { id: order.id },
+          include: { items: true },
+        });
+        if (!orderWithItems) return;
+
+        if (userId) {
+          const user = await prisma.user.findUnique({ where: { id: userId } });
+          if (user?.email) {
+            await m.sendEmail({
+              to: user.email,
+              subject: `Order Confirmation - ${order.id.slice(0, 8)}`,
+              html: m.generateOrderConfirmationEmail(orderWithItems, user),
+            });
+          }
+        } else if (guestEmail) {
+          await m.sendEmail({
+            to: guestEmail,
+            subject: `Order Confirmation - ${order.id.slice(0, 8)}`,
+            html: m.generateOrderConfirmationEmail(orderWithItems, null),
+          });
+        }
+      } catch (err) {
+        console.error('Order confirmation email failed:', err);
+      }
+    })();
+
+    return { success: true, orderId: order.id };
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('createOrderForUser error:', err);
+    return { error: err.message || 'Failed to create order' };
+  }
+}

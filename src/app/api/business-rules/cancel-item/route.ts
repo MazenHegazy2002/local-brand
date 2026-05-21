@@ -1,119 +1,104 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { OrderItemStatus, OrderStatus } from '@/generated/client';
 import { VAT_RATE } from '@/lib/constants';
 import type { SessionUser } from '@/types';
 
-/**
- * Business rule enforcement middleware helpers
- * Implements: coupon stacking, guest checkout, partial cancel, minimum order, COD policy
- */
+// Partial cancellation — buyer cancels one item from an unshipped order.
+// Restocks the variant, marks the item CANCELLED, recomputes the order total
+// using the same VAT_RATE that createOrder applied, and preserves the
+// shipping fee that was originally charged (the parcel is still being
+// delivered as long as at least one item remains).
 
-// Coupon stacking rules
-export async function validateCouponStack(couponIds: string[], subtotal: number) {
-  if (!couponIds.length) return { valid: true, discount: 0, errors: [] };
-
-  const errors: string[] = [];
-
-  // Rule 1: Max 1 platform-wide coupon (We removed seller-specific check for now as it's not in schema)
-  const coupons = await prisma.coupon.findMany({ where: { id: { in: couponIds } } });
-
-  if (coupons.length > 2) errors.push('Max 2 coupons allowed per order');
-
-  if (errors.length) return { valid: false, discount: 0, errors };
-
-  // Calculate combined discount
-  let totalDiscount = 0;
-  for (const c of coupons) {
-    if (!c.isActive || c.expiryDate < new Date()) continue;
-    if (c.minOrderValue && subtotal < c.minOrderValue) continue;
-
-    if (c.discountType === 'PERCENTAGE') {
-      const disc = subtotal * (c.discountValue / 100);
-      totalDiscount += c.maxDiscount ? Math.min(disc, c.maxDiscount) : disc;
-    } else {
-      totalDiscount += c.discountValue;
-    }
-  }
-
-  // Rule 2: Combined discount cannot exceed 50% of subtotal
-  totalDiscount = Math.min(totalDiscount, subtotal * 0.5);
-
-  return { valid: true, discount: totalDiscount, errors: [] };
-}
-
-// Guest checkout: allow without account — returns guest session token
-export function generateGuestToken(): string {
-  return `guest_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-}
-
-// Minimum order value enforcement
-export function enforceMinimumOrder(subtotal: number, minimumEGP = 50): { valid: boolean; message?: string } {
-  if (subtotal < minimumEGP) {
-    return { valid: false, message: `Minimum order value is ${minimumEGP} EGP. Add more items to proceed.` };
-  }
-  return { valid: true };
-}
-
-// Partial order cancellation: cancel one item, refund proportionally
-export async function cancelOrderItem(orderId: string, orderItemId: string, userId: string) {
+async function cancelOrderItemInternal(
+  orderId: string,
+  orderItemId: string,
+  userId: string
+): Promise<
+  | { orderCancelled: true; refundAmount: number }
+  | { orderCancelled: false; refundAmount: number; newTotal: number }
+> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: { items: true }
+    include: { items: true },
   });
 
-  if (!order || order.userId !== userId) throw new Error('Order not found or forbidden');
-  const currentStatus = order.status;
-  if (currentStatus !== OrderStatus.PENDING_PAYMENT && currentStatus !== OrderStatus.CONFIRMED) {
+  if (!order || order.userId !== userId) {
+    throw new Error('Order not found or forbidden');
+  }
+  if (order.status !== OrderStatus.PENDING_PAYMENT && order.status !== OrderStatus.CONFIRMED) {
     throw new Error('Order cannot be cancelled at this stage');
   }
 
   const item = order.items.find(i => i.id === orderItemId);
   if (!item) throw new Error('Order item not found');
-
-  // Mark item as cancelled
-  await prisma.orderItem.update({ where: { id: orderItemId }, data: { status: OrderItemStatus.CANCELLED } });
-
-  // Restock the variant
-  await prisma.productVariant.update({
-    where: { id: item.variantId },
-    data: { stockCount: { increment: item.quantity } }
-  });
-
-  // Recalculate order total
-  const remaining = order.items.filter(i => i.id !== orderItemId && i.status !== OrderItemStatus.CANCELLED);
-  const newTotal = remaining.reduce((sum, i) => sum + i.priceAtPurchase * i.quantity, 0);
-  const vatAmount = newTotal * VAT_RATE;
-  const shippingFee = remaining.length > 0 ? 50 : 0;
-
-  // If all items cancelled, cancel entire order
-  if (remaining.length === 0) {
-    await prisma.order.update({ where: { id: orderId }, data: { status: OrderStatus.CANCELLED, totalAmount: 0 } });
-    return { orderCancelled: true, refundAmount: order.totalAmount };
+  if (item.status === OrderItemStatus.CANCELLED) {
+    throw new Error('Item is already cancelled');
   }
 
-  await prisma.order.update({
-    where: { id: orderId },
-    data: { totalAmount: newTotal + vatAmount + shippingFee }
-  });
+  return prisma.$transaction(async tx => {
+    // Mark item cancelled + restock
+    await tx.orderItem.update({
+      where: { id: orderItemId },
+      data: { status: OrderItemStatus.CANCELLED },
+    });
+    await tx.productVariant.update({
+      where: { id: item.variantId },
+      data: { stockCount: { increment: item.quantity } },
+    });
 
-  const refundAmount = item.priceAtPurchase * item.quantity * 1.14; // inc. VAT
-  return { orderCancelled: false, refundAmount, newTotal: newTotal + vatAmount + shippingFee };
+    const remainingLive = order.items.filter(
+      i => i.id !== orderItemId && i.status !== OrderItemStatus.CANCELLED
+    );
+
+    if (remainingLive.length === 0) {
+      // Cancel the whole order — refund the order total (gross with VAT/shipping).
+      await tx.order.update({
+        where: { id: orderId },
+        data: { status: OrderStatus.CANCELLED, totalAmount: 0 },
+      });
+      return { orderCancelled: true as const, refundAmount: order.totalAmount };
+    }
+
+    // Recompute total with the same VAT rate used at checkout. Shipping
+    // doesn't change because the parcel still ships; the buyer's refund is
+    // only for the cancelled item (price × qty + its VAT share).
+    const remainingSubtotal = remainingLive.reduce(
+      (sum, i) => sum + i.priceAtPurchase * i.quantity,
+      0
+    );
+    const newVat = remainingSubtotal * VAT_RATE;
+    const newTotal = Math.max(
+      0,
+      remainingSubtotal + newVat + order.shippingFee - (order.discountAmount || 0)
+    );
+
+    await tx.order.update({
+      where: { id: orderId },
+      data: { totalAmount: newTotal },
+    });
+
+    const itemGross = item.priceAtPurchase * item.quantity;
+    const refundAmount = itemGross * (1 + VAT_RATE);
+    return { orderCancelled: false as const, refundAmount, newTotal };
+  });
 }
 
-// API route — POST /api/business-rules/cancel-item
+// POST /api/business-rules/cancel-item
 export async function POST(req: Request) {
   try {
-    const { getServerSession } = await import('next-auth');
-    const { authOptions } = await import('@/lib/auth');
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
     const userId = (session.user as SessionUser).id;
     const { orderId, orderItemId } = await req.json();
-    if (!orderId || !orderItemId) return NextResponse.json({ message: 'orderId and orderItemId required' }, { status: 400 });
+    if (!orderId || !orderItemId) {
+      return NextResponse.json({ message: 'orderId and orderItemId required' }, { status: 400 });
+    }
 
-    const result = await cancelOrderItem(orderId, orderItemId, userId);
+    const result = await cancelOrderItemInternal(orderId, orderItemId, userId);
     return NextResponse.json(result, { status: 200 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';

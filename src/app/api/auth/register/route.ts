@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { registerSchema } from '@/lib/validation';
 import { sendEmail } from '@/lib/email';
+import { BCRYPT_COST } from '@/lib/constants';
 import {
   generateEmailVerificationEmail,
   generateSellerPendingEmail,
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_COST);
 
     // Default to BUYER if role is missing or invalid. Allow SELLER assignment.
     const userRole = role === 'SELLER' ? 'SELLER' : 'BUYER';

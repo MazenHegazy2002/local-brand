@@ -48,6 +48,7 @@ prisma/*.db-journal
 # Dev scratch / notes / preview assets
 /scratch
 /tmp
+/Affiliate
 last
 mazen.txt
 stitch-preview.png

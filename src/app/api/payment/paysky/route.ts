@@ -23,17 +23,23 @@ import {
  */
 
 const paySkySchema = z.object({
-  cartItems: z.array(z.object({
-    id: z.string(),
-    qty: z.number().int().positive(),
-  })).min(1),
-  addressInfo: z.object({
-    governorate: z.string().optional(),
-    city: z.string().optional(),
-    street: z.string().optional(),
-    fullName: z.string().optional(),
-    phone: z.string().optional(),
-  }).optional(),
+  cartItems: z
+    .array(
+      z.object({
+        id: z.string(),
+        qty: z.number().int().positive(),
+      })
+    )
+    .min(1),
+  addressInfo: z
+    .object({
+      governorate: z.string().optional(),
+      city: z.string().optional(),
+      street: z.string().optional(),
+      fullName: z.string().optional(),
+      phone: z.string().optional(),
+    })
+    .optional(),
   couponId: z.string().optional(),
 });
 
@@ -78,16 +84,32 @@ export async function POST(req: Request) {
     }
 
     let discount = 0;
+    let promoCode: string | undefined = undefined;
+
     if (couponId) {
-      const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
-      if (coupon && coupon.isActive && coupon.expiryDate > new Date()) {
-        discount =
-          coupon.discountType === 'PERCENTAGE'
-            ? Math.min(
-                subtotal * (coupon.discountValue / 100),
-                coupon.maxDiscount ?? Number.POSITIVE_INFINITY
-              )
-            : Math.min(coupon.discountValue, subtotal);
+      if (couponId.startsWith('aff_')) {
+        const extractedPromo = couponId.substring(4);
+        const { applyPromoToCheckout } = await import('@/lib/checkout-affiliate');
+        const promoResult = await applyPromoToCheckout({
+          promoCode: extractedPromo,
+          orderTotalEgp: subtotal,
+          buyerId: userId,
+        });
+        if (promoResult.affiliateId) {
+          discount = promoResult.discountAmountEgp;
+          promoCode = extractedPromo;
+        }
+      } else {
+        const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
+        if (coupon && coupon.isActive && coupon.expiryDate > new Date()) {
+          discount =
+            coupon.discountType === 'PERCENTAGE'
+              ? Math.min(
+                  subtotal * (coupon.discountValue / 100),
+                  coupon.maxDiscount ?? Number.POSITIVE_INFINITY
+                )
+              : Math.min(coupon.discountValue, subtotal);
+        }
       }
     }
 
@@ -149,7 +171,8 @@ export async function POST(req: Request) {
           userId,
           cartItems,
           addressInfo,
-          couponId,
+          couponId: promoCode ? undefined : couponId,
+          promoCode,
           subtotal,
           discount,
           vat,
@@ -188,9 +211,6 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     const err = error as Error;
     console.error('[paysky] Error:', err);
-    return NextResponse.json(
-      { message: err.message || 'PaySky request failed' },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: err.message || 'PaySky request failed' }, { status: 500 });
   }
 }

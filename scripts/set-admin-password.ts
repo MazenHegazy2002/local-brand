@@ -1,13 +1,15 @@
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
 import 'dotenv/config';
+import { PrismaClient } from '../src/generated/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+const BCRYPT_COST = 12;
+
 async function main() {
-  const adminPassword = await bcrypt.hash('password123', 10);
-  const userPassword = await bcrypt.hash('passwprd123', 10);
-  
+  const adminPassword = await bcrypt.hash('password123', BCRYPT_COST);
+  const userPassword = await bcrypt.hash('password123', BCRYPT_COST);
+
   await prisma.user.upsert({
     where: { email: 'admin@localbrand.com' },
     update: { passwordHash: adminPassword, role: 'ADMIN' },
@@ -31,7 +33,7 @@ async function main() {
   });
 
   console.log('Admin: admin@localbrand.com / password123');
-  console.log('User: mazen@localbrand.com / passwprd123');
+  console.log('User:  mazen@localbrand.com / password123');
 }
 
 main().finally(() => prisma.$disconnect());

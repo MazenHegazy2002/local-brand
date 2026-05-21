@@ -113,6 +113,7 @@ export const createOrderSchema = z.object({
   // shipping address inline. The action will persist it as a snapshot.
   shippingAddress: shippingAddressInlineSchema.optional(),
   couponCode: z.string().optional(),
+  promoCode: z.string().optional(),
   paymentMethod: z
     .enum(['CASH_ON_DELIVERY', 'CREDIT_CARD', 'MOBILE_WALLET', 'PAYMOB', 'FAWRY', 'PAYSKY'])
     .default('CASH_ON_DELIVERY'),
@@ -230,11 +231,32 @@ export const couponEvaluateSchema = z.object({
 // NOTIFICATION SCHEMAS
 // ============================================
 
+// `z.string().url()` accepts ANY syntactically valid URL, including
+// `javascript:`, `data:`, `vbscript:`, `file:`. Since we render this href in
+// notification UI it would be a clickjacking / XSS surface — restrict to
+// http(s) only via a stricter regex (still using `url()` to do the syntactic
+// validation).
+const httpUrlSchema = z
+  .string()
+  .url()
+  .refine(v => /^https?:\/\//i.test(v), {
+    message: 'Link must be an http(s) URL or a /-relative path',
+  });
+
 export const sendNotificationSchema = z.object({
   userId: z.string().uuid().optional(),
   title: z.string().min(1, 'Title is required'),
   message: z.string().min(1, 'Message is required'),
-  link: z.string().url().optional().or(z.string().startsWith('/')).or(z.string().length(0)),
+  // A link is either an absolute http(s) URL or a relative path starting with `/`.
+  // Empty strings are coerced to undefined so we never store an empty href.
+  link: z
+    .union([
+      httpUrlSchema,
+      z.string().regex(/^\/[\w\-./?=&%#]*$/, 'Link must be an absolute URL or a /-relative path'),
+      z.literal(''),
+    ])
+    .optional()
+    .transform(v => (v === '' || v === undefined ? undefined : v)),
   targetAudience: z.enum(['all', 'sellers', 'buyers']).optional(),
 });
 

@@ -2,8 +2,21 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { VAT_RATE, TAX_REG_NUMBER } from '@/lib/constants';
+import { VAT_RATE, getTaxRegistrationNumber } from '@/lib/constants';
 import { SessionUser, Order, OrderItem, Coupon, User, ProductVariant } from '@/types';
+
+// Tiny HTML escaper — every interpolation that ends up in the rendered invoice
+// goes through this. Without it, a malicious seller can XSS the invoice via
+// product title, or a buyer via shipping address.
+function escapeHtml(input: unknown): string {
+  if (input === null || input === undefined) return '';
+  return String(input)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 // The invoice query joins the variant in so we can render its SKU/UPC.
 type InvoiceItem = OrderItem & {
@@ -93,8 +106,8 @@ function generateInvoiceHTML({
   const itemsHTML = order.items
     .map((item: InvoiceItem, i: number) => {
       const codes: string[] = [];
-      if (item.variant?.sku) codes.push(`SKU: ${item.variant.sku}`);
-      if (item.variant?.upc) codes.push(`UPC: ${item.variant.upc}`);
+      if (item.variant?.sku) codes.push(`SKU: ${escapeHtml(item.variant.sku)}`);
+      if (item.variant?.upc) codes.push(`UPC: ${escapeHtml(item.variant.upc)}`);
       const codeLine = codes.length
         ? `<br><span style="font-size: 11px; color: #999; font-family: monospace;">${codes.join(' · ')}</span>`
         : '';
@@ -102,8 +115,8 @@ function generateInvoiceHTML({
     <tr>
       <td style="padding: 12px; border-bottom: 1px solid #eee;">${i + 1}</td>
       <td style="padding: 12px; border-bottom: 1px solid #eee;">
-        <strong>${item.productTitleSnapshot}</strong>
-        ${item.sellerNameSnapshot ? `<br><span style="font-size: 12px; color: #666;">Seller: ${item.sellerNameSnapshot}</span>` : ''}
+        <strong>${escapeHtml(item.productTitleSnapshot)}</strong>
+        ${item.sellerNameSnapshot ? `<br><span style="font-size: 12px; color: #666;">Seller: ${escapeHtml(item.sellerNameSnapshot)}</span>` : ''}
         ${codeLine}
       </td>
       <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
@@ -152,31 +165,31 @@ function generateInvoiceHTML({
     </div>
     <div class="invoice-info">
       <div class="invoice-title">INVOICE</div>
-      <p class="invoice-number"><strong>Invoice #:</strong> LCL-INV-${order.id.split('-')[0].toUpperCase()}</p>
-      <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+      <p class="invoice-number"><strong>Invoice #:</strong> LCL-INV-${escapeHtml(order.id.split('-')[0].toUpperCase())}</p>
+      <p><strong>Date:</strong> ${escapeHtml(new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }))}</p>
       <p>
-        <strong>Status:</strong> 
-        <span class="status-badge ${order.paymentStatus === 'PAID' ? 'status-paid' : 'status-unpaid'}">${order.paymentStatus}</span>
+        <strong>Status:</strong>
+        <span class="status-badge ${order.paymentStatus === 'PAID' ? 'status-paid' : 'status-unpaid'}">${escapeHtml(order.paymentStatus)}</span>
       </p>
-      ${order.coupon ? `<p><strong>Coupon:</strong> ${order.coupon.code}</p>` : ''}
+      ${order.coupon ? `<p><strong>Coupon:</strong> ${escapeHtml(order.coupon.code)}</p>` : ''}
     </div>
   </div>
 
   <div style="display: flex; gap: 40px; margin-bottom: 40px;">
     <div>
       <h3 style="color: #666; font-size: 12px; margin-bottom: 8px; text-transform: uppercase;">Bill To</h3>
-      <p><strong>${order.user?.name || order.guestEmail || 'Guest'}</strong></p>
-      <p>${order.user?.email || order.guestEmail || ''}</p>
-      ${address.street ? `<p>${address.street}</p>` : ''}
-      ${address.city || address.governorate ? `<p>${[address.city, address.governorate].filter(Boolean).join(', ')}</p>` : ''}
+      <p><strong>${escapeHtml(order.user?.name || order.guestEmail || 'Guest')}</strong></p>
+      <p>${escapeHtml(order.user?.email || order.guestEmail || '')}</p>
+      ${address.street ? `<p>${escapeHtml(address.street)}</p>` : ''}
+      ${address.city || address.governorate ? `<p>${escapeHtml([address.city, address.governorate].filter(Boolean).join(', '))}</p>` : ''}
       <p>Egypt</p>
     </div>
     <div>
       <h3 style="color: #666; font-size: 12px; margin-bottom: 8px; text-transform: uppercase;">Ship To</h3>
-      <p><strong>${address.fullName || 'Customer'}</strong></p>
-      ${address.phone ? `<p>${address.phone}</p>` : ''}
-      ${address.street ? `<p>${address.street}</p>` : ''}
-      ${address.city || address.governorate ? `<p>${[address.city, address.governorate].filter(Boolean).join(', ')}</p>` : ''}
+      <p><strong>${escapeHtml(address.fullName || 'Customer')}</strong></p>
+      ${address.phone ? `<p>${escapeHtml(address.phone)}</p>` : ''}
+      ${address.street ? `<p>${escapeHtml(address.street)}</p>` : ''}
+      ${address.city || address.governorate ? `<p>${escapeHtml([address.city, address.governorate].filter(Boolean).join(', '))}</p>` : ''}
     </div>
   </div>
 
@@ -202,8 +215,8 @@ function generateInvoiceHTML({
   </div>
 
   <div class="footer">
-    <p><strong>Tax Registration Number:</strong> ${TAX_REG_NUMBER}</p>
-    <p><strong>Payment Method:</strong> ${order.paymentMethod?.replace(/_/g, ' ') || 'N/A'} | <strong>Payment Status:</strong> ${order.paymentStatus}</p>
+    <p><strong>Tax Registration Number:</strong> ${escapeHtml(getTaxRegistrationNumber())}</p>
+    <p><strong>Payment Method:</strong> ${escapeHtml(order.paymentMethod?.replace(/_/g, ' ') || 'N/A')} | <strong>Payment Status:</strong> ${escapeHtml(order.paymentStatus)}</p>
     <p style="margin-top: 20px;">Thank you for shopping with Brandy! Questions? Contact support@brandy.com</p>
     <p>© ${new Date().getFullYear()} Brandy. All rights reserved.</p>
   </div>

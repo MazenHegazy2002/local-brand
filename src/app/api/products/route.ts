@@ -12,7 +12,7 @@ export async function GET(req: Request) {
     if (idsParam) {
       const ids = idsParam
         .split(',')
-        .map((id) => id.trim())
+        .map(id => id.trim())
         .filter(Boolean)
         .slice(0, 50); // hard cap to prevent abuse
       if (ids.length === 0) {
@@ -52,8 +52,8 @@ export async function GET(req: Request) {
 
     if (q) {
       where.OR = [
-        { title: { contains: q } },
-        { description: { contains: q } },
+        { title: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
       ];
     }
 
@@ -77,8 +77,8 @@ export async function GET(req: Request) {
     if (inStock) {
       where.variants = {
         some: {
-          stockCount: { gt: 0 }
-        }
+          stockCount: { gt: 0 },
+        },
       };
     }
 
@@ -115,51 +115,90 @@ export async function GET(req: Request) {
         orderBy = { createdAt: 'desc' };
     }
 
-    const productsWithRating = await prisma.product.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy,
-      include: {
-        images: { where: { isPrimary: true } },
-        seller: { select: { storeName: true } },
-        category: { select: { name: true, slug: true } },
-        tags: true,
-        _count: { select: { reviews: true } },
-        reviews: {
-          select: { rating: true },
-        },
-        variants: {
-          select: { id: true, stockCount: true, price: true },
-          orderBy: { stockCount: 'desc' },
-        },
-      }
-    });
-
-    let products = productsWithRating;
+    // When a rating floor is applied we have to fetch the full filtered set
+    // (capped at 500 for safety) and filter in code, because aggregate avg
+    // rating isn't directly queryable from Prisma without a raw join.
+    // Otherwise we paginate in the DB as normal.
     if (rating > 0) {
-      products = productsWithRating.filter(p => {
-        const avgRating = p.reviews.length > 0
-          ? p.reviews.reduce((sum, r) => sum + r.rating, 0) / p.reviews.length
-          : 0;
-        return avgRating >= rating;
+      const candidates = await prisma.product.findMany({
+        where,
+        orderBy,
+        include: {
+          images: { where: { isPrimary: true } },
+          seller: { select: { storeName: true } },
+          category: { select: { name: true, slug: true } },
+          tags: true,
+          _count: { select: { reviews: true } },
+          reviews: { select: { rating: true } },
+          variants: {
+            select: { id: true, stockCount: true, price: true },
+            orderBy: { stockCount: 'desc' },
+          },
+        },
+        take: 500,
       });
+
+      const filtered = candidates.filter(p => {
+        if (p.reviews.length === 0) return false;
+        const avg = p.reviews.reduce((sum, r) => sum + r.rating, 0) / p.reviews.length;
+        return avg >= rating;
+      });
+
+      const total = filtered.length;
+      const products = filtered.slice(skip, skip + limit);
+
+      return NextResponse.json(
+        {
+          products,
+          pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasNext: page * limit < total,
+            hasPrev: page > 1,
+          },
+        },
+        { status: 200 }
+      );
     }
 
-    const total = await prisma.product.count({ where });
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          images: { where: { isPrimary: true } },
+          seller: { select: { storeName: true } },
+          category: { select: { name: true, slug: true } },
+          tags: true,
+          _count: { select: { reviews: true } },
+          reviews: { select: { rating: true } },
+          variants: {
+            select: { id: true, stockCount: true, price: true },
+            orderBy: { stockCount: 'desc' },
+          },
+        },
+      }),
+      prisma.product.count({ where }),
+    ]);
 
-    return NextResponse.json({
-      products,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page * limit < total,
-        hasPrev: page > 1,
-      }
-    }, { status: 200 });
-
+    return NextResponse.json(
+      {
+        products,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+          hasNext: page * limit < total,
+          hasPrev: page > 1,
+        },
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Products API Error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });

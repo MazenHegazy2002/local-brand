@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
+import { encryptSecret, readSecret, redactBankAccount } from '@/lib/secrets';
 
 const settingsSchema = z.object({
   storeName: z.string().min(2).max(100).optional(),
@@ -48,7 +49,20 @@ export async function GET() {
       return NextResponse.json({ message: 'Seller profile not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ seller });
+    // Bank accounts are encrypted at rest. We never return the cleartext to
+    // the client — only a masked display string and a `bankAccountSet` flag
+    // so the UI can show "you have a bank account on file" without ever
+    // re-rendering the full number on the page.
+    const decrypted = readSecret(seller.bankAccount);
+    const { bankAccount: _ignored, ...safe } = seller;
+    void _ignored;
+    return NextResponse.json({
+      seller: {
+        ...safe,
+        bankAccountMasked: redactBankAccount(decrypted),
+        bankAccountSet: !!decrypted,
+      },
+    });
   } catch (error: unknown) {
     const err = error as Error;
     console.error('[seller/settings] GET error:', err);
@@ -88,8 +102,21 @@ export async function PATCH(req: Request) {
     }
 
     // Remove empty logo string so we don't overwrite with '' unintentionally.
-    const data = { ...parsed.data };
+    const data: Record<string, unknown> = { ...parsed.data };
     if (data.logoUrl === '') delete data.logoUrl;
+
+    // Encrypt the bank account before write. If the seller didn't pass one,
+    // skip the field entirely (so it doesn't clobber an existing value with
+    // null/empty). If they passed an empty string, treat that as "clear".
+    if (typeof parsed.data.bankAccount === 'string') {
+      const trimmed = parsed.data.bankAccount.trim();
+      if (trimmed === '') {
+        data.bankAccount = null;
+      } else {
+        const enc = encryptSecret(trimmed);
+        data.bankAccount = enc ?? trimmed; // fall back to plain only if no key configured
+      }
+    }
 
     const updated = await prisma.sellerProfile.update({
       where: { id: seller.id },
@@ -108,7 +135,17 @@ export async function PATCH(req: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, seller: updated });
+    const decrypted = readSecret(updated.bankAccount);
+    const { bankAccount: _drop, ...safe } = updated;
+    void _drop;
+    return NextResponse.json({
+      success: true,
+      seller: {
+        ...safe,
+        bankAccountMasked: redactBankAccount(decrypted),
+        bankAccountSet: !!decrypted,
+      },
+    });
   } catch (error: unknown) {
     const err = error as Error;
     console.error('[seller/settings] PATCH error:', err);

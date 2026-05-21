@@ -1,12 +1,12 @@
 import 'dotenv/config';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../src/generated/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const passwordHash = await bcrypt.hash('password123', 10);
-  
+  const passwordHash = await bcrypt.hash('password123', 12);
+
   const admin = await prisma.user.upsert({
     where: { email: 'admin@localbrand.com' },
     update: { passwordHash },
@@ -19,7 +19,7 @@ async function main() {
   });
 
   console.log('✅ Admin created:', admin.email, admin.role);
-  
+
   const verify = await prisma.user.findUnique({ where: { email: 'admin@localbrand.com' } });
   console.log('✅ Verified:', verify?.email, 'Password hash exists:', !!verify?.passwordHash);
 }

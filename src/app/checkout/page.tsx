@@ -60,6 +60,8 @@ export default function CheckoutPage() {
     id: string;
     code?: string;
     amount: number;
+    isAffiliate?: boolean; // true when it's an affiliate promo code, not a coupon
+    affiliateCode?: string;
   } | null>(null);
   const [couponError, setCouponError] = useState('');
   const [applyingCoupon, setApplyingCoupon] = useState(false);
@@ -154,6 +156,7 @@ export default function CheckoutPage() {
     setCouponError('');
 
     try {
+      // First try as a store coupon
       const res = await fetch('/api/coupons/evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -161,14 +164,40 @@ export default function CheckoutPage() {
       });
       const data: { message?: string; couponId: string; discountAmount: number } = await res.json();
 
-      if (!res.ok) {
-        setCouponError(data.message || 'Invalid coupon');
+      if (res.ok) {
+        setCouponApplied({
+          id: data.couponId,
+          code: couponCode,
+          amount: data.discountAmount,
+          isAffiliate: false,
+        });
         return;
       }
 
-      setCouponApplied({ id: data.couponId, amount: data.discountAmount });
+      // If coupon not found, try as an affiliate promo code
+      const affRes = await fetch('/api/checkout/apply-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode, orderTotalEgp: subtotal - pointsDiscount }),
+      });
+      const affData: { valid: boolean; reason?: string; discountAmountEgp?: number } =
+        await affRes.json();
+
+      if (affData.valid && affData.discountAmountEgp) {
+        setCouponApplied({
+          id: `aff_${couponCode}`,
+          code: couponCode,
+          amount: affData.discountAmountEgp,
+          isAffiliate: true,
+          affiliateCode: couponCode,
+        });
+        return;
+      }
+
+      setCouponError(affData.reason || data.message || 'Invalid promo code');
     } catch (err: unknown) {
-      setCouponError('Failed to apply coupon');
+      setCouponError('Failed to apply promo code');
+      console.error(err);
     } finally {
       setApplyingCoupon(false);
     }
@@ -336,7 +365,10 @@ export default function CheckoutPage() {
         // Order.guestEmail and uses it to send the confirmation receipt.
         guestEmail: session?.user ? undefined : trimmedGuestEmail,
         paymentMethod,
-        couponCode: couponApplied?.code || undefined,
+        // Pass coupon code only for store coupons; affiliate promo codes go in promoCode
+        couponCode:
+          couponApplied && !couponApplied.isAffiliate ? couponApplied.code || undefined : undefined,
+        promoCode: couponApplied?.isAffiliate ? couponApplied.affiliateCode : undefined,
         orderNotes: orderNotes.trim() || undefined,
         giftWrapping,
         pointsRedeemed: pointsToUse || undefined,

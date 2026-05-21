@@ -26,14 +26,21 @@ export async function POST(req: Request) {
   const validated = createCouponSchema.safeParse(body);
 
   if (!validated.success) {
-    return NextResponse.json({ message: 'Invalid data', errors: validated.error.format() }, { status: 400 });
+    return NextResponse.json(
+      { message: 'Invalid data', errors: validated.error.format() },
+      { status: 400 }
+    );
   }
 
   const data = validated.data;
 
+  // Coupon codes are matched case-insensitively at evaluation
+  // (`/api/coupons/evaluate` normalises with toUpperCase()), so we store
+  // them upper-cased on insert too. Otherwise a coupon stored as "summer10"
+  // would be unreachable from the evaluation endpoint.
   const coupon = await prisma.coupon.create({
     data: {
-      code: data.code,
+      code: data.code.trim().toUpperCase(),
       discountType: data.discountType,
       discountValue: data.discountValue,
       minOrderValue: data.minOrderValue ?? null,

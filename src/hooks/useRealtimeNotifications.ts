@@ -18,46 +18,49 @@ export function useRealtimeNotifications() {
   const [isConnected, setIsConnected] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const connect = useCallback(() => {
+  useEffect(() => {
     if (!session?.user) return;
 
-    const eventSource = new EventSource('/api/notifications/stream');
+    let eventSource: EventSource | null = null;
+    let timeoutId: NodeJS.Timeout | null = null;
 
-    eventSource.addEventListener('connected', () => {
-      setIsConnected(true);
-    });
+    function connect() {
+      eventSource = new EventSource('/api/notifications/stream');
 
-    eventSource.addEventListener('notification', (event) => {
-      try {
-        const notification = JSON.parse(event.data) as Notification;
-        setNotifications(prev => [notification, ...prev]);
-        setUnreadCount(prev => prev + 1);
-      } catch (error) {
-        console.error('Failed to parse notification:', error);
-      }
-    });
+      eventSource.addEventListener('connected', () => {
+        setIsConnected(true);
+      });
 
-    eventSource.onerror = () => {
-      setIsConnected(false);
-      eventSource.close();
-      setTimeout(connect, 5000);
-    };
+      eventSource.addEventListener('notification', event => {
+        try {
+          const notification = JSON.parse(event.data) as Notification;
+          setNotifications(prev => [notification, ...prev]);
+          setUnreadCount(prev => prev + 1);
+        } catch (error) {
+          console.error('Failed to parse notification:', error);
+        }
+      });
+
+      eventSource.onerror = () => {
+        setIsConnected(false);
+        if (eventSource) {
+          eventSource.close();
+        }
+        timeoutId = setTimeout(connect, 5000);
+      };
+    }
+
+    connect();
 
     return () => {
-      eventSource.close();
+      if (eventSource) eventSource.close();
+      if (timeoutId) clearTimeout(timeoutId);
       setIsConnected(false);
     };
   }, [session]);
 
-  useEffect(() => {
-    if (session?.user) {
-      const cleanup = connect();
-      return () => cleanup?.();
-    }
-  }, [session, connect]);
-
   const markAsRead = useCallback((id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
     setUnreadCount(prev => Math.max(0, prev - 1));
   }, []);
 

@@ -93,6 +93,21 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       data,
     });
 
+    // Hook in affiliate commissions
+    try {
+      const { confirmCommission, cancelCommission } = await import('@/lib/checkout-affiliate');
+      if (status === OrderStatus.DELIVERED && order.status !== OrderStatus.DELIVERED) {
+        await confirmCommission(orderId);
+      } else if (
+        (status === OrderStatus.CANCELLED || status === OrderStatus.RETURNED) &&
+        order.status !== status
+      ) {
+        await cancelCommission(orderId);
+      }
+    } catch (err) {
+      console.error('Failed to trigger affiliate commission updates:', err);
+    }
+
     return NextResponse.json(
       { message: 'Order status updated', order: updatedOrder },
       { status: 200 }

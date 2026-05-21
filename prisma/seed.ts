@@ -1,4 +1,4 @@
-import { PrismaClient } from '../src/generated/client';
+import { PrismaClient, AffiliateTier } from '../src/generated/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -42,41 +42,47 @@ async function main() {
   await prisma.sellerProfile.deleteMany();
   await prisma.address.deleteMany();
   await prisma.passwordResetToken.deleteMany();
+  await prisma.commission.deleteMany();
+  await prisma.promoCodeUsage.deleteMany();
+  await prisma.affiliateReferral.deleteMany();
+  await prisma.affiliateBonus.deleteMany();
+  await prisma.affiliatePayout.deleteMany();
+  await prisma.affiliate.deleteMany();
+  await prisma.affiliateTierConfig.deleteMany();
+  await prisma.affiliateGlobalSettings.deleteMany();
   await prisma.verificationToken.deleteMany();
   await prisma.user.deleteMany();
 
   // ── Categories (catalog scaffolding) ──────────────────────────────────────
   const categoriesData = [
-    { name: 'Women',       slug: 'women' },
-    { name: 'Men',         slug: 'men' },
-    { name: 'Kids',        slug: 'kids' },
+    { name: 'Women', slug: 'women' },
+    { name: 'Men', slug: 'men' },
+    { name: 'Kids', slug: 'kids' },
     { name: 'Electronics', slug: 'electronics' },
-    { name: 'Home',        slug: 'home' },
-    { name: 'Beauty',      slug: 'beauty' },
-    { name: 'Sports',      slug: 'sports' },
-    { name: 'Footwear',    slug: 'footwear' },
+    { name: 'Home', slug: 'home' },
+    { name: 'Beauty', slug: 'beauty' },
+    { name: 'Sports', slug: 'sports' },
+    { name: 'Footwear', slug: 'footwear' },
     { name: 'Accessories', slug: 'accessories' },
-    { name: 'Toys',        slug: 'toys' },
-    { name: 'Appliances',  slug: 'appliances' },
-    { name: 'Groceries',   slug: 'groceries' },
-    { name: 'Auto',        slug: 'auto' },
-    { name: 'Furniture',   slug: 'furniture' },
-    { name: 'Books',       slug: 'books' },
-    { name: 'Health',      slug: 'health' },
-    { name: 'Pets',        slug: 'pets' },
-    { name: 'Jewelry',     slug: 'jewelry' },
-    { name: 'Garden',      slug: 'garden' },
-    { name: 'Pharma',      slug: 'pharma' },
+    { name: 'Toys', slug: 'toys' },
+    { name: 'Appliances', slug: 'appliances' },
+    { name: 'Groceries', slug: 'groceries' },
+    { name: 'Auto', slug: 'auto' },
+    { name: 'Furniture', slug: 'furniture' },
+    { name: 'Books', slug: 'books' },
+    { name: 'Health', slug: 'health' },
+    { name: 'Pets', slug: 'pets' },
+    { name: 'Jewelry', slug: 'jewelry' },
+    { name: 'Garden', slug: 'garden' },
+    { name: 'Pharma', slug: 'pharma' },
   ];
 
-  await Promise.all(
-    categoriesData.map((c) => prisma.category.create({ data: c })),
-  );
+  await Promise.all(categoriesData.map(c => prisma.category.create({ data: c })));
   console.log(`✅ ${categoriesData.length} categories created`);
 
   // ── Users ───────────────────────────────────────────────────────────────
   // Loyalty points, balances and counters all start at zero.
-  const adminPwHash = await bcrypt.hash('admin1234', 10);
+  const adminPwHash = await bcrypt.hash('admin1234', 12);
   await prisma.user.create({
     data: {
       name: 'Admin',
@@ -87,7 +93,7 @@ async function main() {
     },
   });
 
-  const sellerPwHash = await bcrypt.hash('seller1234', 10);
+  const sellerPwHash = await bcrypt.hash('seller1234', 12);
   const sellerUser = await prisma.user.create({
     data: {
       name: 'Demo Seller',
@@ -108,7 +114,7 @@ async function main() {
     },
   });
 
-  const buyerPwHash = await bcrypt.hash('user1234', 10);
+  const buyerPwHash = await bcrypt.hash('user1234', 12);
   await prisma.user.create({
     data: {
       name: 'Demo User',
@@ -122,6 +128,40 @@ async function main() {
   console.log('✅ Starter accounts created (admin / seller / buyer)');
   console.log('   No sample products, orders, points, balances or reviews — start clean.');
 
+  // ── Affiliate Program Scaffolding ──────────────────────────────────────────
+  const tiers = [
+    { tier: 'STARTER', name: 'Starter', minConversions: 0, commissionPct: 5 },
+    { tier: 'SILVER', name: 'Silver', minConversions: 20, commissionPct: 6 },
+    { tier: 'GOLD', name: 'Gold', minConversions: 84, commissionPct: 8 },
+    { tier: 'PLATINUM', name: 'Platinum', minConversions: 200, commissionPct: 12 },
+  ];
+
+  for (const t of tiers) {
+    await prisma.affiliateTierConfig.create({
+      data: {
+        tier: t.tier as AffiliateTier,
+        name: t.name,
+        minConversions: t.minConversions,
+        commissionPct: t.commissionPct,
+        isActive: true,
+      },
+    });
+  }
+
+  await prisma.affiliateGlobalSettings.create({
+    data: {
+      id: 'global',
+      defaultDiscountPct: 15,
+      maxDiscountPct: 30,
+      referrerBonusEgp: 50,
+      joinerBonusEgp: 30,
+      bonusExpiryDays: 90,
+      bonusesEnabled: true,
+      programEnabled: true,
+    },
+  });
+  console.log('✅ Affiliate tiers and global settings seeded');
+
   console.log('\n🎉 Seeding complete!');
   console.log('Login credentials:');
   console.log('  Admin:  admin@admin.com / admin1234   → /admin-os');
@@ -130,7 +170,7 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error(e);
     process.exit(1);
   })

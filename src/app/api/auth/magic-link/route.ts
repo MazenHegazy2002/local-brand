@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { BCRYPT_COST } from '@/lib/constants';
 
 // Magic-link sign-in. The user submits an email; we either look up an
 // existing account or auto-create one (with an unguessable random
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
     // sets a real password through /account/set-password.
     let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      const placeholder = await bcrypt.hash(crypto.randomBytes(48).toString('hex'), 10);
+      const placeholder = await bcrypt.hash(crypto.randomBytes(48).toString('hex'), BCRYPT_COST);
       user = await prisma.user.create({
         data: {
           email,
