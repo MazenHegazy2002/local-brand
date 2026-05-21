@@ -166,51 +166,10 @@ export default function SellPage() {
           Takes 2 minutes. We review within 48 hours.
         </p>
 
-        {!session ? (
-          <div
-            style={{
-              background: '#EFF6FF',
-              border: '1px solid #BFDBFE',
-              borderRadius: 10,
-              padding: '12px 16px',
-              marginBottom: 24,
-              fontSize: 14,
-              color: '#1E3A8A',
-            }}
-          >
-            Already have an account?{' '}
-            <Link
-              href="/login?callbackUrl=/sell"
-              style={{ fontWeight: 600, color: '#1e3b8a', textDecoration: 'underline' }}
-            >
-              Sign in
-            </Link>{' '}
-            to apply with your existing profile. Otherwise, fill out the form below to register and
-            apply at the same time!
-          </div>
-        ) : null}
-
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Account Details for Guest Users */}
           {!session && (
-            <div
-              style={{
-                background: '#F8FAFC',
-                border: '1px solid #E2E8F0',
-                borderRadius: 12,
-                padding: '20px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 16,
-              }}
-            >
-              <h3 style={{ fontSize: 15, fontWeight: 600, color: '#0F172A', marginBottom: 2 }}>
-                Account Details
-              </h3>
-              <p style={{ color: '#64748B', fontSize: 12, marginTop: -12, marginBottom: 4 }}>
-                Enter your details to automatically register your account.
-              </p>
-
+            <>
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
                   Full Name <span style={{ color: '#EF4444' }}>*</span>
@@ -223,7 +182,7 @@ export default function SellPage() {
                   required
                   style={{
                     width: '100%',
-                    border: '1px solid #CBD5E1',
+                    border: '1px solid #e2e8f0',
                     borderRadius: 8,
                     padding: '10px 14px',
                     fontSize: 14,
@@ -246,7 +205,7 @@ export default function SellPage() {
                   required
                   style={{
                     width: '100%',
-                    border: '1px solid #CBD5E1',
+                    border: '1px solid #e2e8f0',
                     borderRadius: 8,
                     padding: '10px 14px',
                     fontSize: 14,
@@ -272,7 +231,7 @@ export default function SellPage() {
                     required
                     style={{
                       width: '100%',
-                      border: '1px solid #CBD5E1',
+                      border: '1px solid #e2e8f0',
                       borderRadius: 8,
                       padding: '10px 14px',
                       fontSize: 14,
@@ -286,17 +245,18 @@ export default function SellPage() {
                   <label
                     style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}
                   >
-                    WhatsApp Number <span style={{ color: '#EF4444' }}>*</span>
+                    Password <span style={{ color: '#EF4444' }}>*</span>
                   </label>
                   <input
-                    type="tel"
-                    placeholder="01xxxxxxxxx"
-                    value={form.whatsapp}
-                    onChange={e => set('whatsapp', e.target.value)}
+                    type="password"
+                    placeholder="••••••••"
+                    value={form.password}
+                    onChange={e => set('password', e.target.value)}
                     required
+                    minLength={8}
                     style={{
                       width: '100%',
-                      border: '1px solid #CBD5E1',
+                      border: '1px solid #e2e8f0',
                       borderRadius: 8,
                       padding: '10px 14px',
                       fontSize: 14,
@@ -307,31 +267,7 @@ export default function SellPage() {
                   />
                 </div>
               </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
-                  Password <span style={{ color: '#EF4444' }}>*</span>
-                </label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={form.password}
-                  onChange={e => set('password', e.target.value)}
-                  required
-                  minLength={8}
-                  style={{
-                    width: '100%',
-                    border: '1px solid #CBD5E1',
-                    borderRadius: 8,
-                    padding: '10px 14px',
-                    fontSize: 14,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    background: '#fff',
-                  }}
-                />
-              </div>
-            </div>
+            </>
           )}
 
           <div>
@@ -434,30 +370,27 @@ export default function SellPage() {
             </select>
           </div>
 
-          {/* Standalone WhatsApp Number field for authenticated users */}
-          {session && (
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
-                WhatsApp Number <span style={{ color: '#EF4444' }}>*</span>
-              </label>
-              <input
-                type="tel"
-                placeholder="e.g. 01xxxxxxxxx"
-                value={form.whatsapp}
-                onChange={e => set('whatsapp', e.target.value)}
-                required
-                style={{
-                  width: '100%',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: 8,
-                  padding: '10px 14px',
-                  fontSize: 14,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-          )}
+          <div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
+              WhatsApp Number <span style={{ color: '#EF4444' }}>*</span>
+            </label>
+            <input
+              type="tel"
+              placeholder="e.g. 01xxxxxxxxx"
+              value={form.whatsapp}
+              onChange={e => set('whatsapp', e.target.value)}
+              required
+              style={{
+                width: '100%',
+                border: '1px solid #e2e8f0',
+                borderRadius: 8,
+                padding: '10px 14px',
+                fontSize: 14,
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
 
           <div>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
