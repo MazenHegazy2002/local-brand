@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
   },
 
   outputFileTracingExcludes: {},
+  outputFileTracingIncludes: {
+    '/api/**/*': ['./src/generated/client/**/*'],
+    '/**/*': ['./src/generated/client/**/*'],
+  },
 
   // ─── Image Optimisation ───────────────────────────────────────────────────
   images: {
