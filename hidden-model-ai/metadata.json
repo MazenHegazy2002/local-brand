@@ -1,5 +1,0 @@
-{
-  "name": "Hidden Model AI",
-  "description": "Transform your clothing photos into professional product shots using an invisible model effect (ghost mannequin). Perfect for e-commerce and fashion brands.",
-  "requestFramePermissions": ["camera"]
-}

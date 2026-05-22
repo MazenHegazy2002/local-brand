@@ -6,9 +6,6 @@ const nextConfig: NextConfig = {
   // ─── Turbopack Configuration ────────────────────────────────────────────────
   turbopack: {},
 
-  // ─── Standalone output for smaller Docker images ────────────────────────────
-  output: 'standalone',
-
   // ─── Server External Packages ───────────────────────────────────────────────
   serverExternalPackages: ['@prisma/client', '@neondatabase/serverless', 'ws', 'pg'],
 

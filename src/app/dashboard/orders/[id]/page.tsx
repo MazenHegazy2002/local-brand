@@ -5,12 +5,13 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
-export default async function OrderTrackingPage({ params }: { params: { id: string } }) {
+export default async function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect('/login');
 
   const order = await prisma.order.findUnique({
-    where: { id: params.id, userId: session.user.id },
+    where: { id, userId: session.user.id },
     include: {
       items: {
         include: {
