@@ -49,6 +49,7 @@ export const CSRF_EXEMPT_PREFIXES = [
   '/api/payment/paysky/callback',
   '/api/payment/paymob',
   '/api/payment/fawry',
+  '/api/admin/seed-catalog',
 ];
 
 export function isCsrfExempt(pathname: string): boolean {
