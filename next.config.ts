@@ -17,12 +17,7 @@ const nextConfig: NextConfig = {
     proxyClientMaxBodySize: '10mb', // for image uploads
   },
 
-  // ─── Output File Tracing ─────────────────────────────────────────────────────
-  // Prevent Prisma's custom-output generated client from being unintentionally
-  // traced into every server bundle (Turbopack NFT false-positive).
-  outputFileTracingExcludes: {
-    '*': ['./src/generated/client/**'],
-  },
+  outputFileTracingExcludes: {},
 
   // ─── Image Optimisation ───────────────────────────────────────────────────
   images: {
