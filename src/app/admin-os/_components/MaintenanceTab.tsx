@@ -32,6 +32,11 @@ export default function MaintenanceTab() {
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [seoPing, setSeoPing] = useState<{
+    googleLastPingedAt: string | null;
+    bingLastPingedAt: string | null;
+  } | null>(null);
+  const [seoBusy, setSeoBusy] = useState(false);
 
   const loadCurrent = async () => {
     try {
@@ -58,9 +63,33 @@ export default function MaintenanceTab() {
     }
   };
 
+  const loadSeoPing = async () => {
+    try {
+      const res = await fetch('/api/admin/seo');
+      if (res.ok) setSeoPing(await res.json());
+    } catch {
+      /* best-effort */
+    }
+  };
+
+  const pingSitemap = async () => {
+    setSeoBusy(true);
+    try {
+      const res = await fetch('/api/admin/seo', { method: 'POST' });
+      const data = await res.json();
+      setSeoPing({ googleLastPingedAt: data.pinnedAt, bingLastPingedAt: data.pinnedAt });
+      setInfo(`Sitemap pinged — Google: ${data.google.status}, Bing: ${data.bing.status}`);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Ping failed');
+    } finally {
+      setSeoBusy(false);
+    }
+  };
+
   useEffect(() => {
     loadCurrent();
     loadHealth();
+    loadSeoPing();
   }, []);
 
   const saveSetting = async (key: string, value: unknown) => {
@@ -275,6 +304,42 @@ export default function MaintenanceTab() {
           )}
           <button onClick={loadHealth} className="maint-btn mt-3">
             Refresh
+          </button>
+        </div>
+
+        {/* SEO — sitemap ping */}
+        <div className="maint-card">
+          <h3>🔍 SEO — Sitemap indexing</h3>
+          <p className="maint-card-desc">
+            Notify Google &amp; Bing of your sitemap so they re-crawl the latest pages.
+          </p>
+          {seoPing && (
+            <ul className="maint-stat-list mt-2">
+              <li>
+                <span>Google last pinged</span>
+                <span>
+                  {seoPing.googleLastPingedAt
+                    ? new Date(seoPing.googleLastPingedAt).toLocaleString()
+                    : 'never'}
+                </span>
+              </li>
+              <li>
+                <span>Bing last pinged</span>
+                <span>
+                  {seoPing.bingLastPingedAt
+                    ? new Date(seoPing.bingLastPingedAt).toLocaleString()
+                    : 'never'}
+                </span>
+              </li>
+            </ul>
+          )}
+          <button
+            onClick={pingSitemap}
+            disabled={seoBusy}
+            className="maint-btn mt-3"
+            style={{ opacity: seoBusy ? 0.6 : 1 }}
+          >
+            {seoBusy ? 'Pinging…' : '📡 Ping sitemap (Google + Bing)'}
           </button>
         </div>
       </div>
