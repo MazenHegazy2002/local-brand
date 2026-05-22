@@ -131,6 +131,77 @@ export default async function Home() {
         </Suspense>
       </div>
 
+      {/* ── Start Selling CTA ──────────────────────────────────────── */}
+      <section
+        style={{
+          background: 'linear-gradient(135deg, #1e3b8a 0%, #16307a 100%)',
+          color: '#fff',
+          padding: '56px 20px',
+          textAlign: 'center',
+          marginTop: 32,
+        }}
+      >
+        <p
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: 2,
+            textTransform: 'uppercase',
+            opacity: 0.6,
+            marginBottom: 12,
+          }}
+        >
+          For Sellers
+        </p>
+        <h2 style={{ fontSize: 28, fontWeight: 900, marginBottom: 12, lineHeight: 1.2 }}>
+          Sell your brand on Brandy
+        </h2>
+        <p
+          style={{
+            fontSize: 15,
+            opacity: 0.75,
+            maxWidth: 420,
+            margin: '0 auto 28px',
+            lineHeight: 1.6,
+          }}
+        >
+          Join 100+ Egyptian local brands already growing their business. Zero upfront costs — just
+          sign up and start selling.
+        </p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <a
+            href="/seller/apply"
+            style={{
+              background: '#fff',
+              color: '#1e3b8a',
+              padding: '12px 28px',
+              borderRadius: 999,
+              fontWeight: 800,
+              fontSize: 14,
+              textDecoration: 'none',
+              display: 'inline-block',
+            }}
+          >
+            Start Selling →
+          </a>
+          <a
+            href="/legal/seller-terms"
+            style={{
+              border: '1.5px solid rgba(255,255,255,0.4)',
+              color: '#fff',
+              padding: '12px 28px',
+              borderRadius: 999,
+              fontWeight: 700,
+              fontSize: 14,
+              textDecoration: 'none',
+              display: 'inline-block',
+            }}
+          >
+            Learn more
+          </a>
+        </div>
+      </section>
+
       {/* ── Scoped styles ─────────────────────────────────────────── */}
       <style>{`
         /* Page shell — clamp to ~1280px on big screens, snug on phones. */

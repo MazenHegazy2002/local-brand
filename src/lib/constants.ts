@@ -4,6 +4,9 @@
 
 export const VAT_RATE = 0.14; // Egypt VAT 14%
 export const DEFAULT_COMMISSION_RATE = 0.15; // Platform takes 15%
+// Hard cap: no coupon/promo can discount more than 60% of the pre-discount subtotal.
+// Prevents promotional codes from being used to buy products for near-zero cost.
+export const MAX_DISCOUNT_PCT = 0.6;
 export const RETURN_WINDOW_DAYS = 14;
 // Seller earnings are held in escrow for this many days post-delivery before
 // becoming withdrawable. Keep this in lockstep with `ESCROW_DAYS` in

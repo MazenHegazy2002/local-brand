@@ -62,7 +62,7 @@ export default function Navbar() {
           {/* Nav links */}
           <div className="hidden xl:flex items-center gap-5 text-sm font-semibold text-white/85">
             <Link
-              href="/flash-sales"
+              href="/fresh-sales"
               className="hover:text-white transition-colors border-b-2 border-white pb-0.5 text-white"
             >
               {t('FlashSales')}
@@ -70,7 +70,7 @@ export default function Navbar() {
             <Link href="/brands" className="hover:text-white transition-colors">
               {t('TopBrands')}
             </Link>
-            <Link href="/track" className="hover:text-white transition-colors">
+            <Link href="/dashboard?tab=orders" className="hover:text-white transition-colors">
               {t('TrackOrder')}
             </Link>
             <Link href="/help" className="hover:text-white transition-colors">

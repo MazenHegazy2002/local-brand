@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { DiscountType } from '@/generated/client';
-import { VAT_RATE, STRIPE_API_VERSION, getShippingRate } from '@/lib/constants';
+import { VAT_RATE, MAX_DISCOUNT_PCT, STRIPE_API_VERSION, getShippingRate } from '@/lib/constants';
 import { SessionUser, ProductImage } from '@/types';
 import type Stripe from 'stripe';
 import crypto from 'crypto';
@@ -69,6 +69,15 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
+      // Guard: reject deleted or unpublished products server-side
+      if (variant.product.deletedAt || !variant.product.published) {
+        return NextResponse.json(
+          {
+            message: `"${variant.product.title}" is no longer available. Please remove it from your cart.`,
+          },
+          { status: 400 }
+        );
+      }
       if (variant.stockCount < item.qty) {
         return NextResponse.json(
           { message: `${variant.product.title} is out of stock` },
@@ -76,7 +85,14 @@ export async function POST(req: Request) {
         );
       }
 
-      const price = variant.price || variant.product.basePrice;
+      // Use active flash-sale price when applicable, else variant/base price
+      const flashActive =
+        variant.product.flashSalePrice != null &&
+        variant.product.flashSaleEndsAt != null &&
+        variant.product.flashSaleEndsAt > new Date();
+      const price = flashActive
+        ? (variant.product.flashSalePrice as number)
+        : variant.price || variant.product.basePrice;
       subtotal += price * item.qty;
 
       lineItems.push({
@@ -107,6 +123,9 @@ export async function POST(req: Request) {
         }
       }
     }
+
+    // Hard cap: total discount must not exceed MAX_DISCOUNT_PCT of subtotal
+    discountAmount = Math.min(discountAmount, subtotal * MAX_DISCOUNT_PCT);
 
     const shippingFee = addressInfo?.governorate ? getShippingRate(addressInfo.governorate) : 50;
     const vatAmount = subtotal * VAT_RATE;

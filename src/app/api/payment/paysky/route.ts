@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { VAT_RATE, getShippingRate } from '@/lib/constants';
+import { VAT_RATE, MAX_DISCOUNT_PCT, getShippingRate } from '@/lib/constants';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
 import {
@@ -73,13 +73,29 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
+      // Guard: reject deleted or unpublished products server-side
+      if (variant.product.deletedAt || !variant.product.published) {
+        return NextResponse.json(
+          {
+            message: `"${variant.product.title}" is no longer available. Please remove it from your cart.`,
+          },
+          { status: 400 }
+        );
+      }
       if (variant.stockCount < item.qty) {
         return NextResponse.json(
           { message: `Out of stock: ${variant.product.title}` },
           { status: 400 }
         );
       }
-      const price = variant.price || variant.product.basePrice;
+      // Use active flash-sale price when applicable, else variant/base price
+      const flashActive =
+        variant.product.flashSalePrice != null &&
+        variant.product.flashSaleEndsAt != null &&
+        variant.product.flashSaleEndsAt > new Date();
+      const price = flashActive
+        ? (variant.product.flashSalePrice as number)
+        : variant.price || variant.product.basePrice;
       subtotal += price * item.qty;
     }
 
@@ -112,6 +128,9 @@ export async function POST(req: Request) {
         }
       }
     }
+
+    // Hard cap: total discount must not exceed MAX_DISCOUNT_PCT of subtotal
+    discount = Math.min(discount, subtotal * MAX_DISCOUNT_PCT);
 
     const shipping = addressInfo?.governorate ? getShippingRate(addressInfo.governorate) : 50;
     const subtotalAfter = Math.max(0, subtotal - discount);

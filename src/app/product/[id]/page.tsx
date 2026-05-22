@@ -8,6 +8,51 @@ import RelatedProducts from '@/components/RelatedProducts';
 import RecentlyViewed from '@/components/RecentlyViewed';
 import { PLATFORM_URL } from '@/lib/constants';
 import type { Product as ProductType, Review } from '@/types';
+import type { Metadata } from 'next';
+
+export const revalidate = 60;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const product = await prisma.product.findUnique({
+    where: { id },
+    select: {
+      title: true,
+      description: true,
+      basePrice: true,
+      flashSalePrice: true,
+      images: { where: { isPrimary: true }, take: 1 },
+      seller: { select: { storeName: true } },
+      category: { select: { name: true } },
+    },
+  });
+
+  if (!product) return { title: 'Product Not Found' };
+
+  const price = product.flashSalePrice ?? product.basePrice;
+  const image = product.images[0]?.url;
+  const description =
+    product.description.slice(0, 155) ||
+    `Shop ${product.title} from ${product.seller?.storeName} on Brandy — Egypt's local marketplace. Price: ${price} EGP.`;
+  const arabicDescription = `تسوق ${product.title} من ${product.seller?.storeName} على Brandy — السوق المحلي المصري. السعر: ${price} جنيه.`;
+
+  return {
+    title: `${product.title} — ${product.seller?.storeName ?? 'Brandy'}`,
+    description,
+    alternates: { languages: { 'ar-EG': arabicDescription } },
+    openGraph: {
+      title: product.title,
+      description,
+      images: image ? [{ url: image, width: 800, height: 800 }] : undefined,
+      type: 'website',
+    },
+    twitter: { card: 'summary_large_image', title: product.title, description },
+  };
+}
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

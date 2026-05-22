@@ -56,6 +56,9 @@ function ShopContent() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const addItem = useCartStore(s => s.addItem);
   const [added, setAdded] = useState<Record<string, boolean>>({});
@@ -78,7 +81,7 @@ function ShopContent() {
     }
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (currentPage = 1) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -93,12 +96,16 @@ function ShopContent() {
       if (filters.flashSale) params.set('flashSale', 'true');
       if (filters.rating > 0) params.set('rating', String(filters.rating));
       params.set('sort', filters.sort);
-      params.set('limit', '50');
+      params.set('page', String(currentPage));
+      params.set('limit', '20');
 
       const res = await fetch(`/api/products?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setProducts(data.products || []);
+        setTotalPages(data.pagination?.totalPages ?? 1);
+        setTotal(data.pagination?.total ?? 0);
+        setPage(currentPage);
       }
     } catch (e) {
       console.error(e);
@@ -111,7 +118,8 @@ function ShopContent() {
     fetchFilters();
   }, []);
   useEffect(() => {
-    fetchProducts();
+    fetchProducts(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   const handleFilterChange = (key: keyof FilterState, value: string | number | boolean) => {
@@ -179,7 +187,7 @@ function ShopContent() {
                 : t('AllProducts')}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            {sortedProducts.length} {t('Products')}
+            {total > 0 ? `${total} ${t('Products')}` : `${sortedProducts.length} ${t('Products')}`}
           </p>
         </div>
         <div className="flex gap-3 items-center">
@@ -347,37 +355,106 @@ function ShopContent() {
           </div>
         </aside>
 
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col gap-6">
           {loading ? (
             <ProductGridSkeleton count={12} />
           ) : sortedProducts.length === 0 ? (
-            <div className="text-center py-20 text-gray-400">
-              <div className="text-5xl mb-4">🔍</div>
-              <p className="font-semibold">{t('NoProductsFound')}</p>
-              <button onClick={clearFilters} className="mt-4 text-[#1e3b8a] hover:underline">
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <svg
+                className="w-20 h-20 text-gray-300 mb-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0Z"
+                />
+              </svg>
+              <h3 className="text-xl font-bold text-gray-700 mb-2">{t('NoProductsFound')}</h3>
+              <p className="text-gray-400 text-sm mb-6 max-w-xs">
+                {t('TryAdjustingFilters') ||
+                  "Try adjusting your filters or search term to find what you're looking for."}
+              </p>
+              <button
+                onClick={clearFilters}
+                className="px-6 py-2.5 bg-[#1e3b8a] text-white rounded-full text-sm font-medium hover:bg-[#16307a] transition-colors"
+              >
                 {t('ClearFilters')}
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {sortedProducts.map((product, idx) => (
-                <ProductCard
-                  key={product.id}
-                  product={
-                    {
-                      ...product,
-                      name: product.title,
-                      image: product.images?.[0]?.url,
-                      brand: product.seller?.storeName || 'Local Brand',
-                      brandSlug: product.seller?.storeName
-                        ? product.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-                        : '',
-                    } as any
-                  }
-                  index={idx}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                {sortedProducts.map((product, idx) => (
+                  <ProductCard
+                    key={product.id}
+                    product={
+                      {
+                        ...product,
+                        name: product.title,
+                        image: product.images?.[0]?.url,
+                        brand: product.seller?.storeName || 'Local Brand',
+                        brandSlug: product.seller?.storeName
+                          ? product.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                          : '',
+                      } as any
+                    }
+                    index={idx}
+                  />
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-4 pb-2">
+                  <button
+                    onClick={() => fetchProducts(page - 1)}
+                    disabled={page <= 1}
+                    className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                  >
+                    {t('Previous') || 'Previous'}
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+                    .reduce<(number | 'ellipsis')[]>((acc, p, i, arr) => {
+                      if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push('ellipsis');
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((item, i) =>
+                      item === 'ellipsis' ? (
+                        <span key={`ellipsis-${i}`} className="px-2 text-gray-400 select-none">
+                          …
+                        </span>
+                      ) : (
+                        <button
+                          key={item}
+                          onClick={() => fetchProducts(item as number)}
+                          className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+                            item === page
+                              ? 'bg-[#1e3b8a] text-white'
+                              : 'border hover:bg-gray-50 text-gray-700'
+                          }`}
+                        >
+                          {item}
+                        </button>
+                      )
+                    )}
+
+                  <button
+                    onClick={() => fetchProducts(page + 1)}
+                    disabled={page >= totalPages}
+                    className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                  >
+                    {t('Next') || 'Next'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

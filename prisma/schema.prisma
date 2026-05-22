@@ -158,6 +158,20 @@ model Product {
   tags         Tag[]
   collections  Collection[]
   productQAs   ProductQA[]
+
+  // Query-pattern indexes
+  // Base browse: published + soft-delete guard, sorted by recency (default)
+  @@index([published, deletedAt, createdAt])
+  // Category page: narrow by category then apply the standard filters
+  @@index([categoryId, published, deletedAt])
+  // Seller hub / store page: all products for a seller
+  @@index([sellerId, published, deletedAt])
+  // Price sort / range filter
+  @@index([basePrice])
+  // Featured products section
+  @@index([isFeatured, published, deletedAt])
+  // Flash-sale filter (flashSaleEndsAt > now)
+  @@index([flashSaleEndsAt])
 }
 
 model Category {

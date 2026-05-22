@@ -18,7 +18,7 @@ import {
   PaymentStatus,
   PaymentMethod,
 } from '@/generated/client';
-import { VAT_RATE, getShippingRate } from '@/lib/constants';
+import { VAT_RATE, MAX_DISCOUNT_PCT, getShippingRate } from '@/lib/constants';
 import { createOrderSchema } from '@/lib/validation';
 
 export interface CreateOrderResult {
@@ -105,11 +105,25 @@ export async function createOrderForUser(
             'One or more items in your cart are no longer available. Please refresh your cart and try again.',
         };
       }
+      // Guard: reject deleted or unpublished products server-side
+      if (variant.product.deletedAt || !variant.product.published) {
+        return {
+          error: `"${variant.product.title}" is no longer available. Please remove it from your cart.`,
+        };
+      }
       if (variant.stockCount < itemInput.quantity) {
         return { error: `Out of stock: ${variant.product.title}` };
       }
 
-      const price = variant.price || variant.product.basePrice;
+      // Use active flash-sale price when applicable, else variant/base price
+      const now = new Date();
+      const flashActive =
+        variant.product.flashSalePrice != null &&
+        variant.product.flashSaleEndsAt != null &&
+        variant.product.flashSaleEndsAt > now;
+      const price = flashActive
+        ? (variant.product.flashSalePrice as number)
+        : variant.price || variant.product.basePrice;
       subtotal += price * itemInput.quantity;
 
       orderItemsData.push({
@@ -163,6 +177,9 @@ export async function createOrderForUser(
         console.error('Failed to apply affiliate promo code:', err);
       }
     }
+
+    // Hard cap: total discount must not exceed MAX_DISCOUNT_PCT of subtotal
+    discountAmount = Math.min(discountAmount, subtotal * MAX_DISCOUNT_PCT);
 
     const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
     const vatAmount = subtotalAfterDiscount * VAT_RATE;

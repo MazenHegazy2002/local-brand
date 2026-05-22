@@ -1,9 +1,12 @@
-import type { NextConfig } from "next";
-import withPWA from "next-pwa";
+import type { NextConfig } from 'next';
+import withPWA from 'next-pwa';
 
 const nextConfig: NextConfig = {
   // ─── Turbopack Configuration ────────────────────────────────────────────────
   turbopack: {},
+
+  // ─── Standalone output for smaller Docker images ────────────────────────────
+  output: 'standalone',
 
   // ─── Server External Packages ───────────────────────────────────────────────
   serverExternalPackages: ['@prisma/client', '@neondatabase/serverless', 'ws', 'pg'],
@@ -18,16 +21,16 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 3600,
     remotePatterns: [
-      { protocol: "https", hostname: "images.unsplash.com" },
-      { protocol: "https", hostname: "res.cloudinary.com" },
-      { protocol: "https", hostname: "picsum.photos" },
-      { protocol: "https", hostname: "*.amazonaws.com" },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
+      { protocol: 'https', hostname: 'picsum.photos' },
+      { protocol: 'https', hostname: '*.amazonaws.com' },
     ],
   },
 
   // ─── Production Hardening ────────────────────────────────────────────────
   poweredByHeader: false, // Remove "X-Powered-By: Next.js" header (security)
-  compress: true,          // Enable gzip compression
+  compress: true, // Enable gzip compression
   reactStrictMode: true,
 
   // ─── Security Headers ─────────────────────────────────────────────────────
@@ -38,6 +41,16 @@ const nextConfig: NextConfig = {
   // loading.tsx placeholder never gets replaced with the real page.
   async headers() {
     return [
+      // ── CDN caching for hashed static assets ──────────────────────────────
+      {
+        source: '/_next/static/(.*)',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        source: '/static/(.*)',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      // ── Security headers on all routes ────────────────────────────────────
       {
         source: '/(.*)',
         headers: [

@@ -111,6 +111,7 @@ export default function ProductCard({
     '';
   const productBrandSlug =
     product.brandSlug || productBrand.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const isVerifiedLocal = (product as Partial<Product>).isVerifiedLocal ?? false;
 
   // ── Client Cart & Language Hooks ──
   const addItem = useCartStore(s => s.addItem);
@@ -219,6 +220,23 @@ export default function ProductCard({
         </div>
         {/* Badges Overlay */}
         <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-10">
+          {isVerifiedLocal && (
+            <span
+              title="Verified Local Brand"
+              className="inline-flex items-center gap-1 bg-[#1e3b8a] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow"
+            >
+              <svg
+                className="w-3 h-3 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Local
+            </span>
+          )}
           {productTags.slice(0, 2).map((tag: string | Tag) => {
             const tagName = typeof tag === 'string' ? tag : tag.name;
             return (

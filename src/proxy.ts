@@ -208,6 +208,8 @@ export async function proxy(req: NextRequest) {
   return attachCsp(req, NextResponse.next({ request: { headers: req.headers } }));
 }
 
+export { proxy as middleware };
+
 export const config = {
   matcher: [
     /*

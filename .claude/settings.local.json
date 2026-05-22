@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir C:\\\\Users\\\\Mazen\\\\Desktop\\\\Apps Store\\\\Local brand\\\\prisma\\\\migrations *)",
+      "Bash(npm run *)"
+    ]
+  }
+}
