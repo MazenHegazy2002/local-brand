@@ -15,7 +15,8 @@ export type PluginCategory =
   | 'SHIPPING'
   | 'SMS'
   | 'ADS'
-  | 'OTHER';
+  | 'OTHER'
+  | 'AI';
 
 export interface PluginField {
   key: string;
@@ -404,6 +405,28 @@ export const PLUGIN_REGISTRY: PluginDefinition[] = [
     icon: '/plugins/bosta.svg',
     fields: [{ key: 'apiKey', label: 'API key', type: 'secret', required: true }],
   },
+
+  // ── AI ──────────────────────────────────────────────────────────────
+  {
+    slug: 'virtual-tryon',
+    name: 'Virtual Try-On AI',
+    category: 'AI',
+    vendor: 'Google Gemini',
+    description:
+      'Let customers see how clothing looks on them. Powered by Gemini 2.0 Flash. Shows a "Try It" button on men\'s and women\'s product pages.',
+    icon: '/plugins/gemini.svg',
+    docsUrl: 'https://ai.google.dev/gemini-api/docs',
+    fields: [
+      {
+        key: 'apiKeys',
+        label: 'Gemini API Keys (comma-separated)',
+        description:
+          'One or more Google AI Studio keys separated by commas. Multiple keys rotate automatically to handle quota limits.',
+        type: 'secret',
+        required: true,
+      },
+    ],
+  },
 ];
 
 // ─── Helpers ────────────────────────────────────────────────────────────
@@ -446,4 +469,5 @@ export const PLUGIN_CATEGORIES: Array<{
   { slug: 'PUSH', label: 'Push', icon: '🔔', description: 'Web and mobile push' },
   { slug: 'STORAGE', label: 'Storage', icon: '🗄️', description: 'Image and asset hosting' },
   { slug: 'OTHER', label: 'Other', icon: '🧩', description: 'Error tracking, search, etc.' },
+  { slug: 'AI', label: 'AI Features', icon: '✨', description: 'AI-powered shopping tools' },
 ];

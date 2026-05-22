@@ -26,6 +26,7 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@neondatabase/serverless": "^1.1.0",
     "@prisma/adapter-neon": "^6.2.1",
     "@prisma/client": "^6.2.1",

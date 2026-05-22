@@ -1,5 +1,17 @@
 import { prisma } from '@/lib/prisma';
 import Navbar from '@/components/Navbar';
+// Lightweight helper — no extra query when plugin is not installed
+async function isVirtualTryOnEnabled(): Promise<boolean> {
+  try {
+    const plugin = await prisma.plugin.findUnique({
+      where: { slug: 'virtual-tryon' },
+      select: { isEnabled: true },
+    });
+    return plugin?.isEnabled ?? false;
+  } catch {
+    return false;
+  }
+}
 import Link from 'next/link';
 import { getDictionary } from '@/lib/i18n/server';
 import ReviewSection from '@/components/ReviewSection';
@@ -61,20 +73,24 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   const baseUrl = PLATFORM_URL;
 
-  const product = await prisma.product.findUnique({
-    where: { id },
-    include: {
-      images: true,
-      variants: true,
-      seller: true,
-      category: true,
-      tags: true,
-      reviews: {
-        orderBy: { createdAt: 'desc' },
-        include: { user: { select: { name: true } } },
+  // Run plugin check in parallel with the product query
+  const [product, virtualTryOnEnabled] = await Promise.all([
+    prisma.product.findUnique({
+      where: { id },
+      include: {
+        images: true,
+        variants: true,
+        seller: true,
+        category: true,
+        tags: true,
+        reviews: {
+          orderBy: { createdAt: 'desc' },
+          include: { user: { select: { name: true } } },
+        },
       },
-    },
-  });
+    }),
+    isVirtualTryOnEnabled(),
+  ]);
 
   if (!product) {
     return (
@@ -165,7 +181,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        <ProductDetails product={product as unknown as ProductType} />
+        <ProductDetails
+          product={product as unknown as ProductType}
+          virtualTryOnEnabled={virtualTryOnEnabled}
+        />
 
         {/* Related Products */}
         <RelatedProducts

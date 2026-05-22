@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/lib/cartStore';
 import { useLanguage } from '@/providers/LanguageContext';
 import WishlistButton from '@/components/WishlistButton';
@@ -77,8 +78,24 @@ const getSwatchBackground = (colorName: string) => {
   return COLOR_MAP[name] || name;
 };
 
-export default function ProductDetails({ product }: { product: any }) {
+// Category slugs / name fragments that qualify for the Virtual Try-On button
+const TRYON_CATEGORY_SLUGS = ['men', 'women'];
+function isTryOnCategory(category: { slug?: string; name?: string } | null | undefined): boolean {
+  if (!category) return false;
+  const slug = (category.slug ?? '').toLowerCase();
+  const name = (category.name ?? '').toLowerCase();
+  return TRYON_CATEGORY_SLUGS.some(k => slug.includes(k) || name.includes(k));
+}
+
+export default function ProductDetails({
+  product,
+  virtualTryOnEnabled = false,
+}: {
+  product: any;
+  virtualTryOnEnabled?: boolean;
+}) {
   const { t } = useLanguage();
+  const router = useRouter();
   const addItem = useCartStore(s => s.addItem);
 
   const images = product.images || [];
@@ -530,6 +547,24 @@ export default function ProductDetails({ product }: { product: any }) {
             />
           </div>
         </div>
+
+        {/* ── Virtual Try-On button (AI plugin, men/women categories only) ── */}
+        {virtualTryOnEnabled && isTryOnCategory(product.category) && (
+          <button
+            onClick={() => {
+              const params = new URLSearchParams({
+                product_image: activeImage || primaryImage,
+                title: product.title,
+                ...(selectedColor ? { color: selectedColor } : {}),
+              });
+              router.push(`/virtual-tryon?${params.toString()}`);
+            }}
+            className="mt-3 w-full h-12 rounded-xl font-black text-sm tracking-wider uppercase transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-lg shadow-violet-500/20 active:scale-95"
+          >
+            <span className="text-base">✨</span>
+            Try It On — AI Fitting Room
+          </button>
+        )}
 
         {/* Global stock overview */}
         {hasVariants && (

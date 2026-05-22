@@ -1078,6 +1078,7 @@ enum PluginCategory {
   SMS
   ADS
   OTHER
+  AI
 }
 
 // Per-governorate (or per-zone) shipping rate. Replaces the hard-coded
