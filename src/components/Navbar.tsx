@@ -70,7 +70,7 @@ export default function Navbar() {
             <Link href="/brands" className="hover:text-white transition-colors">
               {t('TopBrands')}
             </Link>
-            <Link href="/dashboard?tab=orders" className="hover:text-white transition-colors">
+            <Link href="/track" className="hover:text-white transition-colors">
               {t('TrackOrder')}
             </Link>
             <Link href="/help" className="hover:text-white transition-colors">

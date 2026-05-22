@@ -1,298 +1,482 @@
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getHomepageData } from '@/app/actions/seller';
 import { en } from '@/lib/i18n/dicts';
 import { getDictionary } from '@/lib/i18n/server';
-import ProductCard from '@/components/ProductCard';
+import WishlistButton from '@/components/WishlistButton';
+import {
+  ElectronicsIcon,
+  FashionIcon,
+  HomeIcon,
+  HealthIcon,
+  SportsIcon,
+  GroceryIcon,
+  ChevronLeft,
+  ChevronRight,
+} from '@/components/icons';
+import { ProductGridSkeleton, CategoryGridSkeleton } from '@/components/Skeleton';
 import { Suspense } from 'react';
-import { Product, ProductImage } from '@/types';
 import PromoBanner from '@/components/PromoBanner';
 
-interface HomePageData {
-  categories: { id: string; name: string; slug: string; parentId: string | null }[];
-  featuredProducts: (Product & { images: ProductImage[] })[];
-  recentProducts: (Product & { images: ProductImage[] })[];
-}
-
-// ── Section ────────────────────────────────────────────────────────────────
-
-function ProductSection({
-  emoji,
-  title,
-  linkLabel,
-  linkHref,
-  products,
-  dict,
-}: {
-  emoji: string;
-  title: string;
-  linkLabel: string;
-  linkHref: string;
-  products: (Product & { images: ProductImage[] })[];
-  dict: typeof en;
-}) {
-  if (products.length === 0) return null;
-
-  return (
-    <section className="ps-section">
-      <div className="ps-header">
-        <h2 className="ps-title">
-          <span>{emoji}</span> {title}
-        </h2>
-        <Link href={linkHref} className="ps-link">
-          {linkLabel} →
-        </Link>
-      </div>
-      <div className="ps-grid">
-        {products.slice(0, 6).map((p, idx) => (
-          <ProductCard
-            key={p.id}
-            product={
-              {
-                ...p,
-                name: p.title,
-                image: p.images[0]?.url,
-                brand: (p as any).seller?.storeName || dict.Brandy || 'Local Brand',
-                brandSlug: (p as any).seller?.storeName
-                  ? (p as any).seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-                  : '',
-              } as any
-            }
-            index={idx}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-// ── Page ───────────────────────────────────────────────────────────────────
-
 export default async function Home() {
-  let homeData: HomePageData = { categories: [], featuredProducts: [], recentProducts: [] };
-  let dict = en;
+  let homeData: any = { categories: [], featuredProducts: [], recentProducts: [] };
+  let dict: any = en;
 
   try {
     const data = await getHomepageData();
-    if (data) homeData = data as unknown as HomePageData;
+    if (data) homeData = data;
     const d = await getDictionary();
     if (d) dict = d;
   } catch (e) {
     console.error('Critical SSR Error:', e);
   }
 
-  const { featuredProducts, recentProducts } = homeData;
+  const { categories: dbCategories, featuredProducts, recentProducts } = homeData;
 
-  // Use featured as Bestsellers, recent as New Arrivals, mix as Recommended
-  const bestsellers = featuredProducts.length > 0 ? featuredProducts : recentProducts;
-  const newArrivals = recentProducts.length > 0 ? recentProducts : featuredProducts;
-  const recommended = [...recentProducts, ...featuredProducts].slice(0, 6);
+  const categories =
+    dbCategories.length > 0
+      ? dbCategories.map((c: any) => ({
+          name: c.name,
+          slug: c.slug,
+          icon: c.name.toLowerCase().includes('electronic') ? (
+            <ElectronicsIcon />
+          ) : c.name.toLowerCase().includes('fashion') ||
+            c.name.toLowerCase().includes('women') ||
+            c.name.toLowerCase().includes('men') ? (
+            <FashionIcon />
+          ) : c.name.toLowerCase().includes('home') ||
+            c.name.toLowerCase().includes('furniture') ? (
+            <HomeIcon />
+          ) : c.name.toLowerCase().includes('health') ||
+            c.name.toLowerCase().includes('beauty') ||
+            c.name.toLowerCase().includes('pharma') ? (
+            <HealthIcon />
+          ) : c.name.toLowerCase().includes('sport') ? (
+            <SportsIcon />
+          ) : c.name.toLowerCase().includes('grocer') || c.name.toLowerCase().includes('food') ? (
+            <GroceryIcon />
+          ) : (
+            <ElectronicsIcon />
+          ),
+        }))
+      : [
+          { name: dict.Electronics, slug: 'electronics', icon: <ElectronicsIcon /> },
+          { name: dict.Fashion, slug: 'fashion', icon: <FashionIcon /> },
+          { name: dict.HomeDecor, slug: 'home-decor', icon: <HomeIcon /> },
+          { name: dict.HealthBeauty, slug: 'health-beauty', icon: <HealthIcon /> },
+          { name: dict.Sports, slug: 'sports', icon: <SportsIcon /> },
+        ];
+
+  const hotDeals: any[] = featuredProducts.map((p: any) => ({
+    id: p.id,
+    brand: p.seller?.storeName || dict.LocalBrand,
+    title: p.title,
+    price: `${p.basePrice.toLocaleString()} ${dict.EGP}`,
+    badge: dict.Sale,
+    badgeColor: 'bg-[#d97706]',
+    img:
+      p.images[0]?.url ||
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop',
+  }));
+
+  // Show fallback deals if DB is empty so the section always has content
+  if (hotDeals.length === 0) {
+    hotDeals.push(
+      {
+        id: '1',
+        brand: 'BRANDY SPORT',
+        title: 'Air Max Velocity Red',
+        price: '1,299 EGP',
+        oldPrice: '1,799 EGP',
+        badge: '-30%',
+        badgeColor: 'bg-[#d97706]',
+        img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop',
+      },
+      {
+        id: '2',
+        brand: 'CAIRO THREADS',
+        title: 'Floral Midi Dress',
+        price: '799 EGP',
+        oldPrice: '1,099 EGP',
+        badge: '-27%',
+        badgeColor: 'bg-[#d97706]',
+        img: 'https://images.unsplash.com/photo-1572804119341-6d2e54d3b59a?q=80&w=600&auto=format&fit=crop',
+      },
+      {
+        id: '3',
+        brand: 'DELTA TECH',
+        title: 'Wireless Headphones Pro',
+        price: '1,499 EGP',
+        oldPrice: '1,999 EGP',
+        badge: '-25%',
+        badgeColor: 'bg-[#d97706]',
+        img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=600&auto=format&fit=crop',
+      },
+      {
+        id: '4',
+        brand: 'NILE HOME',
+        title: 'Luxury Throw Pillow Set',
+        price: '449 EGP',
+        oldPrice: '599 EGP',
+        badge: '-25%',
+        badgeColor: 'bg-[#d97706]',
+        img: 'https://images.unsplash.com/photo-1616046386594-c152babc9e15?q=80&w=600&auto=format&fit=crop',
+      }
+    );
+  }
+
+  const pickedForYou =
+    recentProducts.length > 0
+      ? recentProducts.map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          price: `${p.basePrice.toLocaleString()} ${dict.EGP}`,
+          img:
+            p.images[0]?.url ||
+            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop',
+        }))
+      : [
+          {
+            id: '1',
+            title: 'Classic Silver Watch',
+            price: '2,499 EGP',
+            img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400&auto=format&fit=crop',
+          },
+          {
+            id: '2',
+            title: 'Leather Tote Bag',
+            price: '1,299 EGP',
+            img: 'https://images.unsplash.com/photo-1553062335-7aa4-4c5f-9069-7b0e98e5aa9e?q=80&w=400&auto=format&fit=crop',
+          },
+          {
+            id: '3',
+            title: 'White Sneakers',
+            price: '999 EGP',
+            img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=400&auto=format&fit=crop',
+          },
+          {
+            id: '4',
+            title: 'Scented Candle Set',
+            price: '349 EGP',
+            img: 'https://images.unsplash.com/photo-1608181831688-8b2d6a85e5e3?q=80&w=400&auto=format&fit=crop',
+          },
+          {
+            id: '5',
+            title: 'Yoga Mat Pro',
+            price: '599 EGP',
+            img: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=400&auto=format&fit=crop',
+          },
+          {
+            id: '6',
+            title: 'Wireless Earbuds',
+            price: '1,099 EGP',
+            img: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=400&auto=format&fit=crop',
+          },
+        ];
 
   return (
-    <main id="main-content" className="min-h-screen font-sans" style={{ background: '#f6f6f7' }}>
+    <main id="main-content" className="min-h-screen bg-[hsl(var(--background))] font-sans pb-10">
       <PromoBanner />
-      <PromoBanner
-        id="affiliate-program"
-        message="💰 Earn up to 12% commission sharing your promo code — join our affiliate program!"
-        ctaLabel="Apply now — it's free"
-        ctaHref="/sell"
-      />
       <Navbar />
       <Hero />
 
-      <div className="home-shell">
-        <Suspense fallback={<div style={{ height: 400 }} />}>
-          <ProductSection
-            emoji="🔥"
-            title="Bestsellers"
-            linkLabel="All products"
-            linkHref="/shop"
-            products={bestsellers}
-            dict={dict}
-          />
-          <ProductSection
-            emoji="✨"
-            title="New Arrivals"
-            linkLabel="All new"
-            linkHref="/shop?sort=newest"
-            products={newArrivals}
-            dict={dict}
-          />
-          <ProductSection
-            emoji="💡"
-            title="Recommended for You"
-            linkLabel="All products"
-            linkHref="/shop"
-            products={recommended}
-            dict={dict}
-          />
-        </Suspense>
-      </div>
+      {/* 1. Browse Categories */}
+      <section className="container mx-auto px-4 py-8">
+        <div className="flex items-end justify-between mb-6 px-1">
+          <h2 className="text-[22px] md:text-2xl font-bold text-gray-900 tracking-tight">
+            {dict.BrowseCategories}
+          </h2>
+          <Link
+            href="/departments"
+            className="text-[#1e3b8a] font-bold text-[13px] hover:underline mb-1"
+          >
+            {dict.ViewAllDepartments}
+          </Link>
+        </div>
 
-      {/* ── Start Selling CTA ──────────────────────────────────────── */}
-      <section
-        style={{
-          background: 'linear-gradient(135deg, #1e3b8a 0%, #16307a 100%)',
-          color: '#fff',
-          padding: '56px 20px',
-          textAlign: 'center',
-          marginTop: 32,
-        }}
-      >
-        <p
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: 2,
-            textTransform: 'uppercase',
-            opacity: 0.6,
-            marginBottom: 12,
-          }}
-        >
-          For Sellers
-        </p>
-        <h2 style={{ fontSize: 28, fontWeight: 900, marginBottom: 12, lineHeight: 1.2 }}>
-          Sell your brand on Brandy
-        </h2>
-        <p
-          style={{
-            fontSize: 15,
-            opacity: 0.75,
-            maxWidth: 420,
-            margin: '0 auto 28px',
-            lineHeight: 1.6,
-          }}
-        >
-          Join 100+ Egyptian local brands already growing their business. Zero upfront costs — just
-          sign up and start selling.
-        </p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a
-            href="/seller/apply"
-            style={{
-              background: '#fff',
-              color: '#1e3b8a',
-              padding: '12px 28px',
-              borderRadius: 999,
-              fontWeight: 800,
-              fontSize: 14,
-              textDecoration: 'none',
-              display: 'inline-block',
-            }}
-          >
-            Start Selling →
-          </a>
-          <a
-            href="/legal/seller-terms"
-            style={{
-              border: '1.5px solid rgba(255,255,255,0.4)',
-              color: '#fff',
-              padding: '12px 28px',
-              borderRadius: 999,
-              fontWeight: 700,
-              fontSize: 14,
-              textDecoration: 'none',
-              display: 'inline-block',
-            }}
-          >
-            Learn more
-          </a>
+        <Suspense fallback={<CategoryGridSkeleton count={6} />}>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 border-b border-gray-200 pb-12">
+            {categories.map((cat: any, i: number) => (
+              <Link
+                href={`/category/${cat.slug || cat.name.toLowerCase().replace(' ', '-')}`}
+                key={i}
+                className="flex flex-col items-center group cursor-pointer"
+              >
+                <div className="w-full aspect-[1.1/1] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 group-hover:shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all rounded-lg flex items-center justify-center mb-4">
+                  <div className="text-[#1e3b8a] scale-[1.35] group-hover:scale-[1.45] transition-transform">
+                    {cat.icon}
+                  </div>
+                </div>
+                <span className="font-bold text-gray-800 text-[13px] tracking-tight">
+                  {cat.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </Suspense>
+      </section>
+
+      {/* 2. Hot Deals Now */}
+      <section className="container mx-auto px-4 py-6">
+        <div className="flex items-center gap-3 mb-6 px-1">
+          <h2 className="text-[22px] md:text-2xl font-bold text-gray-900 tracking-tight">
+            {dict.HotDealsNow}
+          </h2>
+          <span className="bg-red-50 text-red-600 text-[11px] font-bold px-2.5 py-1 rounded-full border border-red-100 flex items-center gap-1">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="10" />
+            </svg>
+            {dict.EndsIn} 04:23:18
+          </span>
+        </div>
+
+        <Suspense fallback={<ProductGridSkeleton count={4} />}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {hotDeals.map((item: any, i: number) => (
+              <Link
+                href={`/product/${item.id}`}
+                key={i}
+                className="bg-white rounded-lg overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow cursor-pointer block group"
+              >
+                <div className="relative aspect-square bg-gray-50 flex items-center justify-center">
+                  {item.badge && (
+                    <div
+                      className={`absolute top-4 left-4 z-10 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm ${item.badgeColor}`}
+                    >
+                      {item.badge}
+                    </div>
+                  )}
+                  <div className="absolute top-4 right-4 z-20">
+                    <WishlistButton product={item} />
+                  </div>
+                  <Image
+                    src={item.img}
+                    alt={item.title}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    className="group-hover:scale-105 transition-transform duration-500 object-cover"
+                  />
+                </div>
+                <div className="p-4">
+                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">
+                    {item.brand}
+                  </span>
+                  <h3 className="font-bold text-gray-900 text-[13px] mb-2 leading-tight truncate">
+                    {item.title}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-gray-900 text-sm">{item.price}</span>
+                    {item.oldPrice && (
+                      <span className="text-xs text-gray-400 font-medium line-through">
+                        {item.oldPrice}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </Suspense>
+      </section>
+
+      {/* 3. Empowering Local Brands */}
+      <section className="container mx-auto px-4 py-12">
+        <div className="bg-[#eef3f7] rounded-xl p-8 md:p-12 flex flex-col lg:flex-row items-center justify-between gap-10">
+          <div className="lg:w-1/2 max-w-md">
+            <h2 className="text-2xl md:text-[28px] font-bold text-[#1e3b8a] mb-4 tracking-tight leading-tight">
+              Empowering Egyptian Local Brands
+            </h2>
+            <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+              {dict.PlatformFeaturesDesc}
+            </p>
+            <Link
+              href="/shop?local=true"
+              className="inline-block bg-[#1e3b8a] hover:bg-[#152c6e] text-white font-bold text-sm py-2.5 px-6 rounded-md transition-colors shadow-sm"
+            >
+              {dict.ShopLocal}
+            </Link>
+          </div>
+
+          <div className="lg:w-1/2 flex flex-col sm:flex-row justify-end gap-6 w-full">
+            <div className="bg-white rounded-xl p-6 flex flex-col items-center justify-center flex-1 shadow-sm border border-white/50">
+              <div className="w-14 h-14 bg-[#e8f3ee] text-[#4d866a] rounded-lg mb-4 flex items-center justify-center">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+              </div>
+              <h4 className="font-bold text-gray-900 text-sm">EcoHome Co.</h4>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-1">
+                Sustainable Living
+              </p>
+            </div>
+            <div className="bg-white rounded-xl p-6 flex flex-col items-center justify-center flex-1 shadow-sm border border-white/50">
+              <div className="w-14 h-14 bg-gray-900 text-white rounded-lg mb-4 flex items-center justify-center font-black italic tracking-tighter">
+                US
+              </div>
+              <h4 className="font-bold text-gray-900 text-sm">Urban Stitch</h4>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide mt-1">
+                Contemporary Apparel
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ── Scoped styles ─────────────────────────────────────────── */}
-      <style>{`
-        /* Page shell — clamp to ~1280px on big screens, snug on phones. */
-        .home-shell {
-          max-width: 1280px;
-          margin: 0 auto;
-          padding: 0 16px;
-        }
-        @media (max-width: 480px) { .home-shell { padding: 0 12px; } }
-        /* Section */
-        .ps-section { margin: 24px 0; }
-        @media (min-width: 768px) { .ps-section { margin: 32px 0; } }
-        .ps-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
-        @media (min-width: 768px) { .ps-header { margin-bottom: 16px; } }
-        .ps-title { font-size: 17px; font-weight: 800; color: #1e3b8a; display: flex; align-items: center; gap: 8px; }
-        @media (min-width: 768px) { .ps-title { font-size: 20px; } }
-        .ps-link { font-size: 12px; font-weight: 600; color: #1e3b8a; text-decoration: none; opacity: .75; white-space: nowrap; }
-        @media (min-width: 768px) { .ps-link { font-size: 13px; } }
-        .ps-link:hover { opacity: 1; text-decoration: underline; }
-        .ps-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 10px;
-        }
-        @media (min-width: 640px)  { .ps-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
-        @media (min-width: 1024px) { .ps-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-        @media (min-width: 1280px) { .ps-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+      {/* 4. Picked For You */}
+      <section className="container mx-auto px-4 py-8">
+        <div className="flex items-end justify-between mb-6 px-1 border-b border-gray-200 pb-4">
+          <div>
+            <h2 className="text-[22px] md:text-2xl font-bold text-gray-900 tracking-tight mb-1">
+              Picked For You
+            </h2>
+            <p className="text-xs text-gray-500">Based on your recent browsing</p>
+          </div>
+          <div className="flex gap-2">
+            <button className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-50">
+              <ChevronLeft />
+            </button>
+            <button className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-50">
+              <ChevronRight />
+            </button>
+          </div>
+        </div>
 
-        /* Card */
-        .pc-card {
-          background: #fff;
-          border-radius: 12px;
-          padding: 12px;
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          transition: box-shadow .2s, transform .2s;
-          border: 1px solid #e8e3dc;
-        }
-        .pc-card:hover { box-shadow: 0 6px 24px rgba(30,59,138,.1); transform: translateY(-2px); }
+        <Suspense fallback={<ProductGridSkeleton count={6} />}>
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+            {pickedForYou.map((item: any, i: number) => (
+              <Link href={`/product/${item.id}`} key={i} className="group cursor-pointer">
+                <div className="w-full aspect-[4/5] bg-white rounded-lg overflow-hidden border border-gray-100 mb-3 relative">
+                  <div className="absolute top-2 right-2 z-20">
+                    <WishlistButton product={item} />
+                  </div>
+                  <Image
+                    src={item.img}
+                    alt={item.title}
+                    fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                    className="group-hover:scale-105 transition-transform duration-500 object-cover"
+                  />
+                </div>
+                <h3 className="font-bold text-gray-900 text-xs mb-1 truncate">{item.title}</h3>
+                <p className="font-bold text-[#1e3b8a] text-xs">{item.price}</p>
+              </Link>
+            ))}
+          </div>
+        </Suspense>
+      </section>
 
-        /* Badges */
-        .pc-badges { display: flex; gap: 4px; position: absolute; top: 10px; left: 10px; z-index: 10; flex-wrap: wrap; }
-        .pc-badge-disc {
-          background: #d97706; color: #fff; font-size: 10px; font-weight: 800;
-          padding: 2px 6px; border-radius: 4px; letter-spacing: .3px;
-        }
-        .pc-badge-new {
-          background: #1e3b8a; color: #fff; font-size: 10px; font-weight: 800;
-          padding: 2px 6px; border-radius: 4px; letter-spacing: .3px;
-        }
+      {/* Footer */}
+      <footer className="mt-16 container mx-auto px-4 py-12 border-t border-gray-200 pt-16">
+        <div className="flex flex-col lg:flex-row justify-between gap-12">
+          <div className="lg:w-1/3">
+            <h2 className="text-xl font-bold text-[#1e3b8a] tracking-tight mb-4 uppercase">
+              {dict.Marketplace}
+            </h2>
+            <p className="text-[11px] leading-relaxed text-gray-500 max-w-xs mb-6">
+              Egypt&apos;s marketplace for local brands. Discover handcrafted, homegrown products
+              from 100+ Egyptian sellers.
+            </p>
+            <div className="flex gap-3 text-[#1e3b8a]">
+              <div className="w-6 h-6 rounded-full border border-gray-200" />
+              <div className="w-6 h-6 rounded-full border border-gray-200" />
+              <div className="w-6 h-6 rounded-full border border-gray-200" />
+            </div>
+          </div>
 
-        /* Wishlist */
-        .pc-wish { position: absolute; top: 10px; right: 10px; z-index: 10; }
-
-        /* Image */
-        .pc-img-wrap {
-          position: relative; width: 100%; padding-top: 100%;
-          border-radius: 8px; overflow: hidden; background: #f2efe9;
-          display: block; margin-top: 8px;
-        }
-        .pc-img { object-fit: cover; }
-
-        /* Info */
-        .pc-info { display: flex; flex-direction: column; gap: 4px; }
-        .pc-brand { font-size: 10px; color: #9b9080; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin: 0; }
-        .pc-title {
-          font-size: 13px; font-weight: 700; color: #2d2824;
-          display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-          overflow: hidden; margin: 0; line-height: 1.4;
-        }
-        .pc-title:hover { color: #1e3b8a; }
-        .pc-prices { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
-        .pc-price { font-size: 16px; font-weight: 800; color: #1e3b8a; }
-        .pc-old { font-size: 11px; color: #b0a89e; text-decoration: line-through; }
-        .pc-save { font-size: 11px; color: #d97706; font-weight: 600; margin: 0; }
-        .pc-rating { display: flex; align-items: center; gap: 4px; font-size: 11px; }
-        .pc-stars { color: #d97706; font-weight: 700; }
-        .pc-reviews { color: #9b9080; }
-
-        /* Button */
-        .pc-btn {
-          display: flex; align-items: center; justify-content: center; gap: 6px;
-          background: #1e3b8a; color: #fff;
-          border-radius: 8px; padding: 8px 0;
-          font-size: 12px; font-weight: 700;
-          text-decoration: none; margin-top: 4px;
-          transition: background .15s;
-        }
-        .pc-btn:hover { background: #152c6e; }
-      `}</style>
+          <div className="flex flex-wrap lg:flex-nowrap gap-12 lg:gap-24 w-full justify-between lg:justify-end">
+            <div>
+              <h4 className="font-bold text-gray-900 text-[10px] uppercase tracking-wider mb-5">
+                Shop &amp; Discover
+              </h4>
+              <ul className="space-y-4 text-[11px] text-gray-500">
+                <li>
+                  <Link href="/flash-sales" className="hover:text-gray-900">
+                    Flash Sales
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/brands" className="hover:text-gray-900">
+                    Popular Brands
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/shop" className="hover:text-gray-900">
+                    All Products
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/sell" className="hover:text-gray-900">
+                    Sell on Brandy
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold text-gray-900 text-[10px] uppercase tracking-wider mb-5">
+                Customer Care
+              </h4>
+              <ul className="space-y-4 text-[11px] text-gray-500">
+                <li>
+                  <Link href="/help" className="hover:text-gray-900">
+                    Help Center
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/track" className="hover:text-gray-900">
+                    Track My Order
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/help" className="hover:text-gray-900">
+                    Shipping Info
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/help" className="hover:text-gray-900">
+                    Returns &amp; Refunds
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold text-gray-900 text-[10px] uppercase tracking-wider mb-5">
+                Legal &amp; Policy
+              </h4>
+              <ul className="space-y-4 text-[11px] text-gray-500">
+                <li>
+                  <Link href="/legal#terms" className="hover:text-gray-900">
+                    Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/legal#privacy" className="hover:text-gray-900">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/legal#cookies" className="hover:text-gray-900">
+                    Cookie Settings
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/legal#accessibility" className="hover:text-gray-900">
+                    Accessibility
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
