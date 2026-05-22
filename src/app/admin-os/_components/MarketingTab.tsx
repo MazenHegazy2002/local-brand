@@ -168,57 +168,710 @@ function CampaignsPanel() {
 }
 
 // ─── Flash Sales ────────────────────────────────────────────────────────────
+interface FlashProduct {
+  id: string;
+  title: string;
+  basePrice: number;
+  flashSalePrice: number | null;
+  flashSaleStartsAt: string | null;
+  flashSaleEndsAt: string | null;
+  flashSaleLimit: number | null;
+  published: boolean;
+  stockCount: number;
+  images: { url: string }[];
+  seller: { storeName: string };
+  category: { name: string } | null;
+}
+
+interface SearchProduct {
+  id: string;
+  title: string;
+  basePrice: number;
+  images: { url: string; isPrimary?: boolean }[];
+  seller?: { storeName: string };
+}
+
+function flashSaleStatus(p: FlashProduct): 'active' | 'upcoming' | 'expired' | 'none' {
+  if (!p.flashSalePrice || !p.flashSaleEndsAt) return 'none';
+  const now = Date.now();
+  const ends = new Date(p.flashSaleEndsAt).getTime();
+  if (ends <= now) return 'expired';
+  if (p.flashSaleStartsAt && new Date(p.flashSaleStartsAt).getTime() > now) return 'upcoming';
+  return 'active';
+}
+
+// Format a Date to the datetime-local input value (yyyy-MM-ddTHH:mm)
+function toDatetimeLocal(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 function FlashSalesPanel() {
+  const [filter, setFilter] = useState<'all' | 'active' | 'upcoming' | 'expired'>('active');
+  const [items, setItems] = useState<FlashProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState('');
+
+  // Schedule form state
+  const [showForm, setShowForm] = useState(false);
+  const [searchQ, setSearchQ] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchProduct[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<SearchProduct | null>(null);
+  const [formPrice, setFormPrice] = useState('');
+  const [formStartsAt, setFormStartsAt] = useState('');
+  const [formEndsAt, setFormEndsAt] = useState('');
+  const [formLimit, setFormLimit] = useState('');
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 3500);
+  };
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/flash-sales?status=${filter}`);
+      if (res.ok) {
+        const json = await res.json();
+        setItems(json.products || []);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter]);
+
+  // Debounced product search
+  useEffect(() => {
+    if (!searchQ.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const id = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(`/api/products?q=${encodeURIComponent(searchQ)}&limit=8`);
+        if (res.ok) {
+          const json = await res.json();
+          setSearchResults(json.products || []);
+        }
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(id);
+  }, [searchQ]);
+
+  const handleSchedule = async () => {
+    if (!selectedProduct) return;
+    if (!formPrice || !formEndsAt) {
+      showToast('Fill in price and end time');
+      return;
+    }
+    const price = parseFloat(formPrice);
+    if (isNaN(price) || price <= 0) {
+      showToast('Invalid price');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/flash-sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: selectedProduct.id,
+          flashSalePrice: price,
+          flashSaleStartsAt: formStartsAt ? new Date(formStartsAt).toISOString() : null,
+          flashSaleEndsAt: new Date(formEndsAt).toISOString(),
+          flashSaleLimit: formLimit ? parseInt(formLimit) : null,
+        }),
+      });
+      if (res.ok) {
+        showToast('Flash sale scheduled!');
+        setShowForm(false);
+        setSelectedProduct(null);
+        setSearchQ('');
+        setFormPrice('');
+        setFormStartsAt('');
+        setFormEndsAt('');
+        setFormLimit('');
+        load();
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Error saving');
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = async (productId: string, title: string) => {
+    if (!confirm(`Remove flash sale from "${title}"?`)) return;
+    try {
+      const res = await fetch(`/api/admin/flash-sales/${productId}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('Flash sale removed');
+        load();
+      } else {
+        showToast('Error removing flash sale');
+      }
+    } catch {
+      showToast('Error removing flash sale');
+    }
+  };
+
+  // Pre-fill form when editing an existing flash sale
+  const handleEdit = (p: FlashProduct) => {
+    setSelectedProduct({ id: p.id, title: p.title, basePrice: p.basePrice, images: p.images });
+    setFormPrice(String(p.flashSalePrice ?? ''));
+    setFormStartsAt(p.flashSaleStartsAt ? toDatetimeLocal(new Date(p.flashSaleStartsAt)) : '');
+    setFormEndsAt(p.flashSaleEndsAt ? toDatetimeLocal(new Date(p.flashSaleEndsAt)) : '');
+    setFormLimit(p.flashSaleLimit != null ? String(p.flashSaleLimit) : '');
+    setSearchQ('');
+    setSearchResults([]);
+    setShowForm(true);
+  };
+
+  const statusBadge = (p: FlashProduct) => {
+    const s = flashSaleStatus(p);
+    const map: Record<string, { bg: string; fg: string; label: string }> = {
+      active: { bg: '#d1fae5', fg: '#065f46', label: 'LIVE' },
+      upcoming: { bg: '#dbeafe', fg: '#1e40af', label: 'SCHEDULED' },
+      expired: { bg: '#f1f5f9', fg: '#64748b', label: 'EXPIRED' },
+      none: { bg: '#fef3c7', fg: '#92400e', label: 'NONE' },
+    };
+    const c = map[s];
+    return (
+      <span
+        style={{
+          background: c.bg,
+          color: c.fg,
+          fontSize: 9,
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          padding: '2px 6px',
+          borderRadius: 4,
+          letterSpacing: '0.05em',
+        }}
+      >
+        {c.label}
+      </span>
+    );
+  };
+
+  // Default end time = 24 h from now
+  const defaultEndsAt = toDatetimeLocal(new Date(Date.now() + 24 * 60 * 60 * 1000));
+
   return (
-    <div className="card">
-      <div className="card-head">
-        <h2 className="card-title">Flash Sales</h2>
-        <a href="/admin-os/banners" className="card-action">
-          Manage banners →
-        </a>
+    <div>
+      {/* Toast */}
+      {toast && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            background: '#1e293b',
+            color: '#fff',
+            padding: '10px 18px',
+            borderRadius: 10,
+            fontSize: 13,
+            zIndex: 9999,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+          }}
+        >
+          {toast}
+        </div>
+      )}
+
+      {/* Header card */}
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="card-head">
+          <h2 className="card-title">Flash Sale Scheduler</h2>
+          <button
+            className="card-action"
+            onClick={() => {
+              setShowForm(v => !v);
+              setSelectedProduct(null);
+              setSearchQ('');
+              setFormPrice('');
+              setFormStartsAt('');
+              setFormEndsAt(defaultEndsAt);
+              setFormLimit('');
+            }}
+          >
+            {showForm ? '✕ Cancel' : '+ Schedule flash sale'}
+          </button>
+        </div>
+        <p className="card-sub">
+          Schedule time-limited discounts on any product. Active sales appear on{' '}
+          <a href="/flash-sales" target="_blank" style={{ color: '#534ab7' }}>
+            /flash-sales
+          </a>
+          .
+        </p>
+
+        {/* Inline scheduler form */}
+        {showForm && (
+          <div
+            style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: 10,
+              padding: 20,
+              marginTop: 16,
+            }}
+          >
+            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14 }}>
+              {selectedProduct ? `Editing: ${selectedProduct.title}` : 'Select a product'}
+            </div>
+
+            {/* Product search */}
+            {!selectedProduct && (
+              <div style={{ position: 'relative', marginBottom: 12 }}>
+                <input
+                  value={searchQ}
+                  onChange={e => setSearchQ(e.target.value)}
+                  placeholder="Search products by name…"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid #e2e8f0',
+                    fontSize: 13,
+                    boxSizing: 'border-box',
+                  }}
+                />
+                {searching && (
+                  <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Searching…</div>
+                )}
+                {searchResults.length > 0 && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      background: '#fff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 8,
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                      zIndex: 50,
+                      maxHeight: 260,
+                      overflowY: 'auto',
+                    }}
+                  >
+                    {searchResults.map(p => (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setSelectedProduct(p);
+                          setSearchQ('');
+                          setSearchResults([]);
+                          setFormEndsAt(defaultEndsAt);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          padding: '10px 12px',
+                          cursor: 'pointer',
+                          borderBottom: '1px solid #f1f5f9',
+                          fontSize: 13,
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '')}
+                      >
+                        {p.images?.[0]?.url && (
+                          <img
+                            src={p.images[0].url}
+                            alt=""
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 6,
+                              objectFit: 'cover',
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
+                        <div>
+                          <div style={{ fontWeight: 600 }}>{p.title}</div>
+                          <div style={{ fontSize: 11, color: '#64748b' }}>
+                            {p.seller?.storeName} · {Number(p.basePrice).toLocaleString()} EGP base
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Form fields — shown after product selected */}
+            {selectedProduct && (
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    marginBottom: 14,
+                    background: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 8,
+                    padding: '10px 12px',
+                  }}
+                >
+                  {selectedProduct.images?.[0]?.url && (
+                    <img
+                      src={selectedProduct.images[0].url}
+                      alt=""
+                      style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'cover' }}
+                    />
+                  )}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{selectedProduct.title}</div>
+                    <div style={{ fontSize: 11, color: '#64748b' }}>
+                      Base price: {Number(selectedProduct.basePrice).toLocaleString()} EGP
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedProduct(null)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#94a3b8',
+                      fontSize: 18,
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <label
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: '#475569',
+                    }}
+                  >
+                    Flash Price (EGP) *
+                    <input
+                      type="number"
+                      min="1"
+                      value={formPrice}
+                      onChange={e => setFormPrice(e.target.value)}
+                      placeholder={`e.g. ${Math.round(selectedProduct.basePrice * 0.7)}`}
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: 8,
+                        border: '1px solid #e2e8f0',
+                        fontSize: 13,
+                      }}
+                    />
+                    {formPrice && selectedProduct.basePrice > 0 && (
+                      <span style={{ fontSize: 11, color: '#22c55e' }}>
+                        {Math.round((1 - parseFloat(formPrice) / selectedProduct.basePrice) * 100)}%
+                        off
+                      </span>
+                    )}
+                  </label>
+                  <label
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: '#475569',
+                    }}
+                  >
+                    Unit Limit (optional)
+                    <input
+                      type="number"
+                      min="1"
+                      value={formLimit}
+                      onChange={e => setFormLimit(e.target.value)}
+                      placeholder="e.g. 50"
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: 8,
+                        border: '1px solid #e2e8f0',
+                        fontSize: 13,
+                      }}
+                    />
+                  </label>
+                  <label
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: '#475569',
+                    }}
+                  >
+                    Starts At (leave blank = immediately)
+                    <input
+                      type="datetime-local"
+                      value={formStartsAt}
+                      onChange={e => setFormStartsAt(e.target.value)}
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: 8,
+                        border: '1px solid #e2e8f0',
+                        fontSize: 13,
+                      }}
+                    />
+                  </label>
+                  <label
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: '#475569',
+                    }}
+                  >
+                    Ends At *
+                    <input
+                      type="datetime-local"
+                      value={formEndsAt}
+                      onChange={e => setFormEndsAt(e.target.value)}
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: 8,
+                        border: '1px solid #e2e8f0',
+                        fontSize: 13,
+                      }}
+                    />
+                  </label>
+                </div>
+
+                <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={handleSchedule}
+                    disabled={saving}
+                    style={{
+                      padding: '8px 20px',
+                      background: '#534ab7',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 8,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: saving ? 'not-allowed' : 'pointer',
+                      opacity: saving ? 0.7 : 1,
+                    }}
+                  >
+                    {saving ? 'Saving…' : 'Save Flash Sale'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowForm(false);
+                      setSelectedProduct(null);
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      background: '#f1f5f9',
+                      color: '#475569',
+                      border: 'none',
+                      borderRadius: 8,
+                      fontSize: 13,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-      <p className="card-sub">
-        Flash sales are configured per-product on the seller side. The admin can feature them on the
-        homepage via the banners tab. Schema fields:
-        <code className="mx-1 bg-slate-100 px-1.5 py-0.5 rounded text-xs">flashSalePrice</code>,
-        <code className="mx-1 bg-slate-100 px-1.5 py-0.5 rounded text-xs">flashSaleEndsAt</code>,
-        <code className="mx-1 bg-slate-100 px-1.5 py-0.5 rounded text-xs">flashSaleLimit</code>.
-      </p>
-      <div className="mt-4 grid grid-cols-3 gap-4">
-        <a href="/seller-hub" className="mkt-link-card">
-          <div className="text-2xl mb-2">⚡</div>
-          <strong>Per-product flash sale</strong>
-          <p className="text-xs text-slate-500 mt-1">
-            Sellers set this on their product edit page.
-          </p>
-        </a>
-        <a href="/admin-os/banners" className="mkt-link-card">
-          <div className="text-2xl mb-2">🖼️</div>
-          <strong>Homepage banners</strong>
-          <p className="text-xs text-slate-500 mt-1">Promote sales above the fold.</p>
-        </a>
-        <a href="/admin-os/coupons" className="mkt-link-card">
-          <div className="text-2xl mb-2">🎟️</div>
-          <strong>Coupons</strong>
-          <p className="text-xs text-slate-500 mt-1">Sitewide or category-level discount codes.</p>
-        </a>
+
+      {/* Flash sales list */}
+      <div className="card">
+        {/* Filter tabs */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 4,
+            marginBottom: 16,
+            padding: 4,
+            background: '#f1f5f9',
+            borderRadius: 8,
+            width: 'fit-content',
+          }}
+        >
+          {(['active', 'upcoming', 'expired', 'all'] as const).map(f => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              style={{
+                padding: '5px 14px',
+                borderRadius: 6,
+                border: 'none',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                background: filter === f ? '#fff' : 'transparent',
+                color: filter === f ? '#534ab7' : '#64748b',
+                boxShadow: filter === f ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+              }}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {loading ? (
+          <div style={{ padding: 48, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+            Loading…
+          </div>
+        ) : items.length === 0 ? (
+          <div style={{ padding: 48, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+            No {filter !== 'all' ? filter : ''} flash sales found.
+          </div>
+        ) : (
+          <table className="mkt-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Seller</th>
+                <th>Base</th>
+                <th>Sale</th>
+                <th>Discount</th>
+                <th>Status</th>
+                <th>Starts</th>
+                <th>Ends</th>
+                <th>Limit</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map(p => {
+                const disc =
+                  p.flashSalePrice != null
+                    ? Math.round((1 - p.flashSalePrice / p.basePrice) * 100)
+                    : 0;
+                return (
+                  <tr key={p.id}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {p.images?.[0]?.url && (
+                          <img
+                            src={p.images[0].url}
+                            alt=""
+                            style={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: 4,
+                              objectFit: 'cover',
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
+                        <span
+                          style={{
+                            fontWeight: 600,
+                            fontSize: 12,
+                            maxWidth: 160,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {p.title}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ fontSize: 12, color: '#64748b' }}>{p.seller?.storeName}</td>
+                    <td style={{ fontSize: 12 }}>{Number(p.basePrice).toLocaleString()} EGP</td>
+                    <td style={{ fontSize: 12, fontWeight: 700, color: '#dc2626' }}>
+                      {p.flashSalePrice != null
+                        ? `${Number(p.flashSalePrice).toLocaleString()} EGP`
+                        : '—'}
+                    </td>
+                    <td>
+                      <span
+                        style={{
+                          background: '#fef2f2',
+                          color: '#dc2626',
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: 4,
+                        }}
+                      >
+                        -{disc}%
+                      </span>
+                    </td>
+                    <td>{statusBadge(p)}</td>
+                    <td style={{ fontSize: 11, color: '#64748b' }}>
+                      {p.flashSaleStartsAt
+                        ? new Date(p.flashSaleStartsAt).toLocaleString()
+                        : 'Immediately'}
+                    </td>
+                    <td style={{ fontSize: 11, color: '#64748b' }}>
+                      {p.flashSaleEndsAt ? new Date(p.flashSaleEndsAt).toLocaleString() : '—'}
+                    </td>
+                    <td style={{ fontSize: 12, color: '#64748b' }}>{p.flashSaleLimit ?? '∞'}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button
+                          onClick={() => handleEdit(p)}
+                          style={{
+                            padding: '4px 10px',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            background: '#f1f5f9',
+                            border: 'none',
+                            borderRadius: 6,
+                            cursor: 'pointer',
+                            color: '#475569',
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleCancel(p.id, p.title)}
+                          style={{
+                            padding: '4px 10px',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            background: '#fee2e2',
+                            border: 'none',
+                            borderRadius: 6,
+                            cursor: 'pointer',
+                            color: '#b91c1c',
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+        <style jsx>{tableStyles}</style>
       </div>
-      <style jsx>{`
-        .mkt-link-card {
-          display: block;
-          padding: 16px;
-          background: #fff;
-          border: 1px solid #f1f5f9;
-          border-radius: 12px;
-          color: inherit;
-          text-decoration: none;
-          transition: all 150ms ease;
-        }
-        .mkt-link-card:hover {
-          border-color: #534ab7;
-          transform: translateY(-1px);
-        }
-      `}</style>
     </div>
   );
 }

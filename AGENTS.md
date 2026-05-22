@@ -88,6 +88,7 @@ Already wired in (just add the env vars on your host):
 - **Cloudinary** (fallback image hosting) — `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
 - **Web Push** — `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`
 - **Redis** (guest carts / rate limiting) — `REDIS_URL` or `UPSTASH_REDIS_REST_URL` + token
+- **Sentry** (crash logging) — `SENTRY_DSN` (server + edge) and/or `NEXT_PUBLIC_SENTRY_DSN` (browser). Source-map uploads also need `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`.
 
 # Bulk product import (sellers)
 

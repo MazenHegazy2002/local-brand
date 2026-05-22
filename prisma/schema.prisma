@@ -137,9 +137,10 @@ model Product {
   published   Boolean @default(true)
 
   // Flash Sale
-  flashSalePrice  Float?
-  flashSaleEndsAt DateTime?
-  flashSaleLimit  Int?
+  flashSalePrice    Float?
+  flashSaleStartsAt DateTime? // null = start immediately
+  flashSaleEndsAt   DateTime?
+  flashSaleLimit    Int?
 
   // Local Verification
   countryOfOrigin String  @default("Egypt")
@@ -170,8 +171,9 @@ model Product {
   @@index([basePrice])
   // Featured products section
   @@index([isFeatured, published, deletedAt])
-  // Flash-sale filter (flashSaleEndsAt > now)
+  // Flash-sale filter (flashSaleEndsAt > now, flashSaleStartsAt <= now)
   @@index([flashSaleEndsAt])
+  @@index([flashSaleStartsAt])
 }
 
 model Category {

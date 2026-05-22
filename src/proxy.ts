@@ -3,6 +3,13 @@ import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { rateLimit } from '@/lib/rateLimit';
 import { redis } from '@/lib/redis';
+import {
+  CSRF_COOKIE,
+  CSRF_HEADER,
+  generateCsrfToken,
+  validateCsrfTokens,
+  isCsrfExempt,
+} from '@/lib/csrf';
 
 // ─── Maintenance-mode check ────────────────────────────────────────────────
 // We can't pull `prisma` into the edge bundle without breaking the Next
@@ -114,11 +121,26 @@ function attachCsp(req: NextRequest, res: NextResponse): NextResponse {
   req.headers.set('x-nonce', nonce);
   res.headers.set('x-nonce', nonce);
   res.headers.set('Content-Security-Policy', csp);
+
+  // Issue the CSRF token cookie if the browser doesn't have one yet.
+  // Non-HttpOnly so client JS can read and forward it as X-CSRF-Token.
+  if (!req.cookies?.get(CSRF_COOKIE)?.value) {
+    const token = generateCsrfToken();
+    res.cookies.set(CSRF_COOKIE, token, {
+      httpOnly: false,
+      sameSite: 'lax',
+      secure: !isDev,
+      path: '/',
+      maxAge: 60 * 60 * 24, // 1 day
+    });
+  }
+
   return res;
 }
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const method = (req.method ?? 'GET').toUpperCase();
 
   // 1. Rate Limiting for API routes
   if (pathname.startsWith('/api') && !pathname.startsWith('/api/auth/session')) {
@@ -129,12 +151,29 @@ export async function proxy(req: NextRequest) {
         {
           status: 429,
           headers: {
-            'X-RateLimit-Limit': '60', // Simplified for now, or get from config
+            'X-RateLimit-Limit': '60',
             'X-RateLimit-Remaining': '0',
             'X-RateLimit-Reset': result.reset.toString(),
           },
         }
       );
+    }
+  }
+
+  // 2. CSRF enforcement — POST/PATCH/PUT/DELETE on our own API routes.
+  //    Webhook callbacks are exempt (they arrive from external servers).
+  //    Skipped in development so curl / Postman still works locally.
+  const isProd = process.env.NODE_ENV === 'production';
+  if (
+    isProd &&
+    pathname.startsWith('/api') &&
+    ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) &&
+    !isCsrfExempt(pathname)
+  ) {
+    const cookieToken = req.cookies?.get(CSRF_COOKIE)?.value ?? '';
+    const headerToken = req.headers?.get(CSRF_HEADER) ?? '';
+    if (!validateCsrfTokens(cookieToken, headerToken)) {
+      return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
     }
   }
 

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/flash-sales — live flash-sale products (flashSaleEndsAt in the future)
+// GET /api/flash-sales — live flash-sale products that have started and not yet expired
 export async function GET() {
   try {
     const now = new Date();
@@ -14,6 +14,8 @@ export async function GET() {
         deletedAt: null,
         flashSalePrice: { not: null },
         flashSaleEndsAt: { gt: now },
+        // Only show flash sales that have already started (null = start immediately)
+        OR: [{ flashSaleStartsAt: null }, { flashSaleStartsAt: { lte: now } }],
       },
       select: {
         id: true,

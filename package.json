@@ -29,6 +29,7 @@
     "@neondatabase/serverless": "^1.1.0",
     "@prisma/adapter-neon": "^6.2.1",
     "@prisma/client": "^6.2.1",
+    "@sentry/nextjs": "^10.53.1",
     "@types/ws": "^8.18.1",
     "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.3.3",

@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import withPWA from 'next-pwa';
+import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
   // ─── Turbopack Configuration ────────────────────────────────────────────────
@@ -93,4 +94,24 @@ const pwaConfig = withPWA({
   ],
 });
 
-export default pwaConfig(nextConfig);
+const pwaWrapped = pwaConfig(nextConfig);
+
+// Wrap with Sentry — only active when SENTRY_DSN is set in the environment.
+// When the DSN is absent (local dev without config), Sentry is a no-op and
+// the build proceeds exactly as before.
+export default withSentryConfig(pwaWrapped, {
+  // Suppress Sentry CLI output in CI unless DEBUG_SENTRY=1 is set.
+  silent: !process.env.DEBUG_SENTRY,
+
+  // Tree-shake unused Sentry features in client bundles.
+  disableLogger: true,
+
+  // Don't automatically create a Sentry release or upload source maps
+  // unless SENTRY_AUTH_TOKEN is explicitly set (production deployment).
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Avoid instrumentation warnings when SENTRY_DSN is not configured.
+  autoInstrumentServerFunctions: !!process.env.SENTRY_DSN,
+});

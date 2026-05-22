@@ -10,7 +10,7 @@ import { Product, ProductImage } from '@/types';
 import PromoBanner from '@/components/PromoBanner';
 
 interface HomePageData {
-  categories: never[];
+  categories: { id: string; name: string; slug: string; parentId: string | null }[];
   featuredProducts: (Product & { images: ProductImage[] })[];
   recentProducts: (Product & { images: ProductImage[] })[];
 }
@@ -75,7 +75,7 @@ export default async function Home() {
 
   try {
     const data = await getHomepageData();
-    if (data) homeData = data as HomePageData;
+    if (data) homeData = data as unknown as HomePageData;
     const d = await getDictionary();
     if (d) dict = d;
   } catch (e) {
