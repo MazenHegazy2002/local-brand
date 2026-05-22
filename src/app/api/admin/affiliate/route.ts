@@ -34,16 +34,21 @@ export async function GET(req: NextRequest) {
     orderBy: { totalEarnedEgp: 'desc' },
   });
 
-  // Summary stats
-  const totalActive = await prisma.affiliate.count({ where: { status: 'ACTIVE' } });
-  const totalPending = await prisma.affiliate.count({ where: { status: 'PENDING' } });
-  const commissionsAgg = await prisma.commission.aggregate({
-    where: { status: { in: ['CONFIRMED', 'PAID'] } },
-    _sum: { commissionEgp: true },
-  });
-  const revenueAgg = await prisma.promoCodeUsage.aggregate({
-    _sum: { orderTotalAfterDiscount: true },
-  });
+  // Summary stats — run in parallel for performance
+  const [totalActive, totalPending, commissionsAgg, revenueAgg, totalConversionsCount] =
+    await Promise.all([
+      prisma.affiliate.count({ where: { status: 'ACTIVE' } }),
+      prisma.affiliate.count({ where: { status: 'PENDING' } }),
+      prisma.commission.aggregate({
+        where: { status: { in: ['CONFIRMED', 'PAID'] } },
+        _sum: { commissionEgp: true },
+      }),
+      prisma.promoCodeUsage.aggregate({
+        _sum: { orderTotalAfterDiscount: true },
+      }),
+      // Real-time conversion count from the PromoCodeUsage table
+      prisma.promoCodeUsage.count(),
+    ]);
 
   return NextResponse.json({
     affiliates: affiliates.map(a => ({
@@ -55,6 +60,8 @@ export async function GET(req: NextRequest) {
       customCommissionPct: a.customCommissionPct ? Number(a.customCommissionPct) : null,
       customDiscountPct: a.customDiscountPct ? Number(a.customDiscountPct) : null,
       totalConversions: a.totalConversions,
+      // Source-of-truth count from PromoCodeUsage relation
+      promoUsageCount: a._count.promoUsages,
       totalEarnedEgp: Number(a.totalEarnedEgp),
       pendingEarningsEgp: Number(a.pendingEarningsEgp),
       platform: a.platform,
@@ -66,13 +73,13 @@ export async function GET(req: NextRequest) {
       approvedAt: a.approvedAt,
       createdAt: a.createdAt,
       user: a.user,
-      promoUsageCount: a._count.promoUsages,
     })),
     stats: {
       totalActive,
       totalPending,
       commissionsPaidEgp: Number(commissionsAgg._sum.commissionEgp ?? 0),
       revenueFromRefsEgp: Number(revenueAgg._sum.orderTotalAfterDiscount ?? 0),
+      totalConversions: totalConversionsCount,
     },
   });
 }

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import { Heart, User, ShoppingCart, LayoutDashboard, LogOut } from 'lucide-react';
+import { Heart, User, ShoppingCart, LayoutDashboard, LogOut, Store } from 'lucide-react';
 import CartDrawer from './CartDrawer';
 import NotificationBell from './NotificationBell';
 import LiveSearch from './LiveSearch';
@@ -62,7 +62,7 @@ export default function Navbar() {
           {/* Nav links */}
           <div className="hidden xl:flex items-center gap-5 text-sm font-semibold text-white/85">
             <Link
-              href="/fresh-sales"
+              href="/flash-sales"
               className="hover:text-white transition-colors border-b-2 border-white pb-0.5 text-white"
             >
               {t('FlashSales')}
@@ -100,6 +100,17 @@ export default function Navbar() {
               <NotificationBell />
             </div>
 
+            {/* Start Selling CTA — shown to guests and buyers only */}
+            {(!session || role === 'BUYER') && (
+              <Link
+                href="/seller/apply"
+                className="hidden lg:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-[hsl(var(--accent))] text-[hsl(var(--primary))] hover:opacity-90 transition-opacity shrink-0"
+              >
+                <Store size={13} />
+                Start Selling
+              </Link>
+            )}
+
             {/* User menu — click-based so it works on touch devices */}
             {session ? (
               <div className="relative" ref={userMenuRef}>
@@ -114,6 +125,9 @@ export default function Navbar() {
                   <div className="w-8 h-8 rounded-full bg-[hsl(var(--accent))] text-[hsl(var(--primary))] flex items-center justify-center font-black text-xs">
                     {(session.user?.name ?? 'U').slice(0, 2).toUpperCase()}
                   </div>
+                  <span className="hidden lg:block text-xs font-semibold text-white/90">
+                    My Account
+                  </span>
                 </button>
 
                 {isUserMenuOpen && (

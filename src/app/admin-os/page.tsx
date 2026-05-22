@@ -24,6 +24,7 @@ import ReviewsTab from './_components/ReviewsTab';
 import MarketingTab from './_components/MarketingTab';
 import SupportTab from './_components/SupportTab';
 import MaintenanceTab from './_components/MaintenanceTab';
+import ShippingTab from './_components/ShippingTab';
 import {
   SessionUser,
   SellerProfile,
@@ -408,6 +409,12 @@ export default function AdminOS() {
           icon={<PluginIcon />}
         />
         <NavItem
+          active={activeTab === 'shipping'}
+          onClick={() => setActiveTab('shipping')}
+          label="Shipping"
+          icon={<TruckIcon />}
+        />
+        <NavItem
           active={activeTab === 'maintenance'}
           onClick={() => setActiveTab('maintenance')}
           label="Maintenance"
@@ -511,6 +518,7 @@ export default function AdminOS() {
           {activeTab === 'reviews' && <ReviewsTab />}
           {activeTab === 'marketing' && <MarketingTab />}
           {activeTab === 'support' && <SupportTab />}
+          {activeTab === 'shipping' && <ShippingTab />}
           {activeTab === 'maintenance' && <MaintenanceTab />}
           {activeTab === 'affiliate' && <AffiliateTab />}
         </div>
@@ -655,6 +663,7 @@ const TITLES: Record<string, string> = {
   taxonomy: 'Classification systems',
   affiliate: 'Affiliate program',
   plugins: 'Plugins & integrations',
+  shipping: 'Governorate shipping rates',
   maintenance: 'Maintenance & system',
   settings: 'System configuration',
 };
@@ -684,6 +693,8 @@ type AdminAff = {
   status: string;
   tier: string;
   totalConversions: number;
+  // Real-time count from PromoCodeUsage relation (source of truth).
+  promoUsageCount: number;
   totalEarnedEgp: number;
   pendingEarningsEgp: number;
   customCommissionPct: number | null;
@@ -716,6 +727,7 @@ type AffStats = {
   totalPending: number;
   commissionsPaidEgp: number;
   revenueFromRefsEgp: number;
+  totalConversions: number;
 };
 type GlobalSettings = {
   defaultDiscountPct: number;
@@ -907,10 +919,14 @@ function AffiliateTab() {
   return (
     <div>
       {/* Stats bar */}
-      <div className="stats" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
+      <div className="stats" style={{ gridTemplateColumns: 'repeat(5,1fr)' }}>
         <div className="stat">
           <div className="stat-label">Active affiliates</div>
           <div className="stat-val">{stats?.totalActive ?? 0}</div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Total conversions</div>
+          <div className="stat-val">{(stats?.totalConversions ?? 0).toLocaleString()}</div>
         </div>
         <div className="stat">
           <div className="stat-label">Commissions paid</div>
@@ -1300,7 +1316,12 @@ function AffiliateTab() {
                 >
                   {a.tier}
                 </span>
-                <span style={{ fontWeight: 500 }}>{a.totalConversions}</span>
+                <span
+                  style={{ fontWeight: 500 }}
+                  title={`Stored count: ${a.totalConversions} | DB count: ${a.promoUsageCount}`}
+                >
+                  {a.promoUsageCount}
+                </span>
                 <span style={{ color: '#085041', fontWeight: 600 }}>
                   {a.totalEarnedEgp.toLocaleString()} EGP
                 </span>
@@ -3558,6 +3579,17 @@ function WrenchIcon() {
         fill="none"
         opacity=".7"
       />
+    </svg>
+  );
+}
+
+function TruckIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <rect x="1" y="4" width="9" height="7" rx="1" stroke="currentColor" strokeWidth="1.1" />
+      <path d="M10 6h3l2 3v2h-5V6z" stroke="currentColor" strokeWidth="1.1" />
+      <circle cx="4" cy="12" r="1.2" stroke="currentColor" strokeWidth="1" />
+      <circle cx="12" cy="12" r="1.2" stroke="currentColor" strokeWidth="1" />
     </svg>
   );
 }
