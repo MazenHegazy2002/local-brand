@@ -894,8 +894,33 @@ async function main() {
     },
   });
 
-  console.log('✅ Starter accounts created (admin / seller / buyer)');
-  console.log('   No sample products, orders, points, balances or reviews — start clean.');
+  // Affiliate demo account — BUYER role + approved Affiliate record
+  const affiliatePwHash = await bcrypt.hash('affiliate1234', 12);
+  const affiliateUser = await prisma.user.create({
+    data: {
+      name: 'Demo Affiliate',
+      email: 'affiliate@demo.com',
+      passwordHash: affiliatePwHash,
+      role: 'BUYER',
+      loyaltyPoints: 0,
+    },
+  });
+  await prisma.affiliate.create({
+    data: {
+      userId: affiliateUser.id,
+      promoCode: 'DEMO15',
+      referralSlug: 'demo-affiliate',
+      status: 'ACTIVE',
+      tier: 'STARTER',
+      platform: 'Instagram',
+      platformFollowers: 5000,
+      categoryFocus: 'Fashion',
+      approvedAt: new Date(),
+    },
+  });
+
+  console.log('✅ Starter accounts created (admin / seller / buyer / affiliate)');
+  console.log('   No sample orders, points, balances or reviews — start clean.');
 
   // ── Affiliate Program Scaffolding ──────────────────────────────────────────
   const tiers = [
@@ -1002,9 +1027,10 @@ async function main() {
 
   console.log('\n🎉 Seeding complete!');
   console.log('Login credentials:');
-  console.log('  Admin:  admin@admin.com / admin1234   → /admin-os');
-  console.log('  Seller: seller@seller.com / seller1234 → /seller-hub');
-  console.log('  Buyer:  user@user.com / user1234      → /dashboard');
+  console.log('  Admin:     admin@admin.com / admin1234         → /admin-os');
+  console.log('  Seller:    seller@seller.com / seller1234      → /seller-hub');
+  console.log('  Buyer:     user@user.com / user1234            → /dashboard');
+  console.log('  Affiliate: affiliate@demo.com / affiliate1234  → /dashboard (promo: DEMO15)');
 }
 
 main()
