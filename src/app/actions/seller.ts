@@ -799,7 +799,10 @@ export async function submitReview(
     });
 
     revalidatePath(`/product/${productId}`);
-    return { success: true, review: review as unknown as Review };
+    return JSON.parse(JSON.stringify({ success: true, review })) as {
+      success: boolean;
+      review: Review;
+    };
   } catch (err: unknown) {
     const error = err as Error;
     return { error: error.message };
@@ -843,7 +846,8 @@ export async function createTaxonomy(type: 'category' | 'tag' | 'collection', da
     }
 
     revalidatePath('/admin-os');
-    return result;
+    // Return only the id — avoids Date serialization errors from the raw Prisma object.
+    return { success: true, id: result?.id };
   } catch (err: unknown) {
     const error = err as Error;
     return { error: error.message };
@@ -1111,7 +1115,8 @@ export async function adminUpdateUser(
     });
 
     revalidatePath('/admin-os');
-    return { success: true, user: updatedUser };
+    // Return only the scalar fields the caller needs — avoids Date serialization issues.
+    return { success: true, userId: updatedUser.id };
   } catch (err: unknown) {
     const error = err as Error;
     console.error('[adminUpdateUser] Error:', err);
