@@ -45,15 +45,17 @@ export async function getDashboardStats() {
         orderBy: { createdAt: 'desc' },
       });
 
-      return {
-        myOrders: orders,
-        wishlist,
-        notifications,
-        stats: {
-          totalOrders: orders.length,
-          wishlistCount: wishlist.length,
-        },
-      };
+      return JSON.parse(
+        JSON.stringify({
+          myOrders: orders,
+          wishlist,
+          notifications,
+          stats: {
+            totalOrders: orders.length,
+            wishlistCount: wishlist.length,
+          },
+        })
+      );
     }
 
     if (role === 'SELLER') {
@@ -217,15 +219,17 @@ export async function getDashboardStats() {
         },
       };
 
-      return {
-        currentSeller: seller,
-        myProducts: seller.products,
-        myOrders: orders,
-        stats,
-        categories: await prisma.category.findMany(),
-        tags: await prisma.tag.findMany(),
-        collections: await prisma.collection.findMany(),
-      };
+      return JSON.parse(
+        JSON.stringify({
+          currentSeller: seller,
+          myProducts: seller.products,
+          myOrders: orders,
+          stats,
+          categories: await prisma.category.findMany(),
+          tags: await prisma.tag.findMany(),
+          collections: await prisma.collection.findMany(),
+        })
+      );
     }
 
     if (role === 'ADMIN') {
@@ -317,20 +321,22 @@ export async function getDashboardStats() {
         totalProducts: products.length,
       };
 
-      return {
-        sellers,
-        orders,
-        users,
-        products,
-        auditLogs,
-        systemSettings,
-        payouts,
-        categories,
-        tags,
-        collections,
-        pendingSellers: sellers.filter(s => s.status === 'PENDING_APPROVAL'),
-        stats,
-      };
+      return JSON.parse(
+        JSON.stringify({
+          sellers,
+          orders,
+          users,
+          products,
+          auditLogs,
+          systemSettings,
+          payouts,
+          categories,
+          tags,
+          collections,
+          pendingSellers: sellers.filter(s => s.status === 'PENDING_APPROVAL'),
+          stats,
+        })
+      );
     }
 
     return { error: 'Invalid role' };
