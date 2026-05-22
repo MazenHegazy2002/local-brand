@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
   // ─── Body Size Limit (Next.js 16: lives under `experimental`) ──────────────
   experimental: {
     proxyClientMaxBodySize: '10mb', // for image uploads
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
   },
 
   outputFileTracingExcludes: {},
