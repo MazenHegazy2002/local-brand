@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
-const SOCIAL_PROVIDERS = ['google', 'facebook', 'twitter'] as const;
+const SOCIAL_PROVIDERS = ['google'] as const;
 
 const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   OAuthAccountNotLinked:
@@ -165,13 +165,13 @@ function LoginForm() {
           )}
 
           {/* ─── Social OAuth Buttons ────────────────────────────────────────── */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="flex flex-col gap-3">
             {SOCIAL_PROVIDERS.map(provider => (
               <button
                 key={provider}
                 onClick={() => handleSocialSignIn(provider)}
                 disabled={loadingProvider === provider}
-                className="flex items-center justify-center gap-2 py-3 px-2 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 hover:shadow-md transition-all shadow-sm text-xs font-semibold text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 hover:shadow-md transition-all shadow-sm text-sm font-semibold text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {provider === 'google' && (
                   <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
@@ -193,17 +193,7 @@ function LoginForm() {
                     />
                   </svg>
                 )}
-                {provider === 'facebook' && (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#1877F2">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                  </svg>
-                )}
-                {provider === 'twitter' && (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#000000">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26h8.238l5.69-6.425L23.39 22H1.17l6.833-7.821L1.35 2.25H8.1l5.903 6.766-2.248 3.176H2.266l6.86-7.835 5.69 6.425V2.25z" />
-                  </svg>
-                )}
-                <span className="hidden sm:inline capitalize">{provider}</span>
+                <span className="capitalize">Continue with {provider}</span>
               </button>
             ))}
           </div>
