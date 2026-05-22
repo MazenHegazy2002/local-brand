@@ -91,6 +91,7 @@ export default async function Hero() {
               <Image
                 src="https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=80&w=1000&auto=format&fit=crop"
                 fill
+                sizes="(max-width: 1024px) 50vw, 17vw"
                 style={{ objectFit: 'cover' }}
                 alt="Sneaker"
                 className="z-0 grayscale contrast-125"
@@ -111,6 +112,7 @@ export default async function Hero() {
               <Image
                 src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop"
                 fill
+                sizes="(max-width: 1024px) 50vw, 17vw"
                 style={{ objectFit: 'cover' }}
                 alt="Watch"
                 className="z-0 object-center"

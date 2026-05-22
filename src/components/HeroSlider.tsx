@@ -57,6 +57,7 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
           src={slide.imageUrl}
           alt={renderText(slide.title, slide.isI18nKey)}
           fill
+          sizes="(max-width: 1024px) 100vw, 67vw"
           style={{ objectFit: 'cover' }}
           className={`z-0 mix-blend-multiply transition-opacity duration-1000 ${currentSlide === idx ? 'opacity-100' : 'opacity-0'}`}
           priority={idx === 0}
