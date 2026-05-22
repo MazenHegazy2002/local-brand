@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
 
 /**
@@ -24,7 +23,7 @@ export async function POST(req: Request) {
 
     const event = {
       userId,
-      eventType,           // 'view' | 'search' | 'add_to_cart' | 'purchase' | 'wishlist'
+      eventType, // 'view' | 'search' | 'add_to_cart' | 'purchase' | 'wishlist'
       productId: productId || null,
       searchQuery: searchQuery || null,
       metadata: metadata || null,
@@ -43,12 +42,12 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 }
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
     const { getServerSession } = await import('next-auth');
     const { authOptions } = await import('@/lib/auth');

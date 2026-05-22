@@ -107,7 +107,7 @@ export async function POST(req: Request) {
 }
 
 // GET /api/rma — get user's return requests
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user)

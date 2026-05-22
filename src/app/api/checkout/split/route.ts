@@ -18,39 +18,56 @@ export async function POST(req: Request) {
 
     const userId = (session.user as SessionUser).id;
     const body = await req.json();
-    
+
     // ── 1. Validate Input ─────────────────────────────────────────────────────
     const validated = createOrderSchema.safeParse(body);
     if (!validated.success) {
-      return NextResponse.json({ 
-        message: 'Invalid input', 
-        errors: validated.error.errors 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          message: 'Invalid input',
+          errors: validated.error.errors,
+        },
+        { status: 400 }
+      );
     }
 
-    const { items: cartItemsInput, addressId, couponCode, paymentMethod } = validated.data;
+    const {
+      items: cartItemsInput,
+      addressId,
+      couponCode: _couponCode,
+      paymentMethod,
+    } = validated.data;
 
     // ── 2. Group cart items by seller ─────────────────────────────────────────
     // We need to fetch product info to know the seller
-    const sellerGroups: Record<string, { 
-      items: { variantId: string; quantity: number; price: number; title: string; sellerName: string }[],
-      governorate: string 
-    }> = {};
+    const sellerGroups: Record<
+      string,
+      {
+        items: {
+          variantId: string;
+          quantity: number;
+          price: number;
+          title: string;
+          sellerName: string;
+        }[];
+        governorate: string;
+      }
+    > = {};
 
     // Get user's address for shipping calculation
     const address = await prisma.address.findUnique({
-      where: { id: addressId }
+      where: { id: addressId },
     });
     if (!address) return NextResponse.json({ message: 'Address not found' }, { status: 400 });
 
     for (const itemInput of cartItemsInput) {
       const variant = await prisma.productVariant.findUnique({
         where: { id: itemInput.variantId },
-        include: { 
-          product: { 
-            include: { seller: true } 
-          } 
-        }
+        include: {
+          product: {
+            include: { seller: true },
+          },
+        },
       });
 
       if (!variant) throw new Error(`Product variant ${itemInput.variantId} not found`);
@@ -62,18 +79,18 @@ export async function POST(req: Request) {
       if (!sellerGroups[sellerId]) {
         sellerGroups[sellerId] = { items: [], governorate: address.governorate };
       }
-      
+
       sellerGroups[sellerId].items.push({
         variantId: variant.id,
         quantity: itemInput.quantity,
         price: variant.price || variant.product.basePrice,
         title: variant.product.title,
-        sellerName: variant.product.seller.storeName
+        sellerName: variant.product.seller.storeName,
       });
     }
 
     // ── 3. Execute Split Checkout in a Transaction ───────────────────────────
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async tx => {
       const createdOrders = [];
 
       for (const [sellerId, group] of Object.entries(sellerGroups)) {
@@ -84,9 +101,9 @@ export async function POST(req: Request) {
           // Atomic stock decrement
           const updated = await tx.productVariant.updateMany({
             where: { id: item.variantId, stockCount: { gte: item.quantity } },
-            data: { stockCount: { decrement: item.quantity } }
+            data: { stockCount: { decrement: item.quantity } },
           });
-          
+
           if (updated.count === 0) {
             throw new Error(`Concurrency error: ${item.title} just sold out`);
           }
@@ -122,15 +139,15 @@ export async function POST(req: Request) {
             paymentStatus: PaymentStatus.UNPAID, // Always start UNPAID for split checkout, then update via webhook
             status: OrderStatus.PENDING_PAYMENT,
             shippingAddressSnapshot: JSON.stringify(address),
-            items: { create: orderItemsData }
-          }
+            items: { create: orderItemsData },
+          },
         });
 
-        createdOrders.push({ 
-          orderId: order.id, 
-          sellerId, 
-          subtotal, 
-          totalAmount 
+        createdOrders.push({
+          orderId: order.id,
+          sellerId,
+          subtotal,
+          totalAmount,
         });
       }
 
@@ -140,21 +157,23 @@ export async function POST(req: Request) {
 
       await tx.user.update({
         where: { id: userId },
-        data: { loyaltyPoints: { increment: pointsEarned } }
+        data: { loyaltyPoints: { increment: pointsEarned } },
       });
 
       return { createdOrders, pointsEarned };
     });
 
-    return NextResponse.json({
-      message: `Checkout initiated. ${result.createdOrders.length} sub-order(s) created.`,
-      orders: result.createdOrders,
-      loyaltyPoints: { 
-        earned: result.pointsEarned, 
-        message: `+${result.pointsEarned} loyalty points pending!` 
-      }
-    }, { status: 201 });
-
+    return NextResponse.json(
+      {
+        message: `Checkout initiated. ${result.createdOrders.length} sub-order(s) created.`,
+        orders: result.createdOrders,
+        loyaltyPoints: {
+          earned: result.pointsEarned,
+          message: `+${result.pointsEarned} loyalty points pending!`,
+        },
+      },
+      { status: 201 }
+    );
   } catch (error: unknown) {
     console.error('Split Checkout Error:', error);
     const message = error instanceof Error ? error.message : 'Checkout failed';

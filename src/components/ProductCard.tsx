@@ -119,7 +119,7 @@ export default function ProductCard({
 
   const addToCartText = t ? t('AddToCart') || t('Add') || 'Add to Cart' : 'Add to Cart';
   const addedText = t ? t('AddedToCart') || t('Added') || 'Added ✓' : 'Added ✓';
-  const egpText = t ? t('EGP') || 'EGP' : 'EGP';
+  const _egpText = t ? t('EGP') || 'EGP' : 'EGP';
 
   // ── Color Swatch & Variant Parsing ──
   const variants = (product.variants || []) as ProductVariant[];
@@ -137,7 +137,7 @@ export default function ProductCard({
           colorMap.set(key, { variant: v, colorName });
         }
       }
-    } catch (e) {
+    } catch (_e) {
       // Ignore parsing errors
     }
   });
@@ -179,6 +179,7 @@ export default function ProductCard({
         setActiveImage(matchedImg);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.variants, displayImage]);
 
   // Handle Add to Cart action

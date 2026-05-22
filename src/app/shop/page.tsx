@@ -1,14 +1,12 @@
 'use client';
 
 import Navbar from '@/components/Navbar';
-import Link from 'next/link';
 import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useCartStore } from '@/lib/cartStore';
 import { useLanguage } from '@/providers/LanguageContext';
 import ProductCard from '@/components/ProductCard';
-import { ProductSkeleton, ProductGridSkeleton } from '@/components/Skeleton';
-import { Product, Category, Tag } from '@/types';
+import { ProductGridSkeleton } from '@/components/Skeleton';
+import { Product, Category } from '@/types';
 
 interface FilterState {
   q: string;
@@ -54,14 +52,10 @@ function ShopContent() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
-  const addItem = useCartStore(s => s.addItem);
-  const [added, setAdded] = useState<Record<string, boolean>>({});
   const { t } = useLanguage();
 
   const fetchFilters = async () => {
@@ -71,10 +65,6 @@ function ShopContent() {
         const data = await res.json();
         setCategories(data.categories || []);
         setBrands(data.brands || []);
-        setTags(data.tags || []);
-        if (data.priceRange) {
-          setPriceRange(data.priceRange);
-        }
       }
     } catch (e) {
       console.error(e);
@@ -148,23 +138,6 @@ function ShopContent() {
     if (filters.sort === 'price-desc') sorted.sort((a, b) => b.basePrice - a.basePrice);
     return sorted;
   }, [products, filters.sort]);
-
-  const handleAddToCart = (product: Product) => {
-    // Prefer the product's default variant id — that's the id the cart and
-    // order pipeline actually expect. Fall back to the product id (the cart
-    // validation endpoint can rewrite that for us on the next open).
-    const variant = product.variants?.[0];
-    addItem({
-      id: String(variant?.id ?? product.id),
-      name: product.title,
-      price: variant?.price ?? product.basePrice,
-      image: product.images?.[0]?.url || '',
-    });
-    setAdded(prev => ({ ...prev, [product.id]: true }));
-    setTimeout(() => setAdded(prev => ({ ...prev, [product.id]: false })), 1200);
-  };
-
-  const egp = t('EGP');
 
   const activeFilterCount = [
     filters.brand,

@@ -21,12 +21,12 @@ export function Pagination({
   totalItems,
   className = '',
 }: PaginationProps) {
-  const [pageInput, setPageInput] = useState('');
+  const [_pageInput, _setPageInput] = useState('');
 
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
     const maxVisible = 7;
-    
+
     if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
@@ -52,9 +52,13 @@ export function Pagination({
     <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`}>
       <div className="text-sm text-gray-500 order-2 sm:order-1">
         {totalItems ? (
-          <span>Showing {startItem}-{endItem} of {totalItems}</span>
+          <span>
+            Showing {startItem}-{endItem} of {totalItems}
+          </span>
         ) : (
-          <span>Page {currentPage} of {totalPages}</span>
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
         )}
       </div>
 
@@ -64,29 +68,39 @@ export function Pagination({
           disabled={currentPage === 1}
           className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
 
         <div className="flex items-center gap-1">
-          {getPageNumbers().map((page, i) => (
+          {getPageNumbers().map((page, i) =>
             typeof page === 'number' ? (
               <button
                 key={i}
                 onClick={() => onPageChange(page)}
                 className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
-                  ${currentPage === page
-                    ? 'bg-[hsl(var(--primary))] text-white'
-                    : 'hover:bg-gray-50 text-gray-600'
+                  ${
+                    currentPage === page
+                      ? 'bg-[hsl(var(--primary))] text-white'
+                      : 'hover:bg-gray-50 text-gray-600'
                   }`}
               >
                 {page}
               </button>
             ) : (
-              <span key={i} className="w-9 h-9 flex items-center justify-center text-gray-400">...</span>
+              <span key={i} className="w-9 h-9 flex items-center justify-center text-gray-400">
+                ...
+              </span>
             )
-          ))}
+          )}
         </div>
 
         <button
@@ -94,7 +108,14 @@ export function Pagination({
           disabled={currentPage === totalPages}
           className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </button>
@@ -105,11 +126,13 @@ export function Pagination({
           <span className="text-gray-500">Show:</span>
           <select
             value={itemsPerPage}
-            onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+            onChange={e => onItemsPerPageChange(Number(e.target.value))}
             className="px-2 py-1 rounded border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
           >
-            {[10, 20, 50, 100].map((n) => (
-              <option key={n} value={n}>{n}</option>
+            {[10, 20, 50, 100].map(n => (
+              <option key={n} value={n}>
+                {n}
+              </option>
             ))}
           </select>
         </div>

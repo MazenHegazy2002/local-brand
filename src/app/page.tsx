@@ -1,7 +1,6 @@
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import Link from 'next/link';
-import Image from 'next/image';
 import { getHomepageData } from '@/app/actions/seller';
 import { en } from '@/lib/i18n/dicts';
 import { getDictionary } from '@/lib/i18n/server';

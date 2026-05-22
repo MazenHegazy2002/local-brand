@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { createCouponSchema } from '@/lib/validation';
 import { SessionUser } from '@/types';
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   const session = await getServerSession(authOptions);
   if (!session || (session.user as SessionUser).role !== 'ADMIN') {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });

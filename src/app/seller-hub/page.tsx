@@ -18,7 +18,6 @@ import {
   XCircle,
   TrendingUp,
   Star,
-  Users,
   Copy,
   ExternalLink,
 } from 'lucide-react';
@@ -36,7 +35,6 @@ import {
   SellerProfile,
   SessionUser,
   ProductVariant,
-  ProductImage,
   Tag,
   Collection,
 } from '@/types';
@@ -1049,7 +1047,12 @@ function NavItem({
   );
 }
 
-function OverviewTab({ stats, myOrders, myProducts, data }: OverviewTabProps) {
+function OverviewTab({
+  stats,
+  myOrders: _myOrders,
+  myProducts: _myProducts,
+  data,
+}: OverviewTabProps) {
   return (
     <div className="overview-wrap">
       {/* Top Stats Row */}
@@ -2220,6 +2223,7 @@ function SettingsTab({ data }: { data: DashboardData }) {
         <div className="flex items-center gap-6">
           <div className="w-24 h-24 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center">
             {form.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img src={form.logoUrl} alt="Store logo" className="w-full h-full object-cover" />
             ) : (
               <span className="text-2xl text-slate-300">🏪</span>

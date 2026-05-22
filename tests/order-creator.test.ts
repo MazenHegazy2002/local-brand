@@ -68,6 +68,10 @@ describe('createOrderForUser — input validation', () => {
       product: {
         title: 'T-Shirt',
         basePrice: 100,
+        published: true,
+        deletedAt: null,
+        flashSalePrice: null,
+        flashSaleEndsAt: null,
         seller: { storeName: 'Demo Store' },
       },
     });
@@ -134,6 +138,10 @@ describe('createOrderForUser — stock + variant resolution', () => {
       product: {
         title: 'Out-of-stock Item',
         basePrice: 100,
+        published: true,
+        deletedAt: null,
+        flashSalePrice: null,
+        flashSaleEndsAt: null,
         seller: { storeName: 'Demo Store' },
       },
     });
@@ -154,13 +162,29 @@ describe('createOrderForUser — stock + variant resolution', () => {
         id: VALID_VARIANT_ID,
         stockCount: 10,
         price: 100,
-        product: { title: 'A', basePrice: 100, seller: { storeName: 'S' } },
+        product: {
+          title: 'A',
+          basePrice: 100,
+          published: true,
+          deletedAt: null,
+          flashSalePrice: null,
+          flashSaleEndsAt: null,
+          seller: { storeName: 'S' },
+        },
       })
       .mockResolvedValueOnce({
         id: VALID_VARIANT_ID_2,
         stockCount: 10,
         price: 200,
-        product: { title: 'B', basePrice: 200, seller: { storeName: 'S' } },
+        product: {
+          title: 'B',
+          basePrice: 200,
+          published: true,
+          deletedAt: null,
+          flashSalePrice: null,
+          flashSaleEndsAt: null,
+          seller: { storeName: 'S' },
+        },
       });
 
     const txOrderCreate = jest.fn<any>().mockResolvedValue({ id: 'order-2' });
@@ -197,7 +221,15 @@ describe('createOrderForUser — coupon application', () => {
       id: VALID_VARIANT_ID,
       stockCount: 5,
       price: 1000,
-      product: { title: 'X', basePrice: 1000, seller: { storeName: 'S' } },
+      product: {
+        title: 'X',
+        basePrice: 1000,
+        published: true,
+        deletedAt: null,
+        flashSalePrice: null,
+        flashSaleEndsAt: null,
+        seller: { storeName: 'S' },
+      },
     });
     mocked.coupon.findUnique.mockResolvedValue({
       id: 'coupon-1',
@@ -247,7 +279,15 @@ describe('createOrderForUser — coupon application', () => {
       id: VALID_VARIANT_ID,
       stockCount: 5,
       price: 100,
-      product: { title: 'X', basePrice: 100, seller: { storeName: 'S' } },
+      product: {
+        title: 'X',
+        basePrice: 100,
+        published: true,
+        deletedAt: null,
+        flashSalePrice: null,
+        flashSaleEndsAt: null,
+        seller: { storeName: 'S' },
+      },
     });
     mocked.coupon.findUnique.mockResolvedValue({
       id: 'expired',
@@ -284,7 +324,15 @@ describe('createOrderForUser — concurrency / stock race', () => {
       id: VALID_VARIANT_ID,
       stockCount: 5,
       price: 100,
-      product: { title: 'Y', basePrice: 100, seller: { storeName: 'S' } },
+      product: {
+        title: 'Y',
+        basePrice: 100,
+        published: true,
+        deletedAt: null,
+        flashSalePrice: null,
+        flashSaleEndsAt: null,
+        seller: { storeName: 'S' },
+      },
     });
     mocked.$transaction.mockImplementation((fn: any) =>
       fn({

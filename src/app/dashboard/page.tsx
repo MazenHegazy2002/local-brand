@@ -796,6 +796,7 @@ function OverviewTab({ data, wishlist, myOrders }: TabProps) {
                 style={{ borderRadius: '4px', overflow: 'hidden', background: '#f1f5f9' }}
               >
                 {w.product?.images?.[0] && (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={w.product.images[0].url}
                     className="w-full h-full object-cover"
@@ -877,6 +878,7 @@ function OrdersTab({
             <div key={item.id} className="flex gap-3 mt-2 p-2 bg-slate-50 rounded items-center">
               <div className="w-10 h-10 rounded bg-white overflow-hidden shrink-0">
                 {item.variant?.product?.images?.[0] && (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={item.variant.product.images[0].url}
                     className="w-full h-full object-cover"
@@ -945,6 +947,7 @@ function WishlistTab({
         <div key={w.productId} className="row-item">
           <div className="w-12 h-12 rounded bg-slate-50 overflow-hidden shrink-0 border border-slate-100">
             {w.product?.images?.[0] && (
+              // eslint-disable-next-line @next/next/no-img-element
               <img src={w.product.images[0].url} className="w-full h-full object-cover" alt="" />
             )}
           </div>

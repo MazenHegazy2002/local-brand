@@ -22,7 +22,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     } else {
       document.body.style.overflow = 'unset';
     }
-    return () => { document.body.style.overflow = 'unset'; };
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [isOpen]);
 
   // Whenever the drawer opens, reconcile the cart against the server:
@@ -37,7 +39,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         const res = await fetch('/api/cart/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ variantIds: items.map((i) => i.id) }),
+          body: JSON.stringify({ variantIds: items.map(i => i.id) }),
         });
         if (!res.ok) return;
         const data: { invalid?: string[]; rewrites?: Record<string, string> } = await res.json();
@@ -76,16 +78,17 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         <>
           <div className="flex-1 overflow-y-auto px-6 py-4">
             {items.map((item, index) => (
-              <div 
-                key={item.id} 
+              <div
+                key={item.id}
                 className="flex gap-4 py-4 border-b border-gray-100 animate-slide-in-right"
                 style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
               >
                 <div className="w-20 h-20 rounded-xl bg-gray-100 flex items-center justify-center text-2xl overflow-hidden shrink-0">
                   {item.image && item.image.startsWith('http') ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                   ) : (
-                    item.emoji ?? '📦'
+                    (item.emoji ?? '📦')
                   )}
                 </div>
 
@@ -94,14 +97,14 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   <p className="text-[hsl(var(--primary))] font-bold mb-2">
                     {(item.price * item.qty).toLocaleString()} EGP
                   </p>
-                  
+
                   <div className="flex items-center gap-3">
                     <QuantitySelector
                       value={item.qty}
                       min={1}
-                      onChange={(qty) => updateQty(item.id, qty)}
+                      onChange={qty => updateQty(item.id, qty)}
                     />
-                    <button 
+                    <button
                       onClick={() => removeItem(item.id)}
                       className="text-red-500 text-sm font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors flex items-center gap-1"
                     >
@@ -116,19 +119,21 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           <div className="border-t border-gray-100 p-6 bg-white">
             <div className="flex justify-between items-center mb-2">
               <span className="text-gray-500">Subtotal</span>
-              <span className="text-xl font-bold text-gray-900">{total().toLocaleString()} EGP</span>
+              <span className="text-xl font-bold text-gray-900">
+                {total().toLocaleString()} EGP
+              </span>
             </div>
             <p className="text-xs text-gray-400 mb-4">Shipping & taxes calculated at checkout</p>
-            
-            <Link 
-              href="/checkout" 
+
+            <Link
+              href="/checkout"
               onClick={onClose}
               className="block text-center w-full bg-[hsl(var(--primary))] text-white py-3.5 rounded-xl font-bold hover:opacity-90 transition-all"
             >
               Checkout — {total().toLocaleString()} EGP
             </Link>
-            
-            <button 
+
+            <button
               onClick={clearCart}
               className="w-full mt-3 py-2.5 text-gray-500 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition-colors"
             >

@@ -27,13 +27,13 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 }
 
 // Retrieve recently viewed — GET /api/track/view
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ products: [] });
@@ -54,12 +54,10 @@ export async function GET(req: Request) {
     });
 
     // Sort to match Redis ordering (most recently viewed first)
-    const sorted = productIds
-      .map(id => products.find(p => p.id === id))
-      .filter(Boolean);
+    const sorted = productIds.map(id => products.find(p => p.id === id)).filter(Boolean);
 
     return NextResponse.json({ products: sorted });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ products: [] }, { status: 500 });
   }
 }

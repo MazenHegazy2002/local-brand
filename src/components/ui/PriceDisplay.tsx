@@ -20,9 +20,11 @@ export function PriceDisplay({
   size = 'md',
 }: PriceDisplayProps) {
   const hasDiscount = originalPrice && originalPrice > price;
-  const discountPercent = hasDiscount ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
+  const discountPercent = hasDiscount
+    ? Math.round(((originalPrice - price) / originalPrice) * 100)
+    : 0;
 
-  const sizeClasses = {
+  const _sizeClasses = {
     sm: 'text-sm',
     md: 'text-xl',
     lg: 'text-2xl',

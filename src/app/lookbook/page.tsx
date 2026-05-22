@@ -70,6 +70,7 @@ export default async function LookbookPage() {
                       className="group relative overflow-hidden rounded-2xl aspect-[3/4] bg-gray-100 block"
                     >
                       {cover ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={cover}
                           alt={collection.name}
@@ -118,6 +119,7 @@ export default async function LookbookPage() {
                     style={{ aspectRatio: isLarge ? '2/3' : '1' }}
                   >
                     {img ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={img}
                         alt={product.title}

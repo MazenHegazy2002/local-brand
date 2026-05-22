@@ -183,6 +183,7 @@ export default function EditProductPage() {
       fetchProduct();
       loadCategories();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
   const loadCategories = async () => {
@@ -832,6 +833,7 @@ export default function EditProductPage() {
               <h3 className="card-title mb-4">Preview</h3>
               <div className="aspect-square bg-slate-50 rounded-lg overflow-hidden mb-3">
                 {product?.images?.[0] ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={product.images[0].url}
                     alt={form.title}

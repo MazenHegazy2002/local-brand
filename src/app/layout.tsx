@@ -110,7 +110,7 @@ export default async function RootLayout({
 
   const isArabic = googTrans ? googTrans.includes('/ar') : false;
   const dir = isArabic ? 'rtl' : 'ltr';
-  const lang = isArabic ? 'ar' : 'en';
+  const _lang = isArabic ? 'ar' : 'en';
 
   return (
     <html lang="en" dir={dir}>

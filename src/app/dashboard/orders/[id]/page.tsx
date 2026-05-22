@@ -142,6 +142,7 @@ export default async function OrderTrackingPage({ params }: { params: { id: stri
                 className="glass p-6 rounded-2xl border border-white/5 flex gap-6 items-center"
               >
                 <div className="w-24 h-24 relative rounded-xl overflow-hidden bg-white/5 hidden sm:block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={primaryImage}
                     alt={item.productTitleSnapshot}

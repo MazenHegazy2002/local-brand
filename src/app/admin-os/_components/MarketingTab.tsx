@@ -235,7 +235,7 @@ interface TplItem {
 function EmailTemplatesPanel() {
   const [items, setItems] = useState<TplItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [active, setActive] = useState<TplItem | null>(null);
+  const [_active, setActive] = useState<TplItem | null>(null);
 
   const load = async () => {
     setLoading(true);

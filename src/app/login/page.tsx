@@ -25,7 +25,7 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
 };
 
 function LoginForm() {
-  const router = useRouter();
+  const _router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
   const urlError = searchParams.get('error');
@@ -129,7 +129,7 @@ function LoginForm() {
         }
 
         window.location.href = target;
-      } catch (err) {
+      } catch (_err) {
         window.location.href = callbackUrl || '/dashboard';
       }
     }

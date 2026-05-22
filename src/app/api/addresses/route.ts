@@ -6,14 +6,14 @@ import { SessionUser } from '@/types';
 import { addressSchema, updateAddressSchema } from '@/lib/validation';
 
 // GET /api/addresses — fetch user's saved addresses
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   const userId = (session.user as SessionUser).id;
 
   const addresses = await prisma.address.findMany({
     where: { userId },
-    orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }]
+    orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
   });
 
   return NextResponse.json({ addresses }, { status: 200 });
@@ -38,19 +38,19 @@ export async function POST(req: Request) {
   if (isDefault) {
     await prisma.address.updateMany({
       where: { userId },
-      data: { isDefault: false }
+      data: { isDefault: false },
     });
   }
 
   const address = await prisma.address.create({
-    data: { userId, street, city, governorate, postalCode, isDefault: !!isDefault }
+    data: { userId, street, city, governorate, postalCode, isDefault: !!isDefault },
   });
 
   // Update user's defaultAddressId if this is default
   if (isDefault) {
     await prisma.user.update({
       where: { id: userId },
-      data: { defaultAddressId: address.id }
+      data: { defaultAddressId: address.id },
     });
   }
 
@@ -104,12 +104,12 @@ export async function PUT(req: Request) {
   if (isDefault) {
     await prisma.address.updateMany({
       where: { userId },
-      data: { isDefault: false }
+      data: { isDefault: false },
     });
-    
+
     await prisma.user.update({
       where: { id: userId },
-      data: { defaultAddressId: id }
+      data: { defaultAddressId: id },
     });
   }
 
@@ -120,8 +120,8 @@ export async function PUT(req: Request) {
       city: city ?? undefined,
       governorate: governorate ?? undefined,
       postalCode: postalCode ?? undefined,
-      isDefault: isDefault !== undefined ? !!isDefault : undefined
-    }
+      isDefault: isDefault !== undefined ? !!isDefault : undefined,
+    },
   });
 
   return NextResponse.json({ address: updated }, { status: 200 });

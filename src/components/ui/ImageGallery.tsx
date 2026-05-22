@@ -16,15 +16,15 @@ interface ImageGalleryProps {
 
 export function ImageGallery({ images, showLightbox = true, className = '' }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isZoomed, setIsZoomed] = useState(false);
+  const [isZoomed, _setIsZoomed] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const goToPrevious = useCallback(() => {
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setCurrentIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
   }, [images.length]);
 
   const goToNext = useCallback(() => {
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setCurrentIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
   }, [images.length]);
 
   useEffect(() => {
@@ -56,18 +56,38 @@ export function ImageGallery({ images, showLightbox = true, className = '' }: Im
         {images.length > 1 && (
           <>
             <button
-              onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
+              onClick={e => {
+                e.stopPropagation();
+                goToPrevious();
+              }}
               className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/90 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); goToNext(); }}
+              onClick={e => {
+                e.stopPropagation();
+                goToNext();
+              }}
               className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/90 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
@@ -83,7 +103,12 @@ export function ImageGallery({ images, showLightbox = true, className = '' }: Im
               onClick={() => setCurrentIndex(i)}
               className={`relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors ${currentIndex === i ? 'border-[hsl(var(--primary))]' : 'border-transparent hover:border-gray-300'}`}
             >
-              <Image src={img.src} alt={img.alt || `Thumbnail ${i + 1}`} fill className="object-cover" />
+              <Image
+                src={img.src}
+                alt={img.alt || `Thumbnail ${i + 1}`}
+                fill
+                className="object-cover"
+              />
             </button>
           ))}
         </div>
@@ -98,18 +123,61 @@ export function ImageGallery({ images, showLightbox = true, className = '' }: Im
             onClick={() => setIsLightboxOpen(false)}
             className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 rounded-full"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-          <button onClick={(e) => { e.stopPropagation(); goToPrevious(); }} className="absolute left-4 text-white p-4 hover:bg-white/10 rounded-full">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
+          <button
+            onClick={e => {
+              e.stopPropagation();
+              goToPrevious();
+            }}
+            className="absolute left-4 text-white p-4 hover:bg-white/10 rounded-full"
+          >
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
           </button>
-          <div className="relative w-[90vw] h-[90vh] max-w-4xl" onClick={(e) => e.stopPropagation()}>
-            <Image src={images[currentIndex].src} alt={images[currentIndex].alt || 'Product image'} fill className="object-contain" />
+          <div className="relative w-[90vw] h-[90vh] max-w-4xl" onClick={e => e.stopPropagation()}>
+            <Image
+              src={images[currentIndex].src}
+              alt={images[currentIndex].alt || 'Product image'}
+              fill
+              className="object-contain"
+            />
           </div>
-          <button onClick={(e) => { e.stopPropagation(); goToNext(); }} className="absolute right-4 text-white p-4 hover:bg-white/10 rounded-full">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+          <button
+            onClick={e => {
+              e.stopPropagation();
+              goToNext();
+            }}
+            className="absolute right-4 text-white p-4 hover:bg-white/10 rounded-full"
+          >
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
           </button>
         </div>
       )}

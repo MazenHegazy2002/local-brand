@@ -179,6 +179,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   key={i}
                   className="w-20 h-20 rounded-lg bg-gray-50 border border-gray-200 p-1 cursor-pointer overflow-hidden"
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={img.url} className="w-full h-full object-cover rounded" alt="" />
                 </div>
               ))}

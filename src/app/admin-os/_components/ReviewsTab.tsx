@@ -8,7 +8,7 @@
 //   • bulk approve / hide / reject actions
 //   • inline expansion for the full review/comment text + product link
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface ReviewItem {
   id: string;
@@ -64,6 +64,7 @@ export default function ReviewsTab() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, status]);
 
   const updateOne = async (

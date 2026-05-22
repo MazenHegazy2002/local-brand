@@ -29,21 +29,24 @@ export async function POST(req: Request) {
         status: 'DELIVERED',
         items: {
           some: {
-            variant: { productId }
-          }
-        }
-      }
+            variant: { productId },
+          },
+        },
+      },
     });
 
     const verifiedPurchase = !!orderHistory;
 
     // 2. Prevent Double Reviewing
     const existingReview = await prisma.review.findFirst({
-      where: { userId, productId }
+      where: { userId, productId },
     });
 
     if (existingReview) {
-      return NextResponse.json({ message: 'You have already reviewed this product' }, { status: 400 });
+      return NextResponse.json(
+        { message: 'You have already reviewed this product' },
+        { status: 400 }
+      );
     }
 
     // 3. Create Review
@@ -53,12 +56,11 @@ export async function POST(req: Request) {
         productId,
         rating,
         comment,
-        verifiedPurchase
-      }
+        verifiedPurchase,
+      },
     });
 
     return NextResponse.json({ message: 'Review successfully submitted', review }, { status: 201 });
-
   } catch (error) {
     console.error('Review Error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
@@ -77,21 +79,22 @@ export async function GET(req: Request) {
     const reviews = await prisma.review.findMany({
       where: { productId },
       include: {
-        user: { select: { name: true, avatarUrl: true } }
+        user: { select: { name: true, avatarUrl: true } },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
-    const averageRating = reviews.length > 0 
-      ? reviews.reduce((acc, rev) => acc + rev.rating, 0) / reviews.length 
-      : 0;
+    const averageRating =
+      reviews.length > 0 ? reviews.reduce((acc, rev) => acc + rev.rating, 0) / reviews.length : 0;
 
-    return NextResponse.json({ 
-      reviews, 
-      stats: { total: reviews.length, averageRating: averageRating.toFixed(1) } 
-    }, { status: 200 });
-
-  } catch (error) {
+    return NextResponse.json(
+      {
+        reviews,
+        stats: { total: reviews.length, averageRating: averageRating.toFixed(1) },
+      },
+      { status: 200 }
+    );
+  } catch (_error) {
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }

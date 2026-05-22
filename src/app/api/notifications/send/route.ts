@@ -4,7 +4,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NOTIFICATION_TYPES } from '@/lib/constants';
 import { sendNotificationSchema } from '@/lib/validation';
-import { SessionUser } from '@/types';
 
 export async function POST(req: Request) {
   try {
@@ -17,7 +16,10 @@ export async function POST(req: Request) {
     const validated = sendNotificationSchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json({ message: 'Invalid data', errors: validated.error.format() }, { status: 400 });
+      return NextResponse.json(
+        { message: 'Invalid data', errors: validated.error.format() },
+        { status: 400 }
+      );
     }
 
     const { userId, title, message, link, targetAudience } = validated.data;

@@ -75,7 +75,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }

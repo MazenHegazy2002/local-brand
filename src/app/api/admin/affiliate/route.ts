@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { AffiliateStatus, AffiliateTier } from '@/generated/client';
 
-async function requireAdmin(req?: NextRequest) {
+async function requireAdmin(_req?: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });

@@ -101,6 +101,7 @@ function DisputesPanel() {
   };
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const updateStatus = async (id: string, status: string) => {
@@ -214,6 +215,7 @@ function ReturnsPanel() {
   };
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const updateStatus = async (id: string, status: 'APPROVED' | 'REJECTED' | 'COMPLETED') => {
@@ -330,6 +332,7 @@ function TicketsPanel() {
   };
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   return (

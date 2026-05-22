@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useState, useCallback } from 'react';
+import { ReactNode, useCallback } from 'react';
 
 export interface TableColumn<T = unknown> {
   header: string;
@@ -30,16 +30,19 @@ export function Table<T extends Record<string, unknown>>({
   sortOrder,
   className = '',
 }: TableProps<T>) {
-  const handleSort = useCallback((accessor: string) => {
-    onSort?.(accessor);
-  }, [onSort]);
+  const handleSort = useCallback(
+    (accessor: string) => {
+      onSort?.(accessor);
+    },
+    [onSort]
+  );
 
   const getCellValue = (row: T, column: TableColumn<T>): ReactNode => {
     if (column.cell) {
       return column.cell(row);
     }
     const value = row[column.accessor as keyof T];
-    return value as ReactNode ?? '-';
+    return (value as ReactNode) ?? '-';
   };
 
   if (loading) {
@@ -72,11 +75,7 @@ export function Table<T extends Record<string, unknown>>({
   }
 
   if (data.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-500">
-        {emptyMessage}
-      </div>
-    );
+    return <div className="text-center py-12 text-gray-500">{emptyMessage}</div>;
   }
 
   return (

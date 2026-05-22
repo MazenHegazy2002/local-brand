@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const { orderItemId, amount, reason } = await req.json();
+    const { orderItemId, amount, reason: _reason } = await req.json();
     const userId = (session.user as SessionUser).id;
     const role = (session.user as SessionUser).role;
 
@@ -20,15 +20,15 @@ export async function POST(req: Request) {
 
     const orderItem = await prisma.orderItem.findUnique({
       where: { id: orderItemId },
-      include: { 
-        order: true, 
-        variant: { 
-          include: { 
-            product: { 
-              include: { seller: true } 
-            } 
-          } 
-        } 
+      include: {
+        order: true,
+        variant: {
+          include: {
+            product: {
+              include: { seller: true },
+            },
+          },
+        },
       },
     });
 
@@ -44,15 +44,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Item already refunded or cancelled' }, { status: 400 });
     }
 
-    const refundAmount = amount || (orderItem.priceAtPurchase * orderItem.quantity);
-    
+    const refundAmount = amount || orderItem.priceAtPurchase * orderItem.quantity;
+
     if (orderItem.order.paymentId && orderItem.order.paymentStatus === 'PAID') {
       try {
         const Stripe = (await import('stripe')).default;
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-        await stripe.refunds.create({ 
-          payment_intent: orderItem.order.paymentId, 
-          amount: Math.round(refundAmount * 100) 
+        await stripe.refunds.create({
+          payment_intent: orderItem.order.paymentId,
+          amount: Math.round(refundAmount * 100),
         });
       } catch (stripeError) {
         console.error('Stripe refund error:', stripeError);
@@ -69,18 +69,22 @@ export async function POST(req: Request) {
     const remainingItems = await prisma.orderItem.findMany({
       where: { orderId: orderItem.order.id, id: { not: orderItemId }, status: { not: 'REFUNDED' } },
     });
-    
-    const remainingSubtotal = remainingItems.reduce((sum, item) => 
-      sum + (item.priceAtPurchase * item.quantity), 0
+
+    const remainingSubtotal = remainingItems.reduce(
+      (sum, item) => sum + item.priceAtPurchase * item.quantity,
+      0
     );
     const newVat = remainingSubtotal * VAT_RATE;
     const newTotal = remainingSubtotal + newVat + currentShippingFee - currentDiscount;
 
     await prisma.order.update({
       where: { id: orderItem.orderId },
-      data: { 
+      data: {
         totalAmount: Math.max(0, newTotal),
-        paymentStatus: orderItem.order.paymentStatus === 'PAID' ? 'PARTIALLY_REFUNDED' : orderItem.order.paymentStatus 
+        paymentStatus:
+          orderItem.order.paymentStatus === 'PAID'
+            ? 'PARTIALLY_REFUNDED'
+            : orderItem.order.paymentStatus,
       },
     });
 
@@ -89,12 +93,11 @@ export async function POST(req: Request) {
       data: { stockCount: { increment: orderItem.quantity } },
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       refundAmount,
-      message: 'Refund processed successfully'
+      message: 'Refund processed successfully',
     });
-
   } catch (error) {
     console.error('Refund Error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
@@ -102,9 +105,12 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  return NextResponse.json({ 
-    message: 'Use POST to process a refund',
-    requiredFields: ['orderItemId'],
-    optionalFields: ['amount', 'reason']
-  }, { status: 200 });
+  return NextResponse.json(
+    {
+      message: 'Use POST to process a refund',
+      requiredFields: ['orderItemId'],
+      optionalFields: ['amount', 'reason'],
+    },
+    { status: 200 }
+  );
 }

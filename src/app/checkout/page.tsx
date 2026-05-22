@@ -1003,6 +1003,7 @@ export default function CheckoutPage() {
                   >
                     <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden shrink-0">
                       {item.image && item.image.startsWith('http') ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={item.image}
                           alt={item.name}

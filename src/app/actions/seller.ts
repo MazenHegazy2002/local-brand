@@ -9,7 +9,7 @@ import bcrypt from 'bcryptjs';
 import { BCRYPT_COST } from '@/lib/constants';
 
 import type { Session } from 'next-auth';
-import type { Product, Review, SessionUser } from '@/types';
+import type { Review, SessionUser } from '@/types';
 
 async function getRealUserId(session: Session | null) {
   if (!session?.user) return null;

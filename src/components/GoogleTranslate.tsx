@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 declare global {
   interface Window {
@@ -14,7 +14,7 @@ declare global {
             autoDisplay?: boolean;
             layout?: number;
           },
-          elementId: string,
+          elementId: string
         ) => unknown;
       };
     };
@@ -32,32 +32,33 @@ declare global {
  */
 export default function GoogleTranslate() {
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
 
     const init = () => {
       if (!window.google?.translate) return;
       try {
         new window.google.translate.TranslateElement(
           {
-            pageLanguage: "en",
-            includedLanguages: "en,ar",
+            pageLanguage: 'en',
+            includedLanguages: 'en,ar',
             autoDisplay: false,
           },
-          "google_translate_element",
+          'google_translate_element'
         );
       } catch (err) {
         // Loaded twice — ignore.
-        // eslint-disable-next-line no-console
-        console.warn("[GoogleTranslate] init failed:", err);
+
+        console.warn('[GoogleTranslate] init failed:', err);
       }
     };
 
     window.googleTranslateElementInit = init;
 
-    if (!document.getElementById("gt-script")) {
-      const script = document.createElement("script");
-      script.id = "gt-script";
-      script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    if (!document.getElementById('gt-script')) {
+      const script = document.createElement('script');
+      script.id = 'gt-script';
+      script.src =
+        'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
       script.async = true;
       script.defer = true;
       document.body.appendChild(script);
@@ -67,5 +68,5 @@ export default function GoogleTranslate() {
     }
   }, []);
 
-  return <div id="google_translate_element" aria-hidden="true" style={{ display: "none" }} />;
+  return <div id="google_translate_element" aria-hidden="true" style={{ display: 'none' }} />;
 }

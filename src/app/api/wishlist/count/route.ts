@@ -13,7 +13,7 @@ export async function GET() {
     const count = await prisma.wishlist.count({ where: { userId } });
 
     return NextResponse.json({ count });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ count: 0 });
   }
 }

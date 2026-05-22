@@ -27,13 +27,7 @@ export const MAX_REVIEW_COMMENT_LENGTH = 2000;
 export const REVIEW_MIN_LENGTH = 10;
 export const QA_MIN_LENGTH = 5;
 
-import {
-  SHIPPING_RATES,
-  DEFAULT_SHIPPING_RATE,
-  FREE_SHIPPING_THRESHOLD,
-  WEIGHT_SURCHARGE_THRESHOLD,
-  WEIGHT_SURCHARGE_PER_500G,
-} from './shipping-rates';
+import { SHIPPING_RATES, DEFAULT_SHIPPING_RATE } from './shipping-rates';
 
 // ============================================================
 // PAGINATION

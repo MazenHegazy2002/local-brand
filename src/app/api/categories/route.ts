@@ -19,18 +19,24 @@ export async function GET(req: Request) {
       // Single category with products
       const category = await prisma.category.findUnique({
         where: { slug },
-        include: { children: true }
+        include: { children: true },
       });
 
       if (!category) return NextResponse.json({ message: 'Category not found' }, { status: 404 });
 
-      const where: Prisma.ProductWhereInput = { categoryId: category.id, published: true, deletedAt: null };
-      const orderBy: Prisma.ProductOrderByWithRelationInput = {
+      const where: Prisma.ProductWhereInput = {
+        categoryId: category.id,
+        published: true,
+        deletedAt: null,
+      };
+      const orderBy: Prisma.ProductOrderByWithRelationInput = ({
         newest: { createdAt: 'desc' },
         price_asc: { basePrice: 'asc' },
         price_desc: { basePrice: 'desc' },
         featured: { isFeatured: 'desc' },
-      }[sort as string] as Prisma.ProductOrderByWithRelationInput || { createdAt: 'desc' as const };
+      }[sort as string] as Prisma.ProductOrderByWithRelationInput) || {
+        createdAt: 'desc' as const,
+      };
 
       const [products, total] = await Promise.all([
         prisma.product.findMany({
@@ -41,17 +47,17 @@ export async function GET(req: Request) {
           include: {
             images: { where: { isPrimary: true } },
             seller: { select: { storeName: true } },
-            _count: { select: { reviews: true } }
-          }
+            _count: { select: { reviews: true } },
+          },
         }),
-        prisma.product.count({ where })
+        prisma.product.count({ where }),
       ]);
 
       return NextResponse.json({
         category,
         subcategories: category.children,
         products,
-        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
       });
     }
 
@@ -60,14 +66,13 @@ export async function GET(req: Request) {
       where: { parentId: null }, // only top-level
       include: {
         children: true,
-        _count: { select: { products: { where: { published: true, deletedAt: null } } } }
+        _count: { select: { products: { where: { published: true, deletedAt: null } } } },
       },
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
     });
 
     return NextResponse.json({ categories });
-
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }
