@@ -10,17 +10,20 @@ import GoogleTranslate from '@/components/GoogleTranslate';
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],
+  display: 'swap',
 });
 
 const outfit = Outfit({
   variable: '--font-outfit',
   subsets: ['latin'],
+  display: 'swap',
 });
 
 const cairo = Cairo({
   variable: '--font-cairo',
   subsets: ['arabic', 'latin'],
   weight: ['400', '600', '700', '900'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -113,8 +116,25 @@ export default async function RootLayout({
   const dir = isArabic ? 'rtl' : 'ltr';
   const _lang = isArabic ? 'ar' : 'en';
 
+  // Build preconnect list dynamically so only configured services are hinted.
+  const preconnectHosts: string[] = [];
+  if (process.env.SENTRY_DSN) preconnectHosts.push('https://o0.ingest.sentry.io');
+  if (process.env.NEXT_PUBLIC_GA_ID)
+    preconnectHosts.push('https://www.google-analytics.com', 'https://www.googletagmanager.com');
+  if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) preconnectHosts.push('https://client.crisp.chat');
+  if (process.env.NEXT_PUBLIC_HOTJAR_ID) preconnectHosts.push('https://static.hotjar.com');
+
   return (
     <html lang="en" dir={dir}>
+      <head>
+        {preconnectHosts.map(href => (
+          <link key={href} rel="preconnect" href={href} crossOrigin="anonymous" />
+        ))}
+        {/* dns-prefetch as progressive-enhancement fallback */}
+        {preconnectHosts.map(href => (
+          <link key={`dns-${href}`} rel="dns-prefetch" href={href} />
+        ))}
+      </head>
       <body
         className={`${inter.variable} ${outfit.variable} ${cairo.variable} ${isArabic ? 'font-cairo' : ''} bg-[hsl(var(--background))] text-[hsl(var(--foreground))] antialiased`}
       >

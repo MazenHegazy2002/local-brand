@@ -142,6 +142,13 @@ model Product {
   flashSaleEndsAt   DateTime?
   flashSaleLimit    Int?
 
+  // Extended product attributes
+  brand          String?  // e.g. "Nike", "Egyptian Cotton Co." — null = generic/unbranded
+  material       String?  // e.g. "100% Cotton", "Genuine Leather"
+  gender         String?  // "men" | "women" | "unisex" | "kids" — null = unspecified
+  ageGroup       String?  // "adult" | "teen" | "child" | "infant" | "all"
+  warrantyMonths Int?     // manufacturer warranty duration; null = no warranty
+
   // Local Verification
   countryOfOrigin String  @default("Egypt")
   isVerifiedLocal Boolean @default(false)
@@ -174,6 +181,9 @@ model Product {
   // Flash-sale filter (flashSaleEndsAt > now, flashSaleStartsAt <= now)
   @@index([flashSaleEndsAt])
   @@index([flashSaleStartsAt])
+  // Attribute filters
+  @@index([brand])
+  @@index([gender])
 }
 
 model Category {

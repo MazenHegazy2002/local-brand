@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@/generated/client';
 
-// GET /api/products?page=1&limit=12&category=&q=&minPrice=&maxPrice=&sort=&brand=&rating=&tags=&condition=&inStock=&flashSale=&ids=id1,id2,...
+// GET /api/products?page=1&limit=12&category=&q=&minPrice=&maxPrice=&sort=&brand=&rating=&tags=&condition=&inStock=&flashSale=&gender=&ageGroup=&material=&ids=id1,id2,...
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -44,6 +44,9 @@ export async function GET(req: Request) {
     const condition = searchParams.get('condition') || '';
     const inStock = searchParams.get('inStock') === 'true';
     const flashSale = searchParams.get('flashSale') === 'true';
+    const gender = searchParams.get('gender') || '';
+    const ageGroup = searchParams.get('ageGroup') || '';
+    const material = searchParams.get('material') || '';
 
     const where: Prisma.ProductWhereInput = {
       published: true,
@@ -101,6 +104,18 @@ export async function GET(req: Request) {
           slug: { in: tagList },
         },
       };
+    }
+
+    if (gender) {
+      where.gender = { equals: gender, mode: 'insensitive' };
+    }
+
+    if (ageGroup) {
+      where.ageGroup = { equals: ageGroup, mode: 'insensitive' };
+    }
+
+    if (material) {
+      where.material = { contains: material, mode: 'insensitive' };
     }
 
     let orderBy: Prisma.ProductOrderByWithRelationInput;

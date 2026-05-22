@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { redis } from '@/lib/redis';
+import { version } from '@/../package.json';
 
 // Liveness + dependency probe. Returns 200 when DB, Redis, and the
 // configured image host are all reachable, otherwise 503. The storage check
@@ -9,6 +10,7 @@ import { redis } from '@/lib/redis';
 export async function GET() {
   const checks: {
     status: 'ok' | 'degraded';
+    version: string;
     timestamp: string;
     uptime: number;
     database: 'connected' | 'disconnected' | 'unknown';
@@ -16,6 +18,7 @@ export async function GET() {
     storage: 'configured' | 'unconfigured' | 'error';
   } = {
     status: 'ok',
+    version,
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     database: 'unknown',

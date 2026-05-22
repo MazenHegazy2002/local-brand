@@ -20,12 +20,14 @@ const nextConfig: NextConfig = {
   // ─── Image Optimisation ───────────────────────────────────────────────────
   images: {
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 3600,
+    minimumCacheTTL: 604800, // 7 days — static product images rarely change
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'picsum.photos' },
       { protocol: 'https', hostname: '*.amazonaws.com' },
+      // Vercel Blob storage
+      { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },
     ],
   },
 
