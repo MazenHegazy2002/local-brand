@@ -27,8 +27,8 @@
 
   --radius: 1rem;
 
-  --font-serif: 'Outfit', sans-serif;
-  --font-sans: 'Inter', sans-serif;
+  --font-serif: var(--font-outfit), 'Outfit', sans-serif;
+  --font-sans: var(--font-inter), 'Inter', sans-serif;
 
   /* Brand color shorthand — kept for backward compatibility */
   --brand-blue: #1e3b8a;

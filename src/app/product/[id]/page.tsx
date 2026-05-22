@@ -201,7 +201,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           {/* Details */}
           <div className="w-full md:w-1/2 flex flex-col justify-center">
             <Link
-              href={`/shop?q=${encodeURIComponent(product.seller.storeName)}`}
+              href={`/brand/${product.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
               className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2 hover:text-[#1e3b8a] transition-colors"
             >
               {product.seller.storeName}

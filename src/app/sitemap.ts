@@ -19,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   let dynamicRoutes: MetadataRoute.Sitemap = [];
-  
+
   try {
     // Product pages (max 1000 per sitemap)
     const products = await prisma.product.findMany({
@@ -54,7 +54,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
 
     const brandRoutes = sellers.map(s => ({
-      url: `${baseUrl}/brand/${s.storeName.toLowerCase().replace(/ /g, '-')}`,
+      url: `${baseUrl}/brand/${s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
       lastModified: s.updatedAt,
       changeFrequency: 'weekly' as const,
       priority: 0.7,

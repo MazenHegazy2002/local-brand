@@ -249,7 +249,7 @@ export default function ProductCard({
         </div>
       </Link>
 
-      <div className="p-5 flex flex-col flex-1 justify-between bg-white dark:bg-[hsl(var(--card))]">
+      <div className="p-5 flex flex-col flex-1 justify-between bg-transparent">
         <div>
           {/* Brand slug */}
           <Link
@@ -260,7 +260,7 @@ export default function ProductCard({
           </Link>
           {/* Title */}
           <Link href={`/product/${displayId}`}>
-            <h3 className="text-[15px] font-bold text-gray-900 dark:text-gray-100 line-clamp-2 mb-2 hover:text-[#1e3b8a] dark:hover:text-[#6b8ff5] transition-colors leading-tight">
+            <h3 className="text-[15px] font-bold text-slate-900 dark:text-slate-100 line-clamp-2 mb-2 hover:text-[#1e3b8a] dark:hover:text-[#6b8ff5] transition-colors leading-tight">
               {displayName}
             </h3>
           </Link>
