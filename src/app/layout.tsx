@@ -113,7 +113,7 @@ export default async function RootLayout({
   const lang = isArabic ? 'ar' : 'en';
 
   return (
-    <html lang={lang} dir={dir}>
+    <html lang="en" dir={dir}>
       <body
         className={`${inter.variable} ${outfit.variable} ${cairo.variable} ${isArabic ? 'font-cairo' : ''} bg-[hsl(var(--background))] text-[hsl(var(--foreground))] antialiased`}
       >

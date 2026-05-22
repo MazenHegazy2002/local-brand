@@ -231,7 +231,19 @@ export async function getDashboardStats() {
     if (role === 'ADMIN') {
       const sellers = await prisma.sellerProfile.findMany({
         include: {
-          user: { select: { id: true, name: true, email: true, role: true, createdAt: true } },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              phone: true,
+              emailVerified: true,
+              createdAt: true,
+            },
+          },
+          products: { select: { id: true, title: true, published: true } },
+          payouts: { orderBy: { createdAt: 'desc' } },
         },
       });
       // Recompute each seller's available balance on the fly so the admin
@@ -456,6 +468,7 @@ interface ProductData {
     image?: string;
     sku?: string;
     upc?: string;
+    sizes?: string;
   }[];
 }
 
@@ -505,9 +518,7 @@ async function resolveSku(
   return `${base}-${index + 1}-${Date.now().toString().slice(-6)}`;
 }
 
-export async function createProduct(
-  data: ProductData
-): Promise<{ id?: string; error?: string } | Product> {
+export async function createProduct(data: ProductData): Promise<{ id?: string; error?: string }> {
   try {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as SessionUser).role !== 'SELLER')
@@ -515,10 +526,33 @@ export async function createProduct(
 
     const userId = await getRealUserId(session);
     if (!userId) return { error: 'User not found' };
-    const seller = await prisma.sellerProfile.findUnique({ where: { userId } });
+
+    const [user, seller] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { emailVerified: true },
+      }),
+      prisma.sellerProfile.findUnique({ where: { userId } }),
+    ]);
+
     if (!seller) return { error: 'Seller profile not found' };
 
     const { variants, ...rest } = data;
+
+    // Enforce business rules for publishing:
+    // 1. Must have at least one product image.
+    // 2. The seller's email must be verified.
+    // 3. The SellerProfile.status must be ACTIVE.
+    const hasImages = (variants || []).some(v => v.image);
+    const isEmailVerified = !!user?.emailVerified;
+    const isSellerActive = seller.status === 'ACTIVE';
+
+    let published = rest.published ?? true;
+    if (published) {
+      if (!hasImages || !isEmailVerified || !isSellerActive) {
+        published = false;
+      }
+    }
 
     // Generate unique slug
     const baseSlug = data.title
@@ -546,18 +580,33 @@ export async function createProduct(
     const product = await prisma.product.create({
       data: {
         ...rest,
+        published,
         sellerId: seller.id,
         slug,
         description: rest.description || '',
         variants: {
-          create: variantList.map((v, idx) => ({
-            sku: resolvedSkus[idx],
-            upc: v.upc?.trim() || null,
-            title: v.color || 'Standard',
-            attributes: JSON.stringify({ color: v.color || 'Standard' }),
-            price: v.price || rest.basePrice,
-            stockCount: v.stock || 0,
-          })),
+          create: variantList.map((v, idx) => {
+            const sizesArray =
+              typeof v.sizes === 'string'
+                ? v.sizes
+                    .split(',')
+                    .map((s: string) => s.trim())
+                    .filter(Boolean)
+                : Array.isArray(v.sizes)
+                  ? v.sizes
+                  : [];
+            return {
+              sku: resolvedSkus[idx],
+              upc: v.upc?.trim() || null,
+              title: v.color || 'Standard',
+              attributes: JSON.stringify({
+                color: v.color || 'Standard',
+                sizes: sizesArray,
+              }),
+              price: v.price || rest.basePrice,
+              stockCount: v.stock || 0,
+            };
+          }),
         },
         images: {
           create: variantList
@@ -571,7 +620,7 @@ export async function createProduct(
     });
 
     revalidatePath('/seller-hub');
-    return product as unknown as Product;
+    return { id: product.id };
   } catch (err: unknown) {
     const error = err as Error;
     console.error('[createProduct] Error:', err);
@@ -590,7 +639,7 @@ interface UpdateProductData {
 export async function updateProduct(
   productId: string,
   data: UpdateProductData
-): Promise<{ success?: boolean; error?: string } | Product> {
+): Promise<{ success?: boolean; error?: string }> {
   try {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as SessionUser).role !== 'SELLER')
@@ -605,13 +654,13 @@ export async function updateProduct(
     if (!product || product.sellerId !== seller.id)
       return { error: 'Unauthorized to update this product' };
 
-    const updatedProduct = await prisma.product.update({
+    await prisma.product.update({
       where: { id: productId },
       data,
     });
 
     revalidatePath('/seller-hub');
-    return updatedProduct as unknown as Product;
+    return { success: true };
   } catch (err: unknown) {
     const error = err as Error;
     return { error: error.message };

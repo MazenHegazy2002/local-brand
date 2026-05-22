@@ -233,6 +233,13 @@ export default function MaintenanceTab() {
           <h3>💾 Backups & exports</h3>
           <p className="maint-card-desc">Daily backups handled by Neon. On-demand exports below.</p>
           <div className="flex flex-col gap-2 mt-3">
+            <a
+              href="/api/admin/backup"
+              className="maint-btn maint-btn-danger"
+              style={{ fontWeight: '700', textAlign: 'center' }}
+            >
+              📥 Download JSON Backup
+            </a>
             <a href="/api/admin/export/orders" className="maint-btn">
               Export orders (CSV)
             </a>

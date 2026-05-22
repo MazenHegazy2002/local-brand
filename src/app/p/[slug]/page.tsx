@@ -16,11 +16,20 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+
 async function loadPage(slug: string) {
   const page = await prisma.page.findUnique({
     where: { slug },
   });
-  if (!page || page.status !== PageStatus.PUBLISHED) return null;
+  if (!page) return null;
+  if (page.status !== PageStatus.PUBLISHED) {
+    const session = await getServerSession(authOptions);
+    if (session?.user?.role !== 'ADMIN') {
+      return null;
+    }
+  }
   return page;
 }
 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   getDashboardStats,
   updateSellerStatus,
@@ -299,6 +300,21 @@ export default function AdminOS() {
         <div className="logo">
           Admin<span>OS</span>
         </div>
+
+        <Link href="/" className="home-link">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          Back to Shop
+        </Link>
 
         <div className="nav-section">Main</div>
         <NavItem
@@ -1876,6 +1892,7 @@ function SearchInput({
 
 function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps) {
   const [search, setSearch] = useState('');
+  const [selectedSeller, setSelectedSeller] = useState<any>(null);
   const q = search.trim().toLowerCase();
   const sellers = (data?.sellers || []).filter((s: SellerProfile) => {
     if (!q) return true;
@@ -1899,9 +1916,9 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps
         <span className="flex-1">Store Name / Owner</span>
         <span className="w-32 text-center">Status</span>
         <span className="w-32 text-right">Balance</span>
-        <span className="w-24"></span>
+        <span className="w-48 text-right">Actions</span>
       </div>
-      {sellers.map((s: SellerProfile) => (
+      {sellers.map((s: any) => (
         <div key={s.id} className="row-item">
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '12px', fontWeight: 500 }}>{s.storeName}</div>
@@ -1917,7 +1934,14 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps
           <div className="w-32 text-right text-sm font-medium">
             {s.balance?.toLocaleString()} EGP
           </div>
-          <div className="w-24 text-right">
+          <div className="w-48 text-right flex justify-end gap-2">
+            <button
+              onClick={() => setSelectedSeller(s)}
+              className="action-btn"
+              style={{ background: '#f1f5f9', color: '#475569' }}
+            >
+              Details
+            </button>
             <button
               disabled={actionLoading === s.id}
               onClick={() =>
@@ -1933,6 +1957,353 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps
       {sellers.length === 0 && (
         <div className="py-10 text-center text-xs text-slate-400">
           {q ? `No sellers match "${search}".` : 'No sellers yet.'}
+        </div>
+      )}
+
+      {selectedSeller && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '24px',
+          }}
+          onClick={() => setSelectedSeller(null)}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              width: '680px',
+              maxWidth: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow:
+                '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: '24px',
+                borderBottom: '1px solid #f1f5f9',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '12px',
+                    background: '#f1f5f9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px',
+                    fontWeight: '700',
+                    color: '#4f46e5',
+                  }}
+                >
+                  {selectedSeller.storeName?.[0]?.toUpperCase() || 'S'}
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
+                    {selectedSeller.storeName}
+                  </h3>
+                  <p style={{ fontSize: '13px', color: '#64748b', margin: '2px 0 0 0' }}>
+                    Owned by {selectedSeller.user?.name}
+                  </p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span
+                  className={`badge ${selectedSeller.status === 'ACTIVE' ? 'b-active' : selectedSeller.status === 'PENDING_APPROVAL' ? 'b-pending' : 'b-banned'}`}
+                >
+                  {selectedSeller.status}
+                </span>
+                <button
+                  onClick={() => setSelectedSeller(null)}
+                  style={{
+                    border: 'none',
+                    background: 'none',
+                    fontSize: '18px',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    padding: '4px',
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {/* Owner Info & Details */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div>
+                  <h4
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      color: '#94a3b8',
+                      letterSpacing: '0.05em',
+                      marginBottom: '10px',
+                    }}
+                  >
+                    👤 Owner Contact Details
+                  </h4>
+                  <ul
+                    style={{
+                      listStyle: 'none',
+                      padding: 0,
+                      margin: 0,
+                      fontSize: '13px',
+                      color: '#334155',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                    }}
+                  >
+                    <li>
+                      <strong>Email:</strong> {selectedSeller.user?.email}
+                    </li>
+                    <li>
+                      <strong>Phone:</strong> {selectedSeller.user?.phone || 'Not provided'}
+                    </li>
+                    <li>
+                      <strong>Verified:</strong>{' '}
+                      {selectedSeller.user?.emailVerified
+                        ? `✅ Verified on ${new Date(selectedSeller.user.emailVerified).toLocaleDateString()}`
+                        : '❌ Email Unverified'}
+                    </li>
+                    <li>
+                      <strong>Joined:</strong>{' '}
+                      {new Date(
+                        selectedSeller.user?.createdAt || selectedSeller.createdAt
+                      ).toLocaleDateString()}
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <h4
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      color: '#94a3b8',
+                      letterSpacing: '0.05em',
+                      marginBottom: '10px',
+                    }}
+                  >
+                    💰 Ledger & Escrow Account
+                  </h4>
+                  <ul
+                    style={{
+                      listStyle: 'none',
+                      padding: 0,
+                      margin: 0,
+                      fontSize: '13px',
+                      color: '#334155',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                    }}
+                  >
+                    <li>
+                      <strong>Available Balance:</strong>{' '}
+                      <span style={{ color: '#059669', fontWeight: '600' }}>
+                        {selectedSeller.balance?.toLocaleString()} EGP
+                      </span>
+                    </li>
+                    <li>
+                      <strong>Bank Account:</strong>{' '}
+                      {selectedSeller.bankAccount || 'Not configured'}
+                    </li>
+                    <li>
+                      <strong>Platform Commission:</strong>{' '}
+                      {Math.round((selectedSeller.commissionRate ?? 0.15) * 100)}%
+                    </li>
+                    <li>
+                      <strong>Location:</strong> {selectedSeller.governorate || 'N/A'},{' '}
+                      {selectedSeller.city || 'N/A'}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Listings */}
+              <div>
+                <h4
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    color: '#94a3b8',
+                    letterSpacing: '0.05em',
+                    marginBottom: '10px',
+                  }}
+                >
+                  📦 Products & Listings ({selectedSeller.products?.length || 0} Total)
+                </h4>
+                {selectedSeller.products && selectedSeller.products.length > 0 ? (
+                  <div
+                    style={{
+                      maxHeight: '160px',
+                      overflow: 'auto',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      background: '#f8fafc',
+                      padding: '8px 12px',
+                    }}
+                  >
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                      <thead>
+                        <tr
+                          style={{
+                            borderBottom: '1px solid #e2e8f0',
+                            textAlign: 'left',
+                            color: '#64748b',
+                          }}
+                        >
+                          <th style={{ padding: '6px 0' }}>Product Name</th>
+                          <th style={{ padding: '6px 0', textAlign: 'right' }}>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedSeller.products.map((p: any) => (
+                          <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '6px 0', color: '#1e293b' }}>{p.title}</td>
+                            <td style={{ padding: '6px 0', textAlign: 'right' }}>
+                              <span
+                                className={`badge ${p.published ? 'b-active' : 'b-pending'}`}
+                                style={{ fontSize: '9px', padding: '2px 4px' }}
+                              >
+                                {p.published ? 'PUBLISHED' : 'DRAFT'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: 0, fontStyle: 'italic' }}>
+                    No products listed yet.
+                  </p>
+                )}
+              </div>
+
+              {/* Payouts */}
+              <div>
+                <h4
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    color: '#94a3b8',
+                    letterSpacing: '0.05em',
+                    marginBottom: '10px',
+                  }}
+                >
+                  💸 Payout History ({selectedSeller.payouts?.length || 0} Records)
+                </h4>
+                {selectedSeller.payouts && selectedSeller.payouts.length > 0 ? (
+                  <div
+                    style={{
+                      maxHeight: '160px',
+                      overflow: 'auto',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      background: '#f8fafc',
+                      padding: '8px 12px',
+                    }}
+                  >
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                      <thead>
+                        <tr
+                          style={{
+                            borderBottom: '1px solid #e2e8f0',
+                            textAlign: 'left',
+                            color: '#64748b',
+                          }}
+                        >
+                          <th style={{ padding: '6px 0' }}>Date</th>
+                          <th style={{ padding: '6px 0', textAlign: 'right' }}>Amount</th>
+                          <th style={{ padding: '6px 0', textAlign: 'right' }}>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedSeller.payouts.map((pay: any) => (
+                          <tr key={pay.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '6px 0', color: '#1e293b' }}>
+                              {new Date(pay.createdAt).toLocaleDateString()}
+                            </td>
+                            <td style={{ padding: '6px 0', textAlign: 'right', fontWeight: '500' }}>
+                              {pay.amount.toLocaleString()} EGP
+                            </td>
+                            <td style={{ padding: '6px 0', textAlign: 'right' }}>
+                              <span
+                                className={`badge ${pay.status === 'COMPLETED' ? 'b-active' : pay.status === 'PENDING' ? 'b-pending' : 'b-banned'}`}
+                                style={{ fontSize: '9px', padding: '2px 4px' }}
+                              >
+                                {pay.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: 0, fontStyle: 'italic' }}>
+                    No payouts requested yet.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div
+              style={{
+                padding: '16px 24px',
+                borderTop: '1px solid #f1f5f9',
+                background: '#f8fafc',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                borderBottomLeftRadius: '16px',
+                borderBottomRightRadius: '16px',
+              }}
+            >
+              <button
+                onClick={() => setSelectedSeller(null)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  background: '#f1f5f9',
+                  border: 'none',
+                  color: '#475569',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                Close Portal
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

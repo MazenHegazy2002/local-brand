@@ -241,7 +241,7 @@ export default function ProductCard({
           </Link>
           {/* Title */}
           <Link href={`/product/${displayId}`}>
-            <h3 className="text-[15px] font-bold text-gray-900 dark:text-gray-100 line-clamp-2 mb-2 hover:text-[hsl(var(--accent))] transition-colors leading-tight">
+            <h3 className="text-[15px] font-bold text-[hsl(var(--foreground))] line-clamp-2 mb-2 hover:text-[hsl(var(--accent))] transition-colors leading-tight">
               {displayName}
             </h3>
           </Link>

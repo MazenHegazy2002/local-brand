@@ -16,7 +16,13 @@ export type WishlistProduct = {
   img?: string;
 };
 
-export default function WishlistButton({ product, className = "" }: { product: WishlistProduct, className?: string }) {
+export default function WishlistButton({
+  product,
+  className = '',
+}: {
+  product: WishlistProduct;
+  className?: string;
+}) {
   const { hasItem, toggleItem } = useWishlistStore();
   const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
@@ -30,15 +36,23 @@ export default function WishlistButton({ product, className = "" }: { product: W
 
   return (
     <button
-      onClick={(e) => {
+      onClick={e => {
         e.preventDefault();
         e.stopPropagation();
-        toggleItem({
-          id: String(product.id),
-          name: product.name || product.title,
-          price: product.price || product.basePrice,
-          image: productImage,
-        }, session as Session | null);
+        if (!session) {
+          alert('Please sign in to add items to your wishlist.');
+          window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+          return;
+        }
+        toggleItem(
+          {
+            id: String(product.id),
+            name: product.name || product.title,
+            price: product.price || product.basePrice,
+            image: productImage,
+          },
+          session as Session | null
+        );
       }}
       className={`z-20 flex items-center justify-center w-8 h-8 rounded-full bg-white/80 backdrop-blur shadow hover:bg-white transition-colors ${className}`}
       aria-label="Toggle wishlist"
@@ -47,8 +61,8 @@ export default function WishlistButton({ product, className = "" }: { product: W
         width="16"
         height="16"
         viewBox="0 0 24 24"
-        fill={isWished ? "#ef4444" : "none"}
-        stroke={isWished ? "#ef4444" : "currentColor"}
+        fill={isWished ? '#ef4444' : 'none'}
+        stroke={isWished ? '#ef4444' : 'currentColor'}
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"

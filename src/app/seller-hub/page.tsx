@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -91,7 +92,103 @@ interface VariantState {
   sku?: string;
   upc?: string;
   uploading?: boolean;
+  sizes?: string;
 }
+
+const CATALOG_COLORS: { name: string; rgb: [number, number, number] }[] = [
+  { name: 'Black', rgb: [0, 0, 0] },
+  { name: 'White', rgb: [255, 255, 255] },
+  { name: 'Red', rgb: [255, 0, 0] },
+  { name: 'Blue', rgb: [0, 0, 255] },
+  { name: 'Green', rgb: [0, 128, 0] },
+  { name: 'Yellow', rgb: [255, 255, 0] },
+  { name: 'Pink', rgb: [255, 192, 203] },
+  { name: 'Purple', rgb: [128, 0, 128] },
+  { name: 'Orange', rgb: [255, 165, 0] },
+  { name: 'Gray', rgb: [128, 128, 128] },
+  { name: 'Brown', rgb: [165, 42, 42] },
+  { name: 'Beige', rgb: [245, 245, 220] },
+  { name: 'Navy', rgb: [0, 0, 128] },
+  { name: 'Teal', rgb: [0, 128, 128] },
+];
+
+const detectImageColor = async (file: File): Promise<string> => {
+  const fileName = file.name.toLowerCase();
+  for (const color of CATALOG_COLORS) {
+    if (fileName.includes(color.name.toLowerCase())) {
+      return color.name;
+    }
+  }
+
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = 10;
+          canvas.height = 10;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve('Default');
+            return;
+          }
+          ctx.drawImage(img, 0, 0, 10, 10);
+          const imgData = ctx.getImageData(0, 0, 10, 10).data;
+
+          let totalR = 0,
+            totalG = 0,
+            totalB = 0,
+            count = 0;
+          for (let i = 0; i < imgData.length; i += 4) {
+            const r = imgData[i];
+            const g = imgData[i + 1];
+            const b = imgData[i + 2];
+            const a = imgData[i + 3];
+
+            if (a > 128) {
+              totalR += r;
+              totalG += g;
+              totalB += b;
+              count++;
+            }
+          }
+
+          if (count === 0) {
+            resolve('Default');
+            return;
+          }
+
+          const avgR = totalR / count;
+          const avgG = totalG / count;
+          const avgB = totalB / count;
+
+          let bestColor = 'Default';
+          let minDistance = Infinity;
+
+          for (const color of CATALOG_COLORS) {
+            const [cr, cg, cb] = color.rgb;
+            const dist = Math.sqrt(
+              Math.pow(avgR - cr, 2) + Math.pow(avgG - cg, 2) + Math.pow(avgB - cb, 2)
+            );
+            if (dist < minDistance) {
+              minDistance = dist;
+              bestColor = color.name;
+            }
+          }
+
+          resolve(bestColor);
+        } catch (err) {
+          console.error('Error analyzing image color:', err);
+          resolve('Default');
+        }
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+};
 
 export default function SellerHub() {
   const { data: session } = useSession();
@@ -209,7 +306,7 @@ export default function SellerHub() {
   });
 
   const [variants, setVariants] = useState<VariantState[]>([
-    { color: 'Default', stock: 10, price: '', image: '' },
+    { color: 'Default', stock: 10, price: '', image: '', sizes: '' },
   ]);
 
   const refreshData = async () => {
@@ -240,9 +337,27 @@ export default function SellerHub() {
     // Show an immediate preview using a local object URL — much cheaper than
     // base64 and avoids the FileReader race condition.
     const previewUrl = URL.createObjectURL(file);
+
+    let suggestedColor = '';
+    try {
+      suggestedColor = await detectImageColor(file);
+    } catch (err) {
+      console.error(err);
+    }
+
     setVariants(prev => {
       const next = [...prev];
-      if (next[index]) next[index] = { ...next[index], image: previewUrl, uploading: true };
+      if (next[index]) {
+        next[index] = {
+          ...next[index],
+          image: previewUrl,
+          uploading: true,
+          color:
+            next[index].color && next[index].color !== 'Default' && next[index].color !== ''
+              ? next[index].color
+              : suggestedColor || 'Default',
+        };
+      }
       return next;
     });
 
@@ -296,7 +411,10 @@ export default function SellerHub() {
   };
 
   const addVariant = () => {
-    setVariants([...variants, { color: '', stock: 0, price: 0, image: '', sku: '', upc: '' }]);
+    setVariants([
+      ...variants,
+      { color: '', stock: 0, price: '', image: '', sku: '', upc: '', sizes: '' },
+    ]);
   };
 
   const updateVariant = <K extends keyof VariantState>(
@@ -328,6 +446,7 @@ export default function SellerHub() {
           ...v,
           stock: Number(v.stock),
           price: Number(v.price) || Number(newProduct.basePrice),
+          sizes: v.sizes || '',
         })),
         published: true,
       })) as { error?: string };
@@ -385,7 +504,7 @@ export default function SellerHub() {
       flashSalePrice: '',
       categoryId: '',
     });
-    setVariants([{ color: 'Default', stock: 10, price: '', image: '' }]);
+    setVariants([{ color: 'Default', stock: 10, price: '', image: '', sizes: '' }]);
   };
 
   useEffect(() => {
@@ -472,6 +591,21 @@ export default function SellerHub() {
           <ShoppingBag size={20} />
           <span>SellerHub</span>
         </div>
+
+        <Link href="/" className="home-link">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          Back to Shop
+        </Link>
 
         <NavItem
           active={activeTab === 'overview'}
@@ -2316,13 +2450,27 @@ function AddProductModal({
           <div>
             <div className="flex justify-between items-center mb-3">
               <label className="text-xs font-bold text-gray-500 uppercase">Variants</label>
-              <button
-                type="button"
-                onClick={addVariant}
-                className="text-xs font-bold text-emerald-600 hover:underline"
-              >
-                + Add variant
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const priceVal = Number(newProduct.basePrice) || 0;
+                    if (priceVal > 0) {
+                      setVariants(variants.map(v => ({ ...v, price: priceVal })));
+                    }
+                  }}
+                  className="text-xs font-bold text-[#0F6E56] hover:underline"
+                >
+                  Same Price for All Variants
+                </button>
+                <button
+                  type="button"
+                  onClick={addVariant}
+                  className="text-xs font-bold text-emerald-600 hover:underline"
+                >
+                  + Add variant
+                </button>
+              </div>
             </div>
             <div className="space-y-3">
               {variants.map((v, i) => (
@@ -2386,6 +2534,14 @@ function AddProductModal({
                   >
                     <Trash2 size={14} />
                   </button>
+                  <input
+                    type="text"
+                    value={v.sizes || ''}
+                    onChange={e => updateVariant(i, 'sizes', e.target.value)}
+                    placeholder="Sizes (CSV, e.g. S, M, L, XL)"
+                    className="col-span-12 px-3 py-2 bg-white border border-slate-100 rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-emerald-500"
+                    autoComplete="off"
+                  />
                   {/* Optional inventory codes — collapsed onto a second row so
                       the main grid stays readable. SKU is auto-generated when
                       blank; UPC is the public barcode and only filled when

@@ -35,6 +35,73 @@ export async function GET(req: Request) {
     return NextResponse.json({ page });
   }
 
+  const count = await prisma.page.count();
+  if (count === 0) {
+    try {
+      await prisma.page.createMany({
+        data: [
+          {
+            slug: 'about',
+            titleEn: 'About Us',
+            titleAr: 'من نحن',
+            bodyEn:
+              '# About Us\n\nWelcome to Brandy, the premier marketplace for local Egyptian brands! We connect talented local artisans and creators directly with buyers across Egypt.',
+            bodyAr: '# من نحن\n\nمرحباً بكم في براندي، المنصة الرائدة للماركات المصرية المحلية!',
+            status: PageStatus.PUBLISHED,
+            footerOrder: 1,
+            navOrder: 0,
+            createdBy: admin.id,
+            updatedBy: admin.id,
+          },
+          {
+            slug: 'faq',
+            titleEn: 'FAQ',
+            titleAr: 'الأسئلة الشائعة',
+            bodyEn:
+              '# FAQ\n\n### 1. What are the delivery times?\nDelivery takes between 3 to 5 business days.\n\n### 2. Can I pay cash on delivery?\nYes, Cash on Delivery (COD) is supported across Egypt.',
+            bodyAr:
+              '# الأسئلة الشائعة\n\n### 1. ما هي مدة التوصيل؟\nيستغرق التوصيل بين 3 إلى 5 أيام عمل.',
+            status: PageStatus.PUBLISHED,
+            footerOrder: 2,
+            navOrder: 0,
+            createdBy: admin.id,
+            updatedBy: admin.id,
+          },
+          {
+            slug: 'terms',
+            titleEn: 'Terms & Conditions',
+            titleAr: 'الشروط والأحكام',
+            bodyEn:
+              '# Terms & Conditions\n\nWelcome to Brandy. By accessing our platform, you agree to our terms of service and usage policies.',
+            bodyAr:
+              '# الشروط والأحكام\n\nأهلاً بكم في براندي. باستخدامكم لمنصتنا، فإنكم توافقون على شروط الخدمة.',
+            status: PageStatus.PUBLISHED,
+            footerOrder: 3,
+            navOrder: 0,
+            createdBy: admin.id,
+            updatedBy: admin.id,
+          },
+          {
+            slug: 'returns',
+            titleEn: 'Returns Policy',
+            titleAr: 'سياسة الاسترجاع',
+            bodyEn:
+              '# Returns Policy\n\nYou can return any unused item in its original packaging within 14 days of receipt. Contact support to initiate a return.',
+            bodyAr:
+              '# سياسة الاسترجاع\n\nيمكنكم استرجاع المنتجات غير المستخدمة في تغليفها الأصلي خلال 14 يوماً من الاستلام.',
+            status: PageStatus.PUBLISHED,
+            footerOrder: 4,
+            navOrder: 0,
+            createdBy: admin.id,
+            updatedBy: admin.id,
+          },
+        ],
+      });
+    } catch (e) {
+      console.error('Failed to seed default pages:', e);
+    }
+  }
+
   const pages = await prisma.page.findMany({
     where: status ? { status } : undefined,
     orderBy: { updatedAt: 'desc' },

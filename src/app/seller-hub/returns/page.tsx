@@ -30,7 +30,9 @@ export default function ReturnsPage() {
   const router = useRouter();
   const [returns, setReturns] = useState<ReturnRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED'>('all');
+  const [filter, setFilter] = useState<'all' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED'>(
+    'all'
+  );
   const [selectedReturn, setSelectedReturn] = useState<ReturnRequest | null>(null);
   const [notes, setNotes] = useState('');
   const [processing, setProcessing] = useState(false);
@@ -68,7 +70,7 @@ export default function ReturnsPage() {
       const res = await fetch(`/api/rma/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus, adminNotes: notes || undefined })
+        body: JSON.stringify({ status: newStatus, adminNotes: notes || undefined }),
       });
       if (res.ok) {
         await fetchReturns();
@@ -107,18 +109,47 @@ export default function ReturnsPage() {
   };
 
   if (loading) {
-    return <div className="db"><div className="main">Loading...</div></div>;
+    return (
+      <div className="db">
+        <div className="main">Loading...</div>
+      </div>
+    );
   }
 
   return (
     <div className="db">
       <div className="sidebar">
         <div className="logo">SellerHub</div>
-        <Link href="/seller-hub" className="nav-item">Overview</Link>
-        <Link href="/seller-hub/orders" className="nav-item">Orders</Link>
-        <Link href="/seller-hub/products" className="nav-item">Products</Link>
-        <Link href="/seller-hub/returns" className="nav-item active">Returns</Link>
-        <Link href="/seller-hub/settings" className="nav-item">Settings</Link>
+
+        <Link href="/" className="home-link">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          Back to Shop
+        </Link>
+        <Link href="/seller-hub" className="nav-item">
+          Overview
+        </Link>
+        <Link href="/seller-hub/orders" className="nav-item">
+          Orders
+        </Link>
+        <Link href="/seller-hub/products" className="nav-item">
+          Products
+        </Link>
+        <Link href="/seller-hub/returns" className="nav-item active">
+          Returns
+        </Link>
+        <Link href="/seller-hub/settings" className="nav-item">
+          Settings
+        </Link>
       </div>
 
       <div className="main">
@@ -161,17 +192,30 @@ export default function ReturnsPage() {
                 <div key={ret.id} className="row-item flex-col items-start">
                   <div className="flex items-center gap-4 w-full">
                     <div className="flex-1">
-                      <div className="text-sm font-medium">{ret.orderItem?.productTitleSnapshot}</div>
-                      <div className="text-xs text-slate-500">Qty: {ret.orderItem?.quantity} · ORD-{ret.orderItem?.order?.id?.slice(0,8)}</div>
+                      <div className="text-sm font-medium">
+                        {ret.orderItem?.productTitleSnapshot}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        Qty: {ret.orderItem?.quantity} · ORD-{ret.orderItem?.order?.id?.slice(0, 8)}
+                      </div>
                     </div>
-                    <div className="w-32 text-sm text-slate-600">{ret.orderItem?.order?.user?.name}</div>
+                    <div className="w-32 text-sm text-slate-600">
+                      {ret.orderItem?.order?.user?.name}
+                    </div>
                     <div className="w-24 text-xs text-slate-500">{ret.reason}</div>
-                    <div className="w-24 text-xs text-slate-500">{new Date(ret.createdAt).toLocaleDateString()}</div>
+                    <div className="w-24 text-xs text-slate-500">
+                      {new Date(ret.createdAt).toLocaleDateString()}
+                    </div>
                     <div className="w-24 flex justify-center">
                       <span className={`badge ${badge.bg} ${badge.text}`}>{ret.status}</span>
                     </div>
                     <div className="w-32">
-                      <button onClick={() => setSelectedReturn(ret)} className="text-xs text-[#0F6E56] hover:underline">View Details</button>
+                      <button
+                        onClick={() => setSelectedReturn(ret)}
+                        className="text-xs text-[#0F6E56] hover:underline"
+                      >
+                        View Details
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -204,7 +248,9 @@ export default function ReturnsPage() {
               </div>
               <div>
                 <div className="text-xs text-slate-500">Status</div>
-                <span className={`badge ${getStatusBadge(selectedReturn.status).bg} ${getStatusBadge(selectedReturn.status).text}`}>
+                <span
+                  className={`badge ${getStatusBadge(selectedReturn.status).bg} ${getStatusBadge(selectedReturn.status).text}`}
+                >
                   {selectedReturn.status}
                 </span>
               </div>
@@ -248,7 +294,10 @@ export default function ReturnsPage() {
                 {processing ? 'Processing...' : 'Mark Complete (Refund Processed)'}
               </button>
             )}
-            <button onClick={() => setSelectedReturn(null)} className="w-full py-3 border border-slate-200 rounded font-medium mt-2">
+            <button
+              onClick={() => setSelectedReturn(null)}
+              className="w-full py-3 border border-slate-200 rounded font-medium mt-2"
+            >
               Close
             </button>
           </div>
@@ -256,24 +305,126 @@ export default function ReturnsPage() {
       )}
 
       <style jsx global>{`
-        .db { display: flex; min-height: 100vh; background: #f8fafc; font-family: 'Inter', sans-serif; }
-        .sidebar { width: 186px; flex-shrink: 0; background: #0F6E56; padding: 16px 0; display: flex; flex-direction: column; max-height: 100vh; overflow-y: auto; position: sticky; top: 0; align-self: flex-start; }
-        .logo { padding: 0 16px 20px; font-size: 17px; font-weight: 500; color: #fff; }
-        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.7); transition: all 0.2s; }
-        .nav-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
-        .nav-item.active { color: #fff; background: rgba(255,255,255,0.1); font-weight: 500; }
-        .main { flex: 1; min-width: 0; padding: 24px 32px; overflow: auto; }
-        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
-        .page-title { font-size: 20px; font-weight: 500; color: #1e293b; }
-        .card { background: #fff; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06); padding: 20px; }
-        .row-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f8fafc; }
-        .row-item:last-child { border-bottom: none; }
-        .row-item.flex-col { flex-direction: column; align-items: stretch; }
-        .badge { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 4px; }
-        .input-field { width: 100%; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; font-size: 13px; outline: none; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-        .modal-content { background: #fff; width: 100%; max-width: 500px; padding: 32px; border-radius: 16px; }
-        .card-title { font-size: 16px; font-weight: 600; color: #1e293b; }
+        .db {
+          display: flex;
+          min-height: 100vh;
+          background: #f8fafc;
+          font-family: 'Inter', sans-serif;
+        }
+        .sidebar {
+          width: 186px;
+          flex-shrink: 0;
+          background: #0f6e56;
+          padding: 16px 0;
+          display: flex;
+          flex-direction: column;
+          max-height: 100vh;
+          overflow-y: auto;
+          position: sticky;
+          top: 0;
+          align-self: flex-start;
+        }
+        .logo {
+          padding: 0 16px 20px;
+          font-size: 17px;
+          font-weight: 500;
+          color: #fff;
+        }
+        .nav-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 16px;
+          cursor: pointer;
+          font-size: 13px;
+          color: rgba(255, 255, 255, 0.7);
+          transition: all 0.2s;
+        }
+        .nav-item:hover {
+          color: #fff;
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .nav-item.active {
+          color: #fff;
+          background: rgba(255, 255, 255, 0.1);
+          font-weight: 500;
+        }
+        .main {
+          flex: 1;
+          min-width: 0;
+          padding: 24px 32px;
+          overflow: auto;
+        }
+        .topbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 28px;
+        }
+        .page-title {
+          font-size: 20px;
+          font-weight: 500;
+          color: #1e293b;
+        }
+        .card {
+          background: #fff;
+          border-radius: 8px;
+          border: 1px solid rgba(0, 0, 0, 0.06);
+          padding: 20px;
+        }
+        .row-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 0;
+          border-bottom: 1px solid #f8fafc;
+        }
+        .row-item:last-child {
+          border-bottom: none;
+        }
+        .row-item.flex-col {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .badge {
+          font-size: 10px;
+          font-weight: 500;
+          padding: 2px 8px;
+          border-radius: 4px;
+        }
+        .input-field {
+          width: 100%;
+          border: 1px solid #e2e8f0;
+          padding: 10px;
+          border-radius: 6px;
+          font-size: 13px;
+          outline: none;
+        }
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          padding: 20px;
+        }
+        .modal-content {
+          background: #fff;
+          width: 100%;
+          max-width: 500px;
+          padding: 32px;
+          border-radius: 16px;
+        }
+        .card-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1e293b;
+        }
       `}</style>
     </div>
   );

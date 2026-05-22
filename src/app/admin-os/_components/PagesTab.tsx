@@ -198,9 +198,27 @@ export default function PagesTab() {
                 </h2>
                 <div className="flex gap-2">
                   {activeId !== 'new' && (
-                    <button onClick={archive} className="pages-archive">
-                      Archive
-                    </button>
+                    <>
+                      {draft.slug && (
+                        <a
+                          href={`/p/${draft.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="pages-cancel"
+                          style={{
+                            textDecoration: 'none',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          👁️ Preview Page
+                        </a>
+                      )}
+                      <button onClick={archive} className="pages-archive">
+                        Archive
+                      </button>
+                    </>
                   )}
                   <button onClick={close} className="pages-cancel">
                     Cancel
