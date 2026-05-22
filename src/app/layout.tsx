@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     title: 'Brandy — Egyptian Marketplace for Local Sellers',
     description:
       'Discover authentic Egyptian local sellers on Brandy. Shop from verified sellers across Egypt.',
-    url: 'https://brandy-egypt.com',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://brandy-egypt.com',
     images: [{ url: '/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
@@ -69,7 +69,10 @@ export const metadata: Metadata = {
     title: 'Brandy — Egyptian Marketplace',
     description: 'Discover authentic Egyptian local sellers on Brandy.',
     images: ['/og-image.png'],
-    creator: '@brandy',
+    // Set NEXT_PUBLIC_TWITTER_HANDLE in your env (e.g. "@yourbrand")
+    ...(process.env.NEXT_PUBLIC_TWITTER_HANDLE
+      ? { creator: process.env.NEXT_PUBLIC_TWITTER_HANDLE }
+      : {}),
   },
   robots: {
     index: true,

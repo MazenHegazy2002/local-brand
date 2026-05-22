@@ -170,7 +170,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <div className="w-full md:w-1/2">
             <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden border border-gray-100 mb-4 relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={primaryImage} alt={product.title} className="w-full h-full object-cover" />
+              <img
+                src={primaryImage}
+                alt={product.title}
+                className="w-full h-full object-cover"
+                // LCP element — load eagerly and hint high priority to the browser
+                fetchPriority="high"
+                loading="eager"
+              />
             </div>
             {/* Thumbnails */}
             <div className="flex gap-3">
@@ -180,7 +187,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   className="w-20 h-20 rounded-lg bg-gray-50 border border-gray-200 p-1 cursor-pointer overflow-hidden"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img.url} className="w-full h-full object-cover rounded" alt="" />
+                  <img
+                    src={img.url}
+                    className="w-full h-full object-cover rounded"
+                    alt=""
+                    loading="lazy"
+                  />
                 </div>
               ))}
             </div>

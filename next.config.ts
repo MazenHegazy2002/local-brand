@@ -69,10 +69,25 @@ const nextConfig: NextConfig = {
 
   // ─── Redirects ────────────────────────────────────────────────────────────
   async redirects() {
-    return [
+    const rules = [
       { source: '/store', destination: '/shop', permanent: true },
       { source: '/products', destination: '/shop', permanent: true },
     ];
+
+    // Canonical-domain redirect: if CANONICAL_DOMAIN is set, any request
+    // arriving on a different host gets 301-redirected to the canonical domain.
+    // Set CANONICAL_DOMAIN=lolozozo.shop (no protocol) in your env.
+    const canonical = process.env.CANONICAL_DOMAIN;
+    if (canonical) {
+      (rules as any[]).push({
+        source: '/:path*',
+        has: [{ type: 'host', value: `(?!${canonical.replace('.', '\\.')}).*` }],
+        destination: `https://${canonical}/:path*`,
+        permanent: true,
+      });
+    }
+
+    return rules;
   },
 };
 

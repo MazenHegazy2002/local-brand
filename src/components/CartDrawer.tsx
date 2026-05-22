@@ -86,7 +86,12 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <div className="w-20 h-20 rounded-xl bg-gray-100 flex items-center justify-center text-2xl overflow-hidden shrink-0">
                   {item.image && item.image.startsWith('http') ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   ) : (
                     (item.emoji ?? '📦')
                   )}
