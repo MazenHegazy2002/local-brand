@@ -94,7 +94,11 @@ function renderMarkdown(md: string): string {
   return out.join('\n');
 }
 
-export default async function LegalPageLoader({ dbSlug, staticContent, staticTitle }: Props) {
+export default async function LegalPageLoader({
+  dbSlug,
+  staticContent,
+  staticTitle: _staticTitle,
+}: Props) {
   // Try to load from the CMS
   let cmsContent: string | null = null;
   let cmsTitle: string | null = null;

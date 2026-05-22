@@ -12,6 +12,7 @@
 // add a new sub-tab without rewriting the parent.
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 type SubTab = 'campaigns' | 'flash' | 'templates' | 'abandoned';
 
@@ -489,12 +490,13 @@ function FlashSalesPanel() {
                         onMouseLeave={e => (e.currentTarget.style.background = '')}
                       >
                         {p.images?.[0]?.url && (
-                          <img
+                          <Image
+                            unoptimized
                             src={p.images[0].url}
                             alt=""
+                            width={36}
+                            height={36}
                             style={{
-                              width: 36,
-                              height: 36,
                               borderRadius: 6,
                               objectFit: 'cover',
                               flexShrink: 0,
@@ -530,10 +532,13 @@ function FlashSalesPanel() {
                   }}
                 >
                   {selectedProduct.images?.[0]?.url && (
-                    <img
+                    <Image
+                      unoptimized
                       src={selectedProduct.images[0].url}
                       alt=""
-                      style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'cover' }}
+                      width={40}
+                      height={40}
+                      style={{ borderRadius: 6, objectFit: 'cover' }}
                     />
                   )}
                   <div style={{ flex: 1 }}>
@@ -773,12 +778,13 @@ function FlashSalesPanel() {
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         {p.images?.[0]?.url && (
-                          <img
+                          <Image
+                            unoptimized
                             src={p.images[0].url}
                             alt=""
+                            width={32}
+                            height={32}
                             style={{
-                              width: 32,
-                              height: 32,
                               borderRadius: 4,
                               objectFit: 'cover',
                               flexShrink: 0,

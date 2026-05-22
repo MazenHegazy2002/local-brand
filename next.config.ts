@@ -17,6 +17,13 @@ const nextConfig: NextConfig = {
     proxyClientMaxBodySize: '10mb', // for image uploads
   },
 
+  // ─── Output File Tracing ─────────────────────────────────────────────────────
+  // Prevent Prisma's custom-output generated client from being unintentionally
+  // traced into every server bundle (Turbopack NFT false-positive).
+  outputFileTracingExcludes: {
+    '*': ['./src/generated/client/**'],
+  },
+
   // ─── Image Optimisation ───────────────────────────────────────────────────
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -125,15 +132,19 @@ export default withSentryConfig(pwaWrapped, {
   // Suppress Sentry CLI output in CI unless DEBUG_SENTRY=1 is set.
   silent: !process.env.DEBUG_SENTRY,
 
-  // Tree-shake unused Sentry features in client bundles.
-  disableLogger: true,
-
   // Don't automatically create a Sentry release or upload source maps
   // unless SENTRY_AUTH_TOKEN is explicitly set (production deployment).
   authToken: process.env.SENTRY_AUTH_TOKEN,
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
 
-  // Avoid instrumentation warnings when SENTRY_DSN is not configured.
-  autoInstrumentServerFunctions: !!process.env.SENTRY_DSN,
+  webpack: {
+    // Avoid instrumentation warnings when SENTRY_DSN is not configured.
+    autoInstrumentServerFunctions: !!process.env.SENTRY_DSN,
+
+    // Tree-shake unused Sentry features in client bundles.
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 });

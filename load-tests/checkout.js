@@ -21,7 +21,7 @@
  */
 
 import http from 'k6/http';
-import { check, sleep, fail } from 'k6';
+import { check, sleep } from 'k6';
 import { Rate, Trend, Counter } from 'k6/metrics';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -162,7 +162,7 @@ function verifyOrder(orderId) {
 }
 
 // ─── Main VU Loop ─────────────────────────────────────────────────────────────
-export default function () {
+export default function checkoutScenario() {
   if (!addToCart()) {
     sleep(1);
     return;

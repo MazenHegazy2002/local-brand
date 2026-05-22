@@ -24,7 +24,7 @@ export const options = {
   },
 };
 
-export default function () {
+export default function smokeScenario() {
   const routes = [
     { path: '/api/health', name: 'health' },
     { path: '/api/products?limit=5', name: 'products_list' },

@@ -116,7 +116,7 @@ function testFlashSales() {
 }
 
 // ─── Main VU Loop ─────────────────────────────────────────────────────────────
-export default function () {
+export default function productsScenario() {
   // Weighted scenario mix mimicking real traffic
   const roll = Math.random();
   if (roll < 0.4) {
