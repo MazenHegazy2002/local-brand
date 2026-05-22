@@ -5,6 +5,8 @@ import { useEffect } from 'react';
 declare global {
   interface Window {
     googleTranslateElementInit?: () => void;
+    /** Call after dynamically loading new content to re-run the active translation. */
+    retranslate?: () => void;
     google?: {
       translate?: {
         TranslateElement: new (
@@ -29,6 +31,19 @@ declare global {
  *
  * The widget itself is hidden via CSS; we keep it mounted only so the
  * Google scripts have a target to attach to.
+ *
+ * IMPORTANT — Google Translate limitation with React:
+ * Google Translate runs once on initial page HTML. Content loaded via
+ * client-side data fetching (e.g. the /shop product grid) is injected into
+ * the DOM AFTER Google Translate has already processed the page, so it
+ * appears in English even when Arabic translation is active.
+ *
+ * SSR pages (homepage, product detail, category, brand page) work correctly
+ * because product titles are present in the initial HTML.
+ *
+ * For client-side pages, call `window.retranslate()` after loading new
+ * content to trigger a retranslation pass. This is exposed as a global so
+ * any component can call it without a prop-drilling chain.
  */
 export default function GoogleTranslate() {
   useEffect(() => {
@@ -47,12 +62,34 @@ export default function GoogleTranslate() {
         );
       } catch (err) {
         // Loaded twice — ignore.
-
         console.warn('[GoogleTranslate] init failed:', err);
       }
     };
 
     window.googleTranslateElementInit = init;
+
+    // Expose a global helper for client-side components to retrigger translation
+    // after dynamically loading content (product grids, search results, etc.).
+    window.retranslate = () => {
+      try {
+        if (!document.cookie.includes('googtrans')) return;
+        const select = document.querySelector<HTMLSelectElement>('.goog-te-combo');
+        if (!select || !select.value || select.value === 'en') return;
+        const tgt = select.value;
+        // Briefly switch to English then back to the target language — this is
+        // the documented way to force Google Translate to re-process the page.
+        select.value = 'en';
+        select.dispatchEvent(new Event('change'));
+        setTimeout(() => {
+          if (document.cookie.includes('googtrans')) {
+            select.value = tgt;
+            select.dispatchEvent(new Event('change'));
+          }
+        }, 120);
+      } catch (err) {
+        console.warn('[GoogleTranslate] retranslate failed:', err);
+      }
+    };
 
     if (!document.getElementById('gt-script')) {
       const script = document.createElement('script');

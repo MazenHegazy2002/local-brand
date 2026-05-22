@@ -37,11 +37,11 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
       </div>
 
       <div className="container py-12 md:py-24">
-        <div className="flex items-center justify-between mb-12 border-b border-white/10 pb-6">
-          <h2 className="text-3xl font-serif font-bold text-[hsl(var(--foreground))]">
-            Curated <span className="text-[hsl(var(--accent))]">Collection</span>
+        <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
+          <h2 className="text-3xl font-serif font-bold text-gray-900">
+            Curated <span className="text-[#1e3b8a]">Collection</span>
           </h2>
-          <span className="text-[hsl(var(--foreground))]/60 font-bold uppercase tracking-widest text-xs">
+          <span className="text-gray-500 font-bold uppercase tracking-widest text-xs">
             {seller.products.length} Items
           </span>
         </div>

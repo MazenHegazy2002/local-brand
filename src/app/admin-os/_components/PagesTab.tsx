@@ -157,7 +157,9 @@ export default function PagesTab() {
           </div>
           <ul className="pages-list-items">
             {visible.length === 0 && (
-              <li className="px-4 py-6 text-center text-xs text-slate-400">No pages yet</li>
+              <li className="px-4 py-6 text-center text-xs text-slate-400">
+                No pages yet — click &ldquo;+ New page&rdquo; to create one.
+              </li>
             )}
             {visible.map(p => (
               <li key={p.id}>
@@ -171,6 +173,41 @@ export default function PagesTab() {
                   </div>
                   <code className="pages-list-slug">/p/{p.slug}</code>
                 </button>
+              </li>
+            ))}
+          </ul>
+
+          {/* Static / legal pages — these are hardcoded Next.js pages, not CMS-managed.
+              Admin can view them here, but to edit their content, update the code files
+              under src/app/legal/. */}
+          <div className="px-3 pt-4 pb-1">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+              Static Pages (code-managed)
+            </p>
+          </div>
+          <ul className="pages-list-items">
+            {[
+              { label: 'Legal Hub', path: '/legal' },
+              { label: 'Privacy Policy', path: '/legal/privacy-policy' },
+              { label: 'Returns Policy', path: '/legal/returns-refunds' },
+              { label: 'Seller Terms', path: '/legal/seller-terms' },
+              { label: 'Shipping Policy', path: '/legal/shipping-policy' },
+            ].map(pg => (
+              <li key={pg.path}>
+                <a
+                  href={pg.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pages-list-item"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 uppercase tracking-wide">
+                      static
+                    </span>
+                    <span className="pages-list-title">{pg.label}</span>
+                  </div>
+                  <code className="pages-list-slug">{pg.path}</code>
+                </a>
               </li>
             ))}
           </ul>

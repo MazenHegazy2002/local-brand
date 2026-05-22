@@ -254,13 +254,13 @@ export default function ProductCard({
           {/* Brand slug */}
           <Link
             href={`/brand/${productBrandSlug}`}
-            className="text-[hsl(var(--accent))] text-xs font-bold uppercase tracking-wider mb-1.5 block hover:underline"
+            className="text-[#1e3b8a] dark:text-[#6b8ff5] text-xs font-bold uppercase tracking-wider mb-1.5 block hover:underline"
           >
             {productBrand}
           </Link>
           {/* Title */}
           <Link href={`/product/${displayId}`}>
-            <h3 className="text-[15px] font-bold text-[hsl(var(--foreground))] line-clamp-2 mb-2 hover:text-[hsl(var(--accent))] transition-colors leading-tight">
+            <h3 className="text-[15px] font-bold text-gray-900 dark:text-gray-100 line-clamp-2 mb-2 hover:text-[#1e3b8a] dark:hover:text-[#6b8ff5] transition-colors leading-tight">
               {displayName}
             </h3>
           </Link>

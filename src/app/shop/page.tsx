@@ -96,6 +96,9 @@ function ShopContent() {
         setTotalPages(data.pagination?.totalPages ?? 1);
         setTotal(data.pagination?.total ?? 0);
         setPage(currentPage);
+        // Retrigger Google Translate so dynamically-loaded product names
+        // get translated when the page is in Arabic (or any non-English) mode.
+        setTimeout(() => window.retranslate?.(), 400);
       }
     } catch (e) {
       console.error(e);
