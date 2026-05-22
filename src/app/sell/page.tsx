@@ -3,8 +3,9 @@
 // Public "Become an Affiliate" landing page + application form
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/providers/LanguageContext';
 
 const PLATFORMS = [
@@ -39,15 +40,14 @@ const PAYOUT_METHODS = [
 export default function SellPage() {
   const { data: session } = useSession();
   const { t, lang, isRTL } = useLanguage();
-  const [step, setStep] = useState<'landing' | 'form' | 'success'>('landing');
+  const router = useRouter();
+  const [step, setStep] = useState<'landing' | 'auth' | 'form' | 'success'>('landing');
+
+  // ── Affiliate application form state ──────────────────────────────────────
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
     whatsapp: '',
-    password: '',
     requestedCode: '',
     platform: '',
     platformFollowers: '',
@@ -57,8 +57,84 @@ export default function SellPage() {
     payoutDetails: '',
   });
   const [result, setResult] = useState<{ promoCode: string } | null>(null);
-
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  // ── Auth gate state ────────────────────────────────────────────────────────
+  const [authTab, setAuthTab] = useState<'login' | 'register'>('login');
+  const [authForm, setAuthForm] = useState({ name: '', email: '', phone: '', password: '' });
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const setAuth = (k: string, v: string) => setAuthForm(f => ({ ...f, [k]: v }));
+
+  function handleApplyClick() {
+    if (session) {
+      setStep('form');
+    } else {
+      setAuthTab('login');
+      setAuthError('');
+      setStep('auth');
+    }
+  }
+
+  async function handleAuth(e: React.FormEvent) {
+    e.preventDefault();
+    setAuthLoading(true);
+    setAuthError('');
+    try {
+      if (authTab === 'login') {
+        const result = await signIn('credentials', {
+          email: authForm.email,
+          password: authForm.password,
+          redirect: false,
+        });
+        if (!result?.ok) {
+          throw new Error(
+            result?.error === 'CredentialsSignin'
+              ? lang === 'ar'
+                ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة.'
+                : 'Invalid email or password.'
+              : lang === 'ar'
+                ? 'فشل تسجيل الدخول.'
+                : 'Sign in failed.'
+          );
+        }
+      } else {
+        // Register new account then auto sign-in
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: authForm.name,
+            email: authForm.email,
+            password: authForm.password,
+            phone: authForm.phone,
+            role: 'BUYER',
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok)
+          throw new Error(
+            data.message || (lang === 'ar' ? 'فشل إنشاء الحساب.' : 'Registration failed.')
+          );
+        const siResult = await signIn('credentials', {
+          email: authForm.email,
+          password: authForm.password,
+          redirect: false,
+        });
+        if (!siResult?.ok)
+          throw new Error(
+            lang === 'ar'
+              ? 'تم إنشاء الحساب. يرجى تسجيل الدخول يدوياً.'
+              : 'Account created. Please sign in manually.'
+          );
+      }
+      setStep('form');
+    } catch (err: unknown) {
+      setAuthError((err as Error).message);
+    } finally {
+      setAuthLoading(false);
+    }
+  }
 
   const translatePlatform = (p: string) => {
     if (lang !== 'ar') return p;
@@ -112,11 +188,7 @@ export default function SellPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: !session ? form.name : undefined,
-          email: !session ? form.email : undefined,
-          phone: !session ? form.phone : undefined,
           whatsapp: form.whatsapp || undefined,
-          password: !session ? form.password : undefined,
           requestedCode: form.requestedCode.toUpperCase() || undefined,
           platform: form.platform || undefined,
           platformFollowers: form.platformFollowers ? parseInt(form.platformFollowers) : undefined,
@@ -127,7 +199,18 @@ export default function SellPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Something went wrong.');
+      if (!res.ok) {
+        // Already an affiliate → send to dashboard
+        if (
+          res.status === 400 &&
+          typeof data.error === 'string' &&
+          data.error.includes('already have an affiliate')
+        ) {
+          router.push('/affiliate/dashboard');
+          return;
+        }
+        throw new Error(data.error ?? 'Something went wrong.');
+      }
       setResult({ promoCode: data.promoCode });
       setStep('success');
     } catch (err: unknown) {
@@ -197,6 +280,247 @@ export default function SellPage() {
     );
   }
 
+  // ── Auth gate ──────────────────────────────────────────────────────────────
+  if (step === 'auth') {
+    const inputStyle: React.CSSProperties = {
+      width: '100%',
+      border: '1px solid #e2e8f0',
+      borderRadius: 8,
+      padding: '10px 14px',
+      fontSize: 14,
+      outline: 'none',
+      boxSizing: 'border-box',
+      background: '#fff',
+      textAlign: isRTL ? 'right' : 'left',
+    };
+    const labelStyle: React.CSSProperties = {
+      display: 'block',
+      fontSize: 13,
+      fontWeight: 500,
+      marginBottom: 6,
+      textAlign: isRTL ? 'right' : 'left',
+    };
+
+    return (
+      <div
+        style={{
+          maxWidth: 440,
+          margin: '0 auto',
+          padding: '56px 16px',
+          direction: isRTL ? 'rtl' : 'ltr',
+        }}
+      >
+        {/* Back link */}
+        <button
+          onClick={() => setStep('landing')}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#64748b',
+            fontSize: 14,
+            marginBottom: 28,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            fontFamily: 'inherit',
+          }}
+        >
+          {isRTL ? '→ رجوع' : '← Back'}
+        </button>
+
+        {/* Header */}
+        <div style={{ textAlign: isRTL ? 'right' : 'left', marginBottom: 28 }}>
+          <div style={{ fontSize: 24, marginBottom: 8 }}>🚀</div>
+          <h1 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 6px' }}>
+            {lang === 'ar' ? 'انضم لبرنامج الأفيليت' : 'Join the Affiliate Program'}
+          </h1>
+          <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>
+            {lang === 'ar'
+              ? 'سجّل دخولك أو أنشئ حساباً للمتابعة'
+              : 'Sign in or create an account to continue'}
+          </p>
+        </div>
+
+        {/* Tabs */}
+        <div
+          style={{
+            display: 'flex',
+            borderBottom: '1px solid #e2e8f0',
+            marginBottom: 24,
+            gap: 0,
+          }}
+        >
+          {(['login', 'register'] as const).map(tab => {
+            const label =
+              tab === 'login'
+                ? lang === 'ar'
+                  ? 'تسجيل الدخول'
+                  : 'Sign in'
+                : lang === 'ar'
+                  ? 'حساب جديد'
+                  : 'Create account';
+            return (
+              <button
+                key={tab}
+                onClick={() => {
+                  setAuthTab(tab);
+                  setAuthError('');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '10px 0',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: authTab === tab ? '2px solid #1e3b8a' : '2px solid transparent',
+                  color: authTab === tab ? '#1e3b8a' : '#64748b',
+                  fontWeight: authTab === tab ? 600 : 400,
+                  fontSize: 14,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  marginBottom: -1,
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
+        <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {authTab === 'register' && (
+            <>
+              <div>
+                <label style={labelStyle}>
+                  {lang === 'ar' ? 'الاسم الكامل' : 'Full name'}{' '}
+                  <span style={{ color: '#EF4444' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={authForm.name}
+                  onChange={e => setAuth('name', e.target.value)}
+                  placeholder={lang === 'ar' ? 'مثال: أحمد علي' : 'e.g. Ahmed Ali'}
+                  required
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>
+                  {lang === 'ar' ? 'رقم الهاتف' : 'Phone number'}{' '}
+                  <span style={{ color: '#EF4444' }}>*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={authForm.phone}
+                  onChange={e => setAuth('phone', e.target.value)}
+                  placeholder="01xxxxxxxxx"
+                  required
+                  style={inputStyle}
+                />
+              </div>
+            </>
+          )}
+
+          <div>
+            <label style={labelStyle}>
+              {lang === 'ar' ? 'البريد الإلكتروني' : 'Email'}{' '}
+              <span style={{ color: '#EF4444' }}>*</span>
+            </label>
+            <input
+              type="email"
+              value={authForm.email}
+              onChange={e => setAuth('email', e.target.value)}
+              placeholder="name@example.com"
+              required
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>
+              {lang === 'ar' ? 'كلمة المرور' : 'Password'}{' '}
+              <span style={{ color: '#EF4444' }}>*</span>
+            </label>
+            <input
+              type="password"
+              value={authForm.password}
+              onChange={e => setAuth('password', e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={8}
+              style={inputStyle}
+            />
+            {authTab === 'register' && (
+              <p
+                style={{
+                  fontSize: 12,
+                  color: '#94a3b8',
+                  marginTop: 4,
+                  textAlign: isRTL ? 'right' : 'left',
+                }}
+              >
+                {lang === 'ar' ? '٨ أحرف على الأقل' : 'At least 8 characters'}
+              </p>
+            )}
+          </div>
+
+          {authError && (
+            <div
+              style={{
+                background: '#FEF2F2',
+                border: '1px solid #FECACA',
+                borderRadius: 8,
+                padding: '10px 14px',
+                fontSize: 13,
+                color: '#B91C1C',
+                textAlign: isRTL ? 'right' : 'left',
+              }}
+            >
+              {authError}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={authLoading}
+            style={{
+              padding: '13px',
+              background: '#1e3b8a',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 10,
+              fontWeight: 600,
+              fontSize: 14,
+              cursor: authLoading ? 'not-allowed' : 'pointer',
+              opacity: authLoading ? 0.6 : 1,
+              marginTop: 4,
+            }}
+          >
+            {authLoading
+              ? lang === 'ar'
+                ? '...'
+                : '...'
+              : authTab === 'login'
+                ? lang === 'ar'
+                  ? 'تسجيل الدخول والمتابعة'
+                  : 'Sign in & continue'
+                : lang === 'ar'
+                  ? 'إنشاء حساب والمتابعة'
+                  : 'Create account & continue'}
+          </button>
+
+          {authTab === 'login' && (
+            <p style={{ textAlign: 'center', fontSize: 13, color: '#64748b', margin: 0 }}>
+              <Link href="/forgot-password" style={{ color: '#1e3b8a' }}>
+                {lang === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
+              </Link>
+            </p>
+          )}
+        </form>
+      </div>
+    );
+  }
+
   if (step === 'form') {
     return (
       <div
@@ -246,141 +570,6 @@ export default function SellPage() {
         </p>
 
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Account Details for Guest Users */}
-          {!session && (
-            <>
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: 13,
-                    fontWeight: 500,
-                    marginBottom: 6,
-                    textAlign: isRTL ? 'right' : 'left',
-                  }}
-                >
-                  {t('AffiliateFullName')} <span style={{ color: '#EF4444' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder={lang === 'ar' ? 'مثال: أحمد علي' : 'e.g. Ahmed Ali'}
-                  value={form.name}
-                  onChange={e => set('name', e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 8,
-                    padding: '10px 14px',
-                    fontSize: 14,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    background: '#fff',
-                    textAlign: isRTL ? 'right' : 'left',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: 13,
-                    fontWeight: 500,
-                    marginBottom: 6,
-                    textAlign: isRTL ? 'right' : 'left',
-                  }}
-                >
-                  {t('AffiliateEmail')} <span style={{ color: '#EF4444' }}>*</span>
-                </label>
-                <input
-                  type="email"
-                  placeholder="name@example.com"
-                  value={form.email}
-                  onChange={e => set('email', e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 8,
-                    padding: '10px 14px',
-                    fontSize: 14,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    background: '#fff',
-                    textAlign: isRTL ? 'right' : 'left',
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      marginBottom: 6,
-                      textAlign: isRTL ? 'right' : 'left',
-                    }}
-                  >
-                    {t('AffiliatePhone')} <span style={{ color: '#EF4444' }}>*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="01xxxxxxxxx"
-                    value={form.phone}
-                    onChange={e => set('phone', e.target.value)}
-                    required
-                    style={{
-                      width: '100%',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: 8,
-                      padding: '10px 14px',
-                      fontSize: 14,
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      background: '#fff',
-                      textAlign: isRTL ? 'right' : 'left',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      marginBottom: 6,
-                      textAlign: isRTL ? 'right' : 'left',
-                    }}
-                  >
-                    {t('AffiliatePassword')} <span style={{ color: '#EF4444' }}>*</span>
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    value={form.password}
-                    onChange={e => set('password', e.target.value)}
-                    required
-                    minLength={8}
-                    style={{
-                      width: '100%',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: 8,
-                      padding: '10px 14px',
-                      fontSize: 14,
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      background: '#fff',
-                      textAlign: isRTL ? 'right' : 'left',
-                    }}
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
           <div>
             <label
               style={{
@@ -763,7 +952,7 @@ export default function SellPage() {
         </p>
         <button
           id="sell-apply-btn"
-          onClick={() => setStep('form')}
+          onClick={handleApplyClick}
           style={{
             display: 'inline-block',
             padding: '16px 36px',
@@ -917,7 +1106,7 @@ export default function SellPage() {
           {t('AffiliateJoinHundreds')}
         </p>
         <button
-          onClick={() => setStep('form')}
+          onClick={handleApplyClick}
           style={{
             background: '#fff',
             color: '#1e3b8a',
