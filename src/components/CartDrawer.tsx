@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useCartStore } from '@/lib/cartStore';
 import Link from 'next/link';
-import { ShoppingCart, Trash2 } from 'lucide-react';
+import { ShoppingCart, Trash2, Tag, X } from 'lucide-react';
 import { Drawer, Button, QuantitySelector } from '@/components/ui';
 
 interface CartDrawerProps {
@@ -14,6 +14,52 @@ interface CartDrawerProps {
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, removeItem, updateQty, total, clearCart, rewriteId } = useCartStore();
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // Promo code state
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState<{ code: string; discount: number } | null>(null);
+  const [promoError, setPromoError] = useState('');
+  const [applyingPromo, setApplyingPromo] = useState(false);
+
+  const applyPromo = async () => {
+    const code = promoCode.trim().toUpperCase();
+    if (!code) return;
+    setApplyingPromo(true);
+    setPromoError('');
+    try {
+      const subtotal = total();
+      // Try store coupon first
+      const res = await fetch('/api/coupons/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, cartTotal: subtotal }),
+      });
+      const couponData: { discountAmount?: number; message?: string } = await res.json();
+      if (res.ok && couponData.discountAmount) {
+        setPromoApplied({ code, discount: couponData.discountAmount });
+        setPromoCode('');
+        return;
+      }
+      // Try affiliate promo code
+      const affRes = await fetch('/api/checkout/apply-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, orderTotalEgp: subtotal }),
+      });
+      const affData: { valid: boolean; reason?: string; discountAmountEgp?: number } =
+        await affRes.json();
+      if (affData.valid && affData.discountAmountEgp) {
+        setPromoApplied({ code, discount: affData.discountAmountEgp });
+        setPromoCode('');
+        return;
+      }
+      setPromoError(affData.reason || couponData.message || 'Invalid promo code');
+    } catch {
+      setPromoError('Failed to apply promo code');
+    } finally {
+      setApplyingPromo(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -121,26 +167,84 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             ))}
           </div>
 
-          <div className="border-t border-gray-100 p-6 bg-white">
-            <div className="flex justify-between items-center mb-2">
+          <div className="border-t border-gray-100 p-6 bg-white space-y-4">
+            {/* Promo code */}
+            {promoApplied ? (
+              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-2.5">
+                <div className="flex items-center gap-2 text-green-800">
+                  <Tag size={14} />
+                  <span className="text-sm font-bold">{promoApplied.code}</span>
+                  <span className="text-sm text-green-600">
+                    −{promoApplied.discount.toLocaleString()} EGP
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setPromoApplied(null);
+                    setPromoError('');
+                  }}
+                  className="text-green-700 hover:text-green-900"
+                  aria-label="Remove promo code"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={e => {
+                      setPromoCode(e.target.value.toUpperCase());
+                      setPromoError('');
+                    }}
+                    onKeyDown={e => e.key === 'Enter' && applyPromo()}
+                    placeholder="Promo / affiliate code"
+                    className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+                  />
+                  <button
+                    onClick={applyPromo}
+                    disabled={applyingPromo || !promoCode.trim()}
+                    className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-bold disabled:opacity-50 shrink-0"
+                  >
+                    {applyingPromo ? '...' : 'Apply'}
+                  </button>
+                </div>
+                {promoError && <p className="text-red-500 text-xs mt-1">{promoError}</p>}
+              </div>
+            )}
+
+            {/* Subtotal */}
+            <div className="flex justify-between items-center">
               <span className="text-gray-500">Subtotal</span>
-              <span className="text-xl font-bold text-gray-900">
+              <span
+                className={`text-xl font-bold ${promoApplied ? 'text-gray-400 line-through text-base' : 'text-gray-900'}`}
+              >
                 {total().toLocaleString()} EGP
               </span>
             </div>
-            <p className="text-xs text-gray-400 mb-4">Shipping & taxes calculated at checkout</p>
+            {promoApplied && (
+              <div className="flex justify-between items-center -mt-3">
+                <span className="text-green-600 text-sm font-medium">After discount</span>
+                <span className="text-xl font-bold text-gray-900">
+                  {Math.max(0, total() - promoApplied.discount).toLocaleString()} EGP
+                </span>
+              </div>
+            )}
+            <p className="text-xs text-gray-400">Shipping & taxes calculated at checkout</p>
 
             <Link
-              href="/checkout"
+              href={promoApplied ? `/checkout?promo=${promoApplied.code}` : '/checkout'}
               onClick={onClose}
               className="block text-center w-full bg-[hsl(var(--primary))] text-white py-3.5 rounded-xl font-bold hover:opacity-90 transition-all"
             >
-              Checkout — {total().toLocaleString()} EGP
+              Checkout — {Math.max(0, total() - (promoApplied?.discount ?? 0)).toLocaleString()} EGP
             </Link>
 
             <button
               onClick={clearCart}
-              className="w-full mt-3 py-2.5 text-gray-500 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+              className="w-full py-2.5 text-gray-500 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition-colors"
             >
               Clear cart
             </button>

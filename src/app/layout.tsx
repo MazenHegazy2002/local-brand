@@ -106,6 +106,7 @@ import WebVitalsReporter from '@/components/WebVitalsReporter';
 import InstallPrompt from '@/components/InstallPrompt';
 import Plugins from '@/components/Plugins';
 import CsrfProvider from '@/components/CsrfProvider';
+import Footer from '@/components/Footer';
 
 export default async function RootLayout({
   children,
@@ -151,6 +152,7 @@ export default async function RootLayout({
           <GoogleTranslate />
           <AuthProvider>
             {children}
+            <Footer />
             <BottomNavigation />
             <CookieConsent />
             <InstallPrompt />

@@ -1,23 +1,52 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui';
 import Link from 'next/link';
 
+// Benefits shown on the seller landing preview for unauthenticated visitors
+const BENEFITS = [
+  {
+    icon: '🛍️',
+    title: 'Reach Thousands of Buyers',
+    desc: 'Tap into a growing base of Egyptian shoppers actively searching for local products.',
+  },
+  {
+    icon: '💰',
+    title: 'Zero Upfront Costs',
+    desc: 'List your products for free. We only earn a small commission when you sell.',
+  },
+  {
+    icon: '📦',
+    title: 'Easy Order Management',
+    desc: 'Manage orders, shipments, and customer messages from one simple dashboard.',
+  },
+  {
+    icon: '📊',
+    title: 'Real-Time Analytics',
+    desc: 'Track your sales, revenue, and top-performing products at a glance.',
+  },
+  {
+    icon: '🤝',
+    title: 'Affiliate Program',
+    desc: 'Create promo codes and earn extra commission through the affiliate network.',
+  },
+  {
+    icon: '✅',
+    title: 'Verified Seller Badge',
+    desc: 'Get a verified badge once approved — build trust with buyers instantly.',
+  },
+];
+
 export default function SellerApplicationPage() {
-  const { data: _session, status } = useSession();
-  const router = useRouter();
+  const { status } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login?callbackUrl=/seller/apply');
-    }
-  }, [status, router]);
+  // Only redirect authenticated users who are already on the form
+  // Unauthenticated visitors see the landing preview below
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +59,84 @@ export default function SellerApplicationPage() {
   };
 
   if (status === 'loading') return null;
+
+  // Unauthenticated visitors: show a selling pitch + CTA to sign in
+  if (status === 'unauthenticated') {
+    return (
+      <div className="min-h-screen bg-[#f9f8f6]">
+        <Navbar />
+
+        {/* Hero */}
+        <section className="bg-[#1e3b8a] text-white py-20 px-4 text-center">
+          <p className="text-xs font-bold uppercase tracking-widest mb-3 opacity-60">For Sellers</p>
+          <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">
+            Sell on Brandy — Egypt&apos;s Local Marketplace
+          </h1>
+          <p className="text-base opacity-75 max-w-lg mx-auto mb-8 leading-relaxed">
+            Join 100+ Egyptian local brands already growing their business. Reach thousands of
+            buyers with zero upfront costs.
+          </p>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <Link
+              href="/login?callbackUrl=/seller/apply"
+              className="bg-white text-[#1e3b8a] font-black px-8 py-3 rounded-full text-sm hover:bg-gray-100 transition-colors"
+            >
+              Sign in to apply →
+            </Link>
+            <Link
+              href="/register?callbackUrl=/seller/apply"
+              className="border border-white/40 text-white font-bold px-8 py-3 rounded-full text-sm hover:bg-white/10 transition-colors"
+            >
+              Create an account
+            </Link>
+          </div>
+        </section>
+
+        {/* Benefits grid */}
+        <section className="container mx-auto px-4 py-16">
+          <h2 className="text-2xl font-black text-gray-900 text-center mb-10">
+            Why sell on Brandy?
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            {BENEFITS.map(b => (
+              <div
+                key={b.title}
+                className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col gap-3"
+              >
+                <div className="text-3xl">{b.icon}</div>
+                <h3 className="font-black text-gray-900 text-base">{b.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{b.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Bottom CTA */}
+        <section className="container mx-auto px-4 pb-16 text-center">
+          <div className="bg-[#1e3b8a]/5 border border-[#1e3b8a]/10 rounded-3xl py-12 px-6 max-w-2xl mx-auto">
+            <h2 className="text-2xl font-black text-gray-900 mb-3">Ready to start?</h2>
+            <p className="text-gray-500 mb-6">
+              Create a free account or sign in to submit your seller application.
+            </p>
+            <div className="flex gap-3 justify-center flex-wrap">
+              <Link
+                href="/login?callbackUrl=/seller/apply"
+                className="bg-[#1e3b8a] text-white font-black px-8 py-3 rounded-full text-sm hover:bg-[#16307a] transition-colors"
+              >
+                Sign in to apply
+              </Link>
+              <Link
+                href="/register?callbackUrl=/seller/apply"
+                className="border border-[#1e3b8a] text-[#1e3b8a] font-bold px-8 py-3 rounded-full text-sm hover:bg-[#1e3b8a]/5 transition-colors"
+              >
+                Register free
+              </Link>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f9f8f6]">

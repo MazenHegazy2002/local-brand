@@ -104,9 +104,9 @@ export const en = {
   Processing: 'Processing...',
 
   // Brands page
-  OurCreators: 'Our Creators',
+  OurCreators: 'Our Sellers',
   OurCreatorsDesc:
-    'Meet the visionaries crafting the soul of the platform. We verify and support every artisan to ensure authentic quality.',
+    'Meet the verified local sellers on Brandy. We vet every seller to ensure you get authentic Egyptian products and a great shopping experience.',
   PartnerSince: 'PARTNER SINCE',
 
   // Reviews
@@ -367,9 +367,9 @@ export const ar: Partial<typeof en> = {
   Processing: 'جاري المعالجة...',
 
   // Brands page
-  OurCreators: 'مبدعونا',
+  OurCreators: 'بائعونا',
   OurCreatorsDesc:
-    'تعرف على العقول المبدعة التي تصنع روح المنصة. نتحقق من كل حِرَفي ونساعده لضمان الجودة الأصيلة.',
+    'تعرف على البائعين المحليين الموثوقين على Brandy. نتحقق من كل بائع لضمان حصولك على منتجات مصرية أصيلة وتجربة تسوق رائعة.',
   PartnerSince: 'شريك منذ',
 
   // Reviews

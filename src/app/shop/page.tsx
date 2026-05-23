@@ -443,7 +443,11 @@ export default function ShopPage() {
     <main className="min-h-screen bg-[#f9f8f6]">
       <Navbar />
       <Suspense
-        fallback={<div className="container mx-auto px-4 py-8 text-center">Loading shop...</div>}
+        fallback={
+          <div className="container mx-auto px-4 py-8">
+            <ProductGridSkeleton count={12} />
+          </div>
+        }
       >
         <ShopContent />
       </Suspense>

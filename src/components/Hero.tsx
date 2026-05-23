@@ -9,7 +9,7 @@ import HeroSlider, { type HeroSlide } from './HeroSlider';
 const FALLBACK_SLIDES: HeroSlide[] = [
   {
     imageUrl:
-      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=2500&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=75&w=1200&auto=format&fit=crop',
     title: 'HeroTitle',
     subtitle: 'HeroSubtitle',
     linkUrl: '/shop',
@@ -18,7 +18,7 @@ const FALLBACK_SLIDES: HeroSlide[] = [
   },
   {
     imageUrl:
-      'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=2500&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=75&w=1200&auto=format&fit=crop',
     title: 'HeroTitle',
     subtitle: 'HeroSubtitle',
     linkUrl: '/shop',
@@ -27,7 +27,7 @@ const FALLBACK_SLIDES: HeroSlide[] = [
   },
   {
     imageUrl:
-      'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?q=80&w=2500&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?q=75&w=1200&auto=format&fit=crop',
     title: 'HeroTitle',
     subtitle: 'HeroSubtitle',
     linkUrl: '/shop',
@@ -89,7 +89,7 @@ export default async function Hero() {
               className="relative flex-1 rounded-xl overflow-hidden group block cursor-pointer"
             >
               <Image
-                src="https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=80&w=1000&auto=format&fit=crop"
+                src="https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=75&w=600&auto=format&fit=crop"
                 fill
                 sizes="(max-width: 1024px) 50vw, 17vw"
                 style={{ objectFit: 'cover' }}
@@ -110,7 +110,7 @@ export default async function Hero() {
               className="relative flex-1 rounded-xl overflow-hidden group block cursor-pointer"
             >
               <Image
-                src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop"
+                src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=75&w=600&auto=format&fit=crop"
                 fill
                 sizes="(max-width: 1024px) 50vw, 17vw"
                 style={{ objectFit: 'cover' }}

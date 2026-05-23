@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useCartStore } from '@/lib/cartStore';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { createOrder } from '@/app/actions/orders';
 import Navbar from '@/components/Navbar';
@@ -24,9 +24,10 @@ interface PaySkyInitData {
   };
 }
 
-export default function CheckoutPage() {
+function CheckoutPageInner() {
   const { items, total, clearCart, removeItem, rewriteId } = useCartStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const { lang, isRTL, t } = useLanguage();
 
@@ -54,7 +55,7 @@ export default function CheckoutPage() {
   const [paySkyInit, setPaySkyInit] = useState<PaySkyInitData | null>(null);
   const [paySkyMockMessage, setPaySkyMockMessage] = useState<string>('');
 
-  // Coupon state
+  // Coupon state — pre-fill code from ?promo= URL param (set by CartDrawer)
   const [couponCode, setCouponCode] = useState('');
   const [couponApplied, setCouponApplied] = useState<{
     id: string;
@@ -75,6 +76,53 @@ export default function CheckoutPage() {
   const [orderNotes, setOrderNotes] = useState('');
   const [giftWrapping, setGiftWrapping] = useState(false);
   const [showInstallments, setShowInstallments] = useState(false);
+
+  // Pre-fill promo code from ?promo= URL param (passed by CartDrawer) and auto-apply
+  useEffect(() => {
+    const promoParam = searchParams.get('promo');
+    if (!promoParam || couponApplied) return;
+    const code = promoParam.toUpperCase();
+    setCouponCode(code);
+    // Auto-apply after a short delay to let the cart finish loading
+    const t = setTimeout(async () => {
+      const subtotal = total();
+      if (subtotal === 0) return;
+      try {
+        const res = await fetch('/api/coupons/evaluate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, cartTotal: subtotal }),
+        });
+        const data: { discountAmount?: number; couponId?: string; message?: string } =
+          await res.json();
+        if (res.ok && data.discountAmount) {
+          setCouponApplied({ id: data.couponId ?? code, code, amount: data.discountAmount });
+          setCouponCode('');
+          return;
+        }
+        const affRes = await fetch('/api/checkout/apply-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, orderTotalEgp: subtotal }),
+        });
+        const affData: { valid: boolean; discountAmountEgp?: number } = await affRes.json();
+        if (affData.valid && affData.discountAmountEgp) {
+          setCouponApplied({
+            id: `aff_${code}`,
+            code,
+            amount: affData.discountAmountEgp,
+            isAffiliate: true,
+            affiliateCode: code,
+          });
+          setCouponCode('');
+        }
+      } catch {
+        // Silent — user can always apply manually
+      }
+    }, 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Fetch user loyalty points
   useEffect(() => {
@@ -1127,5 +1175,13 @@ export default function CheckoutPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={null}>
+      <CheckoutPageInner />
+    </Suspense>
   );
 }
