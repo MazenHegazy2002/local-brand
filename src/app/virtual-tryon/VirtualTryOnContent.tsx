@@ -41,11 +41,34 @@ export default function VirtualTryOnContent() {
   }, [isGenerating]);
 
   // Handle user photo selection
+  // Convert any uploaded image to JPEG via canvas so Gemini always gets a
+  // supported MIME type (HEIC, BMP, TIFF, WebP, etc. would otherwise fail).
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onloadend = () => setUserPhoto(reader.result as string);
+    reader.onloadend = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          // Fallback — just use the raw data URL as-is
+          setUserPhoto(reader.result as string);
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        // Always produce image/jpeg regardless of the original format
+        setUserPhoto(canvas.toDataURL('image/jpeg', 0.92));
+      };
+      img.onerror = () => {
+        // If canvas decode fails, fall back to raw data URL
+        setUserPhoto(reader.result as string);
+      };
+      img.src = reader.result as string;
+    };
     reader.readAsDataURL(file);
   };
 

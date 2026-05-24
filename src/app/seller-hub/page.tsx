@@ -2672,13 +2672,9 @@ function AddProductModal({
                   <input
                     type="text"
                     value={v.upc || ''}
-                    onChange={e =>
-                      updateVariant(i, 'upc', e.target.value.replace(/\D/g, '').slice(0, 14))
-                    }
-                    placeholder="UPC / barcode (optional, 8-14 digits)"
+                    onChange={e => updateVariant(i, 'upc', e.target.value.slice(0, 14))}
+                    placeholder="UPC / barcode (optional)"
                     className="col-span-6 px-3 py-2 bg-white border border-slate-100 rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-emerald-500"
-                    inputMode="numeric"
-                    pattern="\d*"
                     autoComplete="off"
                   />
                   {v.image && (

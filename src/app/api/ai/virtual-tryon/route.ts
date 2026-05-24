@@ -88,16 +88,22 @@ export async function POST(req: Request) {
     );
   }
 
-  // 5. Parse user photo data-URI
-  const userMatch = userPhotoBase64.match(/^data:([^;]+);base64,(.+)$/);
-  if (!userMatch) {
-    return NextResponse.json(
-      { error: 'userPhotoBase64 must be a valid data-URI.' },
-      { status: 400 }
-    );
+  // 5. Parse user photo data-URI.
+  // Accept any data-URI format; fall back to image/jpeg if MIME is missing/unsupported.
+  const SUPPORTED_MIME = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  let userMime = 'image/jpeg';
+  let userBase64 = '';
+  const userMatch = userPhotoBase64.match(/^data:([^;]*);base64,(.+)$/);
+  if (userMatch) {
+    userMime = SUPPORTED_MIME.includes(userMatch[1]) ? userMatch[1] : 'image/jpeg';
+    userBase64 = userMatch[2];
+  } else {
+    // Last resort: treat the whole value as raw base64
+    userBase64 = userPhotoBase64;
   }
-  const userMime = userMatch[1];
-  const userBase64 = userMatch[2];
+  if (!userBase64) {
+    return NextResponse.json({ error: 'Could not read the uploaded photo.' }, { status: 400 });
+  }
 
   // 6. Build the prompt parts
   const parts = [
