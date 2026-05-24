@@ -10,15 +10,15 @@
 //
 // The route checks that the `virtual-tryon` plugin is installed + enabled in
 // the DB, decrypts the stored Gemini API keys, then calls the Gemini
-// gemini-2.0-flash-exp model to perform the virtual try-on.
+// gemini-2.5-flash-image model to perform the virtual try-on.
 
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI, Modality } from '@google/genai';
 import { prisma } from '@/lib/prisma';
 import { readSecret } from '@/lib/secrets';
 
 const PLUGIN_SLUG = 'virtual-tryon';
-const MODEL = 'gemini-2.0-flash-exp';
+const MODEL = 'gemini-2.5-flash-image';
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -121,16 +121,20 @@ Return ONLY the image.`,
     if (i > 0) await delay(800);
 
     try {
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: MODEL });
-      const result = await model.generateContent(parts);
-      const response = await result.response;
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: MODEL,
+        contents: [{ role: 'user', parts }],
+        config: {
+          responseModalities: [Modality.TEXT, Modality.IMAGE],
+        },
+      });
 
       if (response.candidates?.[0]?.content?.parts) {
         for (const part of response.candidates[0].content.parts) {
-          if ((part as any).inlineData) {
+          if (part.inlineData) {
             return NextResponse.json({
-              result: `data:image/png;base64,${(part as any).inlineData.data}`,
+              result: `data:image/png;base64,${part.inlineData.data}`,
             });
           }
         }
