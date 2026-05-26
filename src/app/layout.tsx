@@ -27,7 +27,7 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://brandy-egypt.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://lolozozo.shop'),
   title: {
     default: 'Brandy — Egyptian Marketplace for Local Sellers',
     template: '%s | Brandy',
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     title: 'Brandy — Egyptian Marketplace for Local Sellers',
     description:
       'Discover authentic Egyptian local sellers on Brandy. Shop from verified sellers across Egypt.',
-    url: process.env.NEXT_PUBLIC_APP_URL || 'https://brandy-egypt.com',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://lolozozo.shop',
     images: [{ url: '/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
