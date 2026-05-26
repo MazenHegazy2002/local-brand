@@ -44,6 +44,7 @@ model User {
   affiliate           Affiliate?
   promoUsages         PromoCodeUsage[]     @relation("BuyerPromoUsages")
   couponUsages        CouponUsage[]
+  loyaltyTransactions LoyaltyTransaction[]
 
   // Granular RBAC roles assigned to this user (in addition to the
   // coarse `role` enum above). See models AdminRole / UserAdminRole.
@@ -1257,4 +1258,23 @@ enum AbandonedCartStatus {
   EMAILED // reminder sent
   RECOVERED // user came back & ordered
   EXPIRED // ignored long enough we stopped trying
+}
+
+model LoyaltyTransaction {
+  id          String        @id @default(uuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Int           // positive for earned, negative for spent/used
+  type        LoyaltyTxType // EARNED_BY_REVIEW, EARNED_BY_ORDER, REDEEMED_AT_CHECKOUT, REFUNDED
+  description String?
+  createdAt   DateTime      @default(now())
+
+  @@index([userId])
+}
+
+enum LoyaltyTxType {
+  EARNED_BY_REVIEW
+  EARNED_BY_ORDER
+  REDEEMED_AT_CHECKOUT
+  REFUNDED
 }

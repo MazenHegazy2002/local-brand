@@ -2,7 +2,7 @@
 // src/app/sell/page.tsx
 // Public "Become an Affiliate" landing page + application form
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -56,6 +56,46 @@ export default function SellPage() {
     payoutMethod: '',
     payoutDetails: '',
   });
+  const [existingAppStatus, setExistingAppStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (session) {
+      fetch('/api/affiliate/apply')
+        .then(res => res.json())
+        .then(data => {
+          if (data.affiliate) {
+            const app = data.affiliate;
+            if (app.status === 'ACTIVE') {
+              router.push('/affiliate/dashboard');
+              return;
+            }
+            setExistingAppStatus(app.status);
+
+            // Clean application note from "WhatsApp: ..." prefix if present
+            let cleanNote = app.applicationNote || '';
+            let whatsappNum = '';
+            const match = cleanNote.match(/^WhatsApp:\s*([^\n]+)/i);
+            if (match) {
+              whatsappNum = match[1].trim();
+              cleanNote = cleanNote.replace(/^WhatsApp:\s*[^\n]+\n*/i, '').trim();
+            }
+
+            setForm({
+              whatsapp: whatsappNum || '',
+              requestedCode: app.promoCode || '',
+              platform: app.platform || '',
+              platformFollowers: app.platformFollowers ? String(app.platformFollowers) : '',
+              categoryFocus: app.categoryFocus || '',
+              applicationNote: cleanNote,
+              payoutMethod: app.payoutMethod || '',
+              payoutDetails: app.payoutDetails || '',
+            });
+          }
+        })
+        .catch(err => console.error('Failed to fetch existing affiliate application:', err));
+    }
+  }, [session, router]);
+
   const [result, setResult] = useState<{ promoCode: string } | null>(null);
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
@@ -568,6 +608,46 @@ export default function SellPage() {
         >
           {t('AffiliateTakes2Min')}
         </p>
+
+        {existingAppStatus === 'PENDING' && (
+          <div
+            style={{
+              padding: '12px 16px',
+              background: '#fffbeb',
+              border: '1px solid #fef3c7',
+              borderRadius: 8,
+              color: '#b45309',
+              fontSize: 13,
+              marginBottom: 20,
+              lineHeight: 1.5,
+              textAlign: isRTL ? 'right' : 'left',
+            }}
+          >
+            {lang === 'ar'
+              ? 'لديك طلب قيد الانتظار حالياً. يمكنك تعديل تفاصيل طلبك أدناه وحفظ التغييرات.'
+              : 'You currently have a PENDING application under review. You can modify your application details below and save changes.'}
+          </div>
+        )}
+
+        {existingAppStatus === 'REJECTED' && (
+          <div
+            style={{
+              padding: '12px 16px',
+              background: '#fef2f2',
+              border: '1px solid #fee2e2',
+              borderRadius: 8,
+              color: '#b91c1c',
+              fontSize: 13,
+              marginBottom: 20,
+              lineHeight: 1.5,
+              textAlign: isRTL ? 'right' : 'left',
+            }}
+          >
+            {lang === 'ar'
+              ? 'تم رفض طلبك السابق. يرجى مراجعة تفاصيل طلبك وإعادة تقديمها للمراجعة.'
+              : 'Your previous application was rejected. Please revise your application details and resubmit for review.'}
+          </div>
+        )}
 
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div>

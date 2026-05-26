@@ -1017,6 +1017,14 @@ function NotificationsTab({ items }: { items: Notification[] }) {
   );
 }
 
+interface LoyaltyTx {
+  id: string;
+  amount: number;
+  type: string;
+  description: string | null;
+  createdAt: string;
+}
+
 function WalletTab({ user }: { user?: User }) {
   const points = user?.loyaltyPoints || 0;
   // Tier thresholds — aligned with POINTS_PER_ORDER=10
@@ -1027,6 +1035,35 @@ function WalletTab({ user }: { user?: User }) {
   const nextTier = tier === 'Bronze' ? 'Silver' : tier === 'Silver' ? 'Gold' : null;
   const nextTierPoints = tier === 'Bronze' ? 500 : tier === 'Silver' ? 2000 : 0;
   const progress = nextTierPoints ? Math.min(100, (points / nextTierPoints) * 100) : 100;
+
+  const [history, setHistory] = useState<LoyaltyTx[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/loyalty')
+      .then(r => r.json())
+      .then(d => setHistory(d.history ?? []))
+      .catch(() => setHistory([]))
+      .finally(() => setHistoryLoading(false));
+  }, []);
+
+  const txIcon = (type: string) => {
+    if (type === 'EARNED_BY_ORDER') return '🛍️';
+    if (type === 'EARNED_BY_REVIEW') return '⭐';
+    if (type === 'REDEEMED_AT_CHECKOUT') return '💳';
+    if (type === 'REFUNDED') return '↩️';
+    return '🏆';
+  };
+
+  const txLabel = (type: string) => {
+    if (type === 'EARNED_BY_ORDER') return 'Order reward';
+    if (type === 'EARNED_BY_REVIEW') return 'Review reward';
+    if (type === 'REDEEMED_AT_CHECKOUT') return 'Redeemed';
+    if (type === 'REFUNDED') return 'Refund';
+    return type;
+  };
+
+  void tierBg;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -1091,10 +1128,48 @@ function WalletTab({ user }: { user?: User }) {
 
       {/* History section */}
       <div className="card">
-        <div className="card-title mb-4">Recent Transactions</div>
-        <div className="py-10 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg">
-          No recent loyalty transactions found.
-        </div>
+        <div className="card-title mb-4">Transaction History</div>
+        {historyLoading ? (
+          <div className="py-8 text-center text-xs text-slate-400">Loading transactions…</div>
+        ) : history.length === 0 ? (
+          <div className="py-10 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg">
+            No loyalty transactions yet. Place your first order to earn points!
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {history.map(tx => (
+              <div key={tx.id} className="flex items-center justify-between py-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-sm flex-shrink-0">
+                    {txIcon(tx.type)}
+                  </div>
+                  <div>
+                    <div className="text-[13px] font-semibold text-slate-800">
+                      {txLabel(tx.type)}
+                    </div>
+                    {tx.description && (
+                      <div className="text-[11px] text-slate-400 mt-0.5">{tx.description}</div>
+                    )}
+                    <div className="text-[10px] text-slate-300 mt-0.5">
+                      {new Date(tx.createdAt).toLocaleDateString('en-EG', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </div>
+                  </div>
+                </div>
+                <div
+                  className="text-sm font-bold tabular-nums"
+                  style={{ color: tx.amount >= 0 ? '#16a34a' : '#dc2626' }}
+                >
+                  {tx.amount >= 0 ? '+' : ''}
+                  {tx.amount.toLocaleString()} pts
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* How to earn */}
@@ -1107,7 +1182,7 @@ function WalletTab({ user }: { user?: User }) {
             </div>
             <div>
               <div className="font-bold text-slate-900">Shop purchases</div>
-              <div className="text-[11px] text-slate-400">1 point for every 10 EGP spent</div>
+              <div className="text-[11px] text-slate-400">10 points per completed order</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -1117,7 +1192,7 @@ function WalletTab({ user }: { user?: User }) {
             <div>
               <div className="font-bold text-slate-900">Write reviews</div>
               <div className="text-[11px] text-slate-400">
-                Earn 10 points per verified purchase review
+                Earn 5 points per verified purchase review
               </div>
             </div>
           </div>

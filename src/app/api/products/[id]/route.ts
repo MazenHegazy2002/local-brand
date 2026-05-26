@@ -90,6 +90,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       flashSalePrice,
       flashSaleEndsAt,
       flashSaleLimit,
+      loyaltyPointPct,
       published,
       variants,
     } = body;
@@ -107,6 +108,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         flashSalePrice: flashSalePrice ? Number(flashSalePrice) : null,
         flashSaleEndsAt: flashSaleEndsAt ? new Date(flashSaleEndsAt) : null,
         flashSaleLimit: flashSaleLimit ? Number(flashSaleLimit) : null,
+        loyaltyPointPct: loyaltyPointPct != null ? Number(loyaltyPointPct) : null,
         published: published ?? true,
       },
     });

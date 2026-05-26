@@ -84,6 +84,7 @@ export async function createOrderForUser(
     const addressSnapshot = userId ? resolvedAddress : { ...resolvedAddress, email: guestEmail };
 
     let subtotal = 0;
+    let loyaltyPointsToAward = 0; // accumulated per-item loyalty points (Task 8)
     const orderItemsData: Array<{
       variantId: string;
       productTitleSnapshot: string;
@@ -124,7 +125,16 @@ export async function createOrderForUser(
       const price = flashActive
         ? (variant.product.flashSalePrice as number)
         : variant.price || variant.product.basePrice;
-      subtotal += price * itemInput.quantity;
+      const lineTotal = price * itemInput.quantity;
+      subtotal += lineTotal;
+
+      // Per-product loyalty points override (Task 8):
+      // If the product has a loyaltyPointPct, award (pct / 100 * lineTotal) points,
+      // otherwise fall back to the flat POINTS_PER_ORDER awarded once at the end.
+      const pct = (variant.product as { loyaltyPointPct?: number | null }).loyaltyPointPct;
+      if (typeof pct === 'number' && pct > 0) {
+        loyaltyPointsToAward += Math.round((pct / 100) * lineTotal);
+      }
 
       orderItemsData.push({
         variantId: variant.id,
@@ -244,11 +254,18 @@ export async function createOrderForUser(
     }
 
     if (userId) {
-      // Award the flat 10-points-per-order bonus. Awaited so the user sees
-      // their balance change on the next page render.
+      // Award loyalty points. Use per-product accumulation if any product had
+      // loyaltyPointPct set (Task 8), otherwise fall back to the flat bonus.
       try {
         const loyaltyMod = await import('@/app/actions/loyalty');
-        await loyaltyMod.addLoyaltyPoints(userId, subtotal);
+        await loyaltyMod.addLoyaltyPoints(
+          userId,
+          subtotal,
+          loyaltyPointsToAward > 0 ? loyaltyPointsToAward : undefined,
+          loyaltyPointsToAward > 0
+            ? `Earned ${loyaltyPointsToAward} pts (product loyalty %)`
+            : undefined
+        );
       } catch (err) {
         console.error('Failed to award loyalty points:', err);
       }

@@ -151,9 +151,54 @@ export async function POST(req: NextRequest) {
       where: { userId },
     });
     if (existing) {
+      if (existing.status === 'ACTIVE') {
+        return NextResponse.json(
+          { error: 'You already have an active affiliate profile.' },
+          { status: 400 }
+        );
+      }
+
+      // If program is disabled
+      const settings = await getGlobalSettings();
+      if (!settings.programEnabled) {
+        return NextResponse.json(
+          { error: 'The affiliate program is currently disabled.' },
+          { status: 400 }
+        );
+      }
+
+      // Otherwise, allow they to re-apply / update their application!
+      let candidateCode = existing.promoCode;
+      if (requestedCode && requestedCode.toUpperCase() !== existing.promoCode) {
+        const clean = requestedCode.toUpperCase();
+        const available = await isPromoCodeAvailable(clean);
+        if (!available) {
+          return NextResponse.json(
+            { error: 'Requested promo code is already taken.' },
+            { status: 400 }
+          );
+        }
+        candidateCode = clean;
+      }
+
+      const updated = await prisma.affiliate.update({
+        where: { id: existing.id },
+        data: {
+          promoCode: candidateCode,
+          referralSlug: candidateCode,
+          status: 'PENDING', // Reset status back to PENDING so admin reviews it
+          platform,
+          platformFollowers,
+          categoryFocus,
+          applicationNote: finalApplicationNote,
+          payoutMethod: payoutMethod as AffiliatePayoutMethod,
+          payoutDetails,
+        },
+      });
+
       return NextResponse.json(
-        { error: 'You already have an affiliate profile or active application.' },
-        { status: 400 }
+        { success: true, affiliateId: updated.id, promoCode: updated.promoCode, updated: true },
+        { status: 200 }
       );
     }
   }
@@ -201,4 +246,17 @@ export async function POST(req: NextRequest) {
     { success: true, affiliateId: affiliate.id, promoCode: affiliate.promoCode },
     { status: 201 }
   );
+}
+
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const affiliate = await prisma.affiliate.findUnique({
+    where: { userId: session.user.id },
+  });
+
+  return NextResponse.json({ affiliate });
 }
