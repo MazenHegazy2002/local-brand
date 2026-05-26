@@ -242,6 +242,60 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  // ── Referral bonus attribution ──────────────────────────────────────────
+  // If the applicant arrived via a brandy_ref cookie, wire up the referral chain
+  // and create signup bonuses for both the joiner and the referrer.
+  if (settings.bonusesEnabled) {
+    const refSlug = req.cookies.get('brandy_ref')?.value;
+    if (refSlug) {
+      try {
+        const referrer = await prisma.affiliate.findFirst({
+          where: { referralSlug: refSlug.toUpperCase() },
+        });
+        if (referrer && referrer.id !== affiliate.id) {
+          const expiresAt = settings.bonusExpiryDays
+            ? new Date(Date.now() + settings.bonusExpiryDays * 24 * 60 * 60 * 1000)
+            : null;
+
+          // Joiner gets their bonus immediately (ACTIVE — usable on first order)
+          const joinerBonus = await prisma.affiliateBonus.create({
+            data: {
+              affiliateId: affiliate.id,
+              type: 'JOINER_SIGNUP',
+              amountEgp: settings.joinerBonusEgp,
+              status: 'ACTIVE',
+              activatedAt: new Date(),
+              expiresAt,
+            },
+          });
+
+          // Referrer bonus stays PENDING until joiner's first order completes
+          const referrerBonus = await prisma.affiliateBonus.create({
+            data: {
+              affiliateId: referrer.id,
+              type: 'REFERRER_SIGNUP',
+              amountEgp: settings.referrerBonusEgp,
+              status: 'PENDING',
+              expiresAt,
+            },
+          });
+
+          // Link them through an AffiliateReferral record
+          await prisma.affiliateReferral.create({
+            data: {
+              referrerAffiliateId: referrer.id,
+              newAffiliateId: affiliate.id,
+              referrerBonusId: referrerBonus.id,
+              joinerBonusId: joinerBonus.id,
+            },
+          });
+        }
+      } catch (refErr) {
+        console.error('Failed to wire affiliate referral bonuses:', refErr);
+      }
+    }
+  }
+
   return NextResponse.json(
     { success: true, affiliateId: affiliate.id, promoCode: affiliate.promoCode },
     { status: 201 }

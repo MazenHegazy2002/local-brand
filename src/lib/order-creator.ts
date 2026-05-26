@@ -29,7 +29,9 @@ export interface CreateOrderResult {
 
 export async function createOrderForUser(
   userId: string | null,
-  formData: unknown
+  formData: unknown,
+  /** referralSlug read from the `brandy_ref` cookie by the server action (Task 32) */
+  referralSlug?: string | null
 ): Promise<CreateOrderResult> {
   try {
     // ── 1. Validate Input ─────────────────────────────────────────────────────
@@ -188,6 +190,25 @@ export async function createOrderForUser(
       }
     }
 
+    // ── Cookie-based referral attribution (Task 32) ───────────────────────────
+    // If the buyer landed via a referral link (/ref/[slug]) and has not already
+    // been attributed via a promo code, attribute the sale to the referrer.
+    // No discount is given for referral-link attribution (the discount was the
+    // incentive when they typed the code; the link is purely a tracking path).
+    if (!affiliateId && referralSlug && userId) {
+      try {
+        const referrer = await prisma.affiliate.findUnique({
+          where: { referralSlug: referralSlug.toUpperCase() },
+        });
+        if (referrer && referrer.status === 'ACTIVE') {
+          affiliateId = referrer.id;
+          // No discount for cookie-only attribution — buyer didn't enter a code
+        }
+      } catch (err) {
+        console.error('Failed to resolve referral slug:', err);
+      }
+    }
+
     // Hard cap: total discount must not exceed MAX_DISCOUNT_PCT of subtotal
     discountAmount = Math.min(discountAmount, subtotal * MAX_DISCOUNT_PCT);
 
@@ -250,6 +271,43 @@ export async function createOrderForUser(
         });
       } catch (err) {
         console.error('Failed to record affiliate sale:', err);
+      }
+    }
+
+    // ── Activate referrer bonus on joiner's first order ──────────────────
+    if (userId) {
+      try {
+        // Check if this buyer is an affiliate who was referred by someone else
+        const joinerAffiliate = await prisma.affiliate.findUnique({ where: { userId } });
+        if (joinerAffiliate) {
+          const referral = await prisma.affiliateReferral.findFirst({
+            where: {
+              newAffiliateId: joinerAffiliate.id,
+              firstOrderTriggered: false,
+              referrerBonusId: { not: null },
+            },
+          });
+          if (referral?.referrerBonusId) {
+            // Count completed orders for this user to confirm this is their first
+            const prevOrders = await prisma.order.count({
+              where: { userId, id: { not: order.id }, status: { not: 'CANCELLED' } },
+            });
+            if (prevOrders === 0) {
+              await prisma.$transaction([
+                prisma.affiliateBonus.update({
+                  where: { id: referral.referrerBonusId },
+                  data: { status: 'ACTIVE', activatedAt: new Date() },
+                }),
+                prisma.affiliateReferral.update({
+                  where: { id: referral.id },
+                  data: { firstOrderTriggered: true, firstOrderId: order.id },
+                }),
+              ]);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to activate referrer bonus:', err);
       }
     }
 

@@ -26,6 +26,7 @@ import MarketingTab from './_components/MarketingTab';
 import SupportTab from './_components/SupportTab';
 import MaintenanceTab from './_components/MaintenanceTab';
 import ShippingTab from './_components/ShippingTab';
+import BannersTab from './_components/BannersTab';
 import {
   SessionUser,
   SellerProfile,
@@ -366,6 +367,12 @@ export default function AdminOS() {
 
         <div className="nav-section">Content</div>
         <NavItem
+          active={activeTab === 'banners'}
+          onClick={() => setActiveTab('banners')}
+          label="Banners"
+          icon={<BannerIcon />}
+        />
+        <NavItem
           active={activeTab === 'pages'}
           onClick={() => setActiveTab('pages')}
           label="Pages"
@@ -515,6 +522,7 @@ export default function AdminOS() {
           )}
           {activeTab === 'settings' && <NewSettingsTab />}
           {activeTab === 'plugins' && <PluginsTab />}
+          {activeTab === 'banners' && <BannersTab />}
           {activeTab === 'pages' && <PagesTab />}
           {activeTab === 'reviews' && <ReviewsTab />}
           {activeTab === 'marketing' && <MarketingTab />}
@@ -3114,6 +3122,160 @@ function EditOrderModal({ order, onClose, onSaved }: EditOrderModalProps) {
       <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 560 }}>
         <div className="modal-title">Edit order #{order.id.substring(0, 8)}</div>
         {error && <div className="error-banner">{error}</div>}
+
+        {/* ── Line items (Task 11) ── */}
+        {order.items && order.items.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: '#94a3b8',
+                marginBottom: 8,
+              }}
+            >
+              Order Items ({order.items.length})
+            </div>
+            <div
+              style={{
+                border: '1px solid #e2e8f0',
+                borderRadius: 10,
+                overflow: 'hidden',
+                background: '#f8fafc',
+              }}
+            >
+              {(order.items as any[]).map((item: any, idx: number) => {
+                let attrs: Record<string, string> = {};
+                try {
+                  attrs = JSON.parse(item.variant?.attributes || '{}');
+                } catch {}
+                const variantTitle = item.variant?.title;
+                const isStandard =
+                  !variantTitle ||
+                  variantTitle === 'Standard' ||
+                  variantTitle === item.productTitleSnapshot;
+                return (
+                  <div
+                    key={item.id || idx}
+                    style={{
+                      padding: '10px 14px',
+                      borderBottom:
+                        idx < (order.items as any[]).length - 1 ? '1px solid #e2e8f0' : 'none',
+                      display: 'flex',
+                      gap: 12,
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>
+                        {item.productTitleSnapshot || 'Product'}
+                      </div>
+                      {!isStandard && (
+                        <div
+                          style={{ fontSize: 11, color: '#4f46e5', fontWeight: 600, marginTop: 2 }}
+                        >
+                          {variantTitle}
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+                        {attrs.color && (
+                          <span
+                            style={{
+                              fontSize: 10,
+                              background: '#e0e7ff',
+                              color: '#3730a3',
+                              borderRadius: 99,
+                              padding: '2px 8px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            Color: {attrs.color}
+                          </span>
+                        )}
+                        {(attrs.size || attrs.sizes) && (
+                          <span
+                            style={{
+                              fontSize: 10,
+                              background: '#f0fdf4',
+                              color: '#15803d',
+                              borderRadius: 99,
+                              padding: '2px 8px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            Size: {attrs.size || attrs.sizes}
+                          </span>
+                        )}
+                        {Object.entries(attrs)
+                          .filter(([k]) => k !== 'color' && k !== 'size' && k !== 'sizes')
+                          .map(([k, v]) => (
+                            <span
+                              key={k}
+                              style={{
+                                fontSize: 10,
+                                background: '#f8fafc',
+                                color: '#475569',
+                                borderRadius: 99,
+                                padding: '2px 8px',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {k}: {v}
+                            </span>
+                          ))}
+                      </div>
+                      {(item.variant?.sku || item.variant?.upc) && (
+                        <div
+                          style={{
+                            fontSize: 10,
+                            fontFamily: 'monospace',
+                            color: '#94a3b8',
+                            marginTop: 3,
+                          }}
+                        >
+                          {item.variant.sku && `SKU: ${item.variant.sku}`}
+                          {item.variant.sku && item.variant.upc && ' · '}
+                          {item.variant.upc && `UPC: ${item.variant.upc}`}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b' }}>
+                        × {item.quantity}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#64748b' }}>
+                        {(item.priceAtPurchase || 0).toLocaleString()} EGP ea
+                      </div>
+                      {item.status && (
+                        <div
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            marginTop: 3,
+                            color:
+                              item.status === 'DELIVERED'
+                                ? '#059669'
+                                : item.status === 'SHIPPED'
+                                  ? '#0284c7'
+                                  : item.status === 'CANCELLED'
+                                    ? '#dc2626'
+                                    : '#d97706',
+                          }}
+                        >
+                          {item.status.replace(/_/g, ' ')}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <form onSubmit={onSubmit}>
           <div className="form-group">
             <label className="form-label">Status</label>
@@ -3984,6 +4146,16 @@ function TruckIcon() {
       <path d="M10 6h3l2 3v2h-5V6z" stroke="currentColor" strokeWidth="1.1" />
       <circle cx="4" cy="12" r="1.2" stroke="currentColor" strokeWidth="1" />
       <circle cx="12" cy="12" r="1.2" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  );
+}
+
+function BannerIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <rect x="1" y="3" width="14" height="8" rx="1" stroke="currentColor" strokeWidth="1.1" />
+      <path d="M4 7h8M4 9.5h5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+      <path d="M3 13h4M9 13h4" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
     </svg>
   );
 }

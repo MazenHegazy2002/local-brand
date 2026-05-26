@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { OrderStatus, OrderItemStatus } from '@/generated/client';
 import type { SessionUser } from '@/types';
 import { createOrderForUser, type CreateOrderResult } from '@/lib/order-creator';
@@ -16,7 +17,17 @@ export async function createOrder(formData: unknown): Promise<CreateOrderResult>
   const session = await getServerSession(authOptions);
   const userId = session ? (session.user as SessionUser).id : null;
 
-  const result = await createOrderForUser(userId, formData);
+  // Read the affiliate referral cookie (Task 32 — cookie attribution)
+  const cookieStore = await cookies();
+  const referralSlug = cookieStore.get('brandy_ref')?.value ?? null;
+
+  const result = await createOrderForUser(userId, formData, referralSlug);
+
+  // Clear the referral cookie once it has been attributed to an order
+  if (result.success && referralSlug) {
+    cookieStore.delete('brandy_ref');
+  }
+
   if (result.success) revalidatePath('/dashboard');
   return result;
 }

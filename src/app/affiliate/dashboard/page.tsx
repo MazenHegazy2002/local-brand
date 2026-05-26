@@ -204,7 +204,7 @@ export default function AffiliateDashboardPage() {
 
   if (!data) return null;
 
-  const { affiliate, nextTier, progress, settings, recentCommissions } = data;
+  const { affiliate, nextTier, progress, settings, recentCommissions, bonuses } = data;
 
   const statusBadge: Record<string, { bg: string; text: string }> = {
     ACTIVE: { bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
@@ -446,6 +446,77 @@ export default function AffiliateDashboardPage() {
             )}
           </div>
         </div>
+
+        {/* ── Signup Bonuses ── */}
+        {settings.bonusesEnabled && bonuses.length > 0 && (
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4">
+              {lang === 'ar' ? 'مكافآتي' : 'My Bonuses'}
+            </h3>
+            <div className="flex flex-col gap-3">
+              {bonuses.map(b => {
+                const isActive = b.status === 'ACTIVE';
+                const label =
+                  b.type === 'JOINER_SIGNUP'
+                    ? lang === 'ar'
+                      ? 'مكافأة الانضمام'
+                      : 'Welcome Bonus'
+                    : lang === 'ar'
+                      ? 'مكافأة الإحالة'
+                      : 'Referral Reward';
+                const statusLabel = isActive
+                  ? lang === 'ar'
+                    ? 'نشط'
+                    : 'Active'
+                  : lang === 'ar'
+                    ? 'معلق'
+                    : 'Pending';
+                return (
+                  <div
+                    key={b.id}
+                    className={`flex items-center justify-between rounded-xl px-4 py-3 ${isActive ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-zinc-800/60 border border-zinc-700'}`}
+                  >
+                    <div>
+                      <p
+                        className={`text-xs font-black ${isActive ? 'text-emerald-300' : 'text-zinc-400'}`}
+                      >
+                        {label}
+                      </p>
+                      {b.expiresAt && (
+                        <p className="text-[10px] text-zinc-600 mt-0.5">
+                          {lang === 'ar'
+                            ? `تنتهي: ${new Date(b.expiresAt).toLocaleDateString('ar-EG')}`
+                            : `Expires: ${new Date(b.expiresAt).toLocaleDateString('en-EG')}`}
+                        </p>
+                      )}
+                      {!isActive && b.type === 'REFERRER_SIGNUP' && (
+                        <p className="text-[10px] text-zinc-600 mt-0.5">
+                          {lang === 'ar'
+                            ? 'يُفعَّل عند إتمام إحالتك أول طلب'
+                            : 'Activates when your referral completes their first order'}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p
+                        className={`text-sm font-black ${isActive ? 'text-emerald-400' : 'text-zinc-500'}`}
+                      >
+                        {lang === 'ar'
+                          ? `${b.amountEgp.toLocaleString('ar-EG')} ج.م`
+                          : `${b.amountEgp.toLocaleString()} EGP`}
+                      </p>
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-700 text-zinc-500'}`}
+                      >
+                        {statusLabel}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── Tier progression ── */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
