@@ -26,12 +26,15 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
 
   if (!order) {
     return (
-      <main className="min-h-screen bg-[hsl(var(--background))]">
+      <main className="min-h-screen bg-[#f9f8f6] font-[Cairo,system-ui,sans-serif]">
         <Navbar />
-        <div className="container py-12 text-center text-white">
-          <h1 className="text-4xl font-serif mb-4">Order Not Found</h1>
-          <p>We couldn&apos;t find an order with this ID.</p>
-          <Link href="/dashboard" className="btn btn-accent mt-6">
+        <div className="container mx-auto px-4 py-20 text-center">
+          <h1 className="text-3xl font-black text-slate-900 mb-3">Order Not Found</h1>
+          <p className="text-slate-600 mb-6">We couldn&apos;t find an order with this ID.</p>
+          <Link
+            href="/dashboard"
+            className="inline-block bg-[#1e3b8a] text-white font-bold py-3 px-6 rounded-xl hover:bg-[#16307a] transition-colors"
+          >
             Return to Dashboard
           </Link>
         </div>
@@ -40,61 +43,137 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
   }
 
   const steps = ['PENDING_PAYMENT', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+  const stepLabels: Record<string, string> = {
+    PENDING_PAYMENT: 'Awaiting Payment',
+    CONFIRMED: 'Confirmed',
+    PROCESSING: 'Processing',
+    SHIPPED: 'Shipped',
+    DELIVERED: 'Delivered',
+  };
   const currentStepIndex = steps.indexOf(order.status);
 
+  // Parse shipping address snapshot for display
+  let shippingAddress: {
+    fullName?: string;
+    phone?: string;
+    street?: string;
+    city?: string;
+    governorate?: string;
+  } | null = null;
+  try {
+    if (order.shippingAddressSnapshot) {
+      shippingAddress = JSON.parse(order.shippingAddressSnapshot);
+    }
+  } catch {
+    /* ignore */
+  }
+
   return (
-    <main className="min-h-screen bg-[hsl(var(--background))]">
+    <main
+      className="min-h-screen bg-[#f9f8f6]"
+      style={{ fontFamily: 'Cairo, system-ui, -apple-system, sans-serif' }}
+    >
       <Navbar />
 
-      <div className="container py-12">
-        <Link href="/dashboard" className="text-white/40 hover:text-white mb-8 inline-block">
-          &larr; Back to Dashboard
+      <div className="container mx-auto px-4 py-8 max-w-5xl">
+        <Link
+          href="/dashboard"
+          className="text-slate-500 hover:text-[#1e3b8a] text-sm font-semibold mb-6 inline-flex items-center gap-1 transition-colors"
+        >
+          <span aria-hidden>&larr;</span> Back to Dashboard
         </Link>
 
-        <div className="flex justify-between items-end mb-8">
-          <div>
-            <h1 className="text-4xl font-serif font-bold text-white mb-2">
-              Order <span className="text-[hsl(var(--accent))]">#{order.id.split('-')[0]}</span>
-            </h1>
-            <p className="text-white/40 text-sm tracking-widest uppercase font-bold">
-              Placed on {new Date(order.createdAt).toLocaleDateString()}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-2xl font-serif text-white">
-              {order.totalAmount.toLocaleString()} EGP
-            </p>
-            <p className="text-[hsl(var(--accent))] text-sm font-bold uppercase tracking-widest">
-              {order.paymentStatus}
-            </p>
+        {/* ── Order Header ──────────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8 mb-6">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+            <div>
+              <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                Order
+              </div>
+              <h1 className="text-2xl md:text-3xl font-black text-slate-900">
+                #{order.id.split('-')[0].toUpperCase()}
+              </h1>
+              <p className="text-slate-500 text-sm mt-1">
+                Placed on{' '}
+                <span className="font-semibold text-slate-700">
+                  {new Date(order.createdAt).toLocaleDateString(undefined, {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </span>
+              </p>
+            </div>
+            <div className="md:text-right">
+              <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                Total
+              </div>
+              <p className="text-2xl md:text-3xl font-black text-[#1e3b8a]">
+                {order.totalAmount.toLocaleString()}{' '}
+                <span className="text-base font-bold text-slate-400">EGP</span>
+              </p>
+              <span
+                className={`inline-block mt-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                  order.paymentStatus === 'PAID'
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : order.paymentStatus === 'FAILED' || order.paymentStatus === 'REFUNDED'
+                      ? 'bg-red-50 text-red-700'
+                      : 'bg-amber-50 text-amber-700'
+                }`}
+              >
+                {order.paymentStatus} · {order.paymentMethod?.replace(/_/g, ' ')}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Tracking Timeline */}
-        <div className="glass p-8 rounded-3xl border border-white/5 mb-8">
-          <h2 className="text-xl font-serif font-bold text-white mb-8">Tracking Status</h2>
+        {/* ── Tracking Timeline ─────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8 mb-6">
+          <h2 className="text-lg font-black text-slate-900 mb-6">Tracking Status</h2>
 
           <div className="relative">
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-white/10 rounded-full hidden md:block"></div>
+            {/* Desktop horizontal track */}
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 rounded-full hidden md:block"></div>
             <div
-              className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-[hsl(var(--accent))] rounded-full transition-all duration-500 hidden md:block"
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-emerald-500 rounded-full transition-all duration-500 hidden md:block"
               style={{ width: `${Math.max(0, currentStepIndex) * 25}%` }}
             ></div>
+            {/* Mobile vertical track */}
+            <div className="absolute left-4 top-4 w-1 h-[calc(100%-2rem)] bg-slate-100 rounded-full md:hidden"></div>
+            <div
+              className="absolute left-4 top-4 w-1 bg-emerald-500 rounded-full transition-all duration-500 md:hidden"
+              style={{
+                height: `${Math.max(0, currentStepIndex) * 25}%`,
+              }}
+            ></div>
 
-            <div className="relative flex flex-col md:flex-row justify-between gap-4">
+            <div className="relative flex flex-col md:flex-row md:justify-between gap-6 md:gap-4">
               {steps.map((step, index) => {
                 const isActive = index <= currentStepIndex;
+                const isCurrent = index === currentStepIndex;
                 return (
                   <div key={step} className="flex flex-row md:flex-col items-center gap-4 md:gap-0">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center border-4 border-[hsl(var(--background))] z-10 ${isActive ? 'bg-[hsl(var(--accent))] text-[hsl(var(--background))]' : 'bg-white/20 text-transparent'}`}
+                      className={`relative w-9 h-9 rounded-full flex items-center justify-center font-black text-sm shrink-0 z-10 ring-4 ring-white transition-all ${
+                        isActive
+                          ? isCurrent
+                            ? 'bg-[#1e3b8a] text-white shadow-lg shadow-[#1e3b8a]/30 scale-110'
+                            : 'bg-emerald-500 text-white'
+                          : 'bg-slate-200 text-slate-400'
+                      }`}
                     >
-                      {isActive && '✓'}
+                      {isActive ? '✓' : index + 1}
                     </div>
                     <span
-                      className={`md:mt-4 text-xs font-bold tracking-widest uppercase ${isActive ? 'text-white' : 'text-white/40'}`}
+                      className={`md:mt-3 text-xs md:text-center ${
+                        isCurrent
+                          ? 'text-[#1e3b8a] font-black'
+                          : isActive
+                            ? 'text-slate-700 font-bold'
+                            : 'text-slate-400 font-semibold'
+                      }`}
                     >
-                      {step.replace('_', ' ')}
+                      {stepLabels[step]}
                     </span>
                   </div>
                 );
@@ -103,21 +182,25 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
           </div>
 
           {order.shipments.length > 0 && (
-            <div className="mt-8 pt-8 border-t border-white/5">
-              <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-4">
+            <div className="mt-8 pt-6 border-t border-slate-100">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
                 Shipment Details
               </h3>
               {order.shipments.map(shipment => (
-                <div key={shipment.id} className="flex gap-4 items-center">
-                  <div className="bg-white/5 p-4 rounded-xl">
-                    <span className="block text-white/40 text-xs mb-1">Courier</span>
-                    <span className="text-white font-bold">
+                <div key={shipment.id} className="flex flex-wrap gap-3">
+                  <div className="bg-slate-50 px-4 py-3 rounded-xl flex-1 min-w-[180px]">
+                    <span className="block text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">
+                      Courier
+                    </span>
+                    <span className="text-slate-900 font-bold">
                       {shipment.courier || 'Standard Shipping'}
                     </span>
                   </div>
-                  <div className="bg-white/5 p-4 rounded-xl">
-                    <span className="block text-white/40 text-xs mb-1">Tracking Number</span>
-                    <span className="text-[hsl(var(--accent))] font-bold tracking-widest">
+                  <div className="bg-slate-50 px-4 py-3 rounded-xl flex-1 min-w-[180px]">
+                    <span className="block text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">
+                      Tracking Number
+                    </span>
+                    <span className="text-[#1e3b8a] font-bold tracking-wider font-mono text-sm">
                       {shipment.trackingNumber || 'Pending'}
                     </span>
                   </div>
@@ -127,62 +210,178 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
           )}
         </div>
 
-        {/* Order Items */}
-        <h2 className="text-xl font-serif font-bold text-white mb-6">Items in this order</h2>
-        <div className="grid gap-4">
-          {order.items.map(item => {
-            const product = item.variant.product;
-            const primaryImage =
-              product.images.find(img => img.isPrimary)?.url ||
-              product.images[0]?.url ||
-              '/placeholder.png';
+        {/* ── Shipping Address ──────────────────────────────────────── */}
+        {shippingAddress && (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8 mb-6">
+            <h2 className="text-lg font-black text-slate-900 mb-4">Shipping To</h2>
+            <div className="text-sm text-slate-700">
+              <div className="font-bold text-slate-900 text-base">{shippingAddress.fullName}</div>
+              {shippingAddress.phone && (
+                <div className="text-slate-500">{shippingAddress.phone}</div>
+              )}
+              <div className="mt-2 leading-relaxed">
+                {shippingAddress.street}
+                <br />
+                {shippingAddress.city}
+                {shippingAddress.governorate && `, ${shippingAddress.governorate}`}
+              </div>
+            </div>
+          </div>
+        )}
 
-            return (
-              <div
-                key={item.id}
-                className="glass p-6 rounded-2xl border border-white/5 flex gap-6 items-center"
-              >
-                <div className="w-24 h-24 relative rounded-xl overflow-hidden bg-white/5 hidden sm:block">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={primaryImage}
-                    alt={item.productTitleSnapshot}
-                    className="object-cover w-full h-full"
-                  />
+        {/* ── Order Items ──────────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8">
+          <h2 className="text-lg font-black text-slate-900 mb-6">
+            Items in this Order
+            <span className="ml-2 text-sm font-bold text-slate-400">({order.items.length})</span>
+          </h2>
+          <div className="space-y-4">
+            {order.items.map(item => {
+              const product = item.variant.product;
+              const primaryImage =
+                product.images.find(img => img.isPrimary)?.url ||
+                product.images[0]?.url ||
+                '/placeholder.png';
+
+              // Parse variant attributes (color, size, etc.) — Task 11 carryover
+              let attrs: Record<string, string> | null = null;
+              try {
+                if (item.variant.attributes) attrs = JSON.parse(item.variant.attributes);
+              } catch {
+                /* ignore */
+              }
+
+              return (
+                <div
+                  key={item.id}
+                  className="border border-slate-100 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-start hover:border-slate-200 transition-colors"
+                >
+                  <div className="w-24 h-24 relative rounded-xl overflow-hidden bg-slate-50 shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={primaryImage}
+                      alt={item.productTitleSnapshot}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  <div className="flex-grow min-w-0">
+                    <h3 className="text-base font-bold text-slate-900 mb-1">
+                      {item.productTitleSnapshot}
+                    </h3>
+                    <p className="text-slate-500 text-xs mb-2">
+                      Sold by{' '}
+                      <span className="font-semibold text-slate-700">
+                        {item.sellerNameSnapshot}
+                      </span>
+                    </p>
+                    {item.variant?.title && item.variant.title !== item.productTitleSnapshot && (
+                      <p className="text-xs text-[#1e3b8a] font-semibold mb-2">
+                        Variant: {item.variant.title}
+                      </p>
+                    )}
+                    {attrs && (
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {attrs.color && (
+                          <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded-full font-bold">
+                            Color: {attrs.color}
+                          </span>
+                        )}
+                        {(attrs.size || attrs.sizes) && (
+                          <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded-full font-bold">
+                            Size: {attrs.size || attrs.sizes}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-3 text-sm">
+                      <span className="text-slate-600">
+                        Qty: <span className="font-bold text-slate-900">{item.quantity}</span>
+                      </span>
+                      <span className="text-slate-600">
+                        Price:{' '}
+                        <span className="font-bold text-slate-900">
+                          {item.priceAtPurchase.toLocaleString()} EGP
+                        </span>
+                      </span>
+                    </div>
+                    {(item.variant?.sku || item.variant?.upc) && (
+                      <div className="mt-1.5 text-[10px] text-slate-400 font-mono">
+                        {item.variant.sku && <span>SKU: {item.variant.sku}</span>}
+                        {item.variant.sku && item.variant.upc && <span className="mx-2">·</span>}
+                        {item.variant.upc && <span>UPC: {item.variant.upc}</span>}
+                      </div>
+                    )}
+                  </div>
+                  <div className="sm:text-right shrink-0">
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                        item.status === 'DELIVERED'
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : item.status === 'SHIPPED'
+                            ? 'bg-blue-50 text-blue-700'
+                            : item.status === 'CONFIRMED'
+                              ? 'bg-indigo-50 text-indigo-700'
+                              : item.status === 'CANCELLED' || item.status === 'RETURNED'
+                                ? 'bg-red-50 text-red-700'
+                                : 'bg-amber-50 text-amber-700'
+                      }`}
+                    >
+                      {item.status === 'CONFIRMED' ? 'Ready' : item.status.replace(/_/g, ' ')}
+                    </span>
+                    <div className="mt-2 text-base font-black text-slate-900">
+                      {(item.priceAtPurchase * item.quantity).toLocaleString()} EGP
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-grow">
-                  <h3 className="text-lg font-bold text-white mb-1">{item.productTitleSnapshot}</h3>
-                  <p className="text-white/40 text-sm mb-2">Sold by: {item.sellerNameSnapshot}</p>
-                  <div className="flex gap-4 flex-wrap">
-                    <span className="text-white/60 text-sm">Qty: {item.quantity}</span>
-                    <span className="text-white/60 text-sm">
-                      Price: {item.priceAtPurchase.toLocaleString()} EGP
+              );
+            })}
+          </div>
+
+          {/* Order totals breakdown */}
+          {(() => {
+            const subtotal = order.items.reduce(
+              (sum, i) => sum + i.priceAtPurchase * i.quantity,
+              0
+            );
+            return (
+              <div className="mt-6 pt-6 border-t border-slate-100 space-y-1.5 text-sm">
+                <div className="flex justify-between text-slate-600">
+                  <span>Subtotal</span>
+                  <span className="font-semibold text-slate-900">
+                    {subtotal.toLocaleString()} EGP
+                  </span>
+                </div>
+                {order.shippingFee > 0 && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>Shipping</span>
+                    <span className="font-semibold text-slate-900">
+                      {order.shippingFee.toLocaleString()} EGP
                     </span>
                   </div>
-                  {(item.variant?.sku || item.variant?.upc) && (
-                    <div className="mt-2 text-[11px] text-white/40 font-mono">
-                      {item.variant.sku && <span>SKU: {item.variant.sku}</span>}
-                      {item.variant.sku && item.variant.upc && <span className="mx-2">·</span>}
-                      {item.variant.upc && <span>UPC: {item.variant.upc}</span>}
-                    </div>
-                  )}
-                </div>
-                <div className="text-right">
-                  <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${
-                      item.status === 'DELIVERED'
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : item.status === 'CANCELLED'
-                          ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                          : 'bg-white/5 text-white/60 border-white/10'
-                    }`}
-                  >
-                    {item.status}
+                )}
+                {order.discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-600">
+                    <span>Discount</span>
+                    <span className="font-semibold">
+                      −{order.discountAmount.toLocaleString()} EGP
+                    </span>
+                  </div>
+                )}
+                {order.giftWrapping && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>Gift wrapping</span>
+                    <span className="font-semibold text-slate-900">25 EGP</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-lg pt-3 mt-2 border-t border-slate-100">
+                  <span className="font-bold text-slate-900">Total</span>
+                  <span className="font-black text-[#1e3b8a]">
+                    {order.totalAmount.toLocaleString()} EGP
                   </span>
                 </div>
               </div>
             );
-          })}
+          })()}
         </div>
       </div>
     </main>

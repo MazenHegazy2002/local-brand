@@ -90,7 +90,7 @@ export async function GET(req: Request) {
     revenue: Number((p._sum as any).priceAtPurchase || 0),
   }));
 
-  // Returns analytics (Task 28)
+  // Returns analytics
   const returnRequests = await prisma.returnRequest
     .groupBy({
       by: ['reason'],
@@ -105,6 +105,28 @@ export async function GET(req: Request) {
     count: (r._count as any).id || 0,
   }));
 
+  // Most returned products (Task 5) — traverse returnRequest → orderItem for title
+  const returnedItems = await prisma.returnRequest
+    .findMany({
+      where: { createdAt: { gte: startDate } },
+      include: {
+        orderItem: {
+          select: { productTitleSnapshot: true },
+        },
+      },
+    })
+    .catch(() => [] as any[]);
+
+  const returnProductCounts: Record<string, number> = {};
+  for (const ret of returnedItems) {
+    const title = ret.orderItem?.productTitleSnapshot || 'Unknown';
+    returnProductCounts[title] = (returnProductCounts[title] || 0) + 1;
+  }
+  const mostReturnedProducts = Object.entries(returnProductCounts)
+    .map(([title, count]) => ({ title, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
   return NextResponse.json({
     totalOrders: orders,
     newUsers: users,
@@ -114,5 +136,6 @@ export async function GET(req: Request) {
     topSellers,
     topProducts,
     returns: { total: totalReturns, byReason: returnsByReason },
+    mostReturnedProducts,
   });
 }

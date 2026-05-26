@@ -24,6 +24,15 @@ interface PaySkyInitData {
   };
 }
 
+interface SavedAddress {
+  id: string;
+  street: string;
+  city: string;
+  governorate: string;
+  postalCode?: string | null;
+  isDefault?: boolean;
+}
+
 function CheckoutPageInner() {
   const { items, total, clearCart, removeItem, rewriteId } = useCartStore();
   const router = useRouter();
@@ -42,6 +51,8 @@ function CheckoutPageInner() {
     city: '',
     governorate: '',
   });
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedSavedAddressId, setSelectedSavedAddressId] = useState('');
 
   // Guest checkout email — required when the user isn't signed in so we can
   // send the order confirmation and surface a contact in admin/seller views.
@@ -140,9 +151,11 @@ function CheckoutPageInner() {
       // Saved address
       fetch('/api/addresses')
         .then(res => res.json())
-        .then(data => {
+        .then((data: { addresses?: SavedAddress[] }) => {
           if (data.addresses && data.addresses.length > 0) {
             const defaultAddr = data.addresses[0]; // ordered by isDefault desc
+            setSavedAddresses(data.addresses);
+            setSelectedSavedAddressId(defaultAddr.id);
             setAddress({
               fullName: session.user?.name || '',
               // @ts-expect-error - session.user type might not expose phone directly in NextAuth types
@@ -287,6 +300,18 @@ function CheckoutPageInner() {
     const points = Math.max(0, Math.min(value, loyaltyPoints, subtotal - couponDiscount));
     setPointsToUse(points);
     setPointsError('');
+  };
+
+  const selectSavedAddress = (id: string) => {
+    setSelectedSavedAddressId(id);
+    const savedAddress = savedAddresses.find(addr => addr.id === id);
+    if (!savedAddress) return;
+    setAddress(prev => ({
+      ...prev,
+      address: savedAddress.street || '',
+      city: savedAddress.city || '',
+      governorate: savedAddress.governorate || '',
+    }));
   };
 
   if (items.length === 0 && !isLoading) {
@@ -583,6 +608,44 @@ function CheckoutPageInner() {
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {session?.user && savedAddresses.length > 0 && (
+                    <div className="md:col-span-2" style={{ textAlign: isRTL ? 'right' : 'left' }}>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        {lang === 'ar' ? 'اختر عنواناً محفوظاً' : 'Use a saved address'}
+                      </label>
+                      <select
+                        value={selectedSavedAddressId}
+                        onChange={e => selectSavedAddress(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#1e3b8a] outline-none bg-white font-sans"
+                        style={{
+                          textAlign: isRTL ? 'right' : 'left',
+                          direction: isRTL ? 'rtl' : 'ltr',
+                        }}
+                      >
+                        {savedAddresses.map(savedAddress => (
+                          <option key={savedAddress.id} value={savedAddress.id}>
+                            {[
+                              savedAddress.isDefault
+                                ? lang === 'ar'
+                                  ? 'الافتراضي'
+                                  : 'Default'
+                                : null,
+                              savedAddress.street,
+                              savedAddress.city,
+                              savedAddress.governorate,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {lang === 'ar'
+                          ? 'يمكنك تعديل الحقول أدناه لهذا الطلب فقط.'
+                          : 'You can edit the fields below for this order only.'}
+                      </p>
+                    </div>
+                  )}
                   {!session?.user && (
                     <div className="md:col-span-2" style={{ textAlign: isRTL ? 'right' : 'left' }}>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">

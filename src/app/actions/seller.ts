@@ -265,7 +265,14 @@ export async function getDashboardStats() {
       const earningsById = new Map(sellerEarnings);
       for (const s of sellers) {
         const e = earningsById.get(s.id);
-        if (e) s.balance = e.available;
+        if (e) {
+          s.balance = e.available;
+          // Expose escrow fields for the admin deep-view modal
+          (s as typeof s & { heldBalance: number; nextReleaseAt: string | null }).heldBalance =
+            e.held;
+          (s as typeof s & { heldBalance: number; nextReleaseAt: string | null }).nextReleaseAt =
+            e.nextReleaseAt ? e.nextReleaseAt.toISOString() : null;
+        }
       }
       const orders = await prisma.order.findMany({
         include: {
@@ -477,6 +484,41 @@ export async function updateSellerStatus(sellerId: string, status: SellerStatus)
   }
 }
 
+export async function updateSellerCommission(sellerId: string, commissionRate: number) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as SessionUser).role !== 'ADMIN')
+      return { error: 'Unauthorized' };
+
+    const rate = Math.min(1, Math.max(0, commissionRate));
+
+    const adminId = await getRealUserId(session);
+
+    await prisma.sellerProfile.update({
+      where: { id: sellerId },
+      data: { commissionRate: rate },
+    });
+
+    if (adminId) {
+      await prisma.auditLog.create({
+        data: {
+          adminId,
+          action: 'UPDATED_SELLER_COMMISSION',
+          targetId: sellerId,
+          details: `Commission rate changed to ${Math.round(rate * 100)}%`,
+        },
+      });
+    }
+
+    revalidatePath('/admin-os');
+    return { success: true };
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error('[updateSellerCommission] Error:', error);
+    return { error: error.message || 'Failed to update commission' };
+  }
+}
+
 export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   try {
     const session = await getServerSession(authOptions);
@@ -511,14 +553,17 @@ export async function updateOrderItemStatus(itemId: string, status: OrderItemSta
     // Only check transitions if the order is still "live"
     if (parentOrder.status !== 'CANCELLED' && parentOrder.status !== 'RETURNED') {
       const allItems = parentOrder.items;
-      const allDone = allItems.every(i => i.status === 'SHIPPED' || i.status === 'DELIVERED');
 
-      // If all items are shipped/delivered, move order to PROCESSING (if it was earlier in the flow)
-      // or SHIPPED if we want to bypass PROCESSING. In this system, PROCESSING indicates the vendor
-      // prepared the items, and SHIPPED indicates logistics took it.
-      // The task says "Seller marks order as completed -> Processed"
+      // When seller marks all items as CONFIRMED (packed/ready), move order to PROCESSING.
+      // We ignore items that are already cancelled; they no longer block the transition.
+      const liveItems = allItems.filter(i => i.status !== 'CANCELLED');
+      const allPrepared = liveItems.every(i =>
+        ['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(i.status)
+      );
+
       if (
-        allDone &&
+        allPrepared &&
+        liveItems.length > 0 &&
         (parentOrder.status === 'PENDING_PAYMENT' || parentOrder.status === 'CONFIRMED')
       ) {
         await prisma.order.update({

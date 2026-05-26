@@ -45,7 +45,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'You have already reviewed this item' }, { status: 400 });
     }
 
-    // 3. Create Review and award points atomically
+    // 3. Get product title for the loyalty description
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      select: { title: true },
+    });
+
+    // 4. Create Review and award points atomically (Task 24)
     const { POINTS_PER_REVIEW } = await import('@/lib/loyalty-constants');
 
     const [review] = await prisma.$transaction([
@@ -62,6 +68,16 @@ export async function POST(req: Request) {
       prisma.user.update({
         where: { id: userId },
         data: { loyaltyPoints: { increment: POINTS_PER_REVIEW } },
+      }),
+      prisma.loyaltyTransaction.create({
+        data: {
+          userId,
+          amount: POINTS_PER_REVIEW,
+          type: 'EARNED_BY_REVIEW',
+          description: product?.title
+            ? `Earned ${POINTS_PER_REVIEW} pts for reviewing "${product.title}"`
+            : `Earned ${POINTS_PER_REVIEW} pts for review`,
+        },
       }),
     ]);
 

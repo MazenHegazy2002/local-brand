@@ -85,6 +85,16 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       // That column is now vestigial — earnings are always computed from
       // the orders table via computeSellerEarnings, which gives us escrow,
       // refund-aware reconciliation, and a single source of truth.
+    } else if (status === OrderStatus.SHIPPED && order.status !== OrderStatus.SHIPPED) {
+      // Mirror SHIPPED onto every live item so seller-hub order views
+      // reflect the correct courier-stage status.
+      await prisma.orderItem.updateMany({
+        where: {
+          orderId,
+          status: { notIn: ['CANCELLED', 'RETURNED', 'REFUNDED', 'RETURN_REQUESTED', 'DELIVERED'] },
+        },
+        data: { status: 'SHIPPED' },
+      });
     }
 
     // Update order

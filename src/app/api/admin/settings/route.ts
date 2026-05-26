@@ -61,12 +61,39 @@ export async function GET(req: Request) {
   const rows = await prisma.systemSettings.findMany();
   const byKey = new Map(rows.map(r => [r.key, r]));
 
+  // Dynamic choices for homepage category selectors (Task 3).
+  const HOMEPAGE_CAT_KEYS = [
+    'HOMEPAGE_BEST_SELLERS_CAT',
+    'HOMEPAGE_NEW_ARRIVALS_CAT',
+    'HOMEPAGE_RECOMMENDED_CAT',
+  ];
+  let categoryChoices: Array<{ value: string; label: string }> = [];
+  try {
+    const dbCats = await prisma.category.findMany({
+      where: { parentId: null },
+      select: { slug: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+    categoryChoices = [
+      { value: '', label: '— default (auto) —' },
+      ...dbCats.map(c => ({ value: c.slug, label: c.name })),
+    ];
+  } catch {
+    // Non-fatal — falls back to text input via original type
+  }
+
   const items = SETTINGS_REGISTRY.map(def => {
     const row = byKey.get(def.key);
     const stored = row?.value ?? null;
     const value = stored !== null ? maskSecret(def, stored) : serializeValue(def, def.defaultValue);
+    // Override homepage category settings to use a live category dropdown
+    const overrides =
+      HOMEPAGE_CAT_KEYS.includes(def.key) && categoryChoices.length > 0
+        ? { type: 'select' as const, choices: categoryChoices }
+        : {};
     return {
       ...def,
+      ...overrides,
       value,
       isDefault: stored === null,
       updatedAt: row?.updatedAt ?? null,

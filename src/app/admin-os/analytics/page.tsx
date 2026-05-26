@@ -30,6 +30,10 @@ interface ReturnReason {
   reason: string;
   count: number;
 }
+interface ReturnedProduct {
+  title: string;
+  count: number;
+}
 interface AnalyticsData {
   totalRevenue: number;
   totalOrders: number;
@@ -39,6 +43,7 @@ interface AnalyticsData {
   topSellers: SellerStat[];
   topProducts: ProductStat[];
   returns: { total: number; byReason: ReturnReason[] };
+  mostReturnedProducts: ReturnedProduct[];
 }
 
 export default function AdminAnalyticsPage() {
@@ -174,6 +179,42 @@ export default function AdminAnalyticsPage() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Most Returned Products (Task 5) */}
+          <div className="bg-white rounded-xl p-6">
+            <h2 className="text-lg font-bold mb-1">Most Returned Products</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Products with highest return rates in period
+            </p>
+            {data.mostReturnedProducts && data.mostReturnedProducts.length > 0 ? (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 border-b">
+                    <th className="pb-2">#</th>
+                    <th className="pb-2">Product</th>
+                    <th className="pb-2">Returns</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.mostReturnedProducts.map((p: ReturnedProduct, i: number) => (
+                    <tr key={i} className="border-t">
+                      <td className="py-2 text-gray-400 font-bold">{i + 1}</td>
+                      <td className="py-2 truncate max-w-[200px]" title={p.title}>
+                        {p.title}
+                      </td>
+                      <td className="py-2">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-600">
+                          {p.count} returns
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="text-center py-10 text-gray-500">No return data available</div>
+            )}
           </div>
 
           {/* Top Sellers */}

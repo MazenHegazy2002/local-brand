@@ -60,6 +60,7 @@ function CustomerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isAffiliate, setIsAffiliate] = useState(false);
 
   // Access control - redirect admins/sellers to their dashboards
   useEffect(() => {
@@ -77,10 +78,7 @@ function CustomerDashboard() {
       const res = (await getDashboardStats()) as unknown as DashboardData & {
         isAffiliate?: boolean;
       };
-      if (res && res.isAffiliate) {
-        router.push('/affiliate/dashboard');
-        return;
-      }
+      if (res?.isAffiliate) setIsAffiliate(true);
       setData(res);
     } catch (err: unknown) {
       const error = err as Error;
@@ -311,7 +309,28 @@ function CustomerDashboard() {
 
         <div className="tab-content animate-fadeIn" key={activeTab}>
           {activeTab === 'overview' && (
-            <OverviewTab data={data} wishlist={wishlist} myOrders={myOrders} />
+            <>
+              {isAffiliate && (
+                <div className="mb-5 flex items-center justify-between gap-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-violet-50 p-4 shadow-sm">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-widest text-indigo-600 mb-0.5">
+                      Affiliate Program
+                    </p>
+                    <p className="text-sm font-bold text-slate-800">
+                      You have an active affiliate account — track your commissions and referral
+                      earnings.
+                    </p>
+                  </div>
+                  <Link
+                    href="/affiliate/dashboard"
+                    className="shrink-0 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow"
+                  >
+                    Affiliate Portal →
+                  </Link>
+                </div>
+              )}
+              <OverviewTab data={data} wishlist={wishlist} myOrders={myOrders} />
+            </>
           )}
           {activeTab === 'orders' && (
             <OrdersTab

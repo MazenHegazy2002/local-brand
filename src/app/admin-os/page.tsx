@@ -7,6 +7,7 @@ import Link from 'next/link';
 import {
   getDashboardStats,
   updateSellerStatus,
+  updateSellerCommission,
   seedTestData,
   createTaxonomy,
   deleteTaxonomy,
@@ -1914,6 +1915,9 @@ function SearchInput({
 function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps) {
   const [search, setSearch] = useState('');
   const [selectedSeller, setSelectedSeller] = useState<any>(null);
+  const [commissionInput, setCommissionInput] = useState('');
+  const [commissionSaving, setCommissionSaving] = useState(false);
+  const [commissionMsg, setCommissionMsg] = useState<string | null>(null);
   const q = search.trim().toLowerCase();
   const sellers = (data?.sellers || []).filter((s: SellerProfile) => {
     if (!q) return true;
@@ -1921,6 +1925,46 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps
       .toLowerCase()
       .includes(q);
   });
+
+  // Derive per-seller order stats from the shared orders list
+  function getSellerStats(seller: any) {
+    const allOrders: any[] = data?.orders || [];
+    const productIds = new Set((seller.products || []).map((p: any) => p.id));
+    const sellerOrders = allOrders.filter((o: any) =>
+      o.items?.some((item: any) => productIds.has(item.variant?.productId))
+    );
+    const revenue = sellerOrders.reduce((acc: number, o: any) => acc + (o.totalAmount ?? 0), 0);
+    const delivered = sellerOrders.filter((o: any) => o.status === 'DELIVERED').length;
+    const returned = sellerOrders.filter((o: any) => o.status === 'RETURNED').length;
+    return { orderCount: sellerOrders.length, revenue, delivered, returned };
+  }
+
+  function openSellerModal(s: any) {
+    setSelectedSeller(s);
+    setCommissionInput(String(Math.round((s.commissionRate ?? 0.15) * 100)));
+    setCommissionMsg(null);
+  }
+
+  async function handleSaveCommission() {
+    if (!selectedSeller) return;
+    const pct = parseFloat(commissionInput);
+    if (isNaN(pct) || pct < 0 || pct > 100) {
+      setCommissionMsg('Enter a valid percentage (0–100)');
+      return;
+    }
+    setCommissionSaving(true);
+    setCommissionMsg(null);
+    const res = (await updateSellerCommission(selectedSeller.id, pct / 100)) as {
+      error?: string;
+    };
+    setCommissionSaving(false);
+    if (res?.error) {
+      setCommissionMsg(`Error: ${res.error}`);
+    } else {
+      setCommissionMsg(`Saved — ${pct}% commission applied`);
+      setSelectedSeller((prev: any) => ({ ...prev, commissionRate: pct / 100 }));
+    }
+  }
 
   return (
     <div className="card">
@@ -1957,7 +2001,7 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps
           </div>
           <div className="w-48 text-right flex justify-end gap-2">
             <button
-              onClick={() => setSelectedSeller(s)}
+              onClick={() => openSellerModal(s)}
               className="action-btn"
               style={{ background: '#f1f5f9', color: '#475569' }}
             >
@@ -1981,352 +2025,598 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps
         </div>
       )}
 
-      {selectedSeller && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(15, 23, 42, 0.6)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '24px',
-          }}
-          onClick={() => setSelectedSeller(null)}
-        >
-          <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              width: '680px',
-              maxWidth: '100%',
-              maxHeight: '90vh',
-              overflow: 'auto',
-              boxShadow:
-                '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
+      {selectedSeller &&
+        (() => {
+          const stats = getSellerStats(selectedSeller);
+          const heldBalance = (selectedSeller as any).heldBalance ?? 0;
+          const nextReleaseAt = (selectedSeller as any).nextReleaseAt ?? null;
+          return (
             <div
               style={{
-                padding: '24px',
-                borderBottom: '1px solid #f1f5f9',
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(15, 23, 42, 0.65)',
+                backdropFilter: 'blur(4px)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'center',
+                zIndex: 9999,
+                padding: '24px',
               }}
+              onClick={() => setSelectedSeller(null)}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '20px',
+                  width: '760px',
+                  maxWidth: '100%',
+                  maxHeight: '90vh',
+                  overflow: 'auto',
+                  boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+                onClick={e => e.stopPropagation()}
+              >
+                {/* ── Header ── */}
                 <div
                   style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '12px',
-                    background: '#f1f5f9',
+                    padding: '24px',
+                    borderBottom: '1px solid #f1f5f9',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '24px',
-                    fontWeight: '700',
-                    color: '#4f46e5',
+                    justifyContent: 'space-between',
                   }}
                 >
-                  {selectedSeller.storeName?.[0]?.toUpperCase() || 'S'}
-                </div>
-                <div>
-                  <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
-                    {selectedSeller.storeName}
-                  </h3>
-                  <p style={{ fontSize: '13px', color: '#64748b', margin: '2px 0 0 0' }}>
-                    Owned by {selectedSeller.user?.name}
-                  </p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span
-                  className={`badge ${selectedSeller.status === 'ACTIVE' ? 'b-active' : selectedSeller.status === 'PENDING_APPROVAL' ? 'b-pending' : 'b-banned'}`}
-                >
-                  {selectedSeller.status}
-                </span>
-                <button
-                  onClick={() => setSelectedSeller(null)}
-                  style={{
-                    border: 'none',
-                    background: 'none',
-                    fontSize: '18px',
-                    color: '#94a3b8',
-                    cursor: 'pointer',
-                    padding: '4px',
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              {/* Owner Info & Details */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <h4
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      textTransform: 'uppercase',
-                      color: '#94a3b8',
-                      letterSpacing: '0.05em',
-                      marginBottom: '10px',
-                    }}
-                  >
-                    👤 Owner Contact Details
-                  </h4>
-                  <ul
-                    style={{
-                      listStyle: 'none',
-                      padding: 0,
-                      margin: 0,
-                      fontSize: '13px',
-                      color: '#334155',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                    }}
-                  >
-                    <li>
-                      <strong>Email:</strong> {selectedSeller.user?.email}
-                    </li>
-                    <li>
-                      <strong>Phone:</strong> {selectedSeller.user?.phone || 'Not provided'}
-                    </li>
-                    <li>
-                      <strong>Verified:</strong>{' '}
-                      {selectedSeller.user?.emailVerified
-                        ? `✅ Verified on ${new Date(selectedSeller.user.emailVerified).toLocaleDateString()}`
-                        : '❌ Email Unverified'}
-                    </li>
-                    <li>
-                      <strong>Joined:</strong>{' '}
-                      {new Date(
-                        selectedSeller.user?.createdAt || selectedSeller.createdAt
-                      ).toLocaleDateString()}
-                    </li>
-                  </ul>
-                </div>
-                <div>
-                  <h4
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      textTransform: 'uppercase',
-                      color: '#94a3b8',
-                      letterSpacing: '0.05em',
-                      marginBottom: '10px',
-                    }}
-                  >
-                    💰 Ledger & Escrow Account
-                  </h4>
-                  <ul
-                    style={{
-                      listStyle: 'none',
-                      padding: 0,
-                      margin: 0,
-                      fontSize: '13px',
-                      color: '#334155',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                    }}
-                  >
-                    <li>
-                      <strong>Available Balance:</strong>{' '}
-                      <span style={{ color: '#059669', fontWeight: '600' }}>
-                        {selectedSeller.balance?.toLocaleString()} EGP
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    {selectedSeller.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={selectedSeller.logoUrl}
+                        alt={selectedSeller.storeName}
+                        style={{
+                          width: '64px',
+                          height: '64px',
+                          borderRadius: '14px',
+                          objectFit: 'cover',
+                          border: '1px solid #e2e8f0',
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: '64px',
+                          height: '64px',
+                          borderRadius: '14px',
+                          background: 'linear-gradient(135deg,#eef2ff,#c7d2fe)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '26px',
+                          fontWeight: '800',
+                          color: '#4f46e5',
+                        }}
+                      >
+                        {selectedSeller.storeName?.[0]?.toUpperCase() || 'S'}
+                      </div>
+                    )}
+                    <div>
+                      <h3
+                        style={{ fontSize: '20px', fontWeight: '800', color: '#1e293b', margin: 0 }}
+                      >
+                        {selectedSeller.storeName}
+                      </h3>
+                      <p style={{ fontSize: '13px', color: '#64748b', margin: '3px 0 6px 0' }}>
+                        Owned by <strong>{selectedSeller.user?.name}</strong>
+                        {selectedSeller.governorate
+                          ? ` · ${selectedSeller.governorate}${selectedSeller.city ? `, ${selectedSeller.city}` : ''}`
+                          : ''}
+                      </p>
+                      <span
+                        className={`badge ${selectedSeller.status === 'ACTIVE' ? 'b-active' : selectedSeller.status === 'PENDING_APPROVAL' ? 'b-pending' : 'b-banned'}`}
+                      >
+                        {selectedSeller.status}
                       </span>
-                    </li>
-                    <li>
-                      <strong>Bank Account:</strong>{' '}
-                      {selectedSeller.bankAccount || 'Not configured'}
-                    </li>
-                    <li>
-                      <strong>Platform Commission:</strong>{' '}
-                      {Math.round((selectedSeller.commissionRate ?? 0.15) * 100)}%
-                    </li>
-                    <li>
-                      <strong>Location:</strong> {selectedSeller.governorate || 'N/A'},{' '}
-                      {selectedSeller.city || 'N/A'}
-                    </li>
-                  </ul>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedSeller(null)}
+                    style={{
+                      border: 'none',
+                      background: 'none',
+                      fontSize: '20px',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      lineHeight: 1,
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* ── Body ── */}
+                <div
+                  style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}
+                >
+                  {/* Order stats strip */}
+                  <div
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px' }}
+                  >
+                    {[
+                      { label: 'Total Orders', value: stats.orderCount, color: '#4f46e5' },
+                      {
+                        label: 'Total Revenue',
+                        value: `${stats.revenue.toLocaleString()} EGP`,
+                        color: '#059669',
+                      },
+                      { label: 'Delivered', value: stats.delivered, color: '#0ea5e9' },
+                      { label: 'Returns', value: stats.returned, color: '#ef4444' },
+                    ].map(card => (
+                      <div
+                        key={card.label}
+                        style={{
+                          background: '#f8fafc',
+                          borderRadius: '12px',
+                          padding: '14px',
+                          border: '1px solid #e2e8f0',
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: '700',
+                            textTransform: 'uppercase',
+                            color: '#94a3b8',
+                            letterSpacing: '0.05em',
+                            marginBottom: '6px',
+                          }}
+                        >
+                          {card.label}
+                        </div>
+                        <div style={{ fontSize: '18px', fontWeight: '800', color: card.color }}>
+                          {card.value}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Wallet / Escrow */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div
+                      style={{
+                        background: '#f0fdf4',
+                        borderRadius: '12px',
+                        padding: '16px',
+                        border: '1px solid #bbf7d0',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          color: '#15803d',
+                          letterSpacing: '0.05em',
+                          marginBottom: '6px',
+                        }}
+                      >
+                        Mature Funds (Available)
+                      </div>
+                      <div style={{ fontSize: '22px', fontWeight: '800', color: '#15803d' }}>
+                        {selectedSeller.balance?.toLocaleString() ?? '0'}{' '}
+                        <span style={{ fontSize: '13px', color: '#4ade80' }}>EGP</span>
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#166534', marginTop: '4px' }}>
+                        Past 14-day escrow window
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        background: '#fffbeb',
+                        borderRadius: '12px',
+                        padding: '16px',
+                        border: '1px solid #fde68a',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          color: '#b45309',
+                          letterSpacing: '0.05em',
+                          marginBottom: '6px',
+                        }}
+                      >
+                        In Escrow (Held)
+                      </div>
+                      <div style={{ fontSize: '22px', fontWeight: '800', color: '#b45309' }}>
+                        {heldBalance.toLocaleString()}{' '}
+                        <span style={{ fontSize: '13px', color: '#fbbf24' }}>EGP</span>
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#92400e', marginTop: '4px' }}>
+                        {nextReleaseAt
+                          ? `Next release: ${new Date(nextReleaseAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
+                          : 'No pending escrow'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Owner & Commission row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    {/* Owner */}
+                    <div>
+                      <h4
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          color: '#94a3b8',
+                          letterSpacing: '0.05em',
+                          marginBottom: '10px',
+                        }}
+                      >
+                        👤 Owner Details
+                      </h4>
+                      <ul
+                        style={{
+                          listStyle: 'none',
+                          padding: 0,
+                          margin: 0,
+                          fontSize: '12px',
+                          color: '#334155',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '7px',
+                        }}
+                      >
+                        <li>
+                          <strong>Email:</strong> {selectedSeller.user?.email}
+                        </li>
+                        <li>
+                          <strong>Phone:</strong> {selectedSeller.user?.phone || 'Not provided'}
+                        </li>
+                        <li>
+                          <strong>Email verified:</strong>{' '}
+                          {selectedSeller.user?.emailVerified
+                            ? `✅ ${new Date(selectedSeller.user.emailVerified).toLocaleDateString()}`
+                            : '❌ Unverified'}
+                        </li>
+                        <li>
+                          <strong>Joined:</strong>{' '}
+                          {new Date(
+                            selectedSeller.user?.createdAt || selectedSeller.createdAt
+                          ).toLocaleDateString()}
+                        </li>
+                        <li>
+                          <strong>Bank account:</strong>{' '}
+                          {selectedSeller.bankAccount || (
+                            <em style={{ color: '#94a3b8' }}>Not configured</em>
+                          )}
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Commission editor */}
+                    <div>
+                      <h4
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          color: '#94a3b8',
+                          letterSpacing: '0.05em',
+                          marginBottom: '10px',
+                        }}
+                      >
+                        ⚙️ Platform Commission
+                      </h4>
+                      <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '10px' }}>
+                        Override the per-seller commission rate. Default is 15%.
+                      </p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          step={0.5}
+                          value={commissionInput}
+                          onChange={e => setCommissionInput(e.target.value)}
+                          style={{
+                            width: '80px',
+                            padding: '6px 8px',
+                            borderRadius: '8px',
+                            border: '1px solid #e2e8f0',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            textAlign: 'center',
+                          }}
+                        />
+                        <span style={{ fontSize: '13px', color: '#64748b' }}>%</span>
+                        <button
+                          onClick={handleSaveCommission}
+                          disabled={commissionSaving}
+                          style={{
+                            padding: '7px 14px',
+                            borderRadius: '8px',
+                            background: commissionSaving ? '#e2e8f0' : '#4f46e5',
+                            border: 'none',
+                            color: commissionSaving ? '#94a3b8' : '#fff',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            cursor: commissionSaving ? 'default' : 'pointer',
+                          }}
+                        >
+                          {commissionSaving ? 'Saving…' : 'Save'}
+                        </button>
+                      </div>
+                      {commissionMsg && (
+                        <p
+                          style={{
+                            fontSize: '11px',
+                            marginTop: '6px',
+                            color: commissionMsg.startsWith('Error') ? '#ef4444' : '#059669',
+                          }}
+                        >
+                          {commissionMsg}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Products */}
+                  <div>
+                    <h4
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        textTransform: 'uppercase',
+                        color: '#94a3b8',
+                        letterSpacing: '0.05em',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      📦 Listings ({selectedSeller.products?.length || 0})
+                    </h4>
+                    {selectedSeller.products && selectedSeller.products.length > 0 ? (
+                      <div
+                        style={{
+                          maxHeight: '160px',
+                          overflow: 'auto',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          background: '#f8fafc',
+                        }}
+                      >
+                        <table
+                          style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}
+                        >
+                          <thead>
+                            <tr
+                              style={{
+                                borderBottom: '1px solid #e2e8f0',
+                                color: '#64748b',
+                                position: 'sticky',
+                                top: 0,
+                                background: '#f8fafc',
+                              }}
+                            >
+                              <th
+                                style={{
+                                  padding: '8px 12px',
+                                  textAlign: 'left',
+                                  fontWeight: '600',
+                                }}
+                              >
+                                Product
+                              </th>
+                              <th
+                                style={{
+                                  padding: '8px 12px',
+                                  textAlign: 'right',
+                                  fontWeight: '600',
+                                }}
+                              >
+                                Status
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedSeller.products.map((p: any) => (
+                              <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td style={{ padding: '7px 12px', color: '#1e293b' }}>{p.title}</td>
+                                <td style={{ padding: '7px 12px', textAlign: 'right' }}>
+                                  <span
+                                    className={`badge ${p.published ? 'b-active' : 'b-pending'}`}
+                                    style={{ fontSize: '9px' }}
+                                  >
+                                    {p.published ? 'LIVE' : 'DRAFT'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p
+                        style={{
+                          fontSize: '12px',
+                          color: '#94a3b8',
+                          fontStyle: 'italic',
+                          margin: 0,
+                        }}
+                      >
+                        No listings yet.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Payouts */}
+                  <div>
+                    <h4
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        textTransform: 'uppercase',
+                        color: '#94a3b8',
+                        letterSpacing: '0.05em',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      💸 Payout History ({selectedSeller.payouts?.length || 0})
+                    </h4>
+                    {selectedSeller.payouts && selectedSeller.payouts.length > 0 ? (
+                      <div
+                        style={{
+                          maxHeight: '150px',
+                          overflow: 'auto',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          background: '#f8fafc',
+                        }}
+                      >
+                        <table
+                          style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}
+                        >
+                          <thead>
+                            <tr
+                              style={{
+                                borderBottom: '1px solid #e2e8f0',
+                                color: '#64748b',
+                                position: 'sticky',
+                                top: 0,
+                                background: '#f8fafc',
+                              }}
+                            >
+                              <th
+                                style={{
+                                  padding: '8px 12px',
+                                  textAlign: 'left',
+                                  fontWeight: '600',
+                                }}
+                              >
+                                Date
+                              </th>
+                              <th
+                                style={{
+                                  padding: '8px 12px',
+                                  textAlign: 'right',
+                                  fontWeight: '600',
+                                }}
+                              >
+                                Amount
+                              </th>
+                              <th
+                                style={{
+                                  padding: '8px 12px',
+                                  textAlign: 'right',
+                                  fontWeight: '600',
+                                }}
+                              >
+                                Status
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedSeller.payouts.map((pay: any) => (
+                              <tr key={pay.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td style={{ padding: '7px 12px', color: '#1e293b' }}>
+                                  {new Date(pay.createdAt).toLocaleDateString()}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: '7px 12px',
+                                    textAlign: 'right',
+                                    fontWeight: '600',
+                                  }}
+                                >
+                                  {pay.amount.toLocaleString()} EGP
+                                </td>
+                                <td style={{ padding: '7px 12px', textAlign: 'right' }}>
+                                  <span
+                                    className={`badge ${pay.status === 'COMPLETED' ? 'b-active' : pay.status === 'PENDING' ? 'b-pending' : 'b-banned'}`}
+                                    style={{ fontSize: '9px' }}
+                                  >
+                                    {pay.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p
+                        style={{
+                          fontSize: '12px',
+                          color: '#94a3b8',
+                          fontStyle: 'italic',
+                          margin: 0,
+                        }}
+                      >
+                        No payout requests yet.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* ── Footer ── */}
+                <div
+                  style={{
+                    padding: '16px 24px',
+                    borderTop: '1px solid #f1f5f9',
+                    background: '#f8fafc',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottomLeftRadius: '20px',
+                    borderBottomRightRadius: '20px',
+                  }}
+                >
+                  <button
+                    disabled={actionLoading === selectedSeller.id}
+                    onClick={() =>
+                      handleStatusUpdate(
+                        selectedSeller.id,
+                        selectedSeller.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'
+                      )
+                    }
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      background: selectedSeller.status === 'ACTIVE' ? '#fef2f2' : '#f0fdf4',
+                      border: 'none',
+                      color: selectedSeller.status === 'ACTIVE' ? '#ef4444' : '#15803d',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {selectedSeller.status === 'ACTIVE' ? 'Suspend Seller' : 'Activate Seller'}
+                  </button>
+                  <button
+                    onClick={() => setSelectedSeller(null)}
+                    style={{
+                      padding: '8px 20px',
+                      borderRadius: '8px',
+                      background: '#f1f5f9',
+                      border: 'none',
+                      color: '#475569',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
-
-              {/* Listings */}
-              <div>
-                <h4
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    textTransform: 'uppercase',
-                    color: '#94a3b8',
-                    letterSpacing: '0.05em',
-                    marginBottom: '10px',
-                  }}
-                >
-                  📦 Products & Listings ({selectedSeller.products?.length || 0} Total)
-                </h4>
-                {selectedSeller.products && selectedSeller.products.length > 0 ? (
-                  <div
-                    style={{
-                      maxHeight: '160px',
-                      overflow: 'auto',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      background: '#f8fafc',
-                      padding: '8px 12px',
-                    }}
-                  >
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                      <thead>
-                        <tr
-                          style={{
-                            borderBottom: '1px solid #e2e8f0',
-                            textAlign: 'left',
-                            color: '#64748b',
-                          }}
-                        >
-                          <th style={{ padding: '6px 0' }}>Product Name</th>
-                          <th style={{ padding: '6px 0', textAlign: 'right' }}>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedSeller.products.map((p: any) => (
-                          <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '6px 0', color: '#1e293b' }}>{p.title}</td>
-                            <td style={{ padding: '6px 0', textAlign: 'right' }}>
-                              <span
-                                className={`badge ${p.published ? 'b-active' : 'b-pending'}`}
-                                style={{ fontSize: '9px', padding: '2px 4px' }}
-                              >
-                                {p.published ? 'PUBLISHED' : 'DRAFT'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p style={{ fontSize: '12px', color: '#64748b', margin: 0, fontStyle: 'italic' }}>
-                    No products listed yet.
-                  </p>
-                )}
-              </div>
-
-              {/* Payouts */}
-              <div>
-                <h4
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: '700',
-                    textTransform: 'uppercase',
-                    color: '#94a3b8',
-                    letterSpacing: '0.05em',
-                    marginBottom: '10px',
-                  }}
-                >
-                  💸 Payout History ({selectedSeller.payouts?.length || 0} Records)
-                </h4>
-                {selectedSeller.payouts && selectedSeller.payouts.length > 0 ? (
-                  <div
-                    style={{
-                      maxHeight: '160px',
-                      overflow: 'auto',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      background: '#f8fafc',
-                      padding: '8px 12px',
-                    }}
-                  >
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                      <thead>
-                        <tr
-                          style={{
-                            borderBottom: '1px solid #e2e8f0',
-                            textAlign: 'left',
-                            color: '#64748b',
-                          }}
-                        >
-                          <th style={{ padding: '6px 0' }}>Date</th>
-                          <th style={{ padding: '6px 0', textAlign: 'right' }}>Amount</th>
-                          <th style={{ padding: '6px 0', textAlign: 'right' }}>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedSeller.payouts.map((pay: any) => (
-                          <tr key={pay.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '6px 0', color: '#1e293b' }}>
-                              {new Date(pay.createdAt).toLocaleDateString()}
-                            </td>
-                            <td style={{ padding: '6px 0', textAlign: 'right', fontWeight: '500' }}>
-                              {pay.amount.toLocaleString()} EGP
-                            </td>
-                            <td style={{ padding: '6px 0', textAlign: 'right' }}>
-                              <span
-                                className={`badge ${pay.status === 'COMPLETED' ? 'b-active' : pay.status === 'PENDING' ? 'b-pending' : 'b-banned'}`}
-                                style={{ fontSize: '9px', padding: '2px 4px' }}
-                              >
-                                {pay.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p style={{ fontSize: '12px', color: '#64748b', margin: 0, fontStyle: 'italic' }}>
-                    No payouts requested yet.
-                  </p>
-                )}
-              </div>
             </div>
-
-            {/* Footer */}
-            <div
-              style={{
-                padding: '16px 24px',
-                borderTop: '1px solid #f1f5f9',
-                background: '#f8fafc',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                borderBottomLeftRadius: '16px',
-                borderBottomRightRadius: '16px',
-              }}
-            >
-              <button
-                onClick={() => setSelectedSeller(null)}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  background: '#f1f5f9',
-                  border: 'none',
-                  color: '#475569',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                }}
-              >
-                Close Portal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          );
+        })()}
     </div>
   );
 }
@@ -2687,6 +2977,30 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
                 </option>
               ))}
             </select>
+            {o.status === 'PROCESSING' && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => sendUpdate(o.id, { status: 'SHIPPED' }, 'mark shipped')}
+                className="action-btn"
+                style={{ borderColor: '#0369a1', color: '#0369a1' }}
+                title="Courier has picked up — mark order as Shipped"
+              >
+                Ship
+              </button>
+            )}
+            {o.status === 'SHIPPED' && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => sendUpdate(o.id, { status: 'DELIVERED' }, 'mark delivered')}
+                className="action-btn"
+                style={{ borderColor: '#15803d', color: '#15803d' }}
+                title="Mark order as Delivered"
+              >
+                Deliver
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setEditingOrder(o)}
@@ -3082,35 +3396,115 @@ function ProductsTab({ data }: ProductsTabProps) {
   );
 }
 
+/** Pure helper — defined outside any component to satisfy react-hooks/purity. */
+function daysUntilDate(iso: string | null): number | null {
+  if (!iso) return null;
+  const diff = new Date(iso).getTime() - new Date().getTime();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+}
+
 interface PayoutsTabProps {
   data: DashboardData;
 }
 
+interface EscrowRow {
+  sellerId: string;
+  storeName: string;
+  held: number;
+  available: number;
+  nextReleaseAt: string | null;
+}
+
 function PayoutsTab({ data }: PayoutsTabProps) {
+  const [escrow, setEscrow] = React.useState<EscrowRow[]>([]);
+  const [escrowLoading, setEscrowLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    fetch('/api/admin/payouts/escrow')
+      .then(r => r.json())
+      .then(d => setEscrow(d.escrow ?? []))
+      .catch(() => {})
+      .finally(() => setEscrowLoading(false));
+  }, []);
+
+  // daysUntilDate is defined as a module-level pure function above
+
   return (
-    <div className="card">
-      <div className="card-header">
-        <div className="card-title">Pending Payout Requests</div>
-      </div>
-      {data?.payouts?.map((p: Payout) => (
-        <div key={p.id} className="row-item">
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '12px', fontWeight: 600 }}>{p.seller?.storeName}</div>
-            <div style={{ fontSize: '11px', color: '#64748b' }}>
-              {new Date(p.createdAt).toLocaleDateString()}
-            </div>
+    <div className="space-y-6">
+      {/* ── Escrow Breakdown (Task 6) ── */}
+      <div className="card">
+        <div className="card-header">
+          <div className="card-title">Seller Escrow Breakdown (14-day hold)</div>
+          <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+            Funds held until escrow window clears
           </div>
-          <div style={{ fontSize: '14px', fontWeight: 600, marginRight: '20px' }}>
-            {p.amount?.toLocaleString()} EGP
-          </div>
-          <button className="action-btn" style={{ borderColor: '#0F6E56', color: '#085041' }}>
-            Release Payment
-          </button>
         </div>
-      ))}
-      {!data?.payouts?.length && (
-        <div className="py-20 text-center text-xs text-slate-400">No payout requests in queue.</div>
-      )}
+        {escrowLoading && (
+          <div className="py-10 text-center text-xs text-slate-400">Loading escrow data…</div>
+        )}
+        {!escrowLoading && escrow.length === 0 && (
+          <div className="py-10 text-center text-xs text-slate-400">
+            No escrow-held funds at this time.
+          </div>
+        )}
+        {escrow.map(row => {
+          const days = daysUntilDate(row.nextReleaseAt);
+          return (
+            <div key={row.sellerId} className="row-item flex-wrap gap-2">
+              <div style={{ flex: 1, minWidth: 160 }}>
+                <div style={{ fontSize: '12px', fontWeight: 600 }}>{row.storeName}</div>
+                {row.nextReleaseAt && days !== null && (
+                  <div style={{ fontSize: '11px', color: '#64748b' }}>
+                    Next release in{' '}
+                    <span style={{ fontWeight: 700, color: days <= 2 ? '#15803d' : '#0369a1' }}>
+                      {days} day{days !== 1 ? 's' : ''}
+                    </span>{' '}
+                    ({new Date(row.nextReleaseAt).toLocaleDateString()})
+                  </div>
+                )}
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#f59e0b' }}>
+                  {row.held.toLocaleString()} EGP in escrow
+                </div>
+                {row.available > 0 && (
+                  <div style={{ fontSize: '11px', color: '#15803d' }}>
+                    + {row.available.toLocaleString()} EGP mature
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Pending Payout Requests ── */}
+      <div className="card">
+        <div className="card-header">
+          <div className="card-title">Pending Payout Requests</div>
+        </div>
+        {data?.payouts?.map((p: Payout) => (
+          <div key={p.id} className="row-item">
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '12px', fontWeight: 600 }}>{p.seller?.storeName}</div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>
+                {new Date(p.createdAt).toLocaleDateString()}
+              </div>
+            </div>
+            <div style={{ fontSize: '14px', fontWeight: 600, marginRight: '20px' }}>
+              {p.amount?.toLocaleString()} EGP
+            </div>
+            <button className="action-btn" style={{ borderColor: '#0F6E56', color: '#085041' }}>
+              Release Payment
+            </button>
+          </div>
+        ))}
+        {!data?.payouts?.length && (
+          <div className="py-10 text-center text-xs text-slate-400">
+            No payout requests in queue.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

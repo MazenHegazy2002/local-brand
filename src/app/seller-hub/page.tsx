@@ -490,8 +490,10 @@ export default function SellerHub() {
   };
 
   const handleFulfill = async (itemId: string) => {
+    // "Mark Ready" — seller has packed this item; status moves to CONFIRMED which
+    // cascades the parent order to PROCESSING once all items are ready.
     try {
-      const res = (await updateOrderItemStatus(itemId, 'SHIPPED')) as { error?: string };
+      const res = (await updateOrderItemStatus(itemId, 'CONFIRMED')) as { error?: string };
       if (res?.error) {
         alert(res.error);
         return;
@@ -1426,7 +1428,15 @@ function OrdersTab({ orders, onFulfill }: { orders: Order[]; onFulfill: (id: str
   const orderItems =
     statusFilter === 'all' ? allOrderItems : allOrderItems.filter(i => i.status === statusFilter);
 
-  const STATUS_TABS = ['all', 'PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+  const STATUS_TABS = [
+    'all',
+    'PENDING',
+    'CONFIRMED',
+    'SHIPPED',
+    'DELIVERED',
+    'CANCELLED',
+    'RETURNED',
+  ];
 
   return (
     <div className="space-y-4">
@@ -1485,6 +1495,31 @@ function OrdersTab({ orders, onFulfill }: { orders: Order[]; onFulfill: (id: str
                   <div className="text-[11px] text-slate-400">
                     {new Date(item.date).toLocaleDateString()}
                   </div>
+                  {/* Variant specs (color / sizes) — Task 11 */}
+                  {item.variant?.title &&
+                    item.variant.title !== 'Standard' &&
+                    item.variant.title !== item.productTitleSnapshot && (
+                      <div className="text-[11px] text-indigo-600 font-semibold mt-0.5">
+                        {item.variant.title}
+                      </div>
+                    )}
+                  {item.variant?.attributes &&
+                    (() => {
+                      try {
+                        const attrs = JSON.parse(item.variant.attributes);
+                        const parts: string[] = [];
+                        if (attrs.color) parts.push(`Color: ${attrs.color}`);
+                        if (attrs.size) parts.push(`Size: ${attrs.size}`);
+                        if (attrs.sizes) parts.push(`Sizes: ${attrs.sizes}`);
+                        return parts.length > 0 ? (
+                          <div className="text-[10px] text-slate-500 mt-0.5">
+                            {parts.join(' · ')}
+                          </div>
+                        ) : null;
+                      } catch {
+                        return null;
+                      }
+                    })()}
                   {(item.variant?.sku || item.variant?.upc) && (
                     <div className="text-[10px] text-slate-400 font-mono mt-0.5">
                       {item.variant.sku && <>SKU: {item.variant.sku}</>}
@@ -1509,9 +1544,19 @@ function OrdersTab({ orders, onFulfill }: { orders: Order[]; onFulfill: (id: str
                 </td>
                 <td className="px-6 py-4">
                   <span
-                    className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase ${item.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}
+                    className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase ${
+                      item.status === 'DELIVERED'
+                        ? 'bg-emerald-50 text-emerald-600'
+                        : item.status === 'SHIPPED'
+                          ? 'bg-blue-50 text-blue-600'
+                          : item.status === 'CONFIRMED'
+                            ? 'bg-indigo-50 text-indigo-600'
+                            : item.status === 'CANCELLED' || item.status === 'RETURNED'
+                              ? 'bg-red-50 text-red-500'
+                              : 'bg-amber-50 text-amber-600'
+                    }`}
                   >
-                    {item.status}
+                    {item.status === 'CONFIRMED' ? 'Ready' : item.status.replace(/_/g, ' ')}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
@@ -1526,8 +1571,9 @@ function OrdersTab({ orders, onFulfill }: { orders: Order[]; onFulfill: (id: str
                       <button
                         onClick={() => onFulfill(item.id)}
                         className="text-xs font-bold text-[#0F6E56] hover:underline"
+                        title="Mark this item as packed and ready to ship"
                       >
-                        Fulfill
+                        Mark Ready
                       </button>
                     )}
                   </div>
@@ -1564,6 +1610,54 @@ function OrdersTab({ orders, onFulfill }: { orders: Order[]; onFulfill: (id: str
                     </div>
                     <div className="font-bold">{selectedOrder.orderStatus}</div>
                   </div>
+                </div>
+
+                {/* Item Specifications (Task 11) */}
+                <div className="pb-4 border-b border-slate-100">
+                  <div className="text-xs font-bold text-slate-400 uppercase mb-2">
+                    Item Details
+                  </div>
+                  <div className="font-semibold text-slate-800">
+                    {selectedOrder.productTitleSnapshot}
+                  </div>
+                  {selectedOrder.variant?.title && selectedOrder.variant.title !== 'Standard' && (
+                    <div className="text-xs text-indigo-600 font-semibold mt-1">
+                      Variant: {selectedOrder.variant.title}
+                    </div>
+                  )}
+                  {selectedOrder.variant?.attributes &&
+                    (() => {
+                      try {
+                        const attrs = JSON.parse(selectedOrder.variant.attributes);
+                        return (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {attrs.color && (
+                              <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
+                                Color: {attrs.color}
+                              </span>
+                            )}
+                            {(attrs.size || attrs.sizes) && (
+                              <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
+                                Size: {attrs.size || attrs.sizes}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      } catch {
+                        return null;
+                      }
+                    })()}
+                  <div className="text-xs text-slate-500 mt-1">
+                    Qty: {selectedOrder.quantity} ·{' '}
+                    {selectedOrder.priceAtPurchase?.toLocaleString()} EGP each
+                  </div>
+                  {(selectedOrder.variant?.sku || selectedOrder.variant?.upc) && (
+                    <div className="text-[10px] font-mono text-slate-400 mt-1">
+                      {selectedOrder.variant.sku && `SKU: ${selectedOrder.variant.sku}`}
+                      {selectedOrder.variant.sku && selectedOrder.variant.upc && ' · '}
+                      {selectedOrder.variant.upc && `UPC: ${selectedOrder.variant.upc}`}
+                    </div>
+                  )}
                 </div>
 
                 <div className="pb-4 border-b border-slate-100">
@@ -2242,28 +2336,42 @@ function WalletTab({ data }: { data: DashboardData }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 bg-white rounded-2xl p-8 border border-slate-100 shadow-sm">
           <div className="flex items-start justify-between mb-6">
-            <div>
+            <div className="flex-1">
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                Available Balance
+                Mature Funds (Available to withdraw)
               </div>
               <div className="text-4xl font-black text-emerald-600">
                 {balance.toLocaleString()} <span className="text-lg text-slate-400">EGP</span>
               </div>
+              <div className="text-[11px] text-slate-500 mt-1">
+                Earnings past the 14-day escrow window
+              </div>
+
               {(heldBalance > 0 || isLoading) && (
-                <div className="mt-3">
-                  <div className="text-[12px] text-slate-500">
-                    <span className="font-semibold text-amber-600">
-                      {heldBalance.toLocaleString()} EGP
-                    </span>{' '}
-                    in escrow
-                    {nextReleaseAt && (
-                      <> · releases {new Date(nextReleaseAt).toLocaleDateString()}</>
-                    )}
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1.5">
+                    In Escrow (Pending Maturity)
                   </div>
+                  <div className="text-2xl font-black text-amber-600">
+                    {heldBalance.toLocaleString()}{' '}
+                    <span className="text-base text-slate-400">EGP</span>
+                  </div>
+                  {nextReleaseAt && (
+                    <div className="text-[11px] text-slate-500 mt-1">
+                      Next release on{' '}
+                      <span className="font-semibold text-slate-700">
+                        {new Date(nextReleaseAt).toLocaleDateString(undefined, {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                  )}
                   {countdown && (
                     <div className="mt-2 inline-flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
                       <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">
-                        Releases in
+                        Matures in
                       </span>
                       <span className="font-mono font-black text-amber-700 text-sm">
                         {countdown}
@@ -2273,7 +2381,7 @@ function WalletTab({ data }: { data: DashboardData }) {
                 </div>
               )}
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center shrink-0">
               <Wallet className="text-emerald-600" />
             </div>
           </div>
