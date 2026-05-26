@@ -4,11 +4,22 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 
 export default async function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect('/login');
+
+  // Language detection (mirrors root layout)
+  const cookieStore = await cookies();
+  const googTrans = cookieStore.get('googtrans')?.value;
+  const isAr = googTrans ? googTrans.includes('/ar') : false;
+
+  // i18n helper for this page
+  const t = (en: string, ar: string) => (isAr ? ar : en);
+  const locale = isAr ? 'ar-EG' : 'en-EG';
+  const currency = isAr ? 'ج.م' : 'EGP';
 
   const order = await prisma.order.findUnique({
     where: { id, userId: session.user.id },
@@ -29,13 +40,17 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
       <main className="min-h-screen bg-[#f9f8f6] font-[Cairo,system-ui,sans-serif]">
         <Navbar />
         <div className="container mx-auto px-4 py-20 text-center">
-          <h1 className="text-3xl font-black text-slate-900 mb-3">Order Not Found</h1>
-          <p className="text-slate-600 mb-6">We couldn&apos;t find an order with this ID.</p>
+          <h1 className="text-3xl font-black text-slate-900 mb-3">
+            {t('Order Not Found', 'الطلب غير موجود')}
+          </h1>
+          <p className="text-slate-600 mb-6">
+            {t("We couldn't find an order with this ID.", 'لم نتمكن من العثور على هذا الطلب.')}
+          </p>
           <Link
             href="/dashboard"
             className="inline-block bg-[#1e3b8a] text-white font-bold py-3 px-6 rounded-xl hover:bg-[#16307a] transition-colors"
           >
-            Return to Dashboard
+            {t('Return to Dashboard', 'العودة إلى لوحة التحكم')}
           </Link>
         </div>
       </main>
@@ -44,11 +59,11 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
 
   const steps = ['PENDING_PAYMENT', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
   const stepLabels: Record<string, string> = {
-    PENDING_PAYMENT: 'Awaiting Payment',
-    CONFIRMED: 'Confirmed',
-    PROCESSING: 'Processing',
-    SHIPPED: 'Shipped',
-    DELIVERED: 'Delivered',
+    PENDING_PAYMENT: t('Awaiting Payment', 'في انتظار الدفع'),
+    CONFIRMED: t('Confirmed', 'تم التأكيد'),
+    PROCESSING: t('Processing', 'قيد التجهيز'),
+    SHIPPED: t('Shipped', 'تم الشحن'),
+    DELIVERED: t('Delivered', 'تم التوصيل'),
   };
   const currentStepIndex = steps.indexOf(order.status);
 
@@ -72,6 +87,8 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
     <main
       className="min-h-screen bg-[#f9f8f6]"
       style={{ fontFamily: 'Cairo, system-ui, -apple-system, sans-serif' }}
+      dir={isAr ? 'rtl' : 'ltr'}
+      lang={isAr ? 'ar' : 'en'}
     >
       <Navbar />
 
@@ -80,7 +97,8 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
           href="/dashboard"
           className="text-slate-500 hover:text-[#1e3b8a] text-sm font-semibold mb-6 inline-flex items-center gap-1 transition-colors"
         >
-          <span aria-hidden>&larr;</span> Back to Dashboard
+          <span aria-hidden>{isAr ? '→' : '←'}</span>{' '}
+          {t('Back to Dashboard', 'العودة إلى لوحة التحكم')}
         </Link>
 
         {/* ── Order Header ──────────────────────────────────────────── */}
@@ -88,15 +106,15 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
           <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
             <div>
               <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                Order
+                {t('Order', 'طلب')}
               </div>
               <h1 className="text-2xl md:text-3xl font-black text-slate-900">
                 #{order.id.split('-')[0].toUpperCase()}
               </h1>
               <p className="text-slate-500 text-sm mt-1">
-                Placed on{' '}
+                {t('Placed on', 'بتاريخ')}{' '}
                 <span className="font-semibold text-slate-700">
-                  {new Date(order.createdAt).toLocaleDateString(undefined, {
+                  {new Date(order.createdAt).toLocaleDateString(locale, {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric',
@@ -104,13 +122,13 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
                 </span>
               </p>
             </div>
-            <div className="md:text-right">
+            <div className={isAr ? 'md:text-left' : 'md:text-right'}>
               <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                Total
+                {t('Total', 'الإجمالي')}
               </div>
               <p className="text-2xl md:text-3xl font-black text-[#1e3b8a]">
                 {order.totalAmount.toLocaleString()}{' '}
-                <span className="text-base font-bold text-slate-400">EGP</span>
+                <span className="text-base font-bold text-slate-400">{currency}</span>
               </p>
               <span
                 className={`inline-block mt-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
@@ -129,7 +147,9 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
 
         {/* ── Tracking Timeline ─────────────────────────────────────── */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8 mb-6">
-          <h2 className="text-lg font-black text-slate-900 mb-6">Tracking Status</h2>
+          <h2 className="text-lg font-black text-slate-900 mb-6">
+            {t('Tracking Status', 'حالة الطلب')}
+          </h2>
 
           <div className="relative">
             {/* Desktop horizontal track */}
@@ -184,24 +204,24 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
           {order.shipments.length > 0 && (
             <div className="mt-8 pt-6 border-t border-slate-100">
               <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
-                Shipment Details
+                {t('Shipment Details', 'تفاصيل الشحنة')}
               </h3>
               {order.shipments.map(shipment => (
                 <div key={shipment.id} className="flex flex-wrap gap-3">
                   <div className="bg-slate-50 px-4 py-3 rounded-xl flex-1 min-w-[180px]">
                     <span className="block text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">
-                      Courier
+                      {t('Courier', 'شركة الشحن')}
                     </span>
                     <span className="text-slate-900 font-bold">
-                      {shipment.courier || 'Standard Shipping'}
+                      {shipment.courier || t('Standard Shipping', 'شحن عادي')}
                     </span>
                   </div>
                   <div className="bg-slate-50 px-4 py-3 rounded-xl flex-1 min-w-[180px]">
                     <span className="block text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">
-                      Tracking Number
+                      {t('Tracking Number', 'رقم التتبع')}
                     </span>
                     <span className="text-[#1e3b8a] font-bold tracking-wider font-mono text-sm">
-                      {shipment.trackingNumber || 'Pending'}
+                      {shipment.trackingNumber || t('Pending', 'في الانتظار')}
                     </span>
                   </div>
                 </div>
@@ -213,7 +233,9 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
         {/* ── Shipping Address ──────────────────────────────────────── */}
         {shippingAddress && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8 mb-6">
-            <h2 className="text-lg font-black text-slate-900 mb-4">Shipping To</h2>
+            <h2 className="text-lg font-black text-slate-900 mb-4">
+              {t('Shipping To', 'عنوان التوصيل')}
+            </h2>
             <div className="text-sm text-slate-700">
               <div className="font-bold text-slate-900 text-base">{shippingAddress.fullName}</div>
               {shippingAddress.phone && (
@@ -232,8 +254,8 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
         {/* ── Order Items ──────────────────────────────────────────── */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8">
           <h2 className="text-lg font-black text-slate-900 mb-6">
-            Items in this Order
-            <span className="ml-2 text-sm font-bold text-slate-400">({order.items.length})</span>
+            {t('Items in this Order', 'منتجات الطلب')}
+            <span className="ms-2 text-sm font-bold text-slate-400">({order.items.length})</span>
           </h2>
           <div className="space-y-4">
             {order.items.map(item => {
@@ -269,38 +291,39 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
                       {item.productTitleSnapshot}
                     </h3>
                     <p className="text-slate-500 text-xs mb-2">
-                      Sold by{' '}
+                      {t('Sold by', 'بائع')}{' '}
                       <span className="font-semibold text-slate-700">
                         {item.sellerNameSnapshot}
                       </span>
                     </p>
                     {item.variant?.title && item.variant.title !== item.productTitleSnapshot && (
                       <p className="text-xs text-[#1e3b8a] font-semibold mb-2">
-                        Variant: {item.variant.title}
+                        {t('Variant:', 'النوع:')} {item.variant.title}
                       </p>
                     )}
                     {attrs && (
                       <div className="flex flex-wrap gap-1.5 mb-2">
                         {attrs.color && (
                           <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded-full font-bold">
-                            Color: {attrs.color}
+                            {t('Color:', 'اللون:')} {attrs.color}
                           </span>
                         )}
                         {(attrs.size || attrs.sizes) && (
                           <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded-full font-bold">
-                            Size: {attrs.size || attrs.sizes}
+                            {t('Size:', 'المقاس:')} {attrs.size || attrs.sizes}
                           </span>
                         )}
                       </div>
                     )}
                     <div className="flex flex-wrap gap-3 text-sm">
                       <span className="text-slate-600">
-                        Qty: <span className="font-bold text-slate-900">{item.quantity}</span>
+                        {t('Qty:', 'الكمية:')}{' '}
+                        <span className="font-bold text-slate-900">{item.quantity}</span>
                       </span>
                       <span className="text-slate-600">
-                        Price:{' '}
+                        {t('Price:', 'السعر:')}{' '}
                         <span className="font-bold text-slate-900">
-                          {item.priceAtPurchase.toLocaleString()} EGP
+                          {item.priceAtPurchase.toLocaleString()} {currency}
                         </span>
                       </span>
                     </div>
@@ -326,10 +349,20 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
                                 : 'bg-amber-50 text-amber-700'
                       }`}
                     >
-                      {item.status === 'CONFIRMED' ? 'Ready' : item.status.replace(/_/g, ' ')}
+                      {item.status === 'CONFIRMED'
+                        ? t('Ready', 'جاهز')
+                        : item.status === 'DELIVERED'
+                          ? t('Delivered', 'تم التوصيل')
+                          : item.status === 'SHIPPED'
+                            ? t('Shipped', 'تم الشحن')
+                            : item.status === 'CANCELLED'
+                              ? t('Cancelled', 'ملغي')
+                              : item.status === 'RETURNED'
+                                ? t('Returned', 'مُعاد')
+                                : item.status.replace(/_/g, ' ')}
                     </span>
                     <div className="mt-2 text-base font-black text-slate-900">
-                      {(item.priceAtPurchase * item.quantity).toLocaleString()} EGP
+                      {(item.priceAtPurchase * item.quantity).toLocaleString()} {currency}
                     </div>
                   </div>
                 </div>
@@ -346,37 +379,37 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
             return (
               <div className="mt-6 pt-6 border-t border-slate-100 space-y-1.5 text-sm">
                 <div className="flex justify-between text-slate-600">
-                  <span>Subtotal</span>
+                  <span>{t('Subtotal', 'المجموع الفرعي')}</span>
                   <span className="font-semibold text-slate-900">
-                    {subtotal.toLocaleString()} EGP
+                    {subtotal.toLocaleString()} {currency}
                   </span>
                 </div>
                 {order.shippingFee > 0 && (
                   <div className="flex justify-between text-slate-600">
-                    <span>Shipping</span>
+                    <span>{t('Shipping', 'الشحن')}</span>
                     <span className="font-semibold text-slate-900">
-                      {order.shippingFee.toLocaleString()} EGP
+                      {order.shippingFee.toLocaleString()} {currency}
                     </span>
                   </div>
                 )}
                 {order.discountAmount > 0 && (
                   <div className="flex justify-between text-emerald-600">
-                    <span>Discount</span>
+                    <span>{t('Discount', 'الخصم')}</span>
                     <span className="font-semibold">
-                      −{order.discountAmount.toLocaleString()} EGP
+                      −{order.discountAmount.toLocaleString()} {currency}
                     </span>
                   </div>
                 )}
                 {order.giftWrapping && (
                   <div className="flex justify-between text-slate-600">
-                    <span>Gift wrapping</span>
-                    <span className="font-semibold text-slate-900">25 EGP</span>
+                    <span>{t('Gift wrapping', 'تغليف هدية')}</span>
+                    <span className="font-semibold text-slate-900">25 {currency}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg pt-3 mt-2 border-t border-slate-100">
-                  <span className="font-bold text-slate-900">Total</span>
+                  <span className="font-bold text-slate-900">{t('Total', 'الإجمالي')}</span>
                   <span className="font-black text-[#1e3b8a]">
-                    {order.totalAmount.toLocaleString()} EGP
+                    {order.totalAmount.toLocaleString()} {currency}
                   </span>
                 </div>
               </div>

@@ -198,7 +198,7 @@ const detectImageColor = async (file: File): Promise<string> => {
 };
 
 export default function SellerHub() {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [data, setData] = useState<DashboardData | null>(null);
@@ -234,15 +234,17 @@ export default function SellerHub() {
   const [editVariants, setEditVariants] = useState<VariantState[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Access control - redirect if not seller
+  // Access control — seller hub is an isolated portal; redirect all non-sellers
   useEffect(() => {
     const role = (session?.user as SessionUser | undefined)?.role;
-    if (session && role === 'ADMIN') {
-      router.push('/admin');
+    if (sessionStatus === 'unauthenticated') {
+      router.push('/seller/login');
+    } else if (session && role === 'ADMIN') {
+      router.push('/admin-os');
     } else if (session && role === 'BUYER') {
       router.push('/dashboard');
     }
-  }, [session, router]);
+  }, [session, sessionStatus, router]);
 
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
@@ -705,7 +707,9 @@ export default function SellerHub() {
           {activeTab === 'overview' && (
             <OverviewTab stats={stats} myOrders={myOrders} myProducts={myProducts} data={data!} />
           )}
-          {activeTab === 'orders' && <OrdersTab orders={myOrders} onFulfill={handleFulfill} />}
+          {activeTab === 'orders' && (
+            <OrdersTab orders={myOrders} onFulfill={handleFulfill} onRefresh={refreshData} />
+          )}
           {activeTab === 'products' && (
             <ProductsTab
               products={myProducts}
@@ -1400,9 +1404,41 @@ function MetricRow({
 }
 
 // Sub-tabs simplified for this view
-function OrdersTab({ orders, onFulfill }: { orders: Order[]; onFulfill: (id: string) => void }) {
+function OrdersTab({
+  orders,
+  onFulfill,
+  onRefresh,
+}: {
+  orders: Order[];
+  onFulfill: (id: string) => void;
+  onRefresh?: () => Promise<void>;
+}) {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [shippingLoading, setShippingLoading] = useState(false);
+
+  const handleMarkShipped = async (orderId: string) => {
+    if (!confirm('Mark this order as shipped? This notifies the buyer.')) return;
+    setShippingLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'SHIPPED' }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        alert(d.message || 'Failed to mark as shipped');
+        return;
+      }
+      setSelectedOrder(null);
+      if (onRefresh) await onRefresh();
+    } catch (err: unknown) {
+      alert((err as Error).message || 'Failed to mark as shipped');
+    } finally {
+      setShippingLoading(false);
+    }
+  };
 
   const allOrderItems = orders.flatMap(o =>
     (o.items || []).map(i => ({
@@ -1685,10 +1721,19 @@ function OrdersTab({ orders, onFulfill }: { orders: Order[]; onFulfill: (id: str
                 )}
               </div>
 
-              <div className="mt-6 pt-6 border-t border-slate-100 flex justify-end">
+              <div className="mt-6 pt-6 border-t border-slate-100 flex justify-between items-center gap-3">
+                {selectedOrder.orderStatus === 'PROCESSING' && (
+                  <button
+                    onClick={() => handleMarkShipped(selectedOrder.orderId)}
+                    disabled={shippingLoading}
+                    className="px-5 py-2 bg-[#0F6E56] hover:bg-[#0a5a45] text-white rounded-lg font-bold text-sm transition-colors disabled:opacity-40"
+                  >
+                    {shippingLoading ? 'Updating…' : '🚚 Mark as Shipped'}
+                  </button>
+                )}
                 <button
                   onClick={() => setSelectedOrder(null)}
-                  className="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors"
+                  className="ml-auto px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors"
                 >
                   Close
                 </button>

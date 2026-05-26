@@ -11,6 +11,7 @@ import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { sanitizeHtml } from '@/lib/utils';
 import { PageStatus } from '@/generated/client';
+import Navbar from '@/components/Navbar';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -62,6 +63,7 @@ export default async function CmsPage({ params }: PageProps) {
 
   return (
     <main className="cms-page">
+      <Navbar />
       <article>
         <h1>{page.titleEn}</h1>
         <div

@@ -199,8 +199,12 @@ export default function BannersTab() {
                   <div className="text-xs text-slate-500 mb-2 line-clamp-1">{banner.subtitle}</div>
                 )}
                 <div className="text-[10px] text-slate-400 mb-3">
-                  Position #{banner.position} · Links to{' '}
-                  <code className="font-mono">{banner.linkUrl}</code>
+                  {banner.position === 0
+                    ? '🎠 Slot 0 — Main Carousel'
+                    : banner.position === 1
+                      ? '⬆️ Slot 1 — Right Top'
+                      : '⬇️ Slot 2 — Right Bottom'}{' '}
+                  · <code className="font-mono">{banner.linkUrl}</code>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -311,15 +315,17 @@ export default function BannersTab() {
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">
-                    Position / Slot (0 = Slider, 1 = Top Right, 2 = Bottom Right)
+                    Slot
                   </label>
-                  <input
-                    type="number"
-                    min="0"
+                  <select
                     value={form.position}
                     onChange={e => setForm({ ...form, position: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg"
-                  />
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white"
+                  >
+                    <option value={0}>Slot 0 — Main Carousel (multiple images cycle)</option>
+                    <option value={1}>Slot 1 — Right Top Banner</option>
+                    <option value={2}>Slot 2 — Right Bottom Banner</option>
+                  </select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
