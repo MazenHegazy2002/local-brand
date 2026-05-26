@@ -1,9 +1,7 @@
 'use client';
-// src/app/affiliate/dashboard/page.tsx
-// User-facing affiliate dashboard
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useLanguage } from '@/providers/LanguageContext';
@@ -57,19 +55,13 @@ function CopyButton({ text }: { text: string }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}
-      style={{
-        fontSize: 12,
-        padding: '6px 12px',
-        cursor: 'pointer',
-        border: '1px solid #e2e8f0',
-        borderRadius: 6,
-        background: 'transparent',
-        color: copied ? '#085041' : '#64748b',
-        whiteSpace: 'nowrap',
-        flexShrink: 0,
-      }}
+      className={`px-4 py-2 text-xs font-black uppercase rounded-lg border transition-all duration-300 ${
+        copied
+          ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
+          : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+      }`}
     >
-      {copied ? t('AffiliateCopiedBtn') : t('AffiliateCopyBtn')}
+      {copied ? t('AffiliateCopiedBtn') || 'Copied!' : t('AffiliateCopyBtn') || 'Copy'}
     </button>
   );
 }
@@ -124,6 +116,10 @@ export default function AffiliateDashboardPage() {
           ? `تم طلب سحب بقيمة ${d.amountEgp.toLocaleString('ar-EG')} ج.م بنجاح!`
           : `Payout of ${d.amountEgp} EGP requested successfully!`
       );
+      // Reload dashboard data
+      const reloadRes = await fetch('/api/affiliate/dashboard');
+      const reloadData = await reloadRes.json();
+      if (!reloadData.error) setData(reloadData);
     } catch (err: unknown) {
       setPayoutMsg((err as Error).message);
     } finally {
@@ -154,60 +150,65 @@ export default function AffiliateDashboardPage() {
     return arTiers[tName] || tName;
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-        <div style={{ color: '#64748b' }}>{t('AffiliateLoadingDashboard')}</div>
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="text-slate-400 text-sm animate-pulse font-medium">
+          {t('AffiliateLoadingDashboard') || 'Loading Affiliate Dashboard…'}
+        </div>
       </div>
     );
+  }
 
   if (error === 'No affiliate account found.') {
     return (
       <div
-        style={{
-          maxWidth: 520,
-          margin: '80px auto',
-          textAlign: 'center',
-          padding: '0 16px',
-          direction: isRTL ? 'rtl' : 'ltr',
-        }}
+        className={`max-w-md mx-auto my-32 text-center px-4 font-sans ${
+          isRTL ? 'direction-rtl' : 'direction-ltr'
+        }`}
       >
-        <div style={{ fontSize: 48, marginBottom: 16 }}>🚀</div>
-        <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>
-          {t('AffiliateNotAffiliateYet')}
+        <div className="text-6xl mb-6">🚀</div>
+        <h1 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">
+          {t('AffiliateNotAffiliateYet') || 'Not an Affiliate Yet'}
         </h1>
-        <p style={{ color: '#64748b', marginBottom: 24 }}>{t('AffiliateNotAffiliateDesc')}</p>
+        <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+          {t('AffiliateNotAffiliateDesc') ||
+            'Join our growth network to start earning premium commissions.'}
+        </p>
         <Link
           href="/sell"
-          style={{
-            display: 'inline-block',
-            padding: '12px 28px',
-            background: '#1e3b8a',
-            color: '#fff',
-            borderRadius: 10,
-            textDecoration: 'none',
-            fontWeight: 600,
-          }}
+          className="inline-block px-8 py-3.5 bg-slate-950 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-800 transition-colors shadow-lg"
         >
-          {t('AffiliateApplyFree')}
+          {t('AffiliateApplyFree') || "Apply Now — It's Free"}
         </Link>
       </div>
     );
   }
 
-  if (error)
-    return <div style={{ textAlign: 'center', padding: 80, color: '#B91C1C' }}>{error}</div>;
+  if (error) {
+    return (
+      <div className="text-center py-20 text-red-600 font-bold max-w-sm mx-auto font-sans">
+        <p className="mb-4">⚠️ {error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="text-xs text-slate-900 underline font-bold"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   if (!data) return null;
 
   const { affiliate, nextTier, progress, settings, recentCommissions } = data;
 
-  const statusColors: Record<string, { bg: string; text: string }> = {
-    ACTIVE: { bg: '#E1F5EE', text: '#085041' },
-    PENDING: { bg: '#FAEEDA', text: '#633806' },
-    PAUSED: { bg: '#F1F5F9', text: '#475569' },
-    BANNED: { bg: '#FCEBEB', text: '#791F1F' },
-    REJECTED: { bg: '#FCEBEB', text: '#791F1F' },
+  const statusColors: Record<string, { bg: string; text: string; border: string }> = {
+    ACTIVE: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-100' },
+    PENDING: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-100' },
+    PAUSED: { bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200' },
+    BANNED: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-100' },
+    REJECTED: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-100' },
   };
   const statusColor = statusColors[affiliate.status] ?? statusColors.PENDING;
 
@@ -220,487 +221,367 @@ export default function AffiliateDashboardPage() {
   };
 
   const tierColors: Record<string, string> = {
-    STARTER: '#64748b',
-    SILVER: '#94a3b8',
-    GOLD: '#d97706',
-    PLATINUM: '#7c3aed',
+    STARTER: 'text-slate-500',
+    SILVER: 'text-slate-400',
+    GOLD: 'text-amber-600',
+    PLATINUM: 'text-violet-600',
   };
 
   return (
     <div
-      style={{
-        maxWidth: 740,
-        margin: '0 auto',
-        padding: '32px 16px',
-        direction: isRTL ? 'rtl' : 'ltr',
-      }}
+      className={`min-h-screen bg-[#F8FAFC] font-sans pb-24 ${isRTL ? 'rtl' : 'ltr'}`}
+      style={{ direction: isRTL ? 'rtl' : 'ltr' }}
     >
-      {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: 24,
-        }}
-      >
-        <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
-          <h1 style={{ fontSize: 22, fontWeight: 600, margin: 0 }}>{t('AffiliateMyDashboard')}</h1>
-          <p
-            style={{
-              fontSize: 13,
-              color: '#64748b',
-              margin: '4px 0 0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              justifyContent: isRTL ? 'flex-start' : 'flex-start',
-            }}
-          >
-            <span>{session?.user?.name}</span>
-            <span>·</span>
-            <span>
-              {t('AffiliateJoined')}{' '}
-              {new Date(affiliate.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-EG', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-              })}
+      {/* Premium Dashboard Header Toolbar */}
+      <header className="bg-slate-900 text-white sticky top-0 z-40 shadow-md">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-lg font-black tracking-widest uppercase">
+              Brandy<span className="text-indigo-400">.Affiliate</span>
             </span>
-            <span>·</span>
-            <span
-              style={{
-                display: 'inline-block',
-                fontSize: 11,
-                padding: '2px 8px',
-                borderRadius: 20,
-                background: statusColor.bg,
-                color: statusColor.text,
-                fontWeight: 500,
-              }}
+          </div>
+
+          {/* Action Buttons: back to shop & sign out */}
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="px-4 py-2 border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5"
             >
-              {statusLabels[affiliate.status] ?? affiliate.status}
-            </span>
-          </p>
-        </div>
-        <div style={{ textAlign: isRTL ? 'left' : 'right' }}>
-          <p style={{ fontSize: 11, color: '#94a3b8', margin: 0 }}>{t('AffiliateTierLabel')}</p>
-          <p
-            style={{
-              fontSize: 14,
-              fontWeight: 600,
-              margin: 0,
-              color: tierColors[affiliate.tier] ?? '#1e3b8a',
-            }}
-          >
-            {translateTier(affiliate.tierName)} ·{' '}
-            {lang === 'ar'
-              ? `عمولة ${affiliate.commissionPct}%`
-              : `${affiliate.commissionPct}% commission`}
-          </p>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isRTL ? 'repeat(auto-fit, minmax(140px, 1fr))' : 'repeat(4, 1fr)',
-          gap: 10,
-          marginBottom: 20,
-        }}
-      >
-        {[
-          {
-            label: t('AffiliateTotalEarned'),
-            value:
-              lang === 'ar'
-                ? `${affiliate.totalEarnedEgp.toLocaleString('ar-EG')} ج.م`
-                : `${affiliate.totalEarnedEgp.toLocaleString('en-EG')} EGP`,
-          },
-          {
-            label: t('AffiliatePending'),
-            value:
-              lang === 'ar'
-                ? `${affiliate.pendingEarningsEgp.toLocaleString('ar-EG')} ج.م`
-                : `${affiliate.pendingEarningsEgp.toLocaleString('en-EG')} EGP`,
-          },
-          {
-            label: t('AffiliateTotalReferrals'),
-            value:
-              lang === 'ar'
-                ? affiliate.totalConversions.toLocaleString('ar-EG')
-                : affiliate.totalConversions.toString(),
-          },
-          {
-            label: t('AffiliateConversions'),
-            value:
-              lang === 'ar'
-                ? affiliate.totalConversions.toLocaleString('ar-EG')
-                : affiliate.totalConversions.toString(),
-          },
-        ].map(s => (
-          <div
-            key={s.label}
-            style={{
-              background: '#F8FAFC',
-              borderRadius: 10,
-              padding: '12px 14px',
-              textAlign: isRTL ? 'right' : 'left',
-            }}
-          >
-            <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>{s.label}</p>
-            <p style={{ fontSize: 22, fontWeight: 600, margin: '2px 0 0' }}>{s.value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Promo Code */}
-      <div
-        style={{
-          background: '#fff',
-          border: '1px solid #e2e8f0',
-          borderRadius: 12,
-          padding: '16px 20px',
-          marginBottom: 12,
-          textAlign: isRTL ? 'right' : 'left',
-        }}
-      >
-        <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 10px' }}>
-          {t('AffiliateMyPromoCode')}
-        </p>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            marginBottom: 8,
-            flexDirection: isRTL ? 'row-reverse' : 'row',
-          }}
-        >
-          <div
-            style={{
-              flex: 1,
-              background: '#F8FAFC',
-              borderRadius: 8,
-              padding: '10px 14px',
-              fontFamily: 'monospace',
-              fontSize: 18,
-              fontWeight: 600,
-              letterSpacing: 3,
-              textAlign: 'center',
-            }}
-          >
-            {affiliate.promoCode}
-          </div>
-          <CopyButton text={affiliate.promoCode} />
-        </div>
-        <p style={{ fontSize: 12, color: '#64748b', margin: 0 }}>
-          {t('AffiliatePromoCodeDesc')
-            .replace('{discountPct}', affiliate.discountPct.toString())
-            .replace('{commissionPct}', affiliate.commissionPct.toString())}
-        </p>
-      </div>
-
-      {/* Referral Link */}
-      <div
-        style={{
-          background: '#fff',
-          border: '1px solid #e2e8f0',
-          borderRadius: 12,
-          padding: '16px 20px',
-          marginBottom: 12,
-          textAlign: isRTL ? 'right' : 'left',
-        }}
-      >
-        <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 10px' }}>
-          {t('AffiliateMyReferralLink')}
-        </p>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            marginBottom: 10,
-            flexDirection: isRTL ? 'row-reverse' : 'row',
-          }}
-        >
-          <div
-            style={{
-              flex: 1,
-              background: '#F8FAFC',
-              borderRadius: 8,
-              padding: '10px 14px',
-              fontSize: 12,
-              color: '#64748b',
-              overflow: 'hidden',
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
-              textAlign: isRTL ? 'right' : 'left',
-            }}
-          >
-            {affiliate.referralLink}
-          </div>
-          <CopyButton text={affiliate.referralLink} />
-        </div>
-        {settings.bonusesEnabled && (
-          <div style={{ background: '#EFF6FF', borderRadius: 8, padding: '10px 14px' }}>
-            <p style={{ fontSize: 12, color: '#1e3b8a', margin: 0, fontWeight: 600 }}>
-              {t('AffiliateReferralBonus')}
-            </p>
-            <p style={{ fontSize: 12, color: '#1e3b8a', margin: '4px 0 0' }}>
-              {t('AffiliateReferralBonusDesc')
-                .replace('{referrerBonus}', settings.referrerBonusEgp.toString())
-                .replace('{joinerBonus}', settings.joinerBonusEgp.toString())}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Recent commissions */}
-      <div
-        style={{
-          background: '#fff',
-          border: '1px solid #e2e8f0',
-          borderRadius: 12,
-          padding: '16px 20px',
-          marginBottom: 12,
-          textAlign: isRTL ? 'right' : 'left',
-        }}
-      >
-        <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 12px' }}>
-          {t('AffiliateRecentCommissions')}
-        </p>
-        {recentCommissions.length === 0 ? (
-          <p style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>
-            {t('AffiliateNoCommissions')}
-          </p>
-        ) : (
-          <div>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 90px 60px 90px',
-                gap: 8,
-                padding: '6px 0',
-                color: '#94a3b8',
-                fontSize: 12,
-                borderBottom: '1px solid #f1f5f9',
-              }}
-            >
-              <span style={{ textAlign: isRTL ? 'right' : 'left' }}>
-                {t('AffiliateOrderHeader')}
-              </span>
-              <span style={{ textAlign: isRTL ? 'right' : 'left' }}>
-                {t('AffiliateSaleValueHeader')}
-              </span>
-              <span style={{ textAlign: isRTL ? 'right' : 'left' }}>
-                {t('AffiliateRateHeader')}
-              </span>
-              <span style={{ textAlign: isRTL ? 'left' : 'right' }}>
-                {t('AffiliateEarnedHeader')}
-              </span>
-            </div>
-            {recentCommissions.slice(0, 6).map(c => (
-              <div
-                key={c.id}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 90px 60px 90px',
-                  gap: 8,
-                  padding: '8px 0',
-                  borderBottom: '1px solid #f1f5f9',
-                  fontSize: 13,
-                  alignItems: 'center',
-                }}
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
               >
-                <span style={{ color: '#1e293b', textAlign: isRTL ? 'right' : 'left' }}>
-                  #{c.orderId.slice(-6)} ·{' '}
-                  {new Date(c.orderCreatedAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-EG')}
-                </span>
-                <span style={{ textAlign: isRTL ? 'right' : 'left' }}>
-                  {lang === 'ar'
-                    ? `${c.orderTotalEgp.toLocaleString('ar-EG')} ج.م`
-                    : `${c.orderTotalEgp.toLocaleString('en-EG')} EGP`}
-                </span>
-                <span style={{ textAlign: isRTL ? 'right' : 'left' }}>{c.commissionPct}%</span>
-                <span
-                  style={{ textAlign: isRTL ? 'left' : 'right', color: '#085041', fontWeight: 600 }}
-                >
-                  {lang === 'ar'
-                    ? `${c.commissionEgp.toFixed(1)} ج.م`
-                    : `${c.commissionEgp.toFixed(1)} EGP`}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Tier progress */}
-      <div
-        style={{
-          background: '#fff',
-          border: '1px solid #e2e8f0',
-          borderRadius: 12,
-          padding: '16px 20px',
-          marginBottom: 12,
-          textAlign: isRTL ? 'right' : 'left',
-        }}
-      >
-        <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 4px' }}>
-          {t('AffiliateProgressNextTier')}
-        </p>
-        {nextTier ? (
-          <>
-            <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 10px' }}>
-              {t('AffiliateConversionsNeeded')
-                .replace(
-                  '{needed}',
-                  (nextTier.minConversions - affiliate.totalConversions).toString()
-                )
-                .replace('{pct}', nextTier.commissionPct.toString())}
-            </p>
-            <div
-              style={{
-                background: '#F1F5F9',
-                borderRadius: 4,
-                height: 8,
-                overflow: 'hidden',
-                direction: isRTL ? 'rtl' : 'ltr',
-              }}
-            >
-              <div
-                style={{
-                  width: `${progress}%`,
-                  height: '100%',
-                  background: '#1e3b8a',
-                  borderRadius: 4,
-                  transition: 'width 0.5s',
-                }}
-              />
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginTop: 6,
-                direction: isRTL ? 'rtl' : 'ltr',
-              }}
-            >
-              <span style={{ fontSize: 11, color: '#94a3b8' }}>
-                {lang === 'ar'
-                  ? `${affiliate.totalConversions.toLocaleString('ar-EG')} / ${nextTier.minConversions.toLocaleString('ar-EG')} تحويلات`
-                  : `${affiliate.totalConversions} / ${nextTier.minConversions} conversions`}
-              </span>
-              <span style={{ fontSize: 11, color: '#94a3b8' }}>
-                {lang === 'ar' ? `${progress.toLocaleString('ar-EG')}%` : `${progress}%`}
-              </span>
-            </div>
-          </>
-        ) : (
-          <p style={{ fontSize: 13, color: '#085041', fontWeight: 500 }}>
-            {t('AffiliateHighestTierReached')}
-          </p>
-        )}
-      </div>
-
-      {/* Payout request */}
-      {affiliate.status === 'ACTIVE' && affiliate.pendingEarningsEgp > 0 && (
-        <div
-          style={{
-            background: '#fff',
-            border: '1px solid #e2e8f0',
-            borderRadius: 12,
-            padding: '16px 20px',
-            textAlign: isRTL ? 'right' : 'left',
-          }}
-        >
-          <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 12px' }}>
-            {t('AffiliateRequestPayoutLabel').replace(
-              '{amount}',
-              affiliate.pendingEarningsEgp.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-EG')
-            )}
-          </p>
-          <form
-            onSubmit={requestPayout}
-            style={{ display: 'flex', gap: 10, flexWrap: 'wrap', direction: isRTL ? 'rtl' : 'ltr' }}
-          >
-            <select
-              required
-              value={payoutForm.method}
-              onChange={e => setPayoutForm(f => ({ ...f, method: e.target.value }))}
-              style={{
-                flex: 1,
-                border: '1px solid #e2e8f0',
-                borderRadius: 8,
-                padding: '8px 12px',
-                fontSize: 13,
-                background: '#fff',
-                minWidth: 160,
-                textAlign: isRTL ? 'right' : 'left',
-                direction: isRTL ? 'rtl' : 'ltr',
-              }}
-            >
-              <option value="">{t('AffiliateSelectMethod')}</option>
-              <option value="VODAFONE_CASH">{translatePayoutMethod('Vodafone Cash')}</option>
-              <option value="ORANGE_MONEY">{translatePayoutMethod('Orange Money')}</option>
-              <option value="ETISALAT_CASH">{translatePayoutMethod('Etisalat Cash')}</option>
-              <option value="INSTAPAY">{translatePayoutMethod('InstaPay')}</option>
-              <option value="BANK_TRANSFER">{translatePayoutMethod('Bank Transfer')}</option>
-            </select>
-            <input
-              required
-              placeholder={t('AffiliatePhoneOrIban')}
-              value={payoutForm.payoutDetails}
-              onChange={e => setPayoutForm(f => ({ ...f, payoutDetails: e.target.value }))}
-              style={{
-                flex: 2,
-                border: '1px solid #e2e8f0',
-                borderRadius: 8,
-                padding: '8px 12px',
-                fontSize: 13,
-                minWidth: 200,
-                textAlign: isRTL ? 'right' : 'left',
-              }}
-            />
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              {lang === 'ar' ? 'الرجوع للمتجر' : 'Back to Shop'}
+            </Link>
             <button
-              type="submit"
-              disabled={payoutLoading}
-              style={{
-                background: '#1e3b8a',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 8,
-                padding: '8px 20px',
-                fontWeight: 600,
-                fontSize: 13,
-                cursor: 'pointer',
-              }}
+              onClick={() => signOut({ callbackUrl: '/' })}
+              className="px-4 py-2 bg-red-650/80 hover:bg-red-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5"
             >
-              {payoutLoading ? t('AffiliateRequestingPayout') : t('AffiliateRequestPayoutBtn')}
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              {lang === 'ar' ? 'خروج' : 'Sign Out'}
             </button>
-          </form>
-          {payoutMsg && (
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-4xl mx-auto px-4 mt-8">
+        {/* Profile Card */}
+        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          <div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+              {t('AffiliateMyDashboard') || 'My Affiliate Dashboard'}
+            </h1>
+            <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-400 font-bold flex-wrap">
+              <span>{session?.user?.name}</span>
+              <span>·</span>
+              <span>
+                {t('AffiliateJoined') || 'Joined'}{' '}
+                {new Date(affiliate.createdAt).toLocaleDateString(
+                  lang === 'ar' ? 'ar-EG' : 'en-EG',
+                  {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  }
+                )}
+              </span>
+              <span>·</span>
+              <span
+                className={`px-2 py-0.5 rounded-full border text-[10px] font-black uppercase ${statusColor.bg} ${statusColor.text} ${statusColor.border}`}
+              >
+                {statusLabels[affiliate.status] ?? affiliate.status}
+              </span>
+            </div>
+          </div>
+
+          <div className="sm:text-right border-t sm:border-t-0 pt-4 sm:pt-0 border-slate-100">
+            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-0.5">
+              {t('AffiliateTierLabel') || 'Current Tier'}
+            </p>
             <p
-              style={{
-                fontSize: 12,
-                marginTop: 8,
-                color:
+              className={`text-lg font-black uppercase ${tierColors[affiliate.tier] ?? 'text-indigo-600'}`}
+            >
+              {translateTier(affiliate.tierName)} ·{' '}
+              {lang === 'ar'
+                ? `عمولة ${affiliate.commissionPct}%`
+                : `${affiliate.commissionPct}% commission`}
+            </p>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {[
+            {
+              label: t('AffiliateTotalEarned') || 'Total Earned',
+              value:
+                lang === 'ar'
+                  ? `${affiliate.totalEarnedEgp.toLocaleString('ar-EG')} ج.م`
+                  : `${affiliate.totalEarnedEgp.toLocaleString('en-EG')} EGP`,
+              icon: '💰',
+            },
+            {
+              label: t('AffiliatePending') || 'Pending Balance',
+              value:
+                lang === 'ar'
+                  ? `${affiliate.pendingEarningsEgp.toLocaleString('ar-EG')} ج.م`
+                  : `${affiliate.pendingEarningsEgp.toLocaleString('en-EG')} EGP`,
+              icon: '⏳',
+            },
+            {
+              label: t('AffiliateTotalReferrals') || 'Total Referrals',
+              value:
+                lang === 'ar'
+                  ? affiliate.totalConversions.toLocaleString('ar-EG')
+                  : affiliate.totalConversions.toString(),
+              icon: '👥',
+            },
+            {
+              label: t('AffiliateConversions') || 'Conversions',
+              value:
+                lang === 'ar'
+                  ? affiliate.totalConversions.toLocaleString('ar-EG')
+                  : affiliate.totalConversions.toString(),
+              icon: '📈',
+            },
+          ].map((s, idx) => (
+            <div
+              key={idx}
+              className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm relative overflow-hidden group"
+            >
+              <div className="absolute right-3 top-3 text-lg opacity-40 group-hover:opacity-100 transition-opacity duration-300">
+                {s.icon}
+              </div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                {s.label}
+              </p>
+              <p className="text-xl font-black text-slate-900">{s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Promo Code & Link section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Promo Code */}
+          <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">
+              {t('AffiliateMyPromoCode') || 'My Promo Code'}
+            </h3>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex-1 bg-slate-50 border border-slate-200/60 rounded-xl py-2 px-4 font-mono text-xl font-black text-center tracking-widest text-slate-800 uppercase shadow-inner select-all">
+                {affiliate.promoCode}
+              </div>
+              <CopyButton text={affiliate.promoCode} />
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              {(
+                t('AffiliatePromoCodeDesc') ||
+                'Share this code to offer your audience {discountPct}% off their orders, while you earn a {commissionPct}% commission!'
+              )
+                .replace('{discountPct}', affiliate.discountPct.toString())
+                .replace('{commissionPct}', affiliate.commissionPct.toString())}
+            </p>
+          </div>
+
+          {/* Referral Link */}
+          <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">
+              {t('AffiliateMyReferralLink') || 'My Referral Link'}
+            </h3>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex-1 bg-slate-50 border border-slate-200/60 rounded-xl py-2 px-3 text-xs text-slate-500 select-all truncate font-mono text-left">
+                {affiliate.referralLink}
+              </div>
+              <CopyButton text={affiliate.referralLink} />
+            </div>
+            {settings.bonusesEnabled && (
+              <div className="bg-indigo-50 border border-indigo-100/60 rounded-xl p-3">
+                <p className="text-xs font-black text-indigo-700 uppercase tracking-wider mb-0.5">
+                  {t('AffiliateReferralBonus') || 'Referral Bonus'}
+                </p>
+                <p className="text-[11px] text-indigo-600/90 leading-relaxed">
+                  {(
+                    t('AffiliateReferralBonusDesc') ||
+                    'Invite friends! They get {joinerBonus} EGP on signup, and you get {referrerBonus} EGP once they complete their first order.'
+                  )
+                    .replace('{referrerBonus}', settings.referrerBonusEgp.toString())
+                    .replace('{joinerBonus}', settings.joinerBonusEgp.toString())}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Tier Progress */}
+        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm mb-6">
+          <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">
+            {t('AffiliateProgressNextTier') || 'Tier Progression'}
+          </h3>
+          {nextTier ? (
+            <>
+              <p className="text-xs text-slate-600 mb-4 leading-relaxed font-light">
+                {(
+                  t('AffiliateConversionsNeeded') ||
+                  'You need {needed} more conversions to reach {tierName} and unlock {pct}% commission.'
+                )
+                  .replace(
+                    '{needed}',
+                    (nextTier.minConversions - affiliate.totalConversions).toString()
+                  )
+                  .replace('{tierName}', translateTier(nextTier.name))
+                  .replace('{pct}', nextTier.commissionPct.toString())}
+              </p>
+              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-slate-900 h-2.5 rounded-full transition-all duration-700 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center mt-2.5 text-xs text-slate-400 font-bold">
+                <span>
+                  {lang === 'ar'
+                    ? `${affiliate.totalConversions.toLocaleString('ar-EG')} / ${nextTier.minConversions.toLocaleString('ar-EG')} تحويل`
+                    : `${affiliate.totalConversions} / ${nextTier.minConversions} conversions`}
+                </span>
+                <span>{progress}%</span>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-emerald-600 font-bold">
+              🎉{' '}
+              {t('AffiliateHighestTierReached') ||
+                'Congratulations! You have reached the highest affiliate tier.'}
+            </p>
+          )}
+        </div>
+
+        {/* Recent Commissions */}
+        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm mb-6">
+          <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-4">
+            {t('AffiliateRecentCommissions') || 'Recent Commissions'}
+          </h3>
+          {recentCommissions.length === 0 ? (
+            <p className="text-xs text-slate-400 italic text-center py-6">
+              {t('AffiliateNoCommissions') || 'No conversions registered yet.'}
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-400 uppercase tracking-widest font-black text-[9px] pb-2">
+                    <th className="pb-3">{t('AffiliateOrderHeader') || 'Order'}</th>
+                    <th className="pb-3">{t('AffiliateSaleValueHeader') || 'Sale Value'}</th>
+                    <th className="pb-3">{t('AffiliateRateHeader') || 'Commission %'}</th>
+                    <th className="pb-3 text-right">{t('AffiliateEarnedHeader') || 'Earned'}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentCommissions.slice(0, 6).map(c => (
+                    <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                      <td className="py-3 font-bold text-slate-800">
+                        #{c.orderId.slice(-6).toUpperCase()}
+                        <span className="text-[10px] text-slate-400 font-normal block">
+                          {new Date(c.orderCreatedAt).toLocaleDateString(
+                            lang === 'ar' ? 'ar-EG' : 'en-EG'
+                          )}
+                        </span>
+                      </td>
+                      <td className="py-3 text-slate-650">
+                        {lang === 'ar'
+                          ? `${c.orderTotalEgp.toLocaleString('ar-EG')} ج.م`
+                          : `${c.orderTotalEgp.toLocaleString('en-EG')} EGP`}
+                      </td>
+                      <td className="py-3 font-bold text-slate-800">{c.commissionPct}%</td>
+                      <td className="py-3 text-right font-black text-emerald-700">
+                        {lang === 'ar'
+                          ? `${c.commissionEgp.toFixed(1)} ج.م`
+                          : `${c.commissionEgp.toFixed(1)} EGP`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Payout Request */}
+        {affiliate.status === 'ACTIVE' && affiliate.pendingEarningsEgp > 0 && (
+          <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">
+              {t('AffiliateRequestPayoutLabel') || 'Request Earnings Withdrawal'}
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">
+              {lang === 'ar'
+                ? `لديك مبلغ ${affiliate.pendingEarningsEgp.toLocaleString('ar-EG')} ج.م متاح للسحب. اختر وسيلتك المفضلة للسحب بالأسفل:`
+                : `You have ${affiliate.pendingEarningsEgp.toLocaleString('en-EG')} EGP available to withdraw. Complete the form to request disbursement:`}
+            </p>
+            <form onSubmit={requestPayout} className="flex flex-col sm:flex-row gap-3">
+              <select
+                required
+                value={payoutForm.method}
+                onChange={e => setPayoutForm(f => ({ ...f, method: e.target.value }))}
+                className="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-xs bg-white focus:outline-none focus:border-slate-800"
+              >
+                <option value="">{t('AffiliateSelectMethod') || 'Select payout method'}</option>
+                <option value="VODAFONE_CASH">{translatePayoutMethod('Vodafone Cash')}</option>
+                <option value="ORANGE_MONEY">{translatePayoutMethod('Orange Money')}</option>
+                <option value="ETISALAT_CASH">{translatePayoutMethod('Etisalat Cash')}</option>
+                <option value="INSTAPAY">{translatePayoutMethod('InstaPay')}</option>
+                <option value="BANK_TRANSFER">{translatePayoutMethod('Bank Transfer')}</option>
+              </select>
+              <input
+                required
+                placeholder={t('AffiliatePhoneOrIban') || 'Phone number or IBAN'}
+                value={payoutForm.payoutDetails}
+                onChange={e => setPayoutForm(f => ({ ...f, payoutDetails: e.target.value }))}
+                className="flex-[2] border border-slate-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-slate-800"
+              />
+              <button
+                type="submit"
+                disabled={payoutLoading}
+                className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-slate-800 transition-colors disabled:opacity-50"
+              >
+                {payoutLoading
+                  ? t('AffiliateRequestingPayout') || 'Requesting…'
+                  : t('AffiliateRequestPayoutBtn') || 'Withdraw'}
+              </button>
+            </form>
+            {payoutMsg && (
+              <p
+                className={`text-xs mt-3 font-bold ${
                   payoutMsg.includes('EGP') ||
                   payoutMsg.includes('ج.م') ||
                   payoutMsg.includes('بنجاح') ||
                   payoutMsg.includes('success')
-                    ? '#085041'
-                    : '#B91C1C',
-                textAlign: isRTL ? 'right' : 'left',
-              }}
-            >
-              {payoutMsg}
-            </p>
-          )}
-        </div>
-      )}
+                    ? 'text-emerald-700'
+                    : 'text-red-600'
+                }`}
+              >
+                {payoutMsg}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

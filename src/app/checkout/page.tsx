@@ -124,14 +124,41 @@ function CheckoutPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // Fetch user loyalty points
+  // Fetch user loyalty points and saved address
   useEffect(() => {
     if (session?.user) {
+      // Loyalty points
       fetch('/api/loyalty')
         .then(res => res.json())
         .then((data: { points?: number }) => {
           if (data.points !== undefined) {
             setLoyaltyPoints(data.points);
+          }
+        })
+        .catch((error: unknown) => console.error(error));
+
+      // Saved address
+      fetch('/api/addresses')
+        .then(res => res.json())
+        .then(data => {
+          if (data.addresses && data.addresses.length > 0) {
+            const defaultAddr = data.addresses[0]; // ordered by isDefault desc
+            setAddress({
+              fullName: session.user?.name || '',
+              // @ts-expect-error - session.user type might not expose phone directly in NextAuth types
+              phone: session.user?.phone || '',
+              address: defaultAddr.street || '',
+              city: defaultAddr.city || '',
+              governorate: defaultAddr.governorate || '',
+            });
+          } else {
+            // Just pre-fill name/phone if no address
+            setAddress(prev => ({
+              ...prev,
+              fullName: session.user?.name || '',
+              // @ts-expect-error - session.user type might not expose phone directly in NextAuth types
+              phone: session.user?.phone || prev.phone,
+            }));
           }
         })
         .catch((error: unknown) => console.error(error));

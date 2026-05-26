@@ -321,7 +321,7 @@ export default function AdminBannersPage() {
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">
-                    Position
+                    Position / Slot (0 = Slider, 1 = Top Right, 2 = Bottom Right)
                   </label>
                   <input
                     type="number"

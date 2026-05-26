@@ -9,5 +9,8 @@
 /** Flat number of points awarded for every successful order. */
 export const POINTS_PER_ORDER = 10;
 
+/** Flat number of points awarded for a verified product review. */
+export const POINTS_PER_REVIEW = 5;
+
 /** Conversion rate when redeeming points at checkout. */
 export const POINT_VALUE_EGP = 1;

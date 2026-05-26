@@ -74,7 +74,13 @@ function CustomerDashboard() {
   const refreshData = async () => {
     setLoading(true);
     try {
-      const res = (await getDashboardStats()) as unknown as DashboardData;
+      const res = (await getDashboardStats()) as unknown as DashboardData & {
+        isAffiliate?: boolean;
+      };
+      if (res && res.isAffiliate) {
+        router.push('/affiliate/dashboard');
+        return;
+      }
       setData(res);
     } catch (err: unknown) {
       const error = err as Error;
@@ -152,7 +158,11 @@ function CustomerDashboard() {
         await fetch('/api/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ variantId: item.variantId, quantity: item.quantity }),
+          body: JSON.stringify({
+            variantId: item.variantId,
+            quantity: item.quantity,
+            savedPrice: item.variant?.price || item.priceAtPurchase || 0,
+          }),
         });
       }
       alert('Items added to your cart!');
@@ -1009,11 +1019,13 @@ function NotificationsTab({ items }: { items: Notification[] }) {
 
 function WalletTab({ user }: { user?: User }) {
   const points = user?.loyaltyPoints || 0;
-  // Tier tiering: Bronze < 1000, Silver 1000-4999, Gold 5000+
-  const tier = points >= 5000 ? 'Gold' : points >= 1000 ? 'Silver' : 'Bronze';
+  // Tier thresholds — aligned with POINTS_PER_ORDER=10
+  // Bronze: 0-499 pts | Silver: 500-1999 pts | Gold: 2000+ pts
+  const tier = points >= 2000 ? 'Gold' : points >= 500 ? 'Silver' : 'Bronze';
   const tierColor = tier === 'Gold' ? '#F59E0B' : tier === 'Silver' ? '#94A3B8' : '#A16207';
+  const tierBg = tier === 'Gold' ? '#FFFBEB' : tier === 'Silver' ? '#F8FAFC' : '#FEF3C7';
   const nextTier = tier === 'Bronze' ? 'Silver' : tier === 'Silver' ? 'Gold' : null;
-  const nextTierPoints = tier === 'Bronze' ? 1000 : tier === 'Silver' ? 5000 : 0;
+  const nextTierPoints = tier === 'Bronze' ? 500 : tier === 'Silver' ? 2000 : 0;
   const progress = nextTierPoints ? Math.min(100, (points / nextTierPoints) * 100) : 100;
 
   return (
@@ -1054,6 +1066,34 @@ function WalletTab({ user }: { user?: User }) {
               style={{ width: `${progress}%`, backgroundColor: tierColor }}
             />
           </div>
+          {/* Tier benefits */}
+          <div className="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500">
+            <div className="font-bold text-slate-700 mb-1" style={{ color: tierColor }}>
+              Your {tier} benefits:
+            </div>
+            {tier === 'Bronze' && <div>• 1 pt = 1 EGP off at checkout</div>}
+            {tier === 'Silver' && (
+              <>
+                <div>• 1 pt = 1 EGP off at checkout</div>
+                <div>• Early access to flash sales</div>
+              </>
+            )}
+            {tier === 'Gold' && (
+              <>
+                <div>• 1 pt = 1 EGP off at checkout</div>
+                <div>• Early access to flash sales</div>
+                <div>• Free shipping on orders over 200 EGP</div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* History section */}
+      <div className="card">
+        <div className="card-title mb-4">Recent Transactions</div>
+        <div className="py-10 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg">
+          No recent loyalty transactions found.
         </div>
       </div>
 
@@ -1094,6 +1134,49 @@ function WalletTab({ user }: { user?: User }) {
           </div>
         </div>
       </div>
+
+      {/* Refer a Friend */}
+      <div className="card">
+        <div className="card-title mb-2">Refer a Friend</div>
+        <div className="text-xs text-slate-500 mb-4">
+          Share your unique referral link. Earn <strong>50 bonus points</strong> when a friend signs
+          up and completes their first order.
+        </div>
+        {user?.email && <ReferralLinkWidget email={user.email} />}
+      </div>
+    </div>
+  );
+}
+
+function ReferralLinkWidget({ email }: { email: string }) {
+  const [copied, setCopied] = React.useState(false);
+  const refCode = Buffer.from(email)
+    .toString('base64')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(0, 12);
+  const refLink =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/register?ref=${refCode}`
+      : `https://lolozozo.shop/register?ref=${refCode}`;
+
+  const copy = () => {
+    navigator.clipboard.writeText(refLink).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono text-slate-600 truncate">
+        {refLink}
+      </div>
+      <button
+        onClick={copy}
+        className="px-3 py-2 bg-[#1e3b8a] text-white text-xs font-bold rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap"
+      >
+        {copied ? 'Copied ✓' : 'Copy Link'}
+      </button>
     </div>
   );
 }

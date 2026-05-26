@@ -1,6 +1,14 @@
-"use client";
+'use client';
 import { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 interface SellerStat {
   id: string;
@@ -9,12 +17,19 @@ interface SellerStat {
   revenue: number;
   rating: number | null;
 }
-
 interface RevenueChartPoint {
   date: string;
   revenue: number;
 }
-
+interface ProductStat {
+  title: string;
+  sales: number;
+  revenue: number;
+}
+interface ReturnReason {
+  reason: string;
+  count: number;
+}
 interface AnalyticsData {
   totalRevenue: number;
   totalOrders: number;
@@ -22,6 +37,8 @@ interface AnalyticsData {
   conversionRate: number;
   revenueChart: RevenueChartPoint[];
   topSellers: SellerStat[];
+  topProducts: ProductStat[];
+  returns: { total: number; byReason: ReturnReason[] };
 }
 
 export default function AdminAnalyticsPage() {
@@ -41,7 +58,11 @@ export default function AdminAnalyticsPage() {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Analytics</h1>
-        <select value={period} onChange={e => setPeriod(e.target.value)} className="border rounded-lg px-4 py-2">
+        <select
+          value={period}
+          onChange={e => setPeriod(e.target.value)}
+          className="border rounded-lg px-4 py-2"
+        >
           <option value="7d">Last 7 days</option>
           <option value="30d">Last 30 days</option>
           <option value="90d">Last 90 days</option>
@@ -54,10 +75,16 @@ export default function AdminAnalyticsPage() {
       {!loading && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard label="Total Revenue" value={`${(data.totalRevenue || 0).toLocaleString()} EGP`} />
+            <StatCard
+              label="Total Revenue"
+              value={`${(data.totalRevenue || 0).toLocaleString()} EGP`}
+            />
             <StatCard label="Orders" value={String(data.totalOrders || 0)} />
             <StatCard label="New Users" value={String(data.newUsers || 0)} />
-            <StatCard label="Conversion Rate" value={`${((data.conversionRate || 0) * 100).toFixed(1)}%`} />
+            <StatCard
+              label="Conversion Rate"
+              value={`${((data.conversionRate || 0) * 100).toFixed(1)}%`}
+            />
           </div>
 
           <div className="bg-white rounded-xl p-6">
@@ -77,6 +104,79 @@ export default function AdminAnalyticsPage() {
             )}
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Top Products */}
+            <div className="bg-white rounded-xl p-6">
+              <h2 className="text-lg font-bold mb-4">Top Products</h2>
+              {data.topProducts && data.topProducts.length > 0 ? (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500 border-b">
+                      <th className="pb-2">#</th>
+                      <th className="pb-2">Product</th>
+                      <th className="pb-2">Units Sold</th>
+                      <th className="pb-2">Revenue</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.topProducts.map((p: ProductStat, i: number) => (
+                      <tr key={i} className="border-t">
+                        <td className="py-2 text-gray-400 font-bold">{i + 1}</td>
+                        <td className="py-2 truncate max-w-[160px]" title={p.title}>
+                          {p.title}
+                        </td>
+                        <td className="py-2">{p.sales}</td>
+                        <td className="py-2 font-bold">
+                          {Math.round(p.revenue).toLocaleString()} EGP
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="text-center py-10 text-gray-500">No product data available</div>
+              )}
+            </div>
+
+            {/* Returns Analytics */}
+            <div className="bg-white rounded-xl p-6">
+              <h2 className="text-lg font-bold mb-1">Returns Analysis</h2>
+              <p className="text-sm text-gray-500 mb-4">
+                {data.returns?.total || 0} return requests in period
+              </p>
+              {data.returns?.byReason && data.returns.byReason.length > 0 ? (
+                <div className="space-y-3">
+                  {data.returns.byReason.map((r: ReturnReason) => {
+                    const pct = data.returns?.total
+                      ? Math.round((r.count / data.returns.total) * 100)
+                      : 0;
+                    return (
+                      <div key={r.reason}>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="font-semibold text-gray-700">{r.reason}</span>
+                          <span className="text-gray-400">
+                            {r.count} ({pct}%)
+                          </span>
+                        </div>
+                        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-red-400 rounded-full"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-10 text-gray-500">
+                  No return requests in this period
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Top Sellers */}
           <div className="bg-white rounded-xl p-6">
             <h2 className="text-lg font-bold mb-4">Top Sellers</h2>
             {data.topSellers && data.topSellers.length > 0 ? (
@@ -109,7 +209,6 @@ export default function AdminAnalyticsPage() {
     </div>
   );
 }
-
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (

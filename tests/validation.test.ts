@@ -331,21 +331,31 @@ describe('orderStatusUpdateSchema', () => {
 
 describe('createReviewSchema', () => {
   it('clamps rating between 1 and 5', () => {
-    expect(createReviewSchema.safeParse({ productId: VALID_UUID, rating: 0 }).success).toBe(false);
-    expect(createReviewSchema.safeParse({ productId: VALID_UUID, rating: 6 }).success).toBe(false);
-    expect(createReviewSchema.parse({ productId: VALID_UUID, rating: 5 }).rating).toBe(5);
+    expect(
+      createReviewSchema.safeParse({ productId: VALID_UUID, orderItemId: VALID_UUID, rating: 0 })
+        .success
+    ).toBe(false);
+    expect(
+      createReviewSchema.safeParse({ productId: VALID_UUID, orderItemId: VALID_UUID, rating: 6 })
+        .success
+    ).toBe(false);
+    expect(
+      createReviewSchema.parse({ productId: VALID_UUID, orderItemId: VALID_UUID, rating: 5 }).rating
+    ).toBe(5);
   });
 
   it('rejects integer-shaped floats (rating must be int)', () => {
-    expect(createReviewSchema.safeParse({ productId: VALID_UUID, rating: 4.5 }).success).toBe(
-      false
-    );
+    expect(
+      createReviewSchema.safeParse({ productId: VALID_UUID, orderItemId: VALID_UUID, rating: 4.5 })
+        .success
+    ).toBe(false);
   });
 
   it('caps comment length at 2000 characters', () => {
     expect(
       createReviewSchema.safeParse({
         productId: VALID_UUID,
+        orderItemId: VALID_UUID,
         rating: 5,
         comment: 'x'.repeat(2001),
       }).success

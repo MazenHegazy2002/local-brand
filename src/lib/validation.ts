@@ -157,6 +157,7 @@ export const orderItemStatusUpdateSchema = z.object({
 
 export const createReviewSchema = z.object({
   productId: z.string().uuid('Invalid product ID'),
+  orderItemId: z.string().uuid('Invalid order item ID'),
   rating: z.number().int().min(1, 'Rating must be at least 1').max(5, 'Rating must be at most 5'),
   comment: z.string().max(2000, 'Comment must be less than 2000 characters').optional(),
 });

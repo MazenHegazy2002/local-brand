@@ -36,20 +36,83 @@ export async function GET(req: Request) {
     revenue: o._sum.totalAmount || 0,
   }));
 
-  const topSellers = await prisma.sellerProfile.findMany({
-    where: { status: 'ACTIVE' },
-    select: { id: true, storeName: true },
-    take: 10,
-  }).then((profiles) => {
-    return profiles.map(p => ({ id: p.id, storeName: p.storeName, sales: 0, revenue: 0 }));
+  // Real top sellers by revenue
+  const sellerRevenue = await prisma.orderItem.groupBy({
+    by: ['variantId'],
+    where: { order: { createdAt: { gte: startDate }, paymentStatus: 'PAID' } },
+    _sum: { priceAtPurchase: true },
+    _count: { id: true },
   });
+
+  const variantIds = sellerRevenue.map(s => s.variantId);
+  const variants = await prisma.productVariant.findMany({
+    where: { id: { in: variantIds } },
+    include: { product: { include: { seller: true } } },
+  });
+
+  const sellerMap: Record<
+    string,
+    { id: string; storeName: string; sales: number; revenue: number; rating: number | null }
+  > = {};
+  for (const sv of sellerRevenue) {
+    const variant = variants.find(v => v.id === sv.variantId);
+    if (!variant?.product?.seller) continue;
+    const sid = variant.product.seller.id;
+    if (!sellerMap[sid]) {
+      sellerMap[sid] = {
+        id: sid,
+        storeName: variant.product.seller.storeName,
+        sales: 0,
+        revenue: 0,
+        rating: null,
+      };
+    }
+    sellerMap[sid].sales += (sv._count as any).id;
+    sellerMap[sid].revenue += Number((sv._sum as any).priceAtPurchase || 0);
+  }
+  const topSellers = Object.values(sellerMap)
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 10);
+
+  // Top products by sales volume
+  const productRevenue = await prisma.orderItem.groupBy({
+    by: ['productTitleSnapshot'],
+    where: { order: { createdAt: { gte: startDate }, paymentStatus: 'PAID' } },
+    _sum: { priceAtPurchase: true },
+    _count: { id: true },
+    orderBy: { _count: { id: 'desc' } },
+    take: 10,
+  });
+
+  const topProducts = productRevenue.map(p => ({
+    title: p.productTitleSnapshot,
+    sales: (p._count as any).id,
+    revenue: Number((p._sum as any).priceAtPurchase || 0),
+  }));
+
+  // Returns analytics (Task 28)
+  const returnRequests = await prisma.returnRequest
+    .groupBy({
+      by: ['reason'],
+      where: { createdAt: { gte: startDate } },
+      _count: { id: true },
+    })
+    .catch(() => [] as any[]);
+
+  const totalReturns = returnRequests.reduce((sum, r) => sum + ((r._count as any).id || 0), 0);
+  const returnsByReason = returnRequests.map(r => ({
+    reason: r.reason,
+    count: (r._count as any).id || 0,
+  }));
 
   return NextResponse.json({
     totalOrders: orders,
     newUsers: users,
     totalRevenue: revenue._sum.totalAmount || 0,
-    conversionRate: 0.03,
+    conversionRate: orders > 0 && users > 0 ? Math.min(1, orders / Math.max(users, 1)) : 0,
     revenueChart,
     topSellers,
+    topProducts,
+    returns: { total: totalReturns, byReason: returnsByReason },
   });
 }

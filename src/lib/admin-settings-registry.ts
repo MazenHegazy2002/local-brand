@@ -301,6 +301,39 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
       { value: 'AED', label: 'UAE Dirham (AED)' },
     ],
   },
+  {
+    key: 'HOMEPAGE_BEST_SELLERS_CAT',
+    category: 'store',
+    type: 'text',
+    label: 'Best Sellers Category Slug',
+    defaultValue: '',
+    exposeToClient: true,
+    group: 'Homepage Categories',
+    description:
+      'The category slug whose products will be displayed in the Bestsellers section on the homepage. Leave empty to use featured products.',
+  },
+  {
+    key: 'HOMEPAGE_NEW_ARRIVALS_CAT',
+    category: 'store',
+    type: 'text',
+    label: 'New Arrivals Category Slug',
+    defaultValue: '',
+    exposeToClient: true,
+    group: 'Homepage Categories',
+    description:
+      'The category slug whose products will be displayed in the New Arrivals section. Leave empty to use recent products.',
+  },
+  {
+    key: 'HOMEPAGE_RECOMMENDED_CAT',
+    category: 'store',
+    type: 'text',
+    label: 'Recommended Category Slug',
+    defaultValue: '',
+    exposeToClient: true,
+    group: 'Homepage Categories',
+    description:
+      'The category slug whose products will be displayed in the Recommended section. Leave empty to use mixed products.',
+  },
 
   // ── 2. Contact / Legal ──────────────────────────────────────────────────
   {

@@ -312,14 +312,14 @@ export default function ProductDetails({
         <div className="flex items-center gap-2 mb-2.5">
           <Link
             href={`/brand/${product.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-            className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest hover:text-[#1e3b8a] dark:hover:text-[#6b8ff5] transition-colors"
+            className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest hover:text-[#534AB7] dark:hover:text-[#6b8ff5] transition-colors"
           >
             {product.seller.storeName}
           </Link>
           {(product.seller as { status?: string }).status === 'ACTIVE' && (
             <span
               title="Verified seller on Brandy"
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#1e3b8a]/10 text-[#1e3b8a] dark:bg-[#1e3b8a]/20 dark:text-[#6b8ff5] rounded text-[10px] font-bold uppercase tracking-wide"
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#534AB7]/10 text-[#534AB7] dark:bg-[#534AB7]/20 dark:text-[#6b8ff5] rounded text-[10px] font-bold uppercase tracking-wide"
             >
               <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
                 <path
@@ -340,7 +340,7 @@ export default function ProductDetails({
 
         {/* Dynamic Price & In-stock Indicators */}
         <div className="flex items-center gap-4 mb-6 flex-wrap">
-          <div className="text-3xl font-black text-[#1e3b8a] dark:text-[#6b8ff5]">
+          <div className="text-3xl font-black text-[#534AB7] dark:text-[#6b8ff5]">
             {activePrice.toLocaleString()} {t('EGP') || 'EGP'}
           </div>
 
@@ -420,7 +420,7 @@ export default function ProductDetails({
                           !bgStyle.startsWith('#') && !bgStyle.startsWith('hsl')
                             ? bgStyle
                             : undefined,
-                        boxShadow: isSelected ? `0 0 0 2px bg-white, 0 0 0 4px #1e3b8a` : 'none',
+                        boxShadow: isSelected ? `0 0 0 2px bg-white, 0 0 0 4px #534AB7` : 'none',
                       }}
                       aria-label={`Select ${colorName} color`}
                     />
@@ -444,7 +444,7 @@ export default function ProductDetails({
                   id="size-selector"
                   value={selectedSize}
                   onChange={e => setSelectedSize(e.target.value)}
-                  className="w-full h-12 pl-4 pr-10 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#1e3b8a] dark:focus:border-[#6b8ff5] focus:ring-1 focus:ring-[#1e3b8a] dark:focus:ring-[#6b8ff5] cursor-pointer appearance-none transition-all"
+                  className="w-full h-12 pl-4 pr-10 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#534AB7] dark:focus:border-[#6b8ff5] focus:ring-1 focus:ring-[#534AB7] dark:focus:ring-[#6b8ff5] cursor-pointer appearance-none transition-all"
                 >
                   <option value="">Select Size</option>
                   {uniqueSizes.map(sizeName => {
@@ -521,7 +521,7 @@ export default function ProductDetails({
                 ? 'bg-green-500 text-white shadow-green-500/20'
                 : availableStock === 0
                   ? 'bg-gray-300 dark:bg-slate-800 text-gray-500 dark:text-slate-500 cursor-not-allowed shadow-none'
-                  : 'bg-[#1e3b8a] hover:bg-[#152c6e] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] text-white shadow-[#1e3b8a]/20'
+                  : 'bg-[#534AB7] hover:bg-[#433b9c] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] text-white shadow-[#534AB7]/20'
             }`}
           >
             {added ? (
@@ -592,7 +592,7 @@ export default function ProductDetails({
 
         {/* Guarantee */}
         <div className="mt-8 bg-slate-50 dark:bg-slate-800/40 border border-gray-100 dark:border-slate-800 rounded-xl p-4 flex gap-4">
-          <div className="w-10 h-10 shrink-0 bg-[#eef3f7] dark:bg-slate-700/60 text-[#1e3b8a] dark:text-[#6b8ff5] rounded-full flex items-center justify-center">
+          <div className="w-10 h-10 shrink-0 bg-[#eef3f7] dark:bg-slate-700/60 text-[#534AB7] dark:text-[#6b8ff5] rounded-full flex items-center justify-center">
             <svg
               width="20"
               height="20"

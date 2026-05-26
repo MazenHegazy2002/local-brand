@@ -78,13 +78,13 @@ export default function SellerApplicationPage() {
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
             <Link
-              href="/login?callbackUrl=/seller/apply"
+              href="/seller/login?callbackUrl=/seller/apply"
               className="bg-white text-[#1e3b8a] font-black px-8 py-3 rounded-full text-sm hover:bg-gray-100 transition-colors"
             >
               Sign in to apply →
             </Link>
             <Link
-              href="/register?callbackUrl=/seller/apply"
+              href="/seller/register?callbackUrl=/seller/apply"
               className="border border-white/40 text-white font-bold px-8 py-3 rounded-full text-sm hover:bg-white/10 transition-colors"
             >
               Create an account
@@ -120,13 +120,13 @@ export default function SellerApplicationPage() {
             </p>
             <div className="flex gap-3 justify-center flex-wrap">
               <Link
-                href="/login?callbackUrl=/seller/apply"
+                href="/seller/login?callbackUrl=/seller/apply"
                 className="bg-[#1e3b8a] text-white font-black px-8 py-3 rounded-full text-sm hover:bg-[#16307a] transition-colors"
               >
                 Sign in to apply
               </Link>
               <Link
-                href="/register?callbackUrl=/seller/apply"
+                href="/seller/register?callbackUrl=/seller/apply"
                 className="border border-[#1e3b8a] text-[#1e3b8a] font-bold px-8 py-3 rounded-full text-sm hover:bg-[#1e3b8a]/5 transition-colors"
               >
                 Register free

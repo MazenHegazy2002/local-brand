@@ -19,46 +19,51 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: validated.error.errors[0].message }, { status: 400 });
     }
 
-    const { productId, rating, comment } = validated.data;
+    const { productId, orderItemId, rating, comment } = validated.data;
     const userId = (session.user as SessionUser).id;
 
-    // 1. Verify Purchase (Only allow reviews if the user bought and received it)
-    const orderHistory = await prisma.order.findFirst({
+    // 1. Verify Purchase (Only allow reviews if the user bought and received it via this specific order item)
+    const orderItem = await prisma.orderItem.findFirst({
       where: {
-        userId,
+        id: orderItemId,
         status: 'DELIVERED',
-        items: {
-          some: {
-            variant: { productId },
-          },
-        },
+        order: { userId },
+        variant: { productId },
       },
     });
 
-    const verifiedPurchase = !!orderHistory;
+    if (!orderItem) {
+      return NextResponse.json({ message: 'Item not delivered or invalid order' }, { status: 400 });
+    }
 
-    // 2. Prevent Double Reviewing
+    // 2. Prevent Double Reviewing on the same order item
     const existingReview = await prisma.review.findFirst({
-      where: { userId, productId },
+      where: { orderItemId },
     });
 
     if (existingReview) {
-      return NextResponse.json(
-        { message: 'You have already reviewed this product' },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: 'You have already reviewed this item' }, { status: 400 });
     }
 
-    // 3. Create Review
-    const review = await prisma.review.create({
-      data: {
-        userId,
-        productId,
-        rating,
-        comment,
-        verifiedPurchase,
-      },
-    });
+    // 3. Create Review and award points atomically
+    const { POINTS_PER_REVIEW } = await import('@/lib/loyalty-constants');
+
+    const [review] = await prisma.$transaction([
+      prisma.review.create({
+        data: {
+          userId,
+          productId,
+          orderItemId,
+          rating,
+          comment,
+          verifiedPurchase: true,
+        },
+      }),
+      prisma.user.update({
+        where: { id: userId },
+        data: { loyaltyPoints: { increment: POINTS_PER_REVIEW } },
+      }),
+    ]);
 
     return NextResponse.json({ message: 'Review successfully submitted', review }, { status: 201 });
   } catch (error) {

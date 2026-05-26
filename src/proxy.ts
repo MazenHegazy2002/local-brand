@@ -54,6 +54,16 @@ function buildCsp(nonce: string, isDev: boolean): string {
     'https://script.hotjar.com',
     // Meta (Facebook) Pixel
     'https://connect.facebook.net',
+    // TikTok Pixel
+    'https://analytics.tiktok.com',
+    // Snapchat Pixel
+    'https://tr.snapchat.com',
+    // Microsoft Clarity
+    'https://www.clarity.ms',
+    // Yandex Metrica
+    'https://mc.yandex.ru',
+    // Pinterest Tag
+    'https://s.pinimg.com',
   ];
 
   const scriptSrc = [
@@ -95,6 +105,12 @@ function buildCsp(nonce: string, isDev: boolean): string {
     'wss://*.hotjar.com',
     'https://connect.facebook.net',
     'https://*.facebook.com',
+    // Additional marketing pixels
+    'https://*.tiktok.com',
+    'https://*.snapchat.com',
+    'https://*.clarity.ms',
+    'https://*.yandex.ru',
+    'https://*.pinterest.com',
   ];
 
   return [

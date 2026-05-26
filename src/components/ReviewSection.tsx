@@ -9,9 +9,11 @@ import type { Review } from '@/types';
 export default function ReviewSection({
   productId,
   initialReviews,
+  eligibleOrderItems = [],
 }: {
   productId: string;
   initialReviews: Review[];
+  eligibleOrderItems?: { id: string }[];
 }) {
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [rating, setRating] = useState(5);
@@ -25,11 +27,24 @@ export default function ReviewSection({
 
     setSubmitting(true);
     try {
-      const res = await submitReview(productId, rating, comment);
-      if (res.success && res.review) {
-        setReviews([res.review, ...reviews]);
+      const orderItemId = eligibleOrderItems[0]?.id;
+      if (!orderItemId) return;
+
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, orderItemId, rating, comment }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.review) {
+        setReviews([data.review, ...reviews]);
         setComment('');
         setRating(5);
+        // Remove the used item from eligibility
+        eligibleOrderItems.shift();
+      } else {
+        alert(data.message || 'Failed to submit review.');
       }
     } catch (_err) {
       alert('Failed to submit review. Make sure you are logged in.');
@@ -42,25 +57,27 @@ export default function ReviewSection({
     <div className="mt-12 bg-white rounded-2xl p-6 md:p-10 shadow-sm border border-gray-100">
       <h3 className="text-2xl font-black text-gray-900 mb-8">{t('CustomerReviews')}</h3>
 
-      <form
-        onSubmit={handleSubmit}
-        className="mb-12 bg-gray-50 rounded-xl p-6 border border-gray-100"
-      >
-        <h4 className="font-bold text-gray-900 mb-4">{t('WriteAReview')}</h4>
-        <div className="flex gap-2 mb-4">
-          <RatingStars value={rating} onChange={setRating} size="lg" />
-        </div>
-        <Textarea
-          value={comment}
-          onChange={e => setComment(e.target.value)}
-          placeholder={t('ShareYourThoughts')}
-          rows={4}
-          className="mb-4"
-        />
-        <Button type="submit" loading={submitting}>
-          {submitting ? t('Submitting') : t('SubmitReview')}
-        </Button>
-      </form>
+      {eligibleOrderItems.length > 0 && (
+        <form
+          onSubmit={handleSubmit}
+          className="mb-12 bg-gray-50 rounded-xl p-6 border border-gray-100"
+        >
+          <h4 className="font-bold text-gray-900 mb-4">{t('WriteAReview')}</h4>
+          <div className="flex gap-2 mb-4">
+            <RatingStars value={rating} onChange={setRating} size="lg" />
+          </div>
+          <Textarea
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            placeholder={t('ShareYourThoughts')}
+            rows={4}
+            className="mb-4"
+          />
+          <Button type="submit" loading={submitting}>
+            {submitting ? t('Submitting') : t('SubmitReview')}
+          </Button>
+        </form>
+      )}
 
       <div className="space-y-8">
         {reviews.length === 0 && (

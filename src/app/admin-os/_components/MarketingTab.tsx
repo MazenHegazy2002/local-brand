@@ -13,8 +13,9 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
+import CouponsPanel from './CouponsPanel';
 
-type SubTab = 'campaigns' | 'flash' | 'templates' | 'abandoned';
+type SubTab = 'campaigns' | 'flash' | 'templates' | 'abandoned' | 'coupons';
 
 export default function MarketingTab() {
   const [sub, setSub] = useState<SubTab>('campaigns');
@@ -27,6 +28,7 @@ export default function MarketingTab() {
           { key: 'flash', label: 'Flash Sales', icon: '⚡' },
           { key: 'templates', label: 'Email Templates', icon: '✉️' },
           { key: 'abandoned', label: 'Abandoned Carts', icon: '🛒' },
+          { key: 'coupons', label: 'Promo Coupons', icon: '🎫' },
         ].map(t => (
           <button
             key={t.key}
@@ -44,6 +46,7 @@ export default function MarketingTab() {
         {sub === 'flash' && <FlashSalesPanel />}
         {sub === 'templates' && <EmailTemplatesPanel />}
         {sub === 'abandoned' && <AbandonedCartsPanel />}
+        {sub === 'coupons' && <CouponsPanel showHeader={false} />}
       </div>
 
       <style jsx>{`
@@ -95,6 +98,16 @@ interface Campaign {
 function CampaignsPanel() {
   const [items, setItems] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Form state
+  const [name, setName] = useState('');
+  const [channel, setChannel] = useState<'EMAIL' | 'PUSH' | 'SMS' | 'IN_APP'>('EMAIL');
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [ctaUrl, setCtaUrl] = useState('');
+  const [scheduledAt, setScheduledAt] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -108,15 +121,59 @@ function CampaignsPanel() {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     load();
   }, []);
+
+  const handleCreateCampaign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const payload = {
+        name,
+        channel,
+        subject: channel === 'EMAIL' ? subject : undefined,
+        body,
+        ctaUrl: ctaUrl || undefined,
+        scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
+      };
+
+      const res = await fetch('/api/admin/marketing/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        setShowModal(false);
+        // Reset form
+        setName('');
+        setChannel('EMAIL');
+        setSubject('');
+        setBody('');
+        setCtaUrl('');
+        setScheduledAt('');
+        await load();
+      } else {
+        const err = await res.json();
+        alert(err.message || 'Failed to create campaign');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Error creating campaign');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="card">
       <div className="card-head">
         <h2 className="card-title">Marketing campaigns</h2>
-        <button className="card-action">+ New campaign</button>
+        <button className="card-action" onClick={() => setShowModal(true)}>
+          + New campaign
+        </button>
       </div>
       <p className="card-sub">One-shot email/push/SMS blasts to a segment of customers.</p>
       {loading ? (
@@ -163,6 +220,132 @@ function CampaignsPanel() {
           </tbody>
         </table>
       )}
+
+      {showModal && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl text-left"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-black text-slate-900 mb-4 uppercase tracking-tight">
+              Create Campaign
+            </h2>
+            <form onSubmit={handleCreateCampaign} className="space-y-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">
+                  Campaign Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Eid Al-Adha Mega Promo"
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">
+                    Channel
+                  </label>
+                  <select
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2 text-xs"
+                    value={channel}
+                    onChange={e => setChannel(e.target.value as any)}
+                  >
+                    <option value="EMAIL">Email 📣</option>
+                    <option value="PUSH">Web Push ✉️</option>
+                    <option value="SMS">SMS 📱</option>
+                    <option value="IN_APP">In-App Banner 🎫</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">
+                    Scheduled At
+                  </label>
+                  <input
+                    type="datetime-local"
+                    placeholder="Leave blank to send now"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2 text-xs"
+                    value={scheduledAt}
+                    onChange={e => setScheduledAt(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {channel === 'EMAIL' && (
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">
+                    Email Subject
+                  </label>
+                  <input
+                    type="text"
+                    required={channel === 'EMAIL'}
+                    placeholder="e.g. Exclusive Eid Savings Inside!"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2 text-xs"
+                    value={subject}
+                    onChange={e => setSubject(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">
+                  Message Body / Content
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder={
+                    channel === 'SMS'
+                      ? 'Type SMS copy (max 160 chars recommended)…'
+                      : 'Type your campaign copy here (markdown supported for email)…'
+                  }
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2 text-xs"
+                  value={body}
+                  onChange={e => setBody(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">
+                  CTA URL
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. /shop or https://lolozozo.shop/sale"
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2 text-xs font-mono"
+                  value={ctaUrl}
+                  onChange={e => setCtaUrl(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50"
+                >
+                  {saving ? 'Creating…' : 'Create & Send'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 border border-slate-200 text-slate-700 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <style jsx>{tableStyles}</style>
     </div>
   );

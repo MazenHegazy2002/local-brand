@@ -132,6 +132,16 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
           },
           data: { status: OrderItemStatus.CANCELLED },
         });
+      } else if (data.status === OrderStatus.DELIVERED && order.status !== OrderStatus.DELIVERED) {
+        await tx.orderItem.updateMany({
+          where: { orderId: id },
+          data: { status: OrderItemStatus.DELIVERED },
+        });
+      } else if (data.status === OrderStatus.RETURNED && order.status !== OrderStatus.RETURNED) {
+        await tx.orderItem.updateMany({
+          where: { orderId: id },
+          data: { status: OrderItemStatus.RETURNED },
+        });
       }
       return result;
     });

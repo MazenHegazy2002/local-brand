@@ -11,8 +11,9 @@ import PromoBanner from '@/components/PromoBanner';
 
 interface HomePageData {
   categories: { id: string; name: string; slug: string; parentId: string | null }[];
-  featuredProducts: (Product & { images: ProductImage[] })[];
-  recentProducts: (Product & { images: ProductImage[] })[];
+  bestsellers: (Product & { images: ProductImage[] })[];
+  newArrivals: (Product & { images: ProductImage[] })[];
+  recommended: (Product & { images: ProductImage[] })[];
 }
 
 // ── Section ────────────────────────────────────────────────────────────────
@@ -70,7 +71,12 @@ function ProductSection({
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default async function Home() {
-  let homeData: HomePageData = { categories: [], featuredProducts: [], recentProducts: [] };
+  let homeData: HomePageData = {
+    categories: [],
+    bestsellers: [],
+    newArrivals: [],
+    recommended: [],
+  };
   let dict = en;
 
   try {
@@ -82,12 +88,7 @@ export default async function Home() {
     console.error('Critical SSR Error:', e);
   }
 
-  const { featuredProducts, recentProducts } = homeData;
-
-  // Use featured as Bestsellers, recent as New Arrivals, mix as Recommended
-  const bestsellers = featuredProducts.length > 0 ? featuredProducts : recentProducts;
-  const newArrivals = recentProducts.length > 0 ? recentProducts : featuredProducts;
-  const recommended = [...recentProducts, ...featuredProducts].slice(0, 6);
+  const { bestsellers, newArrivals, recommended } = homeData;
 
   return (
     <main id="main-content" className="min-h-screen font-sans" style={{ background: '#f6f6f7' }}>

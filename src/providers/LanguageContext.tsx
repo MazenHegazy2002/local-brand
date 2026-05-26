@@ -83,7 +83,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof document === 'undefined') return;
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
-    document.documentElement.lang = 'en';
+    document.documentElement.lang = lang;
     if (isRTL) {
       document.body.classList.add('font-cairo');
     } else {

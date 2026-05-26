@@ -36,7 +36,7 @@ const FALLBACK_SLIDES: HeroSlide[] = [
   },
 ];
 
-async function loadHeroSlides(): Promise<HeroSlide[]> {
+async function loadBanners() {
   try {
     const now = new Date();
     const banners = await prisma.homepageBanner.findMany({
@@ -46,31 +46,82 @@ async function loadHeroSlides(): Promise<HeroSlide[]> {
         AND: [{ OR: [{ endsAt: null }, { endsAt: { gte: now } }] }],
       },
       orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
-      select: {
-        title: true,
-        subtitle: true,
-        imageUrl: true,
-        linkUrl: true,
-        ctaLabel: true,
-      },
     });
-    if (banners.length === 0) return FALLBACK_SLIDES;
-    return banners.map(b => ({
-      imageUrl: b.imageUrl,
-      title: b.title,
-      subtitle: b.subtitle,
-      linkUrl: b.linkUrl,
-      ctaLabel: b.ctaLabel,
-    }));
+
+    const sliderBanners = banners.filter(b => b.position === 0 || b.position < 0 || b.position > 2);
+    const rightTopBanner = banners.find(b => b.position === 1) || null;
+    const rightBottomBanner = banners.find(b => b.position === 2) || null;
+
+    return {
+      slider:
+        sliderBanners.length > 0
+          ? sliderBanners.map(b => ({
+              imageUrl: b.imageUrl,
+              title: b.title,
+              subtitle: b.subtitle,
+              linkUrl: b.linkUrl,
+              ctaLabel: b.ctaLabel,
+            }))
+          : FALLBACK_SLIDES,
+      rightTop: rightTopBanner
+        ? {
+            imageUrl: rightTopBanner.imageUrl,
+            title: rightTopBanner.title,
+            subtitle: rightTopBanner.subtitle,
+            linkUrl: rightTopBanner.linkUrl,
+            ctaLabel: rightTopBanner.ctaLabel,
+          }
+        : {
+            imageUrl:
+              'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=75&w=600&auto=format&fit=crop',
+            title: 'Next-Gen Footwear',
+            subtitle: 'Up to 40% Off Brands',
+            linkUrl: '/shoes',
+            ctaLabel: null,
+          },
+      rightBottom: rightBottomBanner
+        ? {
+            imageUrl: rightBottomBanner.imageUrl,
+            title: rightBottomBanner.title,
+            subtitle: rightBottomBanner.subtitle,
+            linkUrl: rightBottomBanner.linkUrl,
+            ctaLabel: rightBottomBanner.ctaLabel,
+          }
+        : {
+            imageUrl:
+              'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=75&w=600&auto=format&fit=crop',
+            title: 'Timeless Design',
+            subtitle: 'Curated Accessories',
+            linkUrl: '/watches',
+            ctaLabel: null,
+          },
+    };
   } catch (err) {
-    // DB unavailable during build / dev — just render the hardcoded set.
     console.error('[Hero] failed to load banners:', err);
-    return FALLBACK_SLIDES;
+    return {
+      slider: FALLBACK_SLIDES,
+      rightTop: {
+        imageUrl:
+          'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=75&w=600&auto=format&fit=crop',
+        title: 'Next-Gen Footwear',
+        subtitle: 'Up to 40% Off Brands',
+        linkUrl: '/shoes',
+        ctaLabel: null,
+      },
+      rightBottom: {
+        imageUrl:
+          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=75&w=600&auto=format&fit=crop',
+        title: 'Timeless Design',
+        subtitle: 'Curated Accessories',
+        linkUrl: '/watches',
+        ctaLabel: null,
+      },
+    };
   }
 }
 
 export default async function Hero() {
-  const slides = await loadHeroSlides();
+  const { slider, rightTop, rightBottom } = await loadBanners();
 
   return (
     <section className="bg-[#f5f3f0] py-6 pb-2">
@@ -78,52 +129,51 @@ export default async function Hero() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-auto lg:h-[480px]">
           {/* Main hero — slider sourced from CMS banners or fallback set. */}
           <div className="relative w-full h-[280px] sm:h-[360px] lg:h-[480px] lg:col-span-2 rounded-xl overflow-hidden bg-[#032094]">
-            <HeroSlider slides={slides} />
+            <HeroSlider slides={slider} />
           </div>
 
           {/* Right-hand stacked cards — static curated entry points to category
               pages. Easier to leave hardcoded than to mix into the CMS for now. */}
           <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:col-span-1 h-[180px] sm:h-[220px] lg:h-[480px]">
             <Link
-              href="/shoes"
+              href={rightTop.linkUrl}
               className="relative flex-1 rounded-xl overflow-hidden group block cursor-pointer"
             >
               <Image
-                src="https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=75&w=600&auto=format&fit=crop"
+                src={rightTop.imageUrl}
                 fill
                 sizes="(max-width: 1024px) 50vw, 17vw"
                 style={{ objectFit: 'cover' }}
-                alt="Sneaker"
-                className="z-0 grayscale contrast-125"
+                alt={rightTop.title}
+                className="z-0"
               />
               <div className="absolute inset-0 z-10 bg-gradient-to-t from-gray-900/90 to-transparent" />
-              <div className="absolute bottom-0 left-0 p-8 z-20 w-full">
-                <h3 className="text-white text-2xl font-bold mb-1 tracking-tight">
-                  Next-Gen Footwear
+              <div className="absolute bottom-0 left-0 p-6 z-20 w-full">
+                <h3 className="text-white text-xl md:text-2xl font-bold mb-1 tracking-tight">
+                  {rightTop.title}
                 </h3>
-                <span className="text-white/70 text-sm font-medium">Up to 40% Off Brands</span>
+                <span className="text-white/70 text-sm font-medium">{rightTop.subtitle}</span>
               </div>
             </Link>
 
             <Link
-              href="/watches"
+              href={rightBottom.linkUrl}
               className="relative flex-1 rounded-xl overflow-hidden group block cursor-pointer"
             >
               <Image
-                src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=75&w=600&auto=format&fit=crop"
+                src={rightBottom.imageUrl}
                 fill
                 sizes="(max-width: 1024px) 50vw, 17vw"
                 style={{ objectFit: 'cover' }}
-                alt="Watch"
-                className="z-0 object-center"
+                alt={rightBottom.title}
+                className="z-0"
               />
-              <div className="absolute inset-0 z-10 bg-[#3a2c1f]/50 mix-blend-multiply" />
-              <div className="absolute inset-0 z-15 bg-gradient-to-t from-[#2a1a0f] to-transparent" />
-              <div className="absolute bottom-0 left-0 p-8 z-20 w-full">
-                <h3 className="text-white text-2xl font-bold mb-1 tracking-tight">
-                  Timeless Design
+              <div className="absolute inset-0 z-10 bg-gradient-to-t from-gray-900/90 to-transparent" />
+              <div className="absolute bottom-0 left-0 p-6 z-20 w-full">
+                <h3 className="text-white text-xl md:text-2xl font-bold mb-1 tracking-tight">
+                  {rightBottom.title}
                 </h3>
-                <span className="text-white/70 text-sm font-medium">Curated Accessories</span>
+                <span className="text-white/70 text-sm font-medium">{rightBottom.subtitle}</span>
               </div>
             </Link>
           </div>

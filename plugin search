@@ -1,0 +1,139 @@
+1. Multi-Vendor Core & Merchant Infrastructure (1-10)
+These power the core engine, allowing third-party sellers to register, manage storefronts, and track earnings.
+
+Dokan Pro – The gold standard for frontend multi-vendor marketplace dashboards.
+
+WCFM Marketplace – Highly customizable, modular multi-vendor management system.
+
+WooCommerce Product Vendors – Official, lightweight vendor assignment tool.
+
+YITH WooCommerce Multi Vendor – Excellent alternative for complex commission structures.
+
+Dokan Vendor Verification – Forces sellers to upload IDs/business licenses before selling.
+
+WCFM Store Invoice – Automates PDF invoicing between vendors, buyers, and admin.
+
+Dokan Vendor Vacation – Allows merchants to pause listings when away without breaking SEO.
+
+WooCommerce Product Reviews Pro – Advanced vendor rating algorithms mimicking Amazon’s system.
+
+Dokan Subscriptions – Charge vendors a monthly/annual fee to list products on your site.
+
+WCFM Vendor Mobile App – Gives sellers a native app interface to manage stock on the go.
+
+2. B2B, Bulk & Wholesale Systems (11-20)
+Essential for the "Alibaba model"—handling large quantities, custom pricing tiers, and negotiations.
+11. Wholesale Suite (Wholesale Prices) – Sets a separate wholesale price visibility layer.
+12. Wholesale Prices Premium – Enforces minimum order quantities (MOQ) per user role.
+13. YITH WooCommerce Request a Quote – Adds a "Request Quote" button for custom bulk orders.
+14. WooCommerce Product Table by Barn2 – Quick-order grid view for wholesale buyers layout.
+15. B2BKing – All-in-one powerful B2B suite handling tax exemptions and corporate registrations.
+16. Dynamic Pricing (by Elementor or WooCommerce) – Auto-calculates bulk price breaks dynamically.
+17. WooCommerce Tiered Price Table – Displays clear price break brackets directly on product pages.
+18. Wholesale Order Form – A single-page searchable matrix for rapid wholesale item entry.
+19. WooCommerce Quick Order – Allows buyers to paste SKU lists to build bulk carts instantly.
+20. YITH WooCommerce Minimum Maximum Quantity – Prevents retail checkouts on wholesale items.
+
+3. Payment Processing & Automated Splitting (21-30)
+Crucial for auto-routing money to vendors while instantly stripping your commission fee.
+21. Stripe Connect for WooCommerce – Seamless multi-party automated payouts at checkout.
+22. PayPal Marketplace – Global split-payment engine handling international commerce laws.
+23. WooCommerce Multi-Currency (by VillaTheme) – Geo-IP targeting currency presentation layer.
+24. Mollie Payments for WooCommerce – Essential for localized European multi-vendor payments.
+25. Paymob for WooCommerce – Integrates critical localized Middle Eastern payment gateways.
+26. Fawry Pay for WooCommerce – Essential cash-on-delivery processing engine for Egypt/MENA regions.
+27. YITH WooCommerce Deposits and Down Payments – Allows partial payments/deposits on massive bulk freight orders.
+28. Cryptoniq – Decentralized checkout processing for direct digital asset/crypto payments.
+29. WooCommerce PDF Invoices & Packing Slips – Automatic localization of compliance tax invoices.
+30. Quaderno – Automated international sales tax, VAT, and compliance calculator engine.
+
+4. Advanced Search, Filtering & UX Navigation (31-40)
+Ensures users locate a specific item instantly across millions of SKUs.
+31. FiboSearch Pro – Instant AJAX smart search with autocorrect, synonyms, and live image thumbnails.
+32. FacetWP – Ultra-fast, UI-smooth faceted navigation filtering using custom database indexes.
+33. WOOF (WooCommerce Products Filter) – Reliable, deeply nested sidebar parameter filtering.
+34. SearchWP – Indexes product attributes, PDF specifications sheets, and custom vendor fields.
+35. Premmerce Active Filters – Cleans up messy URL parameters during deep product category sorting.
+36. WooCommerce Infinite Scroll and Ajax Pagination – Smooth continuous browsing layout like Amazon.
+37. YITH WooCommerce Ajax Product Filter – Clean, minimal design visual filter options (color swatches).
+38. WooCommerce Advanced Product Labels – Flags products with stickers like "Top Seller" or "Verified Vendor".
+39. Advanced Product Fields (for WooCommerce) – Allows complex variations (e.g., file uploads, custom engraving).
+40. WooCommerce Brands – Groups products by manufacturing brand or vendor badge identities.
+
+5. Multi-Origin Logistics & Order Fulfillment (41-50)
+Manages shipping when one order contains products shipped from multiple locations.
+41. WooCommerce Advanced Shipping Packages – Splits single carts into multiple shipping parcels based on vendor origin.
+42. ShipStation Integration – Enterprise-scale multi-carrier automated backend shipping software.
+43. PluginHive WooCommerce Shipping Services – Pulls real-time live rates from DHL, FedEx, and UPS.
+44. WooCommerce Shipment Tracking – Passes tracking links directly to customer accounts.
+45. Dokan Shipping – Hands complete zone and weight shipping control over to the vendor dash.
+46. Local Pickup Plus – Coordinates regional fulfillment centers or warehouse pickup loops.
+47. YITH WooCommerce Order Tracking – Automates customer carrier updates via webhooks.
+48. WooCommerce Delivery Slots – Lets buyers reserve exact dates/times for logistics drops.
+49. Table Rate Shipping (by WooCommerce) – Creates sophisticated conditional matrix pricing loops.
+50. Weight Based Shipping – Simple, bulletproof weight calculating tool for freight shipments.
+
+6. Conversion Rate Optimization (CRO) & Upselling (51-60)
+Maximizes average order values (AOV) and mitigates cart drop-offs.
+51. FunnelKit (WooFunnels) – Builds conversion-optimized custom checkouts, downsells, and order bumps.
+52. CartFlows Pro – Direct checkout routing replacement engine with high-converting templates.
+53. YITH WooCommerce Frequently Bought Together – Replicates Amazon’s cross-sell algorithm system.
+54. WooCommerce Points and Rewards – Gamifies the ecosystem by turning buys into point credits.
+55. Checkout Field Editor – Strips out unnecessary checkout friction fields to boost speed.
+56. YITH WooCommerce Wishlist – Enables list sharing for viral organic buyer referrals.
+57. AutomateWoo – Advanced, hyper-targeted marketing trigger automation platform.
+58. LiveChat for WooCommerce – Real-time customer support routing with pre-purchase triggers.
+59. WooCommerce Recover Abandoned Cart – Automated conditional email sequence targeting lost carts.
+60. Buy Now Button for WooCommerce – One-click bypass directly to payment fields.
+
+7. Communication, Live Messaging & Verification (61-70)
+Builds operational transparency and directly facilitates the standard Alibaba negotiation loop.
+61. Better Messages – Powerhouse real-time instant messaging engine bridging buyers and vendors directly.
+62. WCFM Chat – Seamless context communication button pinned directly to product layout loops.
+63. Customer Reviews for WooCommerce – Auto-collects multi-photo ratings using visual review prompts.
+64. Twilio SMS WooCommerce – Real-time order dispatch notifications directly via SMS alerts.
+65. YITH WooCommerce Questions and Answers – Mimics Amazon’s community customer product Q&A system.
+66. WP WhatsApp Chat – Fast, instant routing channels straight to dedicated vendor help lines.
+67. User Feedback for WordPress – Gathers micro-surveys at checkout regarding marketplace performance.
+68. NotificationX – Leverages social proof by rendering recent sales alerts down the sidebar.
+69. WooCommerce Product Add-ons – Lets customers fill out required custom text specs during checkout.
+70. Gravity Forms – Robust engine for building custom merchant registration intake arrays.
+
+8. Database Optimization, Performance & Caching (71-80)
+A high-SKU database with concurrent user actions will crash without these precise data maintenance layers.
+71. WP Rocket – Market leader for general caching, minification, and visual script deferrals.
+72. Redis Object Cache – Absolute non-negotiable. Speeds up complex dynamic SQL database queries.
+73. Perfmatters – Surgical performance tool to disable script bloat on a page-by-page basis.
+74. Asset CleanUp Pro – Declutters loaded CSS/JS assets running in the platform backend loop.
+75. WP-Optimize Premium – Schedules ongoing database cleaning, table restructuring, and optimization loops.
+76. Imagify – Automatic compression layer preventing giant vendor photo uploads from slowing the site.
+77. FlyingPress – Cutting-edge script execution delays and full-page rendering performance tool.
+78. LiteSpeed Cache – Alternative option if lolozozo.shop is hosted explicitly on a LiteSpeed web server.
+79. WP Crontrol – Monitors and fixes stuck database automated routines (cron jobs).
+80. Advanced Database Cleaner – Flushes old metadata, orphaned options rows, and heavy expired transients.
+
+9. Security, Infrastructure & Compliance (81-90)
+Protects payment channels, blocks automated scrapers, and manages system vulnerabilities.
+81. Wordfence Security Pro – Enterprise endpoint firewall and active malware identification network.
+82. Solid Security Pro (iThemes) – Locks down dashboard entry routes and forces user security compliance.
+83. Cloudflare Integration for WordPress – Optimizes global Edge caching and blocks bad requests at DNS level.
+84. MalCare – Off-site automated daily security tracking and cleanup automation.
+85. Activity Log – Complete visibility tracking over changes made by vendors, managers, or admins.
+86. WP 2FA – Forces multi-factor authentication requirements for merchant dashboards.
+87. WPS Hide Login – Mitigates high-volume automated brute-force attacks on the backend route.
+88. CookieYes – Dynamic cookie compliance consent manager for global privacy standards.
+89. Akismet Anti-Spam – Blocks automated comment and review injection routines.
+90. UpdraftPlus Premium – Automated off-site backup pipeline routing data directly to isolated cloud storage.
+
+10. Data Management, Feeds & Marketing Syncs (91-100)
+Synchronizes bulk inventory feeds across external listing channels and search indexing systems.
+91. WP All Import / Export Pro – Powerhouse XML/CSV automation engine for importing millions of items.
+92. RankMath SEO PRO – Generates deep e-commerce Schema markup for Rich Snippets on Google.
+93. CTX Feed Pro – Automatically generates real-time product feeds for Google Shopping, TikTok, and Meta ads.
+94. PixelYourSite Pro – Manages data attribution tracking across Facebook, Google, and TikTok APIs.
+95. Product Sync for WooCommerce – Synchronizes parent inventory states across diverse satellite stores.
+96. WooCommerce Google Analytics Pro – Deep e-commerce behavioral analytics attribution integration.
+97. Schema Pro – Advanced microdata injection tool ensuring automated vendor product structural clarity.
+98. Bulk Edit Products (by ELEX) – Massive scale fast variation updating utility for site operators.
+99. WPC Product Bundles – Combines cross-vendor products into custom bundle packages seamlessly.
+100. GTranslate Pro – Dynamic cloud-based multilingual translation engine adapting metadata across borders.

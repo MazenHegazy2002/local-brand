@@ -7,159 +7,224 @@ export const revalidate = 3600;
 export const metadata = {
   title: 'Lookbook – Brandy | Style Inspiration',
   description:
-    'Explore curated style edits and seasonal collections from Egyptian local brands. Find your look on Brandy.',
+    'Step into our editorial fashion catalog. Explore curated seasonal aesthetics and shop local Egyptian designers.',
 };
 
-async function getLookbookData() {
-  const [collections, featured] = await Promise.all([
-    prisma.collection.findMany({
-      include: {
-        products: {
-          where: { published: true, deletedAt: null },
-          include: { images: { where: { isPrimary: true }, take: 1 } },
-          take: 4,
-          orderBy: { createdAt: 'desc' },
-        },
-      },
-      take: 6,
-    }),
-    prisma.product.findMany({
-      where: { published: true, deletedAt: null, isFeatured: true },
+async function getLookbookProducts() {
+  try {
+    return await prisma.product.findMany({
+      where: { published: true, deletedAt: null },
       include: {
         images: { where: { isPrimary: true }, take: 1 },
         seller: { select: { storeName: true } },
       },
-      take: 6,
+      take: 8,
       orderBy: { createdAt: 'desc' },
-    }),
-  ]);
-  return { collections, featured };
+    });
+  } catch (err) {
+    console.error('Failed to load lookbook products:', err);
+    return [];
+  }
 }
 
 export default async function LookbookPage() {
-  const { collections, featured } = await getLookbookData();
-  const hasCollections = collections.some(c => c.products.length > 0);
+  const products = await getLookbookProducts();
+
+  // Define curated aesthetic spreads
+  const spreads = [
+    {
+      id: 'summer-linen',
+      tag: 'COLLECTION 01',
+      title: 'Desert Linen Whispers',
+      subtitle:
+        'Effortless breathing fabrics crafted for warm Mediterranean nights and sunny afternoons.',
+      heroImage:
+        'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=800&auto=format&fit=crop',
+      colorTheme: 'bg-[#F7F5F0] text-[#2C2A29]',
+      accentColor: 'border-[#2C2A29] text-[#2C2A29] hover:bg-[#2C2A29] hover:text-[#F7F5F0]',
+      items: products.slice(0, 3),
+    },
+    {
+      id: 'urban-minimalism',
+      tag: 'COLLECTION 02',
+      title: 'Cairo Street Architecture',
+      subtitle:
+        'Structured silhouettes, bold lines, and premium Egyptian cotton tailoring for the modern nomad.',
+      heroImage:
+        'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=800&auto=format&fit=crop',
+      colorTheme: 'bg-[#1E1E1E] text-[#FAF9F6]',
+      accentColor: 'border-[#FAF9F6] text-[#FAF9F6] hover:bg-[#FAF9F6] hover:text-[#1E1E1E]',
+      items: products.slice(3, 6),
+    },
+    {
+      id: 'timeless-accents',
+      tag: 'COLLECTION 03',
+      title: 'Timeless Accents',
+      subtitle:
+        'Sleek premium detailing, handpicked local leather products, and heritage wrist accessories.',
+      heroImage:
+        'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop',
+      colorTheme: 'bg-[#E5D5C5] text-[#2F251E]',
+      accentColor: 'border-[#2F251E] text-[#2F251E] hover:bg-[#2F251E] hover:text-[#E5D5C5]',
+      items: products.slice(6, 8),
+    },
+  ];
 
   return (
-    <main className="min-h-screen bg-[#f9f8f6]">
+    <main className="min-h-screen bg-[#F4F2EE] font-sans pb-16">
       <Navbar />
 
-      {/* Hero */}
-      <section className="bg-[#1e3b8a] text-white py-20 px-4 text-center">
-        <p className="text-xs font-bold uppercase tracking-widest mb-3 opacity-60">Editorial</p>
-        <h1 className="text-5xl md:text-6xl font-black mb-4 tracking-tight">Lookbook</h1>
-        <p className="text-base opacity-75 max-w-sm mx-auto">
-          Curated style edits from Egypt&apos;s most creative local brands.
+      {/* Editorial Intro */}
+      <section className="py-24 px-4 text-center max-w-3xl mx-auto">
+        <span className="text-[10px] tracking-[0.25em] font-black uppercase text-slate-400 block mb-3">
+          BRANDY EDITORIAL
+        </span>
+        <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter mb-6 uppercase">
+          The Lookbook
+        </h1>
+        <div className="w-16 h-1 bg-slate-900 mx-auto mb-6"></div>
+        <p className="text-slate-600 text-lg md:text-xl font-light leading-relaxed">
+          A physical-meets-digital curated catalog showcasing high-fashion styling from Egypt’s
+          premiere local independent designers. Hover, explore, and purchase individual items
+          directly from the pages.
         </p>
       </section>
 
-      <div className="container mx-auto px-4 py-14">
-        {/* Collections */}
-        {hasCollections && (
-          <section className="mb-16">
-            <h2 className="text-2xl font-black text-gray-800 mb-8">Collections</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {collections
-                .filter(c => c.products.length > 0)
-                .map(collection => {
-                  const cover = collection.imageUrl || collection.products[0]?.images?.[0]?.url;
-                  return (
-                    <Link
-                      key={collection.id}
-                      href={`/shop?collection=${collection.slug}`}
-                      className="group relative overflow-hidden rounded-2xl aspect-[3/4] bg-gray-100 block"
-                    >
-                      {cover ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={cover}
-                          alt={collection.name}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#1e3b8a]/20 to-[#1e3b8a]/5" />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                        <p className="text-xs font-bold uppercase tracking-widest opacity-70 mb-1">
-                          {collection.products.length} pieces
-                        </p>
-                        <h3 className="text-2xl font-black leading-tight">{collection.name}</h3>
-                        {collection.description && (
-                          <p className="text-sm opacity-75 mt-1 line-clamp-2">
-                            {collection.description}
-                          </p>
-                        )}
-                        <span className="inline-block mt-3 text-xs font-bold border border-white/50 px-3 py-1 rounded-full group-hover:bg-white group-hover:text-[#1e3b8a] transition-colors">
-                          Shop collection →
-                        </span>
+      {/* Catalog Spreads */}
+      <div className="container mx-auto px-4 max-w-6xl space-y-24">
+        {spreads.map((spread, index) => {
+          const isEven = index % 2 === 0;
+          return (
+            <section
+              key={spread.id}
+              className={`rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 hover:shadow-3xl ${spread.colorTheme}`}
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[600px]">
+                {/* Image Panel (Left or Right based on layout) */}
+                <div
+                  className={`relative lg:col-span-6 h-[400px] lg:h-auto overflow-hidden group ${
+                    isEven ? 'lg:order-first' : 'lg:order-last'
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={spread.heroImage}
+                    alt={spread.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-500" />
+
+                  {/* Floating Catalog Stamp */}
+                  <div className="absolute top-8 left-8 bg-black/85 text-white backdrop-blur-sm px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg">
+                    {spread.tag}
+                  </div>
+                </div>
+
+                {/* Content & Product Showcase Panel */}
+                <div className="lg:col-span-6 p-8 md:p-14 flex flex-col justify-between">
+                  <div>
+                    <span className="text-[10px] tracking-[0.2em] font-black uppercase opacity-60 block mb-2">
+                      {spread.tag}
+                    </span>
+                    <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-4">
+                      {spread.title}
+                    </h2>
+                    <p className="font-light text-base leading-relaxed opacity-80 mb-8 max-w-lg">
+                      {spread.subtitle}
+                    </p>
+
+                    <div className="w-full h-px bg-current opacity-20 mb-8" />
+
+                    {/* Shoppable Products in this Look */}
+                    <h3 className="text-xs font-black tracking-widest uppercase mb-4 opacity-70">
+                      Shop the Look:
+                    </h3>
+
+                    {spread.items.length === 0 ? (
+                      <div className="py-6 text-sm italic opacity-50">
+                        Check back soon to shop pieces from this look!
                       </div>
-                    </Link>
-                  );
-                })}
-            </div>
-          </section>
-        )}
-
-        {/* Featured Products editorial grid */}
-        {featured.length > 0 && (
-          <section className="mb-16">
-            <h2 className="text-2xl font-black text-gray-800 mb-2">Editor&apos;s Picks</h2>
-            <p className="text-sm text-gray-400 mb-8">Hand-selected by our style team</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {featured.map((product, i) => {
-                const img = product.images?.[0]?.url;
-                // First item is large
-                const isLarge = i === 0;
-                return (
-                  <Link
-                    key={product.id}
-                    href={`/product/${product.id}`}
-                    className={`group relative overflow-hidden rounded-xl bg-gray-100 block ${isLarge ? 'row-span-2' : ''}`}
-                    style={{ aspectRatio: isLarge ? '2/3' : '1' }}
-                  >
-                    {img ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={img}
-                        alt={product.title}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
                     ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-100" />
+                      <div className="space-y-4">
+                        {spread.items.map(item => {
+                          const itemImg =
+                            item.images?.[0]?.url ||
+                            'https://images.unsplash.com/photo-1523275335684-37898b6baf30';
+                          return (
+                            <Link
+                              key={item.id}
+                              href={`/product/${item.id}`}
+                              className="group/item flex items-center gap-4 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-300"
+                            >
+                              <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-white/10 flex-shrink-0 border border-current/10">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={itemImg}
+                                  alt={item.title}
+                                  className="w-full h-full object-cover transition-transform duration-300 group-hover/item:scale-105"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-[10px] font-black uppercase tracking-wider opacity-60 block">
+                                  {item.seller?.storeName || 'Local Brand'}
+                                </span>
+                                <h4 className="font-bold text-sm truncate group-hover/item:underline">
+                                  {item.title}
+                                </h4>
+                                <span className="text-xs font-black">
+                                  EGP {item.basePrice.toLocaleString()}
+                                </span>
+                              </div>
+                              <span className="text-xs font-bold px-3 py-1 rounded-full border border-current/30 group-hover/item:border-current transition-colors">
+                                View →
+                              </span>
+                            </Link>
+                          );
+                        })}
+                      </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all">
-                      <p className="text-[10px] font-bold uppercase tracking-wide opacity-70">
-                        {product.seller?.storeName}
-                      </p>
-                      <p className="text-sm font-bold line-clamp-2">{product.title}</p>
-                      <p className="text-xs font-black mt-1">
-                        EGP {product.basePrice.toLocaleString()}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
+                  </div>
 
-        {/* Empty state */}
-        {!hasCollections && featured.length === 0 && (
-          <div className="text-center py-24">
-            <div className="text-6xl mb-4">✨</div>
-            <h2 className="text-2xl font-bold text-gray-700 mb-2">Coming Soon</h2>
-            <p className="text-gray-400 mb-6">Our editorial team is curating the first looks.</p>
+                  <div className="mt-12 pt-6 border-t border-current/10">
+                    <Link
+                      href="/shop"
+                      className={`inline-block px-6 py-3 border font-bold text-xs uppercase tracking-widest rounded-xl transition-all duration-300 ${spread.accentColor}`}
+                    >
+                      Explore Full Catalog
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </section>
+          );
+        })}
+      </div>
+
+      {/* Styled Magazine Callout */}
+      <section className="container mx-auto px-4 max-w-6xl mt-24">
+        <div className="bg-[#1A1A1A] text-white rounded-3xl p-8 md:p-16 text-center relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#FAF9F6_1px,transparent_1px)] [background-size:16px_16px]"></div>
+          <div className="relative z-10 max-w-2xl mx-auto">
+            <span className="text-[10px] tracking-[0.25em] font-black uppercase text-amber-300 block mb-3">
+              LATEST EDITION
+            </span>
+            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-6">
+              Brandy Print Catalog
+            </h2>
+            <p className="text-slate-300 font-light text-base leading-relaxed mb-8">
+              Receive our seasonal high-fashion magazine directly to your doorstep. Features
+              exclusive discounts, designer interviews, and full styled spreads. Free with any
+              purchase over EGP 1,500.
+            </p>
             <Link
               href="/shop"
-              className="inline-block px-8 py-3 bg-[#1e3b8a] text-white rounded-full font-semibold hover:bg-[#16307a] transition-colors"
+              className="inline-block px-8 py-4 bg-white text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-100 transition-colors shadow-lg"
             >
-              Browse the Shop
+              Shop to Qualify
             </Link>
           </div>
-        )}
-      </div>
+        </div>
+      </section>
     </main>
   );
 }

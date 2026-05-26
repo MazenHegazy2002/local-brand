@@ -11,7 +11,18 @@ export async function GET(_req: Request) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  const coupons = await prisma.coupon.findMany();
+  const coupons = await prisma.coupon.findMany({
+    include: {
+      usages: {
+        include: {
+          user: { select: { name: true, email: true } },
+          order: { select: { id: true, totalAmount: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
 
   return NextResponse.json({ coupons });
 }

@@ -45,11 +45,16 @@ export async function getDashboardStats() {
         orderBy: { createdAt: 'desc' },
       });
 
+      const affiliate = await prisma.affiliate.findUnique({
+        where: { userId },
+      });
+
       return JSON.parse(
         JSON.stringify({
           myOrders: orders,
           wishlist,
           notifications,
+          isAffiliate: !!affiliate,
           stats: {
             totalOrders: orders.length,
             wishlistCount: wishlist.length,
@@ -359,32 +364,82 @@ export async function getHomepageData() {
       where: { parentId: null },
     });
 
-    const featuredProducts = await prisma.product.findMany({
-      where: { isFeatured: true, published: true },
-      include: {
-        images: true,
-        variants: true,
-        seller: { select: { storeName: true } },
-      },
-      take: 4,
-    });
+    const { getSetting } = await import('@/lib/admin-settings-registry');
+    const bestSellersSlug = await getSetting<string>('HOMEPAGE_BEST_SELLERS_CAT').catch(() => '');
+    const newArrivalsSlug = await getSetting<string>('HOMEPAGE_NEW_ARRIVALS_CAT').catch(() => '');
+    const recommendedSlug = await getSetting<string>('HOMEPAGE_RECOMMENDED_CAT').catch(() => '');
 
-    const recentProducts = await prisma.product.findMany({
-      where: { published: true },
-      include: {
-        images: true,
-        variants: true,
-        seller: { select: { storeName: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 8,
-    });
+    let bestsellers: any[] = [];
+    if (bestSellersSlug) {
+      bestsellers = await prisma.product.findMany({
+        where: { published: true, category: { slug: bestSellersSlug }, deletedAt: null },
+        include: {
+          images: true,
+          variants: true,
+          seller: { select: { storeName: true } },
+        },
+        take: 6,
+      });
+    }
+    if (bestsellers.length === 0) {
+      bestsellers = await prisma.product.findMany({
+        where: { isFeatured: true, published: true, deletedAt: null },
+        include: {
+          images: true,
+          variants: true,
+          seller: { select: { storeName: true } },
+        },
+        take: 6,
+      });
+    }
 
-    return { categories, featuredProducts, recentProducts };
+    let newArrivals: any[] = [];
+    if (newArrivalsSlug) {
+      newArrivals = await prisma.product.findMany({
+        where: { published: true, category: { slug: newArrivalsSlug }, deletedAt: null },
+        include: {
+          images: true,
+          variants: true,
+          seller: { select: { storeName: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+      });
+    }
+    if (newArrivals.length === 0) {
+      newArrivals = await prisma.product.findMany({
+        where: { published: true, deletedAt: null },
+        include: {
+          images: true,
+          variants: true,
+          seller: { select: { storeName: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+      });
+    }
+
+    let recommended: any[] = [];
+    if (recommendedSlug) {
+      recommended = await prisma.product.findMany({
+        where: { published: true, category: { slug: recommendedSlug }, deletedAt: null },
+        include: {
+          images: true,
+          variants: true,
+          seller: { select: { storeName: true } },
+        },
+        take: 6,
+      });
+    }
+    if (recommended.length === 0) {
+      recommended = [...newArrivals, ...bestsellers].slice(0, 6);
+    }
+
+    return { categories, bestsellers, newArrivals, recommended };
   } catch (err: unknown) {
     const error = err as Error;
     console.error('[getHomepageData] Error:', error);
-    return { categories: [], featuredProducts: [], recentProducts: [] };
+    return { categories: [], bestsellers: [], newArrivals: [], recommended: [] };
   }
 }
 
@@ -446,10 +501,32 @@ export async function updateOrderItemStatus(itemId: string, status: OrderItemSta
     const session = await getServerSession(authOptions);
     if (!session) return { error: 'Unauthorized' };
 
-    await prisma.orderItem.update({
+    const updatedItem = await prisma.orderItem.update({
       where: { id: itemId },
       data: { status },
+      include: { order: { include: { items: true } } },
     });
+
+    const parentOrder = updatedItem.order;
+    // Only check transitions if the order is still "live"
+    if (parentOrder.status !== 'CANCELLED' && parentOrder.status !== 'RETURNED') {
+      const allItems = parentOrder.items;
+      const allDone = allItems.every(i => i.status === 'SHIPPED' || i.status === 'DELIVERED');
+
+      // If all items are shipped/delivered, move order to PROCESSING (if it was earlier in the flow)
+      // or SHIPPED if we want to bypass PROCESSING. In this system, PROCESSING indicates the vendor
+      // prepared the items, and SHIPPED indicates logistics took it.
+      // The task says "Seller marks order as completed -> Processed"
+      if (
+        allDone &&
+        (parentOrder.status === 'PENDING_PAYMENT' || parentOrder.status === 'CONFIRMED')
+      ) {
+        await prisma.order.update({
+          where: { id: parentOrder.id },
+          data: { status: 'PROCESSING' },
+        });
+      }
+    }
 
     revalidatePath('/seller-hub');
     return { success: true };

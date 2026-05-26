@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import Navbar from '@/components/Navbar';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 // Lightweight helper — no extra query when plugin is not installed
 async function isVirtualTryOnEnabled(): Promise<boolean> {
   try {
@@ -74,6 +76,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const baseUrl = PLATFORM_URL;
 
   // Run plugin check in parallel with the product query
+  const session = await getServerSession(authOptions);
+
   const [product, virtualTryOnEnabled] = await Promise.all([
     prisma.product.findUnique({
       where: { id },
@@ -112,6 +116,21 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     product.reviews.length > 0
       ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length
       : 0;
+
+  let eligibleOrderItems: { id: string }[] = [];
+  if (session?.user) {
+    const userId = (session.user as any).id;
+    // Find DELIVERED order items for this product that haven't been reviewed yet
+    eligibleOrderItems = await prisma.orderItem.findMany({
+      where: {
+        order: { userId },
+        variant: { productId: product.id },
+        status: 'DELIVERED',
+        review: null,
+      },
+      select: { id: true },
+    });
+  }
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -201,6 +220,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         <ReviewSection
           productId={product.id}
           initialReviews={product.reviews as unknown as Review[]}
+          eligibleOrderItems={eligibleOrderItems}
         />
       </div>
     </main>
