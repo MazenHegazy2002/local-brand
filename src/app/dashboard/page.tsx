@@ -7,6 +7,7 @@ import { getDashboardStats, toggleWishlist, updateProfile } from '../actions/sel
 import { cancelOrder, requestReturn } from '../actions/orders';
 import Link from 'next/link';
 import { User, Order, OrderItem, WishlistItem, Notification, SessionUser, Product } from '@/types';
+import { useCartStore } from '@/lib/cartStore';
 
 const VALID_TABS = [
   'overview',
@@ -43,6 +44,7 @@ function CustomerDashboard() {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const addItem = useCartStore(s => s.addItem);
   const initialTab = (() => {
     const t = searchParams.get('tab');
     return (VALID_TABS as readonly string[]).includes(t || '') ? (t as DashboardTab) : 'overview';
@@ -153,17 +155,35 @@ function CustomerDashboard() {
     if (!order.items?.length) return;
     try {
       for (const item of order.items) {
-        await fetch('/api/cart', {
+        const price = Number(item.priceAtPurchase) || Number(item.variant?.price) || 0;
+        const image =
+          item.variant?.product?.images?.find(
+            (img: { isPrimary?: boolean; url: string }) => img.isPrimary
+          )?.url ||
+          item.variant?.product?.images?.[0]?.url ||
+          '';
+
+        // 1. Add to the Zustand cart store — this is what checkout reads
+        addItem({
+          id: item.variantId,
+          name: item.productTitleSnapshot,
+          price,
+          qty: item.quantity,
+          image,
+        });
+
+        // 2. Persist to DB for cross-device / session continuity (fire-and-forget; non-fatal)
+        fetch('/api/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             variantId: item.variantId,
             quantity: item.quantity,
-            savedPrice: item.variant?.price || item.priceAtPurchase || 0,
+            savedPrice: price,
           }),
-        });
+        }).catch(err => console.warn('[reorder] DB sync failed:', err));
       }
-      alert('Items added to your cart!');
+
       router.push('/checkout');
     } catch (err: unknown) {
       const error = err as Error;
