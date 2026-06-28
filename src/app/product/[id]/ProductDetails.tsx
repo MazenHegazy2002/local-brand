@@ -9,6 +9,7 @@ import WishlistButton from '@/components/WishlistButton';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { Product, ProductVariant, ProductImage, Tag } from '@/types';
 import { ShareButton } from '@/components/ShareButton';
+import { CountdownTimer } from '@/components/ui/CountdownTimer';
 
 // Comprehensive color map to convert variant color strings to hex/HSL color codes
 const COLOR_MAP: Record<string, string> = {
@@ -244,14 +245,21 @@ export default function ProductDetails({
           .reduce((acc: number, v: any) => acc + v.stockCount, 0)
       : totalStockCount;
 
+  const isFlashSaleActive =
+    product.flashSalePrice !== null &&
+    product.flashSalePrice !== undefined &&
+    (!product.flashSaleStartsAt || new Date(product.flashSaleStartsAt) <= new Date()) &&
+    (!product.flashSaleEndsAt || new Date(product.flashSaleEndsAt) > new Date());
+
   // Dynamic pricing matching state
-  const activePrice =
-    resolvedVariant?.price ??
-    (hasColors && selectedColor
-      ? parsedVariants.find((v: any) => v.color.toLowerCase() === selectedColor.toLowerCase())
-          ?.price
-      : null) ??
-    product.basePrice;
+  const activePrice = isFlashSaleActive
+    ? (product.flashSalePrice ?? product.basePrice)
+    : (resolvedVariant?.price ??
+      (hasColors && selectedColor
+        ? parsedVariants.find((v: any) => v.color.toLowerCase() === selectedColor.toLowerCase())
+            ?.price
+        : null) ??
+      product.basePrice);
 
   const handleAddToCart = () => {
     if (hasVariants && hasSizes && !selectedSize) {
@@ -387,6 +395,46 @@ export default function ProductDetails({
             )}
           </div>
         </div>
+
+        {/* Flash Sale Banner & Countdown */}
+        {isFlashSaleActive && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/50 rounded-xl">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <span className="inline-block bg-red-650 text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded mb-1 animate-pulse">
+                  ⚡ Flash Sale
+                </span>
+                <div className="text-xs text-red-700 dark:text-red-400 font-semibold">
+                  Original Price:{' '}
+                  <span className="line-through">{product.basePrice.toLocaleString()} EGP</span>
+                </div>
+              </div>
+              {product.flashSaleEndsAt && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                    Ends in:
+                  </span>
+                  <CountdownTimer
+                    targetDate={
+                      product.flashSaleEndsAt instanceof Date
+                        ? product.flashSaleEndsAt.toISOString()
+                        : String(product.flashSaleEndsAt)
+                    }
+                    compact
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Low Stock Urgency Banner */}
+        {availableStock > 0 && availableStock <= 5 && (
+          <div className="mb-6 p-3.5 bg-amber-50 dark:bg-amber-950/20 border border-amber-250 dark:border-amber-900/50 text-amber-850 dark:text-amber-400 text-xs font-bold rounded-xl flex items-center gap-2.5 animate-pulse">
+            <span className="text-sm">⚠️</span> Low Stock! Only {availableStock} items left in
+            stock.
+          </div>
+        )}
 
         {/* Description */}
         <p className="text-slate-600 dark:text-slate-350 leading-relaxed mb-8">

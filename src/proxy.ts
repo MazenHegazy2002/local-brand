@@ -127,7 +127,12 @@ function buildCsp(nonce: string, isDev: boolean): string {
   ].join('; ');
 }
 
-function attachCsp(req: NextRequest, res: NextResponse): NextResponse {
+function attachCsp(
+  req: NextRequest,
+  res: NextResponse,
+  csrfToken?: string,
+  isNewCsrf?: boolean
+): NextResponse {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const isDev = process.env.NODE_ENV === 'development';
   const csp = buildCsp(nonce, isDev);
@@ -139,11 +144,18 @@ function attachCsp(req: NextRequest, res: NextResponse): NextResponse {
   res.headers.set('Content-Security-Policy', csp);
 
   // Issue the CSRF token cookie if the browser doesn't have one yet.
-  // Non-HttpOnly so client JS can read and forward it as X-CSRF-Token.
-  if (!req.cookies?.get(CSRF_COOKIE)?.value) {
+  if (isNewCsrf && csrfToken) {
+    res.cookies.set(CSRF_COOKIE, csrfToken, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: !isDev,
+      path: '/',
+      maxAge: 60 * 60 * 24, // 1 day
+    });
+  } else if (!req.cookies?.get(CSRF_COOKIE)?.value) {
     const token = generateCsrfToken();
     res.cookies.set(CSRF_COOKIE, token, {
-      httpOnly: false,
+      httpOnly: true,
       sameSite: 'lax',
       secure: !isDev,
       path: '/',
@@ -157,6 +169,21 @@ function attachCsp(req: NextRequest, res: NextResponse): NextResponse {
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const method = (req.method ?? 'GET').toUpperCase();
+
+  // Issue the CSRF token cookie if the browser doesn't have one yet.
+  // Set it on request headers as well so server components can read it via cookies().
+  let csrfToken = req.cookies?.get(CSRF_COOKIE)?.value;
+  let isNewCsrf = false;
+  if (
+    !csrfToken &&
+    !pathname.startsWith('/api/auth') &&
+    !pathname.startsWith('/_next') &&
+    !pathname.includes('.')
+  ) {
+    csrfToken = generateCsrfToken();
+    req.headers.set('cookie', `${req.headers.get('cookie') || ''}; ${CSRF_COOKIE}=${csrfToken}`);
+    isNewCsrf = true;
+  }
 
   // 1. Rate Limiting for API routes
   if (pathname.startsWith('/api') && !pathname.startsWith('/api/auth/session')) {
@@ -234,7 +261,12 @@ export async function proxy(req: NextRequest) {
       loginUrl.searchParams.set('callbackUrl', pathname);
       return NextResponse.redirect(loginUrl);
     }
-    return attachCsp(req, NextResponse.next({ request: { headers: req.headers } }));
+    return attachCsp(
+      req,
+      NextResponse.next({ request: { headers: req.headers } }),
+      csrfToken,
+      isNewCsrf
+    );
   }
 
   // Get user role from token
@@ -260,7 +292,12 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
-  return attachCsp(req, NextResponse.next({ request: { headers: req.headers } }));
+  return attachCsp(
+    req,
+    NextResponse.next({ request: { headers: req.headers } }),
+    csrfToken,
+    isNewCsrf
+  );
 }
 
 export { proxy as middleware };

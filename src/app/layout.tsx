@@ -116,6 +116,7 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies();
   const googTrans = cookieStore.get('googtrans')?.value;
+  const csrfToken = cookieStore.get('csrf-token')?.value || '';
 
   const isArabic = googTrans ? googTrans.includes('/ar') : false;
   const dir = isArabic ? 'rtl' : 'ltr';
@@ -139,6 +140,7 @@ export default async function RootLayout({
         {preconnectHosts.map(href => (
           <link key={`dns-${href}`} rel="dns-prefetch" href={href} />
         ))}
+        {csrfToken && <meta name="csrf-token" content={csrfToken} />}
       </head>
       <body
         className={`${inter.variable} ${outfit.variable} ${cairo.variable} ${isArabic ? 'font-cairo' : ''} bg-[hsl(var(--background))] text-[hsl(var(--foreground))] antialiased`}

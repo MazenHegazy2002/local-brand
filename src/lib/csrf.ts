@@ -62,6 +62,10 @@ export function isCsrfExempt(pathname: string): boolean {
 /** Read the csrf-token cookie value in a browser context. */
 export function readCsrfCookie(): string {
   if (typeof document === 'undefined') return '';
+  // Try meta tag first (since cookie is now httpOnly)
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  if (meta) return meta.getAttribute('content') || '';
+  // Fallback to cookie
   const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : '';
 }

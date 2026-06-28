@@ -66,6 +66,7 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'Cross-Origin-Embedder-Policy', value: 'unsafe-none' },
           { key: 'Cross-Origin-Resource-Policy', value: 'same-site' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
@@ -84,6 +85,7 @@ const nextConfig: NextConfig = {
     const rules = [
       { source: '/store', destination: '/shop', permanent: true },
       { source: '/products', destination: '/shop', permanent: true },
+      { source: '/affiliate', destination: '/sell', permanent: true },
     ];
 
     // Canonical-domain redirect: if CANONICAL_DOMAIN is set, any request
