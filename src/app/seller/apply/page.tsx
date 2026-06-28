@@ -73,7 +73,7 @@ export default function SellerApplicationPage() {
             Sell on Brandy — Egypt&apos;s Local Marketplace
           </h1>
           <p className="text-base opacity-75 max-w-lg mx-auto mb-8 leading-relaxed">
-            Join 100+ Egyptian local brands already growing their business. Reach thousands of
+            Join emerging Egyptian local brands already growing their business. Reach thousands of
             buyers with zero upfront costs.
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
