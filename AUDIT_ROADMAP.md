@@ -6,14 +6,14 @@ This roadmap tracks the resolution of findings from the [Website Audit Report (P
 
 ## 📊 Executive Status Summary
 
-| Category                  | Score (Audit) |      Status       | Key Resolution Actions Taken                                                                                                                                                                                                |
-| :------------------------ | :-----------: | :---------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **SEO & Meta**            |     **D**     | **95% Resolved**  | Fixed wrong domain references in sitemap, robots.txt, canonical links, and OG tags. Added homepage JSON-LD (Organization, WebSite) and category page JSON-LD (CollectionPage/ItemList). Consorted heading emoji structures. |
-| **Technical Performance** |    **B-**     | **85% Resolved**  | Lazy-loaded Google Translate widget scripts, preconnected external CDNs, consolidated CSS/JS imports. Consolidating live chat reduced third-party overhead.                                                                 |
-| **Security**              |     **A**     | **100% Resolved** | Hardened session security with `httpOnly: true` CSRF cookies, dynamic meta-tag delivery, and Spectre defences (`COEP: unsafe-none`). Removed deprecated `X-XSS-Protection` headers.                                         |
-| **UX & Design**           |    **C+**     | **90% Resolved**  | Added header navigation Cart icon with count badge, Categories mega-menu, horizontal mobile carousel scroll cues, and resolved hero CTA hierarchy.                                                                          |
-| **Content Quality**       |    **D-**     | **Pending Prep**  | Homepage content expanded (About block + value prop). Remaining inventory population, descriptions, and photography are scheduled for Phase 2.                                                                              |
-| **Business & Conversion** |     **C**     | **90% Resolved**  | Implemented related product recommendation carousels, user wishlists, low-stock alerts, flash sale countdown timers, exit-intent capturing popups, product sharing, and affiliate routes.                                   |
+| Category                  | Score (Audit) |      Status       | Key Resolution Actions Taken                                                                                                                                                                                                                                                                                                                                      |
+| :------------------------ | :-----------: | :---------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **SEO & Meta**            |     **D**     | **95% Resolved**  | Fixed wrong domain references in sitemap, robots.txt, canonical links, and OG tags. Added homepage JSON-LD (Organization, WebSite) and category page JSON-LD (CollectionPage/ItemList). Consorted heading emoji structures.                                                                                                                                       |
+| **Technical Performance** |    **B-**     | **92% Resolved**  | Lazy-loaded Google Translate widget scripts, preconnected image CDNs (Cloudinary, Unsplash, lh3.google) for LCP improvement. Switched 8 non-critical marketing pixels (TikTok, Snapchat, Clarity, Pinterest, Yandex, LinkedIn, CrazyEgg, Messenger) to `lazyOnLoad` strategy to reduce Total Blocking Time. Consolidating live chat reduced third-party overhead. |
+| **Security**              |     **A**     | **100% Resolved** | Hardened session security with `httpOnly: true` CSRF cookies, dynamic meta-tag delivery, and Spectre defences (`COEP: unsafe-none`). Removed deprecated `X-XSS-Protection` headers.                                                                                                                                                                               |
+| **UX & Design**           |    **C+**     | **90% Resolved**  | Added header navigation Cart icon with count badge, Categories mega-menu, horizontal mobile carousel scroll cues, and resolved hero CTA hierarchy.                                                                                                                                                                                                                |
+| **Content Quality**       |    **D-**     | **Pending Prep**  | Homepage content expanded (About block + value prop). Remaining inventory population, descriptions, and photography are scheduled for Phase 2.                                                                                                                                                                                                                    |
+| **Business & Conversion** |     **C**     | **90% Resolved**  | Implemented related product recommendation carousels, user wishlists, low-stock alerts, flash sale countdown timers, exit-intent capturing popups, product sharing, and affiliate routes.                                                                                                                                                                         |
 
 ---
 
@@ -29,6 +29,7 @@ The following issues have been fully resolved, verified through test suites, and
 - **B-008 / B-009 (Homepage JSON-LD)**: Injected `Organization` schema (logo, social profiles, Egyptian phone/location tags) and `WebSite` schema (with internal search query action mapping) into the root document head.
 - **B-015 (Category Page JSON-LD)**: Embedded `CollectionPage` and `ItemList` schema markups on all category pages to enable rich product carousel search results.
 - **B-040 (Heading Emoji Structure)**: Restructured heading tags on the Homepage to isolate emoji characters into decorative `<span>` tags next to the headings, ensuring clean heading text representation for search snippet crawl readability.
+- **B-038 (hreflang for Arabic Localization)**: Added `en` and `ar` language alternates alongside the existing `en-EG` and `ar-EG` entries in the root `metadata.alternates.languages` object in `layout.tsx`. Both short-form and region-specific hreflang signals are now emitted by Next.js in every page `<head>`.
 
 ### 2. Security Hardening (P0 / P3)
 
@@ -42,6 +43,8 @@ The following issues have been fully resolved, verified through test suites, and
 - **B-033 (Categories Discoverability)**: Created a header dropdown list showing the marketplace's 22 categories, significantly speeding up product discovery.
 - **B-046 / B-047 (Homepage Carousels & Hero CTAs)**: Standardized main hero CTAs to prioritize catalog browse actions. Integrated visual swipe cues for mobile carousels.
 - **B-041 (Chat Widget Consolidation)**: Removed Tawk.to scripts completely from `src/components/Plugins.tsx` and stripped all `tawk.to` connections/socket hosts from the Content Security Policy inside `src/proxy.ts` to enforce a single modern chat experience (Crisp) and reduce client bundle overhead.
+- **B-044 (Total Blocking Time ~300ms)**: Switched 8 non-critical marketing pixel scripts (TikTok, Snapchat, Microsoft Clarity, Pinterest, Yandex Metrica, LinkedIn Insight, Crazy Egg, Facebook Messenger) from `strategy="afterInteractive"` to `strategy="lazyOnLoad"` in `Plugins.tsx`. These scripts now load only after the page is fully idle, reducing main-thread blocking time.
+- **B-045 (LCP ~2.5s borderline)**: Added unconditional `preconnect` and `dns-prefetch` hint tags for `res.cloudinary.com`, `images.unsplash.com`, and `lh3.googleusercontent.com` (Google user avatars) in `layout.tsx`. Vercel Blob (`blob.vercel-storage.com`) is conditionally preconnected when `BLOB_READ_WRITE_TOKEN` is set. Hero image `priority={idx === 0}` was already in place.
 
 ### 4. Conversion Optimization (P1 / P2)
 
@@ -88,9 +91,9 @@ These issues relate to catalog depth, inventory, and database populating tasks:
 
 These issues relate to growth features, localized subdomains, and performance telemetry:
 
-- **Task 3.1: Complete Arabic Localization (B-038)**
-  - _Issue_: No path-based localized routing or `hreflang` tags exist.
-  - _Action_: Deploy full Next.js middleware i18n configurations (`/ar` subpathing), configure standard `dir="rtl"`, and translate all database entities.
+- **Task 3.1: Complete Arabic Localization (B-038 — hreflang Partially Done)**
+  - _Completed_: `hreflang` `en`, `ar`, `en-EG`, `ar-EG`, and `x-default` link tags are now emitted by Next.js metadata for every page.
+  - _Remaining_: Deploy full Next.js middleware i18n configurations (`/ar` subpathing) and translate database entities and product copy into Arabic.
 - **Task 3.2: Configure Google Merchant Center & Feeds (B-060)**
   - _Issue_: No XML product feed is exposed for advertising campaigns.
   - _Action_: Implement an API route generating real-time XML/JSON product catalogs matching Google Merchant Center specifications once domain configuration and product lists are populated.

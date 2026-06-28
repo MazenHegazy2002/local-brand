@@ -35,6 +35,8 @@ export const metadata: Metadata = {
       'x-default': 'https://www.lolozozo.shop',
       'en-EG': 'https://www.lolozozo.shop',
       'ar-EG': 'https://www.lolozozo.shop?lang=ar',
+      en: 'https://www.lolozozo.shop',
+      ar: 'https://www.lolozozo.shop?lang=ar',
     },
   },
   title: {
@@ -123,12 +125,18 @@ export default async function RootLayout({
   const _lang = isArabic ? 'ar' : 'en';
 
   // Build preconnect list dynamically so only configured services are hinted.
-  const preconnectHosts: string[] = ['https://images.unsplash.com', 'https://res.cloudinary.com'];
+  // Image CDNs are always preconnected because they serve the LCP hero image.
+  const preconnectHosts: string[] = [
+    'https://images.unsplash.com',
+    'https://res.cloudinary.com',
+    'https://lh3.googleusercontent.com',
+  ];
   if (process.env.SENTRY_DSN) preconnectHosts.push('https://o0.ingest.sentry.io');
   if (process.env.NEXT_PUBLIC_GA_ID)
     preconnectHosts.push('https://www.google-analytics.com', 'https://www.googletagmanager.com');
   if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) preconnectHosts.push('https://client.crisp.chat');
   if (process.env.NEXT_PUBLIC_HOTJAR_ID) preconnectHosts.push('https://static.hotjar.com');
+  if (process.env.BLOB_READ_WRITE_TOKEN) preconnectHosts.push('https://blob.vercel-storage.com');
 
   return (
     <html lang={_lang} dir={dir}>
