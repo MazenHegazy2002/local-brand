@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Plugins is a single mount point that loads optional third-party scripts
  * if their corresponding `NEXT_PUBLIC_*` env vars are set.
  *
@@ -171,7 +171,7 @@ export default function Plugins() {
 
       {/* 7. TikTok Pixel — lazyOnLoad: non-critical, loads after page is idle */}
       {tiktokPixelId && (
-        <Script id="tiktok-pixel-init" strategy="lazyOnLoad">{`
+        <Script id="tiktok-pixel-init" strategy="lazyOnload">{`
           !function (w, d, t) {
             w.TiktokSdkObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","trackWithQuery","select","to"];ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};ttq._i=ttq._i||{};ttq._t=ttq._t||{};ttq._t[t]=+new Date;ttq._o=ttq._o||{};ttq._o[t]={},ttq.load=function(e,n){var o="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i[e]=[],ttq._i[e]._u=o,ttq._t[e]=+new Date,ttq._i[e]._v="1.2.4",ttq._i[e]._o=o,ttq._i[e]._o[e]=n;var c=d.createElement("script");c.type="text/javascript",c.async=!0,c.src=o+"?sdkid="+e+"&lib="+t;var a=d.getElementsByTagName("script")[0];a.parentNode.insertBefore(c,a)};
             ttq.load('${tiktokPixelId}');
@@ -182,7 +182,7 @@ export default function Plugins() {
 
       {/* 8. Snapchat Pixel — lazyOnLoad: non-critical */}
       {snapchatPixelId && (
-        <Script id="snapchat-pixel-init" strategy="lazyOnLoad">{`
+        <Script id="snapchat-pixel-init" strategy="lazyOnload">{`
           (function(e,t,n){if(e.snaptr)return;var r=e.snaptr=function(){r.handleRequest?r.handleRequest.apply(r,arguments):r.queue.push(arguments)};
           r.queue=[];var a=t.createElement(n);a.async=!0;a.src="https://tr.snapchat.com/config/pixel.js";
           var g=t.getElementsByTagName(n)[0];g.parentNode.insertBefore(a,g)})(window,document,"script");
@@ -193,7 +193,7 @@ export default function Plugins() {
 
       {/* 9. Microsoft Clarity — lazyOnLoad: session recording is non-critical */}
       {clarityId && (
-        <Script id="clarity-init" strategy="lazyOnLoad">{`
+        <Script id="clarity-init" strategy="lazyOnload">{`
           (function(c,l,a,r,i,t,y){
               c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
               t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
@@ -204,7 +204,7 @@ export default function Plugins() {
 
       {/* 10. Pinterest Tag — lazyOnLoad: non-critical */}
       {pinterestTagId && (
-        <Script id="pinterest-tag-init" strategy="lazyOnLoad">{`
+        <Script id="pinterest-tag-init" strategy="lazyOnload">{`
           !function(e){if(!window.pintr){window.pintr=function(){window.pintr.queue.push(Array.prototype.slice.call(arguments))};var n=window.pintr;n.queue=[],n.version="3.0";var t=document.createElement("script");t.async=!0,t.src="https://s.pinimg.com/ct/core.js";var r=document.getElementsByTagName("script")[0];r.parentNode.insertBefore(t,r)}}(window);
           pintr('init', '${pinterestTagId}');
           pintr('track', 'pageview');
@@ -213,7 +213,7 @@ export default function Plugins() {
 
       {/* 11. Yandex Metrica — lazyOnLoad: non-critical */}
       {yandexMetricaId && (
-        <Script id="yandex-metrica-init" strategy="lazyOnLoad">{`
+        <Script id="yandex-metrica-init" strategy="lazyOnload">{`
           (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
           m[i].l=1*new Date();
           for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
@@ -234,14 +234,14 @@ export default function Plugins() {
       {crazyEggId && (
         <Script
           id="crazyegg-init"
-          strategy="lazyOnLoad"
+          strategy="lazyOnload"
           src={`https://script.crazyegg.com/pages/scripts/${crazyEggId.substring(0, 4)}/${crazyEggId.substring(4)}.js`}
         />
       )}
 
       {/* 13. LinkedIn Insight — lazyOnLoad: ad retargeting, non-critical */}
       {linkedinPartnerId && (
-        <Script id="linkedin-insight-init" strategy="lazyOnLoad">{`
+        <Script id="linkedin-insight-init" strategy="lazyOnload">{`
           _linkedin_partner_id = "${linkedinPartnerId}";
           window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
           window._linkedin_data_partner_ids.push(_linkedin_partner_id);
@@ -261,7 +261,7 @@ export default function Plugins() {
         <>
           <div id="fb-root"></div>
           <div id="fb-customer-chat" className="fb-customerchat"></div>
-          <Script id="fb-messenger-init" strategy="lazyOnLoad">{`
+          <Script id="fb-messenger-init" strategy="lazyOnload">{`
             var chatbox = document.getElementById('fb-customer-chat');
             chatbox.setAttribute("page_id", "${facebookPageId}");
             chatbox.setAttribute("attribution", "biz_inbox");
