@@ -144,9 +144,9 @@ function LoginForm() {
             <span className="text-[hsl(var(--accent))]">Y</span>
           </span>
         </Link>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-[hsl(var(--foreground))]">
+        <h1 className="mt-6 text-center text-3xl font-extrabold text-[hsl(var(--foreground))]">
           Welcome Back
-        </h2>
+        </h1>
         <p className="mt-2 text-center text-sm text-[hsl(var(--muted-foreground))]">
           Sign in to continue your journey
         </p>

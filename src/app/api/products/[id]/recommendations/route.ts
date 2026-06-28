@@ -9,7 +9,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     const params = await context.params;
     const productId = params.id;
     const { searchParams } = new URL(req.url);
-    const type = (searchParams.get('type') || 'similar');
+    const type = searchParams.get('type') || 'similar';
     const limit = Math.min(20, parseInt(searchParams.get('limit') || '12'));
 
     const session = await getServerSession(authOptions);
@@ -26,11 +26,11 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
     switch (type) {
       case 'trending':
-        recommendations = await getTrending(limit) as unknown as Product[];
+        recommendations = (await getTrending(limit)) as unknown as Product[];
         break;
       case 'personalized':
         if (!userId) {
-          recommendations = await getTrending(limit) as unknown as Product[];
+          recommendations = (await getTrending(limit)) as unknown as Product[];
         } else {
           const wishlist = await prisma.wishlist.findMany({
             where: { userId },
@@ -38,24 +38,40 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
           });
           const wishlistIds = wishlist.map(w => w.productId);
           if (wishlistIds.length === 0) {
-            recommendations = await getTrending(limit) as unknown as Product[];
+            recommendations = (await getTrending(limit)) as unknown as Product[];
           } else {
             const products = await prisma.product.findMany({
               where: { id: { in: wishlistIds } },
               select: { categoryId: true },
             });
             const catIds = [...new Set(products.map(p => p.categoryId))];
-            recommendations = await prisma.product.findMany({
-              where: { id: { not: productId }, published: true, deletedAt: null, categoryId: { in: catIds } },
+            recommendations = (await prisma.product.findMany({
+              where: {
+                id: { not: productId },
+                published: true,
+                deletedAt: null,
+                categoryId: { in: catIds },
+              },
               take: limit,
-              include: { images: { where: { isPrimary: true } }, seller: { select: { storeName: true } } },
+              include: {
+                images: { where: { isPrimary: true } },
+                seller: { select: { storeName: true } },
+              },
               orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-            }) as unknown as Product[];
+            })) as unknown as Product[];
           }
         }
         break;
-      default:
-        recommendations = await getSimilar(targetProduct as unknown as Product, productId, limit) as unknown as Product[];
+      default: {
+        const similar = (await getSimilar(
+          targetProduct as unknown as Product,
+          productId,
+          limit
+        )) as unknown as Product[];
+        // B-050: Fall back to trending if no category-similar products exist
+        recommendations =
+          similar.length > 0 ? similar : ((await getTrending(limit)) as unknown as Product[]);
+      }
     }
 
     return NextResponse.json({ recommendations, type }, { status: 200 });

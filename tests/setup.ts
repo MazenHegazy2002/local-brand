@@ -147,6 +147,8 @@ jest.mock('@/lib/prisma', () => ({
       create: jest.fn(),
     },
     coupon: { findUnique: jest.fn(), update: jest.fn(), findMany: jest.fn(), create: jest.fn() },
+    couponUsage: { findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn() },
+    loyaltyTransaction: { findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn() },
     review: { findMany: jest.fn(), findFirst: jest.fn(), create: jest.fn(), aggregate: jest.fn() },
     productQA: {
       findMany: jest.fn(),

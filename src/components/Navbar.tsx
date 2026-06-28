@@ -12,9 +12,36 @@ import { useLanguage } from '@/providers/LanguageContext';
 import { useCartStore } from '@/lib/cartStore';
 import CategoriesBar from './CategoriesBar';
 import { SessionUser } from '@/types';
+import { useRouter } from 'next/navigation';
+import DropdownMenu from './ui/DropdownMenu';
+import { useWishlistStore } from '@/lib/wishlistStore';
 
 export default function Navbar() {
+  const router = useRouter();
   const { data: session } = useSession();
+  const [categories, setCategories] = useState<any[]>([]);
+  const syncLocalItems = useWishlistStore(s => s.syncLocalItems);
+
+  useEffect(() => {
+    if (session) {
+      syncLocalItems();
+    }
+  }, [session, syncLocalItems]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/categories');
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data.categories || []);
+        }
+      } catch (err) {
+        console.error('Navbar error fetching categories:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -47,7 +74,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="w-full bg-[hsl(var(--primary))] text-[hsl(var(--background))] sticky top-0 z-50 shadow-lg border-b border-primary-light/10">
+      <header className="w-full bg-[hsl(var(--primary))] text-[hsl(var(--background))] sticky top-0 z-50 shadow-lg border-b border-primary-light/10">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
           {/* Logo */}
           <Link href="/" className="text-xl font-black tracking-tight shrink-0 text-white">
@@ -61,6 +88,43 @@ export default function Navbar() {
 
           {/* Nav links */}
           <div className="hidden xl:flex items-center gap-5 text-sm font-semibold text-white/85">
+            <DropdownMenu
+              align="left"
+              trigger={
+                <button
+                  type="button"
+                  className="hover:text-white transition-colors flex items-center gap-1 cursor-pointer outline-none"
+                >
+                  {t('Categories')}
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    className="mt-0.5"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+              }
+              items={(categories.length > 0
+                ? categories
+                : [
+                    { name: 'Women', slug: 'women' },
+                    { name: 'Men', slug: 'men' },
+                    { name: 'Kids', slug: 'kids' },
+                    { name: 'Accessories', slug: 'accessories' },
+                    { name: 'Electronics', slug: 'electronics' },
+                    { name: 'Home Decor', slug: 'home-decor' },
+                  ]
+              ).map((cat: any) => ({
+                id: cat.slug || cat.id,
+                label: t(cat.name as any) || cat.name,
+                onClick: () => router.push(`/category/${cat.slug}`),
+              }))}
+            />
             <Link
               href="/flash-sales"
               className="hover:text-white transition-colors border-b-2 border-white pb-0.5 text-white"
@@ -204,7 +268,7 @@ export default function Navbar() {
         </div>
 
         <CategoriesBar />
-      </nav>
+      </header>
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>

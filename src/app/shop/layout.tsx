@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { PLATFORM_URL } from '@/lib/constants';
 
 export const metadata: Metadata = {
-  title: 'Shop — Browse All Products | Brandy',
+  title: 'Shop — Browse All Products',
   description:
     'Shop thousands of products from verified Egyptian local sellers on Brandy. Filter by category, price, rating, and more. Fast delivery across Egypt.',
   alternates: {

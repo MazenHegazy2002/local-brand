@@ -39,11 +39,6 @@ export default function WishlistButton({
       onClick={e => {
         e.preventDefault();
         e.stopPropagation();
-        if (!session) {
-          alert('Please sign in to add items to your wishlist.');
-          window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`;
-          return;
-        }
         toggleItem(
           {
             id: String(product.id),

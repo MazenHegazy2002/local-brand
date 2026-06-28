@@ -35,7 +35,24 @@ import { MessageSquare, X, Send } from 'lucide-react';
 export default function Plugins() {
   const { lang } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   const widgetRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const dismissed = sessionStorage.getItem('support-tooltip-dismissed');
+    if (dismissed) return;
+
+    const timer = setTimeout(() => {
+      setShowTooltip(true);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const dismissTooltip = () => {
+    setShowTooltip(false);
+    sessionStorage.setItem('support-tooltip-dismissed', 'true');
+  };
 
   // Core analytics & support
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
@@ -290,6 +307,65 @@ export default function Plugins() {
           gap: '12px',
         }}
       >
+        {/* Proactive Support Tooltip */}
+        {showTooltip && !isOpen && (
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: '12px',
+              backgroundColor: 'white',
+              color: '#1e293b',
+              fontSize: '13px',
+              fontWeight: 500,
+              boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+              border: '1px solid rgba(0,0,0,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              maxWidth: '220px',
+              position: 'relative',
+              animation: 'slideUpFAB 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+            }}
+          >
+            <span>
+              {isRtl
+                ? 'هل لديك أي استفسار؟ نحن هنا للمساعدة!'
+                : 'Have a question? We are here to help!'}
+            </span>
+            <button
+              type="button"
+              onClick={dismissTooltip}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                padding: '2px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              aria-label="Dismiss tooltip"
+            >
+              <X size={14} />
+            </button>
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '-6px',
+                [isRtl ? 'left' : 'right']: '22px',
+                width: '12px',
+                height: '12px',
+                backgroundColor: 'white',
+                transform: 'rotate(45deg)',
+                borderBottom: '1px solid rgba(0,0,0,0.08)',
+                borderRight: '1px solid rgba(0,0,0,0.08)',
+                zIndex: -1,
+              }}
+            />
+          </div>
+        )}
+
         {/* Expanded Stack of Social Channels */}
         {isOpen && (
           <div

@@ -6,6 +6,7 @@ import './globals.css';
 import AuthProvider from '@/providers/SessionProvider';
 import { cookies } from 'next/headers';
 import GoogleTranslate from '@/components/GoogleTranslate';
+import ExitIntentPopup from '@/components/ExitIntentPopup';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -27,22 +28,21 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://lolozozo.shop'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://www.lolozozo.shop'),
+  alternates: {
+    canonical: './',
+    languages: {
+      'x-default': 'https://www.lolozozo.shop',
+      'en-EG': 'https://www.lolozozo.shop',
+      'ar-EG': 'https://www.lolozozo.shop?lang=ar',
+    },
+  },
   title: {
     default: 'Brandy — Egyptian Marketplace for Local Sellers',
     template: '%s | Brandy',
   },
   description:
     'Discover authentic Egyptian local sellers on Brandy. Shop fashion, electronics, home goods and more from verified Egyptian sellers. Fast delivery across Egypt.',
-  keywords: [
-    'Brandy',
-    'Egyptian brands',
-    'local sellers Egypt',
-    'Egyptian marketplace',
-    'buy Egyptian products',
-    'Egyptian fashion',
-    'Egyptian crafts',
-  ],
   authors: [{ name: 'Brandy' }],
   creator: 'Brandy',
   publisher: 'Brandy',
@@ -60,8 +60,8 @@ export const metadata: Metadata = {
     siteName: 'Brandy',
     title: 'Brandy — Egyptian Marketplace for Local Sellers',
     description:
-      'Discover authentic Egyptian local sellers on Brandy. Shop from verified sellers across Egypt.',
-    url: process.env.NEXT_PUBLIC_APP_URL || 'https://lolozozo.shop',
+      'Discover authentic Egyptian local sellers on Brandy. Shop fashion, electronics, home goods and more from verified Egyptian sellers. Fast delivery across Egypt.',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://www.lolozozo.shop',
     images: [{ url: '/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
@@ -69,6 +69,7 @@ export const metadata: Metadata = {
     title: 'Brandy — Egyptian Marketplace',
     description: 'Discover authentic Egyptian local sellers on Brandy.',
     images: ['/og-image.png'],
+    site: '@brandyeg',
     // Set NEXT_PUBLIC_TWITTER_HANDLE in your env (e.g. "@yourbrand")
     ...(process.env.NEXT_PUBLIC_TWITTER_HANDLE
       ? { creator: process.env.NEXT_PUBLIC_TWITTER_HANDLE }
@@ -121,7 +122,7 @@ export default async function RootLayout({
   const _lang = isArabic ? 'ar' : 'en';
 
   // Build preconnect list dynamically so only configured services are hinted.
-  const preconnectHosts: string[] = [];
+  const preconnectHosts: string[] = ['https://images.unsplash.com', 'https://res.cloudinary.com'];
   if (process.env.SENTRY_DSN) preconnectHosts.push('https://o0.ingest.sentry.io');
   if (process.env.NEXT_PUBLIC_GA_ID)
     preconnectHosts.push('https://www.google-analytics.com', 'https://www.googletagmanager.com');
@@ -129,7 +130,7 @@ export default async function RootLayout({
   if (process.env.NEXT_PUBLIC_HOTJAR_ID) preconnectHosts.push('https://static.hotjar.com');
 
   return (
-    <html lang="en" dir={dir}>
+    <html lang={_lang} dir={dir}>
       <head>
         {preconnectHosts.map(href => (
           <link key={href} rel="preconnect" href={href} crossOrigin="anonymous" />
@@ -156,6 +157,7 @@ export default async function RootLayout({
             <BottomNavigation />
             <CookieConsent />
             <InstallPrompt />
+            <ExitIntentPopup />
           </AuthProvider>
         </LanguageProvider>
         <Plugins />

@@ -384,6 +384,7 @@ export async function getHomepageData() {
           images: true,
           variants: true,
           seller: { select: { storeName: true } },
+          reviews: { select: { rating: true } },
         },
         take: 6,
       });
@@ -395,6 +396,7 @@ export async function getHomepageData() {
           images: true,
           variants: true,
           seller: { select: { storeName: true } },
+          reviews: { select: { rating: true } },
         },
         take: 6,
       });
@@ -408,6 +410,7 @@ export async function getHomepageData() {
           images: true,
           variants: true,
           seller: { select: { storeName: true } },
+          reviews: { select: { rating: true } },
         },
         orderBy: { createdAt: 'desc' },
         take: 6,
@@ -420,6 +423,7 @@ export async function getHomepageData() {
           images: true,
           variants: true,
           seller: { select: { storeName: true } },
+          reviews: { select: { rating: true } },
         },
         orderBy: { createdAt: 'desc' },
         take: 6,
@@ -434,6 +438,7 @@ export async function getHomepageData() {
           images: true,
           variants: true,
           seller: { select: { storeName: true } },
+          reviews: { select: { rating: true } },
         },
         take: 6,
       });

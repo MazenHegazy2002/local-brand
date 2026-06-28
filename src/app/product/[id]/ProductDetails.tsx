@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/lib/cartStore';
 import { useLanguage } from '@/providers/LanguageContext';
 import WishlistButton from '@/components/WishlistButton';
+import { RatingStars } from '@/components/ui/RatingStars';
 import { Product, ProductVariant, ProductImage, Tag } from '@/types';
+import { ShareButton } from '@/components/ShareButton';
 
 // Comprehensive color map to convert variant color strings to hex/HSL color codes
 const COLOR_MAP: Record<string, string> = {
@@ -104,6 +106,13 @@ export default function ProductDetails({
 
   const variants = product.variants || [];
   const hasVariants = variants.length > 0;
+
+  const reviews = product.reviews || [];
+  const reviewCount = reviews.length;
+  const avgRating =
+    reviewCount > 0
+      ? reviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviewCount
+      : 0;
 
   // ── Color & Size Parsing Logic ──
   const parsedVariants = variants.map((v: any) => {
@@ -308,35 +317,47 @@ export default function ProductDetails({
 
       {/* ── Right Column: Configuration & Details ── */}
       <div className="w-full md:w-1/2 flex flex-col justify-center">
-        {/* Brand redirect + verification badge */}
-        <div className="flex items-center gap-2 mb-2.5">
-          <Link
-            href={`/brand/${product.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-            className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest hover:text-[#534AB7] dark:hover:text-[#6b8ff5] transition-colors"
-          >
-            {product.seller.storeName}
-          </Link>
-          {(product.seller as { status?: string }).status === 'ACTIVE' && (
-            <span
-              title="Verified seller on Brandy"
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#534AB7]/10 text-[#534AB7] dark:bg-[#534AB7]/20 dark:text-[#6b8ff5] rounded text-[10px] font-bold uppercase tracking-wide"
+        {/* Brand redirect + verification badge + Share */}
+        <div className="flex items-center justify-between mb-2.5">
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/brand/${product.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+              className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest hover:text-[#534AB7] dark:hover:text-[#6b8ff5] transition-colors"
             >
-              <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Verified
-            </span>
-          )}
+              {product.seller.storeName}
+            </Link>
+            {(product.seller as { status?: string }).status === 'ACTIVE' && (
+              <span
+                title="Verified seller on Brandy"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#534AB7]/10 text-[#534AB7] dark:bg-[#534AB7]/20 dark:text-[#6b8ff5] rounded text-[10px] font-bold uppercase tracking-wide"
+              >
+                <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fillRule="evenodd"
+                    d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  />
+                </svg>
+                Verified
+              </span>
+            )}
+          </div>
+          <ShareButton productId={product.id} productName={product.title} />
         </div>
 
         {/* Title */}
-        <h1 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-50 leading-tight mb-4">
+        <h1 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-50 leading-tight mb-2">
           {product.title}
         </h1>
+
+        {/* Rating Stars */}
+        {reviewCount > 0 && (
+          <div className="flex items-center gap-2 mb-4">
+            <RatingStars value={avgRating} readOnly size="md" />
+            <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+              {avgRating.toFixed(1)} ({reviewCount} {t('Reviews') || 'reviews'})
+            </span>
+          </div>
+        )}
 
         {/* Dynamic Price & In-stock Indicators */}
         <div className="flex items-center gap-4 mb-6 flex-wrap">

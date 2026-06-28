@@ -111,10 +111,10 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
                   {ctaLabel}
                 </Link>
                 <Link
-                  href="/lookbook"
+                  href="/categories"
                   className="bg-[#1e3b8a] hover:bg-[#1e3b8a]/80 text-white font-bold tracking-wide py-3 px-8 rounded-lg transition-colors text-center text-sm shadow-inner"
                 >
-                  {t('ExploreLookbook')}
+                  {t('BrowseCategories')}
                 </Link>
               </div>
             </div>

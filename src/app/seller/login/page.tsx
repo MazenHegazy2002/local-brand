@@ -54,9 +54,9 @@ export default function SellerLoginPage() {
             Brandy<span className="text-indigo-400">.Seller</span>
           </span>
         </Link>
-        <h2 className="mt-6 text-center text-2xl font-black text-slate-100 uppercase tracking-tight">
+        <h1 className="mt-6 text-center text-2xl font-black text-slate-100 uppercase tracking-tight">
           Sign In to Seller Hub
-        </h2>
+        </h1>
         <p className="mt-2 text-center text-xs text-slate-400">
           Exclusive portal for verified Egyptian local brands.
         </p>

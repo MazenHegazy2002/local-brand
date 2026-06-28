@@ -38,9 +38,24 @@ function ProductSection({
   return (
     <section className="ps-section">
       <div className="ps-header">
-        <h2 className="ps-title">
-          <span>{emoji}</span> {title}
-        </h2>
+        <div className="ps-title">
+          {emoji && (
+            <span className="text-xl shrink-0" aria-hidden="true">
+              {emoji}
+            </span>
+          )}
+          <h2
+            style={{
+              fontSize: 'inherit',
+              fontWeight: 'inherit',
+              color: 'inherit',
+              margin: 0,
+              display: 'inline',
+            }}
+          >
+            {title}
+          </h2>
+        </div>
         <Link href={linkHref} className="ps-link">
           {linkLabel} →
         </Link>
@@ -101,6 +116,58 @@ export default async function Home() {
       />
       <Navbar />
       <Hero />
+
+      {/* ── About Brandy & Value Proposition Section ── */}
+      <section className="bg-white border-y border-gray-100 py-12 mb-8">
+        <div className="home-shell">
+          <div className="max-w-3xl mx-auto text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-black text-[#1e3b8a] mb-4">About Brandy</h2>
+            <p className="text-slate-650 leading-relaxed text-sm md:text-base">
+              Brandy is Egypt&apos;s premier dedicated marketplace empowering local, independent
+              brands, artisans, and creators. We believe in the quality, craftsmanship, and
+              potential of Egyptian products. By bridging the gap between local makers and conscious
+              shoppers, we help grow local businesses while providing you with unique, premium
+              fashion, home decor, electronics, and accessories. Experience local shopping redefined
+              with verified brand authentication and complete escrow peace of mind.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center">
+              <div className="w-12 h-12 rounded-full bg-blue-50 text-[#1e3b8a] flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                🇪🇬
+              </div>
+              <h3 className="font-bold text-slate-900 text-base mb-2">Supporting Local Talent</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Discover and directly support emerging Egyptian sellers, designers, and local
+                artisans bringing you unique craftsmanship.
+              </p>
+            </div>
+
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center">
+              <div className="w-12 h-12 rounded-full bg-green-50 text-green-700 flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                🛡️
+              </div>
+              <h3 className="font-bold text-slate-900 text-base mb-2">Verified Quality Brands</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Every brand is carefully vetted and verified by the Brandy team so you can shop
+                premium quality with absolute confidence.
+              </p>
+            </div>
+
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center">
+              <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                🔒
+              </div>
+              <h3 className="font-bold text-slate-900 text-base mb-2">14-Day Escrow Guarantee</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Shop secure. Your payment is held in escrow for 14 days post-delivery to guarantee
+                product authenticity and stress-free returns.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="home-shell">
         <Suspense fallback={<div style={{ height: 400 }} />}>
@@ -165,8 +232,8 @@ export default async function Home() {
             lineHeight: 1.6,
           }}
         >
-          Join 100+ Egyptian local brands already growing their business. Zero upfront costs — just
-          sign up and start selling.
+          Join emerging Egyptian local brands already growing their business. Zero upfront costs —
+          just sign up and start selling.
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <a
@@ -225,6 +292,25 @@ export default async function Home() {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 10px;
+        }
+        @media (max-width: 640px) {
+          .ps-grid {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding: 4px 0 16px;
+            margin: 0 -4px;
+            gap: 12px;
+          }
+          .ps-grid::-webkit-scrollbar {
+            display: none;
+          }
+          .ps-grid > * {
+            flex: 0 0 72%;
+            scroll-snap-align: start;
+          }
         }
         @media (min-width: 640px)  { .ps-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
         @media (min-width: 1024px) { .ps-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

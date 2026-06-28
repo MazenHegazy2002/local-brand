@@ -49,6 +49,10 @@ export default function GoogleTranslate() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    const hasTranslation =
+      document.cookie.includes('googtrans') || window.localStorage.getItem('brandy-lang') === 'ar';
+    if (!hasTranslation) return;
+
     const init = () => {
       if (!window.google?.translate) return;
       try {

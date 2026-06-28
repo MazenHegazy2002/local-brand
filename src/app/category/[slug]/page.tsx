@@ -6,6 +6,7 @@ import { Suspense } from 'react';
 import { ProductGridSkeleton } from '@/components/Skeleton';
 import { Category, Product, ProductImage } from '@/types';
 import type { Metadata } from 'next';
+import { PLATFORM_URL } from '@/lib/constants';
 
 export const revalidate = 300;
 
@@ -69,8 +70,29 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     );
   }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `${category.name} — Brandy`,
+    description: `Shop ${category.name} from Egyptian local sellers on Brandy.`,
+    url: `${PLATFORM_URL}/category/${category.slug}`,
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: category.products.length,
+      itemListElement: category.products.map((product, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: `${PLATFORM_URL}/product/${product.id}`,
+      })),
+    },
+  };
+
   return (
     <main className="min-h-screen bg-[hsl(var(--background))]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">

@@ -13,14 +13,14 @@ const FOOTER_LINKS = {
     { label: 'Start Selling', href: '/seller/apply' },
     { label: 'Seller Hub', href: '/seller-hub' },
     { label: 'Seller Terms', href: '/legal/seller-terms' },
-    { label: 'Affiliate Program', href: '/sell' },
+    { label: 'Affiliate Program', href: '/affiliate' },
   ],
   help: [
     { label: 'Help Center', href: '/help' },
     { label: 'Track My Order', href: '/track' },
     { label: 'Returns & Refunds', href: '/legal/returns-refunds' },
     { label: 'Shipping Policy', href: '/legal/shipping-policy' },
-    { label: 'Contact Us', href: '/help' },
+    { label: 'Contact Us', href: '/contact' },
   ],
   legal: [
     { label: 'Privacy Policy', href: '/legal/privacy-policy' },
@@ -101,25 +101,27 @@ export default function Footer() {
                 </svg>
                 {SUPPORT_EMAIL}
               </a>
-              <a
-                href={`tel:${CONTACT_PHONE.replace(/\s/g, '')}`}
-                className="flex items-center gap-2 hover:text-white transition-colors"
-              >
-                <svg
-                  className="w-4 h-4 shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              {CONTACT_PHONE && (
+                <a
+                  href={`tel:${CONTACT_PHONE.replace(/\s/g, '')}`}
+                  className="flex items-center gap-2 hover:text-white transition-colors"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                  />
-                </svg>
-                {CONTACT_PHONE}
-              </a>
+                  <svg
+                    className="w-4 h-4 shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                    />
+                  </svg>
+                  {CONTACT_PHONE}
+                </a>
+              )}
             </div>
             {/* Social icons */}
             <div className="flex items-center gap-3 mt-5">
@@ -212,10 +214,42 @@ export default function Footer() {
 
       {/* Bottom bar */}
       <div className="border-t border-white/10">
-        <div className="container mx-auto px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/40">
+        <div className="container mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/40">
           <p>
             © {year} {PLATFORM_NAME}. All rights reserved.
           </p>
+
+          {/* Payment Badges & SSL Seal */}
+          <div className="flex flex-wrap items-center justify-center gap-3 text-white/60">
+            <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-bold tracking-wider text-[9px] text-white">
+              VISA
+            </span>
+            <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-bold tracking-wider text-[9px] text-white">
+              MASTERCARD
+            </span>
+            <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-bold tracking-wider text-[9px] text-white">
+              MEEZA
+            </span>
+            <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-bold tracking-wider text-[9px] text-white">
+              FAWRY
+            </span>
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-green-500/10 border border-green-500/20 font-bold text-[9px] text-green-400">
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                className="shrink-0"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              SSL SECURE
+            </span>
+          </div>
+
           <div className="flex items-center gap-4">
             <Link href="/legal/privacy-policy" className="hover:text-white transition-colors">
               Privacy

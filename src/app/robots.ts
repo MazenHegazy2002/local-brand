@@ -20,14 +20,6 @@ export default function robots(): MetadataRoute.Robots {
           '/account/',
         ],
       },
-      {
-        userAgent: 'GPTBot',
-        disallow: ['/'],
-      },
-      {
-        userAgent: 'CCBot',
-        disallow: ['/'],
-      },
     ],
     sitemap: `${PLATFORM_URL}/sitemap.xml`,
     host: PLATFORM_URL,

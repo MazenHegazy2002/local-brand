@@ -135,11 +135,11 @@ export default function LiveSearch() {
           }}
           onKeyDown={handleKeyDown}
           placeholder={t('SearchPlaceholder')}
-          className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-lg py-2.5 px-4 pr-10 outline-none text-sm focus:bg-white/15 focus:border-white/40 transition-all"
+          className="w-full bg-white/15 border border-white/40 text-white placeholder:text-white/75 rounded-lg py-2.5 px-4 pr-10 outline-none text-sm focus:bg-white/25 focus:border-white/60 transition-all"
         />
         <button
           type="submit"
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/85 hover:text-white transition-colors"
         >
           {isSearching ? (
             <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">

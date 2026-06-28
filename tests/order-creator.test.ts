@@ -189,11 +189,13 @@ describe('createOrderForUser — stock + variant resolution', () => {
 
     const txOrderCreate = jest.fn<any>().mockResolvedValue({ id: 'order-2' });
     mocked.$transaction.mockImplementation((fn: any) =>
-      fn({
-        productVariant: { updateMany: jest.fn<any>().mockResolvedValue({ count: 1 }) },
-        order: { create: txOrderCreate },
-        coupon: { update: jest.fn<any>() },
-      })
+      typeof fn === 'function'
+        ? fn({
+            productVariant: { updateMany: jest.fn<any>().mockResolvedValue({ count: 1 }) },
+            order: { create: txOrderCreate },
+            coupon: { update: jest.fn<any>() },
+          })
+        : Promise.all(fn)
     );
 
     const result = await createOrderForUser('user-1', {
@@ -245,11 +247,13 @@ describe('createOrderForUser — coupon application', () => {
     const txOrderCreate = jest.fn<any>().mockResolvedValue({ id: 'order-3' });
     const couponUpdate = jest.fn<any>();
     mocked.$transaction.mockImplementation((fn: any) =>
-      fn({
-        productVariant: { updateMany: jest.fn<any>().mockResolvedValue({ count: 1 }) },
-        order: { create: txOrderCreate },
-        coupon: { update: couponUpdate },
-      })
+      typeof fn === 'function'
+        ? fn({
+            productVariant: { updateMany: jest.fn<any>().mockResolvedValue({ count: 1 }) },
+            order: { create: txOrderCreate },
+            coupon: { update: couponUpdate },
+          })
+        : Promise.all(fn)
     );
 
     const result = await createOrderForUser('user-1', {
@@ -298,11 +302,13 @@ describe('createOrderForUser — coupon application', () => {
     });
     const txOrderCreate = jest.fn<any>().mockResolvedValue({ id: 'order-4' });
     mocked.$transaction.mockImplementation((fn: any) =>
-      fn({
-        productVariant: { updateMany: jest.fn<any>().mockResolvedValue({ count: 1 }) },
-        order: { create: txOrderCreate },
-        coupon: { update: jest.fn<any>() },
-      })
+      typeof fn === 'function'
+        ? fn({
+            productVariant: { updateMany: jest.fn<any>().mockResolvedValue({ count: 1 }) },
+            order: { create: txOrderCreate },
+            coupon: { update: jest.fn<any>() },
+          })
+        : Promise.all(fn)
     );
 
     const result = await createOrderForUser('user-1', {
@@ -335,15 +341,17 @@ describe('createOrderForUser — concurrency / stock race', () => {
       },
     });
     mocked.$transaction.mockImplementation((fn: any) =>
-      fn({
-        productVariant: {
-          // Simulate someone else having taken the last unit between our
-          // findUnique and our updateMany.
-          updateMany: jest.fn<any>().mockResolvedValue({ count: 0 }),
-        },
-        order: { create: jest.fn<any>() },
-        coupon: { update: jest.fn<any>() },
-      })
+      typeof fn === 'function'
+        ? fn({
+            productVariant: {
+              // Simulate someone else having taken the last unit between our
+              // findUnique and our updateMany.
+              updateMany: jest.fn<any>().mockResolvedValue({ count: 0 }),
+            },
+            order: { create: jest.fn<any>() },
+            coupon: { update: jest.fn<any>() },
+          })
+        : Promise.all(fn)
     );
 
     const result = await createOrderForUser('user-1', {

@@ -46,7 +46,7 @@ const CATALOG: SeedCategory[] = [
         description:
           'Lightweight 100% linen midi dress with a bold floral print. Perfect for warm Egyptian summers.',
         basePrice: 799,
-        img: 'https://images.unsplash.com/photo-1572804119341-6d2e54d3b59a?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=600&auto=format&fit=crop',
         isFeatured: true,
         variants: [
           { label: 'Blue - S', color: 'Blue', size: 'S', price: 799, stock: 8 },
@@ -59,7 +59,7 @@ const CATALOG: SeedCategory[] = [
         slug: 'classic-linen-blouse',
         description: 'Relaxed-fit linen blouse with a subtle collar. Pairs with anything.',
         basePrice: 449,
-        img: 'https://images.unsplash.com/photo-1594938298603-c8148c4b4e5d?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1548624149-f7b3e5a3333a?q=80&w=600&auto=format&fit=crop',
         isFeatured: false,
         variants: [
           { label: 'White - XS', color: 'White', size: 'XS', price: 449, stock: 10 },
@@ -295,7 +295,7 @@ const CATALOG: SeedCategory[] = [
         description:
           'Set of 3 hand-poured soy wax candles with cotton wicks. 40-hour burn time each.',
         basePrice: 399,
-        img: 'https://images.unsplash.com/photo-1608181831688-8b2d6a85e5e3?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1603006905003-be475563bc59?q=80&w=600&auto=format&fit=crop',
         isFeatured: false,
         variants: [
           { label: 'Lavender & Vanilla', color: 'Lavender', price: 399, stock: 12 },
@@ -309,7 +309,7 @@ const CATALOG: SeedCategory[] = [
         description:
           'Set of 3 handwoven bamboo baskets in nesting sizes. Eco-friendly home organization.',
         basePrice: 499,
-        img: 'https://images.unsplash.com/photo-1584465970731-5ccf5e60285e?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1531835551805-16d864c8d311?q=80&w=600&auto=format&fit=crop',
         isFeatured: false,
         variants: [
           { label: 'Natural', color: 'Natural', price: 499, stock: 8 },
@@ -464,7 +464,7 @@ const CATALOG: SeedCategory[] = [
         description:
           'Ball-bearing speed rope with adjustable cable. Ideal for CrossFit and cardio workouts.',
         basePrice: 199,
-        img: 'https://images.unsplash.com/photo-1516208813382-2f6e1ad02b27?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=600&auto=format&fit=crop',
         isFeatured: false,
         variants: [
           { label: 'Black', color: 'Black', price: 199, stock: 22 },
@@ -578,7 +578,7 @@ const CATALOG: SeedCategory[] = [
         description:
           'Spacious full-grain leather tote with interior organizer pockets. A true investment piece.',
         basePrice: 1799,
-        img: 'https://images.unsplash.com/photo-1553062335-7aa4-4c5f-9069-7b0e98e5aa9e?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=600&auto=format&fit=crop',
         isFeatured: true,
         variants: [
           { label: 'Cognac Brown', color: 'Cognac', price: 1799, stock: 6 },
@@ -633,7 +633,7 @@ const CATALOG: SeedCategory[] = [
         description:
           '25L waxed canvas backpack with leather accents. Laptop sleeve fits up to 15 inches.',
         basePrice: 899,
-        img: 'https://images.unsplash.com/photo-1553062335-7aa4-4c5f-9069-7b0e98e5aa9e?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=600&auto=format&fit=crop',
         isFeatured: false,
         variants: [
           { label: 'Black', color: 'Black', price: 899, stock: 10 },
@@ -755,7 +755,7 @@ const CATALOG: SeedCategory[] = [
         description:
           'Handmade glass bead bracelet with adjustable cord. Bohemian style meets Egyptian craft.',
         basePrice: 349,
-        img: 'https://images.unsplash.com/photo-1573408301185-9519f94de10f?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1576402187878-974f70c890a5?q=80&w=600&auto=format&fit=crop',
         isFeatured: false,
         variants: [
           { label: 'Turquoise Blue', color: 'Turquoise', price: 349, stock: 15 },

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import WishlistButton, { WishlistProduct } from './WishlistButton';
-import { Badge, PriceDisplay } from '@/components/ui';
+import { Badge, PriceDisplay, RatingStars } from '@/components/ui';
 import type { Product, Tag, ProductVariant, ProductImage } from '@/types';
 import { useCartStore } from '@/lib/cartStore';
 import { useLanguage } from '@/providers/LanguageContext';
@@ -112,6 +112,13 @@ export default function ProductCard({
   const productBrandSlug =
     product.brandSlug || productBrand.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const isVerifiedLocal = (product as Partial<Product>).isVerifiedLocal ?? false;
+
+  const reviews = (product as any).reviews || [];
+  const reviewCount = reviews.length;
+  const avgRating =
+    reviewCount > 0
+      ? reviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviewCount
+      : 0;
 
   // ── Client Cart & Language Hooks ──
   const addItem = useCartStore(s => s.addItem);
@@ -264,6 +271,14 @@ export default function ProductCard({
               {displayName}
             </h3>
           </Link>
+
+          {/* Stars & Review Count */}
+          {reviewCount > 0 && (
+            <div className="flex items-center gap-1.5 mb-2.5">
+              <RatingStars value={avgRating} readOnly size="sm" />
+              <span className="text-xs text-slate-500">({reviewCount})</span>
+            </div>
+          )}
 
           {/* Color Swatches Grid */}
           {uniqueColors.length > 0 && (
