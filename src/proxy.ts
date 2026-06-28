@@ -46,9 +46,6 @@ function buildCsp(nonce: string, isDev: boolean): string {
     'https://ssl.google-analytics.com',
     // Crisp live chat
     'https://client.crisp.chat',
-    // Tawk.to live chat
-    'https://embed.tawk.to',
-    'https://*.tawk.to',
     // Hotjar
     'https://static.hotjar.com',
     'https://script.hotjar.com',
@@ -99,8 +96,6 @@ function buildCsp(nonce: string, isDev: boolean): string {
     'https://*.googletagmanager.com',
     'https://*.crisp.chat',
     'wss://*.relay.crisp.chat',
-    'https://*.tawk.to',
-    'wss://*.tawk.to',
     'https://*.hotjar.com',
     'wss://*.hotjar.com',
     'https://connect.facebook.net',
@@ -116,11 +111,11 @@ function buildCsp(nonce: string, isDev: boolean): string {
   return [
     "default-src 'self'",
     `script-src ${scriptSrc}`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://translate.googleapis.com https://www.gstatic.com https://client.crisp.chat https://*.tawk.to https://*.hotjar.com",
-    "font-src 'self' data: https://fonts.gstatic.com https://client.crisp.chat https://*.tawk.to https://*.hotjar.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://translate.googleapis.com https://www.gstatic.com https://client.crisp.chat https://*.hotjar.com",
+    "font-src 'self' data: https://fonts.gstatic.com https://client.crisp.chat https://*.hotjar.com",
     "img-src 'self' data: https: blob:",
     `connect-src ${["'self'", ...connectHosts].join(' ')}`,
-    'frame-src https://js.stripe.com https://grey.paysky.io https://cube.paysky.io https://accept.paymob.com https://*.tawk.to https://*.hotjar.com',
+    'frame-src https://js.stripe.com https://grey.paysky.io https://cube.paysky.io https://accept.paymob.com https://*.hotjar.com',
     "frame-ancestors 'self'",
     "base-uri 'self'",
     "form-action 'self'",
