@@ -89,9 +89,16 @@ export const MAX_IMAGES_PER_PRODUCT = 10;
 // ============================================================
 // PLATFORM
 // ============================================================
-export const PLATFORM_NAME = 'Brandy';
+/**
+ * PLATFORM_NAME — the display name used across the site (emails, JSON-LD,
+ * page titles, etc.).
+ *
+ * Set NEXT_PUBLIC_SITE_NAME in your .env / Vercel / Docker environment to
+ * change the brand without touching any source files. Falls back to 'Brandy'.
+ */
+export const PLATFORM_NAME = process.env.NEXT_PUBLIC_SITE_NAME || 'Brandy';
 export const PLATFORM_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.lolozozo.shop';
-export const SUPPORT_EMAIL = 'support@lolozozo.shop';
+export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@lolozozo.shop';
 export const CONTACT_PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE || '';
 
 // ============================================================

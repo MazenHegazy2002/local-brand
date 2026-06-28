@@ -59,7 +59,7 @@ const CATALOG: SeedCategory[] = [
         slug: 'classic-linen-blouse',
         description: 'Relaxed-fit linen blouse with a subtle collar. Pairs with anything.',
         basePrice: 449,
-        img: 'https://images.unsplash.com/photo-1548624149-f7b3e5a3333a?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1564257631407-4deb1f99d992?q=80&w=600&auto=format&fit=crop',
         isFeatured: false,
         variants: [
           { label: 'White - XS', color: 'White', size: 'XS', price: 449, stock: 10 },

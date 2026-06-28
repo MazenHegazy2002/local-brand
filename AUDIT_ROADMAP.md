@@ -58,6 +58,12 @@ The following issues have been fully resolved, verified through test suites, and
 - **B-052 (Scarcity Alerts & Banners)**: Mounted flash-sale discount strikethroughs with `<CountdownTimer>` blocks and low-stock warning indicators (if inventory is between 1 and 5).
 - **B-054 (Exit-Intent Capture)**: Created an interactive popup trigger capturing first-order email signups.
 
+### 5. Content Quality & Branding (P0 / P1 / P2)
+
+- **B-011 (Brand name env-configurable)**: Made the brand name configurable via the `NEXT_PUBLIC_SITE_NAME` environment variable (with fallback to 'Brandy'). This allows the brand name to be changed dynamically (e.g. to Lolozo) without touching code.
+- **B-023 (Enforced description validation)**: Implemented input validation checks in `createProduct` and `updateProduct` server actions requiring a minimum description length of 20 characters and prompting sellers to write descriptive details (100–300 words).
+- **B-025 (Fixed broken Unsplash seed image)**: Checked all Unsplash images in `seed.ts` and replaced the single broken 404 URL for "Classic Linen Blouse" with a valid working photo.
+
 ---
 
 ## 🗓️ Action Plan: Remaining Open Items
@@ -68,9 +74,9 @@ The remaining open issues are cataloged by chronological launch phases:
 
 These are critical pre-launch blocking issues focusing on branding configuration and telemetry optimizations:
 
-- **Task 1.1: Rebranding & Identity Reconciliation (B-011 / B-048)**
-  - _Issue_: The platform's internal name is "Brandy" but it lives on `lolozozo.shop`.
-  - _Action_: Confirm the final brand name decision. If Brandy is selected, coordinate the acquisition of `brandy.eg`. If Lolozo is selected, run a global text replacement to rename occurrences of Brandy to Lolozo.
+- **Task 1.1: Rebranding & Identity Reconciliation (B-011 — Configurable Branding Done / B-048)**
+  - _Completed_: Made `PLATFORM_NAME` read from `process.env.NEXT_PUBLIC_SITE_NAME` (falling back to 'Brandy'). This allows the brand name to be configured to 'Lolozo' or any other name without code changes.
+  - _Remaining Action_: Set the desired `NEXT_PUBLIC_SITE_NAME` in production (e.g. Lolozo or Brandy) and coordinate the domain acquisition/DNS if needed.
 - **Task 1.2: Telemetry & Analytics Audit (B-042 — Performance Impact Mitigated)**
   - _Performance Fixed_: All 7 non-GA4 platforms (TikTok, Snapchat, Clarity, Pinterest, Yandex, LinkedIn, CrazyEgg) now use `lazyOnload` strategy — they load after the page is idle with zero TBT impact.
   - _Remaining Decision_: Confirm which platforms drive measurable insights. Disable unused ones by removing their `NEXT_PUBLIC_*` env vars from deployment (Vercel / Docker).
@@ -84,10 +90,9 @@ These issues relate to catalog depth, inventory, and database populating tasks:
 - **Task 2.1: Populate Catalog Categories (B-012 / B-027 / B-031)**
   - _Issue_: Currently, only a placeholder "Demo Store" is present, and categories show single-digit inventory (e.g., 5-6 items).
   - _Action_: Recruit 20+ real Egyptian sellers. Populate each of the 22 categories with at least 15-20 live products before marketing pushes.
-- **Task 2.2: Product Image & Description Enhancements (B-023 / B-024 / B-028)**
-  - _Issue_: All catalog images are stock placeholders from Unsplash, and description copy is limited to one sentence.
-  - _Action_: Require onboarding sellers to upload original product imagery and write 100-300 word descriptions highlighting materials, care, and sizing guides.
-  - _Action_: Consolidate product photography assets on the configured Cloudinary storage instead of hotlinking external hostnames.
+- **Task 2.2: Product Image & Description Enhancements (B-023 — Description Validation Done / B-024 / B-025 — Broken Seed URLs Fixed / B-028)**
+  - _Completed_: Added server-side validation during product creation and update (`createProduct` and `updateProduct` server actions) enforcing a minimum description length of 20 characters with guidance prompts to aim for 100-300 words. Verified all Unsplash seed URLs and replaced the single 404 URL for `Classic Linen Blouse` with a valid working Unsplash image.
+  - _Remaining Action_: Recruit sellers to upload original product imagery and write 100-300 word descriptions. Consolidate photography assets on Cloudinary storage.
 
 ---
 

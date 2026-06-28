@@ -670,6 +670,23 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
 
     if (!seller) return { error: 'Seller profile not found' };
 
+    // ── Input validation ──────────────────────────────────────────────────────
+    // B-023: enforce minimum content quality for product listings.
+    if (!data.title || data.title.trim().length < 3)
+      return { error: 'Product title must be at least 3 characters.' };
+    if (data.title.trim().length > 200)
+      return { error: 'Product title cannot exceed 200 characters.' };
+    if (data.description !== undefined && data.description !== null) {
+      const descLen = data.description.trim().length;
+      if (descLen > 0 && descLen < 20)
+        return {
+          error:
+            'Product description must be at least 20 characters (aim for 100–300 words for better sales).',
+        };
+    }
+    if (!data.basePrice || data.basePrice <= 0)
+      return { error: 'Product price must be greater than zero.' };
+
     const { variants, ...rest } = data;
 
     // Enforce business rules for publishing:
@@ -786,6 +803,25 @@ export async function updateProduct(
     const product = await prisma.product.findUnique({ where: { id: productId } });
     if (!product || product.sellerId !== seller.id)
       return { error: 'Unauthorized to update this product' };
+
+    // ── Input validation ──────────────────────────────────────────────────────
+    if (data.title !== undefined) {
+      if (!data.title || data.title.trim().length < 3)
+        return { error: 'Product title must be at least 3 characters.' };
+      if (data.title.trim().length > 200)
+        return { error: 'Product title cannot exceed 200 characters.' };
+    }
+    if (data.description !== undefined && data.description !== null) {
+      const descLen = data.description.trim().length;
+      if (descLen > 0 && descLen < 20)
+        return {
+          error:
+            'Product description must be at least 20 characters (aim for 100–300 words for better sales).',
+        };
+    }
+    if (data.basePrice !== undefined) {
+      if (data.basePrice <= 0) return { error: 'Product price must be greater than zero.' };
+    }
 
     await prisma.product.update({
       where: { id: productId },
