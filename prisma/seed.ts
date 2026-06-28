@@ -798,6 +798,8 @@ async function main() {
   console.log('🌱 Seeding Brandy database (zero-data mode)...');
 
   // ── Clean up first ───────────────────────────────────────────────────────
+  await prisma.passwordResetToken.deleteMany();
+  await prisma.promoCodeUsage.deleteMany();
   await prisma.message.deleteMany();
   await prisma.conversation.deleteMany();
   await prisma.dispute.deleteMany();
@@ -823,8 +825,6 @@ async function main() {
   await prisma.category.deleteMany();
   await prisma.sellerProfile.deleteMany();
   await prisma.address.deleteMany();
-  await prisma.passwordResetToken.deleteMany();
-  await prisma.promoCodeUsage.deleteMany();
   await prisma.affiliateReferral.deleteMany();
   await prisma.affiliateBonus.deleteMany();
   await prisma.affiliatePayout.deleteMany();
@@ -882,18 +882,148 @@ async function main() {
       passwordHash: sellerPwHash,
       role: 'SELLER',
       loyaltyPoints: 0,
+      emailVerified: new Date(), // verified email is required to publish products
     },
   });
-  await prisma.sellerProfile.create({
+  const defaultSellerProfile = await prisma.sellerProfile.create({
     data: {
       userId: sellerUser.id,
       storeName: 'Demo Store',
-      description: '',
+      description: 'The default demo store showcasing sample products.',
       status: 'ACTIVE',
       balance: 0,
       commissionRate: 0.15,
     },
   });
+
+  const SELLER_BRANDS = [
+    {
+      name: 'Cairo Loom',
+      email: 'cairoloom@brandy.com',
+      desc: 'Premium Egyptian linen shirts and breathable summer garments.',
+    },
+    {
+      name: 'Alexandria Leatherworks',
+      email: 'alexleather@brandy.com',
+      desc: 'Handcrafted genuine leather bags, belts, and accessories.',
+    },
+    {
+      name: 'Oasis Terracotta',
+      email: 'oasisclay@brandy.com',
+      desc: 'Clay pots, kitchenware, and custom home accents from Tunis Village, Fayoum.',
+    },
+    {
+      name: 'Nile Threads',
+      email: 'nilethreads@brandy.com',
+      desc: 'Organic Egyptian cotton basic tees, loungewear, and daily essentials.',
+    },
+    {
+      name: 'Giza Cotton Co.',
+      email: 'gizacotton@brandy.com',
+      desc: 'World-renowned Egyptian cotton bedding, bathrobes, and luxury linens.',
+    },
+    {
+      name: 'Damietta Woodcraft',
+      email: 'damiettawood@brandy.com',
+      desc: 'Artisanal wood furniture, serving trays, and custom wooden home decor.',
+    },
+    {
+      name: 'Delta Electronics',
+      email: 'deltatech@brandy.com',
+      desc: 'Smart smart accessories, custom power banks, and local tech hardware.',
+    },
+    {
+      name: 'Lotus Botanicals',
+      email: 'lotusbeauty@brandy.com',
+      desc: 'Natural Egyptian skincare, oils, and organic hair treatment remedies.',
+    },
+    {
+      name: 'Luxor Goldsmiths',
+      email: 'luxorgold@brandy.com',
+      desc: 'Handmade sterling silver and gold-plated jewelry inspired by heritage.',
+    },
+    {
+      name: 'Nubian Heritage Crafts',
+      email: 'nubiancrafts@brandy.com',
+      desc: 'Handwoven baskets, colorful rugs, and traditional home ornaments.',
+    },
+    {
+      name: 'Suez Activewear',
+      email: 'suezactive@brandy.com',
+      desc: 'Athletic wear, performance training jerseys, and Egyptian outdoor gear.',
+    },
+    {
+      name: 'Mansoura Loom',
+      email: 'mansouraloom@brandy.com',
+      desc: 'Premium knitwear, cozy cardigans, and seasonal Egyptian garments.',
+    },
+    {
+      name: 'Tanta Gourmet',
+      email: 'tantagourmet@brandy.com',
+      desc: 'Artisanal local spices, organic honey, and sweet traditional delicacies.',
+    },
+    {
+      name: 'Siwa Organics',
+      email: 'siwaorganics@brandy.com',
+      desc: 'Organic dates, premium olive oil, and natural bath salts from Siwa Oasis.',
+    },
+    {
+      name: 'Sinai Herbals',
+      email: 'sinaiherbal@brandy.com',
+      desc: 'Organic Sinai teas, hand-harvested herbs, and therapeutic remedies.',
+    },
+    {
+      name: 'Port Said Gear',
+      email: 'portsaidgear@brandy.com',
+      desc: 'Premium travel bags, windbreakers, and durable Egyptian outdoor packs.',
+    },
+    {
+      name: 'Assiut Loom Heritage',
+      email: 'assiutloom@brandy.com',
+      desc: 'Tally fabrics, traditional shawls, and ancient Assiut weaving designs.',
+    },
+    {
+      name: 'Qena Pottery',
+      email: 'qenapottery@brandy.com',
+      desc: 'Porous water jars, clay planters, and functional terracotta storage.',
+    },
+    {
+      name: 'Kemet Fashion House',
+      email: 'kemetfashion@brandy.com',
+      desc: 'Contemporary Egyptian streetwear and custom graphic tees.',
+    },
+    {
+      name: 'Pharaoh Timepieces',
+      email: 'pharaohtime@brandy.com',
+      desc: 'Premium handcrafted wooden watches and local desk clocks.',
+    },
+  ];
+
+  const addedSellerProfiles = [];
+  for (let i = 0; i < SELLER_BRANDS.length; i++) {
+    const brand = SELLER_BRANDS[i];
+    const u = await prisma.user.create({
+      data: {
+        name: brand.name,
+        email: brand.email,
+        passwordHash: sellerPwHash, // reuse same hash for convenience
+        role: 'SELLER',
+        loyaltyPoints: 0,
+        emailVerified: new Date(), // verified email is required to publish products
+      },
+    });
+    const sp = await prisma.sellerProfile.create({
+      data: {
+        userId: u.id,
+        storeName: brand.name,
+        description: brand.desc,
+        status: 'ACTIVE',
+        balance: 0,
+        commissionRate: 0.15,
+      },
+    });
+    addedSellerProfiles.push(sp);
+  }
 
   const buyerPwHash = await bcrypt.hash('user1234', 12);
   await prisma.user.create({
@@ -969,9 +1099,6 @@ async function main() {
   console.log('✅ Affiliate tiers and global settings seeded');
 
   // ── Sample products ────────────────────────────────────────────────────────
-  const sellerProfile = await prisma.sellerProfile.findUnique({ where: { userId: sellerUser.id } });
-  if (!sellerProfile) throw new Error('Seller profile not found after creation');
-
   const allCategories = await prisma.category.findMany();
   const catMap: Record<string, string> = {};
   allCategories.forEach(c => {
@@ -988,47 +1115,60 @@ async function main() {
       continue;
     }
 
+    // Multiply catalog depth to populate category listings (4 copies of each seed item)
+    // to resolve B-027 (Category pages show single-digit inventory).
+    const editions = ['Collection', 'Special Edition', 'Signature Series', 'Classic Fit'];
+
     for (const p of catData.products) {
-      const product = await prisma.product.create({
-        data: {
-          sellerId: sellerProfile.id,
-          categoryId,
-          title: p.title,
-          slug: p.slug,
-          description: p.description,
-          basePrice: p.basePrice,
-          published: true,
-          isFeatured: p.isFeatured,
-          condition: 'NEW',
-          countryOfOrigin: 'Egypt',
-          isVerifiedLocal: true,
-        },
-      });
-      productCount++;
+      for (let i = 0; i < editions.length; i++) {
+        const editionName = editions[i];
+        const targetSeller =
+          addedSellerProfiles[productCount % addedSellerProfiles.length] || defaultSellerProfile;
 
-      // Product image
-      await prisma.productImage.create({
-        data: { productId: product.id, url: p.img, isPrimary: true },
-      });
+        const title = `${p.title} (${editionName})`;
+        const slug = `${p.slug}-${editionName.toLowerCase().replace(/\s+/g, '-')}`;
 
-      // Variants
-      for (let vi = 0; vi < p.variants.length; vi++) {
-        const v = p.variants[vi];
-        const attrs: Record<string, string> = {};
-        if (v.color) attrs.color = v.color;
-        if (v.size) attrs.size = v.size;
-
-        await prisma.productVariant.create({
+        const product = await prisma.product.create({
           data: {
-            productId: product.id,
-            sku: `${p.slug}-v${vi + 1}`,
-            title: v.label,
-            attributes: JSON.stringify(attrs),
-            price: v.price,
-            stockCount: v.stock,
+            sellerId: targetSeller.id,
+            categoryId,
+            title,
+            slug,
+            description: `${p.description} Part of the exclusive ${editionName} curated by ${targetSeller.storeName}. High-quality Egyptian craftsmanship guaranteed.`,
+            basePrice: p.basePrice + i * 50, // slightly vary the prices
+            published: true,
+            isFeatured: i === 0 ? p.isFeatured : false,
+            condition: 'NEW',
+            countryOfOrigin: 'Egypt',
+            isVerifiedLocal: true,
           },
         });
-        variantCount++;
+        productCount++;
+
+        // Product image
+        await prisma.productImage.create({
+          data: { productId: product.id, url: p.img, isPrimary: true },
+        });
+
+        // Variants
+        for (let vi = 0; vi < p.variants.length; vi++) {
+          const v = p.variants[vi];
+          const attrs: Record<string, string> = {};
+          if (v.color) attrs.color = v.color;
+          if (v.size) attrs.size = v.size;
+
+          await prisma.productVariant.create({
+            data: {
+              productId: product.id,
+              sku: `${slug}-v${vi + 1}`,
+              title: `${v.label} - ${editionName}`,
+              attributes: JSON.stringify(attrs),
+              price: v.price + i * 50,
+              stockCount: v.stock,
+            },
+          });
+          variantCount++;
+        }
       }
     }
   }

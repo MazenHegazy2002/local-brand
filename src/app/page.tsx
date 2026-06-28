@@ -169,6 +169,168 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* ── How It Works Section ── */}
+      <section className="bg-slate-50 border-b border-gray-100 py-16">
+        <div className="home-shell">
+          <div className="max-w-3xl mx-auto text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-black text-[#1e3b8a] mb-3">How it Works</h2>
+            <p className="text-slate-500 text-sm md:text-base">
+              Connecting premium Egyptian makers directly with customers across the nation. Simple,
+              safe, and transparent.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* For Shoppers */}
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+              <h3 className="text-lg font-black text-[#1e3b8a] mb-6 flex items-center gap-2">
+                🛍️ For Shoppers
+              </h3>
+              <div className="space-y-6">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-[#1e3b8a] flex items-center justify-center font-bold text-sm">
+                    1
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm mb-1">
+                      Discover Unique Local Brands
+                    </h4>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Browse hundreds of hand-selected clothing, accessories, and home decor items
+                      crafted by local artisans and Egyptian designers.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-[#1e3b8a] flex items-center justify-center font-bold text-sm">
+                    2
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm mb-1">
+                      100% Escrow Protection
+                    </h4>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Pay securely with Credit Cards, Meeza, or Fawry. Your funds are held safely in
+                      escrow for 14 days post-delivery to guarantee quality.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-[#1e3b8a] flex items-center justify-center font-bold text-sm">
+                    3
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm mb-1">Track & Trust</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Follow your shipping in real-time. If there is a dispute or sizing error,
+                      return the item within 14 days for a complete refund.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* For Sellers */}
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+              <h3 className="text-lg font-black text-[#1e3b8a] mb-6 flex items-center gap-2">
+                💼 For Sellers
+              </h3>
+              <div className="space-y-6">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm">
+                    1
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm mb-1">
+                      Apply & Launch Storefront
+                    </h4>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Submit your application and activate your store. Upload product photos,
+                      pricing, and stock details in minutes.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm">
+                    2
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm mb-1">
+                      Built-in Delivery Integration
+                    </h4>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      No courier contracts needed. Our system automatically books shipping labels
+                      with our integrated domestic courier networks.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm">
+                    3
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm mb-1">Earn Vetted Payouts</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      After the 14-day escrow window, your earnings are computed and automatically
+                      transferred to your seller wallet.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Seller Spotlight Section ── */}
+      <section className="py-16 bg-white border-b border-gray-100">
+        <div className="home-shell">
+          <div className="max-w-3xl mx-auto text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-black text-[#1e3b8a] mb-3">
+              Seller Spotlight
+            </h2>
+            <p className="text-slate-500 text-sm md:text-base">
+              Highlighting the incredible local brands that craft our marketplace catalogs.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="border border-slate-100 rounded-3xl p-6 hover:shadow-md transition-shadow">
+              <span className="inline-block bg-blue-50 text-[#1e3b8a] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-3">
+                Cairo Loom
+              </span>
+              <h3 className="font-bold text-slate-900 text-base mb-2">Cairo Loom Garments</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Specializing in relaxed-fit linen shirts, dresses, and trousers crafted locally in
+                Cairo. Supporting breathable, organic fabrics for Egypt's summer season.
+              </p>
+            </div>
+
+            <div className="border border-slate-100 rounded-3xl p-6 hover:shadow-md transition-shadow">
+              <span className="inline-block bg-green-50 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-3">
+                Alex Leather
+              </span>
+              <h3 className="font-bold text-slate-900 text-base mb-2">Alexandria Leatherworks</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Handcrafted genuine leather bags, belts, and accessories made by master craftsmen in
+                Alexandria. Built for longevity, design elegance, and everyday durability.
+              </p>
+            </div>
+
+            <div className="border border-slate-100 rounded-3xl p-6 hover:shadow-md transition-shadow">
+              <span className="inline-block bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-3">
+                Fayoum Clay
+              </span>
+              <h3 className="font-bold text-slate-900 text-base mb-2">Oasis Terracotta Craft</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Handmade clay pots, tableware, and custom home accents sourced directly from
+                artisans in Tunis Village, Fayoum. Blending tradition with modern kitchen utility.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div className="home-shell">
         <Suspense fallback={<div style={{ height: 400 }} />}>
           <ProductSection
@@ -197,6 +359,59 @@ export default async function Home() {
           />
         </Suspense>
       </div>
+
+      {/* ── Customer Testimonials ── */}
+      <section className="bg-slate-50 py-16 mt-8 border-y border-gray-100">
+        <div className="home-shell">
+          <div className="max-w-3xl mx-auto text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-black text-[#1e3b8a] mb-3">
+              Verified Buyer Testimonials
+            </h2>
+            <p className="text-slate-500 text-sm md:text-base">
+              See how our customers feel about supporting local makers with complete security.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+              <p className="text-xs text-slate-600 italic leading-relaxed mb-6">
+                "The linen blouse is gorgeous! It's so rare to find authentic Egyptian linen of this
+                high quality at this price range. Courier delivery to Mansoura was prompt and
+                verified."
+              </p>
+              <div>
+                <div className="text-[#d97706] font-bold text-xs mb-1">★★★★★</div>
+                <div className="font-bold text-slate-800 text-xs">Farida K.</div>
+                <div className="text-[10px] text-slate-400">Verified Buyer, Mansoura</div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+              <p className="text-xs text-slate-600 italic leading-relaxed mb-6">
+                "Having the 14-day escrow protection gave me total confidence to buy online. The
+                leather bag looks even better in person than the photos. Fits everything perfectly!"
+              </p>
+              <div>
+                <div className="text-[#d97706] font-bold text-xs mb-1">★★★★★</div>
+                <div className="font-bold text-slate-800 text-xs">Tarek M.</div>
+                <div className="text-[10px] text-slate-400">Verified Buyer, Alexandria</div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+              <p className="text-xs text-slate-600 italic leading-relaxed mb-6">
+                "Brandy is exactly what the local industry needed. Vetted sellers, real reviews,
+                Meeza/Fawry payment support, and great local style. Will definitely buy again."
+              </p>
+              <div>
+                <div className="text-[#d97706] font-bold text-xs mb-1">★★★★★</div>
+                <div className="font-bold text-slate-800 text-xs">Yasmine A.</div>
+                <div className="text-[10px] text-slate-400">Verified Buyer, Cairo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ── Start Selling CTA ──────────────────────────────────────── */}
       <section

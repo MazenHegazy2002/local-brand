@@ -358,14 +358,14 @@ export default function ProductDetails({
         </h1>
 
         {/* Rating Stars */}
-        {reviewCount > 0 && (
-          <div className="flex items-center gap-2 mb-4">
-            <RatingStars value={avgRating} readOnly size="md" />
-            <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-              {avgRating.toFixed(1)} ({reviewCount} {t('Reviews') || 'reviews'})
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-2 mb-4">
+          <RatingStars value={avgRating} readOnly size="md" />
+          <span className="text-sm font-semibold text-slate-650 dark:text-slate-400">
+            {reviewCount > 0
+              ? `${avgRating.toFixed(1)} (${reviewCount} ${t('Reviews') || 'reviews'})`
+              : `0.0 (${t('NoReviewsYet') || 'No reviews yet'})`}
+          </span>
+        </div>
 
         {/* Dynamic Price & In-stock Indicators */}
         <div className="flex items-center gap-4 mb-6 flex-wrap">

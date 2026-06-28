@@ -273,12 +273,10 @@ export default function ProductCard({
           </Link>
 
           {/* Stars & Review Count */}
-          {reviewCount > 0 && (
-            <div className="flex items-center gap-1.5 mb-2.5">
-              <RatingStars value={avgRating} readOnly size="sm" />
-              <span className="text-xs text-slate-500">({reviewCount})</span>
-            </div>
-          )}
+          <div className="flex items-center gap-1.5 mb-2.5">
+            <RatingStars value={avgRating} readOnly size="sm" />
+            <span className="text-xs text-slate-500">({reviewCount})</span>
+          </div>
 
           {/* Color Swatches Grid */}
           {uniqueColors.length > 0 && (
