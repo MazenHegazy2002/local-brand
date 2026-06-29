@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useConfirm } from '@/providers/ConfirmProvider';
+import { useToast } from '@/components/ui/ToastProvider';
 
 interface Address {
   id: string;
@@ -49,6 +51,8 @@ const governorates = [
 export default function AddressesPage() {
   const { data: _session, status } = useSession();
   const router = useRouter();
+  const { confirm } = useConfirm();
+  const { toast } = useToast();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -113,7 +117,11 @@ export default function AddressesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.street || !form.city || !form.governorate) {
-      alert('Please fill in all required fields');
+      toast({
+        variant: 'warning',
+        title: 'Required Fields',
+        description: 'Please fill in all required fields',
+      });
       return;
     }
     setSaving(true);
@@ -130,24 +138,40 @@ export default function AddressesPage() {
       if (res.ok) {
         await fetchAddresses();
         setShowModal(false);
+        toast({
+          variant: 'success',
+          title: 'Address Saved',
+          description: 'Your delivery address has been saved.',
+        });
       } else {
-        alert('Failed to save address');
+        toast({ variant: 'error', title: 'Save Failed', description: 'Failed to save address' });
       }
     } catch (e) {
       console.error(e);
-      alert('Error saving address');
+      toast({ variant: 'error', title: 'Error', description: 'Error saving address' });
     } finally {
       setSaving(false);
     }
   };
 
   const deleteAddress = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this address?')) return;
+    const confirmed = await confirm({
+      title: 'Delete Address',
+      message: 'Are you sure you want to delete this address?',
+      type: 'danger',
+    });
+    if (!confirmed) return;
     try {
       await fetch(`/api/addresses?id=${id}`, { method: 'DELETE' });
       await fetchAddresses();
+      toast({
+        variant: 'success',
+        title: 'Address Deleted',
+        description: 'Address deleted successfully.',
+      });
     } catch (e) {
       console.error(e);
+      toast({ variant: 'error', title: 'Error', description: 'Failed to delete address.' });
     }
   };
 

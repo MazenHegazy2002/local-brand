@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { getHomepageData } from '@/app/actions/seller';
 import { en } from '@/lib/i18n/dicts';
 import { getDictionary } from '@/lib/i18n/server';
-import ProductCard from '@/components/ProductCard';
+import ProductCard, { ProductCardProduct } from '@/components/ProductCard';
 import { Suspense } from 'react';
 import { Product, ProductImage } from '@/types';
 import PromoBanner from '@/components/PromoBanner';
@@ -69,11 +69,11 @@ function ProductSection({
                 ...p,
                 name: p.title,
                 image: p.images[0]?.url,
-                brand: (p as any).seller?.storeName || dict.Brandy || 'Local Brand',
-                brandSlug: (p as any).seller?.storeName
-                  ? (p as any).seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                brand: p.seller?.storeName || dict.Brandy || 'Local Brand',
+                brandSlug: p.seller?.storeName
+                  ? p.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
                   : '',
-              } as any
+              } as ProductCardProduct
             }
             index={idx}
           />
@@ -106,7 +106,7 @@ export default async function Home() {
   const { bestsellers, newArrivals, recommended } = homeData;
 
   return (
-    <main id="main-content" className="min-h-screen font-sans" style={{ background: '#f6f6f7' }}>
+    <main className="min-h-screen font-sans" style={{ background: '#f6f6f7' }}>
       <PromoBanner />
       <PromoBanner
         id="affiliate-program"

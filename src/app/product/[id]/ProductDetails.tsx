@@ -7,6 +7,7 @@ import { useCartStore } from '@/lib/cartStore';
 import { useLanguage } from '@/providers/LanguageContext';
 import WishlistButton from '@/components/WishlistButton';
 import { RatingStars } from '@/components/ui/RatingStars';
+import { useToast } from '@/components/ui';
 import { Product, ProductVariant, ProductImage, Tag } from '@/types';
 import { ShareButton } from '@/components/ShareButton';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
@@ -97,9 +98,14 @@ export default function ProductDetails({
   product: any;
   virtualTryOnEnabled?: boolean;
 }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const isAr = lang === 'ar';
   const router = useRouter();
   const addItem = useCartStore(s => s.addItem);
+
+  const productTitle = isAr && product.titleAr ? product.titleAr : product.title;
+  const productDescription =
+    isAr && product.descriptionAr ? product.descriptionAr : product.description;
 
   const images = product.images || [];
   const primaryImage =
@@ -261,16 +267,18 @@ export default function ProductDetails({
         : null) ??
       product.basePrice);
 
+  const { toast } = useToast();
+
   const handleAddToCart = () => {
     if (hasVariants && hasSizes && !selectedSize) {
-      alert('Please select a size first');
+      toast({ title: 'Please select a size first', variant: 'error' });
       return;
     }
 
     for (let i = 0; i < qty; i++) {
       addItem({
         id: resolvedVariant?.id || product.id,
-        name: product.title,
+        name: productTitle,
         price: activePrice,
         image: activeImage || primaryImage,
       });
@@ -287,7 +295,7 @@ export default function ProductDetails({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={activeImage}
-            alt={product.title}
+            alt={productTitle}
             className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             fetchPriority="high"
             loading="eager"
@@ -313,7 +321,7 @@ export default function ProductDetails({
                   <img
                     src={img.url}
                     className="w-full h-full object-cover rounded"
-                    alt={`${product.title} gallery thumbnail ${i + 1}`}
+                    alt={`${productTitle} gallery thumbnail ${i + 1}`}
                     loading="lazy"
                   />
                 </button>
@@ -349,12 +357,12 @@ export default function ProductDetails({
               </span>
             )}
           </div>
-          <ShareButton productId={product.id} productName={product.title} />
+          <ShareButton productId={product.id} productName={productTitle} />
         </div>
 
         {/* Title */}
         <h1 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-50 leading-tight mb-2">
-          {product.title}
+          {productTitle}
         </h1>
 
         {/* Rating Stars */}
@@ -438,7 +446,7 @@ export default function ProductDetails({
 
         {/* Description */}
         <p className="text-slate-600 dark:text-slate-350 leading-relaxed mb-8">
-          {product.description}
+          {productDescription}
         </p>
 
         {/* SKU/UPC code indicator */}
@@ -623,8 +631,8 @@ export default function ProductDetails({
             <WishlistButton
               product={{
                 id: product.id,
-                title: product.title,
-                name: product.title,
+                title: productTitle,
+                name: productTitle,
                 basePrice: product.basePrice,
                 price: activePrice,
                 image: activeImage || primaryImage,
@@ -640,7 +648,7 @@ export default function ProductDetails({
             onClick={() => {
               const params = new URLSearchParams({
                 product_image: activeImage || primaryImage,
-                title: product.title,
+                title: productTitle,
                 ...(selectedColor ? { color: selectedColor } : {}),
               });
               router.push(`/virtual-tryon?${params.toString()}`);
@@ -694,7 +702,7 @@ export default function ProductDetails({
                 key={tag.id}
                 className="text-xs font-semibold text-slate-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1 rounded-full animate-fade-in"
               >
-                #{tag.name}
+                #{isAr && tag.nameAr ? tag.nameAr : tag.name}
               </span>
             ))}
           </div>

@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { SessionUser } from '@/types';
+import { useToast } from '@/components/ui';
 
 interface ReturnRequest {
   id: string;
@@ -28,6 +29,7 @@ interface ReturnRequest {
 export default function ReturnsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { toast } = useToast();
   const [returns, setReturns] = useState<ReturnRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED'>(
@@ -78,11 +80,11 @@ export default function ReturnsPage() {
         setNotes('');
       } else {
         const data = await res.json();
-        alert(data.message || 'Failed to update return');
+        toast({ title: data.message || 'Failed to update return', variant: 'error' });
       }
     } catch (e) {
       console.error(e);
-      alert('Failed to update return request');
+      toast({ title: 'Failed to update return request', variant: 'error' });
     } finally {
       setProcessing(false);
     }

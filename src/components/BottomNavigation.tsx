@@ -110,7 +110,16 @@ export default function BottomNavigation() {
     { href: '/shop?local=true', icon: <LocalIcon />, label: t('Local' as DictKey) || 'Local' },
     {
       href: '#profile',
-      icon: <ProfileIcon />,
+      icon: (
+        <div className="relative">
+          <ProfileIcon />
+          {wishlistCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-md">
+              {wishlistCount > 9 ? '9+' : wishlistCount}
+            </span>
+          )}
+        </div>
+      ),
       label: t('Profile' as DictKey) || 'Profile',
       hasSubmenu: true,
     },

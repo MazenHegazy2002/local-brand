@@ -17,11 +17,12 @@ async function isVirtualTryOnEnabled(): Promise<boolean> {
 import Link from 'next/link';
 import { getDictionary } from '@/lib/i18n/server';
 import ReviewSection from '@/components/ReviewSection';
+import QASection from '@/components/QASection';
 import ProductDetails from './ProductDetails';
 import RelatedProducts from '@/components/RelatedProducts';
 import RecentlyViewed from '@/components/RecentlyViewed';
 import { PLATFORM_URL } from '@/lib/constants';
-import type { Product as ProductType, Review } from '@/types';
+import type { Product as ProductType, Review, ProductQA } from '@/types';
 import type { Metadata } from 'next';
 
 export const revalidate = 60;
@@ -118,17 +119,31 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       : 0;
 
   let eligibleOrderItems: { id: string }[] = [];
+  let initialQuestions: any[] = [];
   if (session?.user) {
     const userId = (session.user as any).id;
     // Find DELIVERED order items for this product that haven't been reviewed yet
-    eligibleOrderItems = await prisma.orderItem.findMany({
-      where: {
-        order: { userId },
-        variant: { productId: product.id },
-        status: 'DELIVERED',
-        review: null,
-      },
-      select: { id: true },
+    [eligibleOrderItems, initialQuestions] = await Promise.all([
+      prisma.orderItem.findMany({
+        where: {
+          order: { userId },
+          variant: { productId: product.id },
+          status: 'DELIVERED',
+          review: null,
+        },
+        select: { id: true },
+      }),
+      prisma.productQA.findMany({
+        where: { productId: product.id },
+        include: { user: { select: { name: true } } },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+  } else {
+    initialQuestions = await prisma.productQA.findMany({
+      where: { productId: product.id },
+      include: { user: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -221,6 +236,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           productId={product.id}
           initialReviews={product.reviews as unknown as Review[]}
           eligibleOrderItems={eligibleOrderItems}
+        />
+
+        {/* Q&A Section */}
+        <QASection
+          productId={product.id}
+          sellerId={product.seller?.id ?? ''}
+          initialQuestions={initialQuestions as unknown as ProductQA[]}
         />
       </div>
     </main>

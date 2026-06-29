@@ -1,5 +1,5 @@
 import Navbar from '@/components/Navbar';
-import ProductCard from '@/components/ProductCard';
+import ProductCard, { ProductCardProduct } from '@/components/ProductCard';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { Product, ProductImage } from '@/types';
@@ -51,7 +51,11 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
             <ProductCard
               key={product.id}
               product={
-                { ...product, name: product.title, image: product.images[0]?.url || '' } as any
+                {
+                  ...product,
+                  name: product.title,
+                  image: product.images[0]?.url || '',
+                } as ProductCardProduct
               }
               index={idx}
             />

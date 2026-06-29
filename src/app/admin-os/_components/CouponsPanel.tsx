@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useToast } from '@/components/ui';
 
 interface CouponUsage {
   id: string;
@@ -45,6 +46,7 @@ export default function CouponsPanel({ showHeader = false }: CouponsPanelProps) 
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(EMPTY_FORM);
   const [expandedCouponId, setExpandedCouponId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchCoupons();
@@ -89,11 +91,11 @@ export default function CouponsPanel({ showHeader = false }: CouponsPanelProps) 
         await fetchCoupons();
       } else {
         const errData = await res.json();
-        alert(errData.message || 'Failed to create coupon.');
+        toast({ title: errData.message || 'Failed to create coupon.', variant: 'error' });
       }
     } catch (err) {
       console.error(err);
-      alert('Error creating coupon.');
+      toast({ title: 'Error creating coupon.', variant: 'error' });
     }
   };
 

@@ -165,15 +165,19 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const method = (req.method ?? 'GET').toUpperCase();
 
+  // Detect Arabic subpath
+  const isArabic = pathname === '/ar' || pathname.startsWith('/ar/');
+  const targetPathname = isArabic ? (pathname === '/ar' ? '/' : pathname.substring(3)) : pathname;
+
   // Issue the CSRF token cookie if the browser doesn't have one yet.
   // Set it on request headers as well so server components can read it via cookies().
   let csrfToken = req.cookies?.get(CSRF_COOKIE)?.value;
   let isNewCsrf = false;
   if (
     !csrfToken &&
-    !pathname.startsWith('/api/auth') &&
-    !pathname.startsWith('/_next') &&
-    !pathname.includes('.')
+    !targetPathname.startsWith('/api/auth') &&
+    !targetPathname.startsWith('/_next') &&
+    !targetPathname.includes('.')
   ) {
     csrfToken = generateCsrfToken();
     req.headers.set('cookie', `${req.headers.get('cookie') || ''}; ${CSRF_COOKIE}=${csrfToken}`);
@@ -181,7 +185,7 @@ export async function proxy(req: NextRequest) {
   }
 
   // 1. Rate Limiting for API routes
-  if (pathname.startsWith('/api') && !pathname.startsWith('/api/auth/session')) {
+  if (targetPathname.startsWith('/api') && !targetPathname.startsWith('/api/auth/session')) {
     const result = await rateLimit(req);
     if (result.limited) {
       return NextResponse.json(
@@ -204,9 +208,9 @@ export async function proxy(req: NextRequest) {
   const isProd = process.env.NODE_ENV === 'production';
   if (
     isProd &&
-    pathname.startsWith('/api') &&
+    targetPathname.startsWith('/api') &&
     ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) &&
-    !isCsrfExempt(pathname)
+    !isCsrfExempt(targetPathname)
   ) {
     const cookieToken = req.cookies?.get(CSRF_COOKIE)?.value ?? '';
     const headerToken = req.headers?.get(CSRF_HEADER) ?? '';
@@ -217,10 +221,10 @@ export async function proxy(req: NextRequest) {
 
   // Allow public routes (but still let Next.js serve them normally)
   if (
-    pathname.startsWith('/api/auth') ||
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/static') ||
-    pathname.includes('.') // static files
+    targetPathname.startsWith('/api/auth') ||
+    targetPathname.startsWith('/_next') ||
+    targetPathname.startsWith('/static') ||
+    targetPathname.includes('.') // static files
   ) {
     return NextResponse.next();
   }
@@ -233,35 +237,48 @@ export async function proxy(req: NextRequest) {
   // surface itself) gets redirected to /maintenance. Admin login still
   // works so the operator can flip the switch back off.
   if (
-    !pathname.startsWith('/admin-os') &&
-    !pathname.startsWith('/api/admin') &&
-    !pathname.startsWith('/login') &&
-    !pathname.startsWith('/maintenance')
+    !targetPathname.startsWith('/admin-os') &&
+    !targetPathname.startsWith('/api/admin') &&
+    !targetPathname.startsWith('/login') &&
+    !targetPathname.startsWith('/maintenance')
   ) {
     const role = (token?.role as string | undefined) ?? 'BUYER';
     if (await isInMaintenance(role === 'ADMIN')) {
-      return NextResponse.redirect(new URL('/maintenance', req.url));
+      return NextResponse.redirect(new URL(isArabic ? '/ar/maintenance' : '/maintenance', req.url));
     }
   }
 
   // Define role-based route protection
-  const adminRoutes = pathname.startsWith('/admin') || pathname.startsWith('/admin-os');
-  const sellerRoutes = pathname.startsWith('/seller') || pathname === '/seller-hub';
-  const dashboardRoutes = pathname.startsWith('/dashboard');
+  const adminRoutes = targetPathname.startsWith('/admin') || targetPathname.startsWith('/admin-os');
+  const sellerRoutes = targetPathname.startsWith('/seller') || targetPathname === '/seller-hub';
+  const dashboardRoutes = targetPathname.startsWith('/dashboard');
 
   // If no user is logged in, redirect to login (except for public shop pages)
   if (!token) {
     if (adminRoutes || sellerRoutes || dashboardRoutes) {
-      const loginUrl = new URL('/login', req.url);
+      const loginUrl = new URL(isArabic ? '/ar/login' : '/login', req.url);
       loginUrl.searchParams.set('callbackUrl', pathname);
       return NextResponse.redirect(loginUrl);
     }
-    return attachCsp(
-      req,
-      NextResponse.next({ request: { headers: req.headers } }),
-      csrfToken,
-      isNewCsrf
-    );
+
+    // Set language header
+    req.headers.set('x-lang', isArabic ? 'ar' : 'en');
+
+    const response = isArabic
+      ? NextResponse.rewrite(new URL(targetPathname + req.nextUrl.search, req.url), {
+          request: { headers: req.headers },
+        })
+      : NextResponse.next({
+          request: { headers: req.headers },
+        });
+
+    if (isArabic) {
+      response.cookies.set('googtrans', '/en/ar', { path: '/' });
+    } else {
+      response.cookies.set('googtrans', '/en/en', { path: '/' });
+    }
+
+    return attachCsp(req, response, csrfToken, isNewCsrf);
   }
 
   // Get user role from token
@@ -271,28 +288,40 @@ export async function proxy(req: NextRequest) {
   if (adminRoutes && role !== 'ADMIN') {
     // Redirect non-admins away from admin panel
     if (role === 'SELLER') {
-      return NextResponse.redirect(new URL('/seller-hub', req.url));
+      return NextResponse.redirect(new URL(isArabic ? '/ar/seller-hub' : '/seller-hub', req.url));
     }
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+    return NextResponse.redirect(new URL(isArabic ? '/ar/dashboard' : '/dashboard', req.url));
   }
 
   // Seller Routes Protection (SellerHub, /sell, /seller/*)
   if (sellerRoutes && role !== 'SELLER' && role !== 'ADMIN') {
     // If trying to access seller area as buyer, go to customer dashboard
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+    return NextResponse.redirect(new URL(isArabic ? '/ar/dashboard' : '/dashboard', req.url));
   }
 
   // Customer Dashboard Protection (Block Buyers from Seller areas)
   if ((sellerRoutes || adminRoutes) && role === 'BUYER') {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+    return NextResponse.redirect(new URL(isArabic ? '/ar/dashboard' : '/dashboard', req.url));
   }
 
-  return attachCsp(
-    req,
-    NextResponse.next({ request: { headers: req.headers } }),
-    csrfToken,
-    isNewCsrf
-  );
+  // Set language header
+  req.headers.set('x-lang', isArabic ? 'ar' : 'en');
+
+  const response = isArabic
+    ? NextResponse.rewrite(new URL(targetPathname + req.nextUrl.search, req.url), {
+        request: { headers: req.headers },
+      })
+    : NextResponse.next({
+        request: { headers: req.headers },
+      });
+
+  if (isArabic) {
+    response.cookies.set('googtrans', '/en/ar', { path: '/' });
+  } else {
+    response.cookies.set('googtrans', '/en/en', { path: '/' });
+  }
+
+  return attachCsp(req, response, csrfToken, isNewCsrf);
 }
 
 export { proxy as middleware };

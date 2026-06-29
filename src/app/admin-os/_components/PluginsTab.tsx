@@ -17,6 +17,7 @@
 // button that pings the integration.
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useToast } from '@/components/ui';
 
 interface PluginField {
   key: string;
@@ -63,6 +64,7 @@ export default function PluginsTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [installingSlug, setInstallingSlug] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const load = async () => {
     setLoading(true);
@@ -91,9 +93,15 @@ export default function PluginsTab() {
         throw new Error(j.message || 'Installation failed');
       }
       await load();
-      alert(`Successfully installed plugin! You can now configure it.`);
+      toast({
+        title: 'Successfully installed plugin! You can now configure it.',
+        variant: 'success',
+      });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Installation failed');
+      toast({
+        title: err instanceof Error ? err.message : 'Installation failed',
+        variant: 'error',
+      });
     } finally {
       setInstallingSlug(null);
     }
@@ -593,6 +601,7 @@ function PluginDrawer({
   const [shown, setShown] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const save = async () => {
     setSaving(true);
@@ -628,7 +637,10 @@ function PluginDrawer({
         const j = await res.json().catch(() => ({}));
         throw new Error(j.message || 'Installation failed');
       }
-      alert('Extension successfully installed! You can now configure it.');
+      toast({
+        title: 'Extension successfully installed! You can now configure it.',
+        variant: 'success',
+      });
       onSaved();
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Installation failed');

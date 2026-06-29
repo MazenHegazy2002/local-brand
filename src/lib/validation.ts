@@ -49,8 +49,14 @@ export const createProductSchema = z.object({
     .string()
     .min(3, 'Title must be at least 3 characters')
     .max(200, 'Title must be less than 200 characters'),
+  titleAr: z
+    .string()
+    .max(200, 'Arabic title must be less than 200 characters')
+    .optional()
+    .nullable(),
   slug: z.string().min(3).max(200),
   description: z.string().min(10, 'Description must be at least 10 characters'),
+  descriptionAr: z.string().optional().nullable(),
   basePrice: z.number().positive('Price must be positive'),
   categoryId: z.string().uuid('Invalid category ID'),
   condition: z.string().optional().default('NEW'),
@@ -81,6 +87,7 @@ export const productVariantSchema = z.object({
     .optional()
     .or(z.literal('')),
   title: z.string().min(1).max(100),
+  titleAr: z.string().max(100).optional().nullable(),
   attributes: z.string().optional(),
   price: z.number().positive(),
   stock: z.number().int().min(0),

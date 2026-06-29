@@ -83,8 +83,7 @@ html {
   html {
     scroll-padding-bottom: 80px;
   }
-  body > main,
-  main[id="main-content"] {
+  main {
     padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
 }

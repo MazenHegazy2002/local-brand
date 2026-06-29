@@ -118,6 +118,16 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       console.error('Failed to trigger affiliate commission updates:', err);
     }
 
+    // Best-effort status transition notification email.
+    void (async () => {
+      try {
+        const { triggerOrderStatusEmail } = await import('@/lib/email');
+        await triggerOrderStatusEmail(orderId, status);
+      } catch (err) {
+        console.error('Failed to trigger order status email:', err);
+      }
+    })();
+
     return NextResponse.json(
       { message: 'Order status updated', order: updatedOrder },
       { status: 200 }

@@ -82,6 +82,7 @@ const getSwatchBackground = (colorName: string) => {
 type LegacyProduct = {
   id: number | string;
   name: string;
+  nameAr?: string | null;
   image?: string;
   tags?: string[];
   brand?: string;
@@ -91,7 +92,10 @@ type LegacyProduct = {
   images?: ProductImage[];
 };
 
-type ProductCardProduct = Omit<Partial<Product>, 'id' | 'category' | 'tags'> & LegacyProduct;
+export type ProductCardProduct = Omit<Partial<Product>, 'id' | 'category' | 'tags' | 'seller'> &
+  LegacyProduct & {
+    seller?: { storeName?: string };
+  };
 
 export default function ProductCard({
   product,
@@ -100,8 +104,17 @@ export default function ProductCard({
   product: ProductCardProduct;
   index?: number;
 }) {
+  const { t, lang } = useLanguage();
+  const isAr = lang === 'ar';
+
   const displayId = String(product.id);
-  const displayName = product.name || (product as Partial<Product>).title || 'Product';
+  const displayName = isAr
+    ? product.nameAr ||
+      (product as Partial<Product>).titleAr ||
+      product.name ||
+      (product as Partial<Product>).title ||
+      'منتج'
+    : product.name || (product as Partial<Product>).title || 'Product';
   const basePrice = product.price ?? (product as Partial<Product>).basePrice ?? 0;
   const displayImage = product.image || (product as Partial<Product>).images?.[0]?.url;
   const productTags = product.tags || [];
@@ -122,7 +135,6 @@ export default function ProductCard({
 
   // ── Client Cart & Language Hooks ──
   const addItem = useCartStore(s => s.addItem);
-  const { t } = useLanguage();
 
   const addToCartText = t ? t('AddToCart') || t('Add') || 'Add to Cart' : 'Add to Cart';
   const addedText = t ? t('AddedToCart') || t('Added') || 'Added ✓' : 'Added ✓';
@@ -246,7 +258,8 @@ export default function ProductCard({
             </span>
           )}
           {productTags.slice(0, 2).map((tag: string | Tag) => {
-            const tagName = typeof tag === 'string' ? tag : tag.name;
+            const tagName =
+              typeof tag === 'string' ? tag : isAr && tag.nameAr ? tag.nameAr : tag.name;
             return (
               <Badge key={tagName} size="sm" variant="default">
                 {tagName}

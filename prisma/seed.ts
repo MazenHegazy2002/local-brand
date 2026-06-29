@@ -836,26 +836,26 @@ async function main() {
 
   // ── Categories (catalog scaffolding) ──────────────────────────────────────
   const categoriesData = [
-    { name: 'Women', slug: 'women' },
-    { name: 'Men', slug: 'men' },
-    { name: 'Kids', slug: 'kids' },
-    { name: 'Electronics', slug: 'electronics' },
-    { name: 'Home', slug: 'home' },
-    { name: 'Beauty', slug: 'beauty' },
-    { name: 'Sports', slug: 'sports' },
-    { name: 'Footwear', slug: 'footwear' },
-    { name: 'Accessories', slug: 'accessories' },
-    { name: 'Toys', slug: 'toys' },
-    { name: 'Appliances', slug: 'appliances' },
-    { name: 'Groceries', slug: 'groceries' },
-    { name: 'Auto', slug: 'auto' },
-    { name: 'Furniture', slug: 'furniture' },
-    { name: 'Books', slug: 'books' },
-    { name: 'Health', slug: 'health' },
-    { name: 'Pets', slug: 'pets' },
-    { name: 'Jewelry', slug: 'jewelry' },
-    { name: 'Garden', slug: 'garden' },
-    { name: 'Pharma', slug: 'pharma' },
+    { name: 'Women', nameAr: 'نساء', slug: 'women' },
+    { name: 'Men', nameAr: 'رجال', slug: 'men' },
+    { name: 'Kids', nameAr: 'أطفال', slug: 'kids' },
+    { name: 'Electronics', nameAr: 'إلكترونيات', slug: 'electronics' },
+    { name: 'Home', nameAr: 'منزل', slug: 'home' },
+    { name: 'Beauty', nameAr: 'جمال', slug: 'beauty' },
+    { name: 'Sports', nameAr: 'رياضة', slug: 'sports' },
+    { name: 'Footwear', nameAr: 'أحذية', slug: 'footwear' },
+    { name: 'Accessories', nameAr: 'إكسسوارات', slug: 'accessories' },
+    { name: 'Toys', nameAr: 'ألعاب', slug: 'toys' },
+    { name: 'Appliances', nameAr: 'أجهزة منزلية', slug: 'appliances' },
+    { name: 'Groceries', nameAr: 'سوبرماركت', slug: 'groceries' },
+    { name: 'Auto', nameAr: 'سيارات', slug: 'auto' },
+    { name: 'Furniture', nameAr: 'أثاث', slug: 'furniture' },
+    { name: 'Books', nameAr: 'كتب', slug: 'books' },
+    { name: 'Health', nameAr: 'صحة', slug: 'health' },
+    { name: 'Pets', nameAr: 'حيوانات أليفة', slug: 'pets' },
+    { name: 'Jewelry', nameAr: 'مجوهرات', slug: 'jewelry' },
+    { name: 'Garden', nameAr: 'حديقة', slug: 'garden' },
+    { name: 'Pharma', nameAr: 'صيدلية', slug: 'pharma' },
   ];
 
   await Promise.all(categoriesData.map(c => prisma.category.create({ data: c })));
@@ -1108,6 +1108,85 @@ async function main() {
   let productCount = 0;
   let variantCount = 0;
 
+  const arTitles: Record<string, string> = {
+    'Floral Linen Midi Dress': 'فستان ميدي من الكتان بنقشة الزهور',
+    'Classic Linen Blouse': 'بلوزة كتان كلاسيكية',
+    'Wide-Leg Trousers': 'بنطلون واسع الساق',
+    'Wrap Maxi Dress': 'فستان ماكسي ملفوف',
+    'Cropped Ribbed Top': 'توب مضلع قصير',
+    'Wireless Noise-Cancelling Headphones': 'سماعات رأس لاسلكية عازلة للضوضاء',
+    'USB-C 65W GaN Charger': 'شاحن GaN بقوة 65 واط USB-C',
+    'Portable Bluetooth Speaker': 'مكبر صوت بلوتوث محمول',
+    'Smart Watch Pro': 'ساعة ذكية برو',
+    'True Wireless Earbuds': 'سماعات أذن لاسلكية بالكامل',
+    'Luxury Throw Pillow Set (2 pcs)': 'طقم وسائد ديكور فاخرة (قطعتين)',
+    'Soy Wax Scented Candle Set': 'طقم شموع معطرة من شمع الصويا',
+    'Bamboo Storage Basket Set': 'طقم سلات تخزين من الخيزران',
+    'Handmade Ceramic Vase': 'فازة سيراميك مصنوعة يدوياً',
+    'Acacia Wood Serving Board': 'لوح تقديم من خشب الأكاسيا',
+    'Vitamin C Brightening Serum': 'سيروم فيتامين سي للتفتيح',
+    'Egyptian Rose Water Toner': 'تونر ماء الورد المصري',
+    'Argan Oil Hair Mask': 'ماسك الشعر بزيت الأرجان',
+    'Natural Lip Balm Set': 'طقم مرطب شفاه طبيعي',
+  };
+
+  const arEditions: Record<string, string> = {
+    Collection: 'مجموعة التشكيلة',
+    'Special Edition': 'إصدار خاص',
+    'Signature Series': 'سلسلة التوقيع',
+    'Classic Fit': 'مقاس كلاسيكي',
+  };
+
+  const getArabicVariantTitle = (label: string, edName: string) => {
+    const edAr = arEditions[edName] || edName;
+    const parts = label.split(' - ');
+    const colorMapAr: Record<string, string> = {
+      Blue: 'أزرق',
+      Pink: 'وردي',
+      White: 'أبيض',
+      Beige: 'بيج',
+      Black: 'أسود',
+      Camel: 'جملي',
+      Navy: 'كحلي',
+      Emerald: 'زمردي',
+      Burgundy: 'برغندي',
+      'Midnight Black': 'أسود منتصف الليل',
+      'Pearl White': 'أبيض لؤلؤي',
+      'Deep Blue': 'أزرق داكن',
+      'Jet Black': 'أسود فاحم',
+      'Coral Red': 'أحمر مرجاني',
+      'Forest Green': 'أخضر الغابة',
+      'Obsidian Black': 'أسود أوبسيديان',
+      Silver: 'فضي',
+      'Rose Gold': 'ذهبي وردي',
+      'Dusty Blue': 'أزرق غباري',
+      Terracotta: 'تيراكوتا',
+      'Warm Gray': 'رمادي دافئ',
+      Lavender: 'لافندر',
+      Rose: 'ورد',
+      Jasmine: 'ياسمين',
+      Natural: 'طبيعي',
+      Espresso: 'إسبريسو',
+      Ivory: 'عاجي',
+      Sage: 'مرمية',
+      'Midnight Blue': 'أزرق منتصف الليل',
+      Small: 'صغير',
+      Large: 'كبير',
+      '30ml': '٣٠ مل',
+      '50ml': '٥٠ مل',
+      '200ml': '٢٠٠ مل',
+      '400ml': '٤٠٠ مل',
+      '250ml': '٢٥٠ مل',
+      '500ml': '٥٠٠ مل',
+      Cherry: 'كرز',
+      Mint: 'نعناع',
+      Honey: 'عسل',
+    };
+    const colorAr = colorMapAr[parts[0]] || parts[0];
+    const sizeAr = parts[1] ? ` - ${parts[1]}` : '';
+    return `${colorAr}${sizeAr} - ${edAr}`;
+  };
+
   for (const catData of CATALOG) {
     const categoryId = catMap[catData.slug];
     if (!categoryId) {
@@ -1126,6 +1205,9 @@ async function main() {
           addedSellerProfiles[productCount % addedSellerProfiles.length] || defaultSellerProfile;
 
         const title = `${p.title} (${editionName})`;
+        const baseAr = arTitles[p.title] || p.title;
+        const edAr = arEditions[editionName] || editionName;
+        const titleAr = `${baseAr} (${edAr})`;
         const slug = `${p.slug}-${editionName.toLowerCase().replace(/\s+/g, '-')}`;
 
         const product = await prisma.product.create({
@@ -1133,8 +1215,10 @@ async function main() {
             sellerId: targetSeller.id,
             categoryId,
             title,
+            titleAr,
             slug,
             description: `${p.description} Part of the exclusive ${editionName} curated by ${targetSeller.storeName}. High-quality Egyptian craftsmanship guaranteed.`,
+            descriptionAr: `وصف مترجم: ${p.description} جزء من الإصدار المميز ${edAr} المختار بعناية بواسطة ${targetSeller.storeName}. جودة وإتقان مصري مضمون.`,
             basePrice: p.basePrice + i * 50, // slightly vary the prices
             published: true,
             isFeatured: i === 0 ? p.isFeatured : false,
@@ -1162,6 +1246,7 @@ async function main() {
               productId: product.id,
               sku: `${slug}-v${vi + 1}`,
               title: `${v.label} - ${editionName}`,
+              titleAr: getArabicVariantTitle(v.label, editionName),
               attributes: JSON.stringify(attrs),
               price: v.price + i * 50,
               stockCount: v.stock,

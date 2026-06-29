@@ -4,7 +4,7 @@ import { Inter, Outfit, Cairo } from 'next/font/google';
 export const dynamic = 'force-dynamic';
 import './globals.css';
 import AuthProvider from '@/providers/SessionProvider';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import GoogleTranslate from '@/components/GoogleTranslate';
 import ExitIntentPopup from '@/components/ExitIntentPopup';
 
@@ -100,6 +100,8 @@ export const viewport: Viewport = {
 };
 
 import { LanguageProvider } from '@/providers/LanguageContext';
+import { ConfirmProvider } from '@/providers/ConfirmProvider';
+import { ToastProvider } from '@/components/ui/ToastProvider';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
@@ -120,7 +122,9 @@ export default async function RootLayout({
   const googTrans = cookieStore.get('googtrans')?.value;
   const csrfToken = cookieStore.get('csrf-token')?.value || '';
 
-  const isArabic = googTrans ? googTrans.includes('/ar') : false;
+  const headersList = await headers();
+  const xLang = headersList.get('x-lang');
+  const isArabic = (googTrans ? googTrans.includes('/ar') : false) || xLang === 'ar';
   const dir = isArabic ? 'rtl' : 'ltr';
   const _lang = isArabic ? 'ar' : 'en';
 
@@ -159,16 +163,22 @@ export default async function RootLayout({
         >
           Skip to main content
         </a>
-        <LanguageProvider>
-          <GoogleTranslate />
-          <AuthProvider>
-            {children}
-            <Footer />
-            <BottomNavigation />
-            <CookieConsent />
-            <InstallPrompt />
-            <ExitIntentPopup />
-          </AuthProvider>
+        <LanguageProvider defaultLang={_lang}>
+          <ToastProvider>
+            <ConfirmProvider>
+              <GoogleTranslate />
+              <AuthProvider>
+                <div id="main-content" tabIndex={-1} className="outline-none">
+                  {children}
+                </div>
+                <Footer />
+                <BottomNavigation />
+                <CookieConsent />
+                <InstallPrompt />
+                <ExitIntentPopup />
+              </AuthProvider>
+            </ConfirmProvider>
+          </ToastProvider>
         </LanguageProvider>
         <Plugins />
         <CsrfProvider />

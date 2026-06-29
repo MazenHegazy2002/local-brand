@@ -534,6 +534,16 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
       data: { status },
     });
 
+    // Best-effort status transition notification email.
+    void (async () => {
+      try {
+        const { triggerOrderStatusEmail } = await import('@/lib/email');
+        await triggerOrderStatusEmail(orderId, status);
+      } catch (err) {
+        console.error('Failed to trigger order status email:', err);
+      }
+    })();
+
     revalidatePath('/dashboard');
     revalidatePath('/admin-os');
     return { success: true };

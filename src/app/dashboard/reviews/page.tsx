@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useConfirm } from '@/providers/ConfirmProvider';
+import { useToast } from '@/components/ui/ToastProvider';
 
 interface Review {
   id: string;
@@ -21,6 +23,8 @@ interface Review {
 export default function ReviewsPage() {
   const { data: _session, status } = useSession();
   const router = useRouter();
+  const { confirm } = useConfirm();
+  const { toast } = useToast();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
@@ -53,12 +57,23 @@ export default function ReviewsPage() {
   }, []);
 
   const deleteReview = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this review?')) return;
+    const confirmed = await confirm({
+      title: 'Delete Review',
+      message: 'Are you sure you want to delete this review?',
+      type: 'danger',
+    });
+    if (!confirmed) return;
     try {
       await fetch(`/api/reviews?id=${id}`, { method: 'DELETE' });
       setReviews(prev => prev.filter(r => r.id !== id));
+      toast({
+        variant: 'success',
+        title: 'Review Deleted',
+        description: 'Your review was deleted successfully.',
+      });
     } catch (e) {
       console.error(e);
+      toast({ variant: 'error', title: 'Error', description: 'Failed to delete review.' });
     }
   };
 

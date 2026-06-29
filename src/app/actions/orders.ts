@@ -60,8 +60,17 @@ export async function cancelOrder(orderId: string): Promise<{ success?: boolean;
         where: { orderId },
         data: { status: OrderItemStatus.CANCELLED },
       });
-      // Optionally refund wallet or process payment refund if paid
     });
+
+    // Best-effort cancel notification email.
+    void (async () => {
+      try {
+        const { triggerOrderStatusEmail } = await import('@/lib/email');
+        await triggerOrderStatusEmail(orderId, 'CANCELLED');
+      } catch (err) {
+        console.error('Failed to trigger order cancel email:', err);
+      }
+    })();
 
     revalidatePath('/dashboard');
     return { success: true };

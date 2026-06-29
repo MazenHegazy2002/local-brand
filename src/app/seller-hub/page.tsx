@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useConfirm } from '@/providers/ConfirmProvider';
+import { useToast } from '@/components/ui/ToastProvider';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -200,6 +202,8 @@ const detectImageColor = async (file: File): Promise<string> => {
 export default function SellerHub() {
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
+  const { confirm } = useConfirm();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -300,7 +304,7 @@ export default function SellerHub() {
       await refreshData();
     } catch (error: unknown) {
       const err = error as Error;
-      alert(err.message);
+      toast({ variant: 'error', title: 'Update Failed', description: err.message });
     } finally {
       setIsSubmitting(false);
     }
@@ -405,7 +409,11 @@ export default function SellerHub() {
       });
     } catch (err) {
       console.error('Upload failed:', err);
-      alert((err as Error).message || 'Upload failed. Please try a different photo.');
+      toast({
+        variant: 'error',
+        title: 'Upload Failed',
+        description: (err as Error).message || 'Upload failed. Please try a different photo.',
+      });
       // Drop the broken preview so the user can pick again without the
       // submit button silently posting a stale local-only URL.
       setVariants(prev => {
@@ -461,7 +469,7 @@ export default function SellerHub() {
       })) as { error?: string };
 
       if (res?.error) {
-        alert(res.error);
+        toast({ variant: 'error', title: 'Creation Failed', description: res.error });
         return;
       }
 
@@ -470,24 +478,29 @@ export default function SellerHub() {
       await refreshData();
     } catch (error: unknown) {
       const err = error as Error;
-      alert(err.message);
+      toast({ variant: 'error', title: 'Creation Failed', description: err.message });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteProduct = async (id: string) => {
-    if (!confirm('Are you sure?')) return;
+    const confirmed = await confirm({
+      title: 'Delete Product',
+      message: 'Are you sure you want to delete this product?',
+      type: 'danger',
+    });
+    if (!confirmed) return;
     try {
       const res = (await deleteProduct(id)) as { error?: string };
       if (res?.error) {
-        alert(res.error);
+        toast({ variant: 'error', title: 'Delete Failed', description: res.error });
         return;
       }
       await refreshData();
     } catch (error: unknown) {
       const err = error as Error;
-      alert(err.message);
+      toast({ variant: 'error', title: 'Error', description: err.message });
     }
   };
 
@@ -497,13 +510,13 @@ export default function SellerHub() {
     try {
       const res = (await updateOrderItemStatus(itemId, 'CONFIRMED')) as { error?: string };
       if (res?.error) {
-        alert(res.error);
+        toast({ variant: 'error', title: 'Fulfillment Failed', description: res.error });
         return;
       }
       await refreshData();
     } catch (error: unknown) {
       const err = error as Error;
-      alert(err.message);
+      toast({ variant: 'error', title: 'Error', description: err.message });
     }
   };
 
@@ -1413,12 +1426,18 @@ function OrdersTab({
   onFulfill: (id: string) => void;
   onRefresh?: () => Promise<void>;
 }) {
+  const { confirm } = useConfirm();
+  const { toast } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [shippingLoading, setShippingLoading] = useState(false);
 
   const handleMarkShipped = async (orderId: string) => {
-    if (!confirm('Mark this order as shipped? This notifies the buyer.')) return;
+    const confirmed = await confirm({
+      title: 'Mark Shipped',
+      message: 'Mark this order as shipped? This notifies the buyer.',
+    });
+    if (!confirmed) return;
     setShippingLoading(true);
     try {
       const res = await fetch(`/api/orders/${orderId}/status`, {
@@ -1428,13 +1447,21 @@ function OrdersTab({
       });
       if (!res.ok) {
         const d = await res.json();
-        alert(d.message || 'Failed to mark as shipped');
+        toast({
+          variant: 'error',
+          title: 'Action Failed',
+          description: d.message || 'Failed to mark as shipped',
+        });
         return;
       }
       setSelectedOrder(null);
       if (onRefresh) await onRefresh();
     } catch (err: unknown) {
-      alert((err as Error).message || 'Failed to mark as shipped');
+      toast({
+        variant: 'error',
+        title: 'Error',
+        description: (err as Error).message || 'Failed to mark as shipped',
+      });
     } finally {
       setShippingLoading(false);
     }
@@ -1761,6 +1788,7 @@ function ProductsTab({
   onAfterRefresh: () => Promise<void>;
   categories?: { id: string; name: string }[];
 }) {
+  const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'in' | 'out' | 'low'>('all');
   const [publishFilter, setPublishFilter] = useState<'all' | 'published' | 'draft'>('all');
@@ -1823,7 +1851,7 @@ function ProductsTab({
   const handlePublishToggle = async (id: string, publish: boolean) => {
     const res = await toggleProductPublished(id, publish);
     if ('error' in res && res.error) {
-      alert(res.error);
+      toast({ variant: 'error', title: 'Action Failed', description: res.error });
       return;
     }
     await onAfterRefresh();

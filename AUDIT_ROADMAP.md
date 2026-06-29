@@ -29,7 +29,7 @@ The following issues have been fully resolved, verified through test suites, and
 - **B-008 / B-009 (Homepage JSON-LD)**: Injected `Organization` schema (logo, social profiles, Egyptian phone/location tags) and `WebSite` schema (with internal search query action mapping) into the root document head.
 - **B-015 (Category Page JSON-LD)**: Embedded `CollectionPage` and `ItemList` schema markups on all category pages to enable rich product carousel search results.
 - **B-040 (Heading Emoji Structure)**: Restructured heading tags on the Homepage to isolate emoji characters into decorative `<span>` tags next to the headings, ensuring clean heading text representation for search snippet crawl readability.
-- **B-038 (hreflang for Arabic Localization)**: Added `en` and `ar` language alternates alongside the existing `en-EG` and `ar-EG` entries in the root `metadata.alternates.languages` object in `layout.tsx`. Both short-form and region-specific hreflang signals are now emitted by Next.js in every page `<head>`.
+- **B-038 (Full Arabic Localization)**: Implemented complete dynamic Arabic localization. Added `/ar` subpath routing support using edge middleware URL rewrites. Enabled locale state synchronization, metadata updates (`hreflang` alternates), and database translations support (optional translated columns on `Product`, `Category`, `Tag`, `Collection`, `ProductVariant` fully populated via database seeding).
 
 ### 2. Security Hardening (P0 / P3)
 
@@ -108,9 +108,6 @@ These issues relate to catalog depth, inventory, and database populating tasks:
 
 These issues relate to growth features, localized subdomains, and performance telemetry:
 
-- **Task 3.1: Complete Arabic Localization (B-038 — hreflang Partially Done)**
-  - _Completed_: `hreflang` `en`, `ar`, `en-EG`, `ar-EG`, and `x-default` link tags are now emitted by Next.js metadata for every page.
-  - _Remaining_: Deploy full Next.js middleware i18n configurations (`/ar` subpathing) and translate database entities and product copy into Arabic.
 - **Task 3.2: Configure Google Merchant Center & Feeds (B-060 — Feed Route Done)**
   - _Completed_: Google Shopping RSS 2.0 XML feed is live at `/api/products/feed`.
   - _Remaining Action_: Connect this URL to your Google Merchant Center account.

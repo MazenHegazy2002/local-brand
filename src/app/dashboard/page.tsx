@@ -8,6 +8,8 @@ import { cancelOrder, requestReturn } from '../actions/orders';
 import Link from 'next/link';
 import { User, Order, OrderItem, WishlistItem, Notification, SessionUser, Product } from '@/types';
 import { useCartStore } from '@/lib/cartStore';
+import { useConfirm } from '@/providers/ConfirmProvider';
+import { useToast } from '@/components/ui/ToastProvider';
 
 const VALID_TABS = [
   'overview',
@@ -58,6 +60,8 @@ function CustomerDashboard() {
       setActiveTab(t as DashboardTab);
     }
   }, [searchParams]);
+  const { confirm, alert, prompt } = useConfirm();
+  const { toast } = useToast();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +100,7 @@ function CustomerDashboard() {
       await refreshData();
     } catch (err: unknown) {
       const error = err as Error;
-      alert(error.message);
+      toast({ variant: 'error', title: 'Error', description: error.message });
     }
   };
 
@@ -107,47 +111,69 @@ function CustomerDashboard() {
     const payload = Object.fromEntries(formData);
     try {
       await updateProfile(payload);
-      alert('Profile updated successfully!');
+      toast({ variant: 'success', title: 'Success', description: 'Profile updated successfully!' });
       await refreshData();
     } catch (err: unknown) {
       const error = err as Error;
-      alert(error.message);
+      toast({ variant: 'error', title: 'Update Failed', description: error.message });
     } finally {
       setIsUpdating(false);
     }
   };
 
   const handleCancelOrder = async (orderId: string) => {
-    if (!confirm('Cancel this order? This cannot be undone.')) return;
+    const confirmed = await confirm({
+      title: 'Cancel Order',
+      message: 'Cancel this order? This cannot be undone.',
+      type: 'danger',
+    });
+    if (!confirmed) return;
     try {
       const res = await cancelOrder(orderId);
       if (res.error) {
-        alert(res.error);
+        toast({ variant: 'error', title: 'Cancellation Failed', description: res.error });
         return;
       }
-      alert('Order cancelled successfully.');
+      toast({
+        variant: 'success',
+        title: 'Order Cancelled',
+        description: 'Order cancelled successfully.',
+      });
       await refreshData();
     } catch (err: unknown) {
       const error = err as Error;
-      alert(error.message);
+      toast({ variant: 'error', title: 'Error', description: error.message });
     }
   };
 
   const handleRequestReturn = async (orderItemId: string) => {
-    const reason = prompt('Reason for return (e.g. Damaged, Wrong size):');
+    const reason = await prompt({
+      title: 'Request Return',
+      message: 'Reason for return (e.g. Damaged, Wrong size):',
+      placeholder: 'Reason',
+    });
     if (!reason) return;
-    const details = prompt('Additional details (optional):') || undefined;
+    const details =
+      (await prompt({
+        title: 'Request Return',
+        message: 'Additional details (optional):',
+        placeholder: 'Details (optional)',
+      })) || undefined;
     try {
       const res = await requestReturn(orderItemId, reason, details);
       if (res.error) {
-        alert(res.error);
+        toast({ variant: 'error', title: 'Request Failed', description: res.error });
         return;
       }
-      alert('Return requested. Our team will review it shortly.');
+      toast({
+        variant: 'success',
+        title: 'Return Requested',
+        description: 'Return requested. Our team will review it shortly.',
+      });
       await refreshData();
     } catch (err: unknown) {
       const error = err as Error;
-      alert(error.message);
+      toast({ variant: 'error', title: 'Error', description: error.message });
     }
   };
 
@@ -187,7 +213,7 @@ function CustomerDashboard() {
       router.push('/checkout');
     } catch (err: unknown) {
       const error = err as Error;
-      alert(error.message);
+      toast({ variant: 'error', title: 'Reorder Failed', description: error.message });
     }
   };
 
@@ -1306,6 +1332,8 @@ function SettingsTab({
 }) {
   const [avatar, setAvatar] = useState(user?.avatarUrl || '');
   const [uploading, setUploading] = useState(false);
+  const { confirm } = useConfirm();
+  const { toast } = useToast();
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1329,7 +1357,11 @@ function SettingsTab({
       setAvatar(d.url);
     } catch (err) {
       console.error('Avatar upload failed', err);
-      alert((err as Error).message || 'Avatar upload failed.');
+      toast({
+        variant: 'error',
+        title: 'Upload Failed',
+        description: (err as Error).message || 'Avatar upload failed.',
+      });
       setAvatar(user?.avatarUrl || '');
     } finally {
       setUploading(false);
@@ -1337,19 +1369,34 @@ function SettingsTab({
   };
 
   const handleDeleteAccount = async () => {
-    if (!confirm('Delete your account? This anonymizes your data and cannot be undone.')) return;
+    const confirmed = await confirm({
+      title: 'Delete Account',
+      message: 'Delete your account? This anonymizes your data and cannot be undone.',
+      type: 'danger',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch('/api/account/delete', { method: 'POST' });
       if (res.ok) {
-        alert('Account deleted. Signing you out…');
-        window.location.href = '/api/auth/signout';
+        toast({
+          variant: 'success',
+          title: 'Account Deleted',
+          description: 'Account deleted. Signing you out…',
+        });
+        setTimeout(() => {
+          window.location.href = '/api/auth/signout';
+        }, 1500);
       } else {
         const d = await res.json();
-        alert(d.message || 'Failed to delete account');
+        toast({
+          variant: 'error',
+          title: 'Deletion Failed',
+          description: d.message || 'Failed to delete account',
+        });
       }
     } catch (err: unknown) {
       const e = err as Error;
-      alert(e.message);
+      toast({ variant: 'error', title: 'Error', description: e.message });
     }
   };
 

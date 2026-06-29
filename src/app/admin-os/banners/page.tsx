@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useToast } from '@/components/ui';
+import { useConfirm } from '@/providers/ConfirmProvider';
 
 interface Banner {
   id: string;
@@ -35,6 +37,8 @@ export default function AdminBannersPage() {
   const [editing, setEditing] = useState<Banner | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
+  const { confirm } = useConfirm();
 
   const load = async () => {
     setLoading(true);
@@ -88,19 +92,21 @@ export default function AdminBannersPage() {
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const d = await res.json();
       if (!res.ok || !d.url) {
-        alert(d.message || 'Banner upload failed');
+        toast({ title: d.message || 'Banner upload failed', variant: 'error' });
         return;
       }
       if (d.url.startsWith('data:') && d.url.length > 700 * 1024) {
-        alert(
-          'Banner is too large after compression. Pick a smaller image, or configure Vercel Blob / Cloudinary on the server.'
-        );
+        toast({
+          title:
+            'Banner is too large after compression. Pick a smaller image, or configure Vercel Blob / Cloudinary on the server.',
+          variant: 'error',
+        });
         return;
       }
       setForm(f => ({ ...f, imageUrl: d.url }));
     } catch (err) {
       console.error('Banner upload failed:', err);
-      alert((err as Error).message || 'Banner upload failed');
+      toast({ title: (err as Error).message || 'Banner upload failed', variant: 'error' });
     } finally {
       setUploading(false);
     }
@@ -128,12 +134,18 @@ export default function AdminBannersPage() {
       await load();
     } else {
       const d = await res.json();
-      alert(d.message || 'Failed to save banner');
+      toast({ title: d.message || 'Failed to save banner', variant: 'error' });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this banner?')) return;
+    const ok = await confirm({
+      title: 'Delete Banner',
+      message: 'Delete this banner? This cannot be undone.',
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
     await fetch(`/api/admin/banners/${id}`, { method: 'DELETE' });
     await load();
   };

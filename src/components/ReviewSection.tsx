@@ -3,7 +3,15 @@
 import { useState } from 'react';
 import { submitReview } from '@/app/actions/seller';
 import { useLanguage } from '@/providers/LanguageContext';
-import { RatingStars, Button, Textarea, EmptyState, Badge, Avatar } from '@/components/ui';
+import {
+  RatingStars,
+  Button,
+  Textarea,
+  EmptyState,
+  Badge,
+  Avatar,
+  useToast,
+} from '@/components/ui';
 import type { Review } from '@/types';
 
 export default function ReviewSection({
@@ -20,6 +28,7 @@ export default function ReviewSection({
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { t } = useLanguage();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,13 +50,14 @@ export default function ReviewSection({
         setReviews([data.review, ...reviews]);
         setComment('');
         setRating(5);
+        toast({ title: 'Review submitted!', variant: 'success' });
         // Remove the used item from eligibility
         eligibleOrderItems.shift();
       } else {
-        alert(data.message || 'Failed to submit review.');
+        toast({ title: data.message || 'Failed to submit review.', variant: 'error' });
       }
     } catch (_err) {
-      alert('Failed to submit review. Make sure you are logged in.');
+      toast({ title: 'Failed to submit review. Make sure you are logged in.', variant: 'error' });
     } finally {
       setSubmitting(false);
     }

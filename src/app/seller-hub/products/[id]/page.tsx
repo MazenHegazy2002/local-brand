@@ -5,6 +5,8 @@ import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { SessionUser } from '@/types';
+import { useToast } from '@/components/ui';
+import { useConfirm } from '@/providers/ConfirmProvider';
 
 interface Product {
   id: string;
@@ -150,6 +152,8 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
+  const { toast } = useToast();
+  const { confirm } = useConfirm();
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [form, setForm] = useState({
     title: '',
@@ -333,7 +337,7 @@ export default function EditProductPage() {
       });
     } catch (e) {
       console.error(e);
-      alert((e as Error).message || 'Upload failed.');
+      toast({ title: (e as Error).message || 'Upload failed.', variant: 'error' });
       setVariants(prev => {
         const next = [...prev];
         if (next[index]) {
@@ -366,7 +370,7 @@ export default function EditProductPage() {
       if (res.ok) {
         router.push('/seller-hub');
       } else {
-        alert('Failed to update product');
+        toast({ title: 'Failed to update product', variant: 'error' });
       }
     } catch (e) {
       console.error(e);
@@ -376,7 +380,13 @@ export default function EditProductPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    const ok = await confirm({
+      title: 'Delete Product',
+      message: 'Are you sure you want to delete this product? This cannot be undone.',
+      confirmText: 'Delete',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`/api/products/${productId}`, { method: 'DELETE' });
       if (res.ok) {

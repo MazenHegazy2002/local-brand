@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLanguage } from '@/providers/LanguageContext';
-import ProductCard from '@/components/ProductCard';
+import ProductCard, { ProductCardProduct } from '@/components/ProductCard';
 import { ProductGridSkeleton } from '@/components/Skeleton';
 import { Product, Category } from '@/types';
 
@@ -376,7 +376,7 @@ function ShopContent() {
                         brandSlug: product.seller?.storeName
                           ? product.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
                           : '',
-                      } as any
+                      } as ProductCardProduct
                     }
                     index={idx}
                   />

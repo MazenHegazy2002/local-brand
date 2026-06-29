@@ -71,6 +71,7 @@ export interface SellerProfile {
 export interface Category {
   id: string;
   name: string;
+  nameAr?: string | null;
   slug: string;
   parentId: string | null;
   parent?: Category | null;
@@ -81,6 +82,7 @@ export interface Category {
 export interface Tag {
   id: string;
   name: string;
+  nameAr?: string | null;
   slug: string;
   products?: Product[];
 }
@@ -88,8 +90,10 @@ export interface Tag {
 export interface Collection {
   id: string;
   name: string;
+  nameAr?: string | null;
   slug: string;
   description: string | null;
+  descriptionAr?: string | null;
   imageUrl: string | null;
   products?: Product[];
 }
@@ -99,8 +103,10 @@ export interface Product {
   sellerId: string;
   categoryId: string;
   title: string;
+  titleAr?: string | null;
   slug: string;
   description: string;
+  descriptionAr?: string | null;
   basePrice: number;
   condition: string;
   isFeatured: boolean;
@@ -141,6 +147,7 @@ export interface ProductVariant {
   // when the seller has a real barcode from GS1 / the manufacturer.
   upc?: string | null;
   title: string;
+  titleAr?: string | null;
   attributes: string;
   price: number;
   stockCount: number;

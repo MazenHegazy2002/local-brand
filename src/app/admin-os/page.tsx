@@ -27,6 +27,8 @@ import SupportTab from './_components/SupportTab';
 import MaintenanceTab from './_components/MaintenanceTab';
 import ShippingTab from './_components/ShippingTab';
 import BannersTab from './_components/BannersTab';
+import { useConfirm } from '@/providers/ConfirmProvider';
+import { useToast } from '@/components/ui/ToastProvider';
 import {
   SessionUser,
   SellerProfile,
@@ -82,6 +84,8 @@ interface DashboardData {
 export default function AdminOS() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { confirm, alert } = useConfirm();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -146,13 +150,22 @@ export default function AdminOS() {
     try {
       const res = (await updateSellerStatus(sellerId, status)) as { error?: string };
       if (res?.error) {
-        alert(res.error);
+        toast({ variant: 'error', title: 'Update Failed', description: res.error });
         return;
       }
+      toast({
+        variant: 'success',
+        title: 'Status Updated',
+        description: `Seller status updated to ${status}.`,
+      });
       await refreshData();
     } catch (err: unknown) {
       const error = err as Error;
-      alert(error.message || 'Failed to update status');
+      toast({
+        variant: 'error',
+        title: 'Update Failed',
+        description: error.message || 'Failed to update status',
+      });
     } finally {
       setActionLoading(null);
     }
@@ -163,29 +176,44 @@ export default function AdminOS() {
     try {
       const res = (await createTaxonomy(taxType, { name: taxName })) as { error?: string };
       if (res?.error) {
-        alert(res.error);
+        toast({ variant: 'error', title: 'Creation Failed', description: res.error });
         return;
       }
+      toast({
+        variant: 'success',
+        title: 'Created Successfully',
+        description: 'Taxonomy created successfully.',
+      });
       setTaxName('');
       await refreshData();
     } catch (err: unknown) {
       const error = err as Error;
-      alert(error.message);
+      toast({ variant: 'error', title: 'Error', description: error.message });
     }
   };
 
   const handleDeleteTaxonomy = async (type: 'category' | 'tag' | 'collection', id: string) => {
-    if (!confirm('Are you sure?')) return;
+    const confirmed = await confirm({
+      title: 'Delete Taxonomy',
+      message: 'Are you sure you want to delete this taxonomy?',
+      type: 'danger',
+    });
+    if (!confirmed) return;
     try {
       const res = (await deleteTaxonomy(type, id)) as { error?: string };
       if (res?.error) {
-        alert(res.error);
+        toast({ variant: 'error', title: 'Delete Failed', description: res.error });
         return;
       }
+      toast({
+        variant: 'success',
+        title: 'Deleted Successfully',
+        description: 'Taxonomy deleted successfully.',
+      });
       await refreshData();
     } catch (err: unknown) {
       const error = err as Error;
-      alert(error.message);
+      toast({ variant: 'error', title: 'Error', description: error.message });
     }
   };
 
@@ -194,14 +222,18 @@ export default function AdminOS() {
     try {
       const res = (await seedTestData()) as { error?: string };
       if (res?.error) {
-        alert(res.error);
+        toast({ variant: 'error', title: 'Seeding Failed', description: res.error });
         return;
       }
       await refreshData();
-      alert('System seeded with full operational data.');
+      toast({
+        variant: 'success',
+        title: 'Seeding Complete',
+        description: 'System seeded with full operational data.',
+      });
     } catch (err: unknown) {
       const error = err as Error;
-      alert(error.message);
+      toast({ variant: 'error', title: 'Error', description: error.message });
     } finally {
       setSeedLoading(false);
     }
@@ -229,18 +261,29 @@ export default function AdminOS() {
   };
 
   const handleDeleteUser = async (userId: string, email: string) => {
-    if (!confirm(`Delete account "${email}"? This cannot be undone.`)) return;
+    const confirmed = await confirm({
+      title: 'Delete User',
+      message: `Delete account "${email}"? This cannot be undone.`,
+      type: 'danger',
+    });
+    if (!confirmed) return;
     try {
       const res = (await adminDeleteUser(userId)) as { error?: string; message?: string };
       if (res?.error) {
-        alert(res.error);
+        toast({ variant: 'error', title: 'Delete Failed', description: res.error });
         return;
       }
-      if (res?.message) alert(res.message);
+      if (res?.message) {
+        toast({ variant: 'success', title: 'Success', description: res.message });
+      }
       await refreshData();
     } catch (err: unknown) {
       const error = err as Error;
-      alert(error.message || 'Failed to delete user.');
+      toast({
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to delete user.',
+      });
     }
   };
 
@@ -2818,6 +2861,8 @@ function safeParseSnapshot(raw: string | null | undefined): ShippingSnapshot {
 }
 
 function OrdersTab({ data, onRefresh }: OrdersTabProps) {
+  const { confirm } = useConfirm();
+  const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
@@ -2846,14 +2891,23 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(payload?.message || `Failed to ${successLabel}`);
+        toast({
+          variant: 'error',
+          title: 'Update Failed',
+          description: payload?.message || `Failed to ${successLabel}`,
+        });
         return false;
       }
       await onRefresh();
+      toast({
+        variant: 'success',
+        title: 'Order Updated',
+        description: `Successfully performed: ${successLabel}`,
+      });
       return true;
     } catch (err) {
       console.error('[admin/orders] update failed:', err);
-      alert(`Failed to ${successLabel}`);
+      toast({ variant: 'error', title: 'Error', description: `Failed to ${successLabel}` });
       return false;
     } finally {
       setBusyOrderId(null);
@@ -2862,34 +2916,43 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
 
   const cancelOrder = async (o: Order) => {
     if (o.status === 'CANCELLED' || o.status === 'RETURNED') return;
-    if (
-      !confirm(
-        `Cancel order #ORD-${o.id.substring(0, 8)}? This will mark all live items as cancelled.`
-      )
-    )
-      return;
+    const confirmed = await confirm({
+      title: 'Cancel Order',
+      message: `Cancel order #ORD-${o.id.substring(0, 8)}? This will mark all live items as cancelled.`,
+      type: 'danger',
+    });
+    if (!confirmed) return;
     await sendUpdate(o.id, { status: 'CANCELLED' }, 'cancel order');
   };
 
   const deleteOrder = async (o: Order) => {
-    if (
-      !confirm(
-        `Permanently delete order #ORD-${o.id.substring(0, 8)}? This cannot be undone. Stock for live items will be returned.`
-      )
-    )
-      return;
+    const confirmed = await confirm({
+      title: 'Delete Order',
+      message: `Permanently delete order #ORD-${o.id.substring(0, 8)}? This cannot be undone. Stock for live items will be returned.`,
+      type: 'danger',
+    });
+    if (!confirmed) return;
     setBusyOrderId(o.id);
     try {
       const res = await fetch(`/api/admin/orders/${o.id}`, { method: 'DELETE' });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(payload?.message || 'Failed to delete order');
+        toast({
+          variant: 'error',
+          title: 'Delete Failed',
+          description: payload?.message || 'Failed to delete order',
+        });
         return;
       }
+      toast({
+        variant: 'success',
+        title: 'Order Deleted',
+        description: 'Order permanently deleted.',
+      });
       await onRefresh();
     } catch (err) {
       console.error('[admin/orders] delete failed:', err);
-      alert('Failed to delete order');
+      toast({ variant: 'error', title: 'Error', description: 'Failed to delete order' });
     } finally {
       setBusyOrderId(null);
     }

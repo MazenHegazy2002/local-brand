@@ -274,3 +274,42 @@ export function generateRefundProcessedEmail(
 </html>
   `;
 }
+
+export async function triggerOrderStatusEmail(orderId: string, status: string): Promise<boolean> {
+  try {
+    const { prisma } = await import('@/lib/prisma');
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true, user: true },
+    });
+    if (!order) return false;
+
+    const emailTo = order.user?.email || order.guestEmail;
+    if (!emailTo) return false;
+
+    const userObj = order.user ? (order.user as unknown as User) : null;
+    let subject = '';
+    let html = '';
+
+    if (status === 'SHIPPED') {
+      subject = `Your Order Has Shipped! - ${order.id.slice(0, 8)}`;
+      html = generateShippingNotificationEmail(order as unknown as Order, userObj);
+    } else if (status === 'DELIVERED') {
+      subject = `Your Order Has Been Delivered! - ${order.id.slice(0, 8)}`;
+      html = generateDeliveryConfirmationEmail(order as unknown as Order, userObj);
+    } else if (status === 'CANCELLED') {
+      subject = `Order Cancelled - ${order.id.slice(0, 8)}`;
+      html = generateOrderCancelledEmail(order as unknown as Order, userObj);
+    } else if (status === 'RETURNED') {
+      subject = `Refund Processed - ${order.id.slice(0, 8)}`;
+      html = generateRefundProcessedEmail(order as unknown as Order, userObj, order.totalAmount);
+    } else {
+      return false;
+    }
+
+    return await sendEmail({ to: emailTo, subject, html });
+  } catch (err) {
+    console.error(`[email] triggerOrderStatusEmail failed for ${orderId} (${status}):`, err);
+    return false;
+  }
+}

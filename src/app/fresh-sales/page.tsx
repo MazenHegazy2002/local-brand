@@ -1,5 +1,5 @@
 import Navbar from '@/components/Navbar';
-import ProductCard from '@/components/ProductCard';
+import ProductCard, { ProductCardProduct } from '@/components/ProductCard';
 import { prisma } from '@/lib/prisma';
 
 export const revalidate = 60;
@@ -109,7 +109,7 @@ export default async function FreshSalesPage() {
                           brandSlug: product.seller?.storeName
                             ? product.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
                             : '',
-                        } as any
+                        } as ProductCardProduct
                       }
                       index={idx}
                     />

@@ -130,8 +130,10 @@ model Product {
   sellerId    String
   categoryId  String
   title       String
+  titleAr     String?
   slug        String  @unique
   description String
+  descriptionAr String?
   basePrice   Float // In EGP
   condition   String  @default("NEW")
   isFeatured  Boolean @default(false)
@@ -194,6 +196,7 @@ model Product {
 model Category {
   id       String     @id @default(uuid())
   name     String     @unique
+  nameAr   String?
   slug     String     @unique
   parentId String?
   parent   Category?  @relation("Subcategories", fields: [parentId], references: [id])
@@ -204,6 +207,7 @@ model Category {
 model Tag {
   id   String @id @default(uuid())
   name String @unique
+  nameAr String?
   slug String @unique
 
   products Product[]
@@ -212,8 +216,10 @@ model Tag {
 model Collection {
   id          String  @id @default(uuid())
   name        String  @unique
+  nameAr      String?
   slug        String  @unique
   description String?
+  descriptionAr String?
   imageUrl    String?
 
   products Product[]
@@ -230,6 +236,7 @@ model ProductVariant {
   // goods or rented numbers from GS1, so we never auto-generate it.
   upc        String?
   title      String // e.g. "Red - Medium"
+  titleAr    String?
   attributes String // JSON string for colors/sizes
   price      Float // Specific variant price overriding basePrice if needed
   stockCount Int     @default(0)

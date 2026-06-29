@@ -9,6 +9,8 @@
 //   • inline expansion for the full review/comment text + product link
 
 import React, { useEffect, useState } from 'react';
+import { useConfirm } from '@/providers/ConfirmProvider';
+import { useToast } from '@/components/ui/ToastProvider';
 
 interface ReviewItem {
   id: string;
@@ -38,6 +40,8 @@ type TabType = 'review' | 'qa';
 type StatusFilter = 'all' | 'PENDING' | 'PUBLISHED' | 'HIDDEN' | 'REJECTED';
 
 export default function ReviewsTab() {
+  const { prompt } = useConfirm();
+  const { toast } = useToast();
   const [type, setType] = useState<TabType>('review');
   const [status, setStatus] = useState<StatusFilter>('PENDING');
   const [search, setSearch] = useState('');
@@ -74,12 +78,28 @@ export default function ReviewsTab() {
   ) => {
     setBusyId(id);
     try {
-      await fetch('/api/admin/reviews', {
+      const res = await fetch('/api/admin/reviews', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, type, status: newStatus, moderationNote }),
       });
-      await load();
+      if (res.ok) {
+        toast({
+          variant: 'success',
+          title: 'Status Updated',
+          description: `Successfully updated item to ${newStatus}.`,
+        });
+        await load();
+      } else {
+        toast({
+          variant: 'error',
+          title: 'Update Failed',
+          description: 'Failed to update review status.',
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'error', title: 'Error', description: 'Error updating review status.' });
     } finally {
       setBusyId(null);
     }
@@ -175,9 +195,14 @@ export default function ReviewsTab() {
                     {item.status !== 'HIDDEN' && (
                       <button
                         disabled={busyId === item.id}
-                        onClick={() => {
-                          const note = prompt('Reason for hiding (optional)') ?? undefined;
-                          updateOne(item.id, 'HIDDEN', note);
+                        onClick={async () => {
+                          const note = await prompt({
+                            title: 'Hide Item',
+                            message: 'Reason for hiding (optional):',
+                            placeholder: 'Reason (optional)',
+                          });
+                          if (note === null) return;
+                          updateOne(item.id, 'HIDDEN', note || undefined);
                         }}
                         className="rev-act rev-act-warn"
                       >
@@ -187,9 +212,14 @@ export default function ReviewsTab() {
                     {item.status !== 'REJECTED' && (
                       <button
                         disabled={busyId === item.id}
-                        onClick={() => {
-                          const note = prompt('Reason for rejection') ?? undefined;
-                          if (note !== undefined) updateOne(item.id, 'REJECTED', note);
+                        onClick={async () => {
+                          const note = await prompt({
+                            title: 'Reject Item',
+                            message: 'Reason for rejection:',
+                            placeholder: 'Reason',
+                          });
+                          if (!note) return;
+                          updateOne(item.id, 'REJECTED', note);
                         }}
                         className="rev-act rev-act-bad"
                       >

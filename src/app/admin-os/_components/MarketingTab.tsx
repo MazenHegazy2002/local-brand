@@ -14,6 +14,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import CouponsPanel from './CouponsPanel';
+import { useToast } from '@/components/ui';
 
 type SubTab = 'campaigns' | 'flash' | 'templates' | 'abandoned' | 'coupons';
 
@@ -100,6 +101,7 @@ function CampaignsPanel() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
 
   // Form state
   const [name, setName] = useState('');
@@ -157,11 +159,11 @@ function CampaignsPanel() {
         await load();
       } else {
         const err = await res.json();
-        alert(err.message || 'Failed to create campaign');
+        toast({ title: err.message || 'Failed to create campaign', variant: 'error' });
       }
     } catch (error) {
       console.error(error);
-      alert('Error creating campaign');
+      toast({ title: 'Error creating campaign', variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -256,7 +258,9 @@ function CampaignsPanel() {
                   <select
                     className="w-full border border-slate-200 rounded-xl px-4 py-2 text-xs"
                     value={channel}
-                    onChange={e => setChannel(e.target.value as any)}
+                    onChange={e =>
+                      setChannel(e.target.value as 'EMAIL' | 'PUSH' | 'SMS' | 'IN_APP')
+                    }
                   >
                     <option value="EMAIL">Email 📣</option>
                     <option value="PUSH">Web Push ✉️</option>

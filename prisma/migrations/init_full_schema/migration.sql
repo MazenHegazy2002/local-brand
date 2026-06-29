@@ -1,0 +1,1 @@
+-- Dummy migration to match database history for init_full_schema

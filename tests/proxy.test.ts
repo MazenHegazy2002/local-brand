@@ -269,3 +269,47 @@ describe('proxy — CSP nonce attachment', () => {
     expect(csp).toContain('https://js.stripe.com');
   });
 });
+
+describe('proxy — Arabic subpathing & rewriting', () => {
+  it('internally rewrites /ar/dashboard to /dashboard and sets x-lang and googtrans headers/cookies', async () => {
+    getTokenMock.mockResolvedValue({ role: 'BUYER', sub: 'buyer-user-id' });
+    const req = buildReq('/ar/dashboard');
+
+    const res = await proxy(req);
+
+    expect(req.headers.get('x-lang')).toBe('ar');
+    expect(res.cookies.get('googtrans')?.value).toBe('/en/ar');
+  });
+
+  it('sets x-lang: en and googtrans: /en/en when path is not prefixed with /ar', async () => {
+    getTokenMock.mockResolvedValue({ role: 'BUYER', sub: 'buyer-user-id' });
+    const req = buildReq('/dashboard');
+
+    const res = await proxy(req);
+
+    expect(req.headers.get('x-lang')).toBe('en');
+    expect(res.cookies.get('googtrans')?.value).toBe('/en/en');
+  });
+
+  it('preserves /ar prefix on redirect for unauthenticated users', async () => {
+    getTokenMock.mockResolvedValue(null);
+    const req = buildReq('/ar/dashboard');
+
+    const res = await proxy(req);
+
+    expect(res.status).toBe(307);
+    const location = res.headers.get('location') || '';
+    expect(location).toContain('/ar/login');
+    expect(location).toContain('callbackUrl=%2Far%2Fdashboard');
+  });
+
+  it('preserves /ar prefix on role-based access redirects', async () => {
+    getTokenMock.mockResolvedValue({ role: 'BUYER', sub: 'buyer-user-id' });
+    const req = buildReq('/ar/seller-hub');
+
+    const res = await proxy(req);
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toContain('/ar/dashboard');
+  });
+});

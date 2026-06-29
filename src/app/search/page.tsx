@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Product } from '@/types';
 import { Skeleton } from '@/components/ui';
-import ProductCard from '@/components/ProductCard';
+import ProductCard, { ProductCardProduct } from '@/components/ProductCard';
 
 export default function SearchResultsPage() {
   const searchParams = useSearchParams();
@@ -80,7 +80,7 @@ export default function SearchResultsPage() {
                     brandSlug: product.seller?.storeName
                       ? product.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
                       : '',
-                  } as any
+                  } as ProductCardProduct
                 }
                 index={idx}
               />

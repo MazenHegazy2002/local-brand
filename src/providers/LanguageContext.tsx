@@ -56,26 +56,33 @@ function clearCookie(name: string) {
 
 function detectInitialLang(): Language {
   if (typeof window === 'undefined') return 'en';
-  // 1) Explicit user preference saved in localStorage wins.
+  // 1) Pathname starts with /ar or is /ar
+  if (window.location.pathname === '/ar' || window.location.pathname.startsWith('/ar/')) {
+    return 'ar';
+  }
+  // 2) Explicit user preference saved in localStorage wins.
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored === 'ar' || stored === 'en') return stored;
   } catch {
     /* ignore */
   }
-  // 2) Existing googtrans cookie (e.g. set in a previous session).
+  // 3) Existing googtrans cookie (e.g. set in a previous session).
   const cookie = readCookie(COOKIE_NAME);
   if (cookie && cookie.includes('/ar')) return 'ar';
-  // 3) Fallback: English.
+  // 4) Fallback: English.
   return 'en';
 }
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  // Use a lazy initializer so we read the cookie/localStorage exactly once
-  // — and only on the client (the function is *called* in render, but the
-  // helpers internally check for `window`/`document` and bail out on the
-  // server, returning the default "en").
-  const [lang, setLangState] = useState<Language>(() => detectInitialLang());
+export function LanguageProvider({
+  children,
+  defaultLang,
+}: {
+  children: React.ReactNode;
+  defaultLang?: Language;
+}) {
+  // Use a lazy initializer, preferring defaultLang (determined on server) to avoid hydration mismatch
+  const [lang, setLangState] = useState<Language>(() => defaultLang || detectInitialLang());
 
   const isRTL = lang === 'ar';
 
@@ -99,21 +106,31 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
 
+    let newPathname = window.location.pathname;
     if (nextLang === 'ar') {
       setCookie(COOKIE_NAME, '/en/ar');
       // GT also reads a hash fragment of this exact form.
       window.location.hash = '#googtrans(en|ar)';
+      if (newPathname !== '/ar' && !newPathname.startsWith('/ar/')) {
+        newPathname = '/ar' + (newPathname === '/' ? '' : newPathname);
+      }
     } else {
       clearCookie(COOKIE_NAME);
       // Drop the GT hash so we don't keep re-translating to Arabic.
       if (window.location.hash.startsWith('#googtrans')) {
         history.replaceState(null, '', window.location.pathname + window.location.search);
       }
+      if (newPathname === '/ar') {
+        newPathname = '/';
+      } else if (newPathname.startsWith('/ar/')) {
+        newPathname = newPathname.substring(3);
+      }
     }
 
-    // Hard reload so the GT widget can re-initialise from scratch — this is
-    // the only reliable way to fully roll back a previous translation.
-    window.location.reload();
+    // Go to the new path and reload
+    const search = window.location.search;
+    const hash = window.location.hash;
+    window.location.href = newPathname + search + hash;
   }, []);
 
   const t = useCallback(
