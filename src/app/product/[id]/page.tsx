@@ -14,7 +14,6 @@ async function isVirtualTryOnEnabled(): Promise<boolean> {
     return false;
   }
 }
-import Link from 'next/link';
 import { getDictionary } from '@/lib/i18n/server';
 import ReviewSection from '@/components/ReviewSection';
 import QASection from '@/components/QASection';
@@ -110,9 +109,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     );
   }
 
-  const primaryImage =
-    product.images.find(i => i.isPrimary)?.url || product.images[0]?.url || '/placeholder.png';
-  const stockCount = product.variants.reduce((acc, v) => acc + v.stockCount, 0);
   const avgRating =
     product.reviews.length > 0
       ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length
@@ -238,10 +234,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           eligibleOrderItems={eligibleOrderItems}
         />
 
-        {/* Q&A Section */}
         <QASection
           productId={product.id}
-          sellerId={product.seller?.id ?? ''}
           initialQuestions={initialQuestions as unknown as ProductQA[]}
         />
       </div>

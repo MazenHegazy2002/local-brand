@@ -21,11 +21,9 @@ function timeAgo(date: Date | string): string {
 
 export default function QASection({
   productId,
-  sellerId,
   initialQuestions = [],
 }: {
   productId: string;
-  sellerId: string;
   initialQuestions: ProductQA[];
 }) {
   const { data: session } = useSession();

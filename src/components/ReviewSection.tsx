@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { submitReview } from '@/app/actions/seller';
 import { useLanguage } from '@/providers/LanguageContext';
 import {
   RatingStars,

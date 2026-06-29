@@ -8,7 +8,6 @@ import { cancelOrder, requestReturn } from '../actions/orders';
 import Link from 'next/link';
 import { User, Order, OrderItem, WishlistItem, Notification, SessionUser, Product } from '@/types';
 import { useCartStore } from '@/lib/cartStore';
-import { useConfirm } from '@/providers/ConfirmProvider';
 import { useToast } from '@/components/ui/ToastProvider';
 
 const VALID_TABS = [
@@ -60,7 +59,6 @@ function CustomerDashboard() {
       setActiveTab(t as DashboardTab);
     }
   }, [searchParams]);
-  const { confirm, alert, prompt } = useConfirm();
   const { toast } = useToast();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);

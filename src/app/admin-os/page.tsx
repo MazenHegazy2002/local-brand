@@ -84,7 +84,7 @@ interface DashboardData {
 export default function AdminOS() {
   const { data: session } = useSession();
   const router = useRouter();
-  const { confirm, alert } = useConfirm();
+  const { confirm } = useConfirm();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [data, setData] = useState<DashboardData | null>(null);

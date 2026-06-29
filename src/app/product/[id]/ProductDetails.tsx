@@ -8,7 +8,7 @@ import { useLanguage } from '@/providers/LanguageContext';
 import WishlistButton from '@/components/WishlistButton';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { useToast } from '@/components/ui';
-import { Product, ProductVariant, ProductImage, Tag } from '@/types';
+import { ProductImage, Tag } from '@/types';
 import { ShareButton } from '@/components/ShareButton';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
 
@@ -129,7 +129,7 @@ export default function ProductDetails({
       const attrs = JSON.parse(v.attributes || '{}');
       color = String(attrs.color || attrs.Color || '').trim();
       size = String(attrs.size || attrs.Size || '').trim();
-    } catch (e) {
+    } catch (_e) {
       // Robust fallback for traditional layouts
       if (v.title.includes('-')) {
         const parts = v.title.split('-').map((p: string) => p.trim());

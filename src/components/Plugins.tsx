@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Plugins is a single mount point that loads optional third-party scripts
  * if their corresponding `NEXT_PUBLIC_*` env vars are set.
  *
@@ -58,8 +58,6 @@ export default function Plugins() {
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
   const crispId = process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID;
-  const tawkProperty = process.env.NEXT_PUBLIC_TAWK_PROPERTY_ID;
-  const tawkWidget = process.env.NEXT_PUBLIC_TAWK_WIDGET_ID;
   const hotjarId = process.env.NEXT_PUBLIC_HOTJAR_ID;
   const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
