@@ -2,8 +2,22 @@ import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { getDictionary } from '@/lib/i18n/server';
+import type { Metadata } from 'next';
+import { PLATFORM_URL } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Local Brands — Egyptian Sellers | Brandy',
+  description:
+    'Discover verified Egyptian local brands on Brandy. Shop authentic products direct from local sellers across fashion, electronics, home goods, and more.',
+  openGraph: {
+    title: 'Local Brands — Egyptian Sellers | Brandy',
+    description: 'Shop authentic products from verified Egyptian local sellers.',
+    url: `${PLATFORM_URL}/brands`,
+    type: 'website',
+  },
+};
 
 export default async function BrandsPage() {
   const t = await getDictionary();
