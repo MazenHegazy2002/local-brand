@@ -8,6 +8,7 @@ import ProductCard, { ProductCardProduct } from '@/components/ProductCard';
 import { Suspense } from 'react';
 import { Product, ProductImage } from '@/types';
 import PromoBanner from '@/components/PromoBanner';
+import { organizationJsonLd, websiteJsonLd, jsonLdScript } from '@/lib/jsonld';
 
 interface HomePageData {
   categories: { id: string; name: string; slug: string; parentId: string | null }[];
@@ -107,6 +108,15 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen font-sans" style={{ background: '#f6f6f7' }}>
+      {/* Organization + WebSite structured data for Google rich results */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(organizationJsonLd()) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(websiteJsonLd()) }}
+      />
       <PromoBanner />
       <PromoBanner
         id="affiliate-program"

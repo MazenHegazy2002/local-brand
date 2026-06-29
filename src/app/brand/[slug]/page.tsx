@@ -3,6 +3,41 @@ import ProductCard, { ProductCardProduct } from '@/components/ProductCard';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { Product, ProductImage } from '@/types';
+import type { Metadata } from 'next';
+import { PLATFORM_URL } from '@/lib/constants';
+import { breadcrumbJsonLd, jsonLdScript } from '@/lib/jsonld';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug).toLowerCase();
+
+  const sellers = await prisma.sellerProfile.findMany({
+    where: { status: 'ACTIVE', deletedAt: null },
+    select: { storeName: true },
+  });
+
+  const seller = sellers.find(
+    s => s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-') === decodedSlug
+  );
+
+  if (!seller) return { title: 'Brand Not Found' };
+
+  const description = `Shop ${seller.storeName} products on Brandy — Egypt's marketplace for local sellers. Authentic Egyptian brand.`;
+
+  return {
+    title: `${seller.storeName} — Brandy`,
+    description,
+    openGraph: {
+      title: `${seller.storeName} — Brandy`,
+      description,
+      type: 'website',
+    },
+  };
+}
 
 export default async function BrandPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -19,8 +54,21 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
 
   if (!seller) return notFound();
 
+  const brandUrl = `${PLATFORM_URL}/brand/${slug}`;
+  const breadcrumbLd = breadcrumbJsonLd({
+    items: [
+      { name: 'Home', url: PLATFORM_URL },
+      { name: 'Brands', url: `${PLATFORM_URL}/brands` },
+      { name: seller.storeName, url: brandUrl },
+    ],
+  });
+
   return (
     <main className="min-h-screen bg-[hsl(var(--background))]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbLd) }}
+      />
       <Navbar />
 
       {/* Brand Hero Cover */}
@@ -37,6 +85,29 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
       </div>
 
       <div className="container py-12 md:py-24">
+        {/* Breadcrumb */}
+        <nav aria-label="Breadcrumb" className="mb-8">
+          <ol className="flex items-center gap-2 text-sm text-gray-500">
+            <li>
+              <a href="/" className="hover:text-[#1e3b8a]">
+                Home
+              </a>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li>
+              <a href="/brands" className="hover:text-[#1e3b8a]">
+                Brands
+              </a>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li>
+              <span className="text-gray-900 font-medium" aria-current="page">
+                {seller.storeName}
+              </span>
+            </li>
+          </ol>
+        </nav>
+
         <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
           <h2 className="text-3xl font-serif font-bold text-gray-900">
             Curated <span className="text-[#1e3b8a]">Collection</span>

@@ -198,17 +198,38 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       <Navbar />
 
       {/* Breadcrumb */}
-      <div className="bg-white border-b border-gray-100 py-3">
-        <div className="container mx-auto px-4 text-xs font-semibold text-gray-500 flex items-center gap-2">
-          <span>{t.Home}</span>
-          <span>/</span>
-          <span>{t.Shop}</span>
-          <span>/</span>
-          <span className="text-[#1e3b8a]">{product.category?.name}</span>
-          <span>/</span>
-          <span className="text-gray-900 truncate max-w-[200px]">{product.title}</span>
+      <nav aria-label="Breadcrumb" className="bg-white border-b border-gray-100 py-3">
+        <div className="container mx-auto px-4">
+          <ol className="flex items-center gap-2 text-xs font-semibold text-gray-500">
+            <li>
+              <a href="/" className="hover:text-[#1e3b8a] transition-colors">
+                {t.Home}
+              </a>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li>
+              <a href="/shop" className="hover:text-[#1e3b8a] transition-colors">
+                {t.Shop}
+              </a>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li>
+              <a
+                href={`/shop?category=${product.category?.slug}`}
+                className="hover:text-[#1e3b8a] transition-colors"
+              >
+                {product.category?.name}
+              </a>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li>
+              <span className="text-gray-900 truncate max-w-[200px] block" aria-current="page">
+                {product.title}
+              </span>
+            </li>
+          </ol>
         </div>
-      </div>
+      </nav>
 
       <div className="container mx-auto px-4 py-8">
         <ProductDetails

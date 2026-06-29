@@ -7,6 +7,7 @@ import { ProductGridSkeleton } from '@/components/Skeleton';
 import { Category, Product, ProductImage } from '@/types';
 import type { Metadata } from 'next';
 import { PLATFORM_URL } from '@/lib/constants';
+import { breadcrumbJsonLd, jsonLdScript } from '@/lib/jsonld';
 
 export const revalidate = 300;
 
@@ -87,27 +88,49 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     },
   };
 
+  const breadcrumbLd = breadcrumbJsonLd({
+    items: [
+      { name: 'Home', url: PLATFORM_URL },
+      { name: 'Categories', url: `${PLATFORM_URL}/categories` },
+      { name: category.name, url: `${PLATFORM_URL}/category/${category.slug}` },
+    ],
+  });
+
   return (
     <main className="min-h-screen bg-[hsl(var(--background))]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbLd) }}
+      />
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))] mb-6">
-          <Link href="/" className="hover:text-[hsl(var(--primary))]">
-            Home
-          </Link>
-          <span>/</span>
-          <Link href="/categories" className="hover:text-[hsl(var(--primary))]">
-            Categories
-          </Link>
-          <span>/</span>
-          <span className="text-[hsl(var(--foreground))] font-medium">{category.name}</span>
-        </div>
+        <nav aria-label="Breadcrumb" className="mb-6">
+          <ol className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]">
+            <li>
+              <Link href="/" className="hover:text-[hsl(var(--primary))]">
+                Home
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li>
+              <Link href="/categories" className="hover:text-[hsl(var(--primary))]">
+                Categories
+              </Link>
+            </li>
+            <li aria-hidden="true">/</li>
+            <li>
+              <span className="text-[hsl(var(--foreground))] font-medium" aria-current="page">
+                {category.name}
+              </span>
+            </li>
+          </ol>
+        </nav>
 
         <h1 className="text-3xl md:text-4xl font-black text-[hsl(var(--foreground))] mb-2">
           {category.name}

@@ -124,7 +124,8 @@ export default function LiveSearch() {
       <form onSubmit={handleSearch} className="relative">
         <input
           ref={inputRef}
-          type="text"
+          id="live-search-input"
+          type="search"
           value={search}
           onChange={e => {
             setSearch(e.target.value);
@@ -135,6 +136,11 @@ export default function LiveSearch() {
           }}
           onKeyDown={handleKeyDown}
           placeholder={t('SearchPlaceholder')}
+          aria-label="Search products"
+          aria-autocomplete="list"
+          aria-expanded={isOpen}
+          aria-controls="live-search-results"
+          role="combobox"
           className="w-full bg-white/15 border border-white/40 text-white placeholder:text-white/75 rounded-lg py-2.5 px-4 pr-10 outline-none text-sm focus:bg-white/25 focus:border-white/60 transition-all"
         />
         <button
@@ -177,7 +183,12 @@ export default function LiveSearch() {
       </form>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-slideDown">
+        <div
+          id="live-search-results"
+          role="listbox"
+          aria-label="Search suggestions"
+          className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-slideDown"
+        >
           {isSearching ? (
             <div className="p-4 text-center text-sm text-gray-500">Searching...</div>
           ) : search.trim().length > 0 ? (
