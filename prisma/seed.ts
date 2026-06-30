@@ -1262,6 +1262,99 @@ async function main() {
     `✅ Sample products created: ${productCount} products, ${variantCount} variants across ${CATALOG.length} categories`
   );
 
+  // ── Homepage Banners ───────────────────────────────────────────────────────
+  await prisma.homepageBanner.createMany({
+    data: [
+      // Slot 0 — Main Carousel
+      {
+        title: 'Redefining Urban Elegance',
+        subtitle: 'Seasonal Collection 2026',
+        imageUrl:
+          'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=75&w=1200&auto=format&fit=crop',
+        linkUrl: '/shop',
+        ctaLabel: 'Shop Now',
+        position: 0,
+        isActive: true,
+      },
+      {
+        title: 'Premium Local Craft',
+        subtitle: 'Handmade in Egypt',
+        imageUrl:
+          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=75&w=1200&auto=format&fit=crop',
+        linkUrl: '/shop',
+        ctaLabel: 'Shop Now',
+        position: 0,
+        isActive: true,
+      },
+      {
+        title: 'New Modern Arrivals',
+        subtitle: 'Fresh Trends',
+        imageUrl:
+          'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?q=75&w=1200&auto=format&fit=crop',
+        linkUrl: '/shop',
+        ctaLabel: 'Shop Now',
+        position: 0,
+        isActive: true,
+      },
+      // Slot 1 — Right Top Banner Carousel
+      {
+        title: 'Next-Gen Footwear',
+        subtitle: 'Up to 40% Off Brands',
+        imageUrl:
+          'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=75&w=600&auto=format&fit=crop',
+        linkUrl: '/shoes',
+        position: 1,
+        isActive: true,
+      },
+      {
+        title: 'Active Trainer Hub',
+        subtitle: 'Performance Gear',
+        imageUrl:
+          'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=75&w=600&auto=format&fit=crop',
+        linkUrl: '/shoes',
+        position: 1,
+        isActive: true,
+      },
+      {
+        title: 'Everyday Streetwear',
+        subtitle: 'Walk in Style',
+        imageUrl:
+          'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=75&w=600&auto=format&fit=crop',
+        linkUrl: '/shoes',
+        position: 1,
+        isActive: true,
+      },
+      // Slot 2 — Right Bottom Banner Carousel
+      {
+        title: 'Timeless Design',
+        subtitle: 'Curated Accessories',
+        imageUrl:
+          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=75&w=600&auto=format&fit=crop',
+        linkUrl: '/watches',
+        position: 2,
+        isActive: true,
+      },
+      {
+        title: 'Premium Timepieces',
+        subtitle: 'Precision Quality',
+        imageUrl:
+          'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?q=75&w=600&auto=format&fit=crop',
+        linkUrl: '/watches',
+        position: 2,
+        isActive: true,
+      },
+      {
+        title: 'Artisanal Carrybags',
+        subtitle: 'Handmade Genuine Leather',
+        imageUrl:
+          'https://images.unsplash.com/photo-1547949003-9792a18a2601?q=75&w=600&auto=format&fit=crop',
+        linkUrl: '/shop',
+        position: 2,
+        isActive: true,
+      },
+    ],
+  });
+
   console.log('\n🎉 Seeding complete!');
   console.log('Login credentials:');
   console.log('  Admin:     admin@admin.com / admin1234         → /admin-os');
