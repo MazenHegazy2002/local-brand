@@ -16,14 +16,20 @@ export async function generateMetadata(
   // primary image. Anything missing falls back to the parent layout's defaults.
   let product: {
     title: string;
+    slug: string;
     description: string;
     images: { url: string; isPrimary: boolean }[];
   } | null = null;
   try {
-    product = await prisma.product.findUnique({
-      where: { id, published: true, deletedAt: null },
+    product = await prisma.product.findFirst({
+      where: {
+        OR: [{ id }, { slug: id }],
+        published: true,
+        deletedAt: null,
+      },
       select: {
         title: true,
+        slug: true,
         description: true,
         images: { select: { url: true, isPrimary: true } },
       },
@@ -39,7 +45,7 @@ export async function generateMetadata(
   const primaryImage = product.images.find(i => i.isPrimary)?.url || product.images[0]?.url;
   const description = product.description.slice(0, 160);
   const previousImages = (await parent).openGraph?.images || [];
-  const url = `${PLATFORM_URL}/product/${id}`;
+  const url = `${PLATFORM_URL}/product/${product.slug}`;
 
   return {
     title: `${product.title} | Brandy Egypt`,

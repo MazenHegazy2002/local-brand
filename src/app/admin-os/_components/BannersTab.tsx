@@ -335,8 +335,8 @@ export default function BannersTab() {
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white"
                   >
                     <option value={0}>Slot 0 — Main Carousel (multiple images cycle)</option>
-                    <option value={1}>Slot 1 — Right Top Banner</option>
-                    <option value={2}>Slot 2 — Right Bottom Banner</option>
+                    <option value={1}>Slot 1 — Right Top Banner (multiple images cycle)</option>
+                    <option value={2}>Slot 2 — Right Bottom Banner (multiple images cycle)</option>
                   </select>
                 </div>
               </div>

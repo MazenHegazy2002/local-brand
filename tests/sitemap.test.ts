@@ -13,8 +13,8 @@ jest.mock('@/lib/prisma', () => ({
   prisma: {
     product: {
       findMany: jest.fn().mockResolvedValue([
-        { id: 'prod-1', updatedAt: new Date('2025-01-01') },
-        { id: 'prod-2', updatedAt: new Date('2025-02-01') },
+        { id: 'prod-1', slug: 'prod-1', updatedAt: new Date('2025-01-01') },
+        { id: 'prod-2', slug: 'prod-2', updatedAt: new Date('2025-02-01') },
       ]),
     },
     category: {

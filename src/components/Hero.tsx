@@ -1,7 +1,6 @@
-import Link from 'next/link';
-import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import HeroSlider, { type HeroSlide } from './HeroSlider';
+import RightBannerSlider, { type RightBannerSlide } from './RightBannerSlider';
 
 // Hardcoded fallback shown when there are no active homepage banners in the
 // database. Titles/subtitles are i18n dictionary keys so default copy
@@ -36,6 +35,26 @@ const FALLBACK_SLIDES: HeroSlide[] = [
   },
 ];
 
+const FALLBACK_RIGHT_TOP: RightBannerSlide[] = [
+  {
+    imageUrl:
+      'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=75&w=600&auto=format&fit=crop',
+    title: 'Next-Gen Footwear',
+    subtitle: 'Up to 40% Off Brands',
+    linkUrl: '/shoes',
+  },
+];
+
+const FALLBACK_RIGHT_BOTTOM: RightBannerSlide[] = [
+  {
+    imageUrl:
+      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=75&w=600&auto=format&fit=crop',
+    title: 'Timeless Design',
+    subtitle: 'Curated Accessories',
+    linkUrl: '/watches',
+  },
+];
+
 async function loadBanners() {
   try {
     const now = new Date();
@@ -49,8 +68,8 @@ async function loadBanners() {
     });
 
     const sliderBanners = banners.filter(b => b.position === 0 || b.position < 0 || b.position > 2);
-    const rightTopBanner = banners.find(b => b.position === 1) || null;
-    const rightBottomBanner = banners.find(b => b.position === 2) || null;
+    const rightTopBanners = banners.filter(b => b.position === 1);
+    const rightBottomBanners = banners.filter(b => b.position === 2);
 
     return {
       slider:
@@ -63,59 +82,31 @@ async function loadBanners() {
               ctaLabel: b.ctaLabel,
             }))
           : FALLBACK_SLIDES,
-      rightTop: rightTopBanner
-        ? {
-            imageUrl: rightTopBanner.imageUrl,
-            title: rightTopBanner.title,
-            subtitle: rightTopBanner.subtitle,
-            linkUrl: rightTopBanner.linkUrl,
-            ctaLabel: rightTopBanner.ctaLabel,
-          }
-        : {
-            imageUrl:
-              'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=75&w=600&auto=format&fit=crop',
-            title: 'Next-Gen Footwear',
-            subtitle: 'Up to 40% Off Brands',
-            linkUrl: '/shoes',
-            ctaLabel: null,
-          },
-      rightBottom: rightBottomBanner
-        ? {
-            imageUrl: rightBottomBanner.imageUrl,
-            title: rightBottomBanner.title,
-            subtitle: rightBottomBanner.subtitle,
-            linkUrl: rightBottomBanner.linkUrl,
-            ctaLabel: rightBottomBanner.ctaLabel,
-          }
-        : {
-            imageUrl:
-              'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=75&w=600&auto=format&fit=crop',
-            title: 'Timeless Design',
-            subtitle: 'Curated Accessories',
-            linkUrl: '/watches',
-            ctaLabel: null,
-          },
+      rightTop:
+        rightTopBanners.length > 0
+          ? rightTopBanners.map(b => ({
+              imageUrl: b.imageUrl,
+              title: b.title,
+              subtitle: b.subtitle,
+              linkUrl: b.linkUrl,
+            }))
+          : FALLBACK_RIGHT_TOP,
+      rightBottom:
+        rightBottomBanners.length > 0
+          ? rightBottomBanners.map(b => ({
+              imageUrl: b.imageUrl,
+              title: b.title,
+              subtitle: b.subtitle,
+              linkUrl: b.linkUrl,
+            }))
+          : FALLBACK_RIGHT_BOTTOM,
     };
   } catch (err) {
     console.error('[Hero] failed to load banners:', err);
     return {
       slider: FALLBACK_SLIDES,
-      rightTop: {
-        imageUrl:
-          'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=75&w=600&auto=format&fit=crop',
-        title: 'Next-Gen Footwear',
-        subtitle: 'Up to 40% Off Brands',
-        linkUrl: '/shoes',
-        ctaLabel: null,
-      },
-      rightBottom: {
-        imageUrl:
-          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=75&w=600&auto=format&fit=crop',
-        title: 'Timeless Design',
-        subtitle: 'Curated Accessories',
-        linkUrl: '/watches',
-        ctaLabel: null,
-      },
+      rightTop: FALLBACK_RIGHT_TOP,
+      rightBottom: FALLBACK_RIGHT_BOTTOM,
     };
   }
 }
@@ -132,50 +123,15 @@ export default async function Hero() {
             <HeroSlider slides={slider} />
           </div>
 
-          {/* Right-hand stacked cards — static curated entry points to category
-              pages. Easier to leave hardcoded than to mix into the CMS for now. */}
+          {/* Right-hand stacked cards — curatable sliders. */}
           <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:col-span-1 h-[180px] sm:h-[220px] lg:h-[480px]">
-            <Link
-              href={rightTop.linkUrl}
-              className="relative flex-1 rounded-xl overflow-hidden group block cursor-pointer"
-            >
-              <Image
-                src={rightTop.imageUrl}
-                fill
-                sizes="(max-width: 1024px) 50vw, 17vw"
-                style={{ objectFit: 'cover' }}
-                alt={rightTop.title}
-                className="z-0"
-              />
-              <div className="absolute inset-0 z-10 bg-gradient-to-t from-gray-900/90 to-transparent" />
-              <div className="absolute bottom-0 left-0 p-6 z-20 w-full">
-                <h3 className="text-white text-xl md:text-2xl font-bold mb-1 tracking-tight">
-                  {rightTop.title}
-                </h3>
-                <span className="text-white/70 text-sm font-medium">{rightTop.subtitle}</span>
-              </div>
-            </Link>
+            <div className="relative flex-1 rounded-xl overflow-hidden group">
+              <RightBannerSlider slides={rightTop} />
+            </div>
 
-            <Link
-              href={rightBottom.linkUrl}
-              className="relative flex-1 rounded-xl overflow-hidden group block cursor-pointer"
-            >
-              <Image
-                src={rightBottom.imageUrl}
-                fill
-                sizes="(max-width: 1024px) 50vw, 17vw"
-                style={{ objectFit: 'cover' }}
-                alt={rightBottom.title}
-                className="z-0"
-              />
-              <div className="absolute inset-0 z-10 bg-gradient-to-t from-gray-900/90 to-transparent" />
-              <div className="absolute bottom-0 left-0 p-6 z-20 w-full">
-                <h3 className="text-white text-xl md:text-2xl font-bold mb-1 tracking-tight">
-                  {rightBottom.title}
-                </h3>
-                <span className="text-white/70 text-sm font-medium">{rightBottom.subtitle}</span>
-              </div>
-            </Link>
+            <div className="relative flex-1 rounded-xl overflow-hidden group">
+              <RightBannerSlider slides={rightBottom} />
+            </div>
           </div>
         </div>
       </div>

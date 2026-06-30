@@ -32,10 +32,13 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const product = await prisma.product.findUnique({
-    where: { id },
+  const product = await prisma.product.findFirst({
+    where: {
+      OR: [{ id }, { slug: id }],
+    },
     select: {
       title: true,
+      slug: true,
       description: true,
       basePrice: true,
       flashSalePrice: true,
@@ -61,6 +64,7 @@ export async function generateMetadata({
     openGraph: {
       title: product.title,
       description,
+      url: `${PLATFORM_URL}/product/${product.slug}`,
       images: image ? [{ url: image, width: 800, height: 800 }] : undefined,
       type: 'website',
     },
@@ -79,8 +83,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const session = await getServerSession(authOptions);
 
   const [product, virtualTryOnEnabled] = await Promise.all([
-    prisma.product.findUnique({
-      where: { id },
+    prisma.product.findFirst({
+      where: {
+        OR: [{ id }, { slug: id }],
+      },
       include: {
         images: true,
         variants: true,

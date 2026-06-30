@@ -357,7 +357,11 @@ export default function ProductDetails({
               </span>
             )}
           </div>
-          <ShareButton productId={product.id} productName={productTitle} />
+          <ShareButton
+            productId={product.id}
+            productName={productTitle}
+            productSlug={product.slug}
+          />
         </div>
 
         {/* Title */}

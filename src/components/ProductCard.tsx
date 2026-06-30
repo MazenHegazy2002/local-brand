@@ -107,7 +107,7 @@ export default function ProductCard({
   const { t, lang } = useLanguage();
   const isAr = lang === 'ar';
 
-  const displayId = String(product.id);
+  const displayId = product.slug || String(product.id);
   const displayName = isAr
     ? product.nameAr ||
       (product as Partial<Product>).titleAr ||
