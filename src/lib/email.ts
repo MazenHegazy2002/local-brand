@@ -1,7 +1,7 @@
 // Email notification utility
 // For production, integrate with SendGrid, Resend, AWS SES, or similar
 
-import { CONTACT_PHONE, SUPPORT_EMAIL } from '@/lib/constants';
+import { CONTACT_PHONE, SUPPORT_EMAIL, VAT_RATE } from '@/lib/constants';
 import type { Order, User, OrderItem } from '@/types';
 
 interface EmailOptions {
@@ -66,6 +66,10 @@ export function generateOrderConfirmationEmail(order: Order, user: User | null):
 
   const address = order.shippingAddressSnapshot ? JSON.parse(order.shippingAddressSnapshot) : {};
 
+  const subtotalAfterDiscount = (order.totalAmount - order.shippingFee) / (1 + VAT_RATE);
+  const subtotalBeforeDiscount = subtotalAfterDiscount + order.discountAmount;
+  const vatAmount = subtotalAfterDiscount * VAT_RATE;
+
   return `
 <!DOCTYPE html>
 <html>
@@ -113,25 +117,29 @@ export function generateOrderConfirmationEmail(order: Order, user: User | null):
       <div style="border-top: 2px solid #eee; padding-top: 20px; margin-top: 20px;">
         <div style="display: flex; justify-content: space-between; margin: 8px 0;">
           <span>Subtotal:</span>
-          <span>${(order.totalAmount - order.shippingFee).toLocaleString()} EGP</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin: 8px 0;">
-          <span>Shipping:</span>
-          <span>${order.shippingFee} EGP</span>
+          <span>${subtotalBeforeDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP</span>
         </div>
         ${
           order.discountAmount > 0
             ? `
         <div style="display: flex; justify-content: space-between; margin: 8px 0; color: green;">
           <span>Discount:</span>
-          <span>-${order.discountAmount} EGP</span>
+          <span>-${order.discountAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP</span>
         </div>
         `
             : ''
         }
+        <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+          <span>VAT (14%):</span>
+          <span>${vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+          <span>Shipping:</span>
+          <span>${order.shippingFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP</span>
+        </div>
         <div style="display: flex; justify-content: space-between; margin: 12px 0 0; padding-top: 12px; border-top: 1px solid #eee; font-size: 18px; font-weight: bold;">
           <span>Total:</span>
-          <span style="color: #1e3b8a;">${order.totalAmount.toLocaleString()} EGP</span>
+          <span style="color: #1e3b8a;">${order.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP</span>
         </div>
       </div>
 

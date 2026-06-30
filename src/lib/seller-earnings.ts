@@ -22,11 +22,7 @@ export interface SellerEarnings {
 
 const ITEM_EARNING_STATUSES: OrderItemStatus[] = [OrderItemStatus.DELIVERED];
 
-const PAYOUT_OUTSTANDING_STATUSES: PayoutStatus[] = [
-  PayoutStatus.PENDING,
-  PayoutStatus.PROCESSING,
-  PayoutStatus.PAID,
-];
+const PAYOUT_OUTSTANDING_STATUSES: PayoutStatus[] = [PayoutStatus.PENDING, PayoutStatus.PROCESSING];
 
 const EMPTY_EARNINGS: SellerEarnings = {
   available: 0,

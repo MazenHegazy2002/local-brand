@@ -127,6 +127,35 @@ export default async function Home() {
       <Navbar />
       <Hero />
 
+      <div className="home-shell mt-8">
+        <Suspense fallback={<div style={{ height: 400 }} />}>
+          <ProductSection
+            emoji="🔥"
+            title="Bestsellers"
+            linkLabel="All products"
+            linkHref="/shop"
+            products={bestsellers}
+            dict={dict}
+          />
+          <ProductSection
+            emoji="✨"
+            title="New Arrivals"
+            linkLabel="All new"
+            linkHref="/shop?sort=newest"
+            products={newArrivals}
+            dict={dict}
+          />
+          <ProductSection
+            emoji="💡"
+            title="Recommended for You"
+            linkLabel="All products"
+            linkHref="/shop"
+            products={recommended}
+            dict={dict}
+          />
+        </Suspense>
+      </div>
+
       {/* ── About Brandy & Value Proposition Section ── */}
       <section className="bg-white border-y border-gray-100 py-12 mb-8">
         <div className="home-shell">
@@ -340,35 +369,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      <div className="home-shell">
-        <Suspense fallback={<div style={{ height: 400 }} />}>
-          <ProductSection
-            emoji="🔥"
-            title="Bestsellers"
-            linkLabel="All products"
-            linkHref="/shop"
-            products={bestsellers}
-            dict={dict}
-          />
-          <ProductSection
-            emoji="✨"
-            title="New Arrivals"
-            linkLabel="All new"
-            linkHref="/shop?sort=newest"
-            products={newArrivals}
-            dict={dict}
-          />
-          <ProductSection
-            emoji="💡"
-            title="Recommended for You"
-            linkLabel="All products"
-            linkHref="/shop"
-            products={recommended}
-            dict={dict}
-          />
-        </Suspense>
-      </div>
 
       {/* ── Customer Testimonials ── */}
       <section className="bg-slate-50 py-16 mt-8 border-y border-gray-100">

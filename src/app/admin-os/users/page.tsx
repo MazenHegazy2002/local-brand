@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useConfirm } from '@/providers/ConfirmProvider';
 
 export default function AdminUsersPage() {
+  const { confirm } = useConfirm();
   const [users, setUsers] = useState<any[]>([]);
   const [_loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -31,7 +33,12 @@ export default function AdminUsersPage() {
   };
 
   const deleteUser = async (id: string) => {
-    if (!confirm('Delete this user? This cannot be undone.')) return;
+    const confirmed = await confirm({
+      title: 'Delete User',
+      message: 'Delete this user? This cannot be undone.',
+      type: 'danger',
+    });
+    if (!confirmed) return;
     await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
     fetchUsers();
   };

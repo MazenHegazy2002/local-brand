@@ -257,13 +257,13 @@ export async function createOrderForUser(
     });
 
     // ── 5. Post-Order Actions ────────────────────────────────────────────────
-    if (affiliateId && userId) {
+    if (affiliateId) {
       try {
         const { recordAffiliateSale } = await import('@/lib/checkout-affiliate');
         await recordAffiliateSale({
           orderId: order.id,
           affiliateId,
-          buyerId: userId,
+          buyerId: userId || null,
           orderTotalBeforeDiscountEgp: subtotal,
           orderTotalAfterDiscountEgp: subtotalAfterDiscount,
           discountPct: affiliateDiscountPct,

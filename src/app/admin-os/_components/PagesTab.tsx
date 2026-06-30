@@ -11,6 +11,7 @@
 // product descriptions.
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useConfirm } from '@/providers/ConfirmProvider';
 
 interface PageRow {
   id: string;
@@ -43,6 +44,7 @@ const EMPTY_DRAFT: Partial<PageRow> = {
 };
 
 export default function PagesTab() {
+  const { confirm } = useConfirm();
   const [pages, setPages] = useState<PageRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -118,7 +120,12 @@ export default function PagesTab() {
 
   const archive = async () => {
     if (!activeId || activeId === 'new') return;
-    if (!confirm('Archive this page? It will become inaccessible at /p/<slug>.')) return;
+    const confirmed = await confirm({
+      title: 'Archive Page',
+      message: 'Archive this page? It will become inaccessible at /p/<slug>.',
+      type: 'warning',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`/api/admin/pages?id=${activeId}`, { method: 'DELETE' });
       if (!res.ok) {

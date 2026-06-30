@@ -52,6 +52,17 @@ export async function cancelOrder(orderId: string): Promise<{ success?: boolean;
     }
 
     await prisma.$transaction(async tx => {
+      const items = await tx.orderItem.findMany({
+        where: { orderId },
+      });
+
+      for (const item of items) {
+        await tx.productVariant.update({
+          where: { id: item.variantId },
+          data: { stockCount: { increment: item.quantity } },
+        });
+      }
+
       await tx.order.update({
         where: { id: orderId },
         data: { status: OrderStatus.CANCELLED },

@@ -13,10 +13,23 @@ const configs: Record<string, RateLimitConfig> = {
   default: { windowMs: 60 * 1000, maxRequests: 60 }, // 60 per minute
 };
 
+function normalizePath(pathname: string): string {
+  let path = pathname.replace(/\/[0-9a-f-]{36}(?=\/|$)/gi, '/:id');
+  path = path.replace(/\/\d+(?=\/|$)/g, '/:id');
+  if (path.startsWith('/api/products/')) {
+    const segments = path.split('/');
+    if (segments.length === 4 && !['bulk-upload', 'evaluate', 'list'].includes(segments[3])) {
+      segments[3] = ':id';
+      path = segments.join('/');
+    }
+  }
+  return path;
+}
+
 export async function rateLimit(req: NextRequest, customConfig?: Partial<RateLimitConfig>) {
   const ip = req.headers.get('x-forwarded-for') || 'unknown';
   const url = req.nextUrl.pathname;
-  
+
   // Find matching config
   let config = configs.default;
   for (const path of Object.keys(configs)) {
@@ -30,7 +43,8 @@ export async function rateLimit(req: NextRequest, customConfig?: Partial<RateLim
     config = { ...config, ...customConfig };
   }
 
-  const key = `ratelimit:${ip}:${url}`;
+  const normalizedUrl = normalizePath(url);
+  const key = `ratelimit:${ip}:${normalizedUrl}`;
   const window = Math.floor(Date.now() / config.windowMs);
   const redisKey = `${key}:${window}`;
 

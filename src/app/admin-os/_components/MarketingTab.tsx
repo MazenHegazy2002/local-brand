@@ -15,6 +15,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import CouponsPanel from './CouponsPanel';
 import { useToast } from '@/components/ui';
+import { useConfirm } from '@/providers/ConfirmProvider';
 
 type SubTab = 'campaigns' | 'flash' | 'templates' | 'abandoned' | 'coupons';
 
@@ -395,6 +396,7 @@ function toDatetimeLocal(date: Date): string {
 }
 
 function FlashSalesPanel() {
+  const { confirm } = useConfirm();
   const [filter, setFilter] = useState<'all' | 'active' | 'upcoming' | 'expired'>('active');
   const [items, setItems] = useState<FlashProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -500,7 +502,12 @@ function FlashSalesPanel() {
   };
 
   const handleCancel = async (productId: string, title: string) => {
-    if (!confirm(`Remove flash sale from "${title}"?`)) return;
+    const confirmed = await confirm({
+      title: 'Cancel Flash Sale',
+      message: `Remove flash sale from "${title}"?`,
+      type: 'danger',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`/api/admin/flash-sales/${productId}`, { method: 'DELETE' });
       if (res.ok) {

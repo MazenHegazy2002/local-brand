@@ -119,6 +119,28 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     const updated = await prisma.$transaction(async tx => {
       const result = await tx.order.update({ where: { id }, data });
       if (data.status === OrderStatus.CANCELLED && order.status !== OrderStatus.CANCELLED) {
+        const liveItems = await tx.orderItem.findMany({
+          where: {
+            orderId: id,
+            status: {
+              in: [
+                OrderItemStatus.PENDING,
+                OrderItemStatus.CONFIRMED,
+                OrderItemStatus.SHIPPED,
+                OrderItemStatus.DELIVERED,
+                OrderItemStatus.RETURN_REQUESTED,
+              ],
+            },
+          },
+        });
+
+        for (const item of liveItems) {
+          await tx.productVariant.update({
+            where: { id: item.variantId },
+            data: { stockCount: { increment: item.quantity } },
+          });
+        }
+
         await tx.orderItem.updateMany({
           where: {
             orderId: id,

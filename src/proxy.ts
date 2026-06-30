@@ -141,7 +141,7 @@ function attachCsp(
   // Issue the CSRF token cookie if the browser doesn't have one yet.
   if (isNewCsrf && csrfToken) {
     res.cookies.set(CSRF_COOKIE, csrfToken, {
-      httpOnly: true,
+      httpOnly: false,
       sameSite: 'lax',
       secure: !isDev,
       path: '/',
@@ -150,7 +150,7 @@ function attachCsp(
   } else if (!req.cookies?.get(CSRF_COOKIE)?.value) {
     const token = generateCsrfToken();
     res.cookies.set(CSRF_COOKIE, token, {
-      httpOnly: true,
+      httpOnly: false,
       sameSite: 'lax',
       secure: !isDev,
       path: '/',

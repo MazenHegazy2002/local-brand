@@ -8,25 +8,25 @@ export function getStripe(): Stripe | null {
     console.warn('Stripe secret key not configured');
     return null;
   }
-  
+
   if (!stripeInstance) {
     stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
       apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
     });
   }
-  
+
   return stripeInstance;
 }
 
 export async function createStripeRefund(
-  paymentIntentId: string, 
+  paymentIntentId: string,
   amount: number
 ): Promise<Stripe.Refund> {
   const stripe = getStripe();
   if (!stripe) {
     throw new Error('Stripe not configured');
   }
-  
+
   return stripe.refunds.create({
     payment_intent: paymentIntentId,
     amount: Math.round(amount * 100),
@@ -42,14 +42,17 @@ export async function createStripePayout(
   if (!stripe) {
     throw new Error('Stripe not configured');
   }
-  
-  return stripe.payouts.create({
-    amount: Math.round(amount * 100),
-    currency: 'egp',
-    destination: stripeAccountId,
-  }, {
-    stripeAccount: stripeAccountId,
-  });
+
+  return stripe.payouts.create(
+    {
+      amount: Math.round(amount * 100),
+      currency: 'egp',
+      destination: stripeAccountId,
+    },
+    {
+      stripeAccount: stripeAccountId,
+    }
+  );
 }
 
 export async function retrievePaymentIntent(
@@ -59,7 +62,7 @@ export async function retrievePaymentIntent(
   if (!stripe) {
     throw new Error('Stripe not configured');
   }
-  
+
   return stripe.paymentIntents.retrieve(paymentIntentId);
 }
 
@@ -72,7 +75,7 @@ export async function createPaymentIntent(
   if (!stripe) {
     throw new Error('Stripe not configured');
   }
-  
+
   return stripe.paymentIntents.create({
     amount: Math.round(amount * 100),
     currency,
@@ -89,7 +92,7 @@ export interface InstallmentPlan {
 }
 
 export function calculateInstallment(
-  amount: number, 
+  amount: number,
   tenure: number,
   annualInterestRate: number = 0
 ): InstallmentPlan {
@@ -109,9 +112,10 @@ export function calculateInstallment(
   }
 
   const monthlyRate = annualInterestRate / 12 / 100;
-  const monthlyPayment = (amount * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / 
+  const monthlyPayment =
+    (amount * monthlyRate * Math.pow(1 + monthlyRate, tenure)) /
     (Math.pow(1 + monthlyRate, tenure) - 1);
-  
+
   const totalAmount = monthlyPayment * tenure;
   const interestAmount = totalAmount - amount;
 
@@ -136,7 +140,7 @@ export async function verifyRefundEligibility(
   orderItemId: string
 ): Promise<{ eligible: boolean; reason?: string; refundableAmount?: number }> {
   const { prisma } = await import('@/lib/prisma');
-  
+
   const orderItem = await prisma.orderItem.findUnique({
     where: { id: orderItemId },
     include: { order: true },
@@ -154,12 +158,19 @@ export async function verifyRefundEligibility(
     return { eligible: false, reason: 'Item already refunded or cancelled' };
   }
 
-  const daysSinceOrder = Math.floor(
-    (Date.now() - new Date(orderItem.order.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+  const deliveryDate =
+    orderItem.order.deliveredAt ||
+    (orderItem.order.status === 'DELIVERED' ? orderItem.order.updatedAt : null);
+  if (!deliveryDate) {
+    return { eligible: false, reason: 'Order item must be delivered to request a refund' };
+  }
+
+  const daysSinceDelivery = Math.floor(
+    (Date.now() - new Date(deliveryDate).getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  if (daysSinceOrder > 14) {
-    return { eligible: false, reason: 'Refund window has expired (14 days)' };
+  if (daysSinceDelivery > 14) {
+    return { eligible: false, reason: 'Refund window has expired (14 days from delivery)' };
   }
 
   return {
@@ -171,14 +182,13 @@ export async function verifyRefundEligibility(
 export function formatPaymentMethodForDisplay(method: string): string {
   const methodMap: Record<string, string> = {
     CREDIT_CARD: 'Credit/Debit Card',
+    MOBILE_WALLET: 'Mobile Wallet',
     CASH_ON_DELIVERY: 'Cash on Delivery',
-    PAYPAL: 'PayPal',
-    APPLE_PAY: 'Apple Pay',
-    GOOGLE_PAY: 'Google Pay',
-    VALU: 'valU Installments',
-    TABBY: 'Tabby Installments',
+    PAYMOB: 'Paymob',
+    FAWRY: 'Fawry',
+    PAYSKY: 'PaySky Card Payment',
   };
-  
+
   return methodMap[method] || method.replace(/_/g, ' ');
 }
 

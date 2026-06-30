@@ -19,8 +19,6 @@ function createPrismaClient(): PrismaClient {
   // Neon serverless: use WebSocket for edge/serverless, tune pool params to
   // recycle idle connections quickly and avoid exhausting the connection limit.
   neonConfig.webSocketConstructor = ws;
-  // Keep idle connections alive for at most 10 s in serverless functions.
-  neonConfig.poolQueryViaFetch = true;
 
   // Append Neon pool-mode connection params when not already present.
   // DIRECT_URL should point to the unpooled endpoint for migrations.

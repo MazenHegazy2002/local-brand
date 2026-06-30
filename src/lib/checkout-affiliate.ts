@@ -17,7 +17,7 @@ import {
 export async function applyPromoToCheckout(params: {
   promoCode: string | null;
   orderTotalEgp: number;
-  buyerId: string;
+  buyerId: string | null;
 }): Promise<{
   finalTotalEgp: number;
   discountAmountEgp: number;
@@ -35,7 +35,7 @@ export async function applyPromoToCheckout(params: {
     };
   }
 
-  const result = await validatePromoCode(promoCode, orderTotalEgp, buyerId);
+  const result = await validatePromoCode(promoCode, orderTotalEgp, buyerId || '');
   if (!result.valid) {
     return {
       finalTotalEgp: orderTotalEgp,
@@ -60,7 +60,7 @@ export async function applyPromoToCheckout(params: {
 export async function recordAffiliateSale(params: {
   orderId: string;
   affiliateId: string;
-  buyerId: string;
+  buyerId: string | null;
   orderTotalBeforeDiscountEgp: number;
   orderTotalAfterDiscountEgp: number;
   discountPct: number;
@@ -80,7 +80,7 @@ export async function recordAffiliateSale(params: {
     data: {
       affiliateId,
       orderId,
-      buyerId,
+      buyerId: buyerId || null,
       discountPct,
       discountAmountEgp,
       orderTotalBeforeDiscount: orderTotalBeforeDiscountEgp,
@@ -100,7 +100,9 @@ export async function recordAffiliateSale(params: {
   });
 
   // Activate referral bonuses on buyer's first order
-  const buyerAffiliate = await prisma.affiliate.findUnique({ where: { userId: buyerId } });
+  const buyerAffiliate = buyerId
+    ? await prisma.affiliate.findUnique({ where: { userId: buyerId } })
+    : null;
   if (buyerAffiliate) {
     await activateReferralBonuses(buyerAffiliate.id, orderId);
   }

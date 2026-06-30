@@ -66,3 +66,7 @@ stitch-preview.png
 # stdout redirections (`> nul`). It cannot be removed on Windows so we
 # just keep it out of the index.
 nul
+
+# Playwright reports and results
+/playwright-report
+/test-results

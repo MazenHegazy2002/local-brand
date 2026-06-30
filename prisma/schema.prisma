@@ -832,8 +832,8 @@ model PromoCodeUsage {
   affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
   orderId     String    @unique
   order       Order     @relation(fields: [orderId], references: [id])
-  buyerId     String
-  buyer       User      @relation("BuyerPromoUsages", fields: [buyerId], references: [id])
+  buyerId     String?
+  buyer       User?     @relation("BuyerPromoUsages", fields: [buyerId], references: [id])
 
   discountPct              Decimal @db.Decimal(5, 2)
   discountAmountEgp        Decimal @db.Decimal(10, 2)

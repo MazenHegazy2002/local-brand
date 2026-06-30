@@ -231,8 +231,12 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     }
 
     // Perform soft or hard delete depending on platform standard (let's do soft delete if deletedAt exists, or cascade hard delete safely)
-    await prisma.product.delete({
+    await prisma.product.update({
       where: { id },
+      data: {
+        deletedAt: new Date(),
+        published: false,
+      },
     });
 
     return NextResponse.json({ success: true }, { status: 200 });

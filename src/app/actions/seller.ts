@@ -103,13 +103,15 @@ export async function getDashboardStats() {
 
       const productIds = seller.products.map(p => p.id);
 
-      const dailyStats = await prisma.order.groupBy({
-        by: ['createdAt'],
+      const recentOrders = await prisma.order.findMany({
         where: {
           createdAt: { gte: sevenDaysAgo },
           items: { some: { variant: { productId: { in: productIds } } } },
         },
-        _sum: { totalAmount: true },
+        select: {
+          createdAt: true,
+          totalAmount: true,
+        },
       });
 
       // Map to 7-day array
@@ -120,8 +122,11 @@ export async function getDashboardStats() {
         d.setDate(d.getDate() - (6 - i));
         const dayStr = d.toISOString().split('T')[0];
 
-        const match = dailyStats.find(s => s.createdAt.toISOString().split('T')[0] === dayStr);
-        dailyRevenue[i] = match?._sum?.totalAmount || 0;
+        const dailySum = recentOrders
+          .filter(o => o.createdAt.toISOString().split('T')[0] === dayStr)
+          .reduce((sum, o) => sum + o.totalAmount, 0);
+
+        dailyRevenue[i] = dailySum;
       }
 
       // Real rating + review aggregation
@@ -254,6 +259,8 @@ export async function getDashboardStats() {
           products: { select: { id: true, title: true, published: true } },
           payouts: { orderBy: { createdAt: 'desc' } },
         },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
       });
       // Recompute each seller's available balance on the fly so the admin
       // sellers tab matches what the seller sees in their own hub. The old
@@ -294,11 +301,17 @@ export async function getDashboardStats() {
           },
           user: { select: { id: true, name: true, email: true } },
         },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
       });
       const users = await prisma.user.findMany({
+        where: { deletedAt: null },
         select: { id: true, name: true, email: true, role: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
       });
       const products = await prisma.product.findMany({
+        where: { deletedAt: null },
         include: {
           images: true,
           variants: { select: { id: true, stockCount: true, price: true } },
@@ -306,6 +319,7 @@ export async function getDashboardStats() {
           seller: { select: { id: true, storeName: true } },
         },
         orderBy: { createdAt: 'desc' },
+        take: 100,
       });
       const auditLogs = await prisma.auditLog.findMany({
         include: { admin: { select: { name: true, email: true } } },
@@ -316,21 +330,33 @@ export async function getDashboardStats() {
       const payouts = await prisma.payout.findMany({
         include: { seller: true },
         orderBy: { createdAt: 'desc' },
+        take: 100,
       });
       const categories = await prisma.category.findMany({ include: { children: true } });
       const tags = await prisma.tag.findMany();
       const collections = await prisma.collection.findMany();
 
-      const totalRevenue = orders.reduce((acc, o) => acc + o.totalAmount, 0);
-      const totalPlatformFees = orders.reduce((acc, o) => acc + o.platformFee, 0);
+      // Query database-wide totals for correct dashboard statistics
+      const [totalOrders, totalSellers, totalUsers, totalProducts, orderAgg] = await Promise.all([
+        prisma.order.count(),
+        prisma.sellerProfile.count(),
+        prisma.user.count({ where: { deletedAt: null } }),
+        prisma.product.count({ where: { deletedAt: null } }),
+        prisma.order.aggregate({
+          _sum: { totalAmount: true, platformFee: true },
+        }),
+      ]);
+
+      const totalRevenue = orderAgg._sum.totalAmount || 0;
+      const totalPlatformFees = orderAgg._sum.platformFee || 0;
 
       const stats = {
         revenue: totalRevenue,
         platformFees: totalPlatformFees,
-        totalOrders: orders.length,
-        totalSellers: sellers.length,
-        totalUsers: users.length,
-        totalProducts: products.length,
+        totalOrders,
+        totalSellers,
+        totalUsers,
+        totalProducts,
       };
 
       return JSON.parse(
@@ -528,6 +554,8 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) return { error: 'Unauthorized' };
+    const role = (session.user as SessionUser).role;
+    if (role !== 'SELLER' && role !== 'ADMIN') return { error: 'Forbidden' };
 
     await prisma.order.update({
       where: { id: orderId },
@@ -557,6 +585,8 @@ export async function updateOrderItemStatus(itemId: string, status: OrderItemSta
   try {
     const session = await getServerSession(authOptions);
     if (!session) return { error: 'Unauthorized' };
+    const role = (session.user as SessionUser).role;
+    if (role !== 'SELLER' && role !== 'ADMIN') return { error: 'Forbidden' };
 
     const updatedItem = await prisma.orderItem.update({
       where: { id: itemId },
@@ -861,7 +891,13 @@ export async function deleteProduct(productId: string) {
     if (!product || product.sellerId !== seller.id)
       return { error: 'Unauthorized to delete this product' };
 
-    await prisma.product.delete({ where: { id: productId } });
+    await prisma.product.update({
+      where: { id: productId },
+      data: {
+        deletedAt: new Date(),
+        published: false,
+      },
+    });
 
     revalidatePath('/seller-hub');
     return { success: true };
@@ -962,14 +998,55 @@ export async function submitReview(
     const reviewRating = typeof productIdOrData === 'string' ? rating! : productIdOrData.rating;
     const reviewComment = typeof productIdOrData === 'string' ? comment : productIdOrData.comment;
 
-    const review = await prisma.review.create({
-      data: {
-        productId,
-        rating: reviewRating,
-        comment: reviewComment,
-        userId,
+    // Verify Purchase (Only allow reviews if the user bought and received it via this specific order item)
+    const orderItem = await prisma.orderItem.findFirst({
+      where: {
+        status: 'DELIVERED',
+        order: { userId },
+        variant: { productId },
+        review: null,
       },
     });
+
+    if (!orderItem) {
+      return { error: 'You can only review products you have purchased and received.' };
+    }
+
+    // Get product title for the loyalty description
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      select: { title: true },
+    });
+
+    // Create Review and award points atomically
+    const { POINTS_PER_REVIEW } = await import('@/lib/loyalty-constants');
+
+    const [review] = await prisma.$transaction([
+      prisma.review.create({
+        data: {
+          productId,
+          rating: reviewRating,
+          comment: reviewComment,
+          userId,
+          orderItemId: orderItem.id,
+          verifiedPurchase: true,
+        },
+      }),
+      prisma.user.update({
+        where: { id: userId },
+        data: { loyaltyPoints: { increment: POINTS_PER_REVIEW } },
+      }),
+      prisma.loyaltyTransaction.create({
+        data: {
+          userId,
+          amount: POINTS_PER_REVIEW,
+          type: 'EARNED_BY_REVIEW',
+          description: product?.title
+            ? `Earned ${POINTS_PER_REVIEW} pts for reviewing "${product.title}"`
+            : `Earned ${POINTS_PER_REVIEW} pts for review`,
+        },
+      }),
+    ]);
 
     revalidatePath(`/product/${productId}`);
     return JSON.parse(JSON.stringify({ success: true, review })) as {
@@ -1007,15 +1084,34 @@ export async function createTaxonomy(type: 'category' | 'tag' | 'collection', da
     if (!session || (session.user as SessionUser).role !== 'ADMIN')
       return { error: 'Unauthorized' };
 
+    const name = data.name.trim();
+    const slug = name.toLowerCase().replace(/ /g, '-');
     let result;
-    const slug = data.name.toLowerCase().replace(/ /g, '-');
 
     if (type === 'category') {
-      result = await prisma.category.create({ data: { ...data, slug } });
+      const existing = await prisma.category.findFirst({
+        where: { OR: [{ name }, { slug }] },
+      });
+      if (existing) {
+        return { error: 'Category name or slug already exists' };
+      }
+      result = await prisma.category.create({ data: { ...data, name, slug } });
     } else if (type === 'tag') {
-      result = await prisma.tag.create({ data: { ...data, slug } });
+      const existing = await prisma.tag.findFirst({
+        where: { OR: [{ name }, { slug }] },
+      });
+      if (existing) {
+        return { error: 'Tag name or slug already exists' };
+      }
+      result = await prisma.tag.create({ data: { ...data, name, slug } });
     } else if (type === 'collection') {
-      result = await prisma.collection.create({ data: { ...data, slug } });
+      const existing = await prisma.collection.findFirst({
+        where: { OR: [{ name }, { slug }] },
+      });
+      if (existing) {
+        return { error: 'Collection name or slug already exists' };
+      }
+      result = await prisma.collection.create({ data: { ...data, name, slug } });
     }
 
     revalidatePath('/admin-os');
@@ -1332,13 +1428,16 @@ export async function adminDeleteUser(userId: string) {
       user._count.productQAs > 0
     ) {
       // If user has records, perform a "Soft Delete" instead of hard delete to preserve data integrity
+      const crypto = await import('crypto');
+      const lockHash = await bcrypt.hash(crypto.randomBytes(48).toString('hex'), BCRYPT_COST);
+
       await prisma.user.update({
         where: { id: userId },
         data: {
           deletedAt: new Date(),
           email: `deleted_${userId.substring(0, 8)}@brandy.invalid`, // anonymize
           name: 'Deleted User',
-          passwordHash: 'DELETED',
+          passwordHash: lockHash,
         },
       });
 

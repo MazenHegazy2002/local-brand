@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/components/ui';
+import { useConfirm } from '@/providers/ConfirmProvider';
 
 interface CouponUsage {
   id: string;
@@ -41,6 +42,7 @@ interface CouponsPanelProps {
 }
 
 export default function CouponsPanel({ showHeader = false }: CouponsPanelProps) {
+  const { confirm } = useConfirm();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -111,20 +113,29 @@ export default function CouponsPanel({ showHeader = false }: CouponsPanelProps) 
       }
     } catch (err) {
       console.error(err);
+      toast({ title: 'Failed to update status.', variant: 'error' });
     }
   };
 
   const handleDeleteCoupon = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this coupon permanently?')) return;
+    const confirmed = await confirm({
+      title: 'Delete Coupon',
+      message: 'Are you sure you want to delete this coupon permanently?',
+      type: 'danger',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`/api/admin/coupons/${id}`, {
         method: 'DELETE',
       });
       if (res.ok) {
         await fetchCoupons();
+      } else {
+        toast({ title: 'Failed to delete coupon.', variant: 'error' });
       }
     } catch (err) {
       console.error(err);
+      toast({ title: 'Error deleting coupon.', variant: 'error' });
     }
   };
 

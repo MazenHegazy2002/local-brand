@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GOVERNORATES, Governorate } from '@/lib/governorates';
 import { SHIPPING_RATES, DEFAULT_SHIPPING_RATE } from '@/lib/shipping-rates';
+import { useConfirm } from '@/providers/ConfirmProvider';
 
 interface ShippingZone {
   id: string;
@@ -17,6 +18,7 @@ interface ShippingZone {
 }
 
 export default function ShippingTab() {
+  const { confirm } = useConfirm();
   const [zones, setZones] = useState<ShippingZone[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingGov, setEditingGov] = useState<Governorate | null>(null);
@@ -136,7 +138,12 @@ export default function ShippingTab() {
     const custom = getCustomConfig(gov.value);
     if (!custom) return;
 
-    if (!confirm(`Reset ${gov.en} shipping rate back to global default?`)) return;
+    const confirmed = await confirm({
+      title: 'Reset Shipping Rate',
+      message: `Reset ${gov.en} shipping rate back to global default?`,
+      type: 'warning',
+    });
+    if (!confirmed) return;
 
     setSaving(true);
     setMsg('');
