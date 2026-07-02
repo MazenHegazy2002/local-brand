@@ -16,6 +16,7 @@ const eslintConfig = defineConfig([
     'Affiliate/**',
     'scripts/**',
     'hidden-model-ai/**',
+    'public/**',
   ]),
   {
     rules: {

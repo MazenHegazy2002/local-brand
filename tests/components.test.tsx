@@ -12,6 +12,9 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PriceDisplay } from '@/components/ui/PriceDisplay';
+import { Select } from '@/components/ui/Select';
+import { Textarea } from '@/components/ui/Textarea';
+import { Checkbox } from '@/components/ui/Checkbox';
 
 describe('<Badge />', () => {
   it('renders children inside a span', () => {
@@ -222,5 +225,69 @@ describe('<PriceDisplay />', () => {
   it('honors a non-default currency', () => {
     render(<PriceDisplay price={100} currency="USD" />);
     expect(screen.getByText(/100.*USD/)).toBeInTheDocument();
+  });
+});
+
+describe('<Select />', () => {
+  const options = [
+    { value: '1', label: 'Option 1' },
+    { value: '2', label: 'Option 2' },
+  ];
+
+  it('renders a label and option elements', () => {
+    render(<Select label="Test Select" options={options} defaultValue="1" />);
+    expect(screen.getByLabelText('Test Select')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Option 2' })).toBeInTheDocument();
+  });
+
+  it('renders required asterisk', () => {
+    render(<Select label="Test Select" options={options} required />);
+    expect(screen.getByText('*')).toBeInTheDocument();
+  });
+
+  it('displays error message when provided', () => {
+    render(<Select options={options} error="Selection is required" />);
+    expect(screen.getByText('Selection is required')).toBeInTheDocument();
+  });
+});
+
+describe('<Textarea />', () => {
+  it('renders label and text content', () => {
+    render(<Textarea label="Comments" placeholder="Write here" />);
+    expect(screen.getByLabelText('Comments')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Write here')).toBeInTheDocument();
+  });
+
+  it('displays character count', () => {
+    render(<Textarea value="Hello" showCharCount maxLength={10} onChange={() => {}} />);
+    expect(screen.getByText('5/10')).toBeInTheDocument();
+  });
+
+  it('displays error text', () => {
+    render(<Textarea error="Must not be empty" />);
+    expect(screen.getByText('Must not be empty')).toBeInTheDocument();
+  });
+});
+
+describe('<Checkbox />', () => {
+  it('renders the checkbox and label', () => {
+    render(<Checkbox label="Agree to terms" />);
+    const checkbox = screen.getByRole('checkbox', { name: 'Agree to terms' });
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it('toggles value when clicked', () => {
+    render(<Checkbox label="Agree to terms" />);
+    const checkbox = screen.getByRole('checkbox', { name: 'Agree to terms' });
+    fireEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+  });
+
+  it('respects disabled state', () => {
+    render(<Checkbox label="Disabled checkbox" disabled />);
+    const checkbox = screen.getByRole('checkbox', { name: 'Disabled checkbox' });
+    expect(checkbox).toBeDisabled();
   });
 });

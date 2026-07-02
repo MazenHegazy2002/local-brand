@@ -14,5 +14,6 @@
       }
     ],
     "no-console": ["warn", { "allow": ["warn", "error"] }]
-  }
+  },
+  "ignorePatterns": ["public/**/*.js", "node_modules/", ".next/"]
 }
