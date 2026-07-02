@@ -334,6 +334,101 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     description:
       'The category slug whose products will be displayed in the Recommended section. Leave empty to use mixed products.',
   },
+  {
+    key: 'HOMEPAGE_ABOUT_TITLE',
+    category: 'store',
+    type: 'text',
+    label: 'Homepage About Title',
+    defaultValue: 'About Brandy',
+    exposeToClient: true,
+    group: 'Homepage Copy',
+  },
+  {
+    key: 'HOMEPAGE_ABOUT_DESC',
+    category: 'store',
+    type: 'longtext',
+    label: 'Homepage About Paragraph',
+    defaultValue:
+      "Brandy is Egypt's premier dedicated marketplace empowering local, independent brands, artisans, and creators. We believe in the quality, craftsmanship, and potential of Egyptian products. By bridging the gap between local makers and conscious shoppers, we help grow local businesses while providing you with unique, premium fashion, home decor, electronics, and accessories. Experience local shopping redefined with verified brand authentication and complete escrow peace of mind.",
+    exposeToClient: true,
+    group: 'Homepage Copy',
+  },
+  {
+    key: 'HOMEPAGE_PROP1_TITLE',
+    category: 'store',
+    type: 'text',
+    label: 'Value Prop 1 Title',
+    defaultValue: 'Supporting Local Talent',
+    exposeToClient: true,
+    group: 'Homepage Value Props',
+  },
+  {
+    key: 'HOMEPAGE_PROP1_DESC',
+    category: 'store',
+    type: 'longtext',
+    label: 'Value Prop 1 Description',
+    defaultValue:
+      'Discover and directly support emerging Egyptian sellers, designers, and local artisans bringing you unique craftsmanship.',
+    exposeToClient: true,
+    group: 'Homepage Value Props',
+  },
+  {
+    key: 'HOMEPAGE_PROP2_TITLE',
+    category: 'store',
+    type: 'text',
+    label: 'Value Prop 2 Title',
+    defaultValue: 'Verified Quality Brands',
+    exposeToClient: true,
+    group: 'Homepage Value Props',
+  },
+  {
+    key: 'HOMEPAGE_PROP2_DESC',
+    category: 'store',
+    type: 'longtext',
+    label: 'Value Prop 2 Description',
+    defaultValue:
+      'Every brand is carefully vetted and verified by the Brandy team so you can shop premium quality with absolute confidence.',
+    exposeToClient: true,
+    group: 'Homepage Value Props',
+  },
+  {
+    key: 'HOMEPAGE_PROP3_TITLE',
+    category: 'store',
+    type: 'text',
+    label: 'Value Prop 3 Title',
+    defaultValue: '14-Day Escrow Guarantee',
+    exposeToClient: true,
+    group: 'Homepage Value Props',
+  },
+  {
+    key: 'HOMEPAGE_PROP3_DESC',
+    category: 'store',
+    type: 'longtext',
+    label: 'Value Prop 3 Description',
+    defaultValue:
+      'Shop secure. Your payment is held in escrow for 14 days post-delivery to guarantee product authenticity and stress-free returns.',
+    exposeToClient: true,
+    group: 'Homepage Value Props',
+  },
+  {
+    key: 'HOMEPAGE_HOW_TITLE',
+    category: 'store',
+    type: 'text',
+    label: 'How It Works Title',
+    defaultValue: 'How it Works',
+    exposeToClient: true,
+    group: 'Homepage How It Works',
+  },
+  {
+    key: 'HOMEPAGE_HOW_DESC',
+    category: 'store',
+    type: 'longtext',
+    label: 'How It Works Description',
+    defaultValue:
+      'Connecting premium Egyptian makers directly with customers across the nation. Simple, safe, and transparent.',
+    exposeToClient: true,
+    group: 'Homepage How It Works',
+  },
 
   // ── 2. Contact / Legal ──────────────────────────────────────────────────
   {

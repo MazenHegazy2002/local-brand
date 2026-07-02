@@ -95,11 +95,45 @@ export default async function Home() {
   };
   let dict = en;
 
+  let aboutTitle = 'About Brandy';
+  let aboutDesc =
+    "Brandy is Egypt's premier dedicated marketplace empowering local, independent brands, artisans, and creators. We believe in the quality, craftsmanship, and potential of Egyptian products. By bridging the gap between local makers and conscious shoppers, we help grow local businesses while providing you with unique, premium fashion, home decor, electronics, and accessories. Experience local shopping redefined with verified brand authentication and complete escrow peace of mind.";
+  let prop1Title = 'Supporting Local Talent';
+  let prop1Desc =
+    'Discover and directly support emerging Egyptian sellers, designers, and local artisans bringing you unique craftsmanship.';
+  let prop2Title = 'Verified Quality Brands';
+  let prop2Desc =
+    'Every brand is carefully vetted and verified by the Brandy team so you can shop premium quality with absolute confidence.';
+  let prop3Title = '14-Day Escrow Guarantee';
+  let prop3Desc =
+    'Shop secure. Your payment is held in escrow for 14 days post-delivery to guarantee product authenticity and stress-free returns.';
+  let howTitle = 'How it Works';
+  let howDesc =
+    'Connecting premium Egyptian makers directly with customers across the nation. Simple, safe, and transparent.';
+
   try {
     const data = await getHomepageData();
     if (data) homeData = data as unknown as HomePageData;
     const d = await getDictionary();
     if (d) dict = d;
+
+    const { getSetting } = await import('@/lib/admin-settings-registry');
+    aboutTitle = await getSetting<string>('HOMEPAGE_ABOUT_TITLE').catch(() => 'About Brandy');
+    aboutDesc = await getSetting<string>('HOMEPAGE_ABOUT_DESC').catch(() => aboutDesc);
+    prop1Title = await getSetting<string>('HOMEPAGE_PROP1_TITLE').catch(
+      () => 'Supporting Local Talent'
+    );
+    prop1Desc = await getSetting<string>('HOMEPAGE_PROP1_DESC').catch(() => prop1Desc);
+    prop2Title = await getSetting<string>('HOMEPAGE_PROP2_TITLE').catch(
+      () => 'Verified Quality Brands'
+    );
+    prop2Desc = await getSetting<string>('HOMEPAGE_PROP2_DESC').catch(() => prop2Desc);
+    prop3Title = await getSetting<string>('HOMEPAGE_PROP3_TITLE').catch(
+      () => '14-Day Escrow Guarantee'
+    );
+    prop3Desc = await getSetting<string>('HOMEPAGE_PROP3_DESC').catch(() => prop3Desc);
+    howTitle = await getSetting<string>('HOMEPAGE_HOW_TITLE').catch(() => 'How it Works');
+    howDesc = await getSetting<string>('HOMEPAGE_HOW_DESC').catch(() => howDesc);
   } catch (e) {
     console.error('Critical SSR Error:', e);
   }
@@ -118,35 +152,41 @@ export default async function Home() {
         dangerouslySetInnerHTML={{ __html: jsonLdScript(websiteJsonLd()) }}
       />
       <PromoBanner />
-      <PromoBanner
-        id="affiliate-program"
-        message="💰 Earn up to 12% commission sharing your promo code — join our affiliate program!"
-        ctaLabel="Apply now — it's free"
-        ctaHref="/sell"
-      />
       <Navbar />
       <Hero />
 
-      <div className="home-shell mt-8">
-        <Suspense fallback={<div style={{ height: 400 }} />}>
+      <div className="home-shell my-8">
+        <Suspense
+          fallback={<div className="h-64 flex items-center justify-center">Loading...</div>}
+        >
           <ProductSection
             emoji="🔥"
             title="Bestsellers"
-            linkLabel="All products"
+            linkLabel="View all"
             linkHref="/shop"
             products={bestsellers}
             dict={dict}
           />
+        </Suspense>
+
+        <Suspense
+          fallback={<div className="h-64 flex items-center justify-center">Loading...</div>}
+        >
           <ProductSection
             emoji="✨"
             title="New Arrivals"
-            linkLabel="All new"
-            linkHref="/shop?sort=newest"
+            linkLabel="View all"
+            linkHref="/shop"
             products={newArrivals}
             dict={dict}
           />
+        </Suspense>
+
+        <Suspense
+          fallback={<div className="h-64 flex items-center justify-center">Loading...</div>}
+        >
           <ProductSection
-            emoji="💡"
+            emoji="💖"
             title="Recommended for You"
             linkLabel="All products"
             linkHref="/shop"
@@ -160,15 +200,8 @@ export default async function Home() {
       <section className="bg-white border-y border-gray-100 py-12 mb-8">
         <div className="home-shell">
           <div className="max-w-3xl mx-auto text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-black text-[#1e3b8a] mb-4">About Brandy</h2>
-            <p className="text-slate-650 leading-relaxed text-sm md:text-base">
-              Brandy is Egypt&apos;s premier dedicated marketplace empowering local, independent
-              brands, artisans, and creators. We believe in the quality, craftsmanship, and
-              potential of Egyptian products. By bridging the gap between local makers and conscious
-              shoppers, we help grow local businesses while providing you with unique, premium
-              fashion, home decor, electronics, and accessories. Experience local shopping redefined
-              with verified brand authentication and complete escrow peace of mind.
-            </p>
+            <h2 className="text-2xl md:text-3xl font-black text-[#1e3b8a] mb-4">{aboutTitle}</h2>
+            <p className="text-slate-650 leading-relaxed text-sm md:text-base">{aboutDesc}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -176,33 +209,24 @@ export default async function Home() {
               <div className="w-12 h-12 rounded-full bg-blue-50 text-[#1e3b8a] flex items-center justify-center text-xl font-bold mx-auto mb-4">
                 🇪🇬
               </div>
-              <h3 className="font-bold text-slate-900 text-base mb-2">Supporting Local Talent</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Discover and directly support emerging Egyptian sellers, designers, and local
-                artisans bringing you unique craftsmanship.
-              </p>
+              <h3 className="font-bold text-slate-900 text-base mb-2">{prop1Title}</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">{prop1Desc}</p>
             </div>
 
             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center">
               <div className="w-12 h-12 rounded-full bg-green-50 text-green-700 flex items-center justify-center text-xl font-bold mx-auto mb-4">
                 🛡️
               </div>
-              <h3 className="font-bold text-slate-900 text-base mb-2">Verified Quality Brands</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Every brand is carefully vetted and verified by the Brandy team so you can shop
-                premium quality with absolute confidence.
-              </p>
+              <h3 className="font-bold text-slate-900 text-base mb-2">{prop2Title}</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">{prop2Desc}</p>
             </div>
 
             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center">
               <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center text-xl font-bold mx-auto mb-4">
                 🔒
               </div>
-              <h3 className="font-bold text-slate-900 text-base mb-2">14-Day Escrow Guarantee</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Shop secure. Your payment is held in escrow for 14 days post-delivery to guarantee
-                product authenticity and stress-free returns.
-              </p>
+              <h3 className="font-bold text-slate-900 text-base mb-2">{prop3Title}</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">{prop3Desc}</p>
             </div>
           </div>
         </div>
@@ -212,11 +236,8 @@ export default async function Home() {
       <section className="bg-slate-50 border-b border-gray-100 py-16">
         <div className="home-shell">
           <div className="max-w-3xl mx-auto text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-black text-[#1e3b8a] mb-3">How it Works</h2>
-            <p className="text-slate-500 text-sm md:text-base">
-              Connecting premium Egyptian makers directly with customers across the nation. Simple,
-              safe, and transparent.
-            </p>
+            <h2 className="text-2xl md:text-3xl font-black text-[#1e3b8a] mb-3">{howTitle}</h2>
+            <p className="text-slate-500 text-sm md:text-base">{howDesc}</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
