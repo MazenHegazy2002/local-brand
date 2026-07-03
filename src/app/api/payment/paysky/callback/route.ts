@@ -110,73 +110,102 @@ export async function POST(req: Request) {
       });
     }
 
-    // 3. Pull the pending cart from Redis.
+    // Acquire Redis Lock to prevent duplicate callbacks processing concurrently.
     const { redis } = await import('@/lib/redis');
-    const pendingKey = `paysky:pending:${parsed.data.MerchantReference}`;
-    const pendingRaw = await redis.get(pendingKey).catch(() => null);
-    if (!pendingRaw) {
-      return NextResponse.json(
-        { message: 'Pending payment not found or expired. Please contact support.' },
-        { status: 410 }
-      );
+    const lockKey = `paysky:lock:${parsed.data.MerchantReference}`;
+    const acquired = await redis.set(lockKey, '1', 'EX', 15, 'NX').catch(() => 'OK');
+    if (acquired !== 'OK') {
+      return NextResponse.json({ message: 'Request is already being processed' }, { status: 409 });
     }
 
-    const pending = JSON.parse(pendingRaw) as {
-      userId: string;
-      cartItems: Array<{ id: string; qty: number }>;
-      addressInfo?: { id?: string };
-      couponId?: string;
-      promoCode?: string;
-    };
+    try {
+      // 3. Pull the pending cart from Redis.
+      const pendingKey = `paysky:pending:${parsed.data.MerchantReference}`;
+      const pendingRaw = await redis.get(pendingKey).catch(() => null);
+      if (!pendingRaw) {
+        return NextResponse.json(
+          { message: 'Pending payment not found or expired. Please contact support.' },
+          { status: 410 }
+        );
+      }
 
-    // Defence-in-depth: if a session IS present, refuse the callback when it
-    // belongs to a different user than the one in the pending record.
-    if (sessionUserId && sessionUserId !== pending.userId) {
-      return NextResponse.json(
-        { message: 'Payment session does not belong to this user' },
-        { status: 403 }
-      );
+      const pending = JSON.parse(pendingRaw) as {
+        userId: string;
+        cartItems: Array<{ id: string; qty: number }>;
+        addressInfo?: { id?: string };
+        couponId?: string;
+        promoCode?: string;
+      };
+
+      // Defence-in-depth: if a session IS present, refuse the callback when it
+      // belongs to a different user than the one in the pending record.
+      if (sessionUserId && sessionUserId !== pending.userId) {
+        return NextResponse.json(
+          { message: 'Payment session does not belong to this user' },
+          { status: 403 }
+        );
+      }
+
+      // 4. Create the order via createOrderForUser (the session-less helper).
+      const result = await createOrderForUser(pending.userId, {
+        items: pending.cartItems.map(c => ({ variantId: c.id, quantity: c.qty })),
+        addressId: pending.addressInfo?.id,
+        paymentMethod: 'PAYSKY',
+        couponCode: pending.couponId,
+        promoCode: pending.promoCode,
+      });
+
+      if (!result.success || !result.orderId) {
+        return NextResponse.json(
+          { message: result.error || 'Order creation failed after payment' },
+          { status: 500 }
+        );
+      }
+
+      try {
+        await prisma.order.update({
+          where: { id: result.orderId },
+          data: {
+            paymentStatus: 'PAID',
+            status: 'CONFIRMED',
+            paymentId: parsed.data.SystemReference,
+            paymentChannel: parsed.data.PaidThrough,
+            paymentNetworkRef: parsed.data.NetworkReference || null,
+            paymentMaskedPan: parsed.data.PayerAccount || null,
+            idempotencyKey: parsed.data.MerchantReference,
+          },
+        });
+      } catch (e: any) {
+        // Unique constraint violation (race condition backup check)
+        if (e.code === 'P2002') {
+          const doubleChecked = await prisma.order.findFirst({
+            where: { idempotencyKey: parsed.data.MerchantReference },
+          });
+          if (doubleChecked) {
+            return NextResponse.json({
+              success: true,
+              orderId: doubleChecked.id,
+              alreadyProcessed: true,
+            });
+          }
+        }
+        throw e;
+      }
+
+      // 5. Clear the pending cache.
+      await redis.del(pendingKey).catch(() => {
+        // ignore — pending data will expire on its own
+      });
+
+      return NextResponse.json({
+        success: true,
+        orderId: result.orderId,
+        systemReference: parsed.data.SystemReference,
+      });
+    } finally {
+      // Release lock
+      await redis.del(lockKey).catch(() => {});
     }
-
-    // 4. Create the order via createOrderForUser (the session-less helper).
-    const result = await createOrderForUser(pending.userId, {
-      items: pending.cartItems.map(c => ({ variantId: c.id, quantity: c.qty })),
-      addressId: pending.addressInfo?.id,
-      paymentMethod: 'PAYSKY',
-      couponCode: pending.couponId,
-      promoCode: pending.promoCode,
-    });
-
-    if (!result.success || !result.orderId) {
-      return NextResponse.json(
-        { message: result.error || 'Order creation failed after payment' },
-        { status: 500 }
-      );
-    }
-
-    await prisma.order.update({
-      where: { id: result.orderId },
-      data: {
-        paymentStatus: 'PAID',
-        status: 'CONFIRMED',
-        paymentId: parsed.data.SystemReference,
-        paymentChannel: parsed.data.PaidThrough,
-        paymentNetworkRef: parsed.data.NetworkReference || null,
-        paymentMaskedPan: parsed.data.PayerAccount || null,
-        idempotencyKey: parsed.data.MerchantReference,
-      },
-    });
-
-    // 5. Clear the pending cache.
-    await redis.del(pendingKey).catch(() => {
-      // ignore — pending data will expire on its own
-    });
-
-    return NextResponse.json({
-      success: true,
-      orderId: result.orderId,
-      systemReference: parsed.data.SystemReference,
-    });
   } catch (error: unknown) {
     const err = error as Error;
     console.error('[paysky/callback] Error:', err);

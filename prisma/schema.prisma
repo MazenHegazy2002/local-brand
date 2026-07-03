@@ -337,6 +337,11 @@ model Order {
   idempotencyKey    String?       @unique
   payoutProcessedAt DateTime? // Guard against double-payout
 
+  // WhatsApp confirmation bot fields
+  whatsappConfirmStatus String    @default("NOT_SENT")
+  whatsappMessageId     String?
+  whatsappLastSentAt    DateTime?
+
   // Customer checkout options
   orderNotes   String? // Optional buyer instructions (max 500 chars)
   giftWrapping Boolean @default(false)

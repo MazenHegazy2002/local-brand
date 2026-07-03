@@ -38,7 +38,7 @@ sellers list products and request payouts; admins moderate via `/admin-os`.
 ### Domain model (28 Prisma tables)
 
 **Core:** `User` (BUYER/SELLER/ADMIN, soft-delete via `deletedAt`), `SellerProfile`
-(PENDING_APPROVAL → ACTIVE/SUSPENDED/BANNED, `commissionRate`, `balance` _(legacy)_),
+(PENDING*APPROVAL → ACTIVE/SUSPENDED/BANNED, `commissionRate`, `balance` *(legacy)\_),
 `Address`, `Category` (self-referential), `Tag`, `Collection`, `Product` (incl. flash
 sale + `isVerifiedLocal`), `ProductVariant` (SKU unique, optional UPC 8–14 digits),
 `ProductImage`.
@@ -319,14 +319,11 @@ P1 = behaviour wrong, P2 = code health / consistency, P3 = nice-to-have).
   the evaluation endpoint.
 - **Fix**: `.toUpperCase()` on insert too (or define a transform in the schema).
 
-#### 18. Magic-link callback requires an active session it just issued
+#### 18. PaySky callback is session-optional (Fixed)
 
-- `src/app/api/payment/paysky/callback/route.ts` requires `getServerSession`. PaySky
-  callbacks come from a popup that may have lost the session cookie depending on
-  browser settings.
-- The cached payment in Redis already stores `userId` — that's a safer trust root.
-- **Fix**: pull `userId` from the Redis pending data, only fall back to session
-  when the pending data is missing.
+- `src/app/api/payment/paysky/callback/route.ts` is session-optional to avoid mobile/Safari cookie loss.
+- Identity and validation are rooted in the cryptographically-verified SecureHash and verified Redis pending payment records.
+- **Fix**: Retrieves userId from the Redis pending cache when active session cookies are missing.
 
 #### 19. Bcrypt cost factor 10
 

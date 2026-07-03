@@ -1462,3 +1462,98 @@ export async function adminDeleteUser(userId: string) {
     return { error: error.message || 'Failed to delete user.' };
   }
 }
+
+/**
+ * Triggers a manual template resend/send for an order.
+ */
+export async function triggerWhatsAppManual(orderId: string, phone: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as SessionUser).role !== 'ADMIN') {
+      return { error: 'Unauthorized' };
+    }
+
+    const { sendWhatsAppConfirmation } = await import('@/lib/whatsapp');
+    const result = await sendWhatsAppConfirmation(orderId, phone);
+
+    if (result.success) {
+      await prisma.auditLog.create({
+        data: {
+          adminId: (session.user as SessionUser).id,
+          action: 'WHATSAPP_MANUAL_SEND',
+          targetId: orderId,
+          details: JSON.stringify({ phone, messageId: result.messageId }),
+        },
+      });
+      revalidatePath('/admin-os');
+      return { success: true };
+    } else {
+      return { error: result.error || 'Failed to dispatch WhatsApp message.' };
+    }
+  } catch (err: any) {
+    console.error('[triggerWhatsAppManual] Error:', err);
+    return { error: err.message || 'Error occurred.' };
+  }
+}
+
+/**
+ * Manually confirm or cancel an order, bypassing the automated bot.
+ */
+export async function overrideWhatsAppStatus(orderId: string, status: 'CONFIRMED' | 'CANCELLED') {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as SessionUser).role !== 'ADMIN') {
+      return { error: 'Unauthorized' };
+    }
+
+    const adminId = (session.user as SessionUser).id;
+
+    if (status === 'CONFIRMED') {
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          whatsappConfirmStatus: 'CONFIRMED',
+          status: 'CONFIRMED',
+        },
+      });
+    } else if (status === 'CANCELLED') {
+      await prisma.$transaction(async tx => {
+        await tx.order.update({
+          where: { id: orderId },
+          data: {
+            whatsappConfirmStatus: 'CANCELLED',
+            status: 'CANCELLED',
+          },
+        });
+
+        const items = await tx.orderItem.findMany({
+          where: { orderId },
+        });
+
+        for (const item of items) {
+          await tx.productVariant.update({
+            where: { id: item.variantId },
+            data: {
+              stockCount: { increment: item.quantity },
+            },
+          });
+        }
+      });
+    }
+
+    await prisma.auditLog.create({
+      data: {
+        adminId,
+        action: `WHATSAPP_OVERRIDE_${status}`,
+        targetId: orderId,
+        details: JSON.stringify({ status }),
+      },
+    });
+
+    revalidatePath('/admin-os');
+    return { success: true };
+  } catch (err: any) {
+    console.error('[overrideWhatsAppStatus] Error:', err);
+    return { error: err.message || 'Error occurred.' };
+  }
+}

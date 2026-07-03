@@ -249,13 +249,18 @@ export async function proxy(req: NextRequest) {
   }
 
   // Define role-based route protection
-  const adminRoutes = targetPathname.startsWith('/admin') || targetPathname.startsWith('/admin-os');
+  const isAdminApi = targetPathname.startsWith('/api/admin');
+  const adminRoutes =
+    targetPathname.startsWith('/admin') || targetPathname.startsWith('/admin-os') || isAdminApi;
   const sellerRoutes = targetPathname.startsWith('/seller') || targetPathname === '/seller-hub';
   const dashboardRoutes = targetPathname.startsWith('/dashboard');
 
   // If no user is logged in, redirect to login (except for public shop pages)
   if (!token) {
     if (adminRoutes || sellerRoutes || dashboardRoutes) {
+      if (targetPathname.startsWith('/api/')) {
+        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      }
       const loginUrl = new URL(isArabic ? '/ar/login' : '/login', req.url);
       loginUrl.searchParams.set('callbackUrl', pathname);
       return NextResponse.redirect(loginUrl);
@@ -286,6 +291,9 @@ export async function proxy(req: NextRequest) {
 
   // Admin Routes Protection
   if (adminRoutes && role !== 'ADMIN') {
+    if (targetPathname.startsWith('/api/')) {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    }
     // Redirect non-admins away from admin panel
     if (role === 'SELLER') {
       return NextResponse.redirect(new URL(isArabic ? '/ar/seller-hub' : '/seller-hub', req.url));

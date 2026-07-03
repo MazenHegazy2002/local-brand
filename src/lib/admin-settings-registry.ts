@@ -43,7 +43,8 @@ export type SettingCategory =
   | 'orders'
   | 'security'
   | 'seo'
-  | 'maintenance';
+  | 'maintenance'
+  | 'whatsapp';
 
 export interface SettingDefinition<T = unknown> {
   key: string;
@@ -165,6 +166,12 @@ export const SETTING_CATEGORIES: Array<{
     label: 'Maintenance',
     icon: '🛠️',
     description: 'Maintenance mode, read-only mode, feature flags',
+  },
+  {
+    slug: 'whatsapp',
+    label: 'WhatsApp Bot',
+    icon: '💬',
+    description: 'WhatsApp confirmation bot settings, verify token, API keys',
   },
 ];
 
@@ -1368,6 +1375,47 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     label: 'Feature flags',
     defaultValue: {} as Record<string, boolean>,
     description: 'Per-feature kill switches consumed by `isFeatureEnabled()`.',
+  },
+  {
+    key: 'WHATSAPP_BOT_ENABLED',
+    category: 'whatsapp',
+    type: 'toggle',
+    label: 'Enable WhatsApp confirmation bot',
+    defaultValue: false,
+    description: 'If active, a WhatsApp message will be sent to customers to verify order details.',
+  },
+  {
+    key: 'WHATSAPP_COD_ONLY',
+    category: 'whatsapp',
+    type: 'toggle',
+    label: 'Confirm COD orders only',
+    defaultValue: true,
+    description: 'If active, only Cash on Delivery orders will trigger bot verification.',
+  },
+  {
+    key: 'WHATSAPP_API_KEY',
+    category: 'whatsapp',
+    type: 'secret',
+    label: 'WhatsApp API Key (System Token)',
+    defaultValue: '',
+    sensitive: true,
+    description: 'Meta permanent access token for the WhatsApp Cloud Graph API.',
+  },
+  {
+    key: 'WHATSAPP_PHONE_NUMBER_ID',
+    category: 'whatsapp',
+    type: 'text',
+    label: 'WhatsApp Phone Number ID',
+    defaultValue: '',
+    description: 'Phone ID from the App dashboard on Meta Developers page.',
+  },
+  {
+    key: 'WHATSAPP_VERIFY_TOKEN',
+    category: 'whatsapp',
+    type: 'text',
+    label: 'Webhook verify token',
+    defaultValue: '',
+    description: 'The verify token string you choose when configuring your Meta Webhook.',
   },
 ];
 

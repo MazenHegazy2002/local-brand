@@ -360,6 +360,19 @@ export async function createOrderForUser(
       }
     })();
 
+    // Best-effort WhatsApp confirmation message. Failures must not block the checkout thread.
+    void (async () => {
+      try {
+        const { sendWhatsAppConfirmation } = await import('@/lib/whatsapp');
+        const phone = resolvedAddress.phone;
+        if (phone) {
+          await sendWhatsAppConfirmation(order.id, phone);
+        }
+      } catch (err) {
+        console.error('WhatsApp order confirmation dispatch failed:', err);
+      }
+    })();
+
     return { success: true, orderId: order.id };
   } catch (error: unknown) {
     const err = error as Error;

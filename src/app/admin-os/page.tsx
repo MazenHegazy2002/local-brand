@@ -27,6 +27,7 @@ import SupportTab from './_components/SupportTab';
 import MaintenanceTab from './_components/MaintenanceTab';
 import ShippingTab from './_components/ShippingTab';
 import BannersTab from './_components/BannersTab';
+import WhatsAppTab from './_components/WhatsAppTab';
 import { useConfirm } from '@/providers/ConfirmProvider';
 import { useToast } from '@/components/ui/ToastProvider';
 import {
@@ -472,6 +473,12 @@ export default function AdminOS() {
           icon={<WrenchIcon />}
         />
         <NavItem
+          active={activeTab === 'whatsapp'}
+          onClick={() => setActiveTab('whatsapp')}
+          label="WhatsApp Bot"
+          icon={<WhatsAppIcon />}
+        />
+        <NavItem
           active={activeTab === 'settings'}
           onClick={() => setActiveTab('settings')}
           label="Settings"
@@ -573,6 +580,7 @@ export default function AdminOS() {
           {activeTab === 'shipping' && <ShippingTab />}
           {activeTab === 'maintenance' && <MaintenanceTab />}
           {activeTab === 'affiliate' && <AffiliateTab />}
+          {activeTab === 'whatsapp' && <WhatsAppTab />}
         </div>
       </div>
 
@@ -718,6 +726,7 @@ const TITLES: Record<string, string> = {
   shipping: 'Governorate shipping rates',
   maintenance: 'Maintenance & system',
   settings: 'System configuration',
+  whatsapp: 'WhatsApp confirmation bot',
 };
 
 // ─── AffiliateIcon ────────────────────────────────────────────────────────────
@@ -4185,6 +4194,13 @@ function PluginIcon() {
         fill="none"
         opacity=".7"
       />
+    </svg>
+  );
+}
+function WhatsAppIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M8 0c-4.4 0-8 3.6-8 8 0 1.5.4 2.9 1.2 4.1l-1.2 3.9 4-1.2C5.2 15.6 6.6 16 8 16c4.4 0 8-3.6 8-8s-3.6-8-8-8zm4.3 11.2c-.2.5-.9.9-1.4 1-.4.1-.9.2-2.5-.5-2.1-.8-3.5-3-3.6-3.1s-.8-1.1-.8-2.1c0-1 .5-1.5.7-1.7.2-.2.4-.3.6-.3h.4c.1 0 .3 0 .4.3.2.4.6 1.4.6 1.5 0 .1.1.3 0 .4-.1.2-.2.3-.3.4-.1.1-.3.3-.4.4-.1.1-.2.3-.1.4.2.4.8 1.4 1.7 2.2.9.8 1.7 1.1 1.9 1.2.2.1.3.1.5-.1.2-.2.7-.8.9-1.1.1-.2.3-.2.5-.1s1.3.6 1.5.7c.2.1.3.2.4.3.1.2 0 .8-.3 1.3z" />
     </svg>
   );
 }
