@@ -53,6 +53,138 @@ export default function PagesTab() {
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<'all' | 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'>('all');
 
+  // Visual Block Builder States
+  const [editMode, setEditMode] = useState<'markdown' | 'visual'>('markdown');
+  const [enBlocks, setEnBlocks] = useState<any[]>([]);
+  const [arBlocks, setArBlocks] = useState<any[]>([]);
+  const [visualLang, setVisualLang] = useState<'en' | 'ar'>('en');
+
+  const activeBlocks = visualLang === 'en' ? enBlocks : arBlocks;
+
+  const updateEnBlocks = (newBlocks: any[]) => {
+    setEnBlocks(newBlocks);
+    setDraft(d => ({ ...d, bodyEn: JSON.stringify(newBlocks) }));
+  };
+
+  const updateArBlocks = (newBlocks: any[]) => {
+    setArBlocks(newBlocks);
+    setDraft(d => ({ ...d, bodyAr: JSON.stringify(newBlocks) }));
+  };
+
+  const updateActiveBlocks = visualLang === 'en' ? updateEnBlocks : updateArBlocks;
+
+  // Block Manipulation Event Handlers
+  const moveBlock = (index: number, direction: 'up' | 'down') => {
+    const blocks = [...activeBlocks];
+    if (direction === 'up' && index > 0) {
+      const temp = blocks[index - 1];
+      blocks[index - 1] = blocks[index];
+      blocks[index] = temp;
+    } else if (direction === 'down' && index < blocks.length - 1) {
+      const temp = blocks[index + 1];
+      blocks[index + 1] = blocks[index];
+      blocks[index] = temp;
+    }
+    updateActiveBlocks(blocks);
+  };
+
+  const removeBlock = (index: number) => {
+    const blocks = [...activeBlocks];
+    blocks.splice(index, 1);
+    updateActiveBlocks(blocks);
+  };
+
+  const editBlockField = (index: number, key: string, value: any) => {
+    const blocks = [...activeBlocks];
+    blocks[index] = { ...blocks[index], [key]: value };
+    updateActiveBlocks(blocks);
+  };
+
+  const editCardField = (index: number, cardIdx: number, field: string, value: any) => {
+    const blocks = [...activeBlocks];
+    const items = [...(blocks[index].items || [])];
+    while (items.length <= cardIdx) {
+      items.push({ emoji: '🌟', title: '', description: '' });
+    }
+    items[cardIdx] = { ...items[cardIdx], [field]: value };
+    blocks[index] = { ...blocks[index], items };
+    updateActiveBlocks(blocks);
+  };
+
+  const addFaqItem = (index: number) => {
+    const blocks = [...activeBlocks];
+    const items = [...(blocks[index].items || [])];
+    items.push({ question: '', answer: '' });
+    blocks[index] = { ...blocks[index], items };
+    updateActiveBlocks(blocks);
+  };
+
+  const removeFaqItem = (index: number, itemIdx: number) => {
+    const blocks = [...activeBlocks];
+    const items = [...(blocks[index].items || [])];
+    items.splice(itemIdx, 1);
+    blocks[index] = { ...blocks[index], items };
+    updateActiveBlocks(blocks);
+  };
+
+  const editFaqItemField = (index: number, itemIdx: number, field: string, value: any) => {
+    const blocks = [...activeBlocks];
+    const items = [...(blocks[index].items || [])];
+    items[itemIdx] = { ...items[itemIdx], [field]: value };
+    blocks[index] = { ...blocks[index], items };
+    updateActiveBlocks(blocks);
+  };
+
+  const addBlockType = (type: string) => {
+    const blocks = [...activeBlocks];
+    let newBlock: any = { type };
+    if (type === 'hero') {
+      newBlock = {
+        type,
+        title: 'New Banner Title',
+        description: 'New Description content goes here.',
+        bgImage: '',
+        btnText: 'Shop Now',
+        btnLink: '/shop',
+      };
+    } else if (type === 'richtext') {
+      newBlock = { type, content: '' };
+    } else if (type === 'banner') {
+      newBlock = { type, emoji: '📢', message: 'Enter alert message text here.' };
+    } else if (type === 'productGrid') {
+      newBlock = { type, title: 'Explore Categories', categorySlug: '', limit: 4 };
+    } else if (type === 'featureGrid') {
+      newBlock = {
+        type,
+        items: [
+          {
+            emoji: '🇪🇬',
+            title: 'Supporting Local Talent',
+            description: 'Discover emerging sellers.',
+          },
+          { emoji: '🛡️', title: 'Verified Quality Brands', description: 'Shop premium quality.' },
+          {
+            emoji: '🔒',
+            title: '14-Day Escrow Guarantee',
+            description: 'Secure checkout holding.',
+          },
+        ],
+      };
+    } else if (type === 'faq') {
+      newBlock = {
+        type,
+        items: [
+          {
+            question: 'What is Brandy?',
+            answer: "Brandy is Egypt's marketplace for local brands.",
+          },
+        ],
+      };
+    }
+    blocks.push(newBlock);
+    updateActiveBlocks(blocks);
+  };
+
   const load = async () => {
     setLoading(true);
     try {
@@ -69,6 +201,39 @@ export default function PagesTab() {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    if (activeId) {
+      const enBody = draft.bodyEn || '';
+      const arBody = draft.bodyAr || '';
+
+      let parsedEn: any[] = [];
+      let parsedAr: any[] = [];
+      let isVisual = false;
+
+      if (enBody.trim().startsWith('[')) {
+        try {
+          parsedEn = JSON.parse(enBody);
+          isVisual = true;
+        } catch {}
+      }
+      if (arBody.trim().startsWith('[')) {
+        try {
+          parsedAr = JSON.parse(arBody);
+          isVisual = true;
+        } catch {}
+      }
+
+      setEnBlocks(parsedEn);
+      setArBlocks(parsedAr);
+      setEditMode(isVisual ? 'visual' : 'markdown');
+    } else {
+      setEnBlocks([]);
+      setArBlocks([]);
+      setEditMode('markdown');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId, draft.id]);
 
   const visible = useMemo(() => {
     return filter === 'all' ? pages : pages.filter(p => p.status === filter);
@@ -315,25 +480,507 @@ export default function PagesTab() {
                   />
                 </Field>
 
-                <Field label="Body (English, Markdown)" required full>
-                  <textarea
-                    className="pages-input pages-textarea"
-                    value={draft.bodyEn ?? ''}
-                    onChange={e => setDraft({ ...draft, bodyEn: e.target.value })}
-                    rows={14}
-                    placeholder={'# About us\n\nWelcome to ...'}
-                  />
-                </Field>
+                {/* ── Editor Mode Toggle ── */}
+                <div className="col-span-full border-y border-slate-200 py-4 my-2 flex items-center justify-between">
+                  <span className="font-bold text-slate-800 text-sm">Editor Mode</span>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditMode('markdown')}
+                      className={`px-4 py-1.5 rounded-xl font-bold text-xs transition ${
+                        editMode === 'markdown'
+                          ? 'bg-[#1e3b8a] text-white shadow-sm'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                      }`}
+                    >
+                      Markdown Editor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditMode('visual')}
+                      className={`px-4 py-1.5 rounded-xl font-bold text-xs transition ${
+                        editMode === 'visual'
+                          ? 'bg-[#1e3b8a] text-white shadow-sm'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                      }`}
+                    >
+                      Visual Blocks Page Builder (Elementor Mode)
+                    </button>
+                  </div>
+                </div>
 
-                <Field label="Body (Arabic, Markdown)" full>
-                  <textarea
-                    className="pages-input pages-textarea"
-                    value={draft.bodyAr ?? ''}
-                    onChange={e => setDraft({ ...draft, bodyAr: e.target.value })}
-                    rows={10}
-                    dir="rtl"
-                  />
-                </Field>
+                {editMode === 'markdown' ? (
+                  <>
+                    <Field label="Body (English, Markdown)" required full>
+                      <textarea
+                        className="pages-input pages-textarea"
+                        value={draft.bodyEn ?? ''}
+                        onChange={e => setDraft({ ...draft, bodyEn: e.target.value })}
+                        rows={14}
+                        placeholder={'# About us\n\nWelcome to ...'}
+                      />
+                    </Field>
+
+                    <Field label="Body (Arabic, Markdown)" full>
+                      <textarea
+                        className="pages-input pages-textarea"
+                        value={draft.bodyAr ?? ''}
+                        onChange={e => setDraft({ ...draft, bodyAr: e.target.value })}
+                        rows={10}
+                        dir="rtl"
+                      />
+                    </Field>
+                  </>
+                ) : (
+                  <div className="col-span-full">
+                    {/* Visual Language Tab Selector */}
+                    <div className="flex gap-2 mb-6 border-b border-slate-200 pb-3">
+                      <button
+                        type="button"
+                        onClick={() => setVisualLang('en')}
+                        className={`px-3 py-1 text-xs font-bold rounded-lg transition ${
+                          visualLang === 'en'
+                            ? 'bg-[#1e3b8a] text-white'
+                            : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                        }`}
+                      >
+                        🇬🇧 Edit English Layout
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVisualLang('ar')}
+                        className={`px-3 py-1 text-xs font-bold rounded-lg transition ${
+                          visualLang === 'ar'
+                            ? 'bg-[#1e3b8a] text-white'
+                            : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                        }`}
+                      >
+                        🇪🇬 Edit Arabic Layout
+                      </button>
+                    </div>
+
+                    {/* Canvas Blocks */}
+                    {activeBlocks.length === 0 ? (
+                      <div className="border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center text-slate-400 bg-slate-50/50 mb-6">
+                        <span className="text-3xl block mb-2">🎨</span>
+                        <p className="font-bold text-xs">Visual Layout Canvas is Empty</p>
+                        <p className="text-[11px] text-slate-400 mt-1">
+                          Add your first layout block below to start building.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mb-6">
+                        {activeBlocks.map((block, index) => (
+                          <div
+                            key={index}
+                            className="border border-slate-200 bg-white rounded-2xl p-6 mb-6 shadow-sm relative group"
+                          >
+                            {/* Block Header */}
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xl">
+                                  {block.type === 'hero'
+                                    ? '🖼️'
+                                    : block.type === 'richtext'
+                                      ? '📝'
+                                      : block.type === 'banner'
+                                        ? '📢'
+                                        : block.type === 'productGrid'
+                                          ? '🛒'
+                                          : block.type === 'featureGrid'
+                                            ? '🌟'
+                                            : '❓'}
+                                </span>
+                                <span className="font-bold text-slate-800 text-sm capitalize">
+                                  {block.type === 'productGrid'
+                                    ? 'Product Grid'
+                                    : block.type === 'featureGrid'
+                                      ? 'Features Grid'
+                                      : block.type === 'richtext'
+                                        ? 'Rich Text / Paragraph'
+                                        : block.type}{' '}
+                                  Block
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => moveBlock(index, 'up')}
+                                  disabled={index === 0}
+                                  className="p-1.5 text-xs text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded disabled:opacity-30"
+                                  title="Move Up"
+                                >
+                                  ▲
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => moveBlock(index, 'down')}
+                                  disabled={index === activeBlocks.length - 1}
+                                  className="p-1.5 text-xs text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded disabled:opacity-30"
+                                  title="Move Down"
+                                >
+                                  ▼
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeBlock(index)}
+                                  className="p-1.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded ml-2"
+                                  title="Delete Block"
+                                >
+                                  ✖
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Block Fields Form */}
+                            <div className="space-y-4 text-xs">
+                              {block.type === 'hero' && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                                      Title
+                                    </label>
+                                    <input
+                                      className="w-full border border-slate-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#1e3b8a]"
+                                      value={block.title || ''}
+                                      onChange={e => editBlockField(index, 'title', e.target.value)}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                                      Background Image URL
+                                    </label>
+                                    <input
+                                      className="w-full border border-slate-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#1e3b8a]"
+                                      value={block.bgImage || ''}
+                                      onChange={e =>
+                                        editBlockField(index, 'bgImage', e.target.value)
+                                      }
+                                      placeholder="e.g. /banners/landing.jpg"
+                                    />
+                                  </div>
+                                  <div className="md:col-span-2">
+                                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                                      Description
+                                    </label>
+                                    <textarea
+                                      className="w-full border border-slate-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#1e3b8a]"
+                                      value={block.description || ''}
+                                      onChange={e =>
+                                        editBlockField(index, 'description', e.target.value)
+                                      }
+                                      rows={2}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                                      Button Label
+                                    </label>
+                                    <input
+                                      className="w-full border border-slate-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#1e3b8a]"
+                                      value={block.btnText || ''}
+                                      onChange={e =>
+                                        editBlockField(index, 'btnText', e.target.value)
+                                      }
+                                      placeholder="Shop Now"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                                      Button Link URL
+                                    </label>
+                                    <input
+                                      className="w-full border border-slate-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#1e3b8a]"
+                                      value={block.btnLink || ''}
+                                      onChange={e =>
+                                        editBlockField(index, 'btnLink', e.target.value)
+                                      }
+                                      placeholder="/shop"
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              {block.type === 'richtext' && (
+                                <div>
+                                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                                    Paragraph Content (Markdown supported)
+                                  </label>
+                                  <textarea
+                                    className="w-full border border-slate-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#1e3b8a] font-mono"
+                                    value={block.content || ''}
+                                    onChange={e => editBlockField(index, 'content', e.target.value)}
+                                    rows={6}
+                                    placeholder="Use **bold** or *italic* text here..."
+                                  />
+                                </div>
+                              )}
+
+                              {block.type === 'banner' && (
+                                <div className="grid grid-cols-6 gap-4">
+                                  <div className="col-span-1">
+                                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                                      Emoji
+                                    </label>
+                                    <input
+                                      className="w-full border border-slate-200 rounded-lg p-2 text-xs text-center focus:ring-1 focus:ring-[#1e3b8a]"
+                                      value={block.emoji || ''}
+                                      onChange={e => editBlockField(index, 'emoji', e.target.value)}
+                                      placeholder="📢"
+                                    />
+                                  </div>
+                                  <div className="col-span-5">
+                                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                                      Message Text
+                                    </label>
+                                    <input
+                                      className="w-full border border-slate-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#1e3b8a]"
+                                      value={block.message || ''}
+                                      onChange={e =>
+                                        editBlockField(index, 'message', e.target.value)
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              {block.type === 'productGrid' && (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                  <div className="md:col-span-1">
+                                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                                      Grid Section Title
+                                    </label>
+                                    <input
+                                      className="w-full border border-slate-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#1e3b8a]"
+                                      value={block.title || ''}
+                                      onChange={e => editBlockField(index, 'title', e.target.value)}
+                                      placeholder="Our Bestsellers"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                                      Category Slug
+                                    </label>
+                                    <input
+                                      className="w-full border border-slate-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#1e3b8a]"
+                                      value={block.categorySlug || ''}
+                                      onChange={e =>
+                                        editBlockField(index, 'categorySlug', e.target.value)
+                                      }
+                                      placeholder="e.g. linen-shirts"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                                      Item Display Limit
+                                    </label>
+                                    <input
+                                      type="number"
+                                      className="w-full border border-slate-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#1e3b8a]"
+                                      value={block.limit || 4}
+                                      onChange={e =>
+                                        editBlockField(
+                                          index,
+                                          'limit',
+                                          parseInt(e.target.value) || 4
+                                        )
+                                      }
+                                      min={1}
+                                      max={12}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              {block.type === 'featureGrid' && (
+                                <div className="space-y-4">
+                                  <span className="block text-[11px] font-bold text-slate-600">
+                                    Feature Cards (Max 3 cards recommended)
+                                  </span>
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {[0, 1, 2].map(cardIdx => {
+                                      const card = block.items?.[cardIdx] || {
+                                        emoji: '🌟',
+                                        title: '',
+                                        description: '',
+                                      };
+                                      return (
+                                        <div
+                                          key={cardIdx}
+                                          className="border border-slate-100 p-3 rounded-xl bg-slate-50 space-y-2"
+                                        >
+                                          <div className="flex gap-2">
+                                            <input
+                                              className="w-10 border border-slate-200 rounded p-1.5 text-xs text-center bg-white"
+                                              value={card.emoji || ''}
+                                              onChange={e =>
+                                                editCardField(
+                                                  index,
+                                                  cardIdx,
+                                                  'emoji',
+                                                  e.target.value
+                                                )
+                                              }
+                                              placeholder="Icon"
+                                            />
+                                            <input
+                                              className="w-full border border-slate-200 rounded p-1.5 text-xs bg-white"
+                                              value={card.title || ''}
+                                              onChange={e =>
+                                                editCardField(
+                                                  index,
+                                                  cardIdx,
+                                                  'title',
+                                                  e.target.value
+                                                )
+                                              }
+                                              placeholder="Card Title"
+                                            />
+                                          </div>
+                                          <textarea
+                                            className="w-full border border-slate-200 rounded p-1.5 text-[11px] bg-white"
+                                            value={card.description || ''}
+                                            onChange={e =>
+                                              editCardField(
+                                                index,
+                                                cardIdx,
+                                                'description',
+                                                e.target.value
+                                              )
+                                            }
+                                            placeholder="Card subtitle description..."
+                                            rows={2}
+                                          />
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {block.type === 'faq' && (
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="block text-[11px] font-bold text-slate-600">
+                                      Questions & Answers Accordions
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => addFaqItem(index)}
+                                      className="bg-[#1e3b8a] text-white font-bold py-1 px-2.5 rounded text-[10px]"
+                                    >
+                                      + Add FAQ Item
+                                    </button>
+                                  </div>
+                                  <div className="space-y-3">
+                                    {(block.items || []).map((faqItem: any, itemIdx: number) => (
+                                      <div
+                                        key={itemIdx}
+                                        className="border border-slate-100 p-3 rounded-xl bg-slate-50 space-y-2 relative"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <span className="font-bold text-[10px] text-slate-500">
+                                            Item #{itemIdx + 1}
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => removeFaqItem(index, itemIdx)}
+                                            className="text-red-500 text-[10px] hover:underline"
+                                          >
+                                            Remove Item
+                                          </button>
+                                        </div>
+                                        <input
+                                          className="w-full border border-slate-200 rounded p-1.5 text-xs bg-white"
+                                          value={faqItem.question || ''}
+                                          onChange={e =>
+                                            editFaqItemField(
+                                              index,
+                                              itemIdx,
+                                              'question',
+                                              e.target.value
+                                            )
+                                          }
+                                          placeholder="Question Text"
+                                        />
+                                        <textarea
+                                          className="w-full border border-slate-200 rounded p-1.5 text-xs bg-white"
+                                          value={faqItem.answer || ''}
+                                          onChange={e =>
+                                            editFaqItemField(
+                                              index,
+                                              itemIdx,
+                                              'answer',
+                                              e.target.value
+                                            )
+                                          }
+                                          placeholder="Answer Text"
+                                          rows={2}
+                                        />
+                                      </div>
+                                    ))}
+                                    {(!block.items || block.items.length === 0) && (
+                                      <p className="text-[11px] text-slate-400 italic text-center py-2">
+                                        No FAQ items added yet. Click "+ Add FAQ Item".
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Add Block Toolbar */}
+                    <div className="bg-slate-100 rounded-2xl p-4 border border-slate-200 flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-bold text-slate-700 mr-2">Add Block:</span>
+                      <button
+                        type="button"
+                        onClick={() => addBlockType('hero')}
+                        className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-1.5 px-3 rounded-lg text-xs shadow-sm"
+                      >
+                        🖼️ Hero Banner
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => addBlockType('richtext')}
+                        className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-1.5 px-3 rounded-lg text-xs shadow-sm"
+                      >
+                        📝 Rich Text
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => addBlockType('banner')}
+                        className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-1.5 px-3 rounded-lg text-xs shadow-sm"
+                      >
+                        📢 Alert Banner
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => addBlockType('productGrid')}
+                        className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-1.5 px-3 rounded-lg text-xs shadow-sm"
+                      >
+                        🛒 Product Grid
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => addBlockType('featureGrid')}
+                        className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-1.5 px-3 rounded-lg text-xs shadow-sm"
+                      >
+                        🌟 Feature Cards
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => addBlockType('faq')}
+                        className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-1.5 px-3 rounded-lg text-xs shadow-sm"
+                      >
+                        ❓ FAQ Accordions
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <h3 className="pages-section">SEO</h3>
 
