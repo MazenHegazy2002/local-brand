@@ -51,7 +51,7 @@ export async function GET() {
         )
       : 100;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://localhost:3000';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
   return NextResponse.json({
     affiliate: {

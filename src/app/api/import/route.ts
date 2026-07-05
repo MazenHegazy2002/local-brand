@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File;
-    
+
     if (!file) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     });
 
     const results = { success: 0, failed: 0, errors: [] as string[] };
-    
+
     for (const row of data) {
       try {
         if (!row.Title || !row['Base Price']) {
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
         let categoryId = '';
         if (row.Category) {
           const category = await prisma.category.findFirst({
-            where: { name: row.Category }
+            where: { name: row.Category },
           });
           if (category) categoryId = category.id;
         }
@@ -71,21 +71,36 @@ export async function POST(req: NextRequest) {
         let sellerId = '';
         if (row.Seller) {
           const sellerProfile = await prisma.sellerProfile.findFirst({
-            where: { storeName: row.Seller }
+            where: { storeName: row.Seller },
           });
           if (sellerProfile) sellerId = sellerProfile.id;
+        }
+
+        if (!sellerId) {
+          results.failed++;
+          results.errors.push(`Skipped "${row.Title}": seller "${row.Seller || ''}" not found`);
+          continue;
+        }
+
+        if (!categoryId) {
+          results.failed++;
+          results.errors.push(`Skipped "${row.Title}": category "${row.Category || ''}" not found`);
+          continue;
         }
 
         await prisma.product.create({
           data: {
             title: row.Title,
             description: row.Description || '',
-            basePrice: typeof row['Base Price'] === 'string' ? parseFloat(row['Base Price']) : (row['Base Price'] as number),
+            basePrice:
+              typeof row['Base Price'] === 'string'
+                ? parseFloat(row['Base Price'])
+                : (row['Base Price'] as number),
             sellerId: sellerId,
             categoryId: categoryId,
             published: row.Published !== 'false' && row.Published !== false,
             slug: row.Title.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
-          }
+          },
         });
 
         results.success++;

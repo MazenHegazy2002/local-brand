@@ -42,7 +42,9 @@ export async function GET(req: Request) {
         try {
           const attributes = JSON.parse(attributesStr);
           Object.keys(attributes).forEach(k => allSpecKeys.add(k));
-        } catch (_e) {}
+        } catch (e) {
+          console.warn(`[compare] Failed to parse attributes for product ${p.id}:`, e);
+        }
       }
     });
 
@@ -52,7 +54,9 @@ export async function GET(req: Request) {
         if (p.variants[0]?.attributes) {
           specs = JSON.parse(p.variants[0].attributes);
         }
-      } catch (_e) {}
+      } catch (e) {
+        console.warn(`[compare] Failed to parse specs for product ${p.id}:`, e);
+      }
       return {
         id: p.id,
         title: p.title,

@@ -4,6 +4,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
 
+function csvEscape(value: string | null | undefined): string {
+  const raw = value ?? '';
+  const sanitized = /^[=+\-@]/.test(raw) ? `'${raw}` : raw;
+  return sanitized.replace(/"/g, '""');
+}
+
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session || (session.user as SessionUser)?.role !== 'ADMIN') {
@@ -16,41 +22,43 @@ export async function GET(req: NextRequest) {
 
     if (type === 'products') {
       const products = await prisma.product.findMany({
-        include: { seller: true, category: true, variants: true }
+        include: { seller: true, category: true, variants: true },
       });
-      
+
       const csv = [
         'ID,Title,Description,Base Price,Seller,Category,Published,Variants Count',
-        ...products.map(p => 
-          `${p.id},"${p.title}","${p.description}",${p.basePrice},"${p.seller?.storeName || 'N/A'}","${p.category?.name || 'N/A'}",${p.published},${p.variants.length}`
-        )
+        ...products.map(
+          p =>
+            `${p.id},"${csvEscape(p.title)}","${csvEscape(p.description)}",${p.basePrice},"${csvEscape(p.seller?.storeName || 'N/A')}","${csvEscape(p.category?.name || 'N/A')}",${p.published},${p.variants.length}`
+        ),
       ].join('\n');
 
       return new NextResponse(csv, {
         headers: {
           'Content-Type': 'text/csv',
-          'Content-Disposition': 'attachment; filename="products.csv"'
-        }
+          'Content-Disposition': 'attachment; filename="products.csv"',
+        },
       });
     }
 
     if (type === 'orders') {
       const orders = await prisma.order.findMany({
-        include: { user: true, items: true }
+        include: { user: true, items: true },
       });
 
       const csv = [
         'ID,User Email,Total Amount,Status,Payment Status,Created At',
-        ...orders.map(o => 
-          `${o.id},"${o.user?.email || 'Guest'}",${o.totalAmount},${o.status},${o.paymentStatus},"${o.createdAt.toISOString()}"`
-        )
+        ...orders.map(
+          o =>
+            `${o.id},"${csvEscape(o.user?.email || 'Guest')}",${o.totalAmount},${o.status},${o.paymentStatus},"${o.createdAt.toISOString()}"`
+        ),
       ].join('\n');
 
       return new NextResponse(csv, {
         headers: {
           'Content-Type': 'text/csv',
-          'Content-Disposition': 'attachment; filename="orders.csv"'
-        }
+          'Content-Disposition': 'attachment; filename="orders.csv"',
+        },
       });
     }
 

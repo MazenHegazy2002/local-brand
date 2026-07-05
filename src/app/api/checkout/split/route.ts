@@ -2,10 +2,15 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { VAT_RATE, getShippingRate, DEFAULT_COMMISSION_RATE } from '@/lib/constants';
+import {
+  VAT_RATE,
+  getShippingRate,
+  DEFAULT_COMMISSION_RATE,
+  MAX_DISCOUNT_PCT,
+} from '@/lib/constants';
 import { SessionUser } from '@/types';
 import { createOrderSchema } from '@/lib/validation';
-import { OrderStatus, PaymentStatus, OrderItemStatus } from '@/generated/client';
+import { OrderStatus, PaymentStatus, OrderItemStatus, DiscountType } from '@/generated/client';
 
 /**
  * Multi-seller cart checkout — splits 1 cart into N sub-orders (1 per seller)
@@ -31,12 +36,26 @@ export async function POST(req: Request) {
       );
     }
 
-    const {
-      items: cartItemsInput,
-      addressId,
-      couponCode: _couponCode,
-      paymentMethod,
-    } = validated.data;
+    const { items: cartItemsInput, addressId, couponCode, paymentMethod } = validated.data;
+
+    // ── 1b. Resolve coupon ──────────────────────────────────────────────────────
+    let coupon: {
+      id: string;
+      discountType: string;
+      discountValue: number;
+      maxDiscount: number | null;
+    } | null = null;
+    if (couponCode) {
+      const dbCoupon = await prisma.coupon.findUnique({ where: { code: couponCode } });
+      if (dbCoupon && dbCoupon.isActive && dbCoupon.expiryDate > new Date()) {
+        coupon = {
+          id: dbCoupon.id,
+          discountType: dbCoupon.discountType,
+          discountValue: dbCoupon.discountValue,
+          maxDiscount: dbCoupon.maxDiscount,
+        };
+      }
+    }
 
     // ── 2. Group cart items by seller ─────────────────────────────────────────
     // We need to fetch product info to know the seller
@@ -122,7 +141,19 @@ export async function POST(req: Request) {
 
         const vatAmount = subtotal * VAT_RATE;
         const shippingFee = getShippingRate(group.governorate);
-        const totalAmount = subtotal + vatAmount + shippingFee;
+
+        let discountAmount = 0;
+        if (coupon) {
+          if (coupon.discountType === DiscountType.PERCENTAGE) {
+            discountAmount = subtotal * (coupon.discountValue / 100);
+            if (coupon.maxDiscount) discountAmount = Math.min(discountAmount, coupon.maxDiscount);
+          } else {
+            discountAmount = coupon.discountValue;
+          }
+          discountAmount = Math.min(discountAmount, subtotal * MAX_DISCOUNT_PCT);
+        }
+
+        const totalAmount = Math.max(0, subtotal + vatAmount + shippingFee - discountAmount);
 
         // Platform fee calculation
         const platformFee = subtotal * DEFAULT_COMMISSION_RATE;
@@ -132,13 +163,15 @@ export async function POST(req: Request) {
           data: {
             userId,
             totalAmount,
+            discountAmount,
             shippingFee,
             platformFee,
             sellerPayoutTotal,
             paymentMethod: paymentMethod as any,
-            paymentStatus: PaymentStatus.UNPAID, // Always start UNPAID for split checkout, then update via webhook
+            paymentStatus: PaymentStatus.UNPAID,
             status: OrderStatus.PENDING_PAYMENT,
             shippingAddressSnapshot: JSON.stringify(address),
+            couponId: coupon?.id,
             items: { create: orderItemsData },
           },
         });
@@ -159,6 +192,24 @@ export async function POST(req: Request) {
         where: { id: userId },
         data: { loyaltyPoints: { increment: pointsEarned } },
       });
+
+      // ── 5. Track coupon usage ───────────────────────────────────────────────
+      if (coupon) {
+        await tx.coupon.update({
+          where: { id: coupon.id },
+          data: { usedCount: { increment: createdOrders.length } },
+        });
+        for (const o of createdOrders) {
+          await tx.couponUsage.create({
+            data: {
+              couponId: coupon.id,
+              userId,
+              orderId: o.orderId,
+              discount: o.subtotal > 0 ? o.totalAmount - o.subtotal : 0,
+            },
+          });
+        }
+      }
 
       return { createdOrders, pointsEarned };
     });

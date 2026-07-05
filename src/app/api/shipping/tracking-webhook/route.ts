@@ -15,6 +15,14 @@ const VALID_TRANSITIONS: Record<string, OrderStatus[]> = {
 
 export async function POST(req: Request) {
   try {
+    const expectedSecret = process.env.TRACKING_WEBHOOK_SECRET;
+    if (expectedSecret) {
+      const provided = req.headers.get('x-webhook-secret');
+      if (provided !== expectedSecret) {
+        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      }
+    }
+
     const body = await req.json();
 
     const courier = req.headers.get('x-courier-name') || body.courier;

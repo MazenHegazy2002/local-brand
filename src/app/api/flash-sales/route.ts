@@ -50,6 +50,6 @@ export async function GET() {
     return NextResponse.json({ products: result });
   } catch (error) {
     console.error('[flash-sales] error:', error);
-    return NextResponse.json({ products: [] });
+    return NextResponse.json({ error: 'Failed to load flash sales' }, { status: 500 });
   }
 }

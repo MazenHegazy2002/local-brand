@@ -1477,14 +1477,28 @@ export async function triggerWhatsAppManual(orderId: string, phone: string) {
     const result = await sendWhatsAppConfirmation(orderId, phone);
 
     if (result.success) {
-      await prisma.auditLog.create({
-        data: {
-          adminId: (session.user as SessionUser).id,
-          action: 'WHATSAPP_MANUAL_SEND',
-          targetId: orderId,
-          details: JSON.stringify({ phone, messageId: result.messageId }),
-        },
-      });
+      const adminId = await getRealUserId(session);
+      // Only write the audit log when the admin user still exists in the DB
+      // (stale JWT tokens can carry an id for a deleted account, which would
+      // violate the AuditLog_adminId_fkey FK constraint).
+      const adminExists = adminId
+        ? await prisma.user.findUnique({ where: { id: adminId }, select: { id: true } })
+        : null;
+      if (adminExists) {
+        await prisma.auditLog.create({
+          data: {
+            adminId,
+            action: 'WHATSAPP_MANUAL_SEND',
+            targetId: orderId,
+            details: JSON.stringify({ phone, messageId: result.messageId }),
+          },
+        });
+      } else {
+        console.warn(
+          '[triggerWhatsAppManual] Skipping audit log — admin user not found in DB for id:',
+          adminId
+        );
+      }
       revalidatePath('/admin-os');
       return { success: true };
     } else {
@@ -1506,7 +1520,13 @@ export async function overrideWhatsAppStatus(orderId: string, status: 'CONFIRMED
       return { error: 'Unauthorized' };
     }
 
-    const adminId = (session.user as SessionUser).id;
+    const sessionAdminId = (session.user as SessionUser).id;
+    // Verify the admin user still exists to avoid AuditLog_adminId_fkey violations
+    // when the JWT is stale (e.g., account was deleted after the token was issued).
+    const adminExists = sessionAdminId
+      ? await prisma.user.findUnique({ where: { id: sessionAdminId }, select: { id: true } })
+      : null;
+    const adminId = adminExists ? sessionAdminId : null;
 
     if (status === 'CONFIRMED') {
       await prisma.order.update({
@@ -1541,14 +1561,21 @@ export async function overrideWhatsAppStatus(orderId: string, status: 'CONFIRMED
       });
     }
 
-    await prisma.auditLog.create({
-      data: {
-        adminId,
-        action: `WHATSAPP_OVERRIDE_${status}`,
-        targetId: orderId,
-        details: JSON.stringify({ status }),
-      },
-    });
+    if (adminId) {
+      await prisma.auditLog.create({
+        data: {
+          adminId,
+          action: `WHATSAPP_OVERRIDE_${status}`,
+          targetId: orderId,
+          details: JSON.stringify({ status }),
+        },
+      });
+    } else {
+      console.warn(
+        '[overrideWhatsAppStatus] Skipping audit log — admin user not found in DB for id:',
+        sessionAdminId
+      );
+    }
 
     revalidatePath('/admin-os');
     return { success: true };

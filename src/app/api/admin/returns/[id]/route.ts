@@ -28,14 +28,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     },
   });
 
-  await prisma.auditLog.create({
-    data: {
-      adminId: (session.user as SessionUser).id,
-      action: `RMA_${body.status}`,
-      targetId: id,
-      details: JSON.stringify({ notes: body.adminNotes }),
-    },
+  // Guard against AuditLog_adminId_fkey FK violations: a stale JWT can carry
+  // an id that no longer exists in the User table (soft/hard-deleted account).
+  const adminId = (session.user as SessionUser).id;
+  const adminExists = await prisma.user.findUnique({
+    where: { id: adminId },
+    select: { id: true },
   });
+  if (adminExists) {
+    await prisma.auditLog.create({
+      data: {
+        adminId,
+        action: `RMA_${body.status}`,
+        targetId: id,
+        details: JSON.stringify({ notes: body.adminNotes }),
+      },
+    });
+  }
 
   return NextResponse.json({ rma: updated });
 }

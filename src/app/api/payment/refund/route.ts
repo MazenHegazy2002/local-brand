@@ -56,6 +56,10 @@ export async function POST(req: Request) {
         });
       } catch (stripeError) {
         console.error('Stripe refund error:', stripeError);
+        return NextResponse.json(
+          { message: 'Stripe refund failed. The payment gateway rejected the request.' },
+          { status: 502 }
+        );
       }
     }
 

@@ -48,14 +48,23 @@ export async function POST(req: Request) {
       }
     } while (cursor !== '0');
 
-    await prisma.auditLog.create({
-      data: {
-        adminId: (session.user as SessionUser).id,
-        action: 'CACHE_CLEARED',
-        targetId: null,
-        details: JSON.stringify({ pattern, deleted }),
-      },
+    // Guard against AuditLog_adminId_fkey FK violations: a stale JWT can carry
+    // an id that no longer exists in the User table (soft/hard-deleted account).
+    const adminId = (session.user as SessionUser).id;
+    const adminExists = await prisma.user.findUnique({
+      where: { id: adminId },
+      select: { id: true },
     });
+    if (adminExists) {
+      await prisma.auditLog.create({
+        data: {
+          adminId,
+          action: 'CACHE_CLEARED',
+          targetId: null,
+          details: JSON.stringify({ pattern, deleted }),
+        },
+      });
+    }
 
     return NextResponse.json({ ok: true, deleted });
   } catch (err: unknown) {

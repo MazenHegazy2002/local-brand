@@ -1453,9 +1453,7 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
 
   const isSessionAdmin = session && (session.user as SessionUser).role === 'ADMIN';
-  const isHeaderValid =
-    authHeader &&
-    (authHeader === process.env.SEED_SECRET || authHeader === 'brandy-prod-seed-2026');
+  const isHeaderValid = authHeader && authHeader === process.env.SEED_SECRET;
 
   if (!isSessionAdmin && !isHeaderValid) {
     return NextResponse.json(
