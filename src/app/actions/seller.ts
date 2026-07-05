@@ -1487,7 +1487,7 @@ export async function triggerWhatsAppManual(orderId: string, phone: string) {
       if (adminExists) {
         await prisma.auditLog.create({
           data: {
-            adminId,
+            adminId: adminExists.id,
             action: 'WHATSAPP_MANUAL_SEND',
             targetId: orderId,
             details: JSON.stringify({ phone, messageId: result.messageId }),
