@@ -364,3 +364,58 @@ describe('createOrderForUser — concurrency / stock race', () => {
     expect(result.success).toBeUndefined();
   });
 });
+
+describe('createOrderForUser — selected size and color snapshots', () => {
+  it('saves selectedSize and selectedColor to OrderItem data', async () => {
+    mocked.productVariant.findUnique.mockResolvedValue({
+      id: VALID_VARIANT_ID,
+      stockCount: 5,
+      price: 100,
+      product: {
+        title: 'T-Shirt',
+        basePrice: 100,
+        published: true,
+        deletedAt: null,
+        flashSalePrice: null,
+        flashSaleEndsAt: null,
+        seller: { storeName: 'Demo Store' },
+      },
+    });
+
+    const txOrderCreate = jest.fn<any>().mockResolvedValue({ id: 'order-1' });
+    mocked.$transaction.mockImplementation((fn: any) =>
+      fn({
+        productVariant: { updateMany: jest.fn<any>().mockResolvedValue({ count: 1 }) },
+        order: { create: txOrderCreate },
+        coupon: { update: jest.fn<any>() },
+      })
+    );
+
+    const result = await createOrderForUser('user-1', {
+      items: [
+        {
+          variantId: VALID_VARIANT_ID,
+          quantity: 1,
+          selectedSize: 'L',
+          selectedColor: 'Red',
+        },
+      ],
+      shippingAddress: baseInlineAddress,
+      paymentMethod: 'CASH_ON_DELIVERY',
+    });
+
+    expect(result.success).toBe(true);
+    expect(txOrderCreate).toHaveBeenCalled();
+    const createData = txOrderCreate.mock.calls[0][0] as any;
+    expect(createData.data.items.create[0]).toEqual({
+      variantId: VALID_VARIANT_ID,
+      productTitleSnapshot: 'T-Shirt',
+      sellerNameSnapshot: 'Demo Store',
+      priceAtPurchase: 100,
+      quantity: 1,
+      status: 'PENDING',
+      selectedSize: 'L',
+      selectedColor: 'Red',
+    });
+  });
+});

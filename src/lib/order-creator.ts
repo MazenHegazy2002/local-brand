@@ -94,6 +94,8 @@ export async function createOrderForUser(
       priceAtPurchase: number;
       quantity: number;
       status: OrderItemStatus;
+      selectedSize?: string | null;
+      selectedColor?: string | null;
     }> = [];
 
     for (const itemInput of cartItemsInput) {
@@ -145,6 +147,8 @@ export async function createOrderForUser(
         priceAtPurchase: price,
         quantity: itemInput.quantity,
         status: OrderItemStatus.PENDING,
+        selectedSize: itemInput.selectedSize || null,
+        selectedColor: itemInput.selectedColor || null,
       });
     }
 

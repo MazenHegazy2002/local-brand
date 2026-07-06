@@ -249,6 +249,8 @@ export interface OrderItem {
   order?: Order;
   variant?: ProductVariant;
   returnRequest?: ReturnRequest | null;
+  selectedSize?: string | null;
+  selectedColor?: string | null;
 }
 
 export interface Shipment {

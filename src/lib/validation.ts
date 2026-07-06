@@ -129,6 +129,8 @@ export const createOrderSchema = z.object({
       z.object({
         variantId: z.string().uuid(),
         quantity: z.number().int().positive('Quantity must be a positive integer'),
+        selectedSize: z.string().optional(),
+        selectedColor: z.string().optional(),
       })
     )
     .min(1, 'At least one item is required'),

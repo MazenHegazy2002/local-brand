@@ -296,24 +296,42 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
                         {item.sellerNameSnapshot}
                       </span>
                     </p>
-                    {item.variant?.title && item.variant.title !== item.productTitleSnapshot && (
-                      <p className="text-xs text-[#1e3b8a] font-semibold mb-2">
-                        {t('Variant:', 'النوع:')} {item.variant.title}
-                      </p>
-                    )}
-                    {attrs && (
+                    {item.selectedColor || item.selectedSize ? (
                       <div className="flex flex-wrap gap-1.5 mb-2">
-                        {attrs.color && (
+                        {item.selectedColor && (
                           <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded-full font-bold">
-                            {t('Color:', 'اللون:')} {attrs.color}
+                            {t('Color:', 'اللون:')} {item.selectedColor}
                           </span>
                         )}
-                        {(attrs.size || attrs.sizes) && (
+                        {item.selectedSize && (
                           <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded-full font-bold">
-                            {t('Size:', 'المقاس:')} {attrs.size || attrs.sizes}
+                            {t('Size:', 'المقاس:')} {item.selectedSize}
                           </span>
                         )}
                       </div>
+                    ) : (
+                      <>
+                        {item.variant?.title &&
+                          item.variant.title !== item.productTitleSnapshot && (
+                            <p className="text-xs text-[#1e3b8a] font-semibold mb-2">
+                              {t('Variant:', 'النوع:')} {item.variant.title}
+                            </p>
+                          )}
+                        {attrs && (
+                          <div className="flex flex-wrap gap-1.5 mb-2">
+                            {attrs.color && (
+                              <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded-full font-bold">
+                                {t('Color:', 'اللون:')} {attrs.color}
+                              </span>
+                            )}
+                            {(attrs.size || attrs.sizes) && (
+                              <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded-full font-bold">
+                                {t('Size:', 'المقاس:')} {attrs.size || attrs.sizes}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </>
                     )}
                     <div className="flex flex-wrap gap-3 text-sm">
                       <span className="text-slate-600">

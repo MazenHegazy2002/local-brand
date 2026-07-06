@@ -993,8 +993,22 @@ function OrdersTab({
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '11px', fontWeight: 600 }}>{item.productTitleSnapshot}</div>
-                <div style={{ fontSize: '10px', color: '#64748b' }}>
-                  Qty: {item.quantity} · Variant: {item.variant?.title}
+                <div
+                  style={{
+                    fontSize: '10px',
+                    color: '#64748b',
+                    display: 'flex',
+                    gap: '8px',
+                    flexWrap: 'wrap',
+                    marginTop: '2px',
+                  }}
+                >
+                  <span>Qty: {item.quantity}</span>
+                  {item.selectedColor && <span>· Color: {item.selectedColor}</span>}
+                  {item.selectedSize && <span>· Size: {item.selectedSize}</span>}
+                  {!item.selectedColor && !item.selectedSize && item.variant?.title && (
+                    <span>· Variant: {item.variant.title}</span>
+                  )}
                 </div>
               </div>
               {item.status === 'DELIVERED' && (

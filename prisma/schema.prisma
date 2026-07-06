@@ -389,6 +389,8 @@ model OrderItem {
   sellerNameSnapshot   String
   priceAtPurchase      Float
   quantity             Int
+  selectedSize         String?
+  selectedColor        String?
 
   status OrderItemStatus @default(PENDING) // Can be refunded/returned individually
 

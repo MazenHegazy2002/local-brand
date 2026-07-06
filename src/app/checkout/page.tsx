@@ -191,22 +191,27 @@ function CheckoutPageInner() {
         const res = await fetch('/api/cart/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ variantIds: items.map(i => i.id) }),
+          body: JSON.stringify({ variantIds: items.map(i => i.variantId || i.id) }),
         });
         if (!res.ok) return;
         const data: { invalid?: string[]; rewrites?: Record<string, string> } = await res.json();
         if (cancelled) return;
         if (data.rewrites) {
           for (const [oldId, newId] of Object.entries(data.rewrites)) {
-            rewriteId(oldId, newId);
+            const sourceItem = items.find(i => i.id === oldId || i.variantId === oldId);
+            if (sourceItem) {
+              rewriteId(sourceItem.id, newId);
+            }
           }
         }
         if (!data.invalid?.length) return;
         const removedNames: string[] = [];
-        for (const id of data.invalid) {
-          const it = items.find(i => i.id === id);
-          if (it) removedNames.push(it.name);
-          removeItem(id);
+        for (const invalidVariantId of data.invalid) {
+          const matchedItems = items.filter(i => (i.variantId || i.id) === invalidVariantId);
+          for (const mi of matchedItems) {
+            removedNames.push(mi.name);
+            removeItem(mi.id);
+          }
         }
         if (removedNames.length) {
           setCartNotice(
@@ -468,7 +473,12 @@ function CheckoutPageInner() {
 
       // ── 3. Create the order ──────────────────────────────────────────────────
       const res = await createOrder({
-        items: items.map(item => ({ variantId: item.id, quantity: item.qty })),
+        items: items.map(item => ({
+          variantId: item.variantId || item.id,
+          quantity: item.qty,
+          selectedSize: item.selectedSize || undefined,
+          selectedColor: item.selectedColor || undefined,
+        })),
         addressId,
         // Always send the inline shipping address as a fallback in case the
         // address row couldn't be persisted (e.g. for guest checkout).

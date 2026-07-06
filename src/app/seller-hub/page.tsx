@@ -1395,14 +1395,20 @@ function OrdersTab({
                     {new Date(item.date).toLocaleDateString()}
                   </div>
                   {/* Variant specs (color / sizes) — Task 11 */}
-                  {item.variant?.title &&
-                    item.variant.title !== 'Standard' &&
-                    item.variant.title !== item.productTitleSnapshot && (
-                      <div className="text-[11px] text-indigo-600 font-semibold mt-0.5">
-                        {item.variant.title}
-                      </div>
-                    )}
-                  {item.variant?.attributes &&
+                  {item.selectedColor || item.selectedSize ? (
+                    <div className="text-[10px] text-slate-505 mt-0.5 flex flex-wrap gap-1.5 font-medium">
+                      {item.selectedColor && (
+                        <span className="bg-slate-100 px-2 py-0.5 rounded-full">
+                          Color: {item.selectedColor}
+                        </span>
+                      )}
+                      {item.selectedSize && (
+                        <span className="bg-slate-100 px-2 py-0.5 rounded-full">
+                          Size: {item.selectedSize}
+                        </span>
+                      )}
+                    </div>
+                  ) : item.variant?.attributes ? (
                     (() => {
                       try {
                         const attrs = JSON.parse(item.variant.attributes);
@@ -1418,7 +1424,8 @@ function OrdersTab({
                       } catch {
                         return null;
                       }
-                    })()}
+                    })()
+                  ) : null}
                   {(item.variant?.sku || item.variant?.upc) && (
                     <div className="text-[10px] text-slate-400 font-mono mt-0.5">
                       {item.variant.sku && <>SKU: {item.variant.sku}</>}
@@ -1524,7 +1531,20 @@ function OrdersTab({
                       Variant: {selectedOrder.variant.title}
                     </div>
                   )}
-                  {selectedOrder.variant?.attributes &&
+                  {selectedOrder.selectedColor || selectedOrder.selectedSize ? (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {selectedOrder.selectedColor && (
+                        <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
+                          Color: {selectedOrder.selectedColor}
+                        </span>
+                      )}
+                      {selectedOrder.selectedSize && (
+                        <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
+                          Size: {selectedOrder.selectedSize}
+                        </span>
+                      )}
+                    </div>
+                  ) : selectedOrder.variant?.attributes ? (
                     (() => {
                       try {
                         const attrs = JSON.parse(selectedOrder.variant.attributes);
@@ -1545,7 +1565,8 @@ function OrdersTab({
                       } catch {
                         return null;
                       }
-                    })()}
+                    })()
+                  ) : null}
                   <div className="text-xs text-slate-500 mt-1">
                     Qty: {selectedOrder.quantity} ·{' '}
                     {selectedOrder.priceAtPurchase?.toLocaleString()} EGP each

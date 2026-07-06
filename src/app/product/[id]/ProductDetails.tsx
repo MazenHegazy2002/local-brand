@@ -292,12 +292,20 @@ export default function ProductDetails({
       return;
     }
 
+    const variantId = resolvedVariant?.id || product.id;
+    const sizeVal = selectedSize || undefined;
+    const colorVal = selectedColor || undefined;
+    const compositeId = `${variantId}-${sizeVal || ''}-${colorVal || ''}`;
+
     for (let i = 0; i < qty; i++) {
       addItem({
-        id: resolvedVariant?.id || product.id,
+        id: compositeId,
+        variantId,
         name: productTitle,
         price: activePrice,
         image: activeImage || primaryImage,
+        selectedSize: sizeVal,
+        selectedColor: colorVal,
       });
     }
     setAdded(true);

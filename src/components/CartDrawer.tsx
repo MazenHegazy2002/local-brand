@@ -85,18 +85,28 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         const res = await fetch('/api/cart/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ variantIds: items.map(i => i.id) }),
+          body: JSON.stringify({ variantIds: items.map(i => i.variantId || i.id) }),
         });
         if (!res.ok) return;
         const data: { invalid?: string[]; rewrites?: Record<string, string> } = await res.json();
         if (cancelled) return;
         if (data.rewrites) {
           for (const [oldId, newId] of Object.entries(data.rewrites)) {
-            rewriteId(oldId, newId);
+            // Reconcile legacy ID to the new variant ID
+            const sourceItem = items.find(i => i.id === oldId || i.variantId === oldId);
+            if (sourceItem) {
+              rewriteId(sourceItem.id, newId);
+            }
           }
         }
         if (data.invalid?.length) {
-          for (const id of data.invalid) removeItem(id);
+          for (const invalidVariantId of data.invalid) {
+            // Find all composite items sharing this variant ID
+            const matchedItems = items.filter(i => (i.variantId || i.id) === invalidVariantId);
+            for (const mi of matchedItems) {
+              removeItem(mi.id);
+            }
+          }
         }
       } catch {
         /* network error — leave cart alone */
@@ -145,6 +155,20 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                 <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-gray-900 mb-1 truncate">{item.name}</h4>
+                  {(item.selectedColor || item.selectedSize) && (
+                    <div className="flex flex-wrap gap-1.5 mb-1.5 text-xs text-gray-500 font-medium">
+                      {item.selectedColor && (
+                        <span className="bg-gray-100 px-2 py-0.5 rounded-full">
+                          Color: {item.selectedColor}
+                        </span>
+                      )}
+                      {item.selectedSize && (
+                        <span className="bg-gray-100 px-2 py-0.5 rounded-full">
+                          Size: {item.selectedSize}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <p className="text-[hsl(var(--primary))] font-bold mb-2">
                     {(item.price * item.qty).toLocaleString()} EGP
                   </p>
