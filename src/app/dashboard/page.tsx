@@ -18,6 +18,7 @@ const VALID_TABS = [
   'notifications',
   'wallet',
   'settings',
+  'track',
 ] as const;
 type DashboardTab = (typeof VALID_TABS)[number];
 
@@ -297,6 +298,26 @@ function CustomerDashboard() {
 
         <div className="nav-section">System</div>
         <NavItem
+          active={activeTab === 'track'}
+          onClick={() => setActiveTab('track')}
+          label="Track Order"
+          icon={
+            <svg
+              className="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              <path d="M2 12h20" />
+            </svg>
+          }
+        />
+        <NavItem
           active={activeTab === 'settings'}
           onClick={() => setActiveTab('settings')}
           label="Settings"
@@ -304,7 +325,14 @@ function CustomerDashboard() {
         />
 
         <div className="mt-auto px-4 pb-4">
-          <div className="user-label">{data?.user?.name}</div>
+          <div className="user-label flex items-center gap-1.5">
+            {data?.user?.name}
+            {data?.user?.emailVerified && (
+              <span className="text-blue-400 text-xs shrink-0" title="Verified Account">
+                ☑️
+              </span>
+            )}
+          </div>
           <button
             onClick={() => (window.location.href = '/api/auth/signout')}
             className="signout-btn"
@@ -394,6 +422,7 @@ function CustomerDashboard() {
           {activeTab === 'settings' && (
             <SettingsTab user={data?.user} onUpdate={handleUpdateProfile} isUpdating={isUpdating} />
           )}
+          {activeTab === 'track' && <TrackLookupTab data={data} />}
         </div>
       </div>
 
@@ -779,6 +808,7 @@ const TITLES: Record<string, string> = {
   notifications: 'System alerts',
   wallet: 'Wallet balance',
   settings: 'Profile management',
+  track: 'Track Order',
 };
 
 interface NavItemProps {
@@ -1453,13 +1483,24 @@ function SettingsTab({
           <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">
             Email Address
           </label>
-          <input
-            name="email"
-            defaultValue={user?.email}
-            className="input-profile"
-            readOnly
-            style={{ background: '#f8fafc', color: '#94a3b8' }}
-          />
+          <div className="flex items-center gap-2">
+            <input
+              name="email"
+              defaultValue={user?.email}
+              className="input-profile flex-1"
+              readOnly
+              style={{ background: '#f8fafc', color: '#94a3b8' }}
+            />
+            {user?.emailVerified ? (
+              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs px-2.5 py-2.5 rounded-xl font-bold flex items-center gap-1">
+                ✅ Verified
+              </span>
+            ) : (
+              <span className="bg-red-50 text-red-700 border border-red-200 text-xs px-2.5 py-2.5 rounded-xl font-bold flex items-center gap-1">
+                ❌ Unverified
+              </span>
+            )}
+          </div>
         </div>
         <div>
           <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">
@@ -1497,6 +1538,207 @@ function SettingsTab({
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+interface TrackLookupTabProps {
+  data: any;
+}
+
+function TrackLookupTab({ data }: TrackLookupTabProps) {
+  const [orderId, setOrderId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [trackResult, setTrackResult] = useState<any>(null);
+
+  const handleTrack = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orderId.trim()) return;
+
+    setLoading(true);
+    setError('');
+    setTrackResult(null);
+
+    try {
+      const cleanId = orderId.trim().replace(/^#/, '');
+      const emailParam = data?.user?.email ? `?email=${encodeURIComponent(data.user.email)}` : '';
+      const res = await fetch(`/api/orders/${cleanId}/track${emailParam}`);
+      const payload = await res.json();
+
+      if (!res.ok) {
+        throw new Error(payload.message || 'Order not found or access forbidden');
+      }
+
+      setTrackResult(payload.order);
+    } catch (err: any) {
+      setError(err.message || 'Failed to retrieve order tracking info');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const steps = ['PENDING_PAYMENT', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+  const stepLabels: Record<string, string> = {
+    PENDING_PAYMENT: 'Pending Payment',
+    CONFIRMED: 'Confirmed',
+    PROCESSING: 'Processing',
+    SHIPPED: 'Shipped',
+    DELIVERED: 'Delivered',
+  };
+
+  const getStatusIndex = (status: string) => {
+    if (status === 'CANCELLED' || status === 'RETURNED') return -1;
+    return steps.indexOf(status);
+  };
+
+  const statusIdx = trackResult ? getStatusIndex(trackResult.status) : -1;
+
+  return (
+    <div className="card">
+      <div className="card-title mb-4">Track Order Progress</div>
+
+      <form onSubmit={handleTrack} className="space-y-4 max-w-md mb-6">
+        <div>
+          <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">
+            Order Number / ID
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              required
+              value={orderId}
+              onChange={e => setOrderId(e.target.value)}
+              placeholder="e.g. 5d5a2d67-..."
+              className="input-profile flex-1"
+              style={{
+                width: '100%',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px',
+                padding: '10px 14px',
+                fontSize: '13px',
+                outline: 'none',
+                background: '#fff',
+                boxSizing: 'border-box',
+              }}
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-[#1e3b8a] hover:bg-[#16307a] text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {loading ? 'Searching...' : 'Track'}
+            </button>
+          </div>
+        </div>
+      </form>
+
+      {error && (
+        <div className="p-4 mb-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
+          ⚠️ {error}
+        </div>
+      )}
+
+      {trackResult && (
+        <div className="border border-slate-100 rounded-2xl p-6 bg-slate-50 space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200/60 pb-4">
+            <div>
+              <div className="text-[10px] text-slate-400 font-bold uppercase">Order Tracked</div>
+              <div className="text-sm font-extrabold text-slate-800 mt-0.5">#{trackResult.id}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] text-slate-400 font-bold uppercase">
+                Estimated Delivery
+              </div>
+              <div className="text-sm font-bold text-[#1e3b8a] mt-0.5">
+                {new Date(
+                  new Date(trackResult.createdAt).getTime() + 4 * 24 * 60 * 60 * 1000
+                ).toLocaleDateString()}
+              </div>
+            </div>
+          </div>
+
+          {/* Status Progress Bar */}
+          {statusIdx !== -1 ? (
+            <div className="py-4">
+              <div className="flex justify-between items-center relative mb-4">
+                {/* Horizontal progress lines */}
+                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-slate-200 -z-10 rounded-full" />
+                <div
+                  className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-emerald-500 -z-10 transition-all duration-500 rounded-full"
+                  style={{ width: `${(statusIdx / (steps.length - 1)) * 100}%` }}
+                />
+
+                {steps.map((step, idx) => {
+                  const isActive = idx <= statusIdx;
+                  const isCurrent = idx === statusIdx;
+                  return (
+                    <div key={step} className="flex flex-col items-center">
+                      <div
+                        className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-sm transition-all duration-300 ${
+                          isCurrent
+                            ? 'bg-[#1e3b8a] text-white ring-4 ring-[#1e3b8a]/20 scale-110'
+                            : isActive
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-white text-slate-400 border border-slate-200'
+                        }`}
+                      >
+                        {isActive && !isCurrent ? '✓' : idx + 1}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex justify-between text-[9px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
+                {steps.map((step, idx) => (
+                  <span
+                    key={step}
+                    className={
+                      idx <= statusIdx
+                        ? idx === statusIdx
+                          ? 'text-[#1e3b8a]'
+                          : 'text-emerald-600'
+                        : 'text-slate-400'
+                    }
+                  >
+                    {stepLabels[step]}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-850 text-xs font-bold uppercase tracking-wider text-center">
+              🚨 Status: {trackResult.status.replace(/_/g, ' ')}
+            </div>
+          )}
+
+          {/* Mini Invoice Summary */}
+          <div className="border-t border-slate-200/60 pt-4">
+            <div className="text-[10px] text-slate-400 font-bold uppercase mb-3">Order Details</div>
+            <div className="space-y-3">
+              {trackResult.items.map((item: any) => (
+                <div key={item.id} className="flex justify-between items-center text-xs">
+                  <div className="flex-1 min-w-0 pr-4 text-left">
+                    <div className="font-bold text-slate-800 truncate">
+                      {item.productTitleSnapshot}
+                    </div>
+                    <div className="text-[10px] text-slate-400">
+                      Qty: {item.quantity} · Price: {item.priceAtPurchase} EGP
+                    </div>
+                  </div>
+                  <div className="font-extrabold text-slate-700">
+                    {(item.priceAtPurchase * item.quantity).toLocaleString()} EGP
+                  </div>
+                </div>
+              ))}
+              <div className="border-t border-slate-200 pt-2 flex justify-between font-extrabold text-sm text-slate-800">
+                <span>Total Amount</span>
+                <span>{trackResult.totalAmount.toLocaleString()} EGP</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

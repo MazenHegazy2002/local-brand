@@ -42,6 +42,13 @@ export default function Navbar() {
     };
     fetchCategories();
   }, []);
+  const [mounted, setMounted] = useState(false);
+  const wishlistCount = useWishlistStore(s => s.items.length);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -74,6 +81,29 @@ export default function Navbar() {
 
   return (
     <>
+      {/* Upper fixed banner for Affiliate Program */}
+      <div className="w-full bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-white py-2 px-4 text-center text-xs font-black tracking-wide shadow-sm flex items-center justify-center gap-1.5 uppercase transition-all duration-300 hover:brightness-105">
+        <span>📢 Earn up to 10% cash on every purchase!</span>
+        <Link
+          href="/sell"
+          className="underline hover:text-amber-100 transition-colors inline-flex items-center gap-0.5"
+        >
+          Join Affiliate Program
+          <svg
+            className="w-3.5 h-3.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+            />
+          </svg>
+        </Link>
+      </div>
       <header className="w-full bg-[hsl(var(--primary))] text-[hsl(var(--background))] sticky top-0 z-50 shadow-lg border-b border-primary-light/10">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
           {/* Logo */}
@@ -146,17 +176,21 @@ export default function Navbar() {
           <div className="flex items-center gap-4 shrink-0">
             <LanguageToggle />
 
-            {/* Wishlist */}
             <Link
               href={
                 session
                   ? `${dashboardHref === '/dashboard' ? '/dashboard?tab=wishlist' : dashboardHref}`
                   : '/login?callbackUrl=/dashboard'
               }
-              className="hidden sm:block text-white/80 hover:text-white transition-colors"
+              className="hidden sm:flex flex-col items-center text-white/80 hover:text-white transition-colors relative"
               aria-label="Wishlist"
             >
               <Heart size={20} />
+              {mounted && wishlistCount > 0 && (
+                <span className="text-[10px] leading-none font-bold mt-1 bg-red-500 text-white rounded-full min-w-[14px] px-1 py-0.5 text-center shadow-sm">
+                  {wishlistCount}
+                </span>
+              )}
             </Link>
 
             {/* Notification Bell */}

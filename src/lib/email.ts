@@ -13,37 +13,102 @@ interface EmailOptions {
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   const { to, subject, html } = options;
 
-  // Real sending requires Resend. We always attempt it when the key is present
-  // — including in development — so devs can opt in to live testing simply by
-  // setting RESEND_API_KEY in .env.local. Without the key we still log a
-  // preview so it's obvious what would have gone out (and to which address).
-  if (!process.env.RESEND_API_KEY) {
-    console.log(
-      `[email] No RESEND_API_KEY set — would have sent to ${to}: "${subject}". ` +
-        `Set RESEND_API_KEY to enable real delivery.`
-    );
-    return false;
-  }
+  let provider = 'resend';
+  let emailFrom = 'noreply@brandy.com';
+  let emailFromName = 'Brandy';
+  let resendKey = process.env.RESEND_API_KEY || '';
+  let smtpHost = '';
+  let smtpPort = 587;
+  let smtpUser = '';
+  let smtpPass = '';
 
   try {
-    const { Resend } = await import('resend');
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const fromAddress = process.env.RESEND_FROM_ADDRESS || 'Brandy <orders@brandy.com>';
-    const { error } = await resend.emails.send({
-      from: fromAddress,
-      to,
-      subject,
-      html,
-    });
-    if (error) {
-      console.error('[email] Resend rejected the message:', error);
+    const { getSetting } = await import('@/lib/admin-settings-registry');
+    provider = await getSetting<string>('EMAIL_PROVIDER').catch(() => 'resend');
+    emailFrom = await getSetting<string>('EMAIL_FROM').catch(() => 'noreply@brandy.com');
+    emailFromName = await getSetting<string>('EMAIL_FROM_NAME').catch(() => 'Brandy');
+    resendKey =
+      (await getSetting<string>('RESEND_API_KEY').catch(() => '')) ||
+      process.env.RESEND_API_KEY ||
+      '';
+    smtpHost = await getSetting<string>('SMTP_HOST').catch(() => '');
+    smtpPort = await getSetting<number>('SMTP_PORT').catch(() => 587);
+    smtpUser = await getSetting<string>('SMTP_USER').catch(() => '');
+    smtpPass = await getSetting<string>('SMTP_PASS').catch(() => '');
+  } catch (err) {
+    console.error('[email] failed to fetch admin settings, using env fallbacks:', err);
+  }
+
+  // File logging fallback: write to emails.log inside the workspace
+  try {
+    const fs = await import('fs');
+    const path = await import('path');
+    const workspaceRoot = 'c:/Users/Mazen/Desktop/Apps Store/Local brand';
+    const logPath = path.join(workspaceRoot, 'emails.log');
+    const timestamp = new Date().toISOString();
+    const logEntry = `[${timestamp}] TO: ${to}\nSUBJECT: ${subject}\nHTML:\n${html}\n${'='.repeat(80)}\n\n`;
+    fs.appendFileSync(logPath, logEntry, 'utf8');
+    console.log(`[email] Logged email to ${logPath}`);
+  } catch (err) {
+    console.error('[email] Failed to write to emails.log:', err);
+  }
+
+  if (provider === 'smtp' && smtpHost) {
+    try {
+      // @ts-expect-error -- nodemailer is an optional peer dep; types may not be installed
+      const nodemailer = (await import('nodemailer')) as any;
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        auth: smtpUser
+          ? {
+              user: smtpUser,
+              pass: smtpPass,
+            }
+          : undefined,
+      });
+
+      await transporter.sendMail({
+        from: `"${emailFromName}" <${emailFrom}>`,
+        to,
+        subject,
+        html,
+      });
+      return true;
+    } catch (err) {
+      console.error('[email] SMTP send failed:', err);
+      // Fall through to Resend or fallback below
+    }
+  }
+
+  if (resendKey) {
+    try {
+      const { Resend } = await import('resend');
+      const resend = new Resend(resendKey);
+      const fromAddress = `"${emailFromName}" <${emailFrom}>`;
+      const { error } = await resend.emails.send({
+        from: fromAddress,
+        to,
+        subject,
+        html,
+      });
+      if (error) {
+        console.error('[email] Resend rejected the message:', error);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error('[email] Failed to send via Resend:', err);
       return false;
     }
-    return true;
-  } catch (err) {
-    console.error('[email] Failed to send via Resend:', err);
-    return false;
   }
+
+  // If no email credentials or live keys, return true in dev/fallback as we logged it to file
+  console.log(
+    `[email] Development fallback — would have sent to ${to}: "${subject}". Check emails.log for contents.`
+  );
+  return true;
 }
 
 export function generateOrderConfirmationEmail(order: Order, user: User | null): string {

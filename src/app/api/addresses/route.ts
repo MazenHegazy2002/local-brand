@@ -58,6 +58,17 @@ export async function POST(req: Request) {
       });
     }
 
+    // Update user phone number if not present
+    if (body.phone) {
+      const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+      if (dbUser && !dbUser.phone) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: { phone: String(body.phone).trim() },
+        });
+      }
+    }
+
     return NextResponse.json({ address }, { status: 201 });
   } catch (error) {
     console.error('[addresses] POST error:', error);

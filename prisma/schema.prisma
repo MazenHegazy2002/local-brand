@@ -109,6 +109,14 @@ model SellerProfile {
   updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?
 
+  // Social media and business details (added for registration form / verification)
+  facebookUrl    String?
+  instagramUrl   String?
+  tiktokUrl      String?
+  type           String       @default("INDIVIDUAL")
+  level          Int          @default(1)
+  taxNumber      String?
+
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   products Product[]
   payouts  Payout[]
@@ -773,6 +781,9 @@ model Affiliate {
 
   status AffiliateStatus @default(PENDING)
   tier   AffiliateTier   @default(STARTER)
+
+  type   String          @default("INDIVIDUAL")
+  level  Int             @default(1)
 
   customCommissionPct Decimal? @db.Decimal(5, 2)
   customDiscountPct   Decimal? @db.Decimal(5, 2)

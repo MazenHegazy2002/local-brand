@@ -27,6 +27,19 @@ export async function getDashboardStats() {
     const role = (session.user as SessionUser).role;
 
     if (role === 'BUYER') {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          avatarUrl: true,
+          loyaltyPoints: true,
+          emailVerified: true,
+        },
+      });
+
       const orders = await prisma.order.findMany({
         where: { userId },
         include: {
@@ -51,6 +64,7 @@ export async function getDashboardStats() {
 
       return JSON.parse(
         JSON.stringify({
+          user,
           myOrders: orders,
           wishlist,
           notifications,
@@ -67,6 +81,7 @@ export async function getDashboardStats() {
       const seller = await prisma.sellerProfile.findUnique({
         where: { userId },
         include: {
+          user: true,
           products: {
             include: {
               images: true,
@@ -306,7 +321,14 @@ export async function getDashboardStats() {
       });
       const users = await prisma.user.findMany({
         where: { deletedAt: null },
-        select: { id: true, name: true, email: true, role: true, createdAt: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          emailVerified: true,
+          createdAt: true,
+        },
         orderBy: { createdAt: 'desc' },
         take: 100,
       });
@@ -489,10 +511,29 @@ export async function updateSellerStatus(sellerId: string, status: SellerStatus)
 
     const adminId = await getRealUserId(session);
 
-    await prisma.sellerProfile.update({
+    const profile = await prisma.sellerProfile.update({
       where: { id: sellerId },
       data: { status },
+      include: { user: true },
     });
+
+    if (status === 'ACTIVE') {
+      await prisma.user.update({
+        where: { id: profile.userId },
+        data: { emailVerified: profile.user.emailVerified || new Date() },
+      });
+
+      try {
+        const { sendEmail } = await import('@/lib/email');
+        await sendEmail({
+          to: profile.user.email,
+          subject: 'Your Brandy seller account has been approved!',
+          html: `<p>Hi ${profile.user.name || 'Seller'},</p><p>Congratulations! Your seller application for store <strong>${profile.storeName}</strong> has been approved. You can now access your Seller Hub, list products, and start selling!</p><p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/seller-hub">Go to Seller Hub</a></p>`,
+        });
+      } catch (emailErr) {
+        console.error('[updateSellerStatus] Failed to send approval email:', emailErr);
+      }
+    }
 
     // Log action
     if (adminId) {

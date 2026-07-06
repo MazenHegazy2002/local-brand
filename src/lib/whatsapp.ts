@@ -35,12 +35,15 @@ export async function sendWhatsAppConfirmation(
     const apiKey = await getSetting<string>('WHATSAPP_API_KEY');
     const phoneNumberId = await getSetting<string>('WHATSAPP_PHONE_NUMBER_ID');
 
-    // Normalize phone number (remove spaces, leading zeros, force international format)
-    let formattedPhone = phone.trim().replace(/\s+/g, '');
-    if (formattedPhone.startsWith('01')) {
-      formattedPhone = '2' + formattedPhone; // Egyptian phone number local prefix
-    } else if (formattedPhone.startsWith('+')) {
-      formattedPhone = formattedPhone.substring(1);
+    // Normalize phone number (remove any non-digits)
+    let formattedPhone = phone.replace(/\D/g, '');
+    if (formattedPhone.startsWith('00')) {
+      formattedPhone = formattedPhone.substring(2);
+    }
+    if (formattedPhone.startsWith('01') && formattedPhone.length === 11) {
+      formattedPhone = '2' + formattedPhone;
+    } else if (formattedPhone.startsWith('1') && formattedPhone.length === 10) {
+      formattedPhone = '20' + formattedPhone;
     }
 
     // ── MOCK MODE ──

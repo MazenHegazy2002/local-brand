@@ -402,7 +402,7 @@ function CheckoutPageInner() {
               street: address.address,
               city: address.city,
               governorate: address.governorate,
-              isDefault: false,
+              isDefault: true,
             }),
           });
           if (addrRes.ok) {

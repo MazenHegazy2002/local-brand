@@ -169,9 +169,7 @@ export default function ProductDetails({
   };
 
   // ── Interactive Client States ──
-  const [selectedColor, setSelectedColor] = useState<string>(() => {
-    return uniqueColors.length > 0 ? uniqueColors[0].colorName : '';
-  });
+  const [selectedColor, setSelectedColor] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [activeImage, setActiveImage] = useState<string>(primaryImage);
   const [qty, setQty] = useState(1);
@@ -179,26 +177,16 @@ export default function ProductDetails({
 
   // Sync initial color image when product variants or primary image changes
   useEffect(() => {
-    if (uniqueColors.length > 0) {
-      const firstColor = uniqueColors[0].colorName;
-      setSelectedColor(firstColor);
-      const matchedImg = getMatchedImageUrl(firstColor);
-      if (matchedImg) {
-        setActiveImage(matchedImg);
-      } else {
-        setActiveImage(primaryImage);
-      }
-    } else {
-      setActiveImage(primaryImage);
-    }
+    setSelectedColor('');
     setSelectedSize('');
     setQty(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setActiveImage(primaryImage);
   }, [product.id, primaryImage]);
 
-  // Extract all unique sizes for selected color
+  // Extract all unique sizes for selected color, or all sizes if no color is selected yet
   const sizesForColor = parsedVariants.filter(
-    (v: any) => !hasColors || v.color.toLowerCase() === selectedColor.toLowerCase()
+    (v: any) =>
+      !hasColors || !selectedColor || v.color.toLowerCase() === selectedColor.toLowerCase()
   );
 
   const uniqueSizes = Array.from(
@@ -270,8 +258,18 @@ export default function ProductDetails({
   const { toast } = useToast();
 
   const handleAddToCart = () => {
-    if (hasVariants && hasSizes && !selectedSize) {
-      toast({ title: 'Please select a size first', variant: 'error' });
+    if (hasColors && !selectedColor) {
+      toast({
+        title: lang === 'ar' ? 'يرجى اختيار اللون أولاً' : 'Please select a color first',
+        variant: 'error',
+      });
+      return;
+    }
+    if (hasSizes && !selectedSize) {
+      toast({
+        title: lang === 'ar' ? 'يرجى اختيار المقاس أولاً' : 'Please select a size first',
+        variant: 'error',
+      });
       return;
     }
 

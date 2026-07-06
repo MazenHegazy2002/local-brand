@@ -238,7 +238,10 @@ export async function createOrderForUser(
           shippingFee,
           paymentMethod: paymentMethod as PaymentMethod,
           paymentStatus: PaymentStatus.UNPAID,
-          status: OrderStatus.PENDING_PAYMENT,
+          status:
+            paymentMethod === PaymentMethod.CASH_ON_DELIVERY
+              ? OrderStatus.PROCESSING
+              : OrderStatus.PENDING_PAYMENT,
           shippingAddressSnapshot: JSON.stringify(addressSnapshot),
           orderNotes: orderNotes || null,
           giftWrapping: giftWrapping || false,

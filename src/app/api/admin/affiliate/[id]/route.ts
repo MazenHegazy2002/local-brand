@@ -26,6 +26,8 @@ const UpdateSchema = z.object({
     .regex(/^[A-Z0-9]+$/)
     .optional(),
   tier: z.enum(['STARTER', 'SILVER', 'GOLD', 'PLATINUM']).optional(),
+  type: z.string().optional(),
+  level: z.number().int().min(1).max(10).optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -39,8 +41,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { status, customCommissionPct, customDiscountPct, adminNote, promoCode, tier } =
-    parsed.data;
+  const {
+    status,
+    customCommissionPct,
+    customDiscountPct,
+    adminNote,
+    promoCode,
+    tier,
+    type,
+    level,
+  } = parsed.data;
 
   // If approving, set approvedAt
   const wasApproved = status === 'ACTIVE';
@@ -56,6 +66,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       ...(adminNote !== undefined ? { adminNote } : {}),
       ...(promoCode !== undefined ? { promoCode, referralSlug: promoCode } : {}),
       ...(tier !== undefined ? { tier } : {}),
+      ...(type !== undefined ? { type } : {}),
+      ...(level !== undefined ? { level } : {}),
       ...(isBeingApproved ? { approvedAt: new Date(), approvedBy: session.user.id } : {}),
     },
     include: { user: { select: { name: true, email: true } } },
@@ -64,6 +76,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   // Link referral bonuses when approved
   if (isBeingApproved) {
     await linkReferralOnApproval(id);
+
+    // Auto-verify email
+    await prisma.user.update({
+      where: { id: updated.userId },
+      data: { emailVerified: new Date() },
+    });
+
+    // Send confirmation email
+    try {
+      const { sendEmail } = await import('@/lib/email');
+      await sendEmail({
+        to: updated.user.email,
+        subject: 'Your Brandy affiliate account has been approved! 🎉',
+        html: `<p>Hi ${updated.user.name || 'Partner'},</p><p>Congratulations! Your application to the Brandy Affiliate Program has been approved. You are now officially a Brandy partner!</p><p><strong>Your Promo Code:</strong> ${updated.promoCode}<br/><strong>Your Referral Link:</strong> ${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/ref/${updated.promoCode}</p><p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/affiliate/dashboard">Go to Affiliate Dashboard</a></p>`,
+      });
+    } catch (emailErr) {
+      console.error('[affiliate approval] Failed to send email:', emailErr);
+    }
   }
 
   return NextResponse.json({ success: true, affiliate: updated });

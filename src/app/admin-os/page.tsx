@@ -827,6 +827,8 @@ function AffiliateTab() {
     adminNote: string;
     promoCode: string;
     tier: string;
+    type: string;
+    level: string;
   }>({
     status: '',
     customCommissionPct: '',
@@ -834,6 +836,8 @@ function AffiliateTab() {
     adminNote: '',
     promoCode: '',
     tier: '',
+    type: 'INDIVIDUAL',
+    level: '1',
   });
   const [settingsForm, setSettingsForm] = React.useState<Partial<GlobalSettings>>({});
   const [savingSettings, setSavingSettings] = React.useState(false);
@@ -895,6 +899,8 @@ function AffiliateTab() {
         adminNote: editForm.adminNote || undefined,
         promoCode: editForm.promoCode || undefined,
         tier: editForm.tier || undefined,
+        type: editForm.type || undefined,
+        level: editForm.level ? parseInt(editForm.level) : undefined,
       }),
     });
     setEditId(null);
@@ -1361,6 +1367,20 @@ function AffiliateTab() {
                 <div>
                   <div style={{ fontWeight: 500, fontSize: 12 }}>{a.user?.name}</div>
                   <div style={{ fontSize: 10, color: '#94a3b8' }}>{a.user?.email}</div>
+                  <div
+                    style={{
+                      fontSize: 9,
+                      color: '#6366f1',
+                      fontWeight: 700,
+                      marginTop: 2,
+                      display: 'flex',
+                      gap: 4,
+                    }}
+                  >
+                    <span>{(a as any).type || 'INDIVIDUAL'}</span>
+                    <span>·</span>
+                    <span>Level {(a as any).level || 1}</span>
+                  </div>
                 </div>
                 <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: 11 }}>
                   {a.promoCode}
@@ -1396,6 +1416,8 @@ function AffiliateTab() {
                       adminNote: a.adminNote ?? '',
                       promoCode: a.promoCode,
                       tier: a.tier,
+                      type: (a as any).type || 'INDIVIDUAL',
+                      level: (a as any).level?.toString() || '1',
                     });
                   }}
                   className="action-btn"
@@ -1499,6 +1521,59 @@ function AffiliateTab() {
                       boxSizing: 'border-box',
                     }}
                   />
+                </div>
+                <div>
+                  <label
+                    style={{ display: 'block', fontSize: 11, color: '#94a3b8', marginBottom: 4 }}
+                  >
+                    Account Type
+                  </label>
+                  <select
+                    value={editForm.type}
+                    onChange={e => setEditForm(f => ({ ...f, type: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 6,
+                      padding: '7px 10px',
+                      fontSize: 12,
+                      outline: 'none',
+                      background: '#fff',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <option value="INDIVIDUAL">Individual / Influencer</option>
+                    <option value="AGENCY">Agency</option>
+                    <option value="COMPANY">Company / Brand</option>
+                    <option value="CONTENT_CREATOR">Content Creator</option>
+                  </select>
+                </div>
+                <div>
+                  <label
+                    style={{ display: 'block', fontSize: 11, color: '#94a3b8', marginBottom: 4 }}
+                  >
+                    Partner Level
+                  </label>
+                  <select
+                    value={editForm.level}
+                    onChange={e => setEditForm(f => ({ ...f, level: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 6,
+                      padding: '7px 10px',
+                      fontSize: 12,
+                      outline: 'none',
+                      background: '#fff',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <option value="1">Level 1</option>
+                    <option value="2">Level 2</option>
+                    <option value="3">Level 3</option>
+                    <option value="4">Level 4</option>
+                    <option value="5">Level 5</option>
+                  </select>
                 </div>
                 <div>
                   <label
@@ -2691,6 +2766,28 @@ interface UsersTabProps {
 function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'BUYER' | 'SELLER' | 'ADMIN'>('all');
+  const [resettingEmails, setResettingEmails] = useState<Record<string, boolean>>({});
+
+  const handleSendResetLink = async (email: string) => {
+    setResettingEmails(prev => ({ ...prev, [email]: true }));
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        alert('Reset password link has been sent to ' + email);
+      } else {
+        alert('Failed to send reset link.');
+      }
+    } catch (err) {
+      alert('Error: ' + (err as Error).message);
+    } finally {
+      setResettingEmails(prev => ({ ...prev, [email]: false }));
+    }
+  };
+
   const q = search.trim().toLowerCase();
   const users = (data?.users || []).filter((u: User) => {
     if (roleFilter !== 'all' && u.role !== roleFilter) return false;
@@ -2788,7 +2885,32 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '12px', fontWeight: 500 }}>{u.name}</div>
-            <div style={{ fontSize: '11px', color: '#64748b' }}>{u.email}</div>
+            <div
+              style={{
+                fontSize: '11px',
+                color: '#64748b',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              {u.email}
+              {u.emailVerified ? (
+                <span
+                  style={{ color: '#10b981', fontSize: '9px', fontWeight: 700 }}
+                  title="Verified Account"
+                >
+                  ☑️
+                </span>
+              ) : (
+                <span
+                  style={{ color: '#ef4444', fontSize: '9px', fontWeight: 700 }}
+                  title="Unverified Account"
+                >
+                  ⚠️
+                </span>
+              )}
+            </div>
           </div>
           <div style={{ width: 80, textAlign: 'center' }}>
             <span
@@ -2802,13 +2924,28 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
           </div>
           <div
             style={{
-              width: 80,
+              width: 150,
               textAlign: 'right',
               display: 'flex',
               gap: 8,
               justifyContent: 'flex-end',
             }}
           >
+            <button
+              className="action-btn"
+              onClick={() => handleSendResetLink(u.email)}
+              disabled={resettingEmails[u.email]}
+              style={{
+                fontSize: '10px',
+                padding: '2px 6px',
+                background: '#e0f2fe',
+                color: '#0369a1',
+                borderColor: '#bae6fd',
+                cursor: 'pointer',
+              }}
+            >
+              {resettingEmails[u.email] ? 'Sending...' : 'Reset Link'}
+            </button>
             <button
               className="action-btn"
               onClick={() => onEdit(u)}
@@ -3464,6 +3601,7 @@ function ProductsTab({ data }: ProductsTabProps) {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState<'all' | 'in' | 'out' | 'low'>('all');
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   const products = data?.products || [];
   const q = search.trim().toLowerCase();
@@ -3556,7 +3694,11 @@ function ProductsTab({ data }: ProductsTabProps) {
         const stock = (p.variants || []).reduce((a, b) => a + (b.stockCount || 0), 0);
         const img = p.images?.find(i => i.isPrimary)?.url || p.images?.[0]?.url || '';
         return (
-          <div key={p.id} className="row-item">
+          <div
+            key={p.id}
+            className="row-item cursor-pointer hover:bg-slate-50 transition-colors"
+            onClick={() => setSelectedProduct(p)}
+          >
             <div
               style={{
                 width: 40,
@@ -3626,6 +3768,186 @@ function ProductsTab({ data }: ProductsTabProps) {
             : 'No products yet.'}
         </div>
       )}
+
+      {selectedProduct && (
+        <ProductDetailsModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
+      )}
+    </div>
+  );
+}
+
+interface ProductDetailsModalProps {
+  product: any;
+  onClose: () => void;
+}
+
+function ProductDetailsModal({ product, onClose }: ProductDetailsModalProps) {
+  const stock = (product.variants || []).reduce((a: number, b: any) => a + (b.stockCount || 0), 0);
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div
+        className="modal-box"
+        onClick={e => e.stopPropagation()}
+        style={{ maxWidth: 680, maxHeight: '90vh', overflowY: 'auto' }}
+      >
+        <div className="flex items-center justify-between border-b pb-3 mb-4">
+          <div className="modal-title" style={{ margin: 0 }}>
+            Product Insights
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 text-lg font-bold"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Images Gallery */}
+          <div>
+            <div className="aspect-square bg-slate-50 border rounded-xl overflow-hidden mb-3 relative flex items-center justify-center">
+              {product.images && product.images.length > 0 ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={product.images.find((i: any) => i.isPrimary)?.url || product.images[0].url}
+                  alt={product.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <span className="text-slate-400 text-xs">No image attached</span>
+              )}
+            </div>
+            {product.images && product.images.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {product.images.map((img: any) => (
+                  <div
+                    key={img.id}
+                    className="w-12 h-12 rounded border overflow-hidden flex-shrink-0"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={img.url}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Details */}
+          <div className="space-y-4 text-left">
+            <div>
+              <div className="text-[10px] uppercase font-bold text-[#534AB7]">
+                {product.category?.name || 'Uncategorized'}
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 leading-tight mt-1">
+                {product.title}
+              </h3>
+              <div className="text-xs text-slate-400 mt-0.5">ID: {product.id}</div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="bg-slate-50 p-2.5 rounded-xl border text-left">
+                <div className="text-[10px] text-slate-400 uppercase font-bold">Base Price</div>
+                <div className="text-sm font-extrabold text-slate-800 mt-0.5">
+                  {product.basePrice} EGP
+                </div>
+              </div>
+              <div className="bg-slate-50 p-2.5 rounded-xl border text-left">
+                <div className="text-[10px] text-slate-400 uppercase font-bold">Total Stock</div>
+                <div className="text-sm font-extrabold text-slate-800 mt-0.5">{stock} units</div>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <div className="text-[11px] text-slate-400 uppercase font-bold">Seller Store</div>
+              <div className="text-xs font-bold text-slate-700 mt-0.5">
+                {product.seller?.storeName || 'Unknown Store'}
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <div className="text-[11px] text-slate-400 uppercase font-bold">Status</div>
+              <div className="mt-1">
+                {product.published ? (
+                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase">
+                    Published
+                  </span>
+                ) : (
+                  <span className="bg-slate-100 text-slate-600 border border-slate-200 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase">
+                    Draft
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Description */}
+        <div className="border-t pt-4 mb-4 text-left">
+          <div className="text-[11px] text-slate-400 uppercase font-bold mb-2">Description</div>
+          <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border whitespace-pre-wrap">
+            {product.description || 'No description provided.'}
+          </p>
+        </div>
+
+        {/* Variants List */}
+        {product.variants && product.variants.length > 0 && (
+          <div className="border-t pt-4 text-left">
+            <div className="text-[11px] text-slate-400 uppercase font-bold mb-2">
+              Product Variants ({product.variants.length})
+            </div>
+            <div className="border rounded-xl overflow-hidden bg-slate-50">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 border-b text-slate-500 font-bold uppercase text-[10px]">
+                    <th className="p-2.5">Variant Title</th>
+                    <th className="p-2.5">Attributes</th>
+                    <th className="p-2.5 text-right">Price</th>
+                    <th className="p-2.5 text-right">Stock</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {product.variants.map((v: any) => {
+                    let attrs: Record<string, string> = {};
+                    try {
+                      attrs = JSON.parse(v.attributes || '{}');
+                    } catch {}
+                    return (
+                      <tr key={v.id} className="hover:bg-white transition-colors">
+                        <td className="p-2.5 font-semibold text-slate-700">{v.title}</td>
+                        <td className="p-2.5 text-slate-500 font-medium">
+                          {Object.entries(attrs)
+                            .map(([key, val]) => `${key}: ${val}`)
+                            .join(' / ') || '—'}
+                        </td>
+                        <td className="p-2.5 text-right font-bold text-slate-700">
+                          {(v.price || product.basePrice).toLocaleString()} EGP
+                        </td>
+                        <td className="p-2.5 text-right font-bold text-slate-600">
+                          {v.stockCount}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        <div className="border-t pt-4 mt-6 flex justify-end">
+          <button
+            onClick={onClose}
+            className="btn-primary"
+            style={{ padding: '8px 24px', fontSize: '12px' }}
+          >
+            Close Details
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

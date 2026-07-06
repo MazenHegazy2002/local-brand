@@ -20,8 +20,16 @@ export async function POST(req: Request) {
     }
 
     const { name, email, password, role } = validated.data;
-    // storeName is passed by the register form when role === SELLER
     const storeName: string = (body.storeName as string | undefined)?.trim() || `${name}'s Store`;
+    const phone: string = (body.phone as string | undefined)?.trim() || '';
+    const type: string = (body.type as string | undefined)?.trim() || 'INDIVIDUAL';
+    const taxNumber: string = (body.taxNumber as string | undefined)?.trim() || '';
+    const description: string =
+      (body.description as string | undefined)?.trim() || 'New Local Brand Seller Store';
+    const facebookUrl: string = (body.facebookUrl as string | undefined)?.trim() || '';
+    const instagramUrl: string = (body.instagramUrl as string | undefined)?.trim() || '';
+    const tiktokUrl: string = (body.tiktokUrl as string | undefined)?.trim() || '';
+    const logoUrl: string = (body.logoUrl as string | undefined)?.trim() || '';
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -42,6 +50,7 @@ export async function POST(req: Request) {
         email,
         passwordHash: hashedPassword,
         role: userRole,
+        phone: phone || null,
       },
     });
 
@@ -52,6 +61,13 @@ export async function POST(req: Request) {
           userId: user.id,
           storeName,
           status: 'PENDING_APPROVAL',
+          type,
+          taxNumber: taxNumber || null,
+          description,
+          facebookUrl: facebookUrl || null,
+          instagramUrl: instagramUrl || null,
+          tiktokUrl: tiktokUrl || null,
+          logoUrl: logoUrl || null,
         },
       });
     }

@@ -11,6 +11,14 @@ export default function SellerRegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [storeName, setStoreName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [type, setType] = useState('INDIVIDUAL');
+  const [taxNumber, setTaxNumber] = useState('');
+  const [description, setDescription] = useState('');
+  const [facebookUrl, setFacebookUrl] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [tiktokUrl, setTiktokUrl] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<Step>('form');
@@ -24,7 +32,21 @@ export default function SellerRegisterPage() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role: 'SELLER', storeName }),
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role: 'SELLER',
+          storeName,
+          phone: phone || undefined,
+          type,
+          taxNumber: taxNumber || undefined,
+          description: description || undefined,
+          facebookUrl: facebookUrl || undefined,
+          instagramUrl: instagramUrl || undefined,
+          tiktokUrl: tiktokUrl || undefined,
+          logoUrl: logoUrl || undefined,
+        }),
       });
 
       const data = await res.json();
@@ -159,6 +181,105 @@ export default function SellerRegisterPage() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white placeholder-slate-600"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
+                  Business Type
+                </label>
+                <select
+                  value={type}
+                  onChange={e => setType(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white"
+                >
+                  <option value="INDIVIDUAL">Individual</option>
+                  <option value="BUSINESS">Company</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="+2010XXXXXXXX"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white placeholder-slate-600"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
+                  Tax Number (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="XXX-XXX-XXX"
+                  value={taxNumber}
+                  onChange={e => setTaxNumber(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white placeholder-slate-600"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
+                  Store Logo URL (Optional)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://logo.png"
+                  value={logoUrl}
+                  onChange={e => setLogoUrl(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white placeholder-slate-600"
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-slate-800 pt-3">
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
+                🔗 Social Links (Optional)
+              </label>
+              <div className="space-y-2">
+                <input
+                  type="url"
+                  placeholder="Facebook Page URL"
+                  value={facebookUrl}
+                  onChange={e => setFacebookUrl(e.target.value)}
+                  className="w-full px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-white placeholder-slate-600"
+                />
+                <input
+                  type="url"
+                  placeholder="Instagram URL"
+                  value={instagramUrl}
+                  onChange={e => setInstagramUrl(e.target.value)}
+                  className="w-full px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-white placeholder-slate-600"
+                />
+                <input
+                  type="url"
+                  placeholder="TikTok URL"
+                  value={tiktokUrl}
+                  onChange={e => setTiktokUrl(e.target.value)}
+                  className="w-full px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-white placeholder-slate-600"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">
+                Describe your products / brand
+              </label>
+              <textarea
+                required
+                rows={3}
+                placeholder="What kinds of clothing or products do you manufacture?"
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                className="w-full px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white placeholder-slate-600"
               />
             </div>
 

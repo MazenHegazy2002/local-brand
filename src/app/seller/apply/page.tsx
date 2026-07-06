@@ -45,17 +45,55 @@ export default function SellerApplicationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Only redirect authenticated users who are already on the form
-  // Unauthenticated visitors see the landing preview below
+  // Real input states
+  const [storeName, setStoreName] = useState('');
+  const [type, setType] = useState('INDIVIDUAL');
+  const [taxNumber, setTaxNumber] = useState('');
+  const [description, setDescription] = useState('');
+  const [phone, setPhone] = useState('');
+  const [facebookUrl, setFacebookUrl] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [tiktokUrl, setTiktokUrl] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
+  const [submitError, setSubmitError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate API call for application
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setSubmitError('');
+
+    try {
+      const res = await fetch('/api/seller/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storeName,
+          type,
+          taxNumber: taxNumber || undefined,
+          description,
+          phone: phone || undefined,
+          facebookUrl: facebookUrl || undefined,
+          instagramUrl: instagramUrl || undefined,
+          tiktokUrl: tiktokUrl || undefined,
+          logoUrl: logoUrl || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.error && typeof data.error === 'object') {
+          const firstErr = Object.values(data.error)[0] as string[];
+          throw new Error(firstErr[0] || 'Validation failed');
+        }
+        throw new Error(data.error || 'Failed to submit application');
+      }
+
       setIsSuccess(true);
-    }, 1500);
+    } catch (err: unknown) {
+      setSubmitError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (status === 'loading') return null;
@@ -168,6 +206,13 @@ export default function SellerApplicationPage() {
                 </p>
               </div>
 
+              {submitError && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-semibold flex items-center gap-2">
+                  <span>⚠️</span>
+                  {submitError}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -176,34 +221,114 @@ export default function SellerApplicationPage() {
                   <input
                     required
                     type="text"
+                    value={storeName}
+                    onChange={e => setStoreName(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
                     placeholder="e.g. Cairo Tech Hub"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Business Type
-                  </label>
-                  <select
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none bg-white"
-                  >
-                    <option value="">Select...</option>
-                    <option value="individual">Individual / Freelancer</option>
-                    <option value="company">Registered Company</option>
-                  </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Business Type
+                    </label>
+                    <select
+                      required
+                      value={type}
+                      onChange={e => setType(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none bg-white"
+                    >
+                      <option value="INDIVIDUAL">Individual / Freelancer</option>
+                      <option value="BUSINESS">Registered Company</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      value={phone}
+                      onChange={e => setPhone(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
+                      placeholder="e.g. +2010XXXXXXXX"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Tax Registration Number (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
-                    placeholder="XXX-XXX-XXX"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Tax Registration Number (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={taxNumber}
+                      onChange={e => setTaxNumber(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
+                      placeholder="XXX-XXX-XXX"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Store Logo URL (Optional)
+                    </label>
+                    <input
+                      type="url"
+                      value={logoUrl}
+                      onChange={e => setLogoUrl(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
+                      placeholder="https://example.com/logo.png"
+                    />
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 pt-6">
+                  <h3 className="text-sm font-black text-gray-800 mb-4 uppercase tracking-wider">
+                    🔗 Social Media Links
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">
+                        Facebook Page URL
+                      </label>
+                      <input
+                        type="url"
+                        value={facebookUrl}
+                        onChange={e => setFacebookUrl(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none text-sm"
+                        placeholder="https://facebook.com/yourstore"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">
+                        Instagram URL
+                      </label>
+                      <input
+                        type="url"
+                        value={instagramUrl}
+                        onChange={e => setInstagramUrl(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none text-sm"
+                        placeholder="https://instagram.com/yourstore"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">
+                        TikTok URL
+                      </label>
+                      <input
+                        type="url"
+                        value={tiktokUrl}
+                        onChange={e => setTiktokUrl(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none text-sm"
+                        placeholder="https://tiktok.com/@yourstore"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -212,6 +337,8 @@ export default function SellerApplicationPage() {
                   </label>
                   <textarea
                     required
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
                     rows={4}
                     placeholder="Describe your product catalog..."
@@ -219,7 +346,11 @@ export default function SellerApplicationPage() {
                 </div>
 
                 <div className="pt-4">
-                  <Button type="submit" disabled={isSubmitting} className="w-full h-14 text-lg">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full h-14 text-lg bg-[#1e3b8a] hover:bg-[#16307a] text-white"
+                  >
                     {isSubmitting ? 'Submitting...' : 'Submit Application'}
                   </Button>
                   <p className="text-center text-xs text-gray-500 mt-4">

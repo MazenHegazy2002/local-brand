@@ -1,0 +1,11 @@
+-- AlterTable
+ALTER TABLE "Affiliate" ADD COLUMN     "level" INTEGER NOT NULL DEFAULT 1,
+ADD COLUMN     "type" TEXT NOT NULL DEFAULT 'INDIVIDUAL';
+
+-- AlterTable
+ALTER TABLE "SellerProfile" ADD COLUMN     "facebookUrl" TEXT,
+ADD COLUMN     "instagramUrl" TEXT,
+ADD COLUMN     "level" INTEGER NOT NULL DEFAULT 1,
+ADD COLUMN     "taxNumber" TEXT,
+ADD COLUMN     "tiktokUrl" TEXT,
+ADD COLUMN     "type" TEXT NOT NULL DEFAULT 'INDIVIDUAL';
