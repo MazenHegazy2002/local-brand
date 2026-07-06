@@ -39,16 +39,7 @@ import {
   updateOrderItemStatus,
   toggleProductPublished,
 } from '../actions/seller';
-import {
-  Product,
-  Order,
-  Category,
-  SellerProfile,
-  SessionUser,
-  ProductVariant,
-  Tag,
-  Collection,
-} from '@/types';
+import { Product, Order, Category, SellerProfile, SessionUser, Tag, Collection } from '@/types';
 
 interface DashboardStats {
   totalProducts: number;
