@@ -122,24 +122,43 @@ export default function ProductDetails({
       : 0;
 
   // ── Color & Size Parsing Logic ──
-  const parsedVariants = variants.map((v: any) => {
+  // Supports both old format { "color":"Red","size":"M" } and new format { "color":"Red","sizes":["S","M","L"] }
+  const parsedVariants = variants.flatMap((v: any) => {
     let color = '';
-    let size = '';
+    let rawSizes: string[] = [];
+    let singleSize = '';
     try {
       const attrs = JSON.parse(v.attributes || '{}');
       color = String(attrs.color || attrs.Color || '').trim();
-      size = String(attrs.size || attrs.Size || '').trim();
+
+      // New seller products store sizes as an array; old seeded data uses singular "size"
+      if (Array.isArray(attrs.sizes) && attrs.sizes.length > 0) {
+        rawSizes = attrs.sizes.map((s: any) => String(s).trim()).filter(Boolean);
+      } else if (attrs.size || attrs.Size) {
+        singleSize = String(attrs.size || attrs.Size || '').trim();
+      }
     } catch (_e) {
-      // Robust fallback for traditional layouts
-      if (v.title.includes('-')) {
+      // Robust fallback for title-encoded layouts e.g. "Red - M"
+      if (v.title && v.title.includes('-')) {
         const parts = v.title.split('-').map((p: string) => p.trim());
         if (parts.length >= 2) {
           color = parts[0];
-          size = parts[1];
+          singleSize = parts[1];
         }
       }
     }
-    return { ...v, color, size };
+
+    // Fallback: use variant title as color name when attrs.color is missing
+    if (!color && v.title) {
+      color = v.title;
+    }
+
+    // Expand a variant with a sizes array into one virtual entry per size so the
+    // existing deduplication + selection logic works without changes downstream.
+    if (rawSizes.length > 0) {
+      return rawSizes.map((sz: string) => ({ ...v, color, size: sz }));
+    }
+    return [{ ...v, color, size: singleSize }];
   });
 
   // Extract unique color entities
@@ -509,60 +528,45 @@ export default function ProductDetails({
             </div>
           )}
 
-          {/* Sizing dropdown selector */}
+          {/* Size pill buttons */}
           {hasSizes && (
             <div>
-              <label
-                htmlFor="size-selector"
-                className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-3"
-              >
-                Size
-              </label>
-              <div className="relative">
-                <select
-                  id="size-selector"
-                  value={selectedSize}
-                  onChange={e => setSelectedSize(e.target.value)}
-                  className="w-full h-12 pl-4 pr-10 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#534AB7] dark:focus:border-[#6b8ff5] focus:ring-1 focus:ring-[#534AB7] dark:focus:ring-[#6b8ff5] cursor-pointer appearance-none transition-all"
-                >
-                  <option value="">Select Size</option>
-                  {uniqueSizes.map(sizeName => {
-                    // Check stock count for this specific size and color
-                    const sizeVariant = parsedVariants.find(
-                      (v: any) =>
-                        v.size.toLowerCase() === sizeName.toLowerCase() &&
-                        (!hasColors || v.color.toLowerCase() === selectedColor.toLowerCase())
-                    );
-                    const isOutOfStock = !sizeVariant || sizeVariant.stockCount === 0;
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Size</span>
+                {selectedSize && (
+                  <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    {selectedSize}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {uniqueSizes.map(sizeName => {
+                  const sizeVariant = parsedVariants.find(
+                    (v: any) =>
+                      v.size.toLowerCase() === sizeName.toLowerCase() &&
+                      (!hasColors || v.color.toLowerCase() === selectedColor.toLowerCase())
+                  );
+                  const isOutOfStock = !sizeVariant || sizeVariant.stockCount === 0;
+                  const isSelected = selectedSize.toLowerCase() === sizeName.toLowerCase();
 
-                    return (
-                      <option
-                        key={sizeName}
-                        value={sizeName}
-                        disabled={isOutOfStock}
-                        className="font-semibold text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-950"
-                      >
-                        {sizeName} {isOutOfStock ? '(Out of stock)' : ''}
-                      </option>
-                    );
-                  })}
-                </select>
-                {/* Custom select arrow icon */}
-                <div className="absolute top-1/2 right-4 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                    />
-                  </svg>
-                </div>
+                  return (
+                    <button
+                      key={sizeName}
+                      type="button"
+                      disabled={isOutOfStock}
+                      onClick={() => setSelectedSize(sizeName)}
+                      className={`min-w-[44px] h-10 px-3 rounded-lg border text-sm font-bold transition-all duration-200 transform hover:scale-105 active:scale-95 ${
+                        isOutOfStock
+                          ? 'border-gray-200 dark:border-slate-700 text-gray-300 dark:text-slate-600 cursor-not-allowed line-through'
+                          : isSelected
+                            ? 'border-[#534AB7] bg-[#534AB7] text-white shadow-md shadow-[#534AB7]/30 scale-105'
+                            : 'border-gray-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-[#534AB7] hover:text-[#534AB7] dark:hover:border-[#6b8ff5] dark:hover:text-[#6b8ff5]'
+                      }`}
+                    >
+                      {sizeName}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
