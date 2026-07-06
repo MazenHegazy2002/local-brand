@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useConfirm } from '@/providers/ConfirmProvider';
 import { useToast } from '@/components/ui/ToastProvider';
@@ -204,7 +204,8 @@ export default function SellerHub() {
   const router = useRouter();
   const { confirm } = useConfirm();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('overview');
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'overview');
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [storeLink, setStoreLink] = useState('');
@@ -226,16 +227,6 @@ export default function SellerHub() {
   };
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [editProduct, setEditProduct] = useState<NewProductState>({
-    title: '',
-    description: '',
-    basePrice: '',
-    flashSalePrice: '',
-    categoryId: '',
-  });
-  const [editVariants, setEditVariants] = useState<VariantState[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Access control — seller hub is an isolated portal; redirect all non-sellers
@@ -249,66 +240,6 @@ export default function SellerHub() {
       router.push('/dashboard');
     }
   }, [session, sessionStatus, router]);
-
-  const handleEditProduct = (product: Product) => {
-    setEditingProduct(product);
-    setEditProduct({
-      title: product.title || '',
-      description: product.description || '',
-      basePrice: product.basePrice || '',
-      flashSalePrice: product.flashSalePrice || '',
-      categoryId: product.categoryId || '',
-    });
-    setEditVariants(
-      product.variants?.map((v: ProductVariant) => ({
-        color: (JSON.parse(v.attributes || '{}') as { color?: string }).color || v.title || '',
-        stock: v.stockCount || 0,
-        price: v.price || '',
-        image: (product.images?.find(img => img.isPrimary) || product.images?.[0])?.url || '',
-      })) || []
-    );
-    setShowEditModal(true);
-  };
-
-  const handleUpdateProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      if (!editProduct.categoryId) throw new Error('Please select a category');
-      if (!editProduct.basePrice || Number(editProduct.basePrice) <= 0)
-        throw new Error('Base price is required');
-      if (editVariants.some((v: VariantState) => !v.price || Number(v.price) <= 0))
-        throw new Error('All variant prices are required');
-
-      if (!editingProduct) return;
-
-      // Call API to update
-      const res = await fetch(`/api/products/${editingProduct.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...editProduct,
-          basePrice: Number(editProduct.basePrice),
-          variants: editVariants.map((v: VariantState) => ({
-            color: v.color,
-            stock: Number(v.stock),
-            price: Number(v.price),
-          })),
-        }),
-      });
-
-      if (!res.ok) throw new Error('Failed to update product');
-
-      setShowEditModal(false);
-      setEditingProduct(null);
-      await refreshData();
-    } catch (error: unknown) {
-      const err = error as Error;
-      toast({ variant: 'error', title: 'Update Failed', description: err.message });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const [newProduct, setNewProduct] = useState<NewProductState>({
     title: '',
@@ -728,7 +659,6 @@ export default function SellerHub() {
               products={myProducts}
               onDelete={handleDeleteProduct}
               onAdd={() => setShowAddModal(true)}
-              onEdit={handleEditProduct}
               onAfterRefresh={refreshData}
               categories={data?.categories}
             />
@@ -754,91 +684,6 @@ export default function SellerHub() {
           addVariant={addVariant}
           updateVariant={updateVariant}
         />
-      )}
-
-      {/* Edit Modal truncated for brevity but assuming same logic */}
-      {showEditModal && editingProduct && (
-        <div
-          className="modal-overlay fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
-          onClick={() => setShowEditModal(false)}
-        >
-          <div
-            className="modal-content bg-white w-full max-w-2xl rounded-2xl p-8 max-h-[90vh] overflow-y-auto"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black">Edit Product</h3>
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="text-gray-400 hover:text-gray-900"
-              >
-                <XCircle size={24} />
-              </button>
-            </div>
-            <form onSubmit={handleUpdateProduct} className="flex flex-col gap-6">
-              {/* Form fields... */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
-                    Title
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    value={editProduct.title}
-                    onChange={e => setEditProduct({ ...editProduct, title: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
-                    Category
-                  </label>
-                  <select
-                    required
-                    value={editProduct.categoryId}
-                    onChange={e => setEditProduct({ ...editProduct, categoryId: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
-                  >
-                    <option value="">Select Category...</option>
-                    {data?.categories?.map((c: Category) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
-                    Base Price (EGP)
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    value={editProduct.basePrice}
-                    onChange={e => setEditProduct({ ...editProduct, basePrice: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="flex-1 py-3 border border-gray-100 rounded-xl font-bold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-3 bg-[#0F6E56] text-white rounded-xl font-bold"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
 
       <style jsx global>{`
@@ -1777,17 +1622,16 @@ function ProductsTab({
   products,
   onDelete,
   onAdd,
-  onEdit,
   onAfterRefresh,
   categories = [],
 }: {
   products: Product[];
   onDelete: (id: string) => void;
   onAdd: () => void;
-  onEdit: (p: Product) => void;
   onAfterRefresh: () => Promise<void>;
   categories?: { id: string; name: string }[];
 }) {
+  const router = useRouter();
   const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'in' | 'out' | 'low'>('all');
@@ -2052,7 +1896,7 @@ function ProductsTab({
                   )}
                   <div className="absolute top-2 right-2 flex gap-1">
                     <button
-                      onClick={() => onEdit(product)}
+                      onClick={() => router.push(`/seller-hub/products/${product.id}`)}
                       aria-label="Edit product"
                       className="w-8 h-8 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-blue-500 hover:bg-white"
                     >

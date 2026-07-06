@@ -368,7 +368,7 @@ export default function EditProductPage() {
         }),
       });
       if (res.ok) {
-        router.push('/seller-hub');
+        router.push('/seller-hub?tab=products');
       } else {
         toast({ title: 'Failed to update product', variant: 'error' });
       }
@@ -390,7 +390,7 @@ export default function EditProductPage() {
     try {
       const res = await fetch(`/api/products/${productId}`, { method: 'DELETE' });
       if (res.ok) {
-        router.push('/seller-hub');
+        router.push('/seller-hub?tab=products');
       }
     } catch (e) {
       console.error(e);
@@ -473,7 +473,10 @@ export default function EditProductPage() {
         <div className="topbar">
           <div className="page-title">Edit Product</div>
           <div className="flex gap-3">
-            <Link href="/seller-hub" className="px-4 py-2 border border-slate-200 rounded text-sm">
+            <Link
+              href="/seller-hub?tab=products"
+              className="px-4 py-2 border border-slate-200 rounded text-sm"
+            >
               Cancel
             </Link>
             <button
