@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import WishlistButton, { WishlistProduct } from './WishlistButton';
-import { Badge, PriceDisplay, RatingStars } from '@/components/ui';
+import { Badge, PriceDisplay, RatingStars, useToast } from '@/components/ui';
 import type { Product, Tag, ProductVariant, ProductImage } from '@/types';
 import { useCartStore } from '@/lib/cartStore';
 import { useLanguage } from '@/providers/LanguageContext';
@@ -105,6 +105,7 @@ export default function ProductCard({
   index?: number;
 }) {
   const { t, lang } = useLanguage();
+  const { toast } = useToast();
   const isAr = lang === 'ar';
 
   const displayId = product.slug || String(product.id);
@@ -189,6 +190,7 @@ export default function ProductCard({
 
   // ── Interactive Client State ──
   const [selectedColor, setSelectedColor] = useState<string | null>(initialColor || null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [activeVariant, setActiveVariant] = useState<ProductVariant | null>(
     hasRealColors ? uniqueColors[0].variant : variants[0] || null
   );
@@ -216,6 +218,7 @@ export default function ProductCard({
       setActivePrice(basePrice);
       setActiveImage(displayImage);
     }
+    setSelectedSize(null);
   }, [product.variants, displayImage, hasRealColors]);
 
   // Supports both old format { "color":"Red","size":"M" } and new format { "color":"Red","sizes":["S","M","L"] }
@@ -269,11 +272,35 @@ export default function ProductCard({
     e.preventDefault();
     e.stopPropagation();
 
+    if (hasRealColors && !selectedColor) {
+      toast({
+        title: lang === 'ar' ? 'يرجى اختيار اللون أولاً' : 'Please select a color first',
+        variant: 'error',
+      });
+      return;
+    }
+
+    if (uniqueSizes.length > 0 && !selectedSize) {
+      toast({
+        title: lang === 'ar' ? 'يرجى اختيار المقاس أولاً' : 'Please select a size first',
+        variant: 'error',
+      });
+      return;
+    }
+
+    const variantId = activeVariant?.id || displayId;
+    const sizeVal = selectedSize || undefined;
+    const colorVal = selectedColor || undefined;
+    const compositeId = `${variantId}-${sizeVal || ''}-${colorVal || ''}`;
+
     addItem({
-      id: activeVariant?.id || displayId,
+      id: compositeId,
+      variantId,
       name: displayName,
       price: activePrice,
       image: activeImage || displayImage || '/placeholder.png',
+      selectedSize: sizeVal || undefined,
+      selectedColor: colorVal || undefined,
     });
 
     setAdded(true);
@@ -377,6 +404,17 @@ export default function ProductCard({
                       } else {
                         setActiveImage(displayImage);
                       }
+
+                      // Reset size if not supported by new color
+                      const newSizes = parsedVariants.filter(
+                        (v: any) => v.color.toLowerCase() === colorName.toLowerCase()
+                      );
+                      const sizeExists = newSizes.some(
+                        (v: any) => v.size.toLowerCase() === (selectedSize || '').toLowerCase()
+                      );
+                      if (!sizeExists) {
+                        setSelectedSize(null);
+                      }
                     }}
                     title={colorName}
                     className={`w-5.5 h-5.5 rounded-full transition-all duration-300 transform hover:scale-120 flex-shrink-0 relative ${
@@ -412,14 +450,27 @@ export default function ProductCard({
                 {isAr ? 'المقاسات:' : 'Sizes:'}
               </span>
               <div className="flex flex-wrap gap-1">
-                {uniqueSizes.map(sz => (
-                  <span
-                    key={sz}
-                    className="px-1.5 py-0.5 text-[9px] font-black rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/40"
-                  >
-                    {sz}
-                  </span>
-                ))}
+                {uniqueSizes.map(sz => {
+                  const isSelected = selectedSize === sz;
+                  return (
+                    <button
+                      key={sz}
+                      type="button"
+                      onClick={e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedSize(sz);
+                      }}
+                      className={`px-2 py-0.5 text-[9px] font-black rounded border transition-all duration-200 ${
+                        isSelected
+                          ? 'bg-[hsl(var(--primary))] text-white border-transparent shadow-sm'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 border-slate-200/40'
+                      }`}
+                    >
+                      {sz}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
