@@ -1625,3 +1625,103 @@ export async function overrideWhatsAppStatus(orderId: string, status: 'CONFIRMED
     return { error: err.message || 'Error occurred.' };
   }
 }
+
+export async function cancelOrderBySeller(
+  orderId: string,
+  reason: string,
+  markSoldOut: boolean
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return { error: 'Unauthorized' };
+    const role = (session.user as SessionUser).role;
+    if (role !== 'SELLER' && role !== 'ADMIN') return { error: 'Forbidden' };
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true },
+    });
+
+    if (!order) return { error: 'Order not found' };
+
+    let sellerProductIds: string[] = [];
+    if (role === 'SELLER') {
+      const seller = await prisma.sellerProfile.findUnique({
+        where: { userId: (session.user as SessionUser).id },
+        include: { products: { select: { id: true } } },
+      });
+      if (!seller) return { error: 'Seller profile not found' };
+      sellerProductIds = seller.products.map(p => p.id);
+    }
+
+    const orderItems = await prisma.orderItem.findMany({
+      where: { orderId },
+      include: { variant: { select: { productId: true } } },
+    });
+
+    const isOwnOrder =
+      role === 'ADMIN' ||
+      orderItems.some(item => sellerProductIds.includes(item.variant.productId));
+    if (!isOwnOrder) return { error: 'Unauthorized order cancellation' };
+
+    await prisma.$transaction(async tx => {
+      for (const item of orderItems) {
+        const belongsToSeller =
+          role === 'ADMIN' || sellerProductIds.includes(item.variant.productId);
+
+        if (belongsToSeller) {
+          if (markSoldOut) {
+            // Set stockCount to 0 for this variant
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stockCount: 0 },
+            });
+          } else {
+            // Restore stock count normally
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stockCount: { increment: item.quantity } },
+            });
+          }
+        } else {
+          // Items belonging to other sellers are restored normally
+          await tx.productVariant.update({
+            where: { id: item.variantId },
+            data: { stockCount: { increment: item.quantity } },
+          });
+        }
+      }
+
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          status: 'CANCELLED',
+          cancelReason: reason,
+        },
+      });
+
+      await tx.orderItem.updateMany({
+        where: { orderId },
+        data: { status: 'CANCELLED' },
+      });
+    });
+
+    // Best-effort status transition notification email.
+    void (async () => {
+      try {
+        const { triggerOrderStatusEmail } = await import('@/lib/email');
+        await triggerOrderStatusEmail(orderId, 'CANCELLED');
+      } catch (err) {
+        console.error('Failed to trigger order status email:', err);
+      }
+    })();
+
+    revalidatePath('/seller-hub');
+    revalidatePath('/dashboard');
+    revalidatePath('/admin-os');
+    return { success: true };
+  } catch (err: any) {
+    console.error('[cancelOrderBySeller] Error:', err);
+    return { error: err.message || 'Error occurred.' };
+  }
+}

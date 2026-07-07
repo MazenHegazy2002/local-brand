@@ -352,6 +352,7 @@ model Order {
 
   // Customer checkout options
   orderNotes   String? // Optional buyer instructions (max 500 chars)
+  cancelReason String? // Reason why the order was cancelled
   giftWrapping Boolean @default(false)
 
   // Snapshots for historical integrity

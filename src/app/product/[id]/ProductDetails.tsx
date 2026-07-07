@@ -173,7 +173,14 @@ export default function ProductDetails({
     }
   });
   const uniqueColors = Array.from(colorMap.values());
-  const hasColors = uniqueColors.length > 0;
+  const hasColors =
+    uniqueColors.length > 0 &&
+    !uniqueColors.every((c: any) => {
+      const lower = c.colorName.toLowerCase();
+      return lower === 'standard' || lower === 'default' || lower === '';
+    });
+
+  const initialColor = hasColors ? uniqueColors[0].colorName : '';
 
   // Image search mapping matching search criteria
   const getMatchedImageUrl = (colorName: string) => {
@@ -188,7 +195,7 @@ export default function ProductDetails({
   };
 
   // ── Interactive Client States ──
-  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [selectedColor, setSelectedColor] = useState<string>(initialColor);
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [activeImage, setActiveImage] = useState<string>(primaryImage);
   const [qty, setQty] = useState(1);
@@ -196,11 +203,12 @@ export default function ProductDetails({
 
   // Sync initial color image when product variants or primary image changes
   useEffect(() => {
-    setSelectedColor('');
+    setSelectedColor(initialColor);
     setSelectedSize('');
     setQty(1);
-    setActiveImage(primaryImage);
-  }, [product.id, primaryImage]);
+    const matchedImg = initialColor ? getMatchedImageUrl(initialColor) : null;
+    setActiveImage(matchedImg || primaryImage);
+  }, [product.id, primaryImage, initialColor]);
 
   // Extract all unique sizes for selected color, or all sizes if no color is selected yet
   const sizesForColor = parsedVariants.filter(

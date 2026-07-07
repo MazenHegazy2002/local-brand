@@ -38,6 +38,7 @@ import {
   deleteProduct,
   updateOrderItemStatus,
   toggleProductPublished,
+  cancelOrderBySeller,
 } from '../actions/seller';
 import { Product, Order, Category, SellerProfile, SessionUser, Tag, Collection } from '@/types';
 
@@ -1267,6 +1268,10 @@ function OrdersTab({
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [shippingLoading, setShippingLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [markSoldOut, setMarkSoldOut] = useState(false);
 
   const handleMarkShipped = async (orderId: string) => {
     const confirmed = await confirm({
@@ -1300,6 +1305,42 @@ function OrdersTab({
       });
     } finally {
       setShippingLoading(false);
+    }
+  };
+
+  const handleCancelSubmit = async () => {
+    if (!selectedOrder) return;
+    setCancelLoading(true);
+    try {
+      const res = await cancelOrderBySeller(
+        selectedOrder.orderId,
+        cancelReason.trim() || 'No reason provided',
+        markSoldOut
+      );
+      if (res?.error) {
+        toast({
+          variant: 'error',
+          title: 'Cancellation Failed',
+          description: res.error,
+        });
+        return;
+      }
+      toast({
+        variant: 'success',
+        title: 'Order Cancelled',
+        description: 'The order has been cancelled successfully.',
+      });
+      setShowCancelModal(false);
+      setSelectedOrder(null);
+      if (onRefresh) await onRefresh();
+    } catch (err: unknown) {
+      toast({
+        variant: 'error',
+        title: 'Error',
+        description: (err as Error).message || 'Failed to cancel order',
+      });
+    } finally {
+      setCancelLoading(false);
     }
   };
 
@@ -1615,12 +1656,84 @@ function OrdersTab({
                     {shippingLoading ? 'Updating…' : '🚚 Mark as Shipped'}
                   </button>
                 )}
+                {selectedOrder.orderStatus !== 'CANCELLED' &&
+                  selectedOrder.orderStatus !== 'DELIVERED' &&
+                  selectedOrder.orderStatus !== 'SHIPPED' && (
+                    <button
+                      onClick={() => {
+                        setCancelReason('');
+                        setMarkSoldOut(false);
+                        setShowCancelModal(true);
+                      }}
+                      className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm transition-colors"
+                    >
+                      ❌ Cancel Order
+                    </button>
+                  )}
                 <button
                   onClick={() => setSelectedOrder(null)}
                   className="ml-auto px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors"
                 >
                   Close
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showCancelModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative text-left">
+              <h4 className="font-black text-base mb-4 text-slate-800">Cancel Order</h4>
+              <p className="text-xs text-slate-500 mb-4">
+                Are you sure you want to cancel order #{selectedOrder?.orderId.slice(0, 8)}? This
+                action cannot be undone.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">
+                    Reason for Cancellation
+                  </label>
+                  <textarea
+                    value={cancelReason}
+                    onChange={e => setCancelReason(e.target.value)}
+                    placeholder="e.g. Item is out of stock, customer requested cancellation..."
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-red-500 h-20 resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="markSoldOutCheckbox"
+                    checked={markSoldOut}
+                    onChange={e => setMarkSoldOut(e.target.checked)}
+                    className="rounded text-red-500 focus:ring-red-500 border-slate-300 cursor-pointer"
+                  />
+                  <label
+                    htmlFor="markSoldOutCheckbox"
+                    className="text-xs font-semibold text-slate-700 cursor-pointer select-none"
+                  >
+                    Mark this item variant as sold out (set stock to 0)
+                  </label>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => setShowCancelModal(false)}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCancelSubmit}
+                    disabled={cancelLoading}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition-colors disabled:opacity-50"
+                  >
+                    {cancelLoading ? 'Cancelling...' : 'Confirm Cancellation'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -2832,7 +2945,7 @@ function AddProductModal({
                     />
                     <div className="flex flex-wrap gap-1.5 mt-2 items-center">
                       <span className="text-[10px] font-bold text-slate-400 mr-1 select-none">
-                        Quick select:
+                        Clothing:
                       </span>
                       {['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Free Size'].map(sz => {
                         const active = (v.sizes || '')
@@ -2858,10 +2971,49 @@ function AddProductModal({
                               }
                               updateVariant(i, 'sizes', next.join(', '));
                             }}
-                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all duration-200 transform hover:scale-105 active:scale-95 ${
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all duration-200 transform hover:scale-105 active:scale-95 ${
                               active
                                 ? 'bg-emerald-500 text-white border-transparent shadow-sm'
-                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/40 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/40 dark:bg-slate-800 dark:hover:bg-slate-700'
+                            }`}
+                          >
+                            {sz}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mt-1.5 items-center">
+                      <span className="text-[10px] font-bold text-slate-400 mr-1 select-none">
+                        Shoes:
+                      </span>
+                      {['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'].map(sz => {
+                        const active = (v.sizes || '')
+                          .split(',')
+                          .map((s: string) => s.trim().toLowerCase())
+                          .includes(sz.toLowerCase());
+                        return (
+                          <button
+                            key={sz}
+                            type="button"
+                            onClick={() => {
+                              const list = (v.sizes || '')
+                                .split(',')
+                                .map((s: string) => s.trim())
+                                .filter(Boolean);
+                              let next;
+                              if (active) {
+                                next = list.filter(
+                                  (s: string) => s.toLowerCase() !== sz.toLowerCase()
+                                );
+                              } else {
+                                next = [...list, sz];
+                              }
+                              updateVariant(i, 'sizes', next.join(', '));
+                            }}
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all duration-200 transform hover:scale-105 active:scale-95 ${
+                              active
+                                ? 'bg-emerald-500 text-white border-transparent shadow-sm'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/40 dark:bg-slate-800 dark:hover:bg-slate-700'
                             }`}
                           >
                             {sz}

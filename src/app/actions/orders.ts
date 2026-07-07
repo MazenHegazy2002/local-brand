@@ -32,7 +32,10 @@ export async function createOrder(formData: unknown): Promise<CreateOrderResult>
   return result;
 }
 
-export async function cancelOrder(orderId: string): Promise<{ success?: boolean; error?: string }> {
+export async function cancelOrder(
+  orderId: string,
+  reason: string
+): Promise<{ success?: boolean; error?: string }> {
   try {
     const session = await getServerSession(authOptions);
     const userId = session ? (session.user as SessionUser).id : null;
@@ -65,7 +68,10 @@ export async function cancelOrder(orderId: string): Promise<{ success?: boolean;
 
       await tx.order.update({
         where: { id: orderId },
-        data: { status: OrderStatus.CANCELLED },
+        data: {
+          status: OrderStatus.CANCELLED,
+          cancelReason: reason,
+        },
       });
       await tx.orderItem.updateMany({
         where: { orderId },

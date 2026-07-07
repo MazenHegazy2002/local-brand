@@ -178,28 +178,91 @@ export default function ProductCard({
     return matched?.url || null;
   };
 
+  const hasRealColors =
+    uniqueColors.length > 0 &&
+    !uniqueColors.every(c => {
+      const lower = c.colorName.toLowerCase();
+      return lower === 'standard' || lower === 'default' || lower === '';
+    });
+
+  const initialColor = hasRealColors ? uniqueColors[0].colorName : '';
+
   // ── Interactive Client State ──
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [activeVariant, setActiveVariant] = useState<ProductVariant | null>(null);
-  const [activePrice, setActivePrice] = useState<number>(basePrice);
-  const [activeImage, setActiveImage] = useState<string | undefined>(displayImage);
+  const [selectedColor, setSelectedColor] = useState<string | null>(initialColor || null);
+  const [activeVariant, setActiveVariant] = useState<ProductVariant | null>(
+    hasRealColors ? uniqueColors[0].variant : variants[0] || null
+  );
+  const [activePrice, setActivePrice] = useState<number>(
+    hasRealColors ? uniqueColors[0].variant.price || basePrice : basePrice
+  );
+  const [activeImage, setActiveImage] = useState<string | undefined>(
+    hasRealColors ? getMatchedImageUrl(uniqueColors[0].colorName) || displayImage : displayImage
+  );
   const [added, setAdded] = useState(false);
 
   // Initialize selected values based on parsed variants
   useEffect(() => {
-    if (uniqueColors.length > 0) {
+    if (hasRealColors) {
       const firstColor = uniqueColors[0];
       setSelectedColor(firstColor.colorName);
       setActiveVariant(firstColor.variant);
       setActivePrice(firstColor.variant.price || basePrice);
 
       const matchedImg = getMatchedImageUrl(firstColor.colorName);
-      if (matchedImg) {
-        setActiveImage(matchedImg);
+      setActiveImage(matchedImg || displayImage);
+    } else {
+      setSelectedColor(null);
+      setActiveVariant(variants[0] || null);
+      setActivePrice(basePrice);
+      setActiveImage(displayImage);
+    }
+  }, [product.variants, displayImage, hasRealColors]);
+
+  // Supports both old format { "color":"Red","size":"M" } and new format { "color":"Red","sizes":["S","M","L"] }
+  const parsedVariants = variants.flatMap((v: any) => {
+    let color = '';
+    let rawSizes: string[] = [];
+    let singleSize = '';
+    try {
+      const attrs = JSON.parse(v.attributes || '{}');
+      color = String(attrs.color || attrs.Color || '').trim();
+
+      if (Array.isArray(attrs.sizes) && attrs.sizes.length > 0) {
+        rawSizes = attrs.sizes.map((s: any) => String(s).trim()).filter(Boolean);
+      } else if (attrs.size || attrs.Size) {
+        singleSize = String(attrs.size || attrs.Size || '').trim();
+      }
+    } catch (_e) {
+      if (v.title && v.title.includes('-')) {
+        const parts = v.title.split('-').map((p: string) => p.trim());
+        if (parts.length >= 2) {
+          color = parts[0];
+          singleSize = parts[1];
+        }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product.variants, displayImage]);
+
+    if (!color && v.title) {
+      color = v.title;
+    }
+
+    if (rawSizes.length > 0) {
+      return rawSizes.map((sz: string) => ({ ...v, color, size: sz }));
+    }
+    return [{ ...v, color, size: singleSize }];
+  });
+
+  const sizesForSelectedColor = parsedVariants.filter(
+    (v: any) => !selectedColor || v.color.toLowerCase() === selectedColor.toLowerCase()
+  );
+
+  const uniqueSizes = Array.from(
+    new Map(
+      sizesForSelectedColor
+        .filter((v: any) => v.size)
+        .map((v: any) => [v.size.toLowerCase(), v.size])
+    ).values()
+  ) as string[];
 
   // Handle Add to Cart action
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -292,8 +355,8 @@ export default function ProductCard({
           </div>
 
           {/* Color Swatches Grid */}
-          {uniqueColors.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3.5 mt-1 items-center">
+          {hasRealColors && (
+            <div className="flex flex-wrap gap-2 mb-3 mt-1 items-center">
               {uniqueColors.map(({ variant, colorName }) => {
                 const isSelected = selectedColor === colorName;
                 const bgStyle = getSwatchBackground(colorName);
@@ -336,6 +399,28 @@ export default function ProductCard({
                   />
                 );
               })}
+            </div>
+          )}
+
+          {/* Available Sizes list */}
+          {uniqueSizes.length > 0 && (
+            <div
+              className="flex flex-wrap gap-1.5 mb-3 mt-1.5 items-center text-left"
+              style={{ direction: isAr ? 'rtl' : 'ltr' }}
+            >
+              <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider select-none">
+                {isAr ? 'المقاسات:' : 'Sizes:'}
+              </span>
+              <div className="flex flex-wrap gap-1">
+                {uniqueSizes.map(sz => (
+                  <span
+                    key={sz}
+                    className="px-1.5 py-0.5 text-[9px] font-black rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/40"
+                  >
+                    {sz}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </div>

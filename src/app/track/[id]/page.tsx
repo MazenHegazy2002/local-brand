@@ -11,6 +11,8 @@ interface OrderItem {
   priceAtPurchase: number;
   quantity: number;
   status: string;
+  selectedSize?: string | null;
+  selectedColor?: string | null;
   variant?: {
     title: string;
     product?: {
@@ -34,7 +36,7 @@ interface Order {
 
 const STATUS_STEPS = [
   { key: 'PENDING_PAYMENT', label: 'Order Placed', icon: '📋' },
-  { key: 'CONFIRMED', label: 'Confirmed', icon: '✓' },
+  { key: 'CONFIRMED', label: 'Confirmed', icon: '✔️' },
   { key: 'PROCESSING', label: 'Processing', icon: '📦' },
   { key: 'SHIPPED', label: 'Shipped', icon: '🚚' },
   { key: 'DELIVERED', label: 'Delivered', icon: '🏠' },
@@ -270,7 +272,13 @@ export default function TrackOrderPage() {
                     <div className="flex-1">
                       <div className="font-medium text-gray-900">{item.productTitleSnapshot}</div>
                       <div className="text-sm text-gray-500">
-                        Qty: {item.quantity} • {item.variant?.title || 'Standard'}
+                        Qty: {item.quantity}
+                        {item.selectedColor && ` • Color: ${item.selectedColor}`}
+                        {item.selectedSize && ` • Size: ${item.selectedSize}`}
+                        {!item.selectedColor &&
+                          !item.selectedSize &&
+                          item.variant?.title &&
+                          ` • Variant: ${item.variant.title}`}
                       </div>
                     </div>
                     <div className="text-right">

@@ -123,14 +123,15 @@ function CustomerDashboard() {
   };
 
   const handleCancelOrder = async (orderId: string) => {
-    const confirmed = await confirm({
+    const reason = await prompt({
       title: 'Cancel Order',
-      message: 'Cancel this order? This cannot be undone.',
-      type: 'danger',
+      message: 'Please provide a reason for cancelling this order:',
+      placeholder: 'e.g. Changed my mind, found a better price...',
+      confirmText: 'Cancel Order',
     });
-    if (!confirmed) return;
+    if (reason === null) return;
     try {
-      const res = await cancelOrder(orderId);
+      const res = await cancelOrder(orderId, reason.trim() || 'No reason provided');
       if (res.error) {
         toast({ variant: 'error', title: 'Cancellation Failed', description: res.error });
         return;
@@ -1697,7 +1698,7 @@ function TrackLookupTab({ data }: TrackLookupTabProps) {
                               : 'bg-white text-slate-400 border border-slate-200'
                         }`}
                       >
-                        {isActive && !isCurrent ? '✓' : idx + 1}
+                        {isActive && !isCurrent ? '✔️' : idx + 1}
                       </div>
                     </div>
                   );
@@ -1737,7 +1738,14 @@ function TrackLookupTab({ data }: TrackLookupTabProps) {
                       {item.productTitleSnapshot}
                     </div>
                     <div className="text-[10px] text-slate-400">
-                      Qty: {item.quantity} · Price: {item.priceAtPurchase} EGP
+                      Qty: {item.quantity}
+                      {item.selectedColor && ` · Color: ${item.selectedColor}`}
+                      {item.selectedSize && ` · Size: ${item.selectedSize}`}
+                      {!item.selectedColor &&
+                        !item.selectedSize &&
+                        item.variant?.title &&
+                        ` · Variant: ${item.variant.title}`}
+                      {` · Price: ${item.priceAtPurchase} EGP`}
                     </div>
                   </div>
                   <div className="font-extrabold text-slate-700">

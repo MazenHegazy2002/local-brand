@@ -9,6 +9,14 @@ export async function GET(_req: Request) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
+    const role = (session.user as SessionUser).role;
+    if (role && role !== 'BUYER') {
+      return NextResponse.json(
+        { message: 'Only customers can use the wishlist.' },
+        { status: 403 }
+      );
+    }
+
     const userId = (session.user as SessionUser).id;
 
     const wishlist = await prisma.wishlist.findMany({
@@ -37,6 +45,14 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+
+    const role = (session.user as SessionUser).role;
+    if (role && role !== 'BUYER') {
+      return NextResponse.json(
+        { message: 'Only customers can use the wishlist.' },
+        { status: 403 }
+      );
+    }
 
     const { productId } = await req.json();
     const userId = (session.user as SessionUser).id;

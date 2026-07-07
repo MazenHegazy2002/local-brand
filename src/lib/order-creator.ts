@@ -56,6 +56,18 @@ export async function createOrderForUser(
       return { error: 'Unauthorized. Please log in or provide guest email.' };
     }
 
+    if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+      if (user && user.role !== 'BUYER') {
+        return {
+          error: 'Only customers (buyers) can place orders. Sellers and Admins are restricted.',
+        };
+      }
+    }
+
     // ── 2. Resolve shipping address ───────────────────────────────────────────
     const address = addressId
       ? await prisma.address.findUnique({ where: { id: addressId } })
@@ -242,10 +254,7 @@ export async function createOrderForUser(
           shippingFee,
           paymentMethod: paymentMethod as PaymentMethod,
           paymentStatus: PaymentStatus.UNPAID,
-          status:
-            paymentMethod === PaymentMethod.CASH_ON_DELIVERY
-              ? OrderStatus.PROCESSING
-              : OrderStatus.PENDING_PAYMENT,
+          status: OrderStatus.PENDING_PAYMENT,
           shippingAddressSnapshot: JSON.stringify(addressSnapshot),
           orderNotes: orderNotes || null,
           giftWrapping: giftWrapping || false,
