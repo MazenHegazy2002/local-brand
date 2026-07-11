@@ -23,6 +23,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const limit = Math.min(Math.max(Number(searchParams.get('limit') || '50'), 1), 200);
+    const page = Math.max(Number(searchParams.get('page') || '1'), 1);
+    const skip = (page - 1) * limit;
+
     // Build transaction ledger from delivered orders
     const deliveredItems = await prisma.orderItem.findMany({
       where: {
@@ -34,7 +39,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         variant: { include: { product: { select: { title: true } } } },
       },
       orderBy: { order: { createdAt: 'desc' } },
-      take: 50,
+      take: limit,
+      skip,
     });
 
     const { ESCROW_DAYS, computeSellerEarnings } = await import('@/lib/seller-earnings');

@@ -90,6 +90,8 @@ export async function cancelOrder(
     })();
 
     revalidatePath('/dashboard');
+    revalidatePath('/seller-hub');
+    revalidatePath('/admin-os');
     return { success: true };
   } catch (error: unknown) {
     const err = error as Error;
@@ -136,6 +138,8 @@ export async function requestReturn(
     });
 
     revalidatePath('/dashboard');
+    revalidatePath('/seller-hub');
+    revalidatePath('/admin-os');
     return { success: true };
   } catch (error: unknown) {
     const err = error as Error;

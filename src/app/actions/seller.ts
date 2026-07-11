@@ -615,6 +615,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
 
     revalidatePath('/dashboard');
     revalidatePath('/admin-os');
+    revalidatePath('/seller-hub');
     return { success: true };
   } catch (err: unknown) {
     const error = err as Error;
@@ -628,6 +629,21 @@ export async function updateOrderItemStatus(itemId: string, status: OrderItemSta
     if (!session) return { error: 'Unauthorized' };
     const role = (session.user as SessionUser).role;
     if (role !== 'SELLER' && role !== 'ADMIN') return { error: 'Forbidden' };
+
+    if (role === 'SELLER') {
+      const sellerProfile = await prisma.sellerProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+      if (!sellerProfile) return { error: 'Seller profile not found' };
+
+      const item = await prisma.orderItem.findUnique({
+        where: { id: itemId },
+        include: { variant: { include: { product: true } } },
+      });
+      if (!item || item.variant.product.sellerId !== sellerProfile.id) {
+        return { error: 'Forbidden: You do not own this order item' };
+      }
+    }
 
     const updatedItem = await prisma.orderItem.update({
       where: { id: itemId },
@@ -660,6 +676,8 @@ export async function updateOrderItemStatus(itemId: string, status: OrderItemSta
     }
 
     revalidatePath('/seller-hub');
+    revalidatePath('/dashboard');
+    revalidatePath('/admin-os');
     return { success: true };
   } catch (err: unknown) {
     const error = err as Error;
@@ -851,6 +869,8 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
     });
 
     revalidatePath('/seller-hub');
+    revalidatePath('/');
+    revalidatePath('/shop');
     return { id: product.id };
   } catch (err: unknown) {
     const error = err as Error;
@@ -910,6 +930,9 @@ export async function updateProduct(
     });
 
     revalidatePath('/seller-hub');
+    revalidatePath('/');
+    revalidatePath('/shop');
+    revalidatePath(`/product/${productId}`);
     return { success: true };
   } catch (err: unknown) {
     const error = err as Error;
@@ -941,6 +964,9 @@ export async function deleteProduct(productId: string) {
     });
 
     revalidatePath('/seller-hub');
+    revalidatePath('/');
+    revalidatePath('/shop');
+    revalidatePath(`/product/${productId}`);
     return { success: true };
   } catch (err: unknown) {
     const error = err as Error;
@@ -1009,6 +1035,9 @@ export async function toggleProductPublished(productId: string, publish: boolean
     });
 
     revalidatePath('/seller-hub');
+    revalidatePath('/');
+    revalidatePath('/shop');
+    revalidatePath(`/product/${productId}`);
     return { success: true, published: publish };
   } catch (err: unknown) {
     const error = err as Error;

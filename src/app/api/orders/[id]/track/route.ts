@@ -49,9 +49,23 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     // Authorization check
     const isOwner = order.userId === userId || order.guestEmail === guestEmail;
-    const isSellerOrAdmin = role === 'SELLER' || role === 'ADMIN';
+    let isAuthorized = isOwner || role === 'ADMIN';
 
-    if (!isOwner && !isSellerOrAdmin) {
+    if (!isAuthorized && role === 'SELLER') {
+      const sellerProfile = await prisma.sellerProfile.findUnique({
+        where: { userId: userId || '' },
+      });
+      if (sellerProfile) {
+        const ownsItem = order.items.some(
+          item => item.variant?.product?.sellerId === sellerProfile.id
+        );
+        if (ownsItem) {
+          isAuthorized = true;
+        }
+      }
+    }
+
+    if (!isAuthorized) {
       return NextResponse.json({ message: 'Forbidden - Invalid order or email' }, { status: 403 });
     }
 

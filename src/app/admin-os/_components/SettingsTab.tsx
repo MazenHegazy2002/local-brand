@@ -424,6 +424,7 @@ export default function SettingsTab() {
           gap: 16px;
           box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
           min-width: 380px;
+          max-width: calc(100% - 32px);
           z-index: 50;
         }
         .settings-savebar-cancel {

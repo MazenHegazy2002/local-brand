@@ -84,6 +84,47 @@ function ProductSection({
   );
 }
 
+function ProductSectionSkeleton({ emoji, title }: { emoji: string; title: string }) {
+  return (
+    <section className="ps-section animate-pulse">
+      <div className="ps-header">
+        <div className="ps-title">
+          {emoji && (
+            <span className="text-xl shrink-0" aria-hidden="true">
+              {emoji}
+            </span>
+          )}
+          <h2
+            style={{
+              fontSize: 'inherit',
+              fontWeight: 'inherit',
+              color: 'inherit',
+              margin: 0,
+              display: 'inline',
+            }}
+          >
+            {title}
+          </h2>
+        </div>
+        <div className="h-4 w-12 bg-gray-250 dark:bg-slate-800 rounded"></div>
+      </div>
+      <div className="ps-grid">
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <div
+            key={idx}
+            className="flex flex-col gap-3 p-3 bg-white rounded-xl border border-[#e8e3dc] shadow-sm"
+          >
+            <div className="aspect-square bg-gray-150 rounded-lg w-full relative overflow-hidden"></div>
+            <div className="h-4 bg-gray-250 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-5 bg-gray-250 rounded w-1/3 mt-2"></div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default async function Home() {
@@ -156,9 +197,7 @@ export default async function Home() {
       <Hero />
 
       <div className="home-shell my-8">
-        <Suspense
-          fallback={<div className="h-64 flex items-center justify-center">Loading...</div>}
-        >
+        <Suspense fallback={<ProductSectionSkeleton emoji="🔥" title="Bestsellers" />}>
           <ProductSection
             emoji="🔥"
             title="Bestsellers"
@@ -169,9 +208,7 @@ export default async function Home() {
           />
         </Suspense>
 
-        <Suspense
-          fallback={<div className="h-64 flex items-center justify-center">Loading...</div>}
-        >
+        <Suspense fallback={<ProductSectionSkeleton emoji="✨" title="New Arrivals" />}>
           <ProductSection
             emoji="✨"
             title="New Arrivals"
@@ -182,9 +219,7 @@ export default async function Home() {
           />
         </Suspense>
 
-        <Suspense
-          fallback={<div className="h-64 flex items-center justify-center">Loading...</div>}
-        >
+        <Suspense fallback={<ProductSectionSkeleton emoji="💖" title="Recommended for You" />}>
           <ProductSection
             emoji="💖"
             title="Recommended for You"

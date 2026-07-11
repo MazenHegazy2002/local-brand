@@ -63,6 +63,28 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       }
     }
 
+    if (role === 'SELLER') {
+      const sellerProfile = await prisma.sellerProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+      if (!sellerProfile) {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      }
+      const ownsItem = await prisma.orderItem.findFirst({
+        where: {
+          orderId,
+          variant: {
+            product: {
+              sellerId: sellerProfile.id,
+            },
+          },
+        },
+      });
+      if (!ownsItem) {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      }
+    }
+
     // Build update payload. We stamp deliveredAt the first time an order
     // transitions into DELIVERED so the seller-earnings escrow window has a
     // reliable start time (instead of being fooled by later updatedAt

@@ -1,18 +1,41 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { X, Mail, Check, Copy } from 'lucide-react';
 import { useLanguage } from '@/providers/LanguageContext';
+
+/** Routes where the exit-intent popup should never appear */
+const SUPPRESSED_PREFIXES = [
+  '/dashboard',
+  '/seller-hub',
+  '/admin-os',
+  '/affiliate',
+  '/checkout',
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+  '/compare',
+];
 
 export default function ExitIntentPopup() {
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const { lang } = useLanguage();
   const isRtl = lang === 'ar';
+  const pathname = usePathname();
+
+  // Suppress popup on non-storefront pages
+  const isSuppressed = SUPPRESSED_PREFIXES.some(prefix => pathname.startsWith(prefix));
 
   useEffect(() => {
+    if (isSuppressed) return;
+
     // Check local storage so we do not prompt repeatedly.
     const hasSeen = localStorage.getItem('brandy-exit-intent-seen');
     if (hasSeen === 'true') return;
@@ -31,15 +54,34 @@ export default function ExitIntentPopup() {
     return () => {
       document.removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, []);
+  }, [isSuppressed]);
 
-  if (!isOpen) return null;
+  if (isSuppressed || !isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    // In a real application, you'd send this to an API or email newsletter tool like Resend.
-    setSubmitted(true);
+    setSubmitError('');
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setSubmitError(
+          d?.message ||
+            (isRtl ? 'فشل الاشتراك. حاول مرة أخرى.' : 'Subscription failed. Please try again.')
+        );
+        return;
+      }
+      setSubmitted(true);
+    } catch {
+      setSubmitError(
+        isRtl ? 'فشل الاشتراك. حاول مرة أخرى.' : 'Subscription failed. Please try again.'
+      );
+    }
   };
 
   const handleCopyCode = () => {
@@ -101,6 +143,8 @@ export default function ExitIntentPopup() {
                   className={`w-full ${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent transition-all`}
                 />
               </div>
+
+              {submitError && <p className="text-red-600 text-xs text-center">{submitError}</p>}
 
               <button
                 type="submit"

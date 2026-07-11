@@ -36,10 +36,23 @@ const statusColors: Record<string, string> = {
   away: 'bg-amber-500',
 };
 
-export function Avatar({ src, fallback, size = 'md', shape = 'circle', showStatus, statusColor = 'online', className = '', alt = 'Avatar' }: AvatarProps) {
+export function Avatar({
+  src,
+  fallback,
+  size = 'md',
+  shape = 'circle',
+  showStatus,
+  statusColor = 'online',
+  className = '',
+  alt = 'Avatar',
+}: AvatarProps) {
   const [error, setError] = useState(false);
 
-  const initials = fallback.slice(0, 2).toUpperCase();
+  const words = fallback.trim().split(/\s+/);
+  const initials =
+    words.length >= 2
+      ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+      : fallback.slice(0, 2).toUpperCase();
 
   return (
     <div className={`relative inline-flex ${className}`}>
@@ -51,13 +64,7 @@ export function Avatar({ src, fallback, size = 'md', shape = 'circle', showStatu
         `}
       >
         {src && !error ? (
-          <Image
-            src={src}
-            alt={alt}
-            fill
-            className="object-cover"
-            onError={() => setError(true)}
-          />
+          <Image src={src} alt={alt} fill className="object-cover" onError={() => setError(true)} />
         ) : (
           <span>{initials}</span>
         )}

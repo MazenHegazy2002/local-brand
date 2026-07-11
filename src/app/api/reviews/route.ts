@@ -97,21 +97,36 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: 'productId is required' }, { status: 400 });
     }
 
-    const reviews = await prisma.review.findMany({
-      where: { productId },
-      include: {
-        user: { select: { name: true, avatarUrl: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const limit = Math.min(Math.max(Number(searchParams.get('limit') || '20'), 1), 100);
+    const page = Math.max(Number(searchParams.get('page') || '1'), 1);
+    const skip = (page - 1) * limit;
 
+    const [reviews, totalCount] = await Promise.all([
+      prisma.review.findMany({
+        where: { productId },
+        include: {
+          user: { select: { name: true, avatarUrl: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip,
+      }),
+      prisma.review.count({ where: { productId } }),
+    ]);
+
+    const allReviewsForAvg = await prisma.review.findMany({
+      where: { productId },
+      select: { rating: true },
+    });
     const averageRating =
-      reviews.length > 0 ? reviews.reduce((acc, rev) => acc + rev.rating, 0) / reviews.length : 0;
+      allReviewsForAvg.length > 0
+        ? allReviewsForAvg.reduce((acc, rev) => acc + rev.rating, 0) / allReviewsForAvg.length
+        : 0;
 
     return NextResponse.json(
       {
         reviews,
-        stats: { total: reviews.length, averageRating: averageRating.toFixed(1) },
+        stats: { total: totalCount, averageRating: averageRating.toFixed(1) },
       },
       { status: 200 }
     );

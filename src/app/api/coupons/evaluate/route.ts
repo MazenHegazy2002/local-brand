@@ -8,13 +8,32 @@ export async function POST(req: Request) {
     const validated = couponEvaluateSchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json({ message: 'Invalid data', errors: validated.error.format() }, { status: 400 });
+      return NextResponse.json(
+        { message: 'Invalid data', errors: validated.error.format() },
+        { status: 400 }
+      );
     }
 
-    const { code, orderValue: cartTotal } = validated.data;
+    const { code } = validated.data;
+    let cartTotal = validated.data.orderValue;
+
+    if (validated.data.items && validated.data.items.length > 0) {
+      let computedTotal = 0;
+      for (const item of validated.data.items) {
+        const dbVariant = await prisma.productVariant.findUnique({
+          where: { id: item.variantId },
+          include: { product: true },
+        });
+        if (dbVariant) {
+          const price = dbVariant.price || dbVariant.product.basePrice;
+          computedTotal += price * item.quantity;
+        }
+      }
+      cartTotal = computedTotal;
+    }
 
     const coupon = await prisma.coupon.findUnique({
-      where: { code: code.toUpperCase() }
+      where: { code: code.toUpperCase() },
     });
 
     if (!coupon) {
@@ -34,7 +53,10 @@ export async function POST(req: Request) {
     }
 
     if (coupon.minOrderValue && cartTotal < coupon.minOrderValue) {
-      return NextResponse.json({ message: `Cart subtotal must be at least EGP ${coupon.minOrderValue}` }, { status: 400 });
+      return NextResponse.json(
+        { message: `Cart subtotal must be at least EGP ${coupon.minOrderValue}` },
+        { status: 400 }
+      );
     }
 
     // Calculate discount amount
@@ -51,12 +73,14 @@ export async function POST(req: Request) {
     // Ensure we don't discount more than the cart total
     discountAmount = Math.min(discountAmount, cartTotal);
 
-    return NextResponse.json({
-      message: 'Coupon applied successfully',
-      discountAmount,
-      couponId: coupon.id
-    }, { status: 200 });
-
+    return NextResponse.json(
+      {
+        message: 'Coupon applied successfully',
+        discountAmount,
+        couponId: coupon.id,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Coupon Evaluation Error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });

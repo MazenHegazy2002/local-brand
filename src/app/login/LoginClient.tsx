@@ -106,11 +106,18 @@ function LoginForm() {
       // ignore storage errors
     }
 
-    const res = await signIn('credentials', {
-      redirect: false,
-      email,
-      password,
-    });
+    let res;
+    try {
+      res = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      });
+    } catch (_networkErr) {
+      setError('Unable to connect. Please check your internet connection and try again.');
+      setIsLoading(false);
+      return;
+    }
 
     if (res?.error) {
       setError('Invalid email or password');
@@ -125,7 +132,26 @@ function LoginForm() {
         if (!target || target === '/dashboard') {
           if (role === 'ADMIN') target = '/admin-os';
           else if (role === 'SELLER') target = '/seller-hub';
-          else target = '/dashboard';
+          else if (role === 'BUYER') {
+            // Check if this buyer is also an active affiliate
+            try {
+              const affRes = await fetch('/api/affiliate/apply');
+              if (affRes.ok) {
+                const affData = await affRes.json();
+                if (affData?.affiliate?.status === 'ACTIVE') {
+                  target = '/affiliate/dashboard';
+                } else {
+                  target = '/dashboard';
+                }
+              } else {
+                target = '/dashboard';
+              }
+            } catch {
+              target = '/dashboard';
+            }
+          } else {
+            target = '/dashboard';
+          }
         }
 
         window.location.href = target;

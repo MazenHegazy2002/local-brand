@@ -254,10 +254,11 @@ export async function proxy(req: NextRequest) {
     targetPathname.startsWith('/admin') || targetPathname.startsWith('/admin-os') || isAdminApi;
   const sellerRoutes = targetPathname.startsWith('/seller') || targetPathname === '/seller-hub';
   const dashboardRoutes = targetPathname.startsWith('/dashboard');
+  const affiliateRoutes = targetPathname.startsWith('/affiliate');
 
   // If no user is logged in, redirect to login (except for public shop pages)
   if (!token) {
-    if (adminRoutes || sellerRoutes || dashboardRoutes) {
+    if (adminRoutes || sellerRoutes || dashboardRoutes || affiliateRoutes) {
       if (targetPathname.startsWith('/api/')) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
       }

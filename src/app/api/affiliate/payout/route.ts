@@ -25,42 +25,68 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No active affiliate account.' }, { status: 403 });
   }
 
-  // Get confirmed, unpaid commissions
-  const confirmedCommissions = await prisma.commission.findMany({
-    where: {
-      affiliateId: affiliate.id,
-      status: 'CONFIRMED',
-      payoutId: null,
-    },
-  });
-
-  if (confirmedCommissions.length === 0) {
-    return NextResponse.json(
-      { error: 'No confirmed earnings available to pay out.' },
-      { status: 400 }
-    );
-  }
-
   const body = await req.json();
   const parsed = PayoutSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const totalAmount = confirmedCommissions.reduce((sum, c) => sum + Number(c.commissionEgp), 0);
+  try {
+    const result = await prisma.$transaction(async tx => {
+      // 1. Get confirmed, unpaid commissions
+      const confirmedCommissions = await tx.commission.findMany({
+        where: {
+          affiliateId: affiliate.id,
+          status: 'CONFIRMED',
+          payoutId: null,
+        },
+      });
 
-  const payout = await prisma.affiliatePayout.create({
-    data: {
-      affiliateId: affiliate.id,
-      amountEgp: totalAmount,
-      method: parsed.data.method as AffiliatePayoutMethod,
-      payoutDetails: parsed.data.payoutDetails,
-      status: 'REQUESTED',
-      commissions: {
-        connect: confirmedCommissions.map(c => ({ id: c.id })),
-      },
-    },
-  });
+      if (confirmedCommissions.length === 0) {
+        throw new Error('No confirmed earnings available to pay out.');
+      }
 
-  return NextResponse.json({ success: true, payoutId: payout.id, amountEgp: totalAmount });
+      const totalAmount = confirmedCommissions.reduce((sum, c) => sum + Number(c.commissionEgp), 0);
+
+      // 2. Create the payout request
+      const payout = await tx.affiliatePayout.create({
+        data: {
+          affiliateId: affiliate.id,
+          amountEgp: totalAmount,
+          method: parsed.data.method as AffiliatePayoutMethod,
+          payoutDetails: parsed.data.payoutDetails,
+          status: 'REQUESTED',
+        },
+      });
+
+      // 3. Mark commissions as paid under this payoutId, ensuring payoutId: null
+      const updated = await tx.commission.updateMany({
+        where: {
+          id: { in: confirmedCommissions.map(c => c.id) },
+          payoutId: null,
+        },
+        data: { payoutId: payout.id },
+      });
+
+      if (updated.count !== confirmedCommissions.length) {
+        throw new Error(
+          'Concurrent modification detected. Some commissions were already processed.'
+        );
+      }
+
+      return { payoutId: payout.id, amountEgp: totalAmount };
+    });
+
+    return NextResponse.json({
+      success: true,
+      payoutId: result.payoutId,
+      amountEgp: result.amountEgp,
+    });
+  } catch (err: unknown) {
+    const error = err as Error;
+    return NextResponse.json(
+      { error: error.message || 'Payout creation failed.' },
+      { status: 400 }
+    );
+  }
 }

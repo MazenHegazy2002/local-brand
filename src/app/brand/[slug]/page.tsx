@@ -6,6 +6,7 @@ import { Product, ProductImage } from '@/types';
 import type { Metadata } from 'next';
 import { PLATFORM_URL } from '@/lib/constants';
 import { breadcrumbJsonLd, jsonLdScript } from '@/lib/jsonld';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 export async function generateMetadata({
   params,
@@ -85,28 +86,15 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
       </div>
 
       <div className="container py-12 md:py-24">
-        {/* Breadcrumb */}
-        <nav aria-label="Breadcrumb" className="mb-8">
-          <ol className="flex items-center gap-2 text-sm text-gray-500">
-            <li>
-              <a href="/" className="hover:text-[#1e3b8a]">
-                Home
-              </a>
-            </li>
-            <li aria-hidden="true">/</li>
-            <li>
-              <a href="/brands" className="hover:text-[#1e3b8a]">
-                Brands
-              </a>
-            </li>
-            <li aria-hidden="true">/</li>
-            <li>
-              <span className="text-gray-900 font-medium" aria-current="page">
-                {seller.storeName}
-              </span>
-            </li>
-          </ol>
-        </nav>
+        <Breadcrumb
+          className="mb-8"
+          separator="/"
+          items={[
+            { label: 'Home', href: '/' },
+            { label: 'Brands', href: '/brands' },
+            { label: seller.storeName },
+          ]}
+        />
 
         <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
           <h2 className="text-3xl font-serif font-bold text-gray-900">

@@ -1304,3 +1304,10 @@ enum LoyaltyTxType {
   REDEEMED_AT_CHECKOUT
   REFUNDED
 }
+
+// ── NEWSLETTER ────────────────────────────────────────────────────────────────
+model NewsletterSubscriber {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  subscribedAt DateTime @default(now())
+}

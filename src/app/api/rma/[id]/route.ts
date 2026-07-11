@@ -8,7 +8,8 @@ import { rmaUpdateSchema } from '@/lib/validation';
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    if (!session || !session.user)
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
     const role = (session.user as SessionUser).role;
     if (role !== 'ADMIN' && role !== 'SELLER') {
@@ -20,18 +21,40 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const validated = rmaUpdateSchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json({ message: 'Invalid data', errors: validated.error.format() }, { status: 400 });
+      return NextResponse.json(
+        { message: 'Invalid data', errors: validated.error.format() },
+        { status: 400 }
+      );
     }
 
     const { status, adminNotes } = validated.data;
 
     const returnRequest = await prisma.returnRequest.findUnique({
       where: { id: resolvedParams.id },
-      include: { orderItem: true }
+      include: {
+        orderItem: {
+          include: {
+            variant: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!returnRequest) {
       return NextResponse.json({ message: 'Return request not found' }, { status: 404 });
+    }
+
+    if (role === 'SELLER') {
+      const sellerProfile = await prisma.sellerProfile.findUnique({
+        where: { userId: (session.user as SessionUser).id },
+      });
+      if (!sellerProfile || returnRequest.orderItem.variant.product.sellerId !== sellerProfile.id) {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      }
     }
 
     // Update return request
@@ -39,8 +62,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       where: { id: resolvedParams.id },
       data: {
         status,
-        adminNotes
-      }
+        adminNotes,
+      },
     });
 
     // Update order item status based on return status
@@ -53,14 +76,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     await prisma.orderItem.update({
       where: { id: returnRequest.orderItemId },
-      data: { status: itemStatus }
+      data: { status: itemStatus },
     });
 
-    return NextResponse.json({
-      message: `Return request ${status.toLowerCase()}`,
-      returnRequest: updated
-    }, { status: 200 });
-
+    return NextResponse.json(
+      {
+        message: `Return request ${status.toLowerCase()}`,
+        returnRequest: updated,
+      },
+      { status: 200 }
+    );
   } catch (error: unknown) {
     const err = error as Error;
     console.error('RMA Update Error:', err);

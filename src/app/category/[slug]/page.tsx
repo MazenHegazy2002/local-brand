@@ -1,6 +1,7 @@
 import Navbar from '@/components/Navbar';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { prisma } from '@/lib/prisma';
 import { Suspense } from 'react';
 import { ProductGridSkeleton } from '@/components/Skeleton';
@@ -109,28 +110,15 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <nav aria-label="Breadcrumb" className="mb-6">
-          <ol className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]">
-            <li>
-              <Link href="/" className="hover:text-[hsl(var(--primary))]">
-                Home
-              </Link>
-            </li>
-            <li aria-hidden="true">/</li>
-            <li>
-              <Link href="/categories" className="hover:text-[hsl(var(--primary))]">
-                Categories
-              </Link>
-            </li>
-            <li aria-hidden="true">/</li>
-            <li>
-              <span className="text-[hsl(var(--foreground))] font-medium" aria-current="page">
-                {category.name}
-              </span>
-            </li>
-          </ol>
-        </nav>
+        <Breadcrumb
+          className="mb-6"
+          separator="/"
+          items={[
+            { label: 'Home', href: '/' },
+            { label: 'Categories', href: '/categories' },
+            { label: category.name },
+          ]}
+        />
 
         <h1 className="text-3xl md:text-4xl font-black text-[hsl(var(--foreground))] mb-2">
           {category.name}

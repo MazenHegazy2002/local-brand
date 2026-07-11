@@ -15,6 +15,7 @@ import { PriceDisplay } from '@/components/ui/PriceDisplay';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 describe('<Badge />', () => {
   it('renders children inside a span', () => {
@@ -289,5 +290,75 @@ describe('<Checkbox />', () => {
     render(<Checkbox label="Disabled checkbox" disabled />);
     const checkbox = screen.getByRole('checkbox', { name: 'Disabled checkbox' });
     expect(checkbox).toBeDisabled();
+  });
+});
+
+describe('<Breadcrumb />', () => {
+  const items = [
+    { label: 'Home', href: '/' },
+    { label: 'Shop', href: '/shop' },
+    { label: 'Product Name' },
+  ];
+
+  it('renders standard semantic nav > ol > li hierarchy', () => {
+    const { container } = render(<Breadcrumb items={items} />);
+
+    expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toBeInTheDocument();
+    expect(container.querySelector('ol')).toBeInTheDocument();
+    expect(container.querySelectorAll('li')).toHaveLength(3);
+  });
+
+  it('renders links for items with href and text for current item', () => {
+    render(<Breadcrumb items={items} />);
+
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Shop' })).toHaveAttribute('href', '/shop');
+
+    const activeText = screen.getByText('Product Name');
+    expect(activeText.tagName.toLowerCase()).toBe('span');
+    expect(activeText).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('forwards className to the nav element', () => {
+    const { container } = render(<Breadcrumb items={items} className="my-custom-class" />);
+    expect(container.querySelector('nav')).toHaveClass('my-custom-class');
+  });
+
+  it('renders a custom separator', () => {
+    render(<Breadcrumb items={items} separator=">" />);
+    const separators = screen.getAllByText('>');
+    expect(separators).toHaveLength(2);
+  });
+
+  it('renders a middle item without href as a span without aria-current', () => {
+    const mixedItems = [
+      { label: 'Home', href: '/' },
+      { label: 'No Link' },
+      { label: 'Current', href: '/current' },
+    ];
+    render(<Breadcrumb items={mixedItems} />);
+
+    const noLinkSpan = screen.getByText('No Link');
+    expect(noLinkSpan.tagName.toLowerCase()).toBe('span');
+    expect(noLinkSpan).not.toHaveAttribute('aria-current');
+  });
+
+  it('renders last item as span even when href is provided', () => {
+    const withHrefLast = [
+      { label: 'Home', href: '/' },
+      { label: 'Current Page', href: '/current' },
+    ];
+    render(<Breadcrumb items={withHrefLast} />);
+
+    const last = screen.getByText('Current Page');
+    expect(last.tagName.toLowerCase()).toBe('span');
+    expect(last).toHaveAttribute('aria-current', 'page');
+    expect(screen.queryByRole('link', { name: 'Current Page' })).toBeNull();
+  });
+
+  it('renders a single item with no separator', () => {
+    const { container } = render(<Breadcrumb items={[{ label: 'Only' }]} />);
+    expect(container.querySelectorAll('li')).toHaveLength(1);
+    expect(container.querySelector('span[aria-hidden]')).toBeNull();
   });
 });

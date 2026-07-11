@@ -56,6 +56,21 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
+    if (role === 'SELLER') {
+      const sellerProfile = await prisma.sellerProfile.findUnique({
+        where: { userId },
+      });
+      if (!sellerProfile) {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      }
+      const ownsItem = order.items.some(
+        item => item.variant?.product?.sellerId === sellerProfile.id
+      );
+      if (!ownsItem) {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+      }
+    }
+
     const address = order.shippingAddressSnapshot ? JSON.parse(order.shippingAddressSnapshot) : {};
     const subtotal = order.items.reduce(
       (sum, item) => sum + item.priceAtPurchase * item.quantity,

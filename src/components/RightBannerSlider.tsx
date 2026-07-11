@@ -11,14 +11,27 @@ export interface RightBannerSlide {
   linkUrl: string;
 }
 
+const coverStyle = { objectFit: 'cover' as const };
+
+const SLIDE_INTERVAL_MS = 5000;
+
 export default function RightBannerSlider({ slides }: { slides: RightBannerSlide[] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
+    if (currentSlide >= slides.length) setCurrentSlide(0);
+  }, [slides.length, currentSlide]);
+
+  useEffect(() => {
     if (slides.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % slides.length);
-    }, 5000);
+
+    const advance = () => {
+      if (document.visibilityState === 'visible') {
+        setCurrentSlide(prev => (prev + 1) % slides.length);
+      }
+    };
+
+    const timer = setInterval(advance, SLIDE_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [slides.length]);
 
@@ -38,9 +51,10 @@ export default function RightBannerSlider({ slides }: { slides: RightBannerSlide
             src={slide.imageUrl}
             fill
             sizes="(max-width: 1024px) 50vw, 17vw"
-            style={{ objectFit: 'cover' }}
+            style={coverStyle}
             alt={slide.title}
             className="z-0"
+            priority={idx === 0}
           />
           <div className="absolute inset-0 z-10 bg-gradient-to-t from-gray-900/90 to-transparent" />
           <div className="absolute bottom-0 left-0 p-6 z-20 w-full text-left">
@@ -54,16 +68,12 @@ export default function RightBannerSlider({ slides }: { slides: RightBannerSlide
         </Link>
       ))}
 
-      {/* Slider dots indicator */}
       {slides.length > 1 && (
         <div className="absolute bottom-4 right-4 z-30 flex gap-1.5">
           {slides.map((_, idx) => (
             <button
               key={idx}
-              onClick={e => {
-                e.preventDefault();
-                setCurrentSlide(idx);
-              }}
+              onClick={() => setCurrentSlide(idx)}
               aria-label={`Go to slide ${idx + 1}`}
               className={`w-1.5 h-1.5 rounded-full transition-all ${
                 currentSlide === idx ? 'bg-white w-4' : 'bg-white/50 hover:bg-white/80'

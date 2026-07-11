@@ -21,6 +21,8 @@ import ProductDetails from './ProductDetails';
 import RelatedProducts from '@/components/RelatedProducts';
 import RecentlyViewed from '@/components/RecentlyViewed';
 import { PLATFORM_URL } from '@/lib/constants';
+import { breadcrumbJsonLd, jsonLdScript } from '@/lib/jsonld';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import type { Product as ProductType, Review, ProductQA } from '@/types';
 import type { Metadata } from 'next';
 
@@ -175,20 +177,17 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         : undefined,
   };
 
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: baseUrl },
+  const breadcrumbLd = breadcrumbJsonLd({
+    items: [
+      { name: t.Home, url: baseUrl },
+      { name: t.Shop, url: `${baseUrl}/shop` },
       {
-        '@type': 'ListItem',
-        position: 2,
-        name: product.category?.name,
-        item: `${baseUrl}/shop?category=${product.category?.slug}`,
+        name: product.category?.name ?? '',
+        url: `${baseUrl}/shop?category=${product.category?.slug ?? ''}`,
       },
-      { '@type': 'ListItem', position: 3, name: product.title },
+      { name: product.title },
     ],
-  };
+  });
 
   return (
     <main className="min-h-screen bg-[#f9f8f6]">
@@ -198,7 +197,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbLd) }}
       />
 
       <Navbar />
@@ -206,34 +205,21 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" className="bg-white border-b border-gray-100 py-3">
         <div className="container mx-auto px-4">
-          <ol className="flex items-center gap-2 text-xs font-semibold text-gray-500">
-            <li>
-              <a href="/" className="hover:text-[#1e3b8a] transition-colors">
-                {t.Home}
-              </a>
-            </li>
-            <li aria-hidden="true">/</li>
-            <li>
-              <a href="/shop" className="hover:text-[#1e3b8a] transition-colors">
-                {t.Shop}
-              </a>
-            </li>
-            <li aria-hidden="true">/</li>
-            <li>
-              <a
-                href={`/shop?category=${product.category?.slug}`}
-                className="hover:text-[#1e3b8a] transition-colors"
-              >
-                {product.category?.name}
-              </a>
-            </li>
-            <li aria-hidden="true">/</li>
-            <li>
-              <span className="text-gray-900 truncate max-w-[200px] block" aria-current="page">
-                {product.title}
-              </span>
-            </li>
-          </ol>
+          <Breadcrumb
+            separator="/"
+            className="text-xs font-semibold text-gray-500"
+            items={[
+              { label: t.Home, href: '/' },
+              { label: t.Shop, href: '/shop' },
+              {
+                label: product.category?.name ?? '',
+                href: product.category?.slug
+                  ? `/shop?category=${product.category.slug}`
+                  : undefined,
+              },
+              { label: product.title },
+            ]}
+          />
         </div>
       </nav>
 

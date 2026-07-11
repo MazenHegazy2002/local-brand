@@ -18,8 +18,16 @@ export async function POST(req: Request) {
     const body = await req.text();
     const sig = req.headers.get('stripe-signature');
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const isProd = process.env.NODE_ENV === 'production';
 
     let event: Stripe.Event;
+
+    if (isProd && (!webhookSecret || !sig)) {
+      console.error(
+        '[stripe webhook] signature verification required in production but webhook secret or signature is missing'
+      );
+      return NextResponse.json({ message: 'Signature verification required' }, { status: 400 });
+    }
 
     if (webhookSecret && sig) {
       const Stripe = (await import('stripe')).default;

@@ -267,6 +267,17 @@ export default function ProductCard({
     ).values()
   ) as string[];
 
+  // Auto-select the size when only one option is available
+  useEffect(() => {
+    if (uniqueSizes.length === 1 && !selectedSize) {
+      setSelectedSize(uniqueSizes[0]);
+    }
+    // Reset selection if the single-size is no longer valid (e.g. color changed)
+    if (uniqueSizes.length > 1 && selectedSize && !uniqueSizes.includes(selectedSize)) {
+      setSelectedSize(null);
+    }
+  }, [uniqueSizes.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Handle Add to Cart action
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();

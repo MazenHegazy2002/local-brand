@@ -3,13 +3,13 @@ import { PLATFORM_URL } from '@/lib/constants';
 import SellClient from './SellClient';
 
 export const metadata: Metadata = {
-  title: 'Start Selling on Brandy | Become a Local Brand Seller',
+  title: 'Become an Affiliate | Earn Commission on Brandy',
   description:
-    "Join Brandy and start selling your products to thousands of Egyptian customers. Apply to become a seller today — it's free to apply, no monthly fees.",
+    'Join the Brandy affiliate program — share your unique promo code, earn up to 12% commission on every sale, and unlock bonuses for new affiliates you refer.',
   openGraph: {
-    title: 'Start Selling on Brandy | Become a Local Brand Seller',
+    title: 'Become an Affiliate | Earn Commission on Brandy',
     description:
-      "Apply to sell your products on Brandy — Egypt's marketplace for local sellers. Free to apply, no monthly fees.",
+      "Join Brandy's affiliate program and earn cash on every sale. Share your code, build your audience, and grow your income — free to apply.",
     url: `${PLATFORM_URL}/sell`,
     type: 'website',
   },

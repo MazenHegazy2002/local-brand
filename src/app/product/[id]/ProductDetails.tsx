@@ -223,6 +223,13 @@ export default function ProductDetails({
   ) as string[];
   const hasSizes = uniqueSizes.length > 0;
 
+  // Auto-select the only available size so the user doesn't have to pick manually
+  useEffect(() => {
+    if (uniqueSizes.length === 1 && !selectedSize) {
+      setSelectedSize(uniqueSizes[0]);
+    }
+  }, [uniqueSizes.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Dynamic color selection handler
   const handleColorSelect = (colorName: string) => {
     setSelectedColor(colorName);
