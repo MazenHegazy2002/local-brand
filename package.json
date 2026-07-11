@@ -23,6 +23,7 @@
     "db:migrate:status": "prisma migrate status",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
+    "db:restore": "tsx prisma/restore.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {
