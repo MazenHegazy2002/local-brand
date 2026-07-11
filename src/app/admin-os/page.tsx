@@ -92,6 +92,11 @@ export default function AdminOS() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Access control - redirect non-admins
   useEffect(() => {
@@ -327,9 +332,9 @@ export default function AdminOS() {
     refreshData();
   }, []);
 
-  if (loading && !data)
+  if (!mounted || (loading && !data))
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#1a1a2e] font-medium">
+      <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#1a1a2e] font-medium animate-pulse">
         Initializing AdminOS...
       </div>
     );

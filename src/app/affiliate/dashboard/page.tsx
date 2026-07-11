@@ -73,9 +73,14 @@ export default function AffiliateDashboardPage() {
   const [data, setData] = useState<AffiliateDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const [payoutForm, setPayoutForm] = useState({ method: '', payoutDetails: '' });
   const [payoutLoading, setPayoutLoading] = useState(false);
   const [payoutMsg, setPayoutMsg] = useState('');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -150,7 +155,7 @@ export default function AffiliateDashboardPage() {
     return arTiers[tName] || tName;
   };
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-zinc-950">
         <div className="text-zinc-500 text-sm animate-pulse font-bold tracking-widest uppercase">
