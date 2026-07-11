@@ -22,7 +22,12 @@ export default function SellerSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [profile, setProfile] = useState<SellerProfile>({
     storeName: '',
     description: '',
@@ -141,7 +146,7 @@ export default function SellerSettingsPage() {
     }
   };
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
       <div className="db">
         <div className="main flex items-center justify-center min-h-screen">Loading…</div>

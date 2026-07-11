@@ -152,8 +152,13 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
+  const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
   const { confirm } = useConfirm();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [form, setForm] = useState({
     title: '',
@@ -425,7 +430,7 @@ export default function EditProductPage() {
     setTags(tags.filter(t => t !== tag));
   };
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
       <div className="db">
         <div className="main">Loading...</div>

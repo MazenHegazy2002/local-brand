@@ -202,6 +202,11 @@ export default function SellerHub() {
   const [loading, setLoading] = useState(true);
   const [storeLink, setStoreLink] = useState('');
   const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (data?.currentSeller?.storeName) {
@@ -458,9 +463,9 @@ export default function SellerHub() {
     refreshData();
   }, []);
 
-  if (loading && !data)
+  if (!mounted || (loading && !data))
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#0F6E56] font-medium">
+      <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#0F6E56] font-medium animate-pulse">
         Loading SellerHub...
       </div>
     );

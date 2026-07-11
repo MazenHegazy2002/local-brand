@@ -32,9 +32,14 @@ export default function ReturnsPage() {
   const { toast } = useToast();
   const [returns, setReturns] = useState<ReturnRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [filter, setFilter] = useState<'all' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED'>(
     'all'
   );
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [selectedReturn, setSelectedReturn] = useState<ReturnRequest | null>(null);
   const [notes, setNotes] = useState('');
   const [processing, setProcessing] = useState(false);
@@ -110,7 +115,7 @@ export default function ReturnsPage() {
     }
   };
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
       <div className="db">
         <div className="main">Loading...</div>
