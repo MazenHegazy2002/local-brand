@@ -2,7 +2,7 @@ import Navbar from '@/components/Navbar';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'About Us | Brandy',
+  title: 'About Us',
   description:
     'Learn more about Brandy - Egypt’s marketplace for local sellers and authentic brands.',
 };

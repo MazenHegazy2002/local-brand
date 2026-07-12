@@ -294,11 +294,9 @@ export default function CategoriesBar() {
                   {getCategoryIcon(category.name)}
                 </span>
                 <span>{category.name}</span>
-                {(category._count?.products ?? 0) > 0 && (
-                  <span className="text-[10px] text-gray-400 group-hover:text-white/80">
-                    ({category._count?.products})
-                  </span>
-                )}
+                <span className="text-[10px] text-gray-400 group-hover:text-white/80">
+                  ({category._count?.products ?? 0})
+                </span>
               </Link>
             );
           })}

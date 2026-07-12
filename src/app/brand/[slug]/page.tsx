@@ -46,7 +46,12 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
 
   const sellers = await prisma.sellerProfile.findMany({
     where: { status: 'ACTIVE', deletedAt: null },
-    include: { products: { include: { images: true, variants: true } } },
+    include: {
+      products: {
+        where: { published: true, deletedAt: null },
+        include: { images: true, variants: true },
+      },
+    },
   });
 
   const seller = sellers.find(

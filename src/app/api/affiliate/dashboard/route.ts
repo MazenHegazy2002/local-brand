@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { getTierConfig, getGlobalSettings } from '@/lib/affiliate';
+import { getTierConfig, getGlobalSettings, getAffiliateReferralBaseUrl } from '@/lib/affiliate';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -51,7 +51,7 @@ export async function GET() {
         )
       : 100;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const appUrl = getAffiliateReferralBaseUrl();
 
   return NextResponse.json({
     affiliate: {

@@ -3,7 +3,7 @@ import { faqJsonLd, jsonLdScript } from '@/lib/jsonld';
 import FAQClient, { FAQ_DATA } from './FAQClient';
 
 export const metadata: Metadata = {
-  title: 'FAQ — Help Center | Brandy',
+  title: 'FAQ — Help Center',
   description:
     "Find answers to common questions about orders, shipping, returns, payments, and selling on Brandy — Egypt's marketplace for local sellers.",
 };

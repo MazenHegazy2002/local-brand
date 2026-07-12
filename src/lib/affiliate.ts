@@ -340,3 +340,15 @@ export async function seedAffiliateTiers() {
     });
   }
 }
+
+export function getAffiliateReferralBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  if (
+    envUrl.includes('localhost') ||
+    envUrl.includes('127.0.0.1') ||
+    process.env.NODE_ENV === 'development'
+  ) {
+    return envUrl || 'http://localhost:3000';
+  }
+  return 'https://www.lolozozo.shop';
+}

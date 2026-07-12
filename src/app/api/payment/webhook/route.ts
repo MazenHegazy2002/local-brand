@@ -79,6 +79,8 @@ export async function POST(req: Request) {
         cartItems: Array<{ id: string; qty: number }>;
         addressId?: string;
         couponCode?: string;
+        promoCode?: string;
+        pointsRedeemed?: number;
       };
 
       // Use the session-less helper. Stripe webhooks come from Stripe's
@@ -89,6 +91,8 @@ export async function POST(req: Request) {
         addressId: pending.addressId,
         paymentMethod: 'CREDIT_CARD',
         couponCode: pending.couponCode,
+        promoCode: pending.promoCode,
+        pointsRedeemed: pending.pointsRedeemed,
       });
 
       if (result.success && result.orderId) {

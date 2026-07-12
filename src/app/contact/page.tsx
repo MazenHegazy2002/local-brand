@@ -2,7 +2,7 @@ import Navbar from '@/components/Navbar';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Contact Us | Brandy',
+  title: 'Contact Us',
   description: 'Get in touch with Brandy customer support and operations team.',
 };
 

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Seller Portal Sign In | Brandy',
+  title: 'Seller Portal Sign In',
   description:
     'Sign in to the Brandy Seller Hub to manage your store, upload products, and prepare shipments.',
 };

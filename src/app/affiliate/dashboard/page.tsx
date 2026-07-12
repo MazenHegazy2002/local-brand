@@ -181,7 +181,7 @@ export default function AffiliateDashboardPage() {
               'Join our growth network to start earning premium commissions.'}
           </p>
           <Link
-            href="/sell"
+            href="/affiliate"
             className="inline-block px-8 py-4 bg-white text-zinc-950 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-zinc-200 transition-colors shadow-lg"
           >
             {t('AffiliateApplyFree') || "Apply Now — It's Free"}

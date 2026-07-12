@@ -254,7 +254,9 @@ export async function proxy(req: NextRequest) {
     targetPathname.startsWith('/admin') || targetPathname.startsWith('/admin-os') || isAdminApi;
   const sellerRoutes = targetPathname.startsWith('/seller') || targetPathname === '/seller-hub';
   const dashboardRoutes = targetPathname.startsWith('/dashboard');
-  const affiliateRoutes = targetPathname.startsWith('/affiliate');
+  const affiliateRoutes =
+    targetPathname.startsWith('/affiliate/dashboard') ||
+    targetPathname.startsWith('/api/affiliate/dashboard');
 
   // If no user is logged in, redirect to login (except for public shop pages)
   if (!token) {

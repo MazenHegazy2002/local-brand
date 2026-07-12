@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { VAT_RATE, MAX_DISCOUNT_PCT, getShippingRate } from '@/lib/constants';
+import { VAT_RATE, MAX_DISCOUNT_PCT, getShippingRate, LOYALTY_POINT_VALUE } from '@/lib/constants';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
 import {
@@ -41,6 +41,7 @@ const paySkySchema = z.object({
     })
     .optional(),
   couponId: z.string().optional(),
+  pointsRedeemed: z.number().int().nonnegative().optional(),
 });
 
 export async function POST(req: Request) {
@@ -57,7 +58,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { cartItems, addressInfo, couponId } = parsed.data;
+    const { cartItems, addressInfo, couponId, pointsRedeemed = 0 } = parsed.data;
     const userId = (session.user as SessionUser).id;
 
     // 1. Server-side total computation (anti-tamper)
@@ -129,11 +130,38 @@ export async function POST(req: Request) {
       }
     }
 
-    // Hard cap: total discount must not exceed MAX_DISCOUNT_PCT of subtotal
-    discount = Math.min(discount, subtotal * MAX_DISCOUNT_PCT);
+    // Validate loyalty points if requested
+    let pointsDiscount = 0;
+    if (pointsRedeemed > 0) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { loyaltyPoints: true },
+      });
+      if (user && user.loyaltyPoints >= pointsRedeemed) {
+        pointsDiscount = pointsRedeemed * LOYALTY_POINT_VALUE;
+      }
+    }
 
-    const shipping = addressInfo?.governorate ? getShippingRate(addressInfo.governorate) : 50;
+    // Hard cap: total discount must not exceed MAX_DISCOUNT_PCT of subtotal
+    discount = Math.min(discount + pointsDiscount, subtotal * MAX_DISCOUNT_PCT);
+
     const subtotalAfter = Math.max(0, subtotal - discount);
+
+    let shipping = addressInfo?.governorate ? getShippingRate(addressInfo.governorate) : 50;
+    try {
+      const { getSetting } = await import('@/lib/admin-settings-registry');
+      const freeShippingEnabled = await getSetting<boolean>('FREE_SHIPPING_ENABLED');
+      const freeShippingThreshold = await getSetting<number>('FREE_SHIPPING_THRESHOLD');
+      if (freeShippingEnabled && subtotalAfter >= freeShippingThreshold) {
+        shipping = 0;
+      }
+    } catch {
+      const { FREE_SHIPPING_THRESHOLD } = await import('@/lib/shipping-rates');
+      if (subtotalAfter >= FREE_SHIPPING_THRESHOLD) {
+        shipping = 0;
+      }
+    }
+
     const vat = subtotalAfter * VAT_RATE;
     const total = subtotalAfter + vat + shipping;
 
@@ -192,6 +220,7 @@ export async function POST(req: Request) {
           addressInfo,
           couponId: promoCode ? undefined : couponId,
           promoCode,
+          pointsRedeemed,
           subtotal,
           discount,
           vat,

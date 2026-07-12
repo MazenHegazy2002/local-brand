@@ -31,7 +31,7 @@ import {
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: 'All Categories | Brandy — Egyptian Marketplace',
+  title: 'All Categories',
   description:
     'Browse every product category on Brandy. Shop electronics, fashion, beauty, home goods, and more from verified Egyptian sellers.',
   alternates: {
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'All Categories | Brandy',
+    title: 'All Categories',
     description: "Shop every category on Brandy — Egypt's local seller marketplace.",
     url: `${PLATFORM_URL}/categories`,
     type: 'website',

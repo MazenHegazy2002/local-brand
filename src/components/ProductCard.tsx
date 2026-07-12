@@ -457,7 +457,7 @@ export default function ProductCard({
               className="flex flex-wrap gap-1.5 mb-3 mt-1.5 items-center text-left"
               style={{ direction: isAr ? 'rtl' : 'ltr' }}
             >
-              <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider select-none">
+              <span className="text-[10px] font-semibold text-slate-500 tracking-wider select-none mr-0.5">
                 {isAr ? 'المقاسات:' : 'Sizes:'}
               </span>
               <div className="flex flex-wrap gap-1">

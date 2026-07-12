@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     canonical: `${PLATFORM_URL}/shop`,
   },
   openGraph: {
-    title: 'Shop All Products | Brandy — Egyptian Marketplace',
+    title: 'Shop All Products',
     description:
       'Discover authentic Egyptian products from local sellers. Shop fashion, electronics, home goods, beauty and more on Brandy.',
     url: `${PLATFORM_URL}/shop`,
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Shop All Products | Brandy',
+    title: 'Shop All Products',
     description: 'Discover authentic Egyptian products from local sellers on Brandy.',
   },
 };

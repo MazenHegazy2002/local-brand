@@ -37,6 +37,8 @@ export async function generateMetadata({
   const product = await prisma.product.findFirst({
     where: {
       OR: [{ id }, { slug: id }],
+      published: true,
+      deletedAt: null,
     },
     select: {
       title: true,
@@ -115,6 +117,28 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         </div>
       </main>
     );
+  }
+
+  // Authorize viewing draft/deleted products only for admins and the owner seller
+  const isDraftOrDeleted = !product.published || product.deletedAt !== null;
+  if (isDraftOrDeleted) {
+    const isOwner =
+      session?.user &&
+      ((session.user as any).role === 'ADMIN' ||
+        ((session.user as any).role === 'SELLER' &&
+          product.seller.userId === (session.user as any).id));
+    if (!isOwner) {
+      return (
+        <main className="min-h-screen bg-[#f9f8f6]">
+          <Navbar />
+          <div className="container mx-auto px-4 py-32 text-center text-gray-500">
+            <div className="text-6xl mb-4">🔍</div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{t.ProductNotFound}</h1>
+            <p>{t.ProductNotFoundDesc}</p>
+          </div>
+        </main>
+      );
+    }
   }
 
   const avgRating =

@@ -85,7 +85,7 @@ export default function Navbar() {
       <div className="w-full bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-white py-2 px-4 text-center text-xs font-black tracking-wide shadow-sm flex items-center justify-center gap-1.5 uppercase transition-all duration-300 hover:brightness-105">
         <span>📢 Earn up to 10% cash on every purchase!</span>
         <Link
-          href="/sell"
+          href="/affiliate"
           className="underline hover:text-amber-100 transition-colors inline-flex items-center gap-0.5"
         >
           Join Affiliate Program

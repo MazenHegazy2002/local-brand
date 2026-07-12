@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
 export const metadata = {
-  title: 'Help Center | Brandy',
+  title: 'Help Center',
   description: 'Find answers to common questions or contact our support team.',
 };
 
@@ -24,7 +24,9 @@ export default function HelpPage() {
             className="bg-white rounded-2xl p-8 border border-gray-100 hover:border-[#1e3b8a]/30 hover:shadow-md transition-all text-center group"
           >
             <div className="text-4xl mb-3">❓</div>
-            <h3 className="text-xl font-black text-gray-900 mb-2 group-hover:text-[#1e3b8a]">FAQ</h3>
+            <h3 className="text-xl font-black text-gray-900 mb-2 group-hover:text-[#1e3b8a]">
+              FAQ
+            </h3>
             <p className="text-sm text-gray-500">Browse frequently asked questions by category.</p>
           </Link>
           <Link
@@ -32,7 +34,9 @@ export default function HelpPage() {
             className="bg-white rounded-2xl p-8 border border-gray-100 hover:border-[#1e3b8a]/30 hover:shadow-md transition-all text-center group"
           >
             <div className="text-4xl mb-3">✉️</div>
-            <h3 className="text-xl font-black text-gray-900 mb-2 group-hover:text-[#1e3b8a]">Contact Support</h3>
+            <h3 className="text-xl font-black text-gray-900 mb-2 group-hover:text-[#1e3b8a]">
+              Contact Support
+            </h3>
             <p className="text-sm text-gray-500">Submit a ticket — we reply within 24 hours.</p>
           </Link>
         </div>
@@ -42,10 +46,22 @@ export default function HelpPage() {
             <h2 className="text-xl font-black text-gray-900 mb-4">Popular Questions</h2>
             <div className="space-y-4">
               {[
-                { q: 'How do I track my order?', a: 'You can track your order by visiting the Orders section in your dashboard.' },
-                { q: 'What is your return policy?', a: 'We accept returns within 14 days of delivery. Items must be unused and in original packaging.' },
-                { q: 'How do I become a seller?', a: 'Click on Sell in the navigation and fill out the application form.' },
-                { q: 'What payment methods do you accept?', a: 'Cash on Delivery, Credit/Debit Cards (Stripe), and Mobile Wallets (Vodafone Cash, Orange Money, Etisalat Cash).' },
+                {
+                  q: 'How do I track my order?',
+                  a: 'You can track your order by visiting the Orders section in your dashboard.',
+                },
+                {
+                  q: 'What is your return policy?',
+                  a: 'We accept returns within 14 days of delivery. Items must be unused and in original packaging.',
+                },
+                {
+                  q: 'How do I become a seller?',
+                  a: 'Click on Sell in the navigation and fill out the application form.',
+                },
+                {
+                  q: 'What payment methods do you accept?',
+                  a: 'Cash on Delivery, Credit/Debit Cards (Stripe), and Mobile Wallets (Vodafone Cash, Orange Money, Etisalat Cash).',
+                },
               ].map((faq, i) => (
                 <div key={i} className="p-5 rounded-xl border border-gray-100 bg-gray-50">
                   <h3 className="text-sm font-black text-gray-900 mb-2">{faq.q}</h3>

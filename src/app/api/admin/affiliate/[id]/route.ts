@@ -86,10 +86,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     // Send confirmation email
     try {
       const { sendEmail } = await import('@/lib/email');
+      const { getAffiliateReferralBaseUrl } = await import('@/lib/affiliate');
+      const appUrl = getAffiliateReferralBaseUrl();
       await sendEmail({
         to: updated.user.email,
         subject: 'Your Brandy affiliate account has been approved! 🎉',
-        html: `<p>Hi ${updated.user.name || 'Partner'},</p><p>Congratulations! Your application to the Brandy Affiliate Program has been approved. You are now officially a Brandy partner!</p><p><strong>Your Promo Code:</strong> ${updated.promoCode}<br/><strong>Your Referral Link:</strong> ${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/ref/${updated.promoCode}</p><p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/affiliate/dashboard">Go to Affiliate Dashboard</a></p>`,
+        html: `<p>Hi ${updated.user.name || 'Partner'},</p><p>Congratulations! Your application to the Brandy Affiliate Program has been approved. You are now officially a Brandy partner!</p><p><strong>Your Promo Code:</strong> ${updated.promoCode}<br/><strong>Your Referral Link:</strong> ${appUrl}/ref/${updated.promoCode}</p><p><a href="${appUrl}/affiliate/dashboard">Go to Affiliate Dashboard</a></p>`,
       });
     } catch (emailErr) {
       console.error('[affiliate approval] Failed to send email:', emailErr);

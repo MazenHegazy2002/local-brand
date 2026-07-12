@@ -2,7 +2,7 @@ import LegalPageLoader from '../_components/LegalPageLoader';
 import Navbar from '@/components/Navbar';
 
 export const metadata = {
-  title: 'Seller Terms & Conditions | Brandy',
+  title: 'Seller Terms & Conditions',
   description: 'Terms and conditions for sellers on Brandy marketplace',
 };
 

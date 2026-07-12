@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
 export const metadata = {
-  title: 'Returns & Refunds Policy | Brandy',
+  title: 'Returns & Refunds Policy',
   description: 'Brandy marketplace returns and refunds policy — 14-day return window across Egypt',
 };
 

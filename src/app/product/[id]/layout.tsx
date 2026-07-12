@@ -39,7 +39,7 @@ export async function generateMetadata(
   }
 
   if (!product) {
-    return { title: 'Product Not Found | Brandy' };
+    return { title: 'Product Not Found' };
   }
 
   const primaryImage = product.images.find(i => i.isPrimary)?.url || product.images[0]?.url;
@@ -48,7 +48,7 @@ export async function generateMetadata(
   const url = `${PLATFORM_URL}/product/${product.slug}`;
 
   return {
-    title: `${product.title} | Brandy Egypt`,
+    title: product.title,
     description,
     openGraph: {
       title: product.title,

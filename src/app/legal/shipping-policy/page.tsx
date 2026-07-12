@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
 export const metadata = {
-  title: 'Shipping Policy | Brandy',
+  title: 'Shipping Policy',
   description:
     'Brandy marketplace shipping policy — delivery times and costs across all Egyptian governorates',
 };

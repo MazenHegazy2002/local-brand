@@ -135,6 +135,7 @@ export async function POST(req: Request) {
         addressInfo?: { id?: string };
         couponId?: string;
         promoCode?: string;
+        pointsRedeemed?: number;
       };
 
       // Defence-in-depth: if a session IS present, refuse the callback when it
@@ -153,6 +154,7 @@ export async function POST(req: Request) {
         paymentMethod: 'PAYSKY',
         couponCode: pending.couponId,
         promoCode: pending.promoCode,
+        pointsRedeemed: pending.pointsRedeemed,
       });
 
       if (!result.success || !result.orderId) {

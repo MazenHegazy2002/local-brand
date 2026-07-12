@@ -18,7 +18,7 @@ import {
   PaymentStatus,
   PaymentMethod,
 } from '@/generated/client';
-import { VAT_RATE, MAX_DISCOUNT_PCT, getShippingRate } from '@/lib/constants';
+import { VAT_RATE, MAX_DISCOUNT_PCT, getShippingRate, LOYALTY_POINT_VALUE } from '@/lib/constants';
 import { createOrderSchema } from '@/lib/validation';
 
 export interface CreateOrderResult {
@@ -50,6 +50,7 @@ export async function createOrderForUser(
       paymentMethod,
       orderNotes,
       giftWrapping,
+      pointsRedeemed = 0,
     } = validated.data;
 
     if (!userId && !guestEmail) {
@@ -225,12 +226,45 @@ export async function createOrderForUser(
       }
     }
 
+    // Validate loyalty points if requested
+    let pointsDiscount = 0;
+    if (pointsRedeemed && pointsRedeemed > 0) {
+      if (!userId) {
+        return { error: 'Guests cannot redeem loyalty points.' };
+      }
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { loyaltyPoints: true },
+      });
+      if (!user || user.loyaltyPoints < pointsRedeemed) {
+        return { error: 'Insufficient loyalty points balance.' };
+      }
+      pointsDiscount = pointsRedeemed * LOYALTY_POINT_VALUE;
+    }
+
     // Hard cap: total discount must not exceed MAX_DISCOUNT_PCT of subtotal
-    discountAmount = Math.min(discountAmount, subtotal * MAX_DISCOUNT_PCT);
+    discountAmount = Math.min(discountAmount + pointsDiscount, subtotal * MAX_DISCOUNT_PCT);
 
     const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
     const vatAmount = subtotalAfterDiscount * VAT_RATE;
-    const shippingFee = getShippingRate(resolvedAddress.governorate);
+
+    // Resolve dynamic shipping cost checking FREE_SHIPPING_THRESHOLD
+    let shippingFee = getShippingRate(resolvedAddress.governorate);
+    try {
+      const { getSetting } = await import('@/lib/admin-settings-registry');
+      const freeShippingEnabled = await getSetting<boolean>('FREE_SHIPPING_ENABLED');
+      const freeShippingThreshold = await getSetting<number>('FREE_SHIPPING_THRESHOLD');
+      if (freeShippingEnabled && subtotalAfterDiscount >= freeShippingThreshold) {
+        shippingFee = 0;
+      }
+    } catch (err) {
+      console.error('Failed to resolve dynamic free shipping settings:', err);
+      const { FREE_SHIPPING_THRESHOLD } = await import('@/lib/shipping-rates');
+      if (subtotalAfterDiscount >= FREE_SHIPPING_THRESHOLD) {
+        shippingFee = 0;
+      }
+    }
+
     const finalTotal = subtotalAfterDiscount + vatAmount + shippingFee;
 
     // ── 4. Execute Transaction ───────────────────────────────────────────────
@@ -242,6 +276,26 @@ export async function createOrderForUser(
           data: { stockCount: { decrement: item.quantity } },
         });
         if (updated.count === 0) throw new Error(`Stock error for variant ${item.variantId}`);
+      }
+
+      // Deduct loyalty points from buyer's profile if redeemed
+      if (pointsRedeemed && pointsRedeemed > 0 && userId) {
+        const updatedUser = await tx.user.updateMany({
+          where: { id: userId, loyaltyPoints: { gte: pointsRedeemed } },
+          data: { loyaltyPoints: { decrement: pointsRedeemed } },
+        });
+        if (updatedUser.count === 0) {
+          throw new Error('Insufficient loyalty points balance.');
+        }
+
+        await tx.loyaltyTransaction.create({
+          data: {
+            userId,
+            amount: -pointsRedeemed,
+            type: 'REDEEMED_AT_CHECKOUT',
+            description: `Redeemed ${pointsRedeemed} pts at checkout`,
+          },
+        });
       }
 
       const newOrder = await tx.order.create({

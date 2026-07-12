@@ -239,7 +239,45 @@ function CheckoutPageInner() {
   const couponDiscount = couponApplied?.amount || 0;
   const pointsDiscount = pointsToUse;
   const afterDiscount = subtotal - couponDiscount - pointsDiscount;
-  const shipping = 50;
+
+  const [shipping, setShipping] = useState(50);
+
+  useEffect(() => {
+    if (!address.governorate) {
+      setShipping(50);
+      return;
+    }
+
+    const fetchShipping = async () => {
+      try {
+        const res = await fetch('/api/shipping/calculate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            governorate: address.governorate,
+            cartItems: items.map(item => ({
+              id: item.variantId || item.id,
+              qty: item.qty,
+            })),
+            subtotal: afterDiscount,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setShipping(data.shippingCost ?? 50);
+        }
+      } catch (err) {
+        console.error('Failed to calculate shipping:', err);
+      }
+    };
+
+    const delayDebounce = setTimeout(() => {
+      fetchShipping();
+    }, 300);
+
+    return () => clearTimeout(delayDebounce);
+  }, [address.governorate, items, afterDiscount]);
+
   const giftWrapFee = giftWrapping ? 25 : 0;
   const vatRate = VAT_RATE;
   const vatAmount = Math.max(0, afterDiscount * vatRate);
@@ -457,22 +495,6 @@ function CheckoutPageInner() {
         return;
       }
 
-      // ── 2. Deduct loyalty points if used ─────────────────────────────────────
-      if (pointsToUse > 0 && session?.user) {
-        try {
-          const { redeemLoyaltyPoints } = await import('@/app/actions/loyalty');
-          const userId = (session.user as SessionUser).id;
-          await redeemLoyaltyPoints(userId, pointsToUse);
-        } catch (err: unknown) {
-          const error = err as Error;
-          setError(
-            error.message || (lang === 'ar' ? 'فشل استبدال النقاط' : 'Failed to redeem points')
-          );
-          setIsLoading(false);
-          return;
-        }
-      }
-
       // ── 3. Create the order ──────────────────────────────────────────────────
       const res = await createOrder({
         items: items.map(item => ({
@@ -514,16 +536,6 @@ function CheckoutPageInner() {
 
       // ── 4. Order action returned a structured error — surface it & stop ──────
       const message = res.error || (lang === 'ar' ? 'فشل تقديم الطلب' : 'Failed to place order');
-      // Refund any redeemed points so the user isn't charged for a failed order.
-      if (pointsToUse > 0 && session?.user) {
-        try {
-          const { refundLoyaltyPoints } = await import('@/app/actions/loyalty');
-          const userId = (session.user as SessionUser).id;
-          await refundLoyaltyPoints(userId, pointsToUse);
-        } catch (err) {
-          console.error('Failed to refund redeemed points:', err);
-        }
-      }
       setError(message);
       setIsLoading(false);
     } catch (err: unknown) {

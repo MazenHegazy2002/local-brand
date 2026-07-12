@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
 export const metadata = {
-  title: 'Privacy Policy | Brandy',
+  title: 'Privacy Policy',
   description:
     'Privacy Policy — PDPL (Law No. 151 of 2020) compliance for Brandy Egypt marketplace',
 };

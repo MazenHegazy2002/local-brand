@@ -3,7 +3,13 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { DiscountType } from '@/generated/client';
-import { VAT_RATE, MAX_DISCOUNT_PCT, STRIPE_API_VERSION, getShippingRate } from '@/lib/constants';
+import {
+  VAT_RATE,
+  MAX_DISCOUNT_PCT,
+  STRIPE_API_VERSION,
+  getShippingRate,
+  LOYALTY_POINT_VALUE,
+} from '@/lib/constants';
 import { SessionUser, ProductImage } from '@/types';
 import type Stripe from 'stripe';
 import crypto from 'crypto';
@@ -36,6 +42,8 @@ export async function POST(req: Request) {
     const addressInfo: { id?: string; governorate?: string } = body?.addressInfo || {};
     const couponId: string | undefined = body?.couponId;
     const couponCode: string | undefined = body?.couponCode;
+    const pointsRedeemed: number =
+      typeof body?.pointsRedeemed === 'number' ? body.pointsRedeemed : 0;
     const userId = (session.user as SessionUser).id;
 
     if (cartItems.length === 0) {
@@ -111,25 +119,73 @@ export async function POST(req: Request) {
     // 2. Apply coupon discount
     let discountAmount = 0;
     let resolvedCouponCode: string | null = null;
+    let promoCode: string | undefined = undefined;
+
     if (couponId) {
-      const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
-      if (coupon && coupon.isActive && coupon.expiryDate > new Date()) {
-        resolvedCouponCode = coupon.code;
-        if (coupon.discountType === DiscountType.PERCENTAGE) {
-          discountAmount = subtotal * (coupon.discountValue / 100);
-          if (coupon.maxDiscount) discountAmount = Math.min(discountAmount, coupon.maxDiscount);
-        } else {
-          discountAmount = coupon.discountValue;
+      if (couponId.startsWith('aff_')) {
+        const extractedPromo = couponId.substring(4);
+        try {
+          const { applyPromoToCheckout } = await import('@/lib/checkout-affiliate');
+          const promoResult = await applyPromoToCheckout({
+            promoCode: extractedPromo,
+            orderTotalEgp: subtotal,
+            buyerId: userId,
+          });
+          if (promoResult.affiliateId) {
+            discountAmount = promoResult.discountAmountEgp;
+            promoCode = extractedPromo;
+          }
+        } catch (err) {
+          console.error('[payment/intent] failed to apply affiliate promo:', err);
+        }
+      } else {
+        const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
+        if (coupon && coupon.isActive && coupon.expiryDate > new Date()) {
+          resolvedCouponCode = coupon.code;
+          if (coupon.discountType === DiscountType.PERCENTAGE) {
+            discountAmount = subtotal * (coupon.discountValue / 100);
+            if (coupon.maxDiscount) discountAmount = Math.min(discountAmount, coupon.maxDiscount);
+          } else {
+            discountAmount = coupon.discountValue;
+          }
         }
       }
     }
 
-    // Hard cap: total discount must not exceed MAX_DISCOUNT_PCT of subtotal
-    discountAmount = Math.min(discountAmount, subtotal * MAX_DISCOUNT_PCT);
+    // Validate loyalty points if requested
+    let pointsDiscount = 0;
+    if (pointsRedeemed > 0) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { loyaltyPoints: true },
+      });
+      if (user && user.loyaltyPoints >= pointsRedeemed) {
+        pointsDiscount = pointsRedeemed * LOYALTY_POINT_VALUE;
+      }
+    }
 
-    const shippingFee = addressInfo?.governorate ? getShippingRate(addressInfo.governorate) : 50;
-    const vatAmount = subtotal * VAT_RATE;
-    const total = Math.max(0, subtotal + vatAmount + shippingFee - discountAmount);
+    // Hard cap: total discount must not exceed MAX_DISCOUNT_PCT of subtotal
+    discountAmount = Math.min(discountAmount + pointsDiscount, subtotal * MAX_DISCOUNT_PCT);
+
+    const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
+
+    let shippingFee = addressInfo?.governorate ? getShippingRate(addressInfo.governorate) : 50;
+    try {
+      const { getSetting } = await import('@/lib/admin-settings-registry');
+      const freeShippingEnabled = await getSetting<boolean>('FREE_SHIPPING_ENABLED');
+      const freeShippingThreshold = await getSetting<number>('FREE_SHIPPING_THRESHOLD');
+      if (freeShippingEnabled && subtotalAfterDiscount >= freeShippingThreshold) {
+        shippingFee = 0;
+      }
+    } catch {
+      const { FREE_SHIPPING_THRESHOLD } = await import('@/lib/shipping-rates');
+      if (subtotalAfterDiscount >= FREE_SHIPPING_THRESHOLD) {
+        shippingFee = 0;
+      }
+    }
+
+    const vatAmount = subtotalAfterDiscount * VAT_RATE;
+    const total = subtotalAfterDiscount + vatAmount + shippingFee;
 
     // 3. Generate idempotency key to prevent double-charge on retry
     const idempotencyKey = `${userId}-${crypto.randomUUID()}`;
@@ -150,6 +206,8 @@ export async function POST(req: Request) {
           cartItems: cartItems.map(c => ({ id: c.id, qty: c.qty })),
           addressId: addressInfo?.id,
           couponCode: resolvedCouponCode || couponCode || undefined,
+          promoCode: promoCode || undefined,
+          pointsRedeemed,
           subtotal,
           discount: discountAmount,
           vat: vatAmount,
