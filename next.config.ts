@@ -96,6 +96,8 @@ const nextConfig: NextConfig = {
       { source: '/watches', destination: '/category/accessories', permanent: true },
       { source: '/help/returns', destination: '/legal/returns-refunds', permanent: true },
       { source: '/help/shipping', destination: '/legal/shipping-policy', permanent: true },
+      // Fix broken nav/footer links
+      { source: '/track-order', destination: '/track', permanent: true },
     ];
 
     // Canonical-domain redirect: if CANONICAL_DOMAIN is set, any request

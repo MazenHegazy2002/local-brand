@@ -25,7 +25,6 @@ const FOOTER_LINKS = {
   legal: [
     { label: 'Privacy Policy', href: '/legal/privacy-policy' },
     { label: 'Terms of Service', href: '/legal' },
-    { label: 'Seller Terms', href: '/legal/seller-terms' },
     { label: 'Returns Policy', href: '/legal/returns-refunds' },
   ],
 };

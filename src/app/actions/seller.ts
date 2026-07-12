@@ -492,7 +492,28 @@ export async function getHomepageData() {
       });
     }
     if (recommended.length === 0) {
-      recommended = [...newArrivals, ...bestsellers].slice(0, 6);
+      // Exclude products already shown in newArrivals to avoid duplicates
+      const excludeIds = newArrivals.map((p: any) => p.id);
+      recommended = await prisma.product.findMany({
+        where: {
+          published: true,
+          deletedAt: null,
+          isFeatured: true,
+          id: excludeIds.length > 0 ? { notIn: excludeIds } : undefined,
+        },
+        include: {
+          images: true,
+          variants: true,
+          seller: { select: { storeName: true } },
+          reviews: { select: { rating: true } },
+        },
+        take: 6,
+        orderBy: { updatedAt: 'desc' },
+      });
+      // If still empty (no featured products), pick from bestsellers excluding newArrivals
+      if (recommended.length === 0) {
+        recommended = bestsellers.filter((p: any) => !excludeIds.includes(p.id)).slice(0, 6);
+      }
     }
 
     return { categories, bestsellers, newArrivals, recommended };

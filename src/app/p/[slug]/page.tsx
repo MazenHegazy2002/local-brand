@@ -6,6 +6,8 @@
 //
 // SEO: page-level seoTitle/seoDescription/ogImageUrl override the
 // catalog defaults from `admin-settings-registry.ts`.
+export const dynamic = 'force-dynamic';
+
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
@@ -107,7 +109,13 @@ function CmsHeroBlock({ title, description, bgImage, btnText, btnLink }: any) {
 
 function CmsRichTextBlock({ content }: any) {
   const rendered = naiveMarkdownToHtml(content || '');
-  const safeHtml = sanitizeHtml(rendered);
+  let safeHtml = '';
+  try {
+    safeHtml = sanitizeHtml(rendered);
+  } catch {
+    // Fallback: render as pre-escaped plain text if DOMPurify is unavailable
+    safeHtml = rendered.replace(/<[^>]*>/g, '');
+  }
   return (
     <div
       className="cms-body my-8 leading-relaxed text-slate-650"
@@ -271,7 +279,12 @@ export default async function CmsPage({ params }: PageProps) {
   }
 
   const rendered = naiveMarkdownToHtml(body || '');
-  const safeHtml = sanitizeHtml(rendered);
+  let safeHtml = '';
+  try {
+    safeHtml = sanitizeHtml(rendered);
+  } catch {
+    safeHtml = rendered.replace(/<[^>]*>/g, '');
+  }
 
   return (
     <main className="cms-page">
