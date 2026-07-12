@@ -47,6 +47,10 @@ export default function QASection({
       toast({ title: 'Please log in to ask a question', variant: 'error' });
       return;
     }
+    if (!newQuestion.trim()) {
+      toast({ title: 'Question cannot be empty', variant: 'error' });
+      return;
+    }
     if (newQuestion.trim().length < 5) {
       toast({ title: 'Question must be at least 5 characters', variant: 'error' });
       return;
@@ -174,7 +178,7 @@ export default function QASection({
             <span className="text-xs text-gray-400">{newQuestion.length}/500</span>
             <button
               type="submit"
-              disabled={submitting || newQuestion.trim().length < 5}
+              disabled={submitting}
               className="flex items-center gap-2 px-5 py-2.5 bg-[hsl(var(--primary))] text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? (

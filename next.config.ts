@@ -92,7 +92,10 @@ const nextConfig: NextConfig = {
     const rules = [
       { source: '/store', destination: '/shop', permanent: true },
       { source: '/products', destination: '/shop', permanent: true },
-      { source: '/affiliate', destination: '/sell', permanent: true },
+      { source: '/shoes', destination: '/category/footwear', permanent: true },
+      { source: '/watches', destination: '/category/accessories', permanent: true },
+      { source: '/help/returns', destination: '/legal/returns-refunds', permanent: true },
+      { source: '/help/shipping', destination: '/legal/shipping-policy', permanent: true },
     ];
 
     // Canonical-domain redirect: if CANONICAL_DOMAIN is set, any request

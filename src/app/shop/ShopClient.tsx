@@ -163,7 +163,15 @@ function ShopContent() {
                 : t('AllProducts')}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            {total > 0 ? `${total} ${t('Products')}` : `${sortedProducts.length} ${t('Products')}`}
+            {loading ? (
+              <span className="text-gray-400 animate-pulse">
+                {t('SearchDots') || 'Searching...'}
+              </span>
+            ) : total > 0 ? (
+              `${total} ${t('Products')}`
+            ) : (
+              `${sortedProducts.length} ${t('Products')}`
+            )}
           </p>
         </div>
         <div className="flex gap-3 items-center">

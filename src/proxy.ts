@@ -252,7 +252,11 @@ export async function proxy(req: NextRequest) {
   const isAdminApi = targetPathname.startsWith('/api/admin');
   const adminRoutes =
     targetPathname.startsWith('/admin') || targetPathname.startsWith('/admin-os') || isAdminApi;
-  const sellerRoutes = targetPathname.startsWith('/seller') || targetPathname === '/seller-hub';
+  const sellerRoutes =
+    (targetPathname.startsWith('/seller') &&
+      !targetPathname.startsWith('/seller/login') &&
+      !targetPathname.startsWith('/seller/apply')) ||
+    targetPathname === '/seller-hub';
   const dashboardRoutes = targetPathname.startsWith('/dashboard');
   const affiliateRoutes =
     targetPathname.startsWith('/affiliate/dashboard') ||
