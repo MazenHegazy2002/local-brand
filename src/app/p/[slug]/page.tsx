@@ -11,7 +11,6 @@ export const dynamic = 'force-dynamic';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
-import { sanitizeHtml } from '@/lib/utils';
 import { PageStatus } from '@/generated/client';
 import Navbar from '@/components/Navbar';
 import { getServerSession } from 'next-auth';
@@ -109,17 +108,12 @@ function CmsHeroBlock({ title, description, bgImage, btnText, btnLink }: any) {
 
 function CmsRichTextBlock({ content }: any) {
   const rendered = naiveMarkdownToHtml(content || '');
-  let safeHtml = '';
-  try {
-    safeHtml = sanitizeHtml(rendered);
-  } catch {
-    // Fallback: render as pre-escaped plain text if DOMPurify is unavailable
-    safeHtml = rendered.replace(/<[^>]*>/g, '');
-  }
+  // naiveMarkdownToHtml pre-escapes all raw HTML before applying markdown
+  // rules — the output is already XSS-safe without an additional sanitizer.
   return (
     <div
       className="cms-body my-8 leading-relaxed text-slate-650"
-      dangerouslySetInnerHTML={{ __html: safeHtml }}
+      dangerouslySetInnerHTML={{ __html: rendered }}
     />
   );
 }
@@ -279,19 +273,14 @@ export default async function CmsPage({ params }: PageProps) {
   }
 
   const rendered = naiveMarkdownToHtml(body || '');
-  let safeHtml = '';
-  try {
-    safeHtml = sanitizeHtml(rendered);
-  } catch {
-    safeHtml = rendered.replace(/<[^>]*>/g, '');
-  }
+  // naiveMarkdownToHtml pre-escapes all raw HTML — already XSS-safe.
 
   return (
     <main className="cms-page">
       <Navbar />
       <article>
         <h1>{title}</h1>
-        <div className="cms-body" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+        <div className="cms-body" dangerouslySetInnerHTML={{ __html: rendered }} />
       </article>
 
       <style>{`

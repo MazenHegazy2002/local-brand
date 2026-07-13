@@ -98,6 +98,11 @@ const nextConfig: NextConfig = {
       { source: '/help/shipping', destination: '/legal/shipping-policy', permanent: true },
       // Fix broken nav/footer links
       { source: '/track-order', destination: '/track', permanent: true },
+      // Seller dashboard URL aliases
+      { source: '/seller', destination: '/seller/apply', permanent: false },
+      { source: '/seller-dashboard', destination: '/seller-hub', permanent: true },
+      { source: '/seller-os', destination: '/seller-hub', permanent: true },
+      { source: '/store/:name', destination: '/brand/:name', permanent: true },
     ];
 
     // Canonical-domain redirect: if CANONICAL_DOMAIN is set, any request

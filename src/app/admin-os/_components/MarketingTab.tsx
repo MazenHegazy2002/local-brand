@@ -1203,7 +1203,7 @@ function AbandonedCartsPanel() {
       </div>
       <p className="card-sub">
         Anyone who left checkout without paying. The recovery worker emails them after{' '}
-        <code className="bg-slate-100 px-1 rounded text-xs">ABANDONED_CART_DELAY_HOURS</code>.
+        <strong>{process.env.NEXT_PUBLIC_ABANDONED_CART_DELAY_HOURS ?? '24'} hours</strong>.
       </p>
       {loading ? (
         <div className="p-12 text-center text-slate-400 text-sm">Loading…</div>
