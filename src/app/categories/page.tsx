@@ -187,12 +187,20 @@ function iconFor(name: string) {
 }
 
 export default async function CategoriesIndexPage() {
-  const categories = await prisma.category.findMany({
+  const allCategories = await prisma.category.findMany({
     include: {
-      products: { where: { published: true }, select: { id: true } },
+      products: { where: { published: true, deletedAt: null }, select: { id: true } },
     },
     orderBy: { name: 'asc' },
   });
+
+  // Filter out categories with 0 products or those that are test placeholders
+  const categories = allCategories.filter(
+    cat =>
+      cat.products.length > 0 &&
+      cat.name.toLowerCase() !== 'testcategory' &&
+      !cat.name.toLowerCase().startsWith('test')
+  );
 
   const totalProducts = categories.reduce((acc, c) => acc + c.products.length, 0);
 
