@@ -218,7 +218,15 @@ export async function GET(req: Request) {
           hasPrev: page > 1,
         },
       },
-      { status: 200 }
+      {
+        status: 200,
+        headers: {
+          // Public listing: 30 s fresh at CDN edge, 60 s stale-while-revalidate
+          // Auth-filtered requests (search by user) are not cached differently
+          // because this route has no auth gate — all results are public.
+          'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+        },
+      }
     );
   } catch (error) {
     console.error('Products API Error:', error);

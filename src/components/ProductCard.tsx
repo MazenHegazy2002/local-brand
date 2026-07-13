@@ -428,10 +428,12 @@ export default function ProductCard({
                       }
                     }}
                     title={colorName}
-                    className={`w-5.5 h-5.5 rounded-full transition-all duration-300 transform hover:scale-120 flex-shrink-0 relative ${
+                    className={`w-6 h-6 rounded-full transition-all duration-200 hover:scale-110 flex-shrink-0 ${
                       isWhite
-                        ? 'border border-gray-300 dark:border-gray-600'
-                        : 'border border-transparent'
+                        ? 'border border-gray-300'
+                        : isSelected
+                          ? 'border-2 border-[#1e3b8a]'
+                          : 'border border-transparent'
                     }`}
                     style={{
                       backgroundColor:
@@ -440,11 +442,11 @@ export default function ProductCard({
                         !bgStyle.startsWith('#') && !bgStyle.startsWith('hsl')
                           ? bgStyle
                           : undefined,
-                      boxShadow: isSelected
-                        ? `0 0 0 2px hsl(var(--card)), 0 0 0 4px hsl(var(--primary))`
-                        : 'none',
+                      outline: isSelected ? '2px solid #1e3b8a' : 'none',
+                      outlineOffset: '2px',
                     }}
                     aria-label={`Select ${colorName} color`}
+                    aria-pressed={isSelected}
                   />
                 );
               })}
