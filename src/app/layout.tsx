@@ -177,6 +177,7 @@ export default async function RootLayout({
                 <CookieConsent />
                 <InstallPrompt />
                 <ExitIntentPopup />
+                <VisitorTracker />
               </AuthProvider>
             </ConfirmProvider>
           </ToastProvider>
@@ -186,7 +187,6 @@ export default async function RootLayout({
         <Analytics />
         <SpeedInsights />
         <WebVitalsReporter />
-        <VisitorTracker />
       </body>
     </html>
   );
