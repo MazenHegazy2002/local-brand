@@ -13,6 +13,8 @@ export default function VisitorTracker() {
   const lastLogIdRef = useRef<string | null>(null);
   const activeTimerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionTokenRef = useRef<string>('');
+  // Dedup guard — prevents React 18 Strict Mode double-fire from creating duplicate rows
+  const firedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     // Generate a unique session token on browser load if not already present
@@ -27,6 +29,8 @@ export default function VisitorTracker() {
   }, []);
 
   useEffect(() => {
+    // Never track admin-os navigation — keeps analytics clean
+    if (pathname.startsWith('/admin-os')) return;
     if (!sessionTokenRef.current) return;
 
     // Clear previous heartbeat timer
@@ -57,6 +61,12 @@ export default function VisitorTracker() {
     }
 
     const logEntry = async () => {
+      // Strict Mode dedup: skip if we already fired for this session+path within 2 s
+      const dedupeKey = `${sessionTokenRef.current}:${pathname}`;
+      if (firedRef.current.has(dedupeKey)) return;
+      firedRef.current.add(dedupeKey);
+      setTimeout(() => firedRef.current.delete(dedupeKey), 2000);
+
       try {
         const userId = (session?.user as SessionUser | undefined)?.id || null;
         const res = await fetch('/api/tracker', {

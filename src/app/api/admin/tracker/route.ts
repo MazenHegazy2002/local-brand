@@ -4,6 +4,15 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
 
+// Mask the last octet/segment of an IP for PII compliance
+function maskIp(ip: string | null): string | null {
+  if (!ip) return null;
+  const parts = ip.split('.');
+  if (parts.length === 4) return `${parts[0]}.${parts[1]}.${parts[2]}.xxx`;
+  // IPv6 — redact last group
+  return ip.replace(/:[0-9a-fA-F]+$/, ':xxxx');
+}
+
 // Human-readable mapping for visitor events based on path and eventType
 function formatEventAction(eventType: string, path: string, eventDetails?: string | null): string {
   if (eventType === 'ADD_TO_CART') return 'Add To Cart';
@@ -75,10 +84,21 @@ export async function GET(req: Request) {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    // 4. Top Referrers
+    // 4. Top Referrers (localhost filtered — dev traffic must not pollute production stats)
     const referrerCounts: Record<string, number> = {};
     logs.forEach(l => {
-      const ref = l.referrer ? new URL(l.referrer).hostname : 'Direct / Bookmark';
+      let ref: string;
+      if (!l.referrer) {
+        ref = 'Direct / Bookmark';
+      } else {
+        try {
+          const h = new URL(l.referrer).hostname;
+          if (h === 'localhost' || h === '127.0.0.1' || h === '::1') return; // skip dev
+          ref = h;
+        } catch {
+          ref = 'Direct / Bookmark';
+        }
+      }
       referrerCounts[ref] = (referrerCounts[ref] || 0) + 1;
     });
     const topReferrers = Object.entries(referrerCounts)
@@ -152,7 +172,7 @@ export async function GET(req: Request) {
       sessionToken: s.sessionToken,
       city: s.city,
       country: s.country,
-      ipAddress: s.ipAddress,
+      ipAddress: maskIp(s.ipAddress),
       currentPath: s.events[s.events.length - 1]?.path ?? '/',
       updatedAt: s.updatedAt,
     }));
@@ -169,12 +189,14 @@ export async function GET(req: Request) {
       country: l.country ?? null,
       referrer: (() => {
         try {
-          return l.referrer ? new URL(l.referrer).hostname : 'Direct';
+          const h = l.referrer ? new URL(l.referrer).hostname : 'Direct';
+          if (h === 'localhost' || h === '127.0.0.1') return 'Direct';
+          return h;
         } catch {
           return 'Direct';
         }
       })(),
-      ipAddress: l.ipAddress,
+      ipAddress: maskIp(l.ipAddress),
       loadTimeMs: l.loadTimeMs,
       durationSec: l.durationSec,
       createdAt: l.createdAt,
@@ -192,7 +214,8 @@ export async function GET(req: Request) {
         activeUsers,
         recentVisits,
         sessionsByLocation,
-        sessions,
+        // Mask IPs in sessions before returning
+        sessions: sessions.map(s => ({ ...s, ipAddress: maskIp(s.ipAddress) })),
       },
       { status: 200 }
     );
