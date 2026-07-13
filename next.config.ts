@@ -170,13 +170,26 @@ const pwaConfig = withPWA({
       urlPattern: /\/api\/.*/i,
       handler: 'NetworkOnly',
     },
-    // ── HTML pages: network-first with offline fallback ─────────────────────
+    // ── Protected routes: NEVER cache (auth-sensitive pages) ───────────────
+    // These must always hit the server so the auth/middleware can redirect
+    // unauthenticated or wrong-role users properly. A cached admin-os page
+    // served by the SW for a /shop request is the root cause of the
+    // "multiple routes showing same admin content" bug.
     {
-      urlPattern: /^https?.*/,
+      urlPattern:
+        /\/(admin-os|dashboard|seller-hub|affiliate|checkout|cart|account|auth|login|register|verify-email|reset-password|forgot-password)(\/.*)?(\?.*)?$/i,
+      handler: 'NetworkOnly',
+    },
+    // ── HTML pages: network-first, SHORT TTL, public routes only ───────────
+    // Max 20 pages, 10-minute TTL — prevents stale content while still
+    // giving a basic offline fallback for public storefront pages.
+    {
+      urlPattern:
+        /^https?:\/\/[^/]+(\/shop|\/product|\/brand|\/category|\/p\/|\/about|\/contact|\/help|\/legal|\/sell|\/$)?(\?.*)?$/i,
       handler: 'NetworkFirst',
       options: {
-        cacheName: 'pages',
-        expiration: { maxEntries: 50, maxAgeSeconds: 24 * 60 * 60 },
+        cacheName: 'public-pages',
+        expiration: { maxEntries: 20, maxAgeSeconds: 10 * 60 }, // 10 minutes only
       },
     },
   ],
