@@ -144,7 +144,41 @@ export async function GET(req: Request) {
 
     // 7. Calculate online users (active in the last 2 minutes)
     const activeCutoff = new Date(Date.now() - 2 * 60 * 1000);
-    const activeUsersCount = sessions.filter(s => s.updatedAt >= activeCutoff).length;
+    const activeSessions = sessions.filter(s => s.updatedAt >= activeCutoff);
+    const activeUsersCount = activeSessions.length;
+
+    // 8. Active users table — derive from active sessions
+    const activeUsers = activeSessions.map(s => ({
+      sessionToken: s.sessionToken,
+      city: s.city,
+      country: s.country,
+      ipAddress: s.ipAddress,
+      currentPath: s.events[s.events.length - 1]?.path ?? '/',
+      updatedAt: s.updatedAt,
+    }));
+
+    // 9. Recent visits — last 50 raw log entries (desc)
+    const recentLogs = [...logs]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, 50);
+    const recentVisits = recentLogs.map(l => ({
+      id: l.id,
+      path: l.path,
+      eventType: l.eventType,
+      city: l.city ?? null,
+      country: l.country ?? null,
+      referrer: (() => {
+        try {
+          return l.referrer ? new URL(l.referrer).hostname : 'Direct';
+        } catch {
+          return 'Direct';
+        }
+      })(),
+      ipAddress: l.ipAddress,
+      loadTimeMs: l.loadTimeMs,
+      durationSec: l.durationSec,
+      createdAt: l.createdAt,
+    }));
 
     return NextResponse.json(
       {
@@ -155,8 +189,10 @@ export async function GET(req: Request) {
         topPaths,
         topReferrers,
         activeUsersCount,
+        activeUsers,
+        recentVisits,
         sessionsByLocation,
-        sessions, // full grouped visitor session lists
+        sessions,
       },
       { status: 200 }
     );
