@@ -103,11 +103,102 @@ export default function VisitorTracker() {
 
     logEntry();
 
+    // Auto-intercept key storefront actions (Add to Cart, Checkout, Purchase)
+    const handleGlobalClick = (e: MouseEvent) => {
+      if (!sessionTokenRef.current) return;
+      const target = e.target as HTMLElement;
+      const btn = target.closest('button') || target.closest('a');
+      if (!btn) return;
+
+      const text = (btn.textContent || '').toLowerCase().trim();
+      const userId = (session?.user as SessionUser | undefined)?.id || null;
+
+      if (
+        text.includes('add to cart') ||
+        text.includes('إضافة إلى السلة') ||
+        text.includes('إضافة للسلة')
+      ) {
+        fetch('/api/tracker', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionToken: sessionTokenRef.current,
+            path: pathname,
+            eventType: 'ADD_TO_CART',
+            eventDetails: 'Added product to cart',
+            userId,
+          }),
+        }).catch(() => {});
+      } else if (
+        text.includes('checkout') ||
+        text.includes('الدفع') ||
+        text.includes('إتمام الشراء')
+      ) {
+        fetch('/api/tracker', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionToken: sessionTokenRef.current,
+            path: pathname,
+            eventType: 'CHECKOUT_STARTED',
+            eventDetails: 'Proceeded to checkout',
+            userId,
+          }),
+        }).catch(() => {});
+      } else if (
+        text.includes('place order') ||
+        text.includes('تأكيد الطلب') ||
+        text.includes('confirm order') ||
+        text.includes('تأكيد طلبك')
+      ) {
+        fetch('/api/tracker', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionToken: sessionTokenRef.current,
+            path: pathname,
+            eventType: 'PURCHASE',
+            eventDetails: 'Confirmed purchase order placement',
+            userId,
+          }),
+        }).catch(() => {});
+      }
+    };
+
+    window.addEventListener('click', handleGlobalClick);
+
+    // Support standard dispatch event listener
+    const handleCustomEvent = (ev: Event) => {
+      const customEvent = ev as CustomEvent<{
+        eventType: string;
+        eventDetails?: string;
+        path?: string;
+      }>;
+      if (!sessionTokenRef.current || !customEvent.detail) return;
+      const userId = (session?.user as SessionUser | undefined)?.id || null;
+
+      fetch('/api/tracker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionToken: sessionTokenRef.current,
+          path: customEvent.detail.path || pathname,
+          eventType: customEvent.detail.eventType,
+          eventDetails: customEvent.detail.eventDetails || null,
+          userId,
+        }),
+      }).catch(() => {});
+    };
+
+    window.addEventListener('brandy_track_event', handleCustomEvent);
+
     return () => {
       if (activeTimerRef.current) {
         clearInterval(activeTimerRef.current);
         activeTimerRef.current = null;
       }
+      window.removeEventListener('click', handleGlobalClick);
+      window.removeEventListener('brandy_track_event', handleCustomEvent);
     };
   }, [pathname, session]);
 

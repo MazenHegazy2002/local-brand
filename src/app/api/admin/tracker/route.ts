@@ -4,6 +4,32 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
 
+// Human-readable mapping for visitor events based on path and eventType
+function formatEventAction(eventType: string, path: string, eventDetails?: string | null): string {
+  if (eventType === 'ADD_TO_CART') return 'Add To Cart';
+  if (eventType === 'CHECKOUT_STARTED') return 'Checkout Started';
+  if (eventType === 'PURCHASE') return 'Purchase Completed';
+
+  if (path === '/') return 'View Home Page';
+  if (path === '/shop') return 'View Shop';
+  if (path === '/cart') return 'View Cart';
+  if (path === '/checkout') return 'Checkout Started';
+  if (path.startsWith('/product/')) {
+    const slug = path.split('/product/')[1]?.replace(/-/g, ' ');
+    return `View Product: ${slug ? slug.charAt(0).toUpperCase() + slug.slice(1) : 'Details'}`;
+  }
+  if (path.startsWith('/p/')) {
+    const slug = path.split('/p/')[1]?.replace(/-/g, ' ');
+    return `View Page: ${slug ? slug.charAt(0).toUpperCase() + slug.slice(1) : 'Policy'}`;
+  }
+  if (path.startsWith('/dashboard')) return 'View User Dashboard';
+  if (path.startsWith('/seller-hub')) return 'View Seller Hub';
+  if (path.startsWith('/admin-os')) return 'View Admin Panel';
+
+  // Fallback
+  return `Visit ${path}`;
+}
+
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -21,26 +47,25 @@ export async function GET(req: Request) {
       where: {
         createdAt: { gte: startDate },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' }, // Order ASC so timeline parses chronologically
     });
 
     const totalViews = logs.length;
-    const uniqueSessions = new Set(logs.map(l => l.sessionToken)).size;
+    const uniqueSessionsCount = new Set(logs.map(l => l.sessionToken)).size;
 
-    // 2. Calculate average load times and time spent
+    // 2. Average speeds & durations
     const loadTimes = logs.map(l => l.loadTimeMs).filter((t): t is number => t !== null && t > 0);
     const avgLoadTime =
       loadTimes.length > 0
         ? Math.round(loadTimes.reduce((a, b) => a + b, 0) / loadTimes.length)
         : 0;
-
     const durations = logs.map(l => l.durationSec);
     const avgDuration =
       durations.length > 0
         ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
         : 0;
 
-    // 3. Top landing pages / paths
+    // 3. Top landing pages
     const pathCounts: Record<string, number> = {};
     logs.forEach(l => {
       pathCounts[l.path] = (pathCounts[l.path] || 0) + 1;
@@ -61,55 +86,77 @@ export async function GET(req: Request) {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    // 5. Active sessions right now (active in the last 2 minutes)
-    const activeCutoff = new Date(Date.now() - 2 * 60 * 1000);
-    const activeLogs = await prisma.trafficLog.findMany({
-      where: {
-        updatedAt: { gte: activeCutoff },
-      },
-      select: {
-        sessionToken: true,
-        path: true,
-        referrer: true,
-        userAgent: true,
-        updatedAt: true,
-      },
-    });
-
-    const activeSessionsMap = new Map<string, (typeof activeLogs)[0]>();
-    activeLogs.forEach(l => {
-      // Keep the most recent entry per session token
-      const existing = activeSessionsMap.get(l.sessionToken);
-      if (!existing || l.updatedAt > existing.updatedAt) {
-        activeSessionsMap.set(l.sessionToken, l);
+    // 5. Group logs into distinct Visitor Sessions
+    const sessionsMap = new Map<
+      string,
+      {
+        sessionToken: string;
+        city: string;
+        country: string;
+        ipAddress: string | null;
+        updatedAt: Date;
+        createdAt: Date;
+        events: { action: string; path: string; timestamp: Date }[];
       }
-    });
-    const activeUsersCount = activeSessionsMap.size;
-    const activeUsers = Array.from(activeSessionsMap.values());
+    >();
 
-    // 6. Recent visit logs timeline (limit to last 50)
-    const recentVisits = logs.slice(0, 50).map(l => ({
-      id: l.id,
-      path: l.path,
-      referrer: l.referrer ? new URL(l.referrer).hostname : 'Direct',
-      userAgent: l.userAgent,
-      ipAddress: l.ipAddress,
-      loadTimeMs: l.loadTimeMs,
-      durationSec: l.durationSec,
-      createdAt: l.createdAt,
-    }));
+    // Iterate through logs chronologically (asc) to build event stream
+    logs.forEach(l => {
+      const key = l.sessionToken;
+      const city = l.city || 'Cairo';
+      const country = l.country || 'Egypt';
+      const action = formatEventAction(l.eventType, l.path, l.eventDetails);
+
+      if (!sessionsMap.has(key)) {
+        sessionsMap.set(key, {
+          sessionToken: key,
+          city,
+          country,
+          ipAddress: l.ipAddress,
+          createdAt: l.createdAt,
+          updatedAt: l.updatedAt,
+          events: [],
+        });
+      }
+
+      const sessionObj = sessionsMap.get(key)!;
+      sessionObj.updatedAt = l.updatedAt;
+      sessionObj.events.push({
+        action,
+        path: l.path,
+        timestamp: l.createdAt,
+      });
+    });
+
+    const sessions = Array.from(sessionsMap.values()).sort(
+      (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+    );
+
+    // 6. Calculate Top Geolocation Leaderboard (Sessions by Location)
+    const locationCounts: Record<string, number> = {};
+    sessions.forEach(s => {
+      const locationKey = `${s.city}, ${s.country}`;
+      locationCounts[locationKey] = (locationCounts[locationKey] || 0) + 1;
+    });
+    const sessionsByLocation = Object.entries(locationCounts)
+      .map(([location, count]) => ({ location, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // 7. Calculate online users (active in the last 2 minutes)
+    const activeCutoff = new Date(Date.now() - 2 * 60 * 1000);
+    const activeUsersCount = sessions.filter(s => s.updatedAt >= activeCutoff).length;
 
     return NextResponse.json(
       {
         totalViews,
-        uniqueSessions,
+        uniqueSessions: uniqueSessionsCount,
         avgLoadTime,
         avgDuration,
         topPaths,
         topReferrers,
         activeUsersCount,
-        activeUsers,
-        recentVisits,
+        sessionsByLocation,
+        sessions, // full grouped visitor session lists
       },
       { status: 200 }
     );

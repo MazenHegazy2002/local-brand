@@ -1,6 +1,13 @@
-export default function AdminOsLayout({ children }: { children: React.ReactNode }) {
-  // The admin-os page owns its own flex layout (sticky sidebar + scrollable
-  // content). We keep this wrapper transparent so it doesn't introduce an
-  // extra scroll container.
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import { SessionUser } from '@/types';
+
+export default async function AdminOsLayout({ children }: { children: React.ReactNode }) {
+  const session = await getServerSession(authOptions);
+  if (!session || (session.user as SessionUser).role !== 'ADMIN') {
+    redirect('/login');
+  }
+
   return <>{children}</>;
 }

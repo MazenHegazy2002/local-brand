@@ -1316,9 +1316,13 @@ model TrafficLog {
   id           String   @id @default(uuid())
   sessionToken String
   path         String
+  eventType    String   @default("PAGE_VIEW")
+  eventDetails String?
   referrer     String?
   userAgent    String?
   ipAddress    String?
+  city         String?
+  country      String?
   loadTimeMs   Int?
   durationSec  Int      @default(0)
   userId       String?

@@ -7,30 +7,33 @@ import {
   Activity,
   Clock,
   Zap,
-  ExternalLink,
   RefreshCw,
   Layers,
   Compass,
   Globe,
+  MapPin,
+  ListTodo,
 } from 'lucide-react';
 
-interface RecentVisit {
-  id: string;
+interface VisitorEvent {
+  action: string;
   path: string;
-  referrer: string;
-  userAgent: string;
-  ipAddress: string | null;
-  loadTimeMs: number | null;
-  durationSec: number;
-  createdAt: string;
+  timestamp: string;
 }
 
-interface ActiveUser {
+interface VisitorSession {
   sessionToken: string;
-  path: string;
-  referrer: string | null;
-  userAgent: string;
+  city: string;
+  country: string;
+  ipAddress: string | null;
   updatedAt: string;
+  createdAt: string;
+  events: VisitorEvent[];
+}
+
+interface LocationLeaderboardItem {
+  location: string;
+  count: number;
 }
 
 interface PathStat {
@@ -51,8 +54,8 @@ interface AnalyticsData {
   topPaths: PathStat[];
   topReferrers: ReferrerStat[];
   activeUsersCount: number;
-  activeUsers: ActiveUser[];
-  recentVisits: RecentVisit[];
+  sessionsByLocation: LocationLeaderboardItem[];
+  sessions: VisitorSession[];
 }
 
 export default function TrackerTab() {
@@ -61,6 +64,8 @@ export default function TrackerTab() {
   const [loading, setLoading] = useState(true);
   const [rangeDays, setRangeDays] = useState(7);
   const [isPending, startTransition] = useTransition();
+
+  const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
 
   const loadAnalytics = async () => {
     setLoading(true);
@@ -85,7 +90,6 @@ export default function TrackerTab() {
 
   useEffect(() => {
     loadAnalytics();
-    // Setup automatic interval to refresh active users every 10 seconds
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/admin/tracker?days=${rangeDays}`);
@@ -95,9 +99,9 @@ export default function TrackerTab() {
             if (!prev) return json;
             return {
               ...json,
-              // Update live stats dynamically
               activeUsersCount: json.activeUsersCount,
-              activeUsers: json.activeUsers,
+              sessionsByLocation: json.sessionsByLocation,
+              sessions: json.sessions,
             };
           });
         }
@@ -128,6 +132,27 @@ export default function TrackerTab() {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
     return `${m}m ${s}s`;
+  };
+
+  const toggleSessionExpand = (token: string) => {
+    setExpandedSessions(prev => {
+      const next = new Set(prev);
+      if (next.has(token)) {
+        next.delete(token);
+      } else {
+        next.add(token);
+      }
+      return next;
+    });
+  };
+
+  const formatTime = (isoString: string) => {
+    try {
+      const date = new Date(isoString);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return '';
+    }
   };
 
   return (
@@ -216,168 +241,116 @@ export default function TrackerTab() {
             </div>
           </div>
 
-          {/* Breakdown Sections */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Top Visited Paths */}
-            <div className="panel">
-              <h3 className="panel-title flex items-center gap-2 mb-4 text-slate-800 text-sm font-bold">
-                <Compass size={16} className="text-blue-500" /> Top Landing Pages / Paths
+          {/* User Geolocation Leaderboard & Collapsible Event Timelines */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* REAL-TIME ACTIVITY TIMELINE */}
+            <div className="lg:col-span-2 panel">
+              <h3 className="panel-title flex items-center gap-2 mb-6 text-slate-800 text-sm font-bold">
+                <Activity size={16} className="text-blue-500" /> REAL-TIME ACTIVITY
               </h3>
-              <div className="space-y-3">
-                {data?.topPaths.map((p, i) => (
-                  <div key={p.path} className="flex justify-between items-center text-xs">
-                    <span className="font-mono text-slate-600 bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5 max-w-[280px] truncate">
-                      {p.path}
-                    </span>
-                    <span className="font-bold text-slate-700 bg-blue-50 text-blue-700 rounded-full px-2 py-0.5">
-                      {p.count} hits
-                    </span>
-                  </div>
-                ))}
-                {data?.topPaths.length === 0 && (
-                  <div className="text-center py-10 text-slate-400 text-xs">
-                    No pages logged yet.
-                  </div>
-                )}
-              </div>
-            </div>
 
-            {/* Top Traffic Referrers */}
-            <div className="panel">
-              <h3 className="panel-title flex items-center gap-2 mb-4 text-slate-800 text-sm font-bold">
-                <Globe size={16} className="text-violet-500" /> Entry Channels / Referrers
-              </h3>
-              <div className="space-y-3">
-                {data?.topReferrers.map((r, i) => (
-                  <div key={r.name} className="flex justify-between items-center text-xs">
-                    <span className="font-medium text-slate-650 flex items-center gap-1.5">
-                      <Compass size={12} className="text-slate-400" />
-                      {r.name}
-                    </span>
-                    <span className="font-bold text-slate-700 bg-violet-50 text-violet-700 rounded-full px-2 py-0.5">
-                      {r.count} refs
-                    </span>
-                  </div>
-                ))}
-                {data?.topReferrers.length === 0 && (
-                  <div className="text-center py-10 text-slate-400 text-xs">
-                    No referrers logged.
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+              <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2">
+                {data?.sessions.map((session, sIdx) => {
+                  const isExpanded = expandedSessions.has(session.sessionToken);
+                  const displayedEvents = isExpanded ? session.events : session.events.slice(-3);
+                  const hiddenCount = session.events.length - displayedEvents.length;
 
-          {/* Active online users details */}
-          <div className="panel">
-            <h3 className="panel-title flex items-center gap-2 mb-4 text-slate-800 text-sm font-bold">
-              <Activity size={16} className="text-emerald-500" /> Live Traffic Timeline (Active
-              Visitors)
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="tracker-table w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
-                    <th className="py-2.5">Session ID</th>
-                    <th className="py-2.5">Current Path</th>
-                    <th className="py-2.5">Referrer</th>
-                    <th className="py-2.5">User Agent</th>
-                    <th className="py-2.5">Last Seen</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data?.activeUsers.map(u => (
-                    <tr
-                      key={u.sessionToken}
-                      className="border-b border-slate-50 hover:bg-slate-50/50"
+                  return (
+                    <div
+                      key={session.sessionToken}
+                      className="flex gap-4 border-l-2 border-indigo-100 pl-4 relative"
                     >
-                      <td className="py-3 font-mono text-slate-500">
-                        {u.sessionToken.substring(5, 13)}...
-                      </td>
-                      <td className="py-3 font-medium text-slate-700">{u.path}</td>
-                      <td
-                        className="py-3 text-slate-400 text-[11px] truncate max-w-[150px]"
-                        title={u.referrer || 'Direct'}
-                      >
-                        {u.referrer ? new URL(u.referrer).hostname : 'Direct'}
-                      </td>
-                      <td
-                        className="py-3 text-slate-400 text-[10px] truncate max-w-[180px]"
-                        title={u.userAgent}
-                      >
-                        {u.userAgent}
-                      </td>
-                      <td className="py-3 font-semibold text-emerald-600">Active now</td>
-                    </tr>
-                  ))}
-                  {data?.activeUsers.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="py-6 text-center text-slate-400">
-                        No active users online in the last 2 minutes.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                      <span className="absolute -left-[6px] top-1.5 w-2.5 h-2.5 rounded-full bg-indigo-500 border border-white"></span>
 
-          {/* Recent timeline logs */}
-          <div className="panel">
-            <h3 className="panel-title flex items-center gap-2 mb-4 text-slate-800 text-sm font-bold">
-              <Play size={16} className="text-blue-500" /> Visitor Session Logs (Last 50 Entries)
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="tracker-table w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
-                    <th className="py-2.5">Time</th>
-                    <th className="py-2.5">Visited Path</th>
-                    <th className="py-2.5">Referrer</th>
-                    <th className="py-2.5">Page Load Speed</th>
-                    <th className="py-2.5">Time Spent</th>
-                    <th className="py-2.5">IP Address</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data?.recentVisits.map(visit => {
-                    const speed = getSpeedRating(visit.loadTimeMs);
-                    return (
-                      <tr key={visit.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                        <td className="py-3 text-slate-500 text-[11px]">
-                          {new Date(visit.createdAt).toLocaleString()}
-                        </td>
-                        <td className="py-3 font-medium text-slate-700">{visit.path}</td>
-                        <td className="py-3 text-slate-500">{visit.referrer}</td>
-                        <td className="py-3">
-                          {visit.loadTimeMs ? (
-                            <span
-                              className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${speed.color}`}
-                            >
-                              {visit.loadTimeMs} ms
-                            </span>
-                          ) : (
-                            <span className="text-slate-400 text-[10px]">Pending / SSR</span>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-bold text-slate-850 text-sm flex items-center gap-1.5">
+                              <MapPin size={13} className="text-slate-450" />
+                              {session.city}, {session.country}
+                            </h4>
+                            <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                              IP: {session.ipAddress || '—'} • ID:{' '}
+                              {session.sessionToken.substring(5, 20)}
+                            </p>
+                          </div>
+
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            {formatTime(session.updatedAt)}
+                          </span>
+                        </div>
+
+                        <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 space-y-2">
+                          {displayedEvents.map((evt, eIdx) => (
+                            <div key={eIdx} className="flex justify-between text-xs text-slate-650">
+                              <span className="font-medium">{evt.action}</span>
+                              <span className="text-[10px] text-slate-400">
+                                {formatTime(evt.timestamp)}
+                              </span>
+                            </div>
+                          ))}
+
+                          {session.events.length > 3 && (
+                            <div className="pt-1.5 border-t border-slate-200/60 mt-1 flex justify-start">
+                              <button
+                                onClick={() => toggleSessionExpand(session.sessionToken)}
+                                className="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                              >
+                                {isExpanded ? `- Show less` : `+ ${hiddenCount} more events`}
+                              </button>
+                            </div>
                           )}
-                        </td>
-                        <td className="py-3 font-bold text-slate-650">
-                          {formatDuration(visit.durationSec)}
-                        </td>
-                        <td className="py-3 text-slate-400 font-mono text-[10px]">
-                          {visit.ipAddress || '—'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {data?.recentVisits.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="py-6 text-center text-slate-400">
-                        No logs recorded yet.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {data?.sessions.length === 0 && (
+                  <div className="text-center py-20 text-slate-400 text-xs font-medium">
+                    No active sessions recorded yet.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* SESSIONS BY LOCATION */}
+            <div className="panel">
+              <h3 className="panel-title flex items-center gap-2 mb-6 text-slate-800 text-sm font-bold">
+                <Globe size={16} className="text-violet-500" /> SESSIONS BY LOCATION
+              </h3>
+
+              <div className="space-y-4">
+                {data?.sessionsByLocation.map((item, idx) => {
+                  const maxCount = data.sessionsByLocation[0]?.count || 1;
+                  const percentage = (item.count / maxCount) * 100;
+                  return (
+                    <div key={item.location} className="space-y-1 text-xs">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-slate-750">
+                          {idx + 1}. {item.location}
+                        </span>
+                        <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full text-[10px]">
+                          {item.count}
+                        </span>
+                      </div>
+
+                      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-indigo-500 h-1.5 rounded-full transition-all duration-500"
+                          style={{ width: `${percentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {data?.sessionsByLocation.length === 0 && (
+                  <div className="text-center py-20 text-slate-400 text-xs">
+                    No location metrics available.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
