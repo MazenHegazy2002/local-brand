@@ -25,6 +25,16 @@ let subscriberPromise: Promise<ReturnType<typeof redis.duplicate>> | null = null
 function getSubscriber(): Promise<ReturnType<typeof redis.duplicate>> {
   if (subscriberPromise) return subscriberPromise;
   subscriberPromise = (async () => {
+    // Guard: if Redis has no URL configured (no REDIS_URL env var), skip
+    // subscription entirely. Without this check, redis.duplicate() on an
+    // offline client throws "Stream isn't writeable" and pollutes logs.
+    if (!process.env.REDIS_URL && !process.env.UPSTASH_REDIS_REST_URL) {
+      console.warn('[sse] Redis not configured — live notifications disabled');
+      // Return a dummy subscriber that never emits
+      const dummy = redis.duplicate();
+      // Don't connect — just return it as a placeholder
+      return dummy;
+    }
     const subscriber = redis.duplicate();
     await subscriber.subscribe(SSE_CHANNEL);
     subscriber.on('message', (_channel: string, message: string) => {
