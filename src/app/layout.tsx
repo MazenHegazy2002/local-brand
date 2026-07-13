@@ -108,6 +108,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import BottomNavigation from '@/components/BottomNavigation';
 import CookieConsent from '@/components/CookieConsent';
 import WebVitalsReporter from '@/components/WebVitalsReporter';
+import VisitorTracker from '@/components/VisitorTracker';
 import InstallPrompt from '@/components/InstallPrompt';
 import Plugins from '@/components/Plugins';
 import CsrfProvider from '@/components/CsrfProvider';
@@ -185,6 +186,7 @@ export default async function RootLayout({
         <Analytics />
         <SpeedInsights />
         <WebVitalsReporter />
+        <VisitorTracker />
       </body>
     </html>
   );

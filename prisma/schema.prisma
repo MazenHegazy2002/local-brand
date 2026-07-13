@@ -1311,3 +1311,20 @@ model NewsletterSubscriber {
   email       String   @unique
   subscribedAt DateTime @default(now())
 }
+
+model TrafficLog {
+  id           String   @id @default(uuid())
+  sessionToken String
+  path         String
+  referrer     String?
+  userAgent    String?
+  ipAddress    String?
+  loadTimeMs   Int?
+  durationSec  Int      @default(0)
+  userId       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([sessionToken])
+}

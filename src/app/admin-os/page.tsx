@@ -28,6 +28,7 @@ import MaintenanceTab from './_components/MaintenanceTab';
 import ShippingTab from './_components/ShippingTab';
 import BannersTab from './_components/BannersTab';
 import WhatsAppTab from './_components/WhatsAppTab';
+import TrackerTab from './_components/TrackerTab';
 import { useConfirm } from '@/providers/ConfirmProvider';
 import { useToast } from '@/components/ui/ToastProvider';
 import {
@@ -478,6 +479,12 @@ export default function AdminOS() {
           icon={<WrenchIcon />}
         />
         <NavItem
+          active={activeTab === 'tracker'}
+          onClick={() => setActiveTab('tracker')}
+          label="Site Tracker"
+          icon={<TrackerIcon />}
+        />
+        <NavItem
           active={activeTab === 'whatsapp'}
           onClick={() => setActiveTab('whatsapp')}
           label="WhatsApp Bot"
@@ -584,6 +591,7 @@ export default function AdminOS() {
           {activeTab === 'support' && <SupportTab />}
           {activeTab === 'shipping' && <ShippingTab />}
           {activeTab === 'maintenance' && <MaintenanceTab />}
+          {activeTab === 'tracker' && <TrackerTab />}
           {activeTab === 'affiliate' && <AffiliateTab />}
           {activeTab === 'whatsapp' && <WhatsAppTab />}
         </div>
@@ -730,6 +738,7 @@ const TITLES: Record<string, string> = {
   plugins: 'Plugins & integrations',
   shipping: 'Governorate shipping rates',
   maintenance: 'Maintenance & system',
+  tracker: 'Developer metrics & tracker',
   settings: 'System configuration',
   whatsapp: 'WhatsApp confirmation bot',
 };
@@ -4552,6 +4561,20 @@ function TruckIcon() {
       <path d="M10 6h3l2 3v2h-5V6z" stroke="currentColor" strokeWidth="1.1" />
       <circle cx="4" cy="12" r="1.2" stroke="currentColor" strokeWidth="1" />
       <circle cx="12" cy="12" r="1.2" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  );
+}
+
+function TrackerIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M2 13h12M4 10h2v3H4v-3zm4-5h2v8H8V5zm4-3h2v11h-2V2z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".7"
+      />
     </svg>
   );
 }
