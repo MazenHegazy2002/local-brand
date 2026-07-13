@@ -871,6 +871,7 @@ async function main() {
       passwordHash: adminPwHash,
       role: 'ADMIN',
       loyaltyPoints: 0,
+      emailVerified: new Date(),
     },
   });
 
@@ -1033,6 +1034,7 @@ async function main() {
       passwordHash: buyerPwHash,
       role: 'BUYER',
       loyaltyPoints: 0,
+      emailVerified: new Date(),
     },
   });
 
@@ -1045,6 +1047,7 @@ async function main() {
       passwordHash: affiliatePwHash,
       role: 'BUYER',
       loyaltyPoints: 0,
+      emailVerified: new Date(),
     },
   });
   await prisma.affiliate.create({

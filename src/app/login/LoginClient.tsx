@@ -120,7 +120,11 @@ function LoginForm() {
     }
 
     if (res?.error) {
-      setError('Invalid email or password');
+      if (res.error.toLowerCase().includes('email not verified')) {
+        setError('Please verify your email address before logging in.');
+      } else {
+        setError('Invalid email or password');
+      }
       setIsLoading(false);
     } else {
       try {

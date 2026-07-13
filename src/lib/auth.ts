@@ -66,10 +66,16 @@ export const authOptions: NextAuthOptions = {
           if (!user || !user.passwordHash) return null;
           const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
           if (!isPasswordValid || user.deletedAt) return null;
+
+          // Enforce email verification for credentials logins
+          if (!user.emailVerified) {
+            throw new Error('Email not verified');
+          }
+
           return { id: user.id, name: user.name, email: user.email, role: user.role };
         } catch (error) {
           console.error('[AUTH] Error:', error);
-          return null;
+          throw error; // Re-throw so NextAuth passes the error string to the client
         }
       },
     }),
@@ -97,6 +103,15 @@ export const authOptions: NextAuthOptions = {
           }
           const user = await prisma.user.findUnique({ where: { email: tokenRecord.email } });
           if (!user || user.deletedAt) return null;
+
+          // Auto-verify email on magic-link entry since they accessed their email
+          if (!user.emailVerified) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { emailVerified: new Date() },
+            });
+          }
+
           // Single-use: consume the token now so it can't be replayed.
           await prisma.passwordResetToken.delete({ where: { token } }).catch(() => {});
           return { id: user.id, name: user.name, email: user.email, role: user.role };
