@@ -217,7 +217,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     <main className="min-h-screen bg-[#f9f8f6]">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }}
       />
       <script
         type="application/ld+json"

@@ -92,5 +92,27 @@ export async function GET() {
       appUrl: process.env.NEXT_PUBLIC_APP_URL || '(not set — canonical URLs broken)',
       nodeEnv: process.env.NODE_ENV,
     },
+
+    // Legacy shape fields for backward compatibility with MaintenanceTab.tsx
+    db: {
+      ok: db.ok,
+      latencyMs: db.latencyMs,
+      message: db.ok ? undefined : 'Database connection failed',
+    },
+    redis: {
+      ok: redisCheck.ok,
+      latencyMs: redisCheck.latencyMs,
+      message: redisCheck.ok ? undefined : 'Redis connection failed',
+    },
+    email: {
+      configured: emailOk,
+      provider: process.env.RESEND_API_KEY ? 'resend' : process.env.SMTP_HOST ? 'smtp' : 'none',
+    },
+    stripe: {
+      configured: paymentGateways.stripe,
+    },
+    paysky: {
+      configured: paymentGateways.paysky,
+    },
   });
 }

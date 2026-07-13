@@ -619,6 +619,21 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
     const role = (session.user as SessionUser).role;
     if (role !== 'SELLER' && role !== 'ADMIN') return { error: 'Forbidden' };
 
+    if (role === 'SELLER') {
+      const sellerProfile = await prisma.sellerProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+      if (!sellerProfile) return { error: 'Seller profile not found' };
+
+      const ownsItem = await prisma.orderItem.findFirst({
+        where: { orderId, variant: { product: { sellerId: sellerProfile.id } } },
+        select: { id: true },
+      });
+      if (!ownsItem) {
+        return { error: 'Forbidden: You do not own this order' };
+      }
+    }
+
     await prisma.order.update({
       where: { id: orderId },
       data: { status },

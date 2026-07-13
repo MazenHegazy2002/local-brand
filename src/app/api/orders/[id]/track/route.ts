@@ -47,8 +47,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
-    // Authorization check
-    const isOwner = order.userId === userId || order.guestEmail === guestEmail;
+    // Authorization check. Guard against null===null matching: an
+    // unauthenticated caller (userId null) must not match a guest order
+    // (order.userId null), and a missing ?email must not match a user
+    // order (order.guestEmail null).
+    const ownsAsUser = !!userId && order.userId === userId;
+    const ownsAsGuest = !!guestEmail && order.guestEmail === guestEmail;
+    const isOwner = ownsAsUser || ownsAsGuest;
     let isAuthorized = isOwner || role === 'ADMIN';
 
     if (!isAuthorized && role === 'SELLER') {

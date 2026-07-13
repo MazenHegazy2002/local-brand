@@ -16,13 +16,46 @@ import { NextResponse } from 'next/server';
 import { GoogleGenAI, Modality } from '@google/genai';
 import { prisma } from '@/lib/prisma';
 import { readSecret } from '@/lib/secrets';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 const PLUGIN_SLUG = 'virtual-tryon';
 const MODEL = 'gemini-2.5-flash-image';
 
+// SSRF guard: only fetch product images from the hosts we actually serve
+// images from (mirrors next.config images.remotePatterns). Blocks fetches to
+// internal/link-local/metadata endpoints via an attacker-supplied URL.
+const ALLOWED_IMAGE_HOST_SUFFIXES = [
+  'images.unsplash.com',
+  'res.cloudinary.com',
+  'picsum.photos',
+  '.amazonaws.com',
+  '.public.blob.vercel-storage.com',
+  'blob.vercel-storage.com',
+  'lh3.googleusercontent.com',
+];
+
+function isAllowedImageUrl(raw: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== 'https:') return false;
+  const host = url.hostname.toLowerCase();
+  return ALLOWED_IMAGE_HOST_SUFFIXES.some(suffix => host === suffix || host.endsWith(suffix));
+}
+
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 export async function POST(req: Request) {
+  // 0. Require authentication — this route consumes paid Gemini quota.
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   // 1. Check plugin is installed + enabled
   const plugin = await prisma.plugin.findUnique({ where: { slug: PLUGIN_SLUG } });
   if (!plugin || !plugin.isEnabled) {
@@ -66,6 +99,13 @@ export async function POST(req: Request) {
   if (!productImageUrl || !userPhotoBase64) {
     return NextResponse.json(
       { error: 'productImageUrl and userPhotoBase64 are required.' },
+      { status: 400 }
+    );
+  }
+
+  if (!isAllowedImageUrl(productImageUrl)) {
+    return NextResponse.json(
+      { error: 'productImageUrl must be an https URL from an allowed image host.' },
       { status: 400 }
     );
   }

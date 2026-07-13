@@ -168,6 +168,7 @@ export async function createOrderForUser(
     // ── 3. Apply Coupon or Affiliate Promo ────────────────────────────────────
     let discountAmount = 0;
     let couponId: string | null = null;
+    let couponUsageLimit: number | null = null;
     let affiliateId: string | null = null;
     let affiliateDiscountPct = 0;
 
@@ -181,6 +182,7 @@ export async function createOrderForUser(
 
         if (canUse && minMet) {
           couponId = coupon.id;
+          couponUsageLimit = coupon.usageLimit ?? null;
           if (coupon.discountType === DiscountType.PERCENTAGE) {
             discountAmount = subtotal * (coupon.discountValue / 100);
             if (coupon.maxDiscount) discountAmount = Math.min(discountAmount, coupon.maxDiscount);
@@ -317,10 +319,16 @@ export async function createOrderForUser(
       });
 
       if (couponId) {
-        await tx.coupon.update({
-          where: { id: couponId },
+        const res = await tx.coupon.updateMany({
+          where:
+            couponUsageLimit == null
+              ? { id: couponId }
+              : { id: couponId, usedCount: { lt: couponUsageLimit } },
           data: { usedCount: { increment: 1 } },
         });
+        if (res.count === 0) {
+          throw new Error('Coupon usage limit reached');
+        }
       }
 
       return newOrder;

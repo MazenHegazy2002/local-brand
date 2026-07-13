@@ -44,7 +44,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Item already refunded or cancelled' }, { status: 400 });
     }
 
-    const refundAmount = amount || orderItem.priceAtPurchase * orderItem.quantity;
+    const maxRefund = orderItem.priceAtPurchase * orderItem.quantity;
+    const requested = typeof amount === 'number' && amount > 0 ? amount : maxRefund;
+    const refundAmount = Math.min(requested, maxRefund);
 
     if (orderItem.order.paymentId && orderItem.order.paymentStatus === 'PAID') {
       try {

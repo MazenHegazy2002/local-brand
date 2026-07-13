@@ -101,7 +101,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     <main className="min-h-screen bg-[hsl(var(--background))]">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }}
       />
       <script
         type="application/ld+json"

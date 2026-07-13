@@ -52,7 +52,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
     if (!order) return NextResponse.json({ message: 'Order not found' }, { status: 404 });
 
-    if (role === 'BUYER' && order.userId && order.userId !== userId && !order.guestEmail) {
+    if (role === 'BUYER' && order.userId !== userId) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
