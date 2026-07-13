@@ -103,6 +103,16 @@ const nextConfig: NextConfig = {
       { source: '/seller-dashboard', destination: '/seller-hub', permanent: true },
       { source: '/seller-os', destination: '/seller-hub', permanent: true },
       { source: '/store/:name', destination: '/brand/:name', permanent: true },
+      // Direct tabs mapping to prevent 404s
+      { source: '/seller-hub/overview', destination: '/seller-hub?tab=overview', permanent: true },
+      { source: '/seller-hub/orders', destination: '/seller-hub?tab=orders', permanent: true },
+      { source: '/seller-hub/products', destination: '/seller-hub?tab=products', permanent: true },
+      {
+        source: '/seller-hub/analytics',
+        destination: '/seller-hub?tab=analytics',
+        permanent: true,
+      },
+      { source: '/seller-hub/wallet', destination: '/seller-hub?tab=wallet', permanent: true },
     ];
 
     // Canonical-domain redirect: if CANONICAL_DOMAIN is set, any request
