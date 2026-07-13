@@ -14,8 +14,30 @@ import { createOrderForUser } from '@/lib/order-creator';
 // PAID + CONFIRMED. The previous version read `cart:${userId}` which nothing
 // ever wrote — live Stripe payments silently failed to create the order.
 export async function POST(req: Request) {
+  let loggedRowId: string | null = null;
+  let eventType = 'unknown';
+  let body = '';
+
   try {
-    const body = await req.text();
+    body = await req.text();
+    try {
+      const parsed = JSON.parse(body);
+      eventType = parsed.type || 'unknown';
+    } catch {
+      // ignore
+    }
+
+    // Save initial webhook log
+    const logRow = await prisma.webhookLog.create({
+      data: {
+        source: 'stripe',
+        event: eventType,
+        payload: body,
+        status: 'pending',
+      },
+    });
+    loggedRowId = logRow.id;
+
     const sig = req.headers.get('stripe-signature');
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     const isProd = process.env.NODE_ENV === 'production';
@@ -26,6 +48,16 @@ export async function POST(req: Request) {
       console.error(
         '[stripe webhook] signature verification required in production but webhook secret or signature is missing'
       );
+      if (loggedRowId) {
+        await prisma.webhookLog.update({
+          where: { id: loggedRowId },
+          data: {
+            status: 'error',
+            statusCode: 400,
+            errorMsg: 'Signature verification required in production',
+          },
+        });
+      }
       return NextResponse.json({ message: 'Signature verification required' }, { status: 400 });
     }
 
@@ -36,8 +68,18 @@ export async function POST(req: Request) {
       });
       try {
         event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-      } catch (err) {
+      } catch (err: any) {
         console.error('[stripe webhook] signature verification failed:', err);
+        if (loggedRowId) {
+          await prisma.webhookLog.update({
+            where: { id: loggedRowId },
+            data: {
+              status: 'error',
+              statusCode: 400,
+              errorMsg: `Construct event failed: ${err?.message}`,
+            },
+          });
+        }
         return NextResponse.json({ message: 'Invalid signature' }, { status: 400 });
       }
     } else {
@@ -45,11 +87,30 @@ export async function POST(req: Request) {
       event = JSON.parse(body) as Stripe.Event;
     }
 
+    // Update event type with actual verified event type
+    eventType = event.type;
+    if (loggedRowId) {
+      await prisma.webhookLog.update({
+        where: { id: loggedRowId },
+        data: { event: eventType },
+      });
+    }
+
     if (event.type === 'payment_intent.succeeded') {
       const intent = event.data.object as Stripe.PaymentIntent;
       const idempotencyKey = intent.metadata?.idempotencyKey;
       if (!idempotencyKey) {
         console.warn('[stripe webhook] payment_intent.succeeded without idempotencyKey metadata');
+        if (loggedRowId) {
+          await prisma.webhookLog.update({
+            where: { id: loggedRowId },
+            data: {
+              status: 'ignored',
+              statusCode: 200,
+              errorMsg: 'payment_intent.succeeded without idempotencyKey metadata',
+            },
+          });
+        }
         return NextResponse.json({ received: true }, { status: 200 });
       }
 
@@ -59,6 +120,16 @@ export async function POST(req: Request) {
         select: { id: true },
       });
       if (existingOrder) {
+        if (loggedRowId) {
+          await prisma.webhookLog.update({
+            where: { id: loggedRowId },
+            data: {
+              status: 'ok',
+              statusCode: 200,
+              errorMsg: 'Already processed (idempotency key match)',
+            },
+          });
+        }
         return NextResponse.json({ received: true, alreadyProcessed: true }, { status: 200 });
       }
 
@@ -71,6 +142,16 @@ export async function POST(req: Request) {
           idempotencyKey,
           '— customer may need to retry checkout'
         );
+        if (loggedRowId) {
+          await prisma.webhookLog.update({
+            where: { id: loggedRowId },
+            data: {
+              status: 'error',
+              statusCode: 200,
+              errorMsg: `Pending cart missing for idempotencyKey ${idempotencyKey}`,
+            },
+          });
+        }
         return NextResponse.json({ received: true, missingPending: true }, { status: 200 });
       }
 
@@ -107,14 +188,23 @@ export async function POST(req: Request) {
         });
       } else {
         console.error('[stripe webhook] createOrder failed for', idempotencyKey, result.error);
+        if (loggedRowId) {
+          await prisma.webhookLog.update({
+            where: { id: loggedRowId },
+            data: {
+              status: 'error',
+              statusCode: 200,
+              errorMsg: `createOrder failed: ${result.error}`,
+            },
+          });
+        }
+        return NextResponse.json({ received: true, error: result.error }, { status: 200 });
       }
 
       // Clear the pending cache regardless — the user has already been charged
       // by Stripe; if order creation failed, support needs to refund manually.
       await redis.del(pendingKey).catch(() => {});
-    }
-
-    if (event.type === 'payment_intent.payment_failed') {
+    } else if (event.type === 'payment_intent.payment_failed') {
       const intent = event.data.object as Stripe.PaymentIntent;
       const idempotencyKey = intent.metadata?.idempotencyKey;
       if (idempotencyKey) {
@@ -130,12 +220,43 @@ export async function POST(req: Request) {
           // ignore
         }
       }
+    } else {
+      // Ignored event
+      if (loggedRowId) {
+        await prisma.webhookLog.update({
+          where: { id: loggedRowId },
+          data: { status: 'ignored', statusCode: 200 },
+        });
+      }
+      return NextResponse.json({ received: true }, { status: 200 });
+    }
+
+    if (loggedRowId) {
+      await prisma.webhookLog.update({
+        where: { id: loggedRowId },
+        data: { status: 'ok', statusCode: 200, processedAt: new Date() },
+      });
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error: unknown) {
     const err = error as Error;
     console.error('Webhook Error:', err.message);
+    if (loggedRowId) {
+      try {
+        await prisma.webhookLog.update({
+          where: { id: loggedRowId },
+          data: {
+            status: 'error',
+            statusCode: 500,
+            errorMsg: err.message,
+            processedAt: new Date(),
+          },
+        });
+      } catch {
+        // ignore log error
+      }
+    }
     return NextResponse.json({ message: 'Webhook handler failed' }, { status: 500 });
   }
 }

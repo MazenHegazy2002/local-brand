@@ -1135,6 +1135,53 @@ enum PluginCategory {
   AI
 }
 
+// ── Webhook delivery log ─────────────────────────────────────────────────────
+// Every inbound webhook (Stripe, PaySky, Paymob, Fawry, shipping providers)
+// writes a row here so admins can inspect, replay, and debug delivery issues.
+model WebhookLog {
+  id          String    @id @default(uuid())
+  source      String    // "stripe" | "paysky" | "paymob" | "fawry" | "bosta"
+  event       String    // raw event type, e.g. "payment_intent.succeeded"
+  payload     String    @db.Text // raw JSON body (may be large)
+  status      String    @default("ok") // "ok" | "error" | "retrying" | "ignored"
+  statusCode  Int?      // HTTP status we returned to the provider
+  errorMsg    String?   // error detail when status = "error"
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([source, receivedAt])
+  @@index([status, receivedAt])
+}
+
+// ── Background job log ───────────────────────────────────────────────────────
+// Lightweight job audit trail. Jobs write a row on start and update on
+// completion / failure. The admin Jobs tab reads this for a live queue view.
+model JobLog {
+  id        String   @id @default(uuid())
+  name      String   // "send-order-email" | "process-payout" | "sync-inventory"
+  status    String   @default("pending") // "pending"|"running"|"done"|"failed"
+  payload   String?  @db.Text // input params (JSON)
+  result    String?  @db.Text // output or error detail (JSON)
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([name, createdAt])
+}
+
+// ── Feature flags ────────────────────────────────────────────────────────────
+// Toggle features per deployment scope without a code deploy.
+// Scopes: "ALL" | "ADMIN" | "SELLER" | "BUYER" | "STAGING"
+model FeatureFlag {
+  key         String   @id           // machine-readable slug, e.g. "virtual-tryon"
+  label       String                 // human label shown in admin UI
+  description String   @default("")
+  enabled     Boolean  @default(false)
+  scope       String   @default("ALL") // who sees this feature
+  updatedAt   DateTime @updatedAt
+}
+
 // Per-governorate (or per-zone) shipping rate. Replaces the hard-coded
 // constants in lib/shipping-rates.ts. The lookup function reads here
 // first and falls back to the SHIPPING_RATES_JSON setting only if the

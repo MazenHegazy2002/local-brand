@@ -29,6 +29,11 @@ import ShippingTab from './_components/ShippingTab';
 import BannersTab from './_components/BannersTab';
 import WhatsAppTab from './_components/WhatsAppTab';
 import TrackerTab from './_components/TrackerTab';
+import WebhooksTab from './_components/WebhooksTab';
+import JobsTab from './_components/JobsTab';
+import FeatureFlagsTab from './_components/FeatureFlagsTab';
+import HealthTab from './_components/HealthTab';
+
 import { useConfirm } from '@/providers/ConfirmProvider';
 import { useToast } from '@/components/ui/ToastProvider';
 import {
@@ -467,6 +472,31 @@ export default function AdminOS() {
           icon={<PluginIcon />}
         />
         <NavItem
+          active={activeTab === 'webhooks'}
+          onClick={() => setActiveTab('webhooks')}
+          label="Webhooks"
+          icon={<WebhooksIcon />}
+        />
+        <NavItem
+          active={activeTab === 'jobs'}
+          onClick={() => setActiveTab('jobs')}
+          label="Jobs"
+          icon={<JobsIcon />}
+        />
+        <NavItem
+          active={activeTab === 'flags'}
+          onClick={() => setActiveTab('flags')}
+          label="Feature Flags"
+          icon={<FlagsIcon />}
+        />
+        <NavItem
+          active={activeTab === 'health'}
+          onClick={() => setActiveTab('health')}
+          label="System Health"
+          icon={<HealthIcon />}
+        />
+
+        <NavItem
           active={activeTab === 'shipping'}
           onClick={() => setActiveTab('shipping')}
           label="Shipping"
@@ -584,6 +614,10 @@ export default function AdminOS() {
           )}
           {activeTab === 'settings' && <NewSettingsTab />}
           {activeTab === 'plugins' && <PluginsTab />}
+          {activeTab === 'webhooks' && <WebhooksTab />}
+          {activeTab === 'jobs' && <JobsTab />}
+          {activeTab === 'flags' && <FeatureFlagsTab />}
+          {activeTab === 'health' && <HealthTab />}
           {activeTab === 'banners' && <BannersTab />}
           {activeTab === 'pages' && <PagesTab />}
           {activeTab === 'reviews' && <ReviewsTab />}
@@ -736,6 +770,10 @@ const TITLES: Record<string, string> = {
   taxonomy: 'Classification systems',
   affiliate: 'Affiliate program',
   plugins: 'Plugins & integrations',
+  webhooks: 'Webhook delivery logs',
+  jobs: 'Background queue & jobs',
+  flags: 'Feature flags manager',
+  health: 'System performance & health',
   shipping: 'Governorate shipping rates',
   maintenance: 'Maintenance & system',
   tracker: 'Developer metrics & tracker',
@@ -4570,6 +4608,58 @@ function TrackerIcon() {
     <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
       <path
         d="M2 13h12M4 10h2v3H4v-3zm4-5h2v8H8V5zm4-3h2v11h-2V2z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".7"
+      />
+    </svg>
+  );
+}
+
+function WebhooksIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M2 5h12M4 5v6a2 2 0 002 2h4a2 2 0 002-2V5"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".7"
+      />
+      <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.2" opacity=".7" />
+    </svg>
+  );
+}
+
+function JobsIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.2" opacity=".7" />
+      <path d="M8 2v3M8 11v3M2 8h3M11 8h3" stroke="currentColor" strokeWidth="1.2" opacity=".7" />
+    </svg>
+  );
+}
+
+function FlagsIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M3 1v14M3 3h10l-2 3 2 3H3"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        opacity=".7"
+      />
+    </svg>
+  );
+}
+
+function HealthIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M2 8h2l2-4 2 8 2-6 1 2h3"
         stroke="currentColor"
         strokeWidth="1.2"
         fill="none"
