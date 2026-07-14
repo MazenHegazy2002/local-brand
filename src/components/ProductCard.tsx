@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import WishlistButton, { WishlistProduct } from './WishlistButton';
@@ -142,42 +142,49 @@ export default function ProductCard({
   const _egpText = t ? t('EGP') || 'EGP' : 'EGP';
 
   // ── Color Swatch & Variant Parsing ──
-  const variants = (product.variants || []) as ProductVariant[];
-  const colorMap = new Map<string, { variant: ProductVariant; colorName: string }>();
+  const variants = React.useMemo(
+    () => (product.variants || []) as ProductVariant[],
+    [product.variants]
+  );
 
-  variants.forEach(v => {
-    try {
-      const attrs = JSON.parse(v.attributes || '{}');
-      const color = attrs.color || attrs.Color;
-      if (color) {
-        const colorName = String(color).trim();
-        const key = colorName.toLowerCase();
-        // Prefer in-stock variant if there are duplicates for the same color
-        if (!colorMap.has(key) || (!colorMap.get(key)!.variant.stockCount && v.stockCount)) {
-          colorMap.set(key, { variant: v, colorName });
+  const uniqueColors = React.useMemo(() => {
+    const colorMap = new Map<string, { variant: ProductVariant; colorName: string }>();
+    variants.forEach(v => {
+      try {
+        const attrs = JSON.parse(v.attributes || '{}');
+        const color = attrs.color || attrs.Color;
+        if (color) {
+          const colorName = String(color).trim();
+          const key = colorName.toLowerCase();
+          // Prefer in-stock variant if there are duplicates for the same color
+          if (!colorMap.has(key) || (!colorMap.get(key)!.variant.stockCount && v.stockCount)) {
+            colorMap.set(key, { variant: v, colorName });
+          }
         }
+      } catch (_e) {
+        // Ignore parsing errors
       }
-    } catch (_e) {
-      // Ignore parsing errors
-    }
-  });
-
-  const uniqueColors = Array.from(colorMap.values());
+    });
+    return Array.from(colorMap.values());
+  }, [variants]);
 
   // ── Image Matching Logic ──
-  const getMatchedImageUrl = (colorName: string) => {
-    if (!colorName || !product.images) return null;
-    const lowerColor = colorName.toLowerCase();
+  const getMatchedImageUrl = React.useCallback(
+    (colorName: string) => {
+      if (!colorName || !product.images) return null;
+      const lowerColor = colorName.toLowerCase();
 
-    // Find image that has the color name in its URL
-    const matched = product.images.find(img => {
-      const urlLower = img.url.toLowerCase();
-      const regex = new RegExp(`\\b${lowerColor}\\b|[-_]${lowerColor}[-_.]`, 'i');
-      return regex.test(urlLower) || urlLower.includes(lowerColor);
-    });
+      // Find image that has the color name in its URL
+      const matched = product.images.find(img => {
+        const urlLower = img.url.toLowerCase();
+        const regex = new RegExp(`\\b${lowerColor}\\b|[-_]${lowerColor}[-_.]`, 'i');
+        return regex.test(urlLower) || urlLower.includes(lowerColor);
+      });
 
-    return matched?.url || null;
-  };
+      return matched?.url || null;
+    },
+    [product.images]
+  );
 
   const hasRealColors =
     uniqueColors.length > 0 &&
@@ -220,7 +227,15 @@ export default function ProductCard({
       setActiveImage(displayImage);
     }
     setSelectedSize(null);
-  }, [product.variants, displayImage, hasRealColors]);
+  }, [
+    product.variants,
+    displayImage,
+    hasRealColors,
+    basePrice,
+    getMatchedImageUrl,
+    uniqueColors,
+    variants,
+  ]);
 
   // Supports both old format { "color":"Red","size":"M" } and new format { "color":"Red","sizes":["S","M","L"] }
   const parsedVariants = variants.flatMap((v: any) => {

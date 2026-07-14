@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/lib/cartStore';
@@ -107,7 +107,7 @@ export default function ProductDetails({
   const productDescription =
     isAr && product.descriptionAr ? product.descriptionAr : product.description;
 
-  const images = product.images || [];
+  const images = React.useMemo(() => product.images || [], [product.images]);
   const primaryImage =
     images.find((i: ProductImage) => i.isPrimary)?.url || images[0]?.url || '/placeholder.png';
 
@@ -183,16 +183,19 @@ export default function ProductDetails({
   const initialColor = hasColors && uniqueColors.length === 1 ? uniqueColors[0].colorName : '';
 
   // Image search mapping matching search criteria
-  const getMatchedImageUrl = (colorName: string) => {
-    if (!colorName || !images.length) return null;
-    const lowerColor = colorName.toLowerCase();
-    const matched = images.find((img: ProductImage) => {
-      const urlLower = img.url.toLowerCase();
-      const regex = new RegExp(`\\b${lowerColor}\\b|[-_]${lowerColor}[-_.]`, 'i');
-      return regex.test(urlLower) || urlLower.includes(lowerColor);
-    });
-    return matched?.url || null;
-  };
+  const getMatchedImageUrl = React.useCallback(
+    (colorName: string) => {
+      if (!colorName || !images.length) return null;
+      const lowerColor = colorName.toLowerCase();
+      const matched = images.find((img: ProductImage) => {
+        const urlLower = img.url.toLowerCase();
+        const regex = new RegExp(`\\b${lowerColor}\\b|[-_]${lowerColor}[-_.]`, 'i');
+        return regex.test(urlLower) || urlLower.includes(lowerColor);
+      });
+      return matched?.url || null;
+    },
+    [images]
+  );
 
   // ── Interactive Client States ──
   const [selectedColor, setSelectedColor] = useState<string>(initialColor);
@@ -208,7 +211,7 @@ export default function ProductDetails({
     setQty(1);
     const matchedImg = initialColor ? getMatchedImageUrl(initialColor) : null;
     setActiveImage(matchedImg || primaryImage);
-  }, [product.id, primaryImage, initialColor]);
+  }, [product.id, primaryImage, initialColor, getMatchedImageUrl]);
 
   // Extract all unique sizes for selected color, or all sizes if no color is selected yet
   const sizesForColor = parsedVariants.filter(

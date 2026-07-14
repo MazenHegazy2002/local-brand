@@ -14,7 +14,7 @@ function maskIp(ip: string | null): string | null {
 }
 
 // Human-readable mapping for visitor events based on path and eventType
-function formatEventAction(eventType: string, path: string, eventDetails?: string | null): string {
+function formatEventAction(eventType: string, path: string, _eventDetails?: string | null): string {
   if (eventType === 'ADD_TO_CART') return 'Add To Cart';
   if (eventType === 'CHECKOUT_STARTED') return 'Checkout Started';
   if (eventType === 'PURCHASE') return 'Purchase Completed';

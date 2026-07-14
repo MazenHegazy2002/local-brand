@@ -29,7 +29,7 @@ export default function WebhooksTab() {
   const [sourceFilter, setSourceFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
-  const load = async () => {
+  const load = React.useCallback(async () => {
     setLoading(true);
     try {
       const q = new URLSearchParams();
@@ -46,7 +46,7 @@ export default function WebhooksTab() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [sourceFilter, statusFilter]);
 
   const loadPayload = async (log: WebhookLog) => {
     setActiveLog(log);
@@ -67,7 +67,7 @@ export default function WebhooksTab() {
 
   useEffect(() => {
     load();
-  }, [sourceFilter, statusFilter]);
+  }, [load]);
 
   return (
     <div className="webhooks-container">

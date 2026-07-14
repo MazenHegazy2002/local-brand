@@ -28,7 +28,7 @@ export default function JobsTab() {
   const [nameFilter, setNameFilter] = useState('');
   const [activeJob, setActiveJob] = useState<JobLog | null>(null);
 
-  const load = async () => {
+  const load = React.useCallback(async () => {
     setLoading(true);
     try {
       const q = new URLSearchParams();
@@ -45,13 +45,13 @@ export default function JobsTab() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter, nameFilter]);
 
   useEffect(() => {
     load();
     const interval = setInterval(load, 15000); // Auto refresh every 15s
     return () => clearInterval(interval);
-  }, [statusFilter, nameFilter]);
+  }, [load]);
 
   return (
     <div className="jobs-container">

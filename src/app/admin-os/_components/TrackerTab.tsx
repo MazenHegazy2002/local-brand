@@ -180,7 +180,11 @@ export default function TrackerTab() {
   const toggleSession = (token: string) => {
     setExpandedSessions(prev => {
       const next = new Set(prev);
-      next.has(token) ? next.delete(token) : next.add(token);
+      if (next.has(token)) {
+        next.delete(token);
+      } else {
+        next.add(token);
+      }
       return next;
     });
   };
