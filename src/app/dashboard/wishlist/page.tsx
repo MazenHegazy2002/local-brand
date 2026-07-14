@@ -69,8 +69,10 @@ export default function WishlistPage() {
 
   const moveToCart = async (item: WishlistItem) => {
     const variant = item.product.variants?.[0];
+    const vid = variantIdFor(item);
     addItem({
-      id: variantIdFor(item),
+      id: vid,
+      variantId: vid,
       name: item.product.title,
       price: variant?.price ?? item.product.basePrice,
       image: item.product.images[0]?.url,
@@ -82,8 +84,10 @@ export default function WishlistPage() {
 
   const addToCart = async (item: WishlistItem) => {
     const variant = item.product.variants?.[0];
+    const vid = variantIdFor(item);
     addItem({
-      id: variantIdFor(item),
+      id: vid,
+      variantId: vid,
       name: item.product.title,
       price: variant?.price ?? item.product.basePrice,
       image: item.product.images[0]?.url,

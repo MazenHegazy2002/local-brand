@@ -38,15 +38,24 @@ export const useCartStore = create<CartStore>()(
       addItem: item =>
         set(state => {
           const addQty = item.qty ?? 1;
-          const existing = state.items.find(i => i.id === item.id);
+          const variantId = item.variantId || item.id;
+          const sizePart = item.selectedSize || '';
+          const colorPart = item.selectedColor || '';
+          const normalizedId = `${variantId}-${sizePart}-${colorPart}`;
+
+          const existing = state.items.find(i => i.id === normalizedId);
           if (existing) {
             return {
-              items: state.items.map(i => (i.id === item.id ? { ...i, qty: i.qty + addQty } : i)),
+              items: state.items.map(i =>
+                i.id === normalizedId ? { ...i, qty: i.qty + addQty } : i
+              ),
             };
           }
           const { qty, ...rest } = item;
           void qty; // ensure we strip the qty field before spreading
-          return { items: [...state.items, { ...rest, qty: addQty }] };
+          return {
+            items: [...state.items, { ...rest, id: normalizedId, variantId, qty: addQty }],
+          };
         }),
 
       removeItem: id => set(state => ({ items: state.items.filter(i => i.id !== id) })),

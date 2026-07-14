@@ -194,6 +194,7 @@ function CustomerDashboard() {
         // 1. Add to the Zustand cart store — this is what checkout reads
         addItem({
           id: item.variantId,
+          variantId: item.variantId,
           name: item.productTitleSnapshot,
           price,
           qty: item.quantity,
