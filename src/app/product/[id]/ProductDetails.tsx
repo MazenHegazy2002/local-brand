@@ -180,7 +180,7 @@ export default function ProductDetails({
       return lower === 'standard' || lower === 'default' || lower === '';
     });
 
-  const initialColor = hasColors ? uniqueColors[0].colorName : '';
+  const initialColor = hasColors && uniqueColors.length === 1 ? uniqueColors[0].colorName : '';
 
   // Image search mapping matching search criteria
   const getMatchedImageUrl = (colorName: string) => {

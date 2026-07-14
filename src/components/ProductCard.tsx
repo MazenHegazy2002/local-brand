@@ -186,7 +186,7 @@ export default function ProductCard({
       return lower === 'standard' || lower === 'default' || lower === '';
     });
 
-  const initialColor = hasRealColors ? uniqueColors[0].colorName : '';
+  const initialColor = hasRealColors && uniqueColors.length === 1 ? uniqueColors[0].colorName : '';
 
   // ── Interactive Client State ──
   const [selectedColor, setSelectedColor] = useState<string | null>(initialColor || null);
@@ -206,7 +206,8 @@ export default function ProductCard({
   useEffect(() => {
     if (hasRealColors) {
       const firstColor = uniqueColors[0];
-      setSelectedColor(firstColor.colorName);
+      const defaultColor = uniqueColors.length === 1 ? firstColor.colorName : null;
+      setSelectedColor(defaultColor);
       setActiveVariant(firstColor.variant);
       setActivePrice(firstColor.variant.price || basePrice);
 
