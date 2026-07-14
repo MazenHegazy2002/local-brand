@@ -18,33 +18,29 @@ import { prisma } from '@/lib/prisma';
 import { readSecret } from '@/lib/secrets';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { isAllowedImageUrl } from '@/lib/allowed-image-hosts';
+import { SessionUser } from '@/types';
 
 const PLUGIN_SLUG = 'virtual-tryon';
 const MODEL = 'gemini-2.5-flash-image';
 
-// SSRF guard: only fetch product images from the hosts we actually serve
-// images from (mirrors next.config images.remotePatterns). Blocks fetches to
-// internal/link-local/metadata endpoints via an attacker-supplied URL.
-const ALLOWED_IMAGE_HOST_SUFFIXES = [
-  'images.unsplash.com',
-  'res.cloudinary.com',
-  'picsum.photos',
-  '.amazonaws.com',
-  '.public.blob.vercel-storage.com',
-  'blob.vercel-storage.com',
-  'lh3.googleusercontent.com',
-];
+// Rate limit: 10 virtual try-on calls per user per hour to control Gemini API spend.
+const TRYON_LIMIT = 10;
+const TRYON_WINDOW_SECS = 60 * 60; // 1 hour
 
-function isAllowedImageUrl(raw: string): boolean {
-  let url: URL;
+async function checkTryonRateLimit(
+  userId: string
+): Promise<{ limited: boolean; remaining: number }> {
   try {
-    url = new URL(raw);
+    const { redis } = await import('@/lib/redis');
+    const key = `tryon:rl:${userId}:${Math.floor(Date.now() / (TRYON_WINDOW_SECS * 1000))}`;
+    const count = await redis.incr(key);
+    if (count === 1) await redis.expire(key, TRYON_WINDOW_SECS);
+    return { limited: count > TRYON_LIMIT, remaining: Math.max(0, TRYON_LIMIT - count) };
   } catch {
-    return false;
+    // Fail open — never block a user due to Redis being down
+    return { limited: false, remaining: TRYON_LIMIT };
   }
-  if (url.protocol !== 'https:') return false;
-  const host = url.hostname.toLowerCase();
-  return ALLOWED_IMAGE_HOST_SUFFIXES.some(suffix => host === suffix || host.endsWith(suffix));
 }
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -54,6 +50,19 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // 0b. Per-user rate limit — max 10 try-on calls per hour.
+  const userId = (session.user as SessionUser).id;
+  const rl = await checkTryonRateLimit(userId);
+  if (rl.limited) {
+    return NextResponse.json(
+      { error: 'You have reached the virtual try-on limit (10 per hour). Please try again later.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(TRYON_WINDOW_SECS), 'X-RateLimit-Remaining': '0' },
+      }
+    );
   }
 
   // 1. Check plugin is installed + enabled
