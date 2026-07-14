@@ -9,27 +9,33 @@ import { z } from 'zod';
 /**
  * PayMob Egypt payment integration.
  * Creates a payment token that the client uses with PayMob's iFrame.
- * 
+ *
  * Env vars required:
  *   PAYMOB_API_KEY
- *   PAYMOB_INTEGRATION_ID  
+ *   PAYMOB_INTEGRATION_ID
  *   PAYMOB_IFRAME_ID
- * 
+ *
  * See https://docs.paymob.com/ for details.
  */
 const payMobSchema = z.object({
-  cartItems: z.array(z.object({
-    id: z.string(),
-    qty: z.number().int().positive(),
-  })).min(1),
-  addressInfo: z.object({
-    id: z.string().optional(),
-    fullName: z.string().optional(),
-    phone: z.string().optional(),
-    street: z.string().optional(),
-    city: z.string().optional(),
-    governorate: z.string().optional(),
-  }).optional(),
+  cartItems: z
+    .array(
+      z.object({
+        id: z.string(),
+        qty: z.number().int().positive(),
+      })
+    )
+    .min(1),
+  addressInfo: z
+    .object({
+      id: z.string().optional(),
+      fullName: z.string().optional(),
+      phone: z.string().optional(),
+      street: z.string().optional(),
+      city: z.string().optional(),
+      governorate: z.string().optional(),
+    })
+    .optional(),
   couponId: z.string().optional(),
 });
 
@@ -191,19 +197,41 @@ export async function POST(req: Request) {
       ? `https://accept.paymob.com/api/acceptance/iframes/${iframeId}?payment_token=${paymentKey.token}`
       : null;
 
+    // Cache the pending cart in Redis so the callback can finalize the order
+    // server-side without trusting any client-supplied data.
+    try {
+      const { redis } = await import('@/lib/redis');
+      await redis.set(
+        `paymob:pending:${merchantOrderId}`,
+        JSON.stringify({
+          userId,
+          cartItems,
+          addressInfo,
+          couponId,
+          subtotal,
+          total,
+          createdAt: new Date().toISOString(),
+        }),
+        'EX',
+        60 * 60 // 1-hour TTL — matches PayMob's token lifetime
+      );
+    } catch (err) {
+      // Non-fatal — callback will still work if Redis is unavailable, but
+      // we won't be able to auto-confirm without the pending record.
+      console.warn('[paymob] Failed to cache pending cart:', err);
+    }
+
     return NextResponse.json({
       success: true,
       paymentToken: paymentKey.token,
       orderId: payMobOrder.id,
+      merchantOrderId,
       iframeUrl,
       total: total.toFixed(2),
     });
   } catch (error: unknown) {
     const err = error as Error;
     console.error('[paymob] Error:', err);
-    return NextResponse.json(
-      { message: err.message || 'PayMob request failed' },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: err.message || 'PayMob request failed' }, { status: 500 });
   }
 }

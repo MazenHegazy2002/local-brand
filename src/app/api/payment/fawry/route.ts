@@ -19,20 +19,29 @@ import { z } from 'zod';
  */
 
 const fawrySchema = z.object({
-  cartItems: z.array(z.object({
-    id: z.string(),
-    qty: z.number().int().positive(),
-  })).min(1),
-  addressInfo: z.object({
-    fullName: z.string().optional(),
-    phone: z.string().optional(),
-    governorate: z.string().optional(),
-  }).optional(),
+  cartItems: z
+    .array(
+      z.object({
+        id: z.string(),
+        qty: z.number().int().positive(),
+      })
+    )
+    .min(1),
+  addressInfo: z
+    .object({
+      fullName: z.string().optional(),
+      phone: z.string().optional(),
+      governorate: z.string().optional(),
+    })
+    .optional(),
   couponId: z.string().optional(),
 });
 
 function fawrySignature(parts: string[], securityKey: string): string {
-  return crypto.createHash('sha256').update(parts.join('') + securityKey).digest('hex');
+  return crypto
+    .createHash('sha256')
+    .update(parts.join('') + securityKey)
+    .digest('hex');
 }
 
 export async function POST(req: Request) {
@@ -54,7 +63,12 @@ export async function POST(req: Request) {
 
     // Server-side total computation
     let subtotal = 0;
-    const chargeItems: Array<{ itemId: string; description: string; price: number; quantity: number }> = [];
+    const chargeItems: Array<{
+      itemId: string;
+      description: string;
+      price: number;
+      quantity: number;
+    }> = [];
     for (const item of cartItems) {
       const variant = await prisma.productVariant.findUnique({
         where: { id: item.id },
@@ -107,12 +121,7 @@ export async function POST(req: Request) {
 
     // Signature per Fawry spec (simplified charge request)
     const sig = fawrySignature(
-      [
-        merchantCode,
-        merchantRefNumber,
-        customerProfileId,
-        amount.toFixed(2),
-      ],
+      [merchantCode, merchantRefNumber, customerProfileId, amount.toFixed(2)],
       securityKey
     );
 
@@ -137,10 +146,7 @@ export async function POST(req: Request) {
     if (!fawryRes.ok) {
       const errText = await fawryRes.text();
       console.error('[fawry] API error:', errText);
-      return NextResponse.json(
-        { message: 'Fawry payment creation failed' },
-        { status: 502 }
-      );
+      return NextResponse.json({ message: 'Fawry payment creation failed' }, { status: 502 });
     }
 
     const data = (await fawryRes.json()) as {
@@ -157,19 +163,38 @@ export async function POST(req: Request) {
       );
     }
 
+    // Cache the pending cart so the server-to-server callback can finalize
+    // the order without trusting any client-supplied data.
+    try {
+      const { redis } = await import('@/lib/redis');
+      await redis.set(
+        `fawry:pending:${merchantRefNumber}`,
+        JSON.stringify({
+          userId,
+          cartItems,
+          addressInfo,
+          couponId,
+          amount,
+          createdAt: new Date().toISOString(),
+        }),
+        'EX',
+        48 * 60 * 60 // 48-hour TTL — matches Fawry payment window
+      );
+    } catch (err) {
+      console.warn('[fawry] Failed to cache pending cart:', err);
+    }
+
     return NextResponse.json({
       success: true,
       fawryRefNumber: data.referenceNumber,
       amount: amount.toFixed(2),
       expiresAt: data.expirationTime || new Date(paymentExpiry).toISOString(),
+      merchantRefNumber,
       message: 'Use this reference at any Fawry outlet or via mobile wallet within 48 hours.',
     });
   } catch (error: unknown) {
     const err = error as Error;
     console.error('[fawry] Error:', err);
-    return NextResponse.json(
-      { message: err.message || 'Fawry request failed' },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: err.message || 'Fawry request failed' }, { status: 500 });
   }
 }

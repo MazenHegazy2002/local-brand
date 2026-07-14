@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
+import { isAllowedImageUrl } from '@/lib/allowed-image-hosts';
 
 interface BulkProductRow {
   title?: string;
@@ -259,7 +260,21 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        const hasImage = !!(row.imageUrl && row.imageUrl.trim());
+        // Validate image URL host against the platform allow-list
+        const rawImageUrl = row.imageUrl?.trim();
+        if (rawImageUrl && !isAllowedImageUrl(rawImageUrl)) {
+          let badHost = rawImageUrl;
+          try {
+            badHost = new URL(rawImageUrl).hostname;
+          } catch {
+            /* keep raw */
+          }
+          results.errors.push(
+            `Row ${rowNumber}: image host "${badHost}" is not allowed — product saved as draft. ` +
+              'Upload via Seller Hub > Products > Upload Image instead.'
+          );
+        }
+        const hasImage = !!(rawImageUrl && isAllowedImageUrl(rawImageUrl));
         const product = await prisma.product.create({
           data: {
             title: row.title,
@@ -273,9 +288,9 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        if (hasImage && row.imageUrl) {
+        if (hasImage && rawImageUrl) {
           await prisma.productImage.create({
-            data: { productId: product.id, url: row.imageUrl.trim(), isPrimary: true },
+            data: { productId: product.id, url: rawImageUrl, isPrimary: true },
           });
         }
 
