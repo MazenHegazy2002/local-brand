@@ -80,9 +80,12 @@ export default async function BrandsPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="text-3xl font-serif font-bold text-[hsl(var(--primary))] opacity-80">
-                          {initial}
-                        </span>
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src="/placeholder.png"
+                          alt={brand.storeName}
+                          className="w-full h-full object-cover opacity-50"
+                        />
                       )}
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-2">{brand.storeName}</h3>

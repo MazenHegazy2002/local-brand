@@ -821,6 +821,7 @@ model Affiliate {
   @@index([tier])
   @@index([promoCode])
   @@index([totalEarnedEgp])
+  @@index([userId])
 }
 
 model AffiliateTierConfig {

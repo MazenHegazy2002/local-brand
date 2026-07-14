@@ -117,7 +117,7 @@ export async function POST(req: Request) {
 
       const cartItem = await prisma.cartItem.upsert({
         where: { userId_variantId: { userId, variantId } },
-        update: { quantity, savedPrice: resolvedPrice },
+        update: { quantity: { increment: quantity }, savedPrice: resolvedPrice },
         create: { userId, variantId, quantity, savedPrice: resolvedPrice },
       });
 
@@ -138,7 +138,7 @@ export async function POST(req: Request) {
 
       const existing = cart.find(item => item.variantId === variantId);
       if (existing) {
-        existing.quantity = quantity;
+        existing.quantity += quantity;
         existing.savedPrice = resolvedPrice;
       } else {
         cart.push({
