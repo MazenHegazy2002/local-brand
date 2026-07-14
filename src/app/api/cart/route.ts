@@ -85,15 +85,40 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     const body = await req.json();
-    const { variantId, quantity, savedPrice, guestId } = body;
+    const { variantId, quantity, guestId } = body;
+
+    if (!variantId) {
+      return NextResponse.json({ message: 'Missing variantId' }, { status: 400 });
+    }
+
+    const variant = await prisma.productVariant.findUnique({
+      where: { id: variantId },
+    });
+
+    if (!variant) {
+      return NextResponse.json({ message: 'Variant not found' }, { status: 404 });
+    }
+
+    if (typeof quantity !== 'number' || quantity <= 0) {
+      return NextResponse.json({ message: 'Quantity must be at least 1' }, { status: 400 });
+    }
+
+    if (variant.stockCount < quantity) {
+      return NextResponse.json(
+        { message: 'Requested quantity exceeds available stock' },
+        { status: 400 }
+      );
+    }
+
+    const resolvedPrice = variant.price;
 
     if (session) {
       const userId = (session.user as SessionUser).id;
 
       const cartItem = await prisma.cartItem.upsert({
         where: { userId_variantId: { userId, variantId } },
-        update: { quantity, savedPrice },
-        create: { userId, variantId, quantity, savedPrice },
+        update: { quantity, savedPrice: resolvedPrice },
+        create: { userId, variantId, quantity, savedPrice: resolvedPrice },
       });
 
       return NextResponse.json(
@@ -114,12 +139,12 @@ export async function POST(req: Request) {
       const existing = cart.find(item => item.variantId === variantId);
       if (existing) {
         existing.quantity = quantity;
-        existing.savedPrice = savedPrice;
+        existing.savedPrice = resolvedPrice;
       } else {
         cart.push({
           variantId,
           quantity,
-          savedPrice,
+          savedPrice: resolvedPrice,
           addedAt: new Date().toISOString(),
         });
       }

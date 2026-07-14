@@ -96,6 +96,7 @@ export default function VisitorTracker() {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     id: lastLogIdRef.current,
+                    sessionToken: sessionTokenRef.current,
                     durationSec: secondsSpent,
                   }),
                   keepalive: true,

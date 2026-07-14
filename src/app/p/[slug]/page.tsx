@@ -272,7 +272,15 @@ export default async function CmsPage({ params }: PageProps) {
     );
   }
 
-  const rendered = naiveMarkdownToHtml(body || '');
+  let cleanBody = body || '';
+  const lines = cleanBody.split(/\r?\n/);
+  const firstNonEmptyIdx = lines.findIndex(l => l.trim() !== '');
+  if (firstNonEmptyIdx !== -1 && lines[firstNonEmptyIdx].trim().startsWith('# ')) {
+    lines.splice(firstNonEmptyIdx, 1);
+    cleanBody = lines.join('\n');
+  }
+
+  const rendered = naiveMarkdownToHtml(cleanBody);
   // naiveMarkdownToHtml pre-escapes all raw HTML — already XSS-safe.
 
   return (

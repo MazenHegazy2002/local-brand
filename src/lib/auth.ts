@@ -75,7 +75,10 @@ export const authOptions: NextAuthOptions = {
           return { id: user.id, name: user.name, email: user.email, role: user.role };
         } catch (error) {
           console.error('[AUTH] Error:', error);
-          throw error; // Re-throw so NextAuth passes the error string to the client
+          if (error instanceof Error && error.message === 'Email not verified') {
+            throw error;
+          }
+          throw new Error('Login failed');
         }
       },
     }),

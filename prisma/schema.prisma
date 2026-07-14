@@ -820,6 +820,7 @@ model Affiliate {
   @@index([status])
   @@index([tier])
   @@index([promoCode])
+  @@index([totalEarnedEgp])
 }
 
 model AffiliateTierConfig {

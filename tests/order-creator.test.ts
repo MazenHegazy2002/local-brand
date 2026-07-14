@@ -245,13 +245,13 @@ describe('createOrderForUser — coupon application', () => {
       usedCount: 0,
     });
     const txOrderCreate = jest.fn<any>().mockResolvedValue({ id: 'order-3' });
-    const couponUpdate = jest.fn<any>();
+    const couponUpdateMany = jest.fn<any>().mockResolvedValue({ count: 1 });
     mocked.$transaction.mockImplementation((fn: any) =>
       typeof fn === 'function'
         ? fn({
             productVariant: { updateMany: jest.fn<any>().mockResolvedValue({ count: 1 }) },
             order: { create: txOrderCreate },
-            coupon: { update: couponUpdate },
+            coupon: { updateMany: couponUpdateMany },
           })
         : Promise.all(fn)
     );
@@ -270,7 +270,7 @@ describe('createOrderForUser — coupon application', () => {
     // (1000 - 200) * 1.14 + 40 shipping = 952
     expect(payload.totalAmount).toBeCloseTo(952);
     expect(payload.couponId).toBe('coupon-1');
-    expect(couponUpdate).toHaveBeenCalledWith(
+    expect(couponUpdateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'coupon-1' },
         data: { usedCount: { increment: 1 } },

@@ -11,7 +11,7 @@ export const redis = new Redis(redisUrl || 'redis://localhost:6379', {
   lazyConnect: true,
   maxRetriesPerRequest: 1,
   connectTimeout: 5_000,
-  enableOfflineQueue: false,
+  enableOfflineQueue: process.env.REDIS_OFFLINE_QUEUE === 'true',
 });
 
 // Prevent noisy unhandled error events from crashing or polluting logs.

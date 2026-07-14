@@ -1,6 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { headers } from 'next/headers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { SessionUser } from '@/types';
+import { redis } from '@/lib/redis';
 
 const geoCache = new Map<string, { city: string; country: string }>();
 
@@ -77,7 +81,7 @@ async function geolocateIp(
   return { city: 'Cairo', country: 'Egypt' };
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
     if (!body || !body.sessionToken || !body.path) {
@@ -86,10 +90,32 @@ export async function POST(req: Request) {
 
     const headersList = await headers();
     const userAgent = headersList.get('user-agent') || 'Unknown';
+
+    // IP spoofing protection: prioritize Next.js req.ip or Vercel x-real-ip
+    const xRealIp = headersList.get('x-real-ip');
     const forwardedFor = headersList.get('x-forwarded-for');
-    const ipAddress = forwardedFor
-      ? forwardedFor.split(',')[0].trim()
-      : headersList.get('x-real-ip') || '127.0.0.1';
+    let ipAddress = (req as any).ip || xRealIp;
+    if (!ipAddress && forwardedFor) {
+      ipAddress = forwardedFor.split(',')[0].trim();
+    }
+    if (!ipAddress) {
+      ipAddress = '127.0.0.1';
+    }
+
+    // Rate Limiting by IP (60 requests per minute)
+    const rateLimitKey = `rate_limit:tracker:${ipAddress}`;
+    try {
+      const currentRequests = await redis.incr(rateLimitKey);
+      if (currentRequests === 1) {
+        await redis.expire(rateLimitKey, 60);
+      }
+      if (currentRequests > 60) {
+        return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+      }
+    } catch (redisErr) {
+      // Fail open if Redis is down
+      console.error('[tracker] Redis rate limit check failed:', redisErr);
+    }
 
     let location = { city: 'Cairo', country: 'Egypt' };
     try {
@@ -99,6 +125,17 @@ export async function POST(req: Request) {
       }
     } catch (e) {
       console.error('[geolocateIp] Failed, using fallback:', e);
+    }
+
+    // Derive userId from the server-side session instead of trusting the client body.userId
+    let userId: string | null = null;
+    try {
+      const session = await getServerSession(authOptions);
+      if (session) {
+        userId = (session.user as SessionUser).id;
+      }
+    } catch (sessionErr) {
+      console.error('[tracker] Failed to fetch server-side session:', sessionErr);
     }
 
     const log = await prisma.trafficLog.create({
@@ -113,7 +150,7 @@ export async function POST(req: Request) {
         city: location.city,
         country: location.country,
         loadTimeMs: body.loadTimeMs ? parseInt(body.loadTimeMs) : null,
-        userId: body.userId,
+        userId,
       },
     });
 
@@ -125,15 +162,29 @@ export async function POST(req: Request) {
   }
 }
 
-export async function PUT(req: Request) {
+export async function PUT(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
-    if (!body || !body.id) {
-      return NextResponse.json({ error: 'Missing tracking log ID' }, { status: 400 });
+    if (!body || !body.id || !body.sessionToken) {
+      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
     const logId = body.id;
+    const sessionToken = body.sessionToken;
     const durationSec = parseInt(body.durationSec) || 0;
+
+    // Verify sessionToken matches the DB record
+    const log = await prisma.trafficLog.findUnique({
+      where: { id: logId },
+    });
+
+    if (!log) {
+      return NextResponse.json({ error: 'Traffic log not found' }, { status: 404 });
+    }
+
+    if (log.sessionToken !== sessionToken) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     await prisma.trafficLog.update({
       where: { id: logId },

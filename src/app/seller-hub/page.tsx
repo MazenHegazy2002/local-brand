@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -226,15 +226,24 @@ export default function SellerHub() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const dataFetched = useRef(false);
+
   // Access control — seller hub is an isolated portal; redirect all non-sellers
   useEffect(() => {
+    if (sessionStatus === 'loading') return;
+
     const role = (session?.user as SessionUser | undefined)?.role;
     if (sessionStatus === 'unauthenticated') {
       router.push('/seller/login');
-    } else if (session && role === 'ADMIN') {
+    } else if (role === 'ADMIN') {
       router.push('/admin-os');
-    } else if (session && role === 'BUYER') {
+    } else if (role === 'BUYER') {
       router.push('/dashboard');
+    } else if (role === 'SELLER') {
+      if (!dataFetched.current) {
+        dataFetched.current = true;
+        refreshData();
+      }
     }
   }, [session, sessionStatus, router]);
 
@@ -459,9 +468,7 @@ export default function SellerHub() {
     setVariants([{ color: 'Default', stock: 10, price: '', image: '', sizes: '' }]);
   };
 
-  useEffect(() => {
-    refreshData();
-  }, []);
+  // Data is loaded dynamically via the access control useEffect once the SELLER role is verified.
 
   if (!mounted || (loading && !data))
     return (

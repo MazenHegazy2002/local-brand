@@ -4,6 +4,7 @@ import { useCartStore } from '@/lib/cartStore';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useEffect } from 'react';
 
 // Dedicated /cart page — renders the full cart with all items.
 // The slide-out CartDrawer still works via the navbar icon;
@@ -12,8 +13,49 @@ export default function CartPage() {
   const items = useCartStore(s => s.items);
   const removeItem = useCartStore(s => s.removeItem);
   const updateQty = useCartStore(s => s.updateQty);
+  const rewriteId = useCartStore(s => s.rewriteId);
   const total = useCartStore(s => s.total());
   const count = useCartStore(s => s.count());
+
+  // Reconcile the cart against the server to rewrite legacy product IDs and drop invalid variants
+  useEffect(() => {
+    if (items.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/cart/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ variantIds: items.map(i => i.variantId || i.id) }),
+        });
+        if (!res.ok) return;
+        const data: { invalid?: string[]; rewrites?: Record<string, string> } = await res.json();
+        if (cancelled) return;
+        if (data.rewrites) {
+          for (const [oldId, newId] of Object.entries(data.rewrites)) {
+            const sourceItem = items.find(i => i.id === oldId || i.variantId === oldId);
+            if (sourceItem) {
+              rewriteId(sourceItem.id, newId);
+            }
+          }
+        }
+        if (data.invalid?.length) {
+          for (const invalidVariantId of data.invalid) {
+            const matchedItems = items.filter(i => (i.variantId || i.id) === invalidVariantId);
+            for (const mi of matchedItems) {
+              removeItem(mi.id);
+            }
+          }
+        }
+      } catch {
+        /* network error — leave cart alone */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <main className="min-h-screen bg-[#f9f8f6]">

@@ -146,7 +146,13 @@ jest.mock('@/lib/prisma', () => ({
       findFirst: jest.fn(),
       create: jest.fn(),
     },
-    coupon: { findUnique: jest.fn(), update: jest.fn(), findMany: jest.fn(), create: jest.fn() },
+    coupon: {
+      findUnique: jest.fn(),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+    },
     couponUsage: { findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn() },
     loyaltyTransaction: { findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn() },
     review: { findMany: jest.fn(), findFirst: jest.fn(), create: jest.fn(), aggregate: jest.fn() },
@@ -196,7 +202,11 @@ jest.mock('@/lib/prisma', () => ({
       deleteMany: jest.fn(),
     },
     verificationToken: { deleteMany: jest.fn() },
-    systemSettings: { findUnique: jest.fn(), upsert: jest.fn(), findMany: jest.fn() },
+    systemSettings: {
+      findUnique: jest.fn(),
+      upsert: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
     tag: { findMany: jest.fn(), create: jest.fn(), delete: jest.fn() },
     collection: { findMany: jest.fn(), create: jest.fn(), delete: jest.fn() },
     affiliate: {

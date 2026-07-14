@@ -12,7 +12,7 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://lolozozo.shop';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.lolozozo.shop';
 const SITEMAP_URL = `${APP_URL}/sitemap.xml`;
 
 export async function GET() {

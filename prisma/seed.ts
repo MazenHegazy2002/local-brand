@@ -886,6 +886,29 @@ async function main() {
       emailVerified: new Date(), // verified email is required to publish products
     },
   });
+  const LOGO_URLS = [
+    'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1534452286896-196903babb23?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1556740758-90de374c12ad?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1582719508461-905c673771fd?q=80&w=200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=200&auto=format&fit=crop',
+  ];
+
   const defaultSellerProfile = await prisma.sellerProfile.create({
     data: {
       userId: sellerUser.id,
@@ -894,6 +917,7 @@ async function main() {
       status: 'ACTIVE',
       balance: 0,
       commissionRate: 0.15,
+      logoUrl: LOGO_URLS[0],
     },
   });
 
@@ -1021,6 +1045,7 @@ async function main() {
         status: 'ACTIVE',
         balance: 0,
         commissionRate: 0.15,
+        logoUrl: LOGO_URLS[(i + 1) % LOGO_URLS.length],
       },
     });
     addedSellerProfiles.push(sp);
@@ -1354,6 +1379,123 @@ async function main() {
         linkUrl: '/shop',
         position: 2,
         isActive: true,
+      },
+    ],
+  });
+
+  // ── CMS Pages Seeding ───────────────────────────────────────────────────────
+  await prisma.page.createMany({
+    data: [
+      {
+        slug: 'legal-terms',
+        titleEn: 'Terms of Service',
+        bodyEn: `# Terms of Service
+
+Welcome to Brandy Egypt. By accessing or using our marketplace, you agree to be bound by these Terms of Service and all applicable Egyptian laws and regulations.
+
+## 1. Acceptance of Terms
+By creating an account or making a purchase on Brandy, you agree to these terms and our Privacy Policy.
+
+## 2. User Accounts
+You are responsible for maintaining the security of your account. You may not share your credentials or register multiple accounts.
+
+## 3. Prohibited Activities
+Users may not list counterfeit goods, engage in price manipulation, or misrepresent product descriptions.
+
+## 4. Dispute Resolution
+All disputes between buyers and sellers shall be mediated by Brandy. Our decision is final and binding per Egyptian Commercial Law.
+
+## 5. Governing Law
+These terms are governed by the laws of the Arab Republic of Egypt.`,
+        status: 'PUBLISHED',
+      },
+      {
+        slug: 'legal-privacy-policy',
+        titleEn: 'Privacy Policy',
+        bodyEn: `# Privacy Policy
+
+Brandy Egypt is committed to protecting your personal data in compliance with Egypt's Personal Data Protection Law (Law No. 151 of 2020).
+
+## Data We Collect
+- Account information (name, email, phone)
+- Order and transaction history
+- Delivery addresses
+- Browsing behavior on our platform
+
+## How We Use Your Data
+- To process orders and payments
+- To communicate order updates
+- To personalize your shopping experience
+
+## Your Rights
+You have the right to access, correct, and delete your personal data. Use our Data Export feature in Account Settings.
+
+## Data Retention
+Order data is retained for 7 years per Egyptian tax law. Personal data is anonymized upon account deletion.`,
+        status: 'PUBLISHED',
+      },
+      {
+        slug: 'legal-returns-refunds',
+        titleEn: 'Returns & Refunds',
+        bodyEn: `# Return Policy
+
+## 14-Day Return Window
+All items may be returned within 14 days of delivery for a full refund, provided they are in original condition with all tags attached.
+
+## Non-Returnable Items
+Customized, personalized, or hygiene-sensitive products are not eligible for returns.
+
+## Return Process
+1. Go to your Order History
+2. Select the item and click "Request Return"
+3. Upload photos of the item
+4. Ship the item via any courier
+5. Refund processed within 5-7 business days of seller confirmation
+
+## Refund Method
+Refunds are returned to the original payment method or credited to your Brandy wallet.`,
+        status: 'PUBLISHED',
+      },
+      {
+        slug: 'legal-shipping-policy',
+        titleEn: 'Shipping Policy',
+        bodyEn: `# Shipping Policy
+
+We ship to all governorates of Egypt using premium courier partners.
+
+## Transit Times
+- Greater Cairo & Giza: 2-3 business days
+- Alexandria & Delta: 3-4 business days
+- Upper Egypt & Sinai: 4-6 business days
+
+## Shipping Fees
+Fees are calculated automatically at checkout based on your delivery governorate. Enjoy free shipping on orders above 1500 EGP.`,
+        status: 'PUBLISHED',
+      },
+      {
+        slug: 'legal-seller-terms',
+        titleEn: 'Seller Terms',
+        bodyEn: `# Seller Agreement
+
+## Seller Obligations
+By becoming a Brandy seller, you agree to:
+- List only authentic, accurately described products
+- Fulfill orders within 2 business days of confirmation
+- Accept returns per Brandy's return policy
+- Maintain a seller rating above 3.5 stars
+
+## Commission Structure
+Brandy charges a 15% commission on every successful sale. Payouts are processed 7-14 days post-delivery.
+
+## Prohibited Listings
+Counterfeit goods, hazardous materials, and items banned under Egyptian law are strictly prohibited.
+
+## Account Suspension
+Brandy reserves the right to suspend seller accounts for policy violations, poor performance metrics, or fraudulent activity.
+
+## Tax Obligations
+Sellers are responsible for declaring income and paying applicable taxes under Egyptian tax law.`,
+        status: 'PUBLISHED',
       },
     ],
   });

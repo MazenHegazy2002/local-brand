@@ -56,6 +56,7 @@ export default function SellerApplicationPage() {
   const [tiktokUrl, setTiktokUrl] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [submitError, setSubmitError] = useState('');
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -275,15 +276,70 @@ export default function SellerApplicationPage() {
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Store Logo URL (Optional)
+                      Store Logo (Optional)
                     </label>
-                    <input
-                      type="url"
-                      value={logoUrl}
-                      onChange={e => setLogoUrl(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
-                      placeholder="https://example.com/logo.png"
-                    />
+                    <div className="flex items-center gap-4 border border-dashed border-gray-350 rounded-xl p-4 bg-gray-50/50 hover:bg-gray-50/80 transition-colors">
+                      <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center border border-gray-100 overflow-hidden shrink-0 shadow-sm relative">
+                        {logoUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={logoUrl}
+                            alt="Store Logo Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-xl">🏪</span>
+                        )}
+                        {isUploadingLogo && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-xs font-semibold">
+                            ...
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={isUploadingLogo}
+                          onChange={async e => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setIsUploadingLogo(true);
+                            try {
+                              const formData = new FormData();
+                              formData.append('file', file);
+                              const uploadRes = await fetch('/api/upload', {
+                                method: 'POST',
+                                body: formData,
+                              });
+                              if (!uploadRes.ok) throw new Error('Upload failed');
+                              const data = await uploadRes.json();
+                              if (data.url) setLogoUrl(data.url);
+                            } catch (err) {
+                              console.error(err);
+                              alert('Failed to upload logo.');
+                            } finally {
+                              setIsUploadingLogo(false);
+                            }
+                          }}
+                          className="hidden"
+                          id="logo-upload"
+                        />
+                        <label
+                          htmlFor="logo-upload"
+                          className={`inline-block px-4 py-2 bg-white border border-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold rounded-lg cursor-pointer transition-all shadow-sm ${isUploadingLogo ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          {isUploadingLogo
+                            ? 'Uploading...'
+                            : logoUrl
+                              ? 'Change Logo'
+                              : 'Upload Logo'}
+                        </label>
+                        <p className="text-[10px] text-gray-400 mt-1">
+                          PNG, JPG up to 10MB. If empty, a letter-initial placeholder will be shown.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
