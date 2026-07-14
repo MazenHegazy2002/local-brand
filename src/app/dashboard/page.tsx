@@ -199,6 +199,8 @@ function CustomerDashboard() {
           price,
           qty: item.quantity,
           image,
+          selectedSize: item.selectedSize || undefined,
+          selectedColor: item.selectedColor || undefined,
         });
 
         // 2. Persist to DB for cross-device / session continuity (fire-and-forget; non-fatal)

@@ -98,6 +98,28 @@ export async function createOrderForUser(
     // admin/seller views that already render the snapshot pick it up for free.
     const addressSnapshot = userId ? resolvedAddress : { ...resolvedAddress, email: guestEmail };
 
+    // Merge any duplicate cart items matching the same (variantId, selectedSize, selectedColor)
+    const mergedCartItems: Array<{
+      variantId: string;
+      quantity: number;
+      selectedSize?: string;
+      selectedColor?: string;
+    }> = [];
+
+    for (const item of cartItemsInput) {
+      const existing = mergedCartItems.find(
+        m =>
+          m.variantId === item.variantId &&
+          (m.selectedSize || null) === (item.selectedSize || null) &&
+          (m.selectedColor || null) === (item.selectedColor || null)
+      );
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        mergedCartItems.push({ ...item });
+      }
+    }
+
     let subtotal = 0;
     let loyaltyPointsToAward = 0; // accumulated per-item loyalty points (Task 8)
     const orderItemsData: Array<{
@@ -111,7 +133,7 @@ export async function createOrderForUser(
       selectedColor?: string | null;
     }> = [];
 
-    for (const itemInput of cartItemsInput) {
+    for (const itemInput of mergedCartItems) {
       const variant = await prisma.productVariant.findUnique({
         where: { id: itemInput.variantId },
         include: { product: { include: { seller: true } } },
@@ -272,7 +294,7 @@ export async function createOrderForUser(
     // ── 4. Execute Transaction ───────────────────────────────────────────────
     const order = await prisma.$transaction(async tx => {
       // Stock decrement
-      for (const item of cartItemsInput) {
+      for (const item of mergedCartItems) {
         const updated = await tx.productVariant.updateMany({
           where: { id: item.variantId, stockCount: { gte: item.quantity } },
           data: { stockCount: { decrement: item.quantity } },
