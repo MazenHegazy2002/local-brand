@@ -808,6 +808,7 @@ async function main() {
   await prisma.returnRequest.deleteMany();
   await prisma.supportTicket.deleteMany();
   await prisma.homepageBanner.deleteMany();
+  await prisma.page.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.productQA.deleteMany();
   await prisma.cartItem.deleteMany();
@@ -875,17 +876,6 @@ async function main() {
     },
   });
 
-  const sellerPwHash = await bcrypt.hash('seller1234', 12);
-  const sellerUser = await prisma.user.create({
-    data: {
-      name: 'Demo Seller',
-      email: 'seller@seller.com',
-      passwordHash: sellerPwHash,
-      role: 'SELLER',
-      loyaltyPoints: 0,
-      emailVerified: new Date(), // verified email is required to publish products
-    },
-  });
   const LOGO_URLS = [
     'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?q=80&w=200&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1534452286896-196903babb23?q=80&w=200&auto=format&fit=crop',
@@ -908,6 +898,19 @@ async function main() {
     'https://images.unsplash.com/photo-1582719508461-905c673771fd?q=80&w=200&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=200&auto=format&fit=crop',
   ];
+
+  const sellerPwHash = await bcrypt.hash('seller1234', 12);
+  const sellerUser = await prisma.user.create({
+    data: {
+      name: 'Demo Seller',
+      email: 'seller@seller.com',
+      passwordHash: sellerPwHash,
+      role: 'SELLER',
+      loyaltyPoints: 0,
+      emailVerified: new Date(), // verified email is required to publish products
+      avatarUrl: LOGO_URLS[0],
+    },
+  });
 
   const defaultSellerProfile = await prisma.sellerProfile.create({
     data: {
@@ -1027,6 +1030,7 @@ async function main() {
   const addedSellerProfiles = [];
   for (let i = 0; i < SELLER_BRANDS.length; i++) {
     const brand = SELLER_BRANDS[i];
+    const logo = LOGO_URLS[(i + 1) % LOGO_URLS.length];
     const u = await prisma.user.create({
       data: {
         name: brand.name,
@@ -1035,6 +1039,7 @@ async function main() {
         role: 'SELLER',
         loyaltyPoints: 0,
         emailVerified: new Date(), // verified email is required to publish products
+        avatarUrl: logo,
       },
     });
     const sp = await prisma.sellerProfile.create({
@@ -1045,7 +1050,7 @@ async function main() {
         status: 'ACTIVE',
         balance: 0,
         commissionRate: 0.15,
-        logoUrl: LOGO_URLS[(i + 1) % LOGO_URLS.length],
+        logoUrl: logo,
       },
     });
     addedSellerProfiles.push(sp);
