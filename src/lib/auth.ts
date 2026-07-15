@@ -73,12 +73,14 @@ export const authOptions: NextAuthOptions = {
         ]);
 
         if (emailAttempts && parseInt(emailAttempts) >= 5) {
-          throw new Error('Too many failed login attempts. Please try again in 5 minutes.');
+          const ttl = await redis.ttl(emailKey);
+          const secs = ttl > 0 ? ttl : 300;
+          throw new Error(`LOCKOUT:email:${secs}`);
         }
         if (ipAttempts && parseInt(ipAttempts) >= 20) {
-          throw new Error(
-            'Too many failed login attempts from this IP. Please try again in 5 minutes.'
-          );
+          const ttl = await redis.ttl(ipKey);
+          const secs = ttl > 0 ? ttl : 300;
+          throw new Error(`LOCKOUT:ip:${secs}`);
         }
 
         try {

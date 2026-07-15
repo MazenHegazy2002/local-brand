@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -29,6 +29,28 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
   const urlError = searchParams.get('error');
+
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
+
+  useEffect(() => {
+    if (lockoutSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setLockoutSeconds(prev => {
+        const next = prev - 1;
+        if (next <= 0) {
+          setError('');
+          return 0;
+        }
+        setError(
+          `Too many failed login attempts. Your account has been temporarily locked. Please try again in ${Math.floor(
+            next / 60
+          )}m ${next % 60}s.`
+        );
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockoutSeconds]);
 
   const [email, setEmail] = useState(() => {
     // Restore "Remember me" email from localStorage
@@ -120,15 +142,17 @@ function LoginForm() {
     }
 
     if (res?.error) {
-      if (res.error.toLowerCase().includes('email not verified')) {
-        setError('Please verify your email address before logging in.');
-      } else if (
-        res.error.toLowerCase().includes('too many') ||
-        res.error.toLowerCase().includes('attempts')
-      ) {
+      if (res.error.startsWith('LOCKOUT:')) {
+        const parts = res.error.split(':');
+        const secs = parseInt(parts[2]) || 300;
+        setLockoutSeconds(secs);
         setError(
-          'Too many failed login attempts. Your account has been temporarily locked. Please try again in 5 minutes.'
+          `Too many failed login attempts. Your account has been temporarily locked. Please try again in ${Math.floor(
+            secs / 60
+          )}m ${secs % 60}s.`
         );
+      } else if (res.error.toLowerCase().includes('email not verified')) {
+        setError('Please verify your email address before logging in.');
       } else {
         setError('Invalid email or password');
       }
@@ -370,7 +394,7 @@ function LoginForm() {
               <button
                 id="signin-submit-btn"
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || lockoutSeconds > 0}
                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-dark))] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(var(--ring))] disabled:bg-gray-400 transition-all"
               >
                 {isLoading ? (
