@@ -72,21 +72,33 @@ export const authOptions: NextAuthOptions = {
         const emailKey = `login:limit:email:${email}`;
         const ipKey = `login:limit:ip:${ip}`;
 
-        const [emailAttempts, ipAttempts] = await Promise.all([
-          redis.get(emailKey),
-          redis.get(ipKey),
-        ]);
+        // Rate-limit / lockout checks — fault-tolerant so login works even
+        // when Redis is unavailable (e.g. no REDIS_URL configured).
+        let emailAttempts: string | null = null;
+        let ipAttempts: string | null = null;
+        let redisAvailable = true;
+
+        try {
+          [emailAttempts, ipAttempts] = await Promise.all([redis.get(emailKey), redis.get(ipKey)]);
+        } catch {
+          redisAvailable = false;
+          console.warn('[AUTH] Redis unavailable — skipping lockout checks');
+        }
 
         let captchaVerified = false;
-        if (captchaId && captchaAnswer) {
-          const expected = await redis.get(`captcha:${captchaId}`);
-          if (expected && expected === captchaAnswer) {
-            captchaVerified = true;
-            await redis.del(`captcha:${captchaId}`);
+        if (redisAvailable && captchaId && captchaAnswer) {
+          try {
+            const expected = await redis.get(`captcha:${captchaId}`);
+            if (expected && expected === captchaAnswer) {
+              captchaVerified = true;
+              await redis.del(`captcha:${captchaId}`);
+            }
+          } catch {
+            // Redis unavailable — skip captcha check
           }
         }
 
-        if (emailAttempts && parseInt(emailAttempts) >= 5) {
+        if (redisAvailable && emailAttempts && parseInt(emailAttempts) >= 5) {
           if (!captchaVerified) {
             const ttl = await redis.ttl(emailKey);
             const secs = ttl > 0 ? ttl : 300;
@@ -95,7 +107,7 @@ export const authOptions: NextAuthOptions = {
           // CAPTCHA verified — reset the lockout so the user can try logging in
           await Promise.all([redis.del(emailKey), redis.del(ipKey)]);
         }
-        if (ipAttempts && parseInt(ipAttempts) >= 20) {
+        if (redisAvailable && ipAttempts && parseInt(ipAttempts) >= 20) {
           const ttl = await redis.ttl(ipKey);
           const secs = ttl > 0 ? ttl : 300;
           throw new Error(`LOCKOUT:ip:${secs}`);
@@ -104,26 +116,30 @@ export const authOptions: NextAuthOptions = {
         try {
           const user = await prisma.user.findUnique({ where: { email } });
           if (!user || !user.passwordHash) {
-            await Promise.all([
-              redis.incr(emailKey).then(attempts => {
-                if (attempts === 1) redis.expire(emailKey, 300);
-              }),
-              redis.incr(ipKey).then(attempts => {
-                if (attempts === 1) redis.expire(ipKey, 300);
-              }),
-            ]);
+            if (redisAvailable) {
+              Promise.all([
+                redis.incr(emailKey).then(attempts => {
+                  if (attempts === 1) redis.expire(emailKey, 300);
+                }),
+                redis.incr(ipKey).then(attempts => {
+                  if (attempts === 1) redis.expire(ipKey, 300);
+                }),
+              ]).catch(() => {});
+            }
             return null;
           }
           const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
           if (!isPasswordValid || user.deletedAt) {
-            await Promise.all([
-              redis.incr(emailKey).then(attempts => {
-                if (attempts === 1) redis.expire(emailKey, 300);
-              }),
-              redis.incr(ipKey).then(attempts => {
-                if (attempts === 1) redis.expire(ipKey, 300);
-              }),
-            ]);
+            if (redisAvailable) {
+              Promise.all([
+                redis.incr(emailKey).then(attempts => {
+                  if (attempts === 1) redis.expire(emailKey, 300);
+                }),
+                redis.incr(ipKey).then(attempts => {
+                  if (attempts === 1) redis.expire(ipKey, 300);
+                }),
+              ]).catch(() => {});
+            }
             return null;
           }
 
@@ -133,7 +149,9 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Reset attempts on successful login
-          await Promise.all([redis.del(emailKey), redis.del(ipKey)]);
+          if (redisAvailable) {
+            Promise.all([redis.del(emailKey), redis.del(ipKey)]).catch(() => {});
+          }
 
           return { id: user.id, name: user.name, email: user.email, role: user.role };
         } catch (error) {
