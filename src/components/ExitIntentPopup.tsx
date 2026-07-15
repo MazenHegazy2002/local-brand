@@ -99,7 +99,7 @@ export default function ExitIntentPopup() {
         {/* Header/Close */}
         <button
           onClick={() => setIsOpen(false)}
-          className={`absolute top-4 ${isRtl ? 'left-4' : 'right-4'} text-gray-400 hover:text-gray-600 transition-colors p-1.5 rounded-full hover:bg-gray-100`}
+          className={`absolute top-4 ${isRtl ? 'left-4' : 'right-4'} z-10 text-white/80 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/10`}
           aria-label="Close dialog"
         >
           <X size={18} />
