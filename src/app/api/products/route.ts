@@ -70,14 +70,23 @@ export async function GET(req: Request) {
       return NextResponse.json({ products: sanitizeProducts(products) }, { status: 200 });
     }
 
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
-    const limit = Math.min(48, parseInt(searchParams.get('limit') || '12'));
+    const rawPage = parseInt(searchParams.get('page') || '1');
+    const page = isNaN(rawPage) || rawPage < 1 ? 1 : rawPage;
+
+    const rawLimit = parseInt(searchParams.get('limit') || '12');
+    const limit = isNaN(rawLimit) || rawLimit < 1 ? 12 : Math.min(48, rawLimit);
+
     const skip = (page - 1) * limit;
     const q = searchParams.get('q') || '';
     const category = searchParams.get('category') || '';
     const brand = searchParams.get('brand') || '';
-    const minPrice = parseFloat(searchParams.get('minPrice') || '0');
-    const maxPrice = parseFloat(searchParams.get('maxPrice') || '999999');
+
+    const rawMinPrice = parseFloat(searchParams.get('minPrice') || '0');
+    const minPrice = isNaN(rawMinPrice) || rawMinPrice < 0 ? 0 : rawMinPrice;
+
+    const rawMaxPrice = parseFloat(searchParams.get('maxPrice') || '999999');
+    const maxPrice = isNaN(rawMaxPrice) || rawMaxPrice < 0 ? 999999 : rawMaxPrice;
+
     const sort = searchParams.get('sort') || 'newest';
     const rating = parseInt(searchParams.get('rating') || '0');
     const tags = searchParams.get('tags') || '';

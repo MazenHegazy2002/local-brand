@@ -9,7 +9,9 @@ const ticketSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email(),
   subject: z.string().min(3).max(200),
-  category: z.enum(['general', 'order', 'payment', 'return', 'seller', 'technical', 'feedback']).default('general'),
+  category: z
+    .enum(['general', 'order', 'payment', 'return', 'seller', 'technical', 'feedback'])
+    .default('general'),
   message: z.string().min(10).max(2000),
 });
 
@@ -19,6 +21,15 @@ function makeTicketId() {
   let id = 'T-';
   for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
   return id;
+}
+
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 export async function POST(req: Request) {
@@ -37,34 +48,45 @@ export async function POST(req: Request) {
 
     const ticketId = makeTicketId();
 
+    const sanitizedData = {
+      name: escapeHtml(parsed.data.name),
+      email: parsed.data.email,
+      subject: escapeHtml(parsed.data.subject),
+      category: parsed.data.category,
+      message: escapeHtml(parsed.data.message),
+    };
+
     const ticket = await prisma.supportTicket.create({
       data: {
         ticketId,
         userId,
-        ...parsed.data,
+        ...sanitizedData,
       },
     });
 
     // Fire-and-forget email to support team + confirmation to user
-    import('@/lib/email').then((m) => {
-      m.sendEmail({
-        to: parsed.data.email,
-        subject: `[${ticketId}] We received your message — Brandy Support`,
-        html: `
-<p>Hi ${parsed.data.name},</p>
+    import('@/lib/email')
+      .then(m => {
+        m.sendEmail({
+          to: sanitizedData.email,
+          subject: `[${ticketId}] We received your message — Brandy Support`,
+          html: `
+<p>Hi ${sanitizedData.name},</p>
 <p>Thanks for reaching out. Your ticket <strong>#${ticketId}</strong> has been logged and our team will get back to you within 24 hours (Sun-Thu).</p>
-<p><strong>Subject:</strong> ${parsed.data.subject}</p>
+<p><strong>Subject:</strong> ${sanitizedData.subject}</p>
 <hr />
 <p style="color:#666"><em>For urgent matters, you can also email us directly at support@brandy.com.</em></p>
 <p>— Brandy Support Team</p>
         `,
-      }).catch(() => { /* dev-mode console fallback handles this */ });
-    }).catch(() => { /* ignore */ });
+        }).catch(() => {
+          /* dev-mode console fallback handles this */
+        });
+      })
+      .catch(() => {
+        /* ignore */
+      });
 
-    return NextResponse.json(
-      { success: true, ticketId: ticket.ticketId },
-      { status: 201 }
-    );
+    return NextResponse.json({ success: true, ticketId: ticket.ticketId }, { status: 201 });
   } catch (error: unknown) {
     const err = error as Error;
     console.error('[support/ticket] Error:', err);
@@ -88,9 +110,12 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
 
-    const where = role === 'ADMIN'
-      ? (status ? { status: status as 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' } : {})
-      : { OR: [{ userId }, { email: email || undefined }] };
+    const where =
+      role === 'ADMIN'
+        ? status
+          ? { status: status as 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' }
+          : {}
+        : { OR: [{ userId }, { email: email || undefined }] };
 
     const tickets = await prisma.supportTicket.findMany({
       where,
@@ -102,9 +127,6 @@ export async function GET(req: Request) {
   } catch (error: unknown) {
     const err = error as Error;
     console.error('[support/ticket] GET Error:', err);
-    return NextResponse.json(
-      { message: err.message || 'Failed to load tickets' },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: err.message || 'Failed to load tickets' }, { status: 500 });
   }
 }

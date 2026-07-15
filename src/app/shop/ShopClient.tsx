@@ -47,6 +47,8 @@ function ShopContent() {
     rating: 0,
     sort: 'newest',
   });
+  const [localMin, setLocalMin] = useState(initialMinPrice);
+  const [localMax, setLocalMax] = useState(initialMaxPrice);
   const [showFilters, setShowFilters] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,6 +122,8 @@ function ShopContent() {
   };
 
   const clearFilters = () => {
+    setLocalMin('');
+    setLocalMax('');
     setFilters({
       q: '',
       category: 'all',
@@ -269,15 +273,23 @@ function ShopContent() {
                 <input
                   type="number"
                   placeholder="Min"
-                  value={filters.minPrice}
-                  onChange={e => handleFilterChange('minPrice', e.target.value)}
+                  value={localMin}
+                  onChange={e => setLocalMin(e.target.value)}
+                  onBlur={e => handleFilterChange('minPrice', e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleFilterChange('minPrice', e.currentTarget.value);
+                  }}
                   className="w-1/2 border border-gray-200 rounded-md px-2 py-1.5 text-sm"
                 />
                 <input
                   type="number"
                   placeholder="Max"
-                  value={filters.maxPrice}
-                  onChange={e => handleFilterChange('maxPrice', e.target.value)}
+                  value={localMax}
+                  onChange={e => setLocalMax(e.target.value)}
+                  onBlur={e => handleFilterChange('maxPrice', e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleFilterChange('maxPrice', e.currentTarget.value);
+                  }}
                   className="w-1/2 border border-gray-200 rounded-md px-2 py-1.5 text-sm"
                 />
               </div>

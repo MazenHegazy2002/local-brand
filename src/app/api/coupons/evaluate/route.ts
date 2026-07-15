@@ -8,8 +8,9 @@ export async function POST(req: Request) {
     const validated = couponEvaluateSchema.safeParse(body);
 
     if (!validated.success) {
+      const codeError = validated.error.format().code?._errors?.[0];
       return NextResponse.json(
-        { message: 'Invalid data', errors: validated.error.format() },
+        { message: codeError || 'Invalid coupon code or cart value' },
         { status: 400 }
       );
     }

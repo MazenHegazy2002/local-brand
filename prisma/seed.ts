@@ -391,7 +391,7 @@ const CATALOG: SeedCategory[] = [
         slug: 'natural-lip-balm-set',
         description: 'Set of 3 natural lip balms with SPF 15. Shea butter and beeswax formula.',
         basePrice: 249,
-        img: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=600&auto=format&fit=crop',
         isFeatured: false,
         variants: [
           { label: 'Cherry', color: 'Cherry', price: 249, stock: 20 },
@@ -498,7 +498,7 @@ const CATALOG: SeedCategory[] = [
         description:
           'Minimalist full-grain leather sneakers with rubber sole. The timeless everyday shoe.',
         basePrice: 1299,
-        img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600&auto=format&fit=crop',
         isFeatured: true,
         variants: [
           { label: 'White - 38', color: 'White', size: '38', price: 1299, stock: 5 },
@@ -528,7 +528,7 @@ const CATALOG: SeedCategory[] = [
         slug: 'suede-penny-loafers',
         description: 'Premium suede penny loafers with a leather sole. Smart-casual elegance.',
         basePrice: 1099,
-        img: 'https://images.unsplash.com/photo-1533867617858-e7b97e060509?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?q=80&w=600&auto=format&fit=crop',
         isFeatured: false,
         variants: [
           { label: 'Brown - 40', color: 'Brown', size: '40', price: 1099, stock: 6 },
@@ -543,7 +543,7 @@ const CATALOG: SeedCategory[] = [
         description:
           'Breathable mesh upper with responsive foam midsole. Built for performance runs.',
         basePrice: 1599,
-        img: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=600&auto=format&fit=crop',
         isFeatured: true,
         variants: [
           { label: 'Blue/White - 39', color: 'Blue', size: '39', price: 1599, stock: 7 },
@@ -558,7 +558,7 @@ const CATALOG: SeedCategory[] = [
         description:
           'Classic canvas slip-on with vulcanized rubber sole. Lightweight and easy to wear.',
         basePrice: 599,
-        img: 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600&auto=format&fit=crop',
         isFeatured: false,
         variants: [
           { label: 'Navy - 38', color: 'Navy', size: '38', price: 599, stock: 10 },
@@ -1240,6 +1240,68 @@ async function main() {
     return `${colorAr}${sizeAr} - ${edAr}`;
   };
 
+  const getCategorySellers = (categorySlug: string, profiles: any[], defaultProfile: any) => {
+    const getProfile = (name: string) => {
+      const found = profiles.find(p => p.storeName === name);
+      if (!found) return defaultProfile;
+      return found;
+    };
+
+    const demoStore = defaultProfile;
+
+    switch (categorySlug) {
+      case 'women':
+        return [
+          getProfile('Cairo Loom'),
+          getProfile('Nile Threads'),
+          getProfile('Mansoura Loom'),
+          getProfile('Assiut Loom Heritage'),
+          getProfile('Kemet Fashion House'),
+          demoStore,
+        ];
+      case 'men':
+        return [
+          getProfile('Cairo Loom'),
+          getProfile('Nile Threads'),
+          getProfile('Mansoura Loom'),
+          getProfile('Kemet Fashion House'),
+          demoStore,
+        ];
+      case 'electronics':
+        return [getProfile('Delta Electronics'), demoStore];
+      case 'home':
+        return [
+          getProfile('Oasis Terracotta'),
+          getProfile('Giza Cotton Co.'),
+          getProfile('Damietta Woodcraft'),
+          getProfile('Nubian Heritage Crafts'),
+          getProfile('Qena Pottery'),
+          getProfile('Tanta Gourmet'),
+          getProfile('Siwa Organics'),
+          demoStore,
+        ];
+      case 'beauty':
+        return [getProfile('Lotus Botanicals'), getProfile('Sinai Herbals'), demoStore];
+      case 'sports':
+        return [getProfile('Suez Activewear'), demoStore];
+      case 'footwear':
+        return [getProfile('Alexandria Leatherworks'), getProfile('Suez Activewear'), demoStore];
+      case 'accessories':
+        return [
+          getProfile('Alexandria Leatherworks'),
+          getProfile('Port Said Gear'),
+          getProfile('Pharaoh Timepieces'),
+          demoStore,
+        ];
+      case 'kids':
+        return [getProfile('Nile Threads'), getProfile('Kemet Fashion House'), demoStore];
+      case 'jewelry':
+        return [getProfile('Luxor Goldsmiths'), demoStore];
+      default:
+        return [defaultProfile];
+    }
+  };
+
   for (const catData of CATALOG) {
     const categoryId = catMap[catData.slug];
     if (!categoryId) {
@@ -1254,8 +1316,13 @@ async function main() {
     for (const p of catData.products) {
       for (let i = 0; i < editions.length; i++) {
         const editionName = editions[i];
+        const categorySellers = getCategorySellers(
+          catData.slug,
+          addedSellerProfiles,
+          defaultSellerProfile
+        );
         const targetSeller =
-          addedSellerProfiles[productCount % addedSellerProfiles.length] || defaultSellerProfile;
+          categorySellers[productCount % categorySellers.length] || defaultSellerProfile;
 
         const title = `${p.title} (${editionName})`;
         const baseAr = arTitles[p.title] || p.title;

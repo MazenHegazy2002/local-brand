@@ -82,7 +82,17 @@ function getCategoryIcon(name: string) {
     return <JewelryIcon />;
   if (lower.includes('kid') || lower.includes('child') || lower.includes('baby'))
     return <KidsIcon />;
-  if (lower.includes('men') || lower.includes('shirt') || lower.includes('trouser'))
+  if (
+    lower.includes('women') ||
+    lower.includes('woman') ||
+    lower.includes('lady') ||
+    lower.includes('dress')
+  )
+    return <WomenIcon />;
+  if (
+    (lower.includes('men') || lower.includes('shirt') || lower.includes('trouser')) &&
+    !lower.includes('women')
+  )
     return <MenIcon />;
   if (lower.includes('pet') || lower.includes('dog') || lower.includes('cat')) return <PetsIcon />;
   if (lower.includes('pharm') || lower.includes('medicine') || lower.includes('drug'))
@@ -91,13 +101,6 @@ function getCategoryIcon(name: string) {
     return <SportsIcon />;
   if (lower.includes('toy') || lower.includes('game') || lower.includes('play'))
     return <ToysIcon />;
-  if (
-    lower.includes('women') ||
-    lower.includes('woman') ||
-    lower.includes('lady') ||
-    lower.includes('dress')
-  )
-    return <WomenIcon />;
   return <FashionIcon />;
 }
 

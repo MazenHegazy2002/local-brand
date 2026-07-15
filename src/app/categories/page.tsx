@@ -155,10 +155,19 @@ function iconFor(name: string) {
   )
     return <KidsIcon />;
   if (
-    lower === 'men' ||
-    lower.includes('men') ||
-    lower.includes('shirt') ||
-    lower.includes('trouser')
+    lower === 'women' ||
+    lower.includes('women') ||
+    lower.includes('woman') ||
+    lower.includes('lady') ||
+    lower.includes('dress')
+  )
+    return <WomenIcon />;
+  if (
+    (lower === 'men' ||
+      lower.includes('men') ||
+      lower.includes('shirt') ||
+      lower.includes('trouser')) &&
+    !lower.includes('women')
   )
     return <MenIcon />;
   if (lower === 'pets' || lower.includes('pet') || lower.includes('dog') || lower.includes('cat'))
@@ -174,14 +183,6 @@ function iconFor(name: string) {
     return <SportsIcon />;
   if (lower === 'toys' || lower.includes('toy') || lower.includes('game') || lower.includes('play'))
     return <ToysIcon />;
-  if (
-    lower === 'women' ||
-    lower.includes('women') ||
-    lower.includes('woman') ||
-    lower.includes('lady') ||
-    lower.includes('dress')
-  )
-    return <WomenIcon />;
   if (lower === 'fashion' || lower.includes('fashion')) return <FashionIcon />;
   return <GroceryIcon />;
 }
