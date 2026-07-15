@@ -18,7 +18,14 @@ export function ReportButton({
   >('INACCURATE');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [ticketId, setTicketId] = useState('');
   const { toast } = useToast();
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setTicketId('');
+    setMessage('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,12 +43,11 @@ export function ReportButton({
       });
       const data = await res.json();
       if (res.ok) {
+        setTicketId(data.ticket?.ticketId || 'T-UNKNOWN');
         toast({
           title: 'Product reported successfully. Our team will review this.',
           variant: 'success',
         });
-        setIsOpen(false);
-        setMessage('');
       } else {
         toast({ title: data.message || 'Failed to submit report.', variant: 'error' });
       }
@@ -82,7 +88,7 @@ export function ReportButton({
                 <span className="text-red-500">🚩</span> Report Product
               </h3>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
                 aria-label="Close"
               >
@@ -100,64 +106,92 @@ export function ReportButton({
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <p className="text-xs text-gray-500 leading-relaxed">
-                Help us keep Brandy authentic and safe. Explain why you think the product listing
-                for <strong>"{productName}"</strong> violates our policies.
-              </p>
-
-              <div>
-                <label className="block text-xs font-black uppercase text-gray-400 mb-1.5">
-                  Reason for reporting
-                </label>
-                <select
-                  value={reason}
-                  onChange={e => setReason(e.target.value as any)}
-                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-red-400"
-                >
-                  <option value="INACCURATE">Inaccurate description or photos</option>
-                  <option value="COUNTERFEIT">Counterfeit or replica item</option>
-                  <option value="HARASSMENT">Offensive content or harassment</option>
-                  <option value="SPAM">Spam or misleading list</option>
-                  <option value="OTHER">Other / Policy violation</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-black uppercase text-gray-400 mb-1.5">
-                  Explanation (minimum 10 characters)
-                </label>
-                <textarea
-                  required
-                  rows={4}
-                  value={message}
-                  onChange={e => setMessage(e.target.value)}
-                  placeholder="Explain in detail what the issue is..."
-                  maxLength={1000}
-                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-red-400 resize-none text-gray-800"
-                />
-                <span className="text-[10px] text-gray-400 block text-right mt-1">
-                  {message.length}/1000 characters
-                </span>
-              </div>
-
-              <div className="flex gap-3 pt-2">
+            {ticketId ? (
+              <div className="text-center py-4 space-y-4 animate-in fade-in duration-300">
+                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
+                  ✓
+                </div>
+                <h4 className="text-base font-extrabold text-gray-900">
+                  Report Submitted Successfully
+                </h4>
+                <p className="text-gray-500 text-xs leading-relaxed max-w-xs mx-auto">
+                  We have logged your report for investigation. The reference ticket ID is:
+                </p>
+                <div className="inline-block bg-gray-50 border border-gray-200 px-4 py-2 rounded-xl font-mono text-gray-700 font-bold text-sm tracking-wider">
+                  #{ticketId}
+                </div>
+                <p className="text-[10px] text-gray-450 leading-normal max-w-xs mx-auto">
+                  Our operations and trust & safety team reviews reported listings within 24 hours.
+                  Thank you for keeping the marketplace safe.
+                </p>
                 <button
                   type="button"
-                  onClick={() => setIsOpen(false)}
-                  className="flex-1 py-2.5 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                  onClick={handleClose}
+                  className="w-full py-2 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-gray-800 transition-colors shadow-sm"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 py-2.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors disabled:opacity-50"
-                >
-                  {submitting ? 'Submitting...' : 'Submit Report'}
+                  Dismiss
                 </button>
               </div>
-            </form>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Help us keep Brandy authentic and safe. Explain why you think the product listing
+                  for <strong>"{productName}"</strong> violates our policies.
+                </p>
+
+                <div>
+                  <label className="block text-xs font-black uppercase text-gray-400 mb-1.5">
+                    Reason for reporting
+                  </label>
+                  <select
+                    value={reason}
+                    onChange={e => setReason(e.target.value as any)}
+                    className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-red-400"
+                  >
+                    <option value="INACCURATE">Inaccurate description or photos</option>
+                    <option value="COUNTERFEIT">Counterfeit or replica item</option>
+                    <option value="HARASSMENT">Offensive content or harassment</option>
+                    <option value="SPAM">Spam or misleading list</option>
+                    <option value="OTHER">Other / Policy violation</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase text-gray-400 mb-1.5">
+                    Explanation (minimum 10 characters)
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={message}
+                    onChange={e => setMessage(e.target.value)}
+                    placeholder="Explain in detail what the issue is..."
+                    maxLength={1000}
+                    className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-red-400 resize-none text-gray-800"
+                  />
+                  <span className="text-[10px] text-gray-400 block text-right mt-1">
+                    {message.length}/1000 characters
+                  </span>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="flex-1 py-2.5 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="flex-1 py-2.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors disabled:opacity-50"
+                  >
+                    {submitting ? 'Submitting...' : 'Submit Report'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
