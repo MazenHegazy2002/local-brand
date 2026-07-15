@@ -81,13 +81,35 @@ function SuccessContent() {
         case).
       </p>
 
-      <div className="bg-gray-50 rounded-xl p-6 mb-10 border border-gray-100 inline-block min-w-[280px]">
-        <div className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">
-          Order Reference
+      <div className="flex flex-col gap-4 items-center mb-10">
+        <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 inline-block min-w-[280px]">
+          <div className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">
+            Order Reference
+          </div>
+          <div className="text-xl font-bold text-[#1e3b8a] font-mono">
+            {orderId || 'LCB-XXXX-XXXX'}
+          </div>
         </div>
-        <div className="text-xl font-bold text-[#1e3b8a] font-mono">
-          {orderId || 'LCB-XXXX-XXXX'}
-        </div>
+
+        {searchParams.get('fawryRef') && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-left max-w-md w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-2xl">🏪</span>
+              <h3 className="font-black text-amber-900 text-base">Fawry Payment Required</h3>
+            </div>
+            <p className="text-amber-800 text-xs leading-relaxed mb-4">
+              To finalize your order, please complete your cash payment at any Fawry retail outlet,
+              smart kiosk, or mobile wallet within **48 hours** using the reference code below:
+            </p>
+            <div className="bg-white border border-amber-300 rounded-xl p-3 text-center shadow-sm font-mono font-black text-amber-700 text-lg tracking-wider mb-4">
+              {searchParams.get('fawryRef')}
+            </div>
+            <p className="text-[10px] text-amber-600 leading-tight">
+              ⚠️ Orders are automatically cancelled if payment is not received before the 48-hour
+              expiration window.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">

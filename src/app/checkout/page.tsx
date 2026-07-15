@@ -61,7 +61,7 @@ function CheckoutPageInner() {
   const [guestEmail, setGuestEmail] = useState('');
 
   const [paymentMethod, setPaymentMethod] = useState<
-    'CASH_ON_DELIVERY' | 'CREDIT_CARD' | 'MOBILE_WALLET' | 'PAYSKY'
+    'CASH_ON_DELIVERY' | 'CREDIT_CARD' | 'MOBILE_WALLET' | 'PAYSKY' | 'FAWRY'
   >('CASH_ON_DELIVERY');
 
   // PaySky session state — populated after we hit /api/payment/paysky
@@ -419,11 +419,11 @@ function CheckoutPageInner() {
         );
         return;
       }
-      if (paymentMethod === 'PAYSKY') {
+      if (paymentMethod === 'PAYSKY' || paymentMethod === 'FAWRY') {
         setError(
           lang === 'ar'
-            ? 'يتطلب الدفع عبر PaySky حساباً على براندي. يرجى تسجيل الدخول أو اختيار الدفع عند الاستلام / المحفظة الإلكترونية.'
-            : 'PaySky checkout requires a Brandy account. Please sign in or choose Cash on Delivery / Mobile Wallet.'
+            ? 'يتطلب الدفع الإلكتروني (PaySky / Fawry) حساباً على براندي. يرجى تسجيل الدخول أو اختيار الدفع عند الاستلام.'
+            : 'Online payment (PaySky / Fawry) requires a Brandy account. Please sign in or choose Cash on Delivery.'
         );
         return;
       }
@@ -457,6 +457,65 @@ function CheckoutPageInner() {
         } catch (err) {
           console.warn('Address save failed, continuing without addressId:', err);
         }
+      }
+
+      // ── Fawry branch ──
+      if (paymentMethod === 'FAWRY') {
+        const res = await fetch('/api/payment/fawry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cartItems: items.map(item => ({ id: item.id, qty: item.qty })),
+            addressInfo: {
+              fullName: address.fullName,
+              phone: address.phone,
+              street: address.address,
+              city: address.city,
+              governorate: address.governorate,
+            },
+            couponId: couponApplied?.id,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed to initiate Fawry payment');
+
+        const mockRes = await createOrder({
+          items: items.map(item => ({
+            variantId: item.variantId || item.id,
+            quantity: item.qty,
+            selectedSize: item.selectedSize || undefined,
+            selectedColor: item.selectedColor || undefined,
+          })),
+          addressId,
+          shippingAddress: {
+            fullName: address.fullName,
+            phone: address.phone,
+            street: address.address,
+            city: address.city,
+            governorate: address.governorate,
+          },
+          guestEmail: undefined,
+          paymentMethod: 'FAWRY',
+          couponCode:
+            couponApplied && !couponApplied.isAffiliate
+              ? couponApplied.code || undefined
+              : undefined,
+          promoCode: couponApplied?.isAffiliate ? couponApplied.affiliateCode : undefined,
+          orderNotes: orderNotes.trim() || undefined,
+          giftWrapping,
+          pointsRedeemed: pointsToUse || undefined,
+        });
+
+        if (mockRes.success && mockRes.orderId) {
+          clearCart();
+          setCouponApplied(null);
+          setPointsToUse(0);
+          router.push(
+            `/checkout/success?orderId=${mockRes.orderId}&fawryRef=${data.fawryRefNumber}`
+          );
+          return;
+        }
+        throw new Error(mockRes.error || 'Failed to place order via Fawry');
       }
 
       // ── PaySky branch — skip createOrder for now, finalize on callback ──
@@ -1067,6 +1126,28 @@ function CheckoutPageInner() {
                         <div className="text-sm text-gray-500">{t('CheckoutPaySkyDesc')}</div>
                       </div>
                       <div className="text-3xl shrink-0">🇪🇬</div>
+                    </label>
+
+                    <label
+                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'FAWRY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                      style={{ textAlign: isRTL ? 'right' : 'left' }}
+                    >
+                      <input
+                        type="radio"
+                        name="payment"
+                        value="FAWRY"
+                        checked={paymentMethod === 'FAWRY'}
+                        onChange={() => {
+                          setPaymentMethod('FAWRY');
+                          setShowInstallments(false);
+                        }}
+                        className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
+                      />
+                      <div className="flex-1">
+                        <div className="font-bold text-gray-900">{t('CheckoutFawry')}</div>
+                        <div className="text-sm text-gray-500">{t('CheckoutFawryDesc')}</div>
+                      </div>
+                      <div className="text-3xl shrink-0">🏪</div>
                     </label>
 
                     {/* PaySky Lightbox renders here when active */}
