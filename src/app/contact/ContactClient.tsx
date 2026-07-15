@@ -213,10 +213,10 @@ export default function ContactClient() {
               Email Support
             </h3>
             <a
-              href="mailto:support@lolozozo.shop"
+              href="mailto:support@brandyy.shop"
               className="text-base font-bold text-blue-600 hover:underline"
             >
-              support@lolozozo.shop
+              support@brandyy.shop
             </a>
           </div>
           <div>

@@ -350,5 +350,5 @@ export function getAffiliateReferralBaseUrl(): string {
   ) {
     return envUrl || 'http://localhost:3000';
   }
-  return 'https://www.lolozozo.shop';
+  return 'https://brandyy.shop';
 }

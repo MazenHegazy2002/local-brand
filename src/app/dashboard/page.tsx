@@ -1345,7 +1345,7 @@ function ReferralLinkWidget({ email }: { email: string }) {
   const refLink =
     typeof window !== 'undefined'
       ? `${window.location.origin}/register?ref=${refCode}`
-      : `https://lolozozo.shop/register?ref=${refCode}`;
+      : `https://brandyy.shop/register?ref=${refCode}`;
 
   const copy = () => {
     navigator.clipboard.writeText(refLink).then(() => {

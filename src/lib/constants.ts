@@ -97,8 +97,8 @@ export const MAX_IMAGES_PER_PRODUCT = 10;
  * change the brand without touching any source files. Falls back to 'Brandy'.
  */
 export const PLATFORM_NAME = process.env.NEXT_PUBLIC_SITE_NAME || 'Brandy';
-export const PLATFORM_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.lolozozo.shop';
-export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@lolozozo.shop';
+export const PLATFORM_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop';
+export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@brandyy.shop';
 export const CONTACT_PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE || '';
 
 // ============================================================

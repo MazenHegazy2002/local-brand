@@ -148,11 +148,7 @@ export async function GET() {
           'google-site-verification-code',
           'get real code from Google Search Console'
         ),
-        check(
-          'CANONICAL_DOMAIN',
-          false,
-          'dual-domain redirect disabled; set to e.g. lolozozo.shop'
-        ),
+        check('CANONICAL_DOMAIN', false, 'dual-domain redirect disabled; set to e.g. brandyy.shop'),
         check('NEXT_PUBLIC_TWITTER_HANDLE', false, 'twitter:creator tag omitted without this'),
         check('TAX_REGISTRATION_NUMBER', false, 'invoices will use placeholder "XXX-XXX-XXX-DEV"'),
       ],

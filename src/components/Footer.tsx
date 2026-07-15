@@ -281,7 +281,7 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="container mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/40">
           <p>
-            © {year} {PLATFORM_NAME} (lolozozo.shop). All rights reserved.
+            © {year} {PLATFORM_NAME} (brandyy.shop). All rights reserved.
           </p>
 
           {/* Payment Badges & SSL Seal */}

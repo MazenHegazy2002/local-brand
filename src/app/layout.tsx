@@ -28,15 +28,15 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://www.lolozozo.shop'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop'),
   alternates: {
     canonical: './',
     languages: {
-      'x-default': 'https://www.lolozozo.shop',
-      'en-EG': 'https://www.lolozozo.shop',
-      'ar-EG': 'https://www.lolozozo.shop?lang=ar',
-      en: 'https://www.lolozozo.shop',
-      ar: 'https://www.lolozozo.shop?lang=ar',
+      'x-default': 'https://brandyy.shop',
+      'en-EG': 'https://brandyy.shop',
+      'ar-EG': 'https://brandyy.shop?lang=ar',
+      en: 'https://brandyy.shop',
+      ar: 'https://brandyy.shop?lang=ar',
     },
   },
   title: {
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     title: 'Brandy — Egyptian Marketplace for Local Sellers',
     description:
       'Discover authentic Egyptian local sellers on Brandy. Shop fashion, electronics, home goods and more from verified Egyptian sellers. Fast delivery across Egypt.',
-    url: process.env.NEXT_PUBLIC_APP_URL || 'https://www.lolozozo.shop',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop',
     images: [{ url: '/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {

@@ -43,7 +43,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const ticketId = makeTicketId();
     const reporterName = user?.name || 'Guest Reporter';
-    const reporterEmail = user?.email || 'guest-report@lolozozo.shop';
+    const reporterEmail = user?.email || 'guest-report@brandyy.shop';
 
     const ticket = await prisma.supportTicket.create({
       data: {

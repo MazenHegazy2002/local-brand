@@ -323,7 +323,7 @@ function CampaignsPanel() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. /shop or https://lolozozo.shop/sale"
+                  placeholder="e.g. /shop or https://brandyy.shop/sale"
                   className="w-full border border-slate-200 rounded-xl px-4 py-2 text-xs font-mono"
                   value={ctaUrl}
                   onChange={e => setCtaUrl(e.target.value)}

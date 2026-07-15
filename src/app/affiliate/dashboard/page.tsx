@@ -431,7 +431,7 @@ export default function AffiliateDashboardPage() {
                   (lang === 'ar'
                     ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} في Brandy للحصول على خصم بقيمة ${affiliate.discountPct}% على طلبك! `
                     : `Use my promo code ${affiliate.promoCode} at Brandy to get ${affiliate.discountPct}% off your order! `) +
-                    'https://www.lolozozo.shop'
+                    'https://brandyy.shop'
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -440,7 +440,7 @@ export default function AffiliateDashboardPage() {
                 <span>WhatsApp</span>
               </a>
               <a
-                href={`https://t.me/share/url?url=${encodeURIComponent('https://www.lolozozo.shop')}&text=${encodeURIComponent(
+                href={`https://t.me/share/url?url=${encodeURIComponent('https://brandyy.shop')}&text=${encodeURIComponent(
                   lang === 'ar'
                     ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} في Brandy للحصول على خصم بقيمة ${affiliate.discountPct}% على طلبك!`
                     : `Use my promo code ${affiliate.promoCode} at Brandy to get ${affiliate.discountPct}% off your order!`
