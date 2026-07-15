@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { headers } from 'next/headers';
 import { PLATFORM_NAME, PLATFORM_URL } from '@/lib/constants';
 
 function escapeXml(unsafe: string): string {
@@ -12,9 +13,21 @@ function escapeXml(unsafe: string): string {
 }
 
 export async function GET() {
+  let baseUrl = PLATFORM_URL;
+  try {
+    const headersList = await headers();
+    const host = headersList.get('host');
+    const proto = headersList.get('x-forwarded-proto') || 'https';
+    if (host) {
+      baseUrl = `${proto}://${host}`;
+    }
+  } catch {
+    // fallback
+  }
+
   try {
     const products = await prisma.product.findMany({
-      where: { published: true },
+      where: { published: true, deletedAt: null },
       include: {
         seller: true,
         category: true,
@@ -28,12 +41,12 @@ export async function GET() {
         const id = product.id;
         const title = escapeXml(product.title);
         const description = escapeXml(product.description || '');
-        const link = `${PLATFORM_URL}/product/${product.id}`;
+        const link = `${baseUrl}/product/${product.slug || product.id}`;
 
         // Find primary image or fallback to first image or placeholder
         const primaryImage =
           product.images.find(img => img.isPrimary)?.url || product.images[0]?.url;
-        const imageLink = primaryImage || `${PLATFORM_URL}/placeholder.png`;
+        const imageLink = primaryImage || `${baseUrl}/placeholder.png`;
 
         const price = product.flashSalePrice ?? product.basePrice;
         const priceStr = `${price} EGP`;
@@ -66,7 +79,7 @@ export async function GET() {
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
     <title>${escapeXml(PLATFORM_NAME)} Product Feed</title>
-    <link>${PLATFORM_URL}</link>
+    <link>${baseUrl}</link>
     <description>${escapeXml(PLATFORM_NAME)} - Egyptian Marketplace for Local Sellers</description>
     ${itemsXml}
   </channel>

@@ -88,7 +88,13 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  verification: { google: process.env.GOOGLE_SITE_VERIFICATION || 'google-site-verification-code' },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || 'google-site-verification-code',
+    other: {
+      'facebook-domain-verification':
+        process.env.FACEBOOK_DOMAIN_VERIFICATION || 'facebook-domain-verification-code',
+    },
+  },
 };
 
 export const viewport: Viewport = {
