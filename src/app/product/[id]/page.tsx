@@ -62,7 +62,9 @@ export async function generateMetadata({
   const arabicDescription = `تسوق ${product.title} من ${product.seller?.storeName} على Brandy — السوق المحلي المصري. السعر: ${price} جنيه.`;
 
   return {
-    title: `${product.title} — ${product.seller?.storeName ?? 'Brandy'}`,
+    title: product.seller?.storeName
+      ? `${product.title} — ${product.seller.storeName}`
+      : product.title,
     description,
     alternates: { languages: { 'ar-EG': arabicDescription } },
     openGraph: {
