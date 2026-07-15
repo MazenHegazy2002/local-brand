@@ -13,7 +13,7 @@ interface PromoBannerProps {
 }
 
 export default function PromoBanner({
-  message = 'Free shipping across Egypt on orders over 500 EGP',
+  message = 'Free shipping across Egypt on orders over 1000 EGP',
   ctaLabel = 'Shop now',
   ctaHref = '/shop',
   id = 'default',
@@ -52,7 +52,15 @@ export default function PromoBanner({
           aria-label="Dismiss"
           className="ml-auto text-white/70 hover:text-white transition-colors"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>

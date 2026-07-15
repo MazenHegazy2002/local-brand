@@ -1232,7 +1232,7 @@ function WalletTab({ user }: { user?: User }) {
               <>
                 <div>• 1 pt = 1 EGP off at checkout</div>
                 <div>• Early access to flash sales</div>
-                <div>• Free shipping on orders over 200 EGP</div>
+                <div>• Free shipping on orders over 1000 EGP</div>
               </>
             )}
           </div>
