@@ -10,6 +10,7 @@ import { RatingStars } from '@/components/ui/RatingStars';
 import { useToast } from '@/components/ui';
 import { ProductImage, Tag } from '@/types';
 import { ShareButton } from '@/components/ShareButton';
+import { ReportButton } from '@/components/ReportButton';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
 
 // Comprehensive color map to convert variant color strings to hex/HSL color codes
@@ -400,11 +401,14 @@ export default function ProductDetails({
               </span>
             )}
           </div>
-          <ShareButton
-            productId={product.id}
-            productName={productTitle}
-            productSlug={product.slug}
-          />
+          <div className="flex items-center gap-2">
+            <ShareButton
+              productId={product.id}
+              productName={productTitle}
+              productSlug={product.slug}
+            />
+            <ReportButton productId={product.id} productName={productTitle} />
+          </div>
         </div>
 
         {/* Title */}

@@ -57,11 +57,16 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
+        captchaId: { label: 'CaptchaId', type: 'text' },
+        captchaAnswer: { label: 'CaptchaAnswer', type: 'text' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
         const email = credentials.email.toLowerCase().trim();
+        const captchaId = credentials.captchaId?.trim();
+        const captchaAnswer = credentials.captchaAnswer?.trim();
+
         const headerList = await headers();
         const ip = headerList.get('x-forwarded-for') || 'unknown';
         const emailKey = `login:limit:email:${email}`;
@@ -72,10 +77,23 @@ export const authOptions: NextAuthOptions = {
           redis.get(ipKey),
         ]);
 
+        let captchaVerified = false;
+        if (captchaId && captchaAnswer) {
+          const expected = await redis.get(`captcha:${captchaId}`);
+          if (expected && expected === captchaAnswer) {
+            captchaVerified = true;
+            await redis.del(`captcha:${captchaId}`);
+          }
+        }
+
         if (emailAttempts && parseInt(emailAttempts) >= 5) {
-          const ttl = await redis.ttl(emailKey);
-          const secs = ttl > 0 ? ttl : 300;
-          throw new Error(`LOCKOUT:email:${secs}`);
+          if (!captchaVerified) {
+            const ttl = await redis.ttl(emailKey);
+            const secs = ttl > 0 ? ttl : 300;
+            throw new Error(`LOCKOUT:email:${secs}`);
+          }
+          // CAPTCHA verified — reset the lockout so the user can try logging in
+          await Promise.all([redis.del(emailKey), redis.del(ipKey)]);
         }
         if (ipAttempts && parseInt(ipAttempts) >= 20) {
           const ttl = await redis.ttl(ipKey);

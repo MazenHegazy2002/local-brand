@@ -1,8 +1,25 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+
+function sanitizeProduct(product: any, isGuest: boolean) {
+  if (!isGuest) return product;
+  const { sellerId, categoryId, deletedAt, ...rest } = product;
+  return rest;
+}
+
+function sanitizeCategory(category: any, isGuest: boolean) {
+  if (!isGuest) return category;
+  const { id, parentId, ...rest } = category;
+  return rest;
+}
 
 export async function GET(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    const isGuest = !session;
+
     const { searchParams } = new URL(req.url);
     const q = searchParams.get('q') || '';
     const page = parseInt(searchParams.get('page') || '1');
@@ -51,7 +68,14 @@ export async function GET(req: Request) {
         new Set(products.map(p => p.title.split(/\s+/).slice(0, 3).join(' ')).filter(Boolean))
       ).slice(0, 5);
 
-      return NextResponse.json({ products, categories, suggestions });
+      const sanitizedProducts = products.map(p => sanitizeProduct(p, isGuest));
+      const sanitizedCategories = categories.map(c => sanitizeCategory(c, isGuest));
+
+      return NextResponse.json({
+        products: sanitizedProducts,
+        categories: sanitizedCategories,
+        suggestions,
+      });
     }
 
     const [products, total] = await Promise.all([
@@ -97,8 +121,10 @@ export async function GET(req: Request) {
       reviewCount: p.reviews.length,
     }));
 
+    const sanitizedProducts = productsWithRating.map(p => sanitizeProduct(p, isGuest));
+
     return NextResponse.json({
-      products: productsWithRating,
+      products: sanitizedProducts,
       total,
       page,
       limit,

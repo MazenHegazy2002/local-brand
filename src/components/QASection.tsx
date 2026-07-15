@@ -6,13 +6,15 @@ import { useToast } from '@/components/ui';
 import type { ProductQA } from '@/types';
 import type { SessionUser } from '@/types';
 
+import Link from 'next/link';
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function timeAgo(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   const diff = Math.floor((Date.now() - d.getTime()) / 1000);
   if (diff < 60) return 'Just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 3605) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
@@ -158,55 +160,69 @@ export default function QASection({
       </div>
 
       {/* Ask a question form */}
-      {!canAnswer && (
-        <form
-          onSubmit={handleAskQuestion}
-          className="mb-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100"
-        >
-          <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <span className="text-lg">💬</span> Ask a Question
-          </h4>
-          <textarea
-            value={newQuestion}
-            onChange={e => setNewQuestion(e.target.value)}
-            placeholder="What would you like to know about this product?"
-            rows={3}
-            className="w-full text-sm border border-blue-200 rounded-xl px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none placeholder-gray-400 text-gray-800 mb-3"
-            maxLength={500}
-          />
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-400">{newQuestion.length}/500</span>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[hsl(var(--primary))] text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+      {!canAnswer &&
+        (session ? (
+          <form
+            onSubmit={handleAskQuestion}
+            className="mb-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100"
+          >
+            <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <span className="text-lg">💬</span> Ask a Question
+            </h4>
+            <textarea
+              value={newQuestion}
+              onChange={e => setNewQuestion(e.target.value)}
+              placeholder="What would you like to know about this product?"
+              rows={3}
+              className="w-full text-sm border border-blue-200 rounded-xl px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none placeholder-gray-400 text-gray-800 mb-3"
+              maxLength={500}
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400">{newQuestion.length}/500</span>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[hsl(var(--primary))] text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                    Submitting…
+                  </>
+                ) : (
+                  'Submit Question'
+                )}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="mb-10 bg-gray-50 rounded-2xl p-6 text-center border border-gray-150 shadow-sm flex flex-col items-center justify-center">
+            <span className="text-3xl mb-2">💬</span>
+            <p className="text-gray-650 font-bold mb-3 text-sm">
+              Have a question about this product?
+            </p>
+            <Link
+              href={`/login?callbackUrl=${typeof window !== 'undefined' ? encodeURIComponent(window.location.pathname) : ''}`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[hsl(var(--primary))] hover:opacity-95 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm"
             >
-              {submitting ? (
-                <>
-                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                    />
-                  </svg>
-                  Submitting…
-                </>
-              ) : (
-                'Submit Question'
-              )}
-            </button>
+              Log in to ask a question
+            </Link>
           </div>
-        </form>
-      )}
+        ))}
 
       {/* Questions list */}
       <div className="space-y-6">

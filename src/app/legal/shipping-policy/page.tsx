@@ -9,10 +9,10 @@ export const metadata = {
 };
 
 const governorateDelivery = [
-  { name: 'Cairo', time: '1-2 days', cost: 'Free > 500 EGP' },
-  { name: 'Giza', time: '1-2 days', cost: 'Free > 500 EGP' },
-  { name: 'Alexandria', time: '2-3 days', cost: 'Free > 500 EGP' },
-  { name: 'Delta (Qalyubia, Dakahlia, Sharkia)', time: '2-3 days', cost: 'Free > 500 EGP' },
+  { name: 'Cairo', time: '1-2 days', cost: 'Free > 1000 EGP' },
+  { name: 'Giza', time: '1-2 days', cost: 'Free > 1000 EGP' },
+  { name: 'Alexandria', time: '2-3 days', cost: 'Free > 1000 EGP' },
+  { name: 'Delta (Qalyubia, Dakahlia, Sharkia)', time: '2-3 days', cost: 'Free > 1000 EGP' },
   { name: 'Suez Canal (Port Said, Ismailia)', time: '3-4 days', cost: '35 EGP' },
   { name: 'Upper Egypt (Assiut, Minya)', time: '4-5 days', cost: '45 EGP' },
   { name: 'South Egypt (Qena, Luxor, Aswan)', time: '5-7 days', cost: '55 EGP' },
@@ -75,7 +75,7 @@ const staticContent = (
           {[
             {
               title: 'Free Shipping Threshold',
-              desc: 'Enjoy free shipping on all orders over 500 EGP delivered to Cairo, Giza, and Alexandria.',
+              desc: 'Enjoy free shipping on all orders over 1000 EGP delivered to Cairo, Giza, and Alexandria.',
             },
             {
               title: 'Same-Day Delivery',

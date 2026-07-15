@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@/generated/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { redis } from '@/lib/redis';
 
 // GET /api/products?page=1&limit=12&category=&q=&minPrice=&maxPrice=&sort=&brand=&rating=&tags=&condition=&inStock=&flashSale=&gender=&ageGroup=&material=&ids=id1,id2,...
 export async function GET(req: Request) {
@@ -86,6 +87,48 @@ export async function GET(req: Request) {
     const gender = searchParams.get('gender') || '';
     const ageGroup = searchParams.get('ageGroup') || '';
     const material = searchParams.get('material') || '';
+
+    const isDefaultQuery =
+      page === 1 &&
+      limit === 12 &&
+      !q &&
+      !category &&
+      !brand &&
+      minPrice === 0 &&
+      maxPrice === 999999 &&
+      sort === 'newest' &&
+      rating === 0 &&
+      !tags &&
+      !condition &&
+      !inStock &&
+      !flashSale &&
+      !gender &&
+      !ageGroup &&
+      !material &&
+      !idsParam;
+
+    if (isDefaultQuery) {
+      try {
+        const cached = await redis.get('products:default');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          return NextResponse.json(
+            {
+              products: sanitizeProducts(parsed.products),
+              pagination: parsed.pagination,
+            },
+            {
+              status: 200,
+              headers: {
+                'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+              },
+            }
+          );
+        }
+      } catch (err) {
+        console.warn('[products] Redis cache read failed:', err);
+      }
+    }
 
     const where: Prisma.ProductWhereInput = {
       published: true,
@@ -244,6 +287,29 @@ export async function GET(req: Request) {
       }),
       prisma.product.count({ where }),
     ]);
+
+    if (isDefaultQuery) {
+      try {
+        await redis.set(
+          'products:default',
+          JSON.stringify({
+            products,
+            pagination: {
+              page,
+              limit,
+              total,
+              totalPages: Math.ceil(total / limit),
+              hasNext: page * limit < total,
+              hasPrev: page > 1,
+            },
+          }),
+          'EX',
+          60
+        );
+      } catch (err) {
+        console.warn('[products] Redis cache write failed:', err);
+      }
+    }
 
     return NextResponse.json(
       {

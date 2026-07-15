@@ -74,9 +74,9 @@ export function organizationJsonLd() {
     url: PLATFORM_URL,
     logo: `${PLATFORM_URL}/logo.png`,
     sameAs: [
-      'https://www.facebook.com/brandy',
-      'https://www.instagram.com/brandy',
-      'https://www.twitter.com/brandy',
+      'https://www.facebook.com/brandy.egypt',
+      'https://www.instagram.com/brandy.egypt',
+      'https://www.tiktok.com/@brandy.egypt',
     ],
     contactPoint: {
       '@type': 'ContactPoint',
@@ -113,7 +113,7 @@ export function faqJsonLd(input: FaqJsonLdInput) {
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: input.items.map((i) => ({
+    mainEntity: input.items.map(i => ({
       '@type': 'Question',
       name: i.question,
       acceptedAnswer: { '@type': 'Answer', text: i.answer },

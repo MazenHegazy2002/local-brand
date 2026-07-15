@@ -43,7 +43,7 @@ export const FAQ_DATA: Record<Category, Array<{ q: string; a: string }>> = {
       q: 'How long does delivery take?',
       a: 'Standard delivery: 2-4 business days for Cairo/Giza, 3-7 days for other governorates.',
     },
-    { q: 'Is free shipping available?', a: 'Yes, on orders over 500 EGP throughout Egypt.' },
+    { q: 'Is free shipping available?', a: 'Yes, on orders over 1000 EGP throughout Egypt.' },
     { q: 'Do you ship internationally?', a: 'Not yet — we currently ship only within Egypt.' },
   ],
   returns: [

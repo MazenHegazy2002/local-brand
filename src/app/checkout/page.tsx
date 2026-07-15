@@ -480,12 +480,41 @@ function CheckoutPageInner() {
         if (!res.ok) throw new Error(data.message || 'Failed to initiate PaySky payment');
 
         if (data.mockMode) {
-          setPaySkyMockMessage(
-            data.message ||
-              'PaySky env vars are not set on the server. Configure PAYSKY_MERCHANT_ID, PAYSKY_TERMINAL_ID, and PAYSKY_MERCHANT_SECRET to enable real payments.'
-          );
-          setIsLoading(false);
-          return;
+          const mockRes = await createOrder({
+            items: items.map(item => ({
+              variantId: item.variantId || item.id,
+              quantity: item.qty,
+              selectedSize: item.selectedSize || undefined,
+              selectedColor: item.selectedColor || undefined,
+            })),
+            addressId,
+            shippingAddress: {
+              fullName: address.fullName,
+              phone: address.phone,
+              street: address.address,
+              city: address.city,
+              governorate: address.governorate,
+            },
+            guestEmail: session?.user ? undefined : trimmedGuestEmail,
+            paymentMethod: 'PAYSKY',
+            couponCode:
+              couponApplied && !couponApplied.isAffiliate
+                ? couponApplied.code || undefined
+                : undefined,
+            promoCode: couponApplied?.isAffiliate ? couponApplied.affiliateCode : undefined,
+            orderNotes: orderNotes.trim() || undefined,
+            giftWrapping,
+            pointsRedeemed: pointsToUse || undefined,
+          });
+
+          if (mockRes.success && mockRes.orderId) {
+            clearCart();
+            setCouponApplied(null);
+            setPointsToUse(0);
+            router.push(`/checkout/success?orderId=${mockRes.orderId}`);
+            return;
+          }
+          throw new Error(mockRes.error || 'Failed to place order via mock PaySky');
         }
 
         setPaySkyInit({

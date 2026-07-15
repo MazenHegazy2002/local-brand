@@ -211,9 +211,9 @@ export default function BannersTab() {
                   <div className="text-xs text-slate-500 mb-2 line-clamp-1">{banner.subtitle}</div>
                 )}
                 <div className="text-[10px] text-slate-400 mb-3">
-                  {banner.position === 0
+                  {Number(banner.position) === 0
                     ? '🎠 Slot 0 — Main Carousel'
-                    : banner.position === 1
+                    : Number(banner.position) === 1
                       ? '⬆️ Slot 1 — Right Top'
                       : '⬇️ Slot 2 — Right Bottom'}{' '}
                   · <code className="font-mono">{banner.linkUrl}</code>

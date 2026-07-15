@@ -1,7 +1,20 @@
 import { MetadataRoute } from 'next';
+import { headers } from 'next/headers';
 import { PLATFORM_URL } from '@/lib/constants';
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  let baseUrl = PLATFORM_URL;
+  try {
+    const headersList = await headers();
+    const host = headersList.get('host');
+    const proto = headersList.get('x-forwarded-proto') || 'https';
+    if (host) {
+      baseUrl = `${proto}://${host}`;
+    }
+  } catch {
+    // fallback
+  }
+
   return {
     rules: [
       {
@@ -21,7 +34,7 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: `${PLATFORM_URL}/sitemap.xml`,
-    host: PLATFORM_URL,
+    sitemap: `${baseUrl}/sitemap.xml`,
+    host: baseUrl,
   };
 }

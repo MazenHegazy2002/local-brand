@@ -58,18 +58,26 @@ export async function GET(req: Request) {
       const variantById = new Map(variants.map(v => [v.id, v]));
 
       // Drop any guest entries whose variant has been deleted, and shape the
-      // payload identically to the authenticated case.
+      // payload identically to the authenticated case, but sanitize the product model.
       const cart = stored
         .filter(s => variantById.has(s.variantId))
-        .map(s => ({
-          id: `guest:${s.variantId}`,
-          userId: null as string | null,
-          variantId: s.variantId,
-          quantity: s.quantity,
-          savedPrice: s.savedPrice,
-          addedAt: s.addedAt ? new Date(s.addedAt) : new Date(),
-          variant: variantById.get(s.variantId)!,
-        }));
+        .map(s => {
+          const rawVariant = variantById.get(s.variantId)!;
+          const { sellerId, categoryId, deletedAt, ...cleanProduct } = rawVariant.product as any;
+          const cleanVariant = {
+            ...rawVariant,
+            product: cleanProduct,
+          };
+          return {
+            id: `guest:${s.variantId}`,
+            userId: null as string | null,
+            variantId: s.variantId,
+            quantity: s.quantity,
+            savedPrice: s.savedPrice,
+            addedAt: s.addedAt ? new Date(s.addedAt) : new Date(),
+            variant: cleanVariant,
+          };
+        });
 
       return NextResponse.json({ cart }, { status: 200 });
     }

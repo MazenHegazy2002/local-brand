@@ -6,6 +6,9 @@ import { prisma } from '@/lib/prisma';
 import { PageStatus } from '@/generated/client';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { SessionUser } from '@/types';
 
 interface Props {
   /** DB slug for this legal page, e.g. "legal-privacy-policy" */
@@ -99,6 +102,9 @@ export default async function LegalPageLoader({
   staticContent,
   staticTitle: _staticTitle,
 }: Props) {
+  const session = await getServerSession(authOptions);
+  const isAdmin = (session?.user as SessionUser | undefined)?.role === 'ADMIN';
+
   // Try to load from the CMS
   let cmsContent: string | null = null;
   let cmsTitle: string | null = null;
@@ -122,9 +128,11 @@ export default async function LegalPageLoader({
               ← Back to Legal
             </Link>
             <h1 className="text-4xl font-black text-gray-900 mb-2">{cmsTitle}</h1>
-            <p className="text-xs text-gray-400">
-              Content managed via Admin → Pages (slug: <code>{dbSlug}</code>)
-            </p>
+            {isAdmin && (
+              <p className="text-xs text-gray-400">
+                Content managed via Admin → Pages (slug: <code>{dbSlug}</code>)
+              </p>
+            )}
           </div>
           <div className="bg-white rounded-2xl p-8 border border-[#e8dfd1] shadow-sm">
             <div

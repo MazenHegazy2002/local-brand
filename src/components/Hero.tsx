@@ -67,9 +67,11 @@ async function loadBanners() {
       orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
     });
 
-    const sliderBanners = banners.filter(b => b.position === 0 || b.position < 0 || b.position > 2);
-    const rightTopBanners = banners.filter(b => b.position === 1);
-    const rightBottomBanners = banners.filter(b => b.position === 2);
+    const sliderBanners = banners.filter(
+      b => Number(b.position) === 0 || Number(b.position) < 0 || Number(b.position) > 2
+    );
+    const rightTopBanners = banners.filter(b => Number(b.position) === 1);
+    const rightBottomBanners = banners.filter(b => Number(b.position) === 2);
 
     return {
       slider:

@@ -31,6 +31,30 @@ function LoginForm() {
   const urlError = searchParams.get('error');
 
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [captchaId, setCaptchaId] = useState('');
+  const [captchaQuestion, setCaptchaQuestion] = useState('');
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+
+  const fetchCaptcha = async () => {
+    try {
+      const res = await fetch('/api/auth/captcha');
+      if (res.ok) {
+        const data = await res.json();
+        setCaptchaId(data.captchaId);
+        setCaptchaQuestion(data.question);
+        setCaptchaAnswer('');
+      }
+    } catch (err) {
+      console.error('Failed to load CAPTCHA:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (failedAttempts >= 3 || lockoutSeconds > 0) {
+      fetchCaptcha();
+    }
+  }, [failedAttempts, lockoutSeconds > 0]);
 
   useEffect(() => {
     if (lockoutSeconds <= 0) return;
@@ -134,6 +158,8 @@ function LoginForm() {
         redirect: false,
         email,
         password,
+        captchaId: failedAttempts >= 3 || lockoutSeconds > 0 ? captchaId : undefined,
+        captchaAnswer: failedAttempts >= 3 || lockoutSeconds > 0 ? captchaAnswer : undefined,
       });
     } catch (_networkErr) {
       setError('Unable to connect. Please check your internet connection and try again.');
@@ -142,22 +168,29 @@ function LoginForm() {
     }
 
     if (res?.error) {
+      setFailedAttempts(prev => prev + 1);
       if (res.error.startsWith('LOCKOUT:')) {
         const parts = res.error.split(':');
         const secs = parseInt(parts[2]) || 300;
         setLockoutSeconds(secs);
         setError(
-          `Too many failed login attempts. Your account has been temporarily locked. Please try again in ${Math.floor(
+          `Too many failed login attempts. Your account has been temporarily locked. Enter the security code above or try again in ${Math.floor(
             secs / 60
           )}m ${secs % 60}s.`
         );
+        fetchCaptcha();
       } else if (res.error.toLowerCase().includes('email not verified')) {
         setError('Please verify your email address before logging in.');
       } else {
         setError('Invalid email or password');
+        if (failedAttempts + 1 >= 3) {
+          fetchCaptcha();
+        }
       }
       setIsLoading(false);
     } else {
+      setFailedAttempts(0);
+      setLockoutSeconds(0);
       try {
         const sessionRes = await fetch('/api/auth/session');
         const session = await sessionRes.json();
@@ -366,6 +399,31 @@ function LoginForm() {
                 </div>
               )}
 
+              {/* CAPTCHA math security verification */}
+              {!magicLinkMode && (failedAttempts >= 3 || lockoutSeconds > 0) && captchaQuestion && (
+                <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 space-y-3">
+                  <div className="text-xs font-bold text-orange-800 uppercase tracking-wider">
+                    Security Verification Required
+                  </div>
+                  <div className="text-sm text-gray-700">
+                    Prove you are human to bypass lockout and verify your login attempt:
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-black bg-white px-3 py-2 border border-gray-200 rounded-lg shadow-sm font-mono text-gray-800">
+                      {captchaQuestion}
+                    </span>
+                    <input
+                      type="text"
+                      required
+                      value={captchaAnswer}
+                      onChange={e => setCaptchaAnswer(e.target.value)}
+                      placeholder="Answer"
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm text-center font-mono focus:ring-2 focus:ring-orange-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              )}
+
               {!magicLinkMode && (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -394,7 +452,10 @@ function LoginForm() {
               <button
                 id="signin-submit-btn"
                 type="submit"
-                disabled={isLoading || lockoutSeconds > 0}
+                disabled={
+                  isLoading ||
+                  ((failedAttempts >= 3 || lockoutSeconds > 0) && !captchaAnswer.trim())
+                }
                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-dark))] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(var(--ring))] disabled:bg-gray-400 transition-all"
               >
                 {isLoading ? (

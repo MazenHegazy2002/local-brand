@@ -96,11 +96,12 @@ export async function GET(req: Request) {
     const safeCategories = isAuthenticated
       ? categories
       : categories.map(cat => ({
+          id: cat.slug,
           name: cat.name,
           slug: cat.slug,
           nameAr: (cat as any).nameAr,
-          count: cat._count.products,
-          children: cat.children.map(c => ({ name: c.name, slug: c.slug })),
+          _count: { products: cat._count.products },
+          children: cat.children.map(c => ({ id: c.slug, name: c.name, slug: c.slug })),
         }));
 
     return NextResponse.json({ categories: safeCategories });

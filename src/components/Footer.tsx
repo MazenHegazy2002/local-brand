@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import { PLATFORM_NAME, SUPPORT_EMAIL, CONTACT_PHONE } from '@/lib/constants';
 
@@ -65,12 +68,44 @@ const SOCIAL_LINKS = [
 
 export default function Footer() {
   const year = new Date().getFullYear();
+  const [email, setEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setStatus('idle');
+    setErrorMsg('');
+
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatus('success');
+        setEmail('');
+      } else {
+        setStatus('error');
+        setErrorMsg(data.message || 'Failed to subscribe.');
+      }
+    } catch {
+      setStatus('error');
+      setErrorMsg('An error occurred. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <footer className="bg-[#0d1f52] text-white mt-16">
       {/* Main footer */}
       <div className="container mx-auto px-4 py-12 md:py-16">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-12">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 md:gap-12">
           {/* Brand column */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="text-xl font-black tracking-tight text-white">
@@ -207,6 +242,37 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
+          </div>
+
+          {/* Newsletter column */}
+          <div className="col-span-2 md:col-span-1">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-white/40 mb-4">
+              Newsletter
+            </h3>
+            <p className="text-xs text-white/60 mb-3 leading-relaxed">
+              Subscribe to get updates on new arrivals, discount offers, and local brands.
+            </p>
+            <form onSubmit={handleSubscribe} className="space-y-2">
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="Your email address"
+                className="w-full text-xs bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-1 focus:ring-white/45"
+              />
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-2.5 text-xs font-bold text-[#0d1f52] bg-white rounded-xl hover:bg-white/90 transition-colors disabled:opacity-50"
+              >
+                {submitting ? 'Subscribing...' : 'Subscribe'}
+              </button>
+            </form>
+            {status === 'success' && (
+              <p className="text-[10px] text-green-400 mt-2">✓ Subscribed successfully!</p>
+            )}
+            {status === 'error' && <p className="text-[10px] text-red-400 mt-2">✕ {errorMsg}</p>}
           </div>
         </div>
       </div>

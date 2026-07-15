@@ -1,9 +1,21 @@
 import { MetadataRoute } from 'next';
 import { prisma } from '@/lib/prisma';
+import { headers } from 'next/headers';
 import { PLATFORM_URL } from '@/lib/constants';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = PLATFORM_URL;
+  let baseUrl = PLATFORM_URL;
+  try {
+    const headersList = await headers();
+    const host = headersList.get('host');
+    const proto = headersList.get('x-forwarded-proto') || 'https';
+    if (host) {
+      baseUrl = `${proto}://${host}`;
+    }
+  } catch {
+    // fallback
+  }
+
   const now = new Date();
 
   // Static pages — public content pages only (auth/account pages excluded)

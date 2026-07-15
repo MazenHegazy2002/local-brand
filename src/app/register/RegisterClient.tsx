@@ -11,7 +11,9 @@ export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [storeName, setStoreName] = useState('');
   const [role, setRole] = useState<'BUYER' | 'SELLER'>('BUYER');
   const [error, setError] = useState('');
@@ -20,6 +22,11 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
@@ -27,7 +34,7 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role, storeName }),
+        body: JSON.stringify({ name, email, password, role, storeName, phone }),
       });
 
       const data = await res.json();
@@ -248,6 +255,21 @@ export default function RegisterPage() {
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Phone Number (Optional)
+              </label>
+              <div className="mt-1">
+                <input
+                  type="tel"
+                  placeholder="e.g. +20 100 123 4567"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-gray-700">Password</label>
               <div className="mt-1">
                 <input
@@ -260,6 +282,20 @@ export default function RegisterPage() {
                 />
               </div>
               <PasswordStrength password={password} />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+              <div className="mt-1">
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm"
+                />
+              </div>
             </div>
 
             <div>
