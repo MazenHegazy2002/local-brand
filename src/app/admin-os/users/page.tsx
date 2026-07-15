@@ -67,6 +67,7 @@ export default function AdminUsersPage() {
           <option value="BUYER">Buyer</option>
           <option value="SELLER">Seller</option>
           <option value="ADMIN">Admin</option>
+          <option value="AFFILIATE">Affiliate</option>
         </select>
       </div>
 
@@ -94,10 +95,14 @@ export default function AdminUsersPage() {
                         ? 'bg-red-100 text-red-700'
                         : user.role === 'SELLER'
                           ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-700'
+                          : user.affiliate && user.affiliate.status === 'APPROVED'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-gray-100 text-gray-700'
                     }`}
                   >
-                    {user.role}
+                    {user.affiliate && user.affiliate.status === 'APPROVED'
+                      ? 'AFFILIATE'
+                      : user.role}
                   </span>
                 </td>
                 <td className="px-4 py-3">{new Date(user.createdAt).toLocaleDateString()}</td>

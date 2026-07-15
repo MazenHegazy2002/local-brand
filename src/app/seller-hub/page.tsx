@@ -82,6 +82,8 @@ interface NewProductState {
   basePrice: string | number;
   flashSalePrice: string | number;
   categoryId: string;
+  mainImage?: string;
+  mainImageUploading?: boolean;
 }
 
 interface VariantState {
@@ -253,6 +255,8 @@ export default function SellerHub() {
     basePrice: '',
     flashSalePrice: '',
     categoryId: '',
+    mainImage: '',
+    mainImageUploading: false,
   });
 
   const [variants, setVariants] = useState<VariantState[]>([
@@ -391,6 +395,7 @@ export default function SellerHub() {
       if (variants.some((v: VariantState) => !v.price || Number(v.price) <= 0))
         throw new Error('All variant prices are required');
 
+      const mainImageUrl = newProduct.mainImage || undefined;
       const res = (await createProduct({
         ...newProduct,
         basePrice: Number(newProduct.basePrice),
@@ -403,6 +408,7 @@ export default function SellerHub() {
           sizes: v.sizes || '',
         })),
         published: true,
+        mainImage: mainImageUrl,
       })) as { error?: string };
 
       if (res?.error) {
@@ -464,6 +470,8 @@ export default function SellerHub() {
       basePrice: '',
       flashSalePrice: '',
       categoryId: '',
+      mainImage: '',
+      mainImageUploading: false,
     });
     setVariants([{ color: 'Default', stock: 10, price: '', image: '', sizes: '' }]);
   };
@@ -2857,6 +2865,88 @@ function AddProductModal({
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
+          </div>
+
+          {/* Primary product image */}
+          <div>
+            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+              Product Image
+            </label>
+            <p className="text-[10px] text-gray-400 mb-2">
+              Upload a main product image. You can also add images per variant below.
+            </p>
+            {newProduct.mainImage && (
+              <div className="flex items-center gap-3 mb-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={newProduct.mainImage}
+                  alt="Product preview"
+                  className="h-20 w-20 rounded-xl object-cover border border-slate-200"
+                />
+                <div className="flex-1 text-xs">
+                  {newProduct.mainImageUploading ? (
+                    <span className="text-amber-600 font-semibold">Uploading…</span>
+                  ) : (
+                    <span className="text-emerald-600 font-semibold">✓ Image ready</span>
+                  )}
+                </div>
+                {!newProduct.mainImageUploading && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setNewProduct({ ...newProduct, mainImage: '', mainImageUploading: false })
+                    }
+                    className="text-xs font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-md hover:bg-red-50"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            )}
+            <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 cursor-pointer text-sm text-slate-600 font-semibold">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              {newProduct.mainImage ? 'Replace Image' : 'Upload Product Image'}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const previewUrl = URL.createObjectURL(file);
+                  setNewProduct({ ...newProduct, mainImage: previewUrl, mainImageUploading: true });
+                  try {
+                    const { compressImage } = await import('@/lib/compress-image');
+                    const uploadFile = await compressImage(file);
+                    const fd = new FormData();
+                    fd.append('file', uploadFile);
+                    const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                    const d = await res.json();
+                    if (!res.ok || !d.url) throw new Error(d.message || 'Upload failed');
+                    if (d.url.startsWith('data:') && d.url.length > 700 * 1024) {
+                      throw new Error(
+                        'Image too large. Pick a smaller photo or enable cloud hosting.'
+                      );
+                    }
+                    setNewProduct({ ...newProduct, mainImage: d.url, mainImageUploading: false });
+                  } catch (err) {
+                    console.error('Main image upload failed:', err);
+                    setNewProduct({ ...newProduct, mainImage: '', mainImageUploading: false });
+                  }
+                }}
+              />
+            </label>
           </div>
 
           <div>

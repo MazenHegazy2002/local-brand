@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
-import { Prisma, Role } from '@/generated/client';
+import { Prisma, Role, AffiliateStatus } from '@/generated/client';
 
 const VALID_ROLES = new Set<Role>([Role.ADMIN, Role.SELLER, Role.BUYER]);
 
@@ -31,7 +31,11 @@ export async function GET(req: Request) {
           ],
         }
       : {}),
-    ...(role ? { role } : {}),
+    ...(roleParam === 'AFFILIATE'
+      ? { affiliate: { is: { status: AffiliateStatus.ACTIVE } } }
+      : role
+        ? { role }
+        : {}),
   };
 
   const [users, total] = await Promise.all([
@@ -49,6 +53,7 @@ export async function GET(req: Request) {
         updatedAt: true,
         emailVerified: true,
         _count: { select: { orders: true } },
+        affiliate: { select: { status: true } },
       },
       skip,
       take: limit,

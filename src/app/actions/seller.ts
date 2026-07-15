@@ -821,6 +821,7 @@ interface ProductData {
   flashSalePrice?: number;
   flashSaleEndsAt?: string;
   published?: boolean;
+  mainImage?: string;
   variants?: {
     color?: string;
     price?: number;
@@ -920,7 +921,7 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
     // 1. Must have at least one product image.
     // 2. The seller's email must be verified.
     // 3. The SellerProfile.status must be ACTIVE.
-    const hasImages = (variants || []).some(v => v.image);
+    const hasImages = data.mainImage || (variants || []).some(v => v.image);
     const isEmailVerified = !!user?.emailVerified;
     const isSellerActive = seller.status === 'ACTIVE';
 
@@ -986,12 +987,17 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
           }),
         },
         images: {
-          create: variantList
-            .filter(v => v.image)
-            .map((v, idx) => ({
-              url: v.image!,
-              isPrimary: idx === 0,
-            })),
+          create: [
+            // Main product image (if provided) is always primary
+            ...(data.mainImage ? [{ url: data.mainImage, isPrimary: true }] : []),
+            // Variant images follow — isPrimary only if no main image was set
+            ...variantList
+              .filter(v => v.image)
+              .map((v, idx) => ({
+                url: v.image!,
+                isPrimary: !data.mainImage && idx === 0,
+              })),
+          ],
         },
       },
     });

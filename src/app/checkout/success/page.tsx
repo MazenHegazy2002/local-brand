@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Suspense, useEffect } from 'react';
+import { useCartStore } from '@/lib/cartStore';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -16,6 +17,12 @@ function SuccessContent() {
   const trackHref = isGuest
     ? `/track/${encodeURIComponent(orderId || '')}`
     : '/dashboard?tab=orders';
+  const clearCart = useCartStore(s => s.clearCart);
+
+  // Clear cart on mount — safety net in case the checkout redirect didn't clear it
+  useEffect(() => {
+    clearCart();
+  }, [clearCart]);
 
   useEffect(() => {
     // Fire simple confetti effect if available, or just ignore

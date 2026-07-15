@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 export const revalidate = 60;
 
 export const metadata = {
-  title: 'Flash Sales – Brandy | Limited-Time Deals',
+  title: 'Flash Sales — Limited-Time Deals',
   description:
     "Shop limited-time flash sales and exclusive deals on Egyptian local brands. Prices drop fast — grab yours before they're gone.",
 };
