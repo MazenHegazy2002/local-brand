@@ -927,101 +927,121 @@ async function main() {
   const SELLER_BRANDS = [
     {
       name: 'Cairo Loom',
+      owner: 'Ahmed Hassan',
       email: 'cairoloom@brandy.com',
       desc: 'Premium Egyptian linen shirts and breathable summer garments.',
     },
     {
       name: 'Alexandria Leatherworks',
+      owner: 'Mariam El-Sayed',
       email: 'alexleather@brandy.com',
       desc: 'Handcrafted genuine leather bags, belts, and accessories.',
     },
     {
       name: 'Oasis Terracotta',
+      owner: 'Youssef Farouk',
       email: 'oasisclay@brandy.com',
       desc: 'Clay pots, kitchenware, and custom home accents from Tunis Village, Fayoum.',
     },
     {
       name: 'Nile Threads',
+      owner: 'Sara Mostafa',
       email: 'nilethreads@brandy.com',
       desc: 'Organic Egyptian cotton basic tees, loungewear, and daily essentials.',
     },
     {
       name: 'Giza Cotton Co.',
+      owner: 'Omar Khaled',
       email: 'gizacotton@brandy.com',
       desc: 'World-renowned Egyptian cotton bedding, bathrobes, and luxury linens.',
     },
     {
       name: 'Damietta Woodcraft',
+      owner: 'Tarek Ibrahim',
       email: 'damiettawood@brandy.com',
       desc: 'Artisanal wood furniture, serving trays, and custom wooden home decor.',
     },
     {
       name: 'Delta Electronics',
+      owner: 'Nour Adel',
       email: 'deltatech@brandy.com',
       desc: 'Smart smart accessories, custom power banks, and local tech hardware.',
     },
     {
       name: 'Lotus Botanicals',
+      owner: 'Hana Sherif',
       email: 'lotusbeauty@brandy.com',
       desc: 'Natural Egyptian skincare, oils, and organic hair treatment remedies.',
     },
     {
       name: 'Luxor Goldsmiths',
+      owner: 'Kareem Nasser',
       email: 'luxorgold@brandy.com',
       desc: 'Handmade sterling silver and gold-plated jewelry inspired by heritage.',
     },
     {
       name: 'Nubian Heritage Crafts',
+      owner: 'Fatma Gamal',
       email: 'nubiancrafts@brandy.com',
       desc: 'Handwoven baskets, colorful rugs, and traditional home ornaments.',
     },
     {
       name: 'Suez Activewear',
+      owner: 'Mahmoud Ali',
       email: 'suezactive@brandy.com',
       desc: 'Athletic wear, performance training jerseys, and Egyptian outdoor gear.',
     },
     {
       name: 'Mansoura Loom',
+      owner: 'Layla Mahmoud',
       email: 'mansouraloom@brandy.com',
       desc: 'Premium knitwear, cozy cardigans, and seasonal Egyptian garments.',
     },
     {
       name: 'Tanta Gourmet',
+      owner: 'Amr Salah',
       email: 'tantagourmet@brandy.com',
       desc: 'Artisanal local spices, organic honey, and sweet traditional delicacies.',
     },
     {
       name: 'Siwa Organics',
+      owner: 'Dina Wael',
       email: 'siwaorganics@brandy.com',
       desc: 'Organic dates, premium olive oil, and natural bath salts from Siwa Oasis.',
     },
     {
       name: 'Sinai Herbals',
+      owner: 'Hassan Fathy',
       email: 'sinaiherbal@brandy.com',
       desc: 'Organic Sinai teas, hand-harvested herbs, and therapeutic remedies.',
     },
     {
       name: 'Port Said Gear',
+      owner: 'Khaled Tawfik',
       email: 'portsaidgear@brandy.com',
       desc: 'Premium travel bags, windbreakers, and durable Egyptian outdoor packs.',
     },
     {
       name: 'Assiut Loom Heritage',
+      owner: 'Rania Samir',
       email: 'assiutloom@brandy.com',
       desc: 'Tally fabrics, traditional shawls, and ancient Assiut weaving designs.',
     },
     {
       name: 'Qena Pottery',
+      owner: 'Mohsen Ezzat',
       email: 'qenapottery@brandy.com',
       desc: 'Porous water jars, clay planters, and functional terracotta storage.',
     },
     {
       name: 'Kemet Fashion House',
+      owner: 'Nadia Refaat',
       email: 'kemetfashion@brandy.com',
       desc: 'Contemporary Egyptian streetwear and custom graphic tees.',
     },
     {
       name: 'Pharaoh Timepieces',
+      owner: 'Sherif Mansour',
       email: 'pharaohtime@brandy.com',
       desc: 'Premium handcrafted wooden watches and local desk clocks.',
     },
@@ -1033,7 +1053,7 @@ async function main() {
     const logo = LOGO_URLS[(i + 1) % LOGO_URLS.length];
     const u = await prisma.user.create({
       data: {
-        name: brand.name,
+        name: brand.owner,
         email: brand.email,
         passwordHash: sellerPwHash, // reuse same hash for convenience
         role: 'SELLER',
