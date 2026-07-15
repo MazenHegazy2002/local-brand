@@ -1,11 +1,50 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@/generated/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 // GET /api/products?page=1&limit=12&category=&q=&minPrice=&maxPrice=&sort=&brand=&rating=&tags=&condition=&inStock=&flashSale=&gender=&ageGroup=&material=&ids=id1,id2,...
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
+    const session = await getServerSession(authOptions);
+
+    const sanitizeProducts = (list: any[]) => {
+      if (session) return list;
+      return list.map(p => ({
+        id: p.id,
+        title: p.title,
+        titleAr: p.titleAr,
+        slug: p.slug,
+        description: p.description,
+        descriptionAr: p.descriptionAr,
+        basePrice: p.basePrice,
+        flashSalePrice: p.flashSalePrice,
+        flashSaleStartsAt: p.flashSaleStartsAt,
+        flashSaleEndsAt: p.flashSaleEndsAt,
+        brand: p.brand,
+        material: p.material,
+        gender: p.gender,
+        ageGroup: p.ageGroup,
+        condition: p.condition,
+        isVerifiedLocal: p.isVerifiedLocal,
+        images: p.images,
+        category: p.category ? { name: p.category.name, slug: p.category.slug } : null,
+        seller: p.seller ? { storeName: p.seller.storeName } : null,
+        variants: p.variants
+          ? p.variants.map((v: any) => ({
+              id: v.id,
+              size: v.size,
+              color: v.color,
+              price: v.price,
+              stockCount: v.stockCount,
+            }))
+          : [],
+        reviews: p.reviews,
+        _count: p._count,
+      }));
+    };
 
     // Special-case: batch fetch by explicit ids (used by RecentlyViewed and compare).
     const idsParam = searchParams.get('ids');
@@ -27,7 +66,7 @@ export async function GET(req: Request) {
           category: { select: { name: true, slug: true } },
         },
       });
-      return NextResponse.json({ products }, { status: 200 });
+      return NextResponse.json({ products: sanitizeProducts(products) }, { status: 200 });
     }
 
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
@@ -173,7 +212,7 @@ export async function GET(req: Request) {
 
       return NextResponse.json(
         {
-          products,
+          products: sanitizeProducts(products),
           pagination: {
             page,
             limit,
@@ -208,7 +247,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(
       {
-        products,
+        products: sanitizeProducts(products),
         pagination: {
           page,
           limit,

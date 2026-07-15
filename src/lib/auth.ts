@@ -27,6 +27,8 @@ import FacebookProvider from 'next-auth/providers/facebook';
 import TwitterProvider from 'next-auth/providers/twitter';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { redis } from '@/lib/redis';
+import { headers } from 'next/headers';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -60,22 +62,66 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         const email = credentials.email.toLowerCase().trim();
+        const headerList = await headers();
+        const ip = headerList.get('x-forwarded-for') || 'unknown';
+        const emailKey = `login:limit:email:${email}`;
+        const ipKey = `login:limit:ip:${ip}`;
+
+        const [emailAttempts, ipAttempts] = await Promise.all([
+          redis.get(emailKey),
+          redis.get(ipKey),
+        ]);
+
+        if (emailAttempts && parseInt(emailAttempts) >= 5) {
+          throw new Error('Too many failed login attempts. Please try again in 5 minutes.');
+        }
+        if (ipAttempts && parseInt(ipAttempts) >= 10) {
+          throw new Error(
+            'Too many failed login attempts from this IP. Please try again in 5 minutes.'
+          );
+        }
 
         try {
           const user = await prisma.user.findUnique({ where: { email } });
-          if (!user || !user.passwordHash) return null;
+          if (!user || !user.passwordHash) {
+            await Promise.all([
+              redis.incr(emailKey).then(attempts => {
+                if (attempts === 1) redis.expire(emailKey, 300);
+              }),
+              redis.incr(ipKey).then(attempts => {
+                if (attempts === 1) redis.expire(ipKey, 300);
+              }),
+            ]);
+            return null;
+          }
           const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
-          if (!isPasswordValid || user.deletedAt) return null;
+          if (!isPasswordValid || user.deletedAt) {
+            await Promise.all([
+              redis.incr(emailKey).then(attempts => {
+                if (attempts === 1) redis.expire(emailKey, 300);
+              }),
+              redis.incr(ipKey).then(attempts => {
+                if (attempts === 1) redis.expire(ipKey, 300);
+              }),
+            ]);
+            return null;
+          }
 
           // Enforce email verification for credentials logins
           if (!user.emailVerified) {
             throw new Error('Email not verified');
           }
 
+          // Reset attempts on successful login
+          await Promise.all([redis.del(emailKey), redis.del(ipKey)]);
+
           return { id: user.id, name: user.name, email: user.email, role: user.role };
         } catch (error) {
           console.error('[AUTH] Error:', error);
-          if (error instanceof Error && error.message === 'Email not verified') {
+          if (
+            error instanceof Error &&
+            (error.message === 'Email not verified' || error.message.includes('attempts'))
+          ) {
             throw error;
           }
           throw new Error('Login failed');

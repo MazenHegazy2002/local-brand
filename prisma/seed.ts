@@ -1027,7 +1027,7 @@ async function main() {
     },
   ];
 
-  const addedSellerProfiles = [];
+  const addedSellerProfiles = [defaultSellerProfile];
   for (let i = 0; i < SELLER_BRANDS.length; i++) {
     const brand = SELLER_BRANDS[i];
     const logo = LOGO_URLS[(i + 1) % LOGO_URLS.length];

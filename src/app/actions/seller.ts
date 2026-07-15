@@ -371,6 +371,7 @@ export async function getDashboardStats() {
           role: true,
           emailVerified: true,
           createdAt: true,
+          affiliate: { select: { id: true, status: true } },
         },
         orderBy: { createdAt: 'desc' },
         take: 100,
@@ -402,7 +403,27 @@ export async function getDashboardStats() {
       const collections = await prisma.collection.findMany();
 
       // Query database-wide totals for correct dashboard statistics
-      const [totalOrders, totalSellers, totalUsers, totalProducts, orderAgg] = await Promise.all([
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const startOfThisMonth = new Date();
+      startOfThisMonth.setDate(1);
+      startOfThisMonth.setHours(0, 0, 0, 0);
+      const startOfPrevMonth = new Date(startOfThisMonth);
+      startOfPrevMonth.setMonth(startOfPrevMonth.getMonth() - 1);
+      const endOfPrevMonth = new Date(startOfThisMonth);
+      endOfPrevMonth.setMilliseconds(-1);
+
+      const [
+        totalOrders,
+        totalSellers,
+        totalUsers,
+        totalProducts,
+        orderAgg,
+        todayUsersCount,
+        thisMonthSellersCount,
+        thisMonthGmvAgg,
+        prevMonthGmvAgg,
+      ] = await Promise.all([
         prisma.order.count(),
         prisma.sellerProfile.count(),
         prisma.user.count({ where: { deletedAt: null } }),
@@ -410,10 +431,35 @@ export async function getDashboardStats() {
         prisma.order.aggregate({
           _sum: { totalAmount: true, platformFee: true },
         }),
+        prisma.user.count({
+          where: { deletedAt: null, createdAt: { gte: startOfToday } },
+        }),
+        prisma.sellerProfile.count({
+          where: { createdAt: { gte: startOfThisMonth } },
+        }),
+        prisma.order.aggregate({
+          where: { status: { not: 'CANCELLED' }, createdAt: { gte: startOfThisMonth } },
+          _sum: { totalAmount: true },
+        }),
+        prisma.order.aggregate({
+          where: {
+            status: { not: 'CANCELLED' },
+            createdAt: { gte: startOfPrevMonth, lte: endOfPrevMonth },
+          },
+          _sum: { totalAmount: true },
+        }),
       ]);
 
       const totalRevenue = orderAgg._sum.totalAmount || 0;
       const totalPlatformFees = orderAgg._sum.platformFee || 0;
+      const thisMonthGmv = thisMonthGmvAgg._sum.totalAmount || 0;
+      const prevMonthGmv = prevMonthGmvAgg._sum.totalAmount || 0;
+      const gmvChangePct =
+        prevMonthGmv > 0
+          ? Math.round(((thisMonthGmv - prevMonthGmv) / prevMonthGmv) * 100)
+          : thisMonthGmv > 0
+            ? 100
+            : 0;
 
       const stats = {
         revenue: totalRevenue,
@@ -422,6 +468,9 @@ export async function getDashboardStats() {
         totalSellers,
         totalUsers,
         totalProducts,
+        todayUsersCount,
+        thisMonthSellersCount,
+        gmvChangePct,
       };
 
       return JSON.parse(

@@ -30,10 +30,10 @@ export async function generateMetadata({
   const description = `Shop ${seller.storeName} products on Brandy — Egypt's marketplace for local sellers. Authentic Egyptian brand.`;
 
   return {
-    title: `${seller.storeName} — Brandy`,
+    title: seller.storeName,
     description,
     openGraph: {
-      title: `${seller.storeName} — Brandy`,
+      title: seller.storeName,
       description,
       type: 'website',
     },

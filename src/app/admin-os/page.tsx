@@ -83,6 +83,9 @@ interface DashboardData {
     totalSellers: number;
     totalUsers: number;
     totalProducts: number;
+    todayUsersCount?: number;
+    thisMonthSellersCount?: number;
+    gmvChangePct?: number;
   };
   error?: string;
   user?: SessionUser;
@@ -1943,7 +1946,10 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabPro
         <div className="stat">
           <div className="stat-label">GMV (Total)</div>
           <div className="stat-val">{(stats.revenue || 0).toLocaleString()}</div>
-          <div className="stat-sub up">+24% vs last month</div>
+          <div className="stat-sub up">
+            {(stats.gmvChangePct ?? 0) >= 0 ? '+' : ''}
+            {stats.gmvChangePct ?? 0}% vs last month
+          </div>
         </div>
         <div className="stat">
           <div className="stat-label">Platform revenue</div>
@@ -1957,12 +1963,12 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabPro
         <div className="stat">
           <div className="stat-label">Active sellers</div>
           <div className="stat-val">{stats.totalSellers || 0}</div>
-          <div className="stat-sub up">+12 this month</div>
+          <div className="stat-sub up">+{stats.thisMonthSellersCount || 0} this month</div>
         </div>
         <div className="stat">
           <div className="stat-label">Total users</div>
           <div className="stat-val">{stats.totalUsers || 0}</div>
-          <div className="stat-sub up">+340 today</div>
+          <div className="stat-sub up">+{stats.todayUsersCount || 0} today</div>
         </div>
       </div>
 
@@ -2968,9 +2974,26 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
           </div>
           <div style={{ width: 80, textAlign: 'center' }}>
             <span
-              className={`badge ${u.role === 'ADMIN' ? 'b-new' : u.role === 'SELLER' ? 'b-active' : 'b-pending'}`}
+              className={`badge ${
+                (u as any).affiliate
+                  ? 'b-new'
+                  : u.role === 'ADMIN'
+                    ? 'b-new'
+                    : u.role === 'SELLER'
+                      ? 'b-active'
+                      : 'b-pending'
+              }`}
+              style={
+                (u as any).affiliate
+                  ? {
+                      background: '#f5f3ff',
+                      color: '#6d28d9',
+                      borderColor: '#ddd6fe',
+                    }
+                  : undefined
+              }
             >
-              {u.role}
+              {(u as any).affiliate ? 'AFFILIATE' : u.role}
             </span>
           </div>
           <div style={{ fontSize: '11px', color: '#94a3b8', width: 100, textAlign: 'right' }}>
@@ -4248,7 +4271,9 @@ function TaxonomyTab({
         </form>
       </div>
       <div className="card col-span-2">
-        <div className="card-title mb-4">Existing {currentType}s</div>
+        <div className="card-title mb-4">
+          Existing {currentType === 'category' ? 'categories' : currentType + 's'}
+        </div>
         <div className="flex flex-col gap-1">
           {items?.map((item: Category | Tag | Collection) => (
             <div key={item.id} className="row-item">

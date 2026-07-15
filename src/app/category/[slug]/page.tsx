@@ -28,10 +28,10 @@ export async function generateMetadata({
   const ar = `تسوق ${category.name} من البائعين المحليين المصريين على Brandy.`;
 
   return {
-    title: `${category.name} — Brandy`,
+    title: category.name,
     description: en,
     alternates: { languages: { 'ar-EG': ar } },
-    openGraph: { title: `${category.name} — Brandy`, description: en },
+    openGraph: { title: category.name, description: en },
   };
 }
 
