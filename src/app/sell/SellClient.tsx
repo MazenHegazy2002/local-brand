@@ -488,6 +488,7 @@ export default function SellPage() {
               placeholder="••••••••"
               required
               minLength={8}
+              autoComplete="new-password"
               style={inputStyle}
             />
             {authTab === 'register' && (

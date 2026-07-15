@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 export const revalidate = 3600;
 
 export const metadata = {
-  title: 'Lookbook – Brandy | Style Inspiration',
+  title: 'Lookbook – Style Inspiration',
   description:
     'Step into our editorial fashion catalog. Explore curated seasonal aesthetics and shop local Egyptian designers.',
 };

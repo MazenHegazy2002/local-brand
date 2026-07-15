@@ -122,6 +122,13 @@ function LoginForm() {
     if (res?.error) {
       if (res.error.toLowerCase().includes('email not verified')) {
         setError('Please verify your email address before logging in.');
+      } else if (
+        res.error.toLowerCase().includes('too many') ||
+        res.error.toLowerCase().includes('attempts')
+      ) {
+        setError(
+          'Too many failed login attempts. Your account has been temporarily locked. Please try again in 5 minutes.'
+        );
       } else {
         setError('Invalid email or password');
       }

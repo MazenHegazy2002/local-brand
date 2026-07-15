@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@/generated/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 /**
  * Category landing pages API
@@ -13,6 +15,8 @@ export async function GET(req: Request) {
   const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
   const limit = Math.min(24, parseInt(searchParams.get('limit') || '12'));
   const sort = searchParams.get('sort') || 'newest';
+  const session = await getServerSession(authOptions);
+  const isAuthenticated = !!session;
 
   try {
     if (slug) {
@@ -53,9 +57,18 @@ export async function GET(req: Request) {
         prisma.product.count({ where }),
       ]);
 
+      // Public-safe category view: strip internal IDs for guests
+      const safeCategory = isAuthenticated
+        ? category
+        : { name: category.name, slug: category.slug, nameAr: (category as any).nameAr };
+
+      const safeSubcategories = isAuthenticated
+        ? category.children
+        : category.children.map(c => ({ name: c.name, slug: c.slug }));
+
       return NextResponse.json({
-        category,
-        subcategories: category.children,
+        category: safeCategory,
+        subcategories: safeSubcategories,
         products,
         pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
       });
@@ -79,7 +92,18 @@ export async function GET(req: Request) {
         !cat.name.toLowerCase().startsWith('test')
     );
 
-    return NextResponse.json({ categories });
+    // Strip internal IDs for unauthenticated requests
+    const safeCategories = isAuthenticated
+      ? categories
+      : categories.map(cat => ({
+          name: cat.name,
+          slug: cat.slug,
+          nameAr: (cat as any).nameAr,
+          count: cat._count.products,
+          children: cat.children.map(c => ({ name: c.name, slug: c.slug })),
+        }));
+
+    return NextResponse.json({ categories: safeCategories });
   } catch (_error) {
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }

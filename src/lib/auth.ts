@@ -75,7 +75,7 @@ export const authOptions: NextAuthOptions = {
         if (emailAttempts && parseInt(emailAttempts) >= 5) {
           throw new Error('Too many failed login attempts. Please try again in 5 minutes.');
         }
-        if (ipAttempts && parseInt(ipAttempts) >= 10) {
+        if (ipAttempts && parseInt(ipAttempts) >= 20) {
           throw new Error(
             'Too many failed login attempts from this IP. Please try again in 5 minutes.'
           );

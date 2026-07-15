@@ -269,7 +269,7 @@ export async function proxy(req: NextRequest) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
       }
       const loginUrl = new URL(isArabic ? '/ar/login' : '/login', req.url);
-      loginUrl.searchParams.set('callbackUrl', pathname);
+      loginUrl.searchParams.set('callbackUrl', req.nextUrl.pathname + req.nextUrl.search);
       return NextResponse.redirect(loginUrl);
     }
 

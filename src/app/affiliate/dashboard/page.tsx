@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useLanguage } from '@/providers/LanguageContext';
+import { useCartStore } from '@/lib/cartStore';
 
 interface AffiliateDashboardData {
   affiliate: {
@@ -284,7 +285,10 @@ export default function AffiliateDashboardPage() {
               {lang === 'ar' ? 'المتجر' : 'Shop'}
             </Link>
             <button
-              onClick={() => signOut({ callbackUrl: '/' })}
+              onClick={() => {
+                useCartStore.getState().clearCart();
+                signOut({ callbackUrl: '/' });
+              }}
               className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
             >
               <svg

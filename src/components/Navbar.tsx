@@ -53,6 +53,7 @@ export default function Navbar() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const cartCount = useCartStore(s => s.count());
+  const clearCart = useCartStore(s => s.clearCart);
   const { t } = useLanguage();
 
   const role = (session?.user as SessionUser)?.role;
@@ -264,6 +265,7 @@ export default function Navbar() {
                       role="menuitem"
                       onClick={() => {
                         setIsUserMenuOpen(false);
+                        clearCart();
                         signOut({ callbackUrl: '/' });
                       }}
                       className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
