@@ -184,7 +184,7 @@ export default function Navbar() {
               href={
                 session
                   ? `${dashboardHref === '/dashboard' ? '/dashboard?tab=wishlist' : dashboardHref}`
-                  : '/login?callbackUrl=/dashboard'
+                  : '/login?callbackUrl=%2Fdashboard%3Ftab%3Dwishlist'
               }
               className="hidden sm:flex flex-col items-center text-white/80 hover:text-white transition-colors relative"
               aria-label="Wishlist"
