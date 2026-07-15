@@ -31,12 +31,19 @@ import Script from 'next/script';
 import { useLanguage } from '@/providers/LanguageContext';
 import { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 export default function Plugins() {
   const { lang } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const widgetRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const isDashboardRoute =
+    pathname?.startsWith('/dashboard') ||
+    pathname?.startsWith('/seller-hub') ||
+    pathname?.startsWith('/admin-os') ||
+    pathname?.startsWith('/affiliate');
 
   useEffect(() => {
     const dismissed = sessionStorage.getItem('support-tooltip-dismissed');
@@ -281,273 +288,275 @@ export default function Plugins() {
       )}
 
       {/* 15. Premium Elite Multichannel Social Support Widget (RTL + Mobile-Safe) */}
-      <div
-        ref={widgetRef}
-        style={{
-          position: 'fixed',
-          bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
-          [isRtl ? 'left' : 'right']: '20px',
-          zIndex: 9999,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: isRtl ? 'flex-start' : 'flex-end',
-          gap: '12px',
-        }}
-      >
-        {/* Proactive Support Tooltip */}
-        {showTooltip && !isOpen && (
-          <div
-            style={{
-              padding: '10px 14px',
-              borderRadius: '12px',
-              backgroundColor: 'white',
-              color: '#1e293b',
-              fontSize: '13px',
-              fontWeight: 500,
-              boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-              border: '1px solid rgba(0,0,0,0.05)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              maxWidth: '220px',
-              position: 'relative',
-              animation: 'slideUpFAB 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-            }}
-          >
-            <span>
-              {isRtl
-                ? 'هل لديك أي استفسار؟ نحن هنا للمساعدة!'
-                : 'Have a question? We are here to help!'}
-            </span>
-            <button
-              type="button"
-              onClick={dismissTooltip}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#94a3b8',
-                cursor: 'pointer',
-                padding: '2px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              aria-label="Dismiss tooltip"
-            >
-              <X size={14} />
-            </button>
+      {!isDashboardRoute && (
+        <div
+          ref={widgetRef}
+          style={{
+            position: 'fixed',
+            bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
+            [isRtl ? 'left' : 'right']: '20px',
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: isRtl ? 'flex-start' : 'flex-end',
+            gap: '12px',
+          }}
+        >
+          {/* Proactive Support Tooltip */}
+          {showTooltip && !isOpen && (
             <div
               style={{
-                position: 'absolute',
-                bottom: '-6px',
-                [isRtl ? 'left' : 'right']: '22px',
-                width: '12px',
-                height: '12px',
+                padding: '10px 14px',
+                borderRadius: '12px',
                 backgroundColor: 'white',
-                transform: 'rotate(45deg)',
-                borderBottom: '1px solid rgba(0,0,0,0.08)',
-                borderRight: '1px solid rgba(0,0,0,0.08)',
-                zIndex: -1,
-              }}
-            />
-          </div>
-        )}
-
-        {/* Expanded Stack of Social Channels */}
-        {isOpen && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px',
-              animation: 'slideUpFAB 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-              opacity: 0,
-              transform: 'translateY(15px)',
-            }}
-          >
-            {/* A. WhatsApp Support Channel */}
-            <a
-              href={wppUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
+                color: '#1e293b',
+                fontSize: '13px',
+                fontWeight: 500,
+                boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                border: '1px solid rgba(0,0,0,0.05)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '8px 14px',
-                borderRadius: '24px',
-                backgroundColor: '#25D366',
-                color: '#ffffff',
-                fontSize: '12px',
-                fontWeight: 700,
-                textDecoration: 'none',
-                boxShadow: '0 4px 15px rgba(37, 211, 102, 0.25)',
-                transition: 'transform 0.2s',
-                width: 'max-content',
-                alignSelf: isRtl ? 'flex-start' : 'flex-end',
+                maxWidth: '220px',
+                position: 'relative',
+                animation: 'slideUpFAB 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
               }}
-              className="hover:scale-105 notranslate"
             >
-              {/* WhatsApp custom SVG */}
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.262 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.625 1.45 5.489 0 9.957-4.432 9.96-9.886.002-2.642-1.025-5.127-2.89-6.995C16.48 1.857 14 1.812 12.013 1.812c-5.491 0-9.959 4.433-9.962 9.887-.001 1.552.422 3.069 1.22 4.425L2.244 20.85l4.403-1.696z" />
-              </svg>
-              <span>{isRtl ? 'تواصل عبر واتساب' : 'WhatsApp Chat'}</span>
-            </a>
-
-            {/* B. Telegram Support Channel */}
-            <a
-              href={tgUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 14px',
-                borderRadius: '24px',
-                backgroundColor: '#0088cc',
-                color: '#ffffff',
-                fontSize: '12px',
-                fontWeight: 700,
-                textDecoration: 'none',
-                boxShadow: '0 4px 15px rgba(0, 136, 204, 0.25)',
-                transition: 'transform 0.2s',
-                width: 'max-content',
-                alignSelf: isRtl ? 'flex-start' : 'flex-end',
-              }}
-              className="hover:scale-105 notranslate"
-            >
-              <Send size={14} />
-              <span>{isRtl ? 'قناة تليجرام' : 'Telegram Support'}</span>
-            </a>
-
-            {/* C. Instagram Channel */}
-            <a
-              href={igUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 14px',
-                borderRadius: '24px',
-                background:
-                  'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
-                color: '#ffffff',
-                fontSize: '12px',
-                fontWeight: 700,
-                textDecoration: 'none',
-                boxShadow: '0 4px 15px rgba(220, 39, 67, 0.25)',
-                transition: 'transform 0.2s',
-                width: 'max-content',
-                alignSelf: isRtl ? 'flex-start' : 'flex-end',
-              }}
-              className="hover:scale-105 notranslate"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ flexShrink: 0 }}
+              <span>
+                {isRtl
+                  ? 'هل لديك أي استفسار؟ نحن هنا للمساعدة!'
+                  : 'Have a question? We are here to help!'}
+              </span>
+              <button
+                type="button"
+                onClick={dismissTooltip}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                aria-label="Dismiss tooltip"
               >
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-              </svg>
-              <span>{isRtl ? 'حساب إنستغرام' : 'Instagram Profile'}</span>
-            </a>
-
-            {/* D. Facebook Messenger Channel */}
-            <a
-              href={fbUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 14px',
-                borderRadius: '24px',
-                background: 'linear-gradient(135deg, #006AFF, #00B2FF)',
-                color: '#ffffff',
-                fontSize: '12px',
-                fontWeight: 700,
-                textDecoration: 'none',
-                boxShadow: '0 4px 15px rgba(0, 106, 255, 0.25)',
-                transition: 'transform 0.2s',
-                width: 'max-content',
-                alignSelf: isRtl ? 'flex-start' : 'flex-end',
-              }}
-              className="hover:scale-105 notranslate"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ flexShrink: 0 }}
-              >
-                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-              </svg>
-              <span>{isRtl ? 'مراسلة فيسبوك' : 'Messenger Chat'}</span>
-            </a>
-          </div>
-        )}
-
-        {/* Master Floating Action Button (FAB) Toggle */}
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-expanded={isOpen}
-          aria-label="Toggle contact support channels"
-          style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            backgroundColor: isOpen ? '#1e293b' : 'hsl(var(--primary))',
-            color: '#ffffff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
-            border: 'none',
-            cursor: 'pointer',
-            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-            position: 'relative',
-          }}
-          className="hover:scale-110 active:scale-95"
-        >
-          {/* Pulsing ring behind the inactive button */}
-          {!isOpen && (
-            <span
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                borderRadius: '50%',
-                boxShadow: '0 0 0 0 hsla(var(--primary), 0.6)',
-                animation: 'fab-ring-pulse 2s infinite',
-                pointerEvents: 'none',
-              }}
-            />
+                <X size={14} />
+              </button>
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '-6px',
+                  [isRtl ? 'left' : 'right']: '22px',
+                  width: '12px',
+                  height: '12px',
+                  backgroundColor: 'white',
+                  transform: 'rotate(45deg)',
+                  borderBottom: '1px solid rgba(0,0,0,0.08)',
+                  borderRight: '1px solid rgba(0,0,0,0.08)',
+                  zIndex: -1,
+                }}
+              />
+            </div>
           )}
 
-          {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
-        </button>
-      </div>
+          {/* Expanded Stack of Social Channels */}
+          {isOpen && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                animation: 'slideUpFAB 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                opacity: 0,
+                transform: 'translateY(15px)',
+              }}
+            >
+              {/* A. WhatsApp Support Channel */}
+              <a
+                href={wppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 14px',
+                  borderRadius: '24px',
+                  backgroundColor: '#25D366',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 15px rgba(37, 211, 102, 0.25)',
+                  transition: 'transform 0.2s',
+                  width: 'max-content',
+                  alignSelf: isRtl ? 'flex-start' : 'flex-end',
+                }}
+                className="hover:scale-105 notranslate"
+              >
+                {/* WhatsApp custom SVG */}
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.262 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.625 1.45 5.489 0 9.957-4.432 9.96-9.886.002-2.642-1.025-5.127-2.89-6.995C16.48 1.857 14 1.812 12.013 1.812c-5.491 0-9.959 4.433-9.962 9.887-.001 1.552.422 3.069 1.22 4.425L2.244 20.85l4.403-1.696z" />
+                </svg>
+                <span>{isRtl ? 'تواصل عبر واتساب' : 'WhatsApp Chat'}</span>
+              </a>
+
+              {/* B. Telegram Support Channel */}
+              <a
+                href={tgUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 14px',
+                  borderRadius: '24px',
+                  backgroundColor: '#0088cc',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 15px rgba(0, 136, 204, 0.25)',
+                  transition: 'transform 0.2s',
+                  width: 'max-content',
+                  alignSelf: isRtl ? 'flex-start' : 'flex-end',
+                }}
+                className="hover:scale-105 notranslate"
+              >
+                <Send size={14} />
+                <span>{isRtl ? 'قناة تليجرام' : 'Telegram Support'}</span>
+              </a>
+
+              {/* C. Instagram Channel */}
+              <a
+                href={igUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 14px',
+                  borderRadius: '24px',
+                  background:
+                    'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 15px rgba(220, 39, 67, 0.25)',
+                  transition: 'transform 0.2s',
+                  width: 'max-content',
+                  alignSelf: isRtl ? 'flex-start' : 'flex-end',
+                }}
+                className="hover:scale-105 notranslate"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ flexShrink: 0 }}
+                >
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+                <span>{isRtl ? 'حساب إنستغرام' : 'Instagram Profile'}</span>
+              </a>
+
+              {/* D. Facebook Messenger Channel */}
+              <a
+                href={fbUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 14px',
+                  borderRadius: '24px',
+                  background: 'linear-gradient(135deg, #006AFF, #00B2FF)',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 15px rgba(0, 106, 255, 0.25)',
+                  transition: 'transform 0.2s',
+                  width: 'max-content',
+                  alignSelf: isRtl ? 'flex-start' : 'flex-end',
+                }}
+                className="hover:scale-105 notranslate"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ flexShrink: 0 }}
+                >
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                </svg>
+                <span>{isRtl ? 'مراسلة فيسبوك' : 'Messenger Chat'}</span>
+              </a>
+            </div>
+          )}
+
+          {/* Master Floating Action Button (FAB) Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            aria-expanded={isOpen}
+            aria-label="Toggle contact support channels"
+            style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              backgroundColor: isOpen ? '#1e293b' : 'hsl(var(--primary))',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              position: 'relative',
+            }}
+            className="hover:scale-110 active:scale-95"
+          >
+            {/* Pulsing ring behind the inactive button */}
+            {!isOpen && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  borderRadius: '50%',
+                  boxShadow: '0 0 0 0 hsla(var(--primary), 0.6)',
+                  animation: 'fab-ring-pulse 2s infinite',
+                  pointerEvents: 'none',
+                }}
+              />
+            )}
+
+            {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
+          </button>
+        </div>
+      )}
 
       {/* Embedded Dynamic Style Sheet */}
       <style jsx global>{`

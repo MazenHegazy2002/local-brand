@@ -99,7 +99,7 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
                   {subtitle}
                 </span>
               )}
-              <h1 className="text-3xl sm:text-4xl md:text-[56px] lg:text-[64px] font-bold tracking-tight mb-4 sm:mb-6 md:mb-8 max-w-xl leading-[1.05]">
+              <h1 className="text-3xl sm:text-4xl md:text-[56px] lg:text-[64px] font-bold tracking-tight mb-4 sm:mb-6 md:mb-8 max-w-xl leading-[1.18]">
                 {title}
               </h1>
 

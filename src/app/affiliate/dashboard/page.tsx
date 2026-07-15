@@ -413,7 +413,7 @@ export default function AffiliateDashboardPage() {
               </div>
               <CopyButton text={affiliate.promoCode} />
             </div>
-            <p className="text-[11px] text-zinc-500 leading-relaxed">
+            <p className="text-[11px] text-zinc-500 leading-relaxed mb-4">
               {(
                 t('AffiliatePromoCodeDesc') ||
                 'Share this code to offer your audience {discountPct}% off their orders, while you earn a {commissionPct}% commission!'
@@ -421,6 +421,33 @@ export default function AffiliateDashboardPage() {
                 .replace('{discountPct}', affiliate.discountPct.toString())
                 .replace('{commissionPct}', affiliate.commissionPct.toString())}
             </p>
+            <div className="flex gap-2">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  (lang === 'ar'
+                    ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} في Brandy للحصول على خصم بقيمة ${affiliate.discountPct}% على طلبك! `
+                    : `Use my promo code ${affiliate.promoCode} at Brandy to get ${affiliate.discountPct}% off your order! `) +
+                    'https://www.lolozozo.shop'
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-lg text-xs font-bold transition-all"
+              >
+                <span>WhatsApp</span>
+              </a>
+              <a
+                href={`https://t.me/share/url?url=${encodeURIComponent('https://www.lolozozo.shop')}&text=${encodeURIComponent(
+                  lang === 'ar'
+                    ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} في Brandy للحصول على خصم بقيمة ${affiliate.discountPct}% على طلبك!`
+                    : `Use my promo code ${affiliate.promoCode} at Brandy to get ${affiliate.discountPct}% off your order!`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-400 rounded-lg text-xs font-bold transition-all"
+              >
+                <span>Telegram</span>
+              </a>
+            </div>
           </div>
 
           {/* Referral link */}
@@ -433,6 +460,33 @@ export default function AffiliateDashboardPage() {
                 {affiliate.referralLink}
               </div>
               <CopyButton text={affiliate.referralLink} />
+            </div>
+            <div className="flex gap-2 mb-4">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  (lang === 'ar'
+                    ? 'ألقِ نظرة على متجر Brandy الرائع للمنتجات المحلية! استخدم رابط الإحالة الخاص بي: '
+                    : 'Check out this amazing marketplace for local brands! Use my referral link: ') +
+                    affiliate.referralLink
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-lg text-xs font-bold transition-all"
+              >
+                <span>WhatsApp</span>
+              </a>
+              <a
+                href={`https://t.me/share/url?url=${encodeURIComponent(affiliate.referralLink)}&text=${encodeURIComponent(
+                  lang === 'ar'
+                    ? 'ألقِ نظرة على متجر Brandy الرائع للمنتجات المحلية!'
+                    : 'Check out this amazing marketplace for local brands!'
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-400 rounded-lg text-xs font-bold transition-all"
+              >
+                <span>Telegram</span>
+              </a>
             </div>
             {settings.bonusesEnabled && (
               <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3">

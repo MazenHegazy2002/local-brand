@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 const STORAGE_KEY = 'local-brand-cookie-consent';
 
@@ -20,17 +21,21 @@ export default function CookieConsent() {
 
   const handleAccept = (choice: 'all' | 'essential') => {
     try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ choice, at: new Date().toISOString() })
-      );
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ choice, at: new Date().toISOString() }));
     } catch {
       // ignore
     }
     setVisible(false);
   };
 
-  if (!visible) return null;
+  const pathname = usePathname();
+  const isDashboardRoute =
+    pathname?.startsWith('/dashboard') ||
+    pathname?.startsWith('/seller-hub') ||
+    pathname?.startsWith('/admin-os') ||
+    pathname?.startsWith('/affiliate');
+
+  if (!visible || isDashboardRoute) return null;
 
   return (
     <div
@@ -72,8 +77,14 @@ export default function CookieConsent() {
 
       <style jsx>{`
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out;

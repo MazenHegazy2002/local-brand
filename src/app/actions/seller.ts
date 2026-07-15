@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
-import { OrderStatus, SellerStatus, OrderItemStatus, Role } from '@/generated/client';
+import { OrderStatus, SellerStatus, OrderItemStatus, Role, PayoutStatus } from '@/generated/client';
 import bcrypt from 'bcryptjs';
 import { BCRYPT_COST } from '@/lib/constants';
 
@@ -277,24 +277,67 @@ export async function getDashboardStats() {
         orderBy: { createdAt: 'desc' },
         take: 100,
       });
-      // Recompute each seller's available balance on the fly so the admin
-      // sellers tab matches what the seller sees in their own hub. The old
-      // sellerProfile.balance column is no longer authoritative.
-      const { computeSellerEarnings } = await import('@/lib/seller-earnings');
-      const sellerEarnings = await Promise.all(
-        sellers.map(s => computeSellerEarnings(s.id).then(e => [s.id, e] as const))
-      );
-      const earningsById = new Map(sellerEarnings);
+      // Recompute each seller's available balance on the fly in memory to avoid 300+ database queries.
+      const sellerIds = sellers.map(s => s.id);
+
+      const [eligibleItems, eligiblePayouts] = await Promise.all([
+        prisma.orderItem.findMany({
+          where: {
+            variant: { product: { sellerId: { in: sellerIds } } },
+            status: OrderItemStatus.DELIVERED,
+            order: { status: OrderStatus.DELIVERED },
+          },
+          select: {
+            priceAtPurchase: true,
+            quantity: true,
+            variant: { select: { product: { select: { sellerId: true } } } },
+            order: { select: { deliveredAt: true, updatedAt: true } },
+          },
+        }),
+        prisma.payout.findMany({
+          where: {
+            sellerId: { in: sellerIds },
+            status: { in: [PayoutStatus.PENDING, PayoutStatus.PROCESSING, PayoutStatus.PAID] },
+          },
+          select: {
+            sellerId: true,
+            amount: true,
+          },
+        }),
+      ]);
+
+      const ESCROW_DAYS = 14;
+      const ESCROW_MS = ESCROW_DAYS * 24 * 60 * 60 * 1000;
+      const cutoff = new Date(Date.now() - ESCROW_MS);
+
       for (const s of sellers) {
-        const e = earningsById.get(s.id);
-        if (e) {
-          s.balance = e.available;
-          // Expose escrow fields for the admin deep-view modal
-          (s as typeof s & { heldBalance: number; nextReleaseAt: string | null }).heldBalance =
-            e.held;
-          (s as typeof s & { heldBalance: number; nextReleaseAt: string | null }).nextReleaseAt =
-            e.nextReleaseAt ? e.nextReleaseAt.toISOString() : null;
+        const sellerItems = eligibleItems.filter(item => item.variant?.product?.sellerId === s.id);
+        const sellerPayoutsSum = eligiblePayouts
+          .filter(p => p.sellerId === s.id)
+          .reduce((sum, p) => sum + p.amount, 0);
+
+        let availableGross = 0;
+        let held = 0;
+        let nextReleaseAt: Date | null = null;
+
+        for (const item of sellerItems) {
+          const gross = item.priceAtPurchase * item.quantity;
+          const net = gross * (1 - s.commissionRate);
+          const delivered = item.order.deliveredAt ?? item.order.updatedAt;
+          if (delivered <= cutoff) {
+            availableGross += net;
+          } else {
+            held += net;
+            const releaseAt = new Date(delivered.getTime() + ESCROW_MS);
+            if (!nextReleaseAt || releaseAt < nextReleaseAt) nextReleaseAt = releaseAt;
+          }
         }
+
+        const available = Math.max(0, availableGross - sellerPayoutsSum);
+        s.balance = Math.round(available * 100) / 100;
+        // Expose escrow fields for the admin deep-view modal
+        (s as any).heldBalance = Math.round(held * 100) / 100;
+        (s as any).nextReleaseAt = nextReleaseAt ? nextReleaseAt.toISOString() : null;
       }
       const orders = await prisma.order.findMany({
         include: {

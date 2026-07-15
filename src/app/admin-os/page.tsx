@@ -528,9 +528,11 @@ export default function AdminOS() {
         />
 
         <div className="mt-auto px-4 pb-4 flex flex-col gap-2">
-          <button onClick={handleSeed} disabled={seedLoading} className="seed-btn">
-            {seedLoading ? 'Seeding...' : 'Seed Data'}
-          </button>
+          {process.env.NODE_ENV === 'development' && (
+            <button onClick={handleSeed} disabled={seedLoading} className="seed-btn">
+              {seedLoading ? 'Seeding...' : 'Seed Data'}
+            </button>
+          )}
           <div className="user-label">{data?.user?.email}</div>
           <button
             onClick={() => (window.location.href = '/api/auth/signout')}
@@ -1997,7 +1999,7 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabPro
           ))}
           {!data?.auditLogs?.length && (
             <div className="py-10 text-center text-xs text-slate-400">
-              No logs yet. Seed data to test.
+              No administrative actions have been logged yet.
             </div>
           )}
         </div>
