@@ -419,23 +419,7 @@ export async function createOrderForUser(
       }
     }
 
-    if (userId) {
-      // Award loyalty points. Use per-product accumulation if any product had
-      // loyaltyPointPct set (Task 8), otherwise fall back to the flat bonus.
-      try {
-        const loyaltyMod = await import('@/app/actions/loyalty');
-        await loyaltyMod.addLoyaltyPoints(
-          userId,
-          subtotal,
-          loyaltyPointsToAward > 0 ? loyaltyPointsToAward : undefined,
-          loyaltyPointsToAward > 0
-            ? `Earned ${loyaltyPointsToAward} pts (product loyalty %)`
-            : undefined
-        );
-      } catch (err) {
-        console.error('Failed to award loyalty points:', err);
-      }
-    }
+    // Note: Loyalty points are awarded when the order reaches DELIVERED status (see /api/orders/[id]/status).
 
     // Best-effort confirmation email. Failures here MUST NOT block the order.
     void (async () => {

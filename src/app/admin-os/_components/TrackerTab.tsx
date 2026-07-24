@@ -77,6 +77,15 @@ interface AnalyticsData {
 
 const REFRESH_INTERVAL = 10; // seconds
 
+function fmtLocation(val: string | null | undefined): string {
+  if (!val) return '—';
+  try {
+    return decodeURIComponent(val).replace(/%20/g, ' ');
+  } catch {
+    return val.replace(/%20/g, ' ');
+  }
+}
+
 /* ──────────────────────────────────────────────────────────────────────────── */
 /*  Component                                                                  */
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -320,7 +329,7 @@ export default function TrackerTab() {
                         <div>
                           <p className="font-bold text-slate-800 text-sm flex items-center gap-1">
                             <MapPin size={12} className="text-slate-400" />
-                            {session.city}, {session.country}
+                            {fmtLocation(session.city)}, {fmtLocation(session.country)}
                           </p>
                           <p className="text-[10px] text-slate-400 font-mono mt-0.5">
                             IP: {session.ipAddress ?? '—'} · ID:{' '}
@@ -372,7 +381,7 @@ export default function TrackerTab() {
                     <div key={item.location} className="space-y-1 text-xs">
                       <div className="flex justify-between">
                         <span className="font-semibold text-slate-700">
-                          {idx + 1}. {item.location}
+                          {idx + 1}. {fmtLocation(item.location)}
                         </span>
                         <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full text-[10px]">
                           {item.count}

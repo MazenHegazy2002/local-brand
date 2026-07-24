@@ -103,6 +103,20 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         },
         data: { status: 'DELIVERED' },
       });
+
+      if (order.userId) {
+        try {
+          const loyaltyMod = await import('@/app/actions/loyalty');
+          await loyaltyMod.addLoyaltyPoints(
+            order.userId,
+            order.totalAmount - order.shippingFee,
+            undefined,
+            `Earned for delivered order #${order.id.slice(0, 8).toUpperCase()}`
+          );
+        } catch (err) {
+          console.error('[status/route] Failed to award loyalty points on delivery:', err);
+        }
+      }
       // NOTE: previously this incremented sellerProfile.balance per item.
       // That column is now vestigial — earnings are always computed from
       // the orders table via computeSellerEarnings, which gives us escrow,
