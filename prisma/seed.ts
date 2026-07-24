@@ -188,7 +188,7 @@ const CATALOG: SeedCategory[] = [
         description:
           'Urban cargo joggers with multiple pockets. Comfortable streetwear for everyday use.',
         basePrice: 599,
-        img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1517445312882-bc9910d016b7?q=80&w=600&auto=format&fit=crop',
         isFeatured: true,
         variants: [
           { label: 'Khaki - S', color: 'Khaki', size: 'S', price: 599, stock: 8 },

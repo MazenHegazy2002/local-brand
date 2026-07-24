@@ -65,12 +65,15 @@ export default function TrackOrderPage() {
   }, [orderId, email]);
 
   const fetchOrder = async (oid: string, em: string) => {
+    setError('');
     setLoading(true);
     try {
-      const res = await fetch(`/api/orders/${oid}/track?email=${encodeURIComponent(em)}`);
+      const res = await fetch(
+        `/api/orders/${encodeURIComponent(oid)}/track?email=${encodeURIComponent(em)}`
+      );
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message || 'Order not found');
+        throw new Error(data.message || 'Order not found. Please check your order ID and email.');
       }
       const data = await res.json();
       setOrder(data.order);

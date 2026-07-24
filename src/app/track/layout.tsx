@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Track Your Order | Brandy',
+  title: 'Track Your Order',
   description: 'Track the real-time status of your Brandy order with your order ID and email.',
 };
 
