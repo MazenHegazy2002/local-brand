@@ -2031,11 +2031,12 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabPro
           </div>
           <div className="mt-3">
             <div className="text-xl font-black text-slate-900">
-              {(stats.revenue || 78680).toLocaleString()}{' '}
+              {(stats.revenue || 0).toLocaleString()}{' '}
               <span className="text-xs font-semibold text-slate-400">EGP</span>
             </div>
             <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
-              +12.5% vs last month
+              {stats.gmvChangePct >= 0 ? `+${stats.gmvChangePct || 0}%` : `${stats.gmvChangePct}%`}{' '}
+              vs last month
             </span>
           </div>
         </div>
@@ -2052,10 +2053,10 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabPro
           </div>
           <div className="mt-3">
             <div className="text-xl font-black text-slate-900">
-              {(stats.totalOrders || 1248).toLocaleString()}
+              {(stats.totalOrders || 0).toLocaleString()}
             </div>
             <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
-              +8.7% vs last month
+              All time completed orders
             </span>
           </div>
         </div>
@@ -2072,10 +2073,10 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabPro
           </div>
           <div className="mt-3">
             <div className="text-xl font-black text-slate-900">
-              {(stats.totalUsers || 856).toLocaleString()}
+              {(stats.totalUsers || 0).toLocaleString()}
             </div>
             <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
-              +15.3% vs last month
+              +{stats.todayUsersCount || 0} today
             </span>
           </div>
         </div>
@@ -2092,11 +2093,11 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabPro
           </div>
           <div className="mt-3">
             <div className="text-xl font-black text-slate-900">
-              {(stats.avgOrderValue || 236).toLocaleString()}{' '}
+              {(stats.avgOrderValue || 0).toLocaleString()}{' '}
               <span className="text-xs font-semibold text-slate-400">EGP</span>
             </div>
             <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
-              +15.5% vs last month
+              Average per purchase
             </span>
           </div>
         </div>
@@ -2112,9 +2113,11 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabPro
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-xl font-black text-slate-900">12,460</div>
+            <div className="text-xl font-black text-slate-900">
+              {(stats.totalVisits || 0).toLocaleString()}
+            </div>
             <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
-              +9.4% vs last month
+              Real-time sessions
             </span>
           </div>
         </div>

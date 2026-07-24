@@ -985,7 +985,7 @@ function OverviewTab({ stats, myOrders, myProducts, data: _data }: OverviewTabPr
     { country: 'Other', flag: '🌐', percentage: 10 },
   ];
 
-  const avgOrderVal = stats.totalOrders > 0 ? Math.round(stats.revenue / stats.totalOrders) : 236;
+  const avgOrderVal = stats.totalOrders > 0 ? Math.round(stats.revenue / stats.totalOrders) : 0;
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>

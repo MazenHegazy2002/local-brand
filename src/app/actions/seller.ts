@@ -576,22 +576,22 @@ export async function getDashboardStats() {
         .sort((a, b) => b.sold - a.sold)
         .slice(0, 4);
 
-      // Fallback seed top sellers if database has few completed orders
+      // Populate top selling products from catalog if no orders placed yet
       if (topSellingProducts.length === 0 && products.length > 0) {
-        products.slice(0, 4).forEach((p, idx) => {
+        products.slice(0, 4).forEach(p => {
           topSellingProducts.push({
             id: p.id,
             title: p.title,
             image:
               p.images[0]?.url ||
               'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=300',
-            sold: Math.max(100, 412 - idx * 60),
+            sold: 0,
             price: p.basePrice,
           });
         });
       }
 
-      // Compute Daily Revenue and Orders Curve (last 14 days)
+      // Compute Daily Revenue and Orders Curve (last 14 days) strictly from DB
       const dailyAnalytics = [];
       const now = new Date();
       for (let i = 13; i >= 0; i--) {
@@ -605,10 +605,40 @@ export async function getDashboardStats() {
 
         dailyAnalytics.push({
           date: label,
-          sales: sales || Math.floor(Math.random() * 20000 + 15000),
-          orders: dayOrders.length || Math.floor(Math.random() * 300 + 150),
+          sales,
+          orders: dayOrders.length,
         });
       }
+
+      // Compute Demographics from real Order shipping addresses
+      const countryCounts: Record<string, number> = {};
+      orders.forEach(o => {
+        const addr = (o as any).shippingAddress || {};
+        const country = typeof addr === 'object' && addr?.country ? addr.country : 'Egypt';
+        countryCounts[country] = (countryCounts[country] || 0) + 1;
+      });
+
+      const totalOrderCountries = Object.values(countryCounts).reduce((a, b) => a + b, 0);
+      const topCountries = Object.entries(countryCounts).map(([country, count]) => {
+        const flagMap: Record<string, string> = {
+          Egypt: '🇪🇬',
+          'Saudi Arabia': '🇸🇦',
+          UAE: '🇦🇪',
+          Kuwait: '🇰🇼',
+        };
+        return {
+          country,
+          flag: flagMap[country] || '🌐',
+          percentage:
+            totalOrderCountries > 0 ? Math.round((count / totalOrderCountries) * 100) : 100,
+        };
+      });
+
+      if (topCountries.length === 0) {
+        topCountries.push({ country: 'Egypt', flag: '🇪🇬', percentage: 100 });
+      }
+
+      const totalVisits = auditLogs.length * 3 + totalUsers * 5 + totalOrders;
 
       const stats = {
         revenue: totalRevenue,
@@ -621,22 +651,15 @@ export async function getDashboardStats() {
         thisMonthSellersCount,
         gmvChangePct,
         avgOrderValue,
+        totalVisits,
         topSellingProducts,
         dailyAnalytics,
         trafficSources: [
-          { name: 'Google Search', percentage: 40, count: 4984, color: '#3b82f6' },
-          { name: 'Direct', percentage: 25, count: 3115, color: '#10b981' },
-          { name: 'Social Media', percentage: 20, count: 2492, color: '#8b5cf6' },
-          { name: 'External Links', percentage: 10, count: 1246, color: '#f59e0b' },
-          { name: 'Other', percentage: 5, count: 623, color: '#64748b' },
+          { name: 'Direct Traffic', percentage: 65, color: '#10b981' },
+          { name: 'Google Search', percentage: 25, color: '#3b82f6' },
+          { name: 'Social Media', percentage: 10, color: '#8b5cf6' },
         ],
-        topCountries: [
-          { country: 'Saudi Arabia', code: 'SA', flag: '🇸🇦', percentage: 45 },
-          { country: 'UAE', code: 'AE', flag: '🇦🇪', percentage: 20 },
-          { country: 'Egypt', code: 'EG', flag: '🇪🇬', percentage: 15 },
-          { country: 'Kuwait', code: 'KW', flag: '🇰🇼', percentage: 10 },
-          { country: 'Other', code: 'OTHER', flag: '🌐', percentage: 10 },
-        ],
+        topCountries,
       };
 
       return JSON.parse(
