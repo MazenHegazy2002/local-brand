@@ -110,8 +110,15 @@ export default function TrackOrderPage() {
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <h1 className="text-3xl font-black text-gray-900 mb-8">Track Your Order</h1>
 
-        {/* Search Form — shown until we successfully load an order. When the
-            URL already includes an order ID we just ask for the email. */}
+        {/* Error Feedback */}
+        {error && (
+          <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 mb-6 font-bold flex items-center gap-3">
+            <span className="text-xl">⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Search Form — shown until we successfully load an order. */}
         {!order && !loading && (
           <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
             <p className="text-sm text-gray-500 mb-4">
@@ -153,13 +160,6 @@ export default function TrackOrderPage() {
                 Track Order
               </button>
             </form>
-          </div>
-        )}
-
-        {/* Error */}
-        {error && (
-          <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 mb-6">
-            {error}
           </div>
         )}
 

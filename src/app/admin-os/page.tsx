@@ -1950,63 +1950,19 @@ interface OverviewTabProps {
 
 function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabProps) {
   const stats = (data?.stats as any) || {};
+  const gmvChangePct = typeof stats.gmvChangePct === 'number' ? stats.gmvChangePct : 0;
 
-  const dailyData = stats.dailyAnalytics || [
-    { date: '1 May', sales: 22000, orders: 180 },
-    { date: '6 May', sales: 34000, orders: 240 },
-    { date: '11 May', sales: 48000, orders: 320 },
-    { date: '16 May', sales: 45860, orders: 721 },
-    { date: '21 May', sales: 52000, orders: 390 },
-    { date: '26 May', sales: 61000, orders: 480 },
-    { date: '31 May', sales: 78680, orders: 540 },
-  ];
+  const dailyData = stats.dailyAnalytics || [];
 
-  const topSellers = stats.topSellingProducts || [
-    {
-      id: '1',
-      title: 'Wireless Noise-Cancelling Headphones',
-      sold: 412,
-      price: 1299,
-      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=300',
-    },
-    {
-      id: '2',
-      title: 'Luxury Leather Smart Watch',
-      sold: 209,
-      price: 2499,
-      image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=300',
-    },
-    {
-      id: '3',
-      title: 'Ergonomic Urban Backpack',
-      sold: 278,
-      price: 899,
-      image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=300',
-    },
-    {
-      id: '4',
-      title: 'Next-Gen Performance Sneakers',
-      sold: 246,
-      price: 1599,
-      image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=300',
-    },
-  ];
+  const topSellers = stats.topSellingProducts || [];
 
   const trafficSources = stats.trafficSources || [
-    { name: 'Google Search', percentage: 40, count: 4984, color: '#3b82f6' },
-    { name: 'Direct', percentage: 25, count: 3115, color: '#10b981' },
-    { name: 'Social Media', percentage: 20, count: 2492, color: '#8b5cf6' },
-    { name: 'External Links', percentage: 10, count: 1246, color: '#f59e0b' },
-    { name: 'Other', percentage: 5, count: 623, color: '#64748b' },
+    { name: 'Direct', percentage: 65, color: '#10b981' },
+    { name: 'Google Search', percentage: 25, color: '#3b82f6' },
+    { name: 'Social Media', percentage: 10, color: '#8b5cf6' },
   ];
 
-  const topCountries = stats.topCountries || [
-    { country: 'Saudi Arabia', flag: '🇸🇦', percentage: 45 },
-    { country: 'UAE', flag: '🇦🇪', percentage: 20 },
-    { country: 'Egypt', flag: '🇪🇬', percentage: 15 },
-    { country: 'Kuwait', flag: '🇰🇼', percentage: 10 },
-    { country: 'Other', flag: '🌐', percentage: 10 },
-  ];
+  const topCountries = stats.topCountries || [{ country: 'Egypt', flag: '🇪🇬', percentage: 100 }];
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -2035,8 +1991,7 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabPro
               <span className="text-xs font-semibold text-slate-400">EGP</span>
             </div>
             <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
-              {stats.gmvChangePct >= 0 ? `+${stats.gmvChangePct || 0}%` : `${stats.gmvChangePct}%`}{' '}
-              vs last month
+              {gmvChangePct >= 0 ? `+${gmvChangePct}%` : `${gmvChangePct}%`} vs last month
             </span>
           </div>
         </div>

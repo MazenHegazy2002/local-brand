@@ -23,18 +23,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const cleanId = orderId.replace(/^[#ORD\-]+/i, '').trim();
 
-    // Get order - allow by full order ID or short ID prefix/suffix + (user ID match OR email match)
+    // Get order - allow by full order ID or short ID prefix/suffix (case-insensitive)
     const order = await prisma.order.findFirst({
       where: {
         OR: [
-          { id: orderId },
-          { id: cleanId },
-          { id: { startsWith: cleanId } },
-          { id: { endsWith: cleanId } },
+          { id: { equals: orderId, mode: 'insensitive' } },
+          { id: { equals: cleanId, mode: 'insensitive' } },
+          { id: { startsWith: cleanId, mode: 'insensitive' } },
+          { id: { endsWith: cleanId, mode: 'insensitive' } },
         ],
       },
       include: {
-        user: { select: { email: true } },
+        user: { select: { id: true, email: true } },
         items: {
           include: {
             variant: {
@@ -54,16 +54,24 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     });
 
     if (!order) {
-      return NextResponse.json({ message: 'Order not found' }, { status: 404 });
+      return NextResponse.json(
+        { message: `Order '${cleanId}' not found. Please check your order reference number.` },
+        { status: 404 }
+      );
     }
 
     // Authorization check
-    const normalizedGuestEmail = guestEmail?.toLowerCase();
+    const normalizedGuestEmail = guestEmail?.trim().toLowerCase();
     const ownsAsUser = !!userId && order.userId === userId;
+    const orderGuestEmail = order.guestEmail?.trim().toLowerCase();
+    const orderUserEmail = order.user?.email?.trim().toLowerCase();
+
     const ownsAsGuest =
       !!normalizedGuestEmail &&
-      (order.guestEmail?.toLowerCase() === normalizedGuestEmail ||
-        order.user?.email?.toLowerCase() === normalizedGuestEmail);
+      (orderGuestEmail === normalizedGuestEmail ||
+        orderUserEmail === normalizedGuestEmail ||
+        (!orderGuestEmail && !orderUserEmail)); // If guest email was not recorded, allow tracking with ID
+
     const isOwner = ownsAsUser || ownsAsGuest;
     let isAuthorized = isOwner || role === 'ADMIN';
 
