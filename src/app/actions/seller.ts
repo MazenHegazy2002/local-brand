@@ -13,8 +13,25 @@ import type { Review, SessionUser } from '@/types';
 
 async function getRealUserId(session: Session | null) {
   if (!session?.user) return null;
-  const userId = (session.user as { id: string }).id;
-  return userId;
+  const userObj = session.user as { id?: string; email?: string | null };
+
+  if (userObj.id) {
+    const existing = await prisma.user.findUnique({
+      where: { id: userObj.id },
+      select: { id: true },
+    });
+    if (existing) return existing.id;
+  }
+
+  if (userObj.email) {
+    const existingByEmail = await prisma.user.findUnique({
+      where: { email: userObj.email },
+      select: { id: true },
+    });
+    if (existingByEmail) return existingByEmail.id;
+  }
+
+  return null;
 }
 
 export async function getDashboardStats() {
@@ -77,7 +94,7 @@ export async function getDashboardStats() {
       );
     }
 
-    if (role === 'SELLER') {
+    if (role === 'SELLER' || role === 'ADMIN') {
       let seller = await prisma.sellerProfile.findUnique({
         where: { userId },
         include: {
@@ -97,10 +114,17 @@ export async function getDashboardStats() {
       if (!seller) {
         const user = await prisma.user.findUnique({ where: { id: userId } });
         if (user) {
+          // Promote user to SELLER role if needed and create profile
+          if (user.role !== 'ADMIN') {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { role: Role.SELLER },
+            });
+          }
           seller = await prisma.sellerProfile.create({
             data: {
               userId: user.id,
-              storeName: `${user.name || 'Local Store'}`,
+              storeName: user.name ? `${user.name}'s Store` : 'Brandy Official Store',
               status: SellerStatus.ACTIVE,
             },
             include: {
@@ -119,9 +143,19 @@ export async function getDashboardStats() {
         }
       }
 
-      if (!seller) {
+      if (!seller && role === 'SELLER') {
         return {
           error: 'Seller profile not found. Please contact support or complete your registration.',
+        };
+      }
+
+      // Only proceed with stats if seller exists
+      if (!seller) {
+        return {
+          currentSeller: null,
+          myProducts: [],
+          myOrders: [],
+          stats: null,
         };
       }
 
