@@ -988,9 +988,16 @@ function OverviewTab({ stats, myOrders, myProducts, data: _data }: OverviewTabPr
   const avgOrderVal = stats.totalOrders > 0 ? Math.round(stats.revenue / stats.totalOrders) : 236;
 
   return (
-    <div className="space-y-6">
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* ── 5 Top Summary KPI Cards Row ─────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '16px',
+          width: '100%',
+        }}
+      >
         {/* Total Revenue */}
         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
@@ -1097,9 +1104,12 @@ function OverviewTab({ stats, myOrders, myProducts, data: _data }: OverviewTabPr
       </div>
 
       {/* ── Main Dual Section: Sales Chart + Recent Orders ─────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', width: '100%' }}>
         {/* Sales & Orders Analytics Chart */}
-        <div className="lg:col-span-8 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+        <div
+          className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm"
+          style={{ flex: '2 1 500px', minWidth: '300px' }}
+        >
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="font-extrabold text-slate-900 text-base">Weekly Sales Performance</h3>
@@ -1173,7 +1183,10 @@ function OverviewTab({ stats, myOrders, myProducts, data: _data }: OverviewTabPr
         </div>
 
         {/* Recent Orders List */}
-        <div className="lg:col-span-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
+        <div
+          className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between"
+          style={{ flex: '1 1 300px', minWidth: '280px' }}
+        >
           <div>
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-extrabold text-slate-900 text-base">Recent Store Orders</h3>
@@ -1221,7 +1234,14 @@ function OverviewTab({ stats, myOrders, myProducts, data: _data }: OverviewTabPr
       </div>
 
       {/* ── 3-Column Section: Top Sellers + Traffic Sources + Top Countries ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '24px',
+          width: '100%',
+        }}
+      >
         {/* Top Selling Products */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
           <div className="flex justify-between items-center mb-4">
