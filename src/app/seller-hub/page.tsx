@@ -770,6 +770,8 @@ export default function SellerHub() {
           flex-direction: column;
           padding: 16px 20px;
           gap: 12px;
+          width: 100%;
+          max-width: 100%;
         }
         .overview-wrap {
           display: flex;
@@ -777,6 +779,8 @@ export default function SellerHub() {
           flex: 1;
           min-height: 0;
           gap: 12px;
+          width: 100%;
+          max-width: 100%;
         }
         .stats-row {
           display: grid;
