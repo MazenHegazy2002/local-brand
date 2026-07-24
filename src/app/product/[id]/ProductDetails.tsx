@@ -523,35 +523,38 @@ export default function ProductDetails({
                   {selectedColor}
                 </span>
               </div>
-              <div className="flex flex-wrap gap-3.5 items-center">
+              <div className="flex flex-wrap gap-2.5 items-center">
                 {uniqueColors.map(({ variant, colorName }) => {
                   const isSelected = selectedColor.toLowerCase() === colorName.toLowerCase();
                   const bgStyle = getSwatchBackground(colorName);
-                  const isWhite = colorName.toLowerCase() === 'white';
+                  const colorHex = COLOR_MAP[colorName.toLowerCase()] || bgStyle;
 
                   return (
                     <button
                       key={variant.id}
+                      type="button"
                       onClick={() => handleColorSelect(colorName)}
-                      title={colorName}
-                      className={`w-8 h-8 rounded-full transition-all duration-300 transform hover:scale-115 flex-shrink-0 relative ${
-                        isWhite
-                          ? 'border border-gray-300 dark:border-gray-600'
-                          : 'border border-transparent'
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 ${
+                        isSelected
+                          ? 'border-[#1e3b8a] bg-blue-50/80 text-[#1e3b8a] ring-2 ring-[#1e3b8a]/20 shadow-sm'
+                          : 'border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-gray-300'
                       }`}
-                      style={{
-                        backgroundColor:
-                          bgStyle.startsWith('#') || bgStyle.startsWith('hsl')
-                            ? bgStyle
-                            : undefined,
-                        background:
-                          !bgStyle.startsWith('#') && !bgStyle.startsWith('hsl')
-                            ? bgStyle
-                            : undefined,
-                        boxShadow: isSelected ? `0 0 0 2px bg-white, 0 0 0 4px #534AB7` : 'none',
-                      }}
-                      aria-label={`Select ${colorName} color`}
-                    />
+                    >
+                      <span
+                        className="w-3.5 h-3.5 rounded-full border border-black/10 shrink-0"
+                        style={{
+                          backgroundColor:
+                            colorHex.startsWith('#') || colorHex.startsWith('hsl')
+                              ? colorHex
+                              : undefined,
+                          background:
+                            !colorHex.startsWith('#') && !colorHex.startsWith('hsl')
+                              ? colorHex
+                              : undefined,
+                        }}
+                      />
+                      {colorName}
+                    </button>
                   );
                 })}
               </div>
@@ -574,7 +577,9 @@ export default function ProductDetails({
                   const sizeVariant = parsedVariants.find(
                     (v: any) =>
                       v.size.toLowerCase() === sizeName.toLowerCase() &&
-                      (!hasColors || v.color.toLowerCase() === selectedColor.toLowerCase())
+                      (!hasColors ||
+                        !selectedColor ||
+                        v.color.toLowerCase() === selectedColor.toLowerCase())
                   );
                   const isOutOfStock = !sizeVariant || sizeVariant.stockCount === 0;
                   const isSelected = selectedSize.toLowerCase() === sizeName.toLowerCase();

@@ -1381,3 +1381,11 @@ model TrafficLog {
   @@index([createdAt])
   @@index([sessionToken])
 }
+
+// ── PERSISTENT CACHE FALLBACK ──────────────────────────────────────────────────
+model CacheEntry {
+  key       String    @id
+  value     String
+  expiresAt DateTime?
+  updatedAt DateTime  @updatedAt
+}

@@ -5,13 +5,13 @@ import { authOptions } from '@/lib/auth';
 
 function sanitizeProduct(product: any, isGuest: boolean) {
   if (!isGuest) return product;
-  const { sellerId, categoryId, deletedAt, ...rest } = product;
+  const { sellerId: _sellerId, categoryId: _categoryId, deletedAt: _deletedAt, ...rest } = product;
   return rest;
 }
 
 function sanitizeCategory(category: any, isGuest: boolean) {
   if (!isGuest) return category;
-  const { id, parentId, ...rest } = category;
+  const { id: _id, parentId: _parentId, ...rest } = category;
   return rest;
 }
 

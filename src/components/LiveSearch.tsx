@@ -217,7 +217,7 @@ export default function LiveSearch() {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-bold text-gray-900 truncate">
+                        <h4 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug">
                           {product.title}
                         </h4>
                         <p className="text-xs text-gray-500 font-medium">{product.basePrice} EGP</p>

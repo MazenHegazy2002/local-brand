@@ -292,8 +292,8 @@ export default function Navbar() {
               className="relative text-white/85 hover:text-white transition-colors"
             >
               <ShoppingCart size={22} />
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-[hsl(var(--accent))] text-[hsl(var(--primary))] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-md">
+              {mounted && cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-amber-400 text-[#0d1f52] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-md animate-in zoom-in-50 duration-200">
                   {cartCount > 99 ? '99+' : cartCount}
                 </span>
               )}

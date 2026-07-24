@@ -279,7 +279,8 @@ export default function Footer() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2.5 text-xs font-bold text-[#0d1f52] bg-white rounded-xl hover:bg-white/90 transition-colors disabled:opacity-50"
+                style={{ color: '#0d1f52' }}
+                className="w-full py-2.5 text-xs font-black uppercase tracking-wider bg-white rounded-xl hover:bg-slate-100 transition-colors disabled:opacity-50 shadow-sm"
               >
                 {submitting ? 'Subscribing...' : 'Subscribe'}
               </button>

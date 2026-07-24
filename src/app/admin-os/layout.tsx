@@ -10,8 +10,16 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminOsLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user as SessionUser).role !== 'ADMIN') {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as SessionUser)?.role !== 'ADMIN') {
+      redirect('/login');
+    }
+  } catch (err: unknown) {
+    if ((err as { digest?: string })?.digest?.startsWith('NEXT_REDIRECT')) {
+      throw err;
+    }
+    console.error('[AdminOsLayout] Auth check error:', err);
     redirect('/login');
   }
 

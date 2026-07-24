@@ -50,11 +50,12 @@ function LoginForm() {
     }
   };
 
+  const isLockedOut = lockoutSeconds > 0;
   useEffect(() => {
     if (failedAttempts >= 3 || lockoutSeconds > 0) {
       fetchCaptcha();
     }
-  }, [failedAttempts, lockoutSeconds > 0]);
+  }, [failedAttempts, isLockedOut, lockoutSeconds]);
 
   useEffect(() => {
     if (lockoutSeconds <= 0) return;

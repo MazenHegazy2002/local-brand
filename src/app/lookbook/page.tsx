@@ -85,8 +85,8 @@ export default async function LookbookPage() {
         <div className="w-16 h-1 bg-slate-900 mx-auto mb-6"></div>
         <p className="text-slate-600 text-lg md:text-xl font-light leading-relaxed">
           A physical-meets-digital curated catalog showcasing high-fashion styling from Egypt’s
-          premiere local independent designers. Hover, explore, and purchase individual items
-          directly from the pages.
+          premiere local independent designers. Explore seasonal lookbooks and shop individual items
+          directly below.
         </p>
       </section>
 

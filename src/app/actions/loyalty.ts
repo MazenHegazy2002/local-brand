@@ -29,7 +29,7 @@ export async function addLoyaltyPoints(
   earnedPoints?: number,
   description?: string
 ) {
-  const points = earnedPoints ?? POINTS_PER_ORDER;
+  const points = earnedPoints ?? Math.max(POINTS_PER_ORDER, Math.floor(_amountSpent * 0.1));
   if (points <= 0) return { points: 0, totalPoints: await getUserPoints(userId) };
 
   await prisma.$transaction([

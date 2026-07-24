@@ -63,7 +63,12 @@ export async function GET(req: Request) {
         .filter(s => variantById.has(s.variantId))
         .map(s => {
           const rawVariant = variantById.get(s.variantId)!;
-          const { sellerId, categoryId, deletedAt, ...cleanProduct } = rawVariant.product as any;
+          const {
+            sellerId: _sellerId,
+            categoryId: _categoryId,
+            deletedAt: _deletedAt,
+            ...cleanProduct
+          } = rawVariant.product as any;
           const cleanVariant = {
             ...rawVariant,
             product: cleanProduct,

@@ -21,10 +21,20 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       role = (session.user as SessionUser).role;
     }
 
-    // Get order - allow by order ID + (user ID match OR email match for guests)
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
+    const cleanId = orderId.replace(/^[#ORD\-]+/i, '').trim();
+
+    // Get order - allow by full order ID or short ID prefix/suffix + (user ID match OR email match)
+    const order = await prisma.order.findFirst({
+      where: {
+        OR: [
+          { id: orderId },
+          { id: cleanId },
+          { id: { startsWith: cleanId } },
+          { id: { endsWith: cleanId } },
+        ],
+      },
       include: {
+        user: { select: { email: true } },
         items: {
           include: {
             variant: {
@@ -47,12 +57,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
-    // Authorization check. Guard against null===null matching: an
-    // unauthenticated caller (userId null) must not match a guest order
-    // (order.userId null), and a missing ?email must not match a user
-    // order (order.guestEmail null).
+    // Authorization check
+    const normalizedGuestEmail = guestEmail?.toLowerCase();
     const ownsAsUser = !!userId && order.userId === userId;
-    const ownsAsGuest = !!guestEmail && order.guestEmail === guestEmail;
+    const ownsAsGuest =
+      !!normalizedGuestEmail &&
+      (order.guestEmail?.toLowerCase() === normalizedGuestEmail ||
+        order.user?.email?.toLowerCase() === normalizedGuestEmail);
     const isOwner = ownsAsUser || ownsAsGuest;
     let isAuthorized = isOwner || role === 'ADMIN';
 

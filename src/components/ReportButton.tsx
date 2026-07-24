@@ -11,7 +11,7 @@ export function ReportButton({
   productId: string;
   productName: string;
 }) {
-  const { data: session } = useSession();
+  useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [reason, setReason] = useState<
     'INACCURATE' | 'COUNTERFEIT' | 'HARASSMENT' | 'SPAM' | 'OTHER'

@@ -69,11 +69,20 @@ export function pluralize(
 /**
  * Format a price range, useful for variant product cards.
  */
-export function formatPriceRange(
-  min: number,
-  max: number,
-  locale: AppLocale = 'en-EG'
-): string {
+export function formatPriceRange(min: number, max: number, locale: AppLocale = 'en-EG'): string {
   if (min === max) return formatEGP(min, locale);
   return `${formatEGP(min, locale)} – ${formatEGP(max, locale)}`;
+}
+
+/**
+ * Format raw order status into human-readable label with Cash on Delivery support.
+ */
+export function formatOrderStatus(status: string, paymentMethod?: string): string {
+  if (status === 'PENDING_PAYMENT') {
+    if (paymentMethod === 'CASH_ON_DELIVERY') {
+      return 'Confirmed (Pay on Delivery)';
+    }
+    return 'Awaiting Payment';
+  }
+  return status.replace(/_/g, ' ');
 }

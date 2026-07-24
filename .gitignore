@@ -70,3 +70,5 @@ nul
 # Playwright reports and results
 /playwright-report
 /test-results
+.env*.local
+emails.log
