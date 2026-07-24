@@ -451,7 +451,7 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     category: 'contact',
     type: 'text',
     label: 'Public contact phone',
-    defaultValue: '+201234567890',
+    defaultValue: '+201094379477',
     exposeToClient: true,
   },
   {
@@ -459,7 +459,7 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     category: 'contact',
     type: 'text',
     label: 'WhatsApp number',
-    defaultValue: '',
+    defaultValue: '+201094379477',
     exposeToClient: true,
     description: 'If set, footer shows a green WhatsApp button.',
   },
