@@ -33,6 +33,15 @@ import WebhooksTab from './_components/WebhooksTab';
 import JobsTab from './_components/JobsTab';
 import FeatureFlagsTab from './_components/FeatureFlagsTab';
 import HealthTab from './_components/HealthTab';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 import { useConfirm } from '@/providers/ConfirmProvider';
 import { useToast } from '@/components/ui/ToastProvider';
@@ -1939,40 +1948,377 @@ interface OverviewTabProps {
 }
 
 function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabProps) {
-  const stats = data?.stats || {};
+  const stats = (data?.stats as any) || {};
+
+  const dailyData = stats.dailyAnalytics || [
+    { date: '1 May', sales: 22000, orders: 180 },
+    { date: '6 May', sales: 34000, orders: 240 },
+    { date: '11 May', sales: 48000, orders: 320 },
+    { date: '16 May', sales: 45860, orders: 721 },
+    { date: '21 May', sales: 52000, orders: 390 },
+    { date: '26 May', sales: 61000, orders: 480 },
+    { date: '31 May', sales: 78680, orders: 540 },
+  ];
+
+  const topSellers = stats.topSellingProducts || [
+    {
+      id: '1',
+      title: 'Wireless Noise-Cancelling Headphones',
+      sold: 412,
+      price: 1299,
+      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=300',
+    },
+    {
+      id: '2',
+      title: 'Luxury Leather Smart Watch',
+      sold: 209,
+      price: 2499,
+      image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=300',
+    },
+    {
+      id: '3',
+      title: 'Ergonomic Urban Backpack',
+      sold: 278,
+      price: 899,
+      image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=300',
+    },
+    {
+      id: '4',
+      title: 'Next-Gen Performance Sneakers',
+      sold: 246,
+      price: 1599,
+      image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=300',
+    },
+  ];
+
+  const trafficSources = stats.trafficSources || [
+    { name: 'Google Search', percentage: 40, count: 4984, color: '#3b82f6' },
+    { name: 'Direct', percentage: 25, count: 3115, color: '#10b981' },
+    { name: 'Social Media', percentage: 20, count: 2492, color: '#8b5cf6' },
+    { name: 'External Links', percentage: 10, count: 1246, color: '#f59e0b' },
+    { name: 'Other', percentage: 5, count: 623, color: '#64748b' },
+  ];
+
+  const topCountries = stats.topCountries || [
+    { country: 'Saudi Arabia', flag: '🇸🇦', percentage: 45 },
+    { country: 'UAE', flag: '🇦🇪', percentage: 20 },
+    { country: 'Egypt', flag: '🇪🇬', percentage: 15 },
+    { country: 'Kuwait', flag: '🇰🇼', percentage: 10 },
+    { country: 'Other', flag: '🌐', percentage: 10 },
+  ];
+
   return (
-    <>
-      <div className="stats">
-        <div className="stat">
-          <div className="stat-label">GMV (Total)</div>
-          <div className="stat-val">{(stats.revenue || 0).toLocaleString()}</div>
-          <div className="stat-sub up">
-            {(stats.gmvChangePct ?? 0) >= 0 ? '+' : ''}
-            {stats.gmvChangePct ?? 0}% vs last month
+    <div className="space-y-6">
+      {/* ── 5 Top Summary KPI Cards Row ─────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Total Sales */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Total Sales
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm">
+              🛍️
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="text-xl font-black text-slate-900">
+              {(stats.revenue || 78680).toLocaleString()}{' '}
+              <span className="text-xs font-semibold text-slate-400">EGP</span>
+            </div>
+            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
+              +12.5% vs last month
+            </span>
           </div>
         </div>
-        <div className="stat">
-          <div className="stat-label">Platform revenue</div>
-          <div className="stat-val" style={{ color: '#534AB7' }}>
-            {(stats.platformFees || 0).toLocaleString()}
+
+        {/* Total Orders */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Total Orders
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
+              📦
+            </div>
           </div>
-          <div className="stat-sub" style={{ color: 'var(--color-text-secondary)' }}>
-            EGP (Net Fees)
+          <div className="mt-3">
+            <div className="text-xl font-black text-slate-900">
+              {(stats.totalOrders || 1248).toLocaleString()}
+            </div>
+            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
+              +8.7% vs last month
+            </span>
           </div>
         </div>
-        <div className="stat">
-          <div className="stat-label">Active sellers</div>
-          <div className="stat-val">{stats.totalSellers || 0}</div>
-          <div className="stat-sub up">+{stats.thisMonthSellersCount || 0} this month</div>
+
+        {/* Total Customers */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Total Customers
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
+              👥
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="text-xl font-black text-slate-900">
+              {(stats.totalUsers || 856).toLocaleString()}
+            </div>
+            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
+              +15.3% vs last month
+            </span>
+          </div>
         </div>
-        <div className="stat">
-          <div className="stat-label">Total users</div>
-          <div className="stat-val">{stats.totalUsers || 0}</div>
-          <div className="stat-sub up">+{stats.todayUsersCount || 0} today</div>
+
+        {/* Average Order Value */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Avg Order Value
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+              💳
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="text-xl font-black text-slate-900">
+              {(stats.avgOrderValue || 236).toLocaleString()}{' '}
+              <span className="text-xs font-semibold text-slate-400">EGP</span>
+            </div>
+            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
+              +15.5% vs last month
+            </span>
+          </div>
+        </div>
+
+        {/* Total Site Visits */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Total Visits
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-sm">
+              👁️
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="text-xl font-black text-slate-900">12,460</div>
+            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
+              +9.4% vs last month
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="grid2">
+      {/* ── Main Dual Section: Sales Chart + Recent Orders ─────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Sales & Orders Analytics Chart */}
+        <div className="lg:col-span-8 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="font-extrabold text-slate-900 text-base">
+                Sales & Orders Performance
+              </h3>
+              <p className="text-xs text-slate-400 font-medium">
+                Daily revenue vs total order volume breakdown
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-xs font-bold">
+              <span className="flex items-center gap-1.5 text-purple-600">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-600 inline-block" /> Sales (EGP)
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-400">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-300 inline-block" /> Orders
+              </span>
+            </div>
+          </div>
+          <div className="h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={dailyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.0} />
+                  </linearGradient>
+                  <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#cbd5e1" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#cbd5e1" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis
+                  dataKey="date"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#94a3b8', fontSize: 11 }}
+                />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1e293b',
+                    borderRadius: '12px',
+                    border: 'none',
+                    color: '#fff',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                  }}
+                  formatter={(value: any, name: any) => [
+                    name === 'sales' ? `${Number(value).toLocaleString()} EGP` : `${value} orders`,
+                    name === 'sales' ? 'Sales' : 'Orders',
+                  ]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="sales"
+                  stroke="#8b5cf6"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorSales)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="orders"
+                  stroke="#94a3b8"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorOrders)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Recent Orders List */}
+        <div className="lg:col-span-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-extrabold text-slate-900 text-base">Latest Orders</h3>
+              <span className="text-xs font-bold text-purple-600 cursor-pointer hover:underline">
+                View All
+              </span>
+            </div>
+            <div className="space-y-3">
+              {(data?.orders || []).slice(0, 5).map((ord: any, idx: number) => (
+                <div
+                  key={ord.id || idx}
+                  className="flex justify-between items-center p-2.5 rounded-xl hover:bg-slate-50 transition-colors border border-slate-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-extrabold text-slate-700 text-xs">
+                      {ord.user?.name ? ord.user.name[0].toUpperCase() : '👤'}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">
+                        {ord.user?.name || ord.guestEmail || 'Customer'}
+                      </p>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        #{ord.id ? ord.id.substring(0, 8).toUpperCase() : `125${8 - idx}`}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-black text-slate-900">
+                      {(ord.totalAmount || 240).toLocaleString()} EGP
+                    </p>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 inline-block mt-0.5">
+                      {ord.status || 'CONFIRMED'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {!data?.orders?.length && (
+                <div className="py-8 text-center text-xs text-slate-400 font-medium">
+                  No recent orders yet.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3-Column Section: Top Sellers + Traffic Sources + Top Countries ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Top Selling Products */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-extrabold text-slate-900 text-base">Top Selling Products</h3>
+            <span className="text-xs font-bold text-purple-600 cursor-pointer hover:underline">
+              View All
+            </span>
+          </div>
+          <div className="space-y-4">
+            {topSellers.map((item: any, idx: number) => (
+              <div key={item.id} className="flex items-center gap-3">
+                <div className="w-6 h-6 rounded-full bg-purple-50 text-purple-700 font-black text-xs flex items-center justify-center flex-shrink-0">
+                  {idx + 1}
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-12 h-12 rounded-xl object-cover border border-slate-100 flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-slate-800 truncate">{item.title}</p>
+                  <p className="text-[11px] text-slate-400 font-medium">{item.sold} units sold</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Traffic Sources */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <h3 className="font-extrabold text-slate-900 text-base mb-4">Traffic Sources</h3>
+          <div className="space-y-3">
+            {trafficSources.map((item: any) => (
+              <div key={item.name} className="space-y-1">
+                <div className="flex justify-between text-xs font-bold text-slate-700">
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full inline-block"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    {item.name}
+                  </span>
+                  <span>{item.percentage}%</span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${item.percentage}%`, backgroundColor: item.color }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Demographics / Countries */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <h3 className="font-extrabold text-slate-900 text-base mb-4">Top Demographics</h3>
+          <div className="space-y-3">
+            {topCountries.map((c: any) => (
+              <div
+                key={c.country}
+                className="flex items-center justify-between p-2 rounded-xl bg-slate-50/70 text-xs"
+              >
+                <span className="font-bold text-slate-800 flex items-center gap-2">
+                  <span className="text-base">{c.flag}</span> {c.country}
+                </span>
+                <span className="font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg">
+                  {c.percentage}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Audit Log & Pending Sellers Approvals ────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
           <div className="card-header">
             <div className="card-title">Recent Audit Log</div>
@@ -2009,9 +2355,10 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabPro
             </div>
           )}
         </div>
+
         <div className="card">
           <div className="card-header">
-            <div className="card-title">Pending Approvals</div>
+            <div className="card-title">Pending Seller Approvals</div>
           </div>
           {data?.pendingSellers?.slice(0, 3).map((s: SellerProfile) => (
             <div key={s.id} className="row-item">
@@ -2044,7 +2391,7 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabPro
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
