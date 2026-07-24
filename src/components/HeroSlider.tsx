@@ -95,11 +95,11 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
           >
             <div className="pointer-events-auto">
               {subtitle && (
-                <span className="text-[10px] sm:text-[11px] md:text-xs tracking-[0.1em] font-medium text-white/80 mb-2 sm:mb-3 uppercase block">
+                <span className="text-[10px] sm:text-[11px] md:text-xs tracking-[0.1em] font-bold text-white/90 mb-2 sm:mb-3 uppercase block drop-shadow-md">
                   {subtitle}
                 </span>
               )}
-              <h1 className="text-3xl sm:text-4xl md:text-[56px] lg:text-[64px] font-bold tracking-tight mb-4 sm:mb-6 md:mb-8 max-w-xl leading-[1.18]">
+              <h1 className="text-3xl sm:text-4xl md:text-[56px] lg:text-[64px] font-black tracking-tight mb-4 sm:mb-6 md:mb-8 max-w-xl leading-[1.18] drop-shadow-lg">
                 {title}
               </h1>
 
