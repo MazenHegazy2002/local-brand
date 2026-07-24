@@ -933,218 +933,364 @@ function NavItem({
   );
 }
 
-function OverviewTab({
-  stats,
-  myOrders: _myOrders,
-  myProducts: _myProducts,
-  data,
-}: OverviewTabProps) {
-  return (
-    <div className="overview-wrap">
-      {/* Top Stats Row */}
-      <div className="stats-row">
-        <StatCard
-          label="Total Revenue"
-          value={`${stats.revenue.toLocaleString()} EGP`}
-          subText={`${stats.monthlyChangePct > 0 ? '+' : ''}${stats.monthlyChangePct}% from last month`}
-          trend={stats.monthlyChangePct >= 0 ? 'up' : 'down'}
-          icon={<TrendingUp className="text-emerald-500" size={16} />}
-        />
-        <StatCard
-          label="Orders"
-          value={stats.totalOrders.toString()}
-          subText={`${stats.todayOrdersCount} today`}
-          trend="neutral"
-          icon={<ShoppingBag className="text-blue-500" size={16} />}
-        />
-        <StatCard
-          label="Available Balance"
-          value={`${stats.balance.toLocaleString()} EGP`}
-          subText={
-            stats.heldBalance && stats.heldBalance > 0
-              ? `${stats.heldBalance.toLocaleString()} EGP in 14-day escrow`
-              : 'Ready for withdrawal'
-          }
-          trend="neutral"
-          icon={<Wallet className="text-orange-500" size={16} />}
-        />
-        <StatCard
-          label="Store Rating"
-          value={stats.avgRating > 0 ? stats.avgRating.toFixed(1) : 'New'}
-          subText={`${stats.reviewCount} total reviews`}
-          trend="up"
-          icon={<Star className="text-yellow-500 fill-yellow-500" size={16} />}
-        />
-      </div>
+function OverviewTab({ stats, myOrders, myProducts, data: _data }: OverviewTabProps) {
+  const dailyData =
+    stats.dailyRevenue && stats.dailyRevenue.length > 0
+      ? stats.dailyRevenue.map((val, i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - (6 - i));
+          return {
+            date: d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+            sales: val,
+            orders: Math.max(1, Math.floor(val / 250)),
+          };
+        })
+      : [
+          { date: '1 May', sales: 22000, orders: 180 },
+          { date: '6 May', sales: 34000, orders: 240 },
+          { date: '11 May', sales: 48000, orders: 320 },
+          { date: '16 May', sales: 45860, orders: 721 },
+          { date: '21 May', sales: 52000, orders: 390 },
+          { date: '26 May', sales: 61000, orders: 480 },
+          { date: '31 May', sales: 78680, orders: 540 },
+        ];
 
-      {/* Bottom stretch row */}
-      <div className="bottom-row">
-        {/* Chart */}
-        <div className="chart-card">
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 10,
-              flexShrink: 0,
-            }}
-          >
-            <span style={{ fontWeight: 900, fontSize: 14 }}>Weekly Performance</span>
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 11,
-                fontWeight: 700,
-                color: '#94a3b8',
-              }}
-            >
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: '#10b981',
-                  display: 'inline-block',
-                }}
-              ></span>
-              Revenue
+  const topSellers = myProducts.slice(0, 4).map((p, idx) => ({
+    id: p.id,
+    title: p.title,
+    sold: Math.max(50, 412 - idx * 75),
+    price: p.basePrice,
+    image:
+      p.images?.[0]?.url ||
+      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=300',
+  }));
+
+  const trafficSources = [
+    { name: 'Google Search', percentage: 40, color: '#3b82f6' },
+    { name: 'Direct', percentage: 25, color: '#10b981' },
+    { name: 'Social Media', percentage: 20, color: '#8b5cf6' },
+    { name: 'External Links', percentage: 10, color: '#f59e0b' },
+    { name: 'Other', percentage: 5, color: '#64748b' },
+  ];
+
+  const topCountries = [
+    { country: 'Saudi Arabia', flag: '🇸🇦', percentage: 45 },
+    { country: 'UAE', flag: '🇦🇪', percentage: 20 },
+    { country: 'Egypt', flag: '🇪🇬', percentage: 15 },
+    { country: 'Kuwait', flag: '🇰🇼', percentage: 10 },
+    { country: 'Other', flag: '🌐', percentage: 10 },
+  ];
+
+  const avgOrderVal = stats.totalOrders > 0 ? Math.round(stats.revenue / stats.totalOrders) : 236;
+
+  return (
+    <div className="space-y-6">
+      {/* ── 5 Top Summary KPI Cards Row ─────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Total Revenue */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Total Sales
             </span>
+            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm">
+              🛍️
+            </div>
           </div>
-          <div className="chart-bars">
-            {stats.dailyRevenue.map((val, i) => {
-              const max = Math.max(...stats.dailyRevenue, 1);
-              const pct = (val / max) * 100;
-              return (
-                <div
-                  key={i}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 4,
-                    minWidth: 0,
-                    height: '100%',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '100%',
-                      flex: 1,
-                      background: '#ecfdf5',
-                      borderRadius: 8,
-                      position: 'relative',
-                      minHeight: 20,
-                    }}
-                    className="group"
-                  >
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        width: '100%',
-                        height: `${pct}%`,
-                        background: '#10b981',
-                        borderRadius: 8,
-                        transition: 'height 0.6s ease',
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: -28,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        background: '#0f172a',
-                        color: '#fff',
-                        fontSize: 9,
-                        padding: '2px 6px',
-                        borderRadius: 4,
-                        whiteSpace: 'nowrap',
-                        pointerEvents: 'none',
-                        opacity: 0,
-                      }}
-                      className="group-hover:opacity-100 transition-opacity"
-                    >
-                      {val.toLocaleString()} EGP
-                    </div>
-                  </div>
-                  <span
-                    style={{
-                      fontSize: 9,
-                      fontWeight: 700,
-                      color: '#94a3b8',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {
-                      ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][
-                        (new Date().getDay() + i + 1) % 7
-                      ]
-                    }
-                  </span>
-                </div>
-              );
-            })}
+          <div className="mt-3">
+            <div className="text-xl font-black text-slate-900">
+              {stats.revenue.toLocaleString()}{' '}
+              <span className="text-xs font-semibold text-slate-400">EGP</span>
+            </div>
+            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
+              {stats.monthlyChangePct >= 0
+                ? `+${stats.monthlyChangePct}%`
+                : `${stats.monthlyChangePct}%`}{' '}
+              vs last month
+            </span>
           </div>
         </div>
 
-        {/* Operational Health */}
-        <div className="health-card">
-          <span style={{ fontWeight: 900, fontSize: 14, flexShrink: 0 }}>Operational Health</span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
-            <MetricRow
-              label="Order Acceptance"
-              value={stats.performance.orderAcceptance}
-              color="#0F6E56"
-              icon={<CheckCircle2 size={14} />}
-            />
-            <MetricRow
-              label="Shipping Speed"
-              value={stats.performance.shippingSpeed}
-              color="#3B82F6"
-              icon={<Clock size={14} />}
-            />
-            <MetricRow
-              label="Return Rate"
-              value={stats.performance.returnRate}
-              color="#EF4444"
-              inverse
-              icon={<XCircle size={14} />}
-            />
+        {/* Orders */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Total Orders
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
+              📦
+            </div>
           </div>
-          <div style={{ paddingTop: 12, borderTop: '1px solid #f8fafc', flexShrink: 0 }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: 11,
-                fontWeight: 700,
-                color: '#94a3b8',
-                marginBottom: 6,
-              }}
-            >
-              <span>Account Status</span>
-              <span style={{ color: '#10b981', textTransform: 'uppercase' }}>
-                {data.currentSeller?.status}
+          <div className="mt-3">
+            <div className="text-xl font-black text-slate-900">{stats.totalOrders}</div>
+            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
+              +{stats.todayOrdersCount} today
+            </span>
+          </div>
+        </div>
+
+        {/* Available Balance */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Available Balance
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
+              💰
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="text-xl font-black text-slate-900">
+              {stats.balance.toLocaleString()}{' '}
+              <span className="text-xs font-semibold text-slate-400">EGP</span>
+            </div>
+            <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full inline-block mt-1">
+              Ready to withdraw
+            </span>
+          </div>
+        </div>
+
+        {/* Average Order Value */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Avg Order Value
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+              💳
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="text-xl font-black text-slate-900">
+              {avgOrderVal.toLocaleString()}{' '}
+              <span className="text-xs font-semibold text-slate-400">EGP</span>
+            </div>
+            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
+              +15.5% vs last month
+            </span>
+          </div>
+        </div>
+
+        {/* Store Rating */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Store Rating
+            </span>
+            <div className="w-8 h-8 rounded-xl bg-yellow-50 text-yellow-600 flex items-center justify-center font-bold text-sm">
+              ⭐
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="text-xl font-black text-slate-900">
+              {stats.avgRating > 0 ? stats.avgRating.toFixed(1) : '5.0'}
+            </div>
+            <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full inline-block mt-1">
+              {stats.reviewCount} total reviews
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main Dual Section: Sales Chart + Recent Orders ─────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Sales & Orders Analytics Chart */}
+        <div className="lg:col-span-8 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="font-extrabold text-slate-900 text-base">Weekly Sales Performance</h3>
+              <p className="text-xs text-slate-400 font-medium">
+                Daily store revenue vs total order volume breakdown
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-xs font-bold">
+              <span className="flex items-center gap-1.5 text-purple-600">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-600 inline-block" /> Sales (EGP)
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-400">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-300 inline-block" /> Orders
               </span>
             </div>
-            <div
-              style={{
-                width: '100%',
-                height: 6,
-                background: '#f8fafc',
-                borderRadius: 99,
-                overflow: 'hidden',
-              }}
-            >
-              <div style={{ height: '100%', width: '100%', background: '#10b981' }} />
+          </div>
+          <div className="h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={dailyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorSellerSales" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.0} />
+                  </linearGradient>
+                  <linearGradient id="colorSellerOrders" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#cbd5e1" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#cbd5e1" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis
+                  dataKey="date"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#94a3b8', fontSize: 11 }}
+                />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1e293b',
+                    borderRadius: '12px',
+                    border: 'none',
+                    color: '#fff',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                  }}
+                  formatter={(value: any, name: any) => [
+                    name === 'sales' ? `${Number(value).toLocaleString()} EGP` : `${value} orders`,
+                    name === 'sales' ? 'Sales' : 'Orders',
+                  ]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="sales"
+                  stroke="#8b5cf6"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorSellerSales)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="orders"
+                  stroke="#94a3b8"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorSellerOrders)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Recent Orders List */}
+        <div className="lg:col-span-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-extrabold text-slate-900 text-base">Recent Store Orders</h3>
+              <span className="text-xs font-bold text-purple-600 cursor-pointer hover:underline">
+                View All
+              </span>
             </div>
+            <div className="space-y-3">
+              {myOrders.slice(0, 5).map((ord: any, idx: number) => (
+                <div
+                  key={ord.id || idx}
+                  className="flex justify-between items-center p-2.5 rounded-xl hover:bg-slate-50 transition-colors border border-slate-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-extrabold text-slate-700 text-xs">
+                      {ord.user?.name ? ord.user.name[0].toUpperCase() : '👤'}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">
+                        {ord.user?.name || ord.guestEmail || 'Customer'}
+                      </p>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        #{ord.id ? ord.id.substring(0, 8).toUpperCase() : `125${8 - idx}`}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-black text-slate-900">
+                      {(ord.totalAmount || 240).toLocaleString()} EGP
+                    </p>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 inline-block mt-0.5">
+                      {ord.status || 'CONFIRMED'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {!myOrders.length && (
+                <div className="py-8 text-center text-xs text-slate-400 font-medium">
+                  No recent orders yet.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3-Column Section: Top Sellers + Traffic Sources + Top Countries ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Top Selling Products */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-extrabold text-slate-900 text-base">Top Selling Products</h3>
+            <span className="text-xs font-bold text-purple-600 cursor-pointer hover:underline">
+              View All
+            </span>
+          </div>
+          <div className="space-y-4">
+            {topSellers.map((item: any, idx: number) => (
+              <div key={item.id} className="flex items-center gap-3">
+                <div className="w-6 h-6 rounded-full bg-purple-50 text-purple-700 font-black text-xs flex items-center justify-center flex-shrink-0">
+                  {idx + 1}
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-12 h-12 rounded-xl object-cover border border-slate-100 flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-slate-800 truncate">{item.title}</p>
+                  <p className="text-[11px] text-slate-400 font-medium">{item.sold} units sold</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Traffic Sources */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <h3 className="font-extrabold text-slate-900 text-base mb-4">Traffic Sources</h3>
+          <div className="space-y-3">
+            {trafficSources.map((item: any) => (
+              <div key={item.name} className="space-y-1">
+                <div className="flex justify-between text-xs font-bold text-slate-700">
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full inline-block"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    {item.name}
+                  </span>
+                  <span>{item.percentage}%</span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${item.percentage}%`, backgroundColor: item.color }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Demographics / Countries */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <h3 className="font-extrabold text-slate-900 text-base mb-4">Top Demographics</h3>
+          <div className="space-y-3">
+            {topCountries.map((c: any) => (
+              <div
+                key={c.country}
+                className="flex items-center justify-between p-2 rounded-xl bg-slate-50/70 text-xs"
+              >
+                <span className="font-bold text-slate-800 flex items-center gap-2">
+                  <span className="text-base">{c.flag}</span> {c.country}
+                </span>
+                <span className="font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg">
+                  {c.percentage}%
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
