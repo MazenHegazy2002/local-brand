@@ -78,7 +78,7 @@ export async function getDashboardStats() {
     }
 
     if (role === 'SELLER') {
-      const seller = await prisma.sellerProfile.findUnique({
+      let seller = await prisma.sellerProfile.findUnique({
         where: { userId },
         include: {
           user: true,
@@ -94,10 +94,36 @@ export async function getDashboardStats() {
         },
       });
 
-      if (!seller)
+      if (!seller) {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (user) {
+          seller = await prisma.sellerProfile.create({
+            data: {
+              userId: user.id,
+              storeName: `${user.name || 'Local Store'}`,
+              status: SellerStatus.ACTIVE,
+            },
+            include: {
+              user: true,
+              products: {
+                include: {
+                  images: true,
+                  variants: true,
+                  category: true,
+                  tags: true,
+                  collections: true,
+                },
+              },
+            },
+          });
+        }
+      }
+
+      if (!seller) {
         return {
           error: 'Seller profile not found. Please contact support or complete your registration.',
         };
+      }
 
       const orders = await prisma.order.findMany({
         where: {
@@ -471,7 +497,9 @@ export async function getDashboardStats() {
         take: 8,
       });
 
-      const variantIds = topItems.map(ti => ti.variantId).filter(Boolean);
+      const variantIds = topItems
+        .map(ti => ti.variantId)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0);
       const variantsWithProduct = variantIds.length
         ? await prisma.productVariant.findMany({
             where: { id: { in: variantIds } },
