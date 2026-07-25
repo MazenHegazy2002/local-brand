@@ -1199,6 +1199,16 @@ function WalletTab({ user }: { user?: User }) {
         <div style={{ fontSize: '13px', color: '#64748b', marginTop: '8px' }}>
           Worth <strong>{points.toLocaleString()} EGP</strong> at checkout (1 pt = 1 EGP)
         </div>
+        {points > 0 && (
+          <div className="mt-4">
+            <Link
+              href="/shop"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1e3b8a] text-white text-xs font-bold hover:bg-[#152e6e] transition-colors shadow-sm"
+            >
+              <span>🛍️</span> Use Points at Checkout
+            </Link>
+          </div>
+        )}
         <div className="mt-6 pt-6 border-t border-slate-100">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-bold uppercase" style={{ color: tierColor }}>

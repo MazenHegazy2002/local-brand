@@ -94,7 +94,7 @@ export async function getDashboardStats() {
       );
     }
 
-    if (role === 'SELLER' || role === 'ADMIN') {
+    if (role === 'SELLER') {
       let seller = await prisma.sellerProfile.findUnique({
         where: { userId },
         include: {

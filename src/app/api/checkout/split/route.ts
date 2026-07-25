@@ -168,8 +168,16 @@ export async function POST(req: Request) {
             platformFee,
             sellerPayoutTotal,
             paymentMethod: paymentMethod as any,
-            paymentStatus: PaymentStatus.UNPAID,
-            status: OrderStatus.PENDING_PAYMENT,
+            paymentStatus:
+              paymentMethod === 'CASH_ON_DELIVERY'
+                ? PaymentStatus.UNPAID
+                : process.env.NODE_ENV === 'development'
+                  ? PaymentStatus.PAID
+                  : PaymentStatus.UNPAID,
+            status:
+              paymentMethod === 'CASH_ON_DELIVERY' || process.env.NODE_ENV === 'development'
+                ? OrderStatus.CONFIRMED
+                : OrderStatus.PENDING_PAYMENT,
             shippingAddressSnapshot: JSON.stringify(address),
             couponId: coupon?.id,
             items: { create: orderItemsData },
