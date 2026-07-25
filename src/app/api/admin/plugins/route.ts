@@ -85,77 +85,98 @@ interface PatchBody {
 }
 
 export async function PATCH(req: Request) {
-  const admin = await requireAdmin();
-  if (!admin) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  try {
+    const admin = await requireAdmin();
+    if (!admin) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-  const body = (await req.json().catch(() => ({}))) as PatchBody;
-  if (!body.slug) return NextResponse.json({ message: 'slug required' }, { status: 400 });
+    const body = (await req.json().catch(() => ({}))) as PatchBody;
+    if (!body.slug) return NextResponse.json({ message: 'slug required' }, { status: 400 });
 
-  const def = getPlugin(body.slug);
-  if (!def) return NextResponse.json({ message: 'Unknown plugin' }, { status: 404 });
+    const def = getPlugin(body.slug);
+    if (!def) return NextResponse.json({ message: 'Unknown plugin' }, { status: 404 });
 
-  // Merge incoming config with the existing row so partial updates don't
-  // wipe other fields. Encrypt fields flagged secret.
-  const existing = await prisma.plugin.findUnique({ where: { slug: body.slug } });
-  let merged: Record<string, string> = {};
-  if (existing?.configJson) {
-    try {
-      merged = JSON.parse(existing.configJson);
-    } catch {
-      merged = {};
-    }
-  }
-  if (body.config) {
-    for (const field of def.fields) {
-      const v = body.config[field.key];
-      if (v === undefined) continue;
-      // Empty string clears the field (lets admin delete a key).
-      if (v === '') {
-        delete merged[field.key];
-        continue;
-      }
-      // Don't re-store the masked placeholder — that means the admin
-      // didn't change the value. Skip those entries.
-      if (typeof v === 'string' && v.startsWith('••• ')) continue;
-      if (field.type === 'secret') {
-        const enc = encryptSecret(v);
-        merged[field.key] = enc ?? v; // fall back to plaintext if no key set
-      } else {
-        merged[field.key] = v;
+    // Merge incoming config with the existing row so partial updates don't
+    // wipe other fields. Encrypt fields flagged secret.
+    const existing = await prisma.plugin.findUnique({ where: { slug: body.slug } });
+    let merged: Record<string, string> = {};
+    if (existing?.configJson) {
+      try {
+        merged = JSON.parse(existing.configJson);
+      } catch {
+        merged = {};
       }
     }
-  }
+    if (body.config) {
+      for (const field of def.fields) {
+        const v = body.config[field.key];
+        if (v === undefined) continue;
+        // Empty string clears the field (lets admin delete a key).
+        if (v === '') {
+          delete merged[field.key];
+          continue;
+        }
+        // Don't re-store the masked placeholder — that means the admin
+        // didn't change the value. Skip those entries.
+        if (typeof v === 'string' && v.startsWith('••• ')) continue;
+        if (field.type === 'secret') {
+          const enc = encryptSecret(v);
+          merged[field.key] = enc ?? v; // fall back to plaintext if no key set
+        } else {
+          merged[field.key] = v;
+        }
+      }
+    }
 
-  const updated = await prisma.plugin.upsert({
-    where: { slug: body.slug },
-    create: {
-      slug: body.slug,
-      name: def.name,
-      category: def.category as PluginCategory,
-      isEnabled: body.isEnabled ?? false,
-      configJson: JSON.stringify(merged),
-      notes: body.notes ?? null,
-    },
-    update: {
-      isEnabled: body.isEnabled ?? existing?.isEnabled ?? false,
-      configJson: JSON.stringify(merged),
-      notes: body.notes ?? existing?.notes ?? null,
-    },
-  });
-
-  await prisma.auditLog.create({
-    data: {
-      adminId: admin.id,
-      action: body.isEnabled === false ? 'PLUGIN_DISABLED' : 'PLUGIN_UPDATED',
-      targetId: body.slug,
-      details: JSON.stringify({
+    const updated = await prisma.plugin.upsert({
+      where: { slug: body.slug },
+      create: {
         slug: body.slug,
-        isEnabled: updated.isEnabled,
-        // Don't log the full config — just the keys that were changed.
-        changedKeys: body.config ? Object.keys(body.config) : [],
-      }),
-    },
-  });
+        name: def.name,
+        category: def.category as PluginCategory,
+        isEnabled: body.isEnabled ?? false,
+        configJson: JSON.stringify(merged),
+        notes: body.notes ?? null,
+      },
+      update: {
+        isEnabled: body.isEnabled ?? existing?.isEnabled ?? false,
+        configJson: JSON.stringify(merged),
+        notes: body.notes ?? existing?.notes ?? null,
+      },
+    });
 
-  return NextResponse.json({ ok: true });
+    // Safely attempt audit log creation without blocking plugin installation if admin ID changed
+    try {
+      const adminUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            ...(admin.id ? [{ id: admin.id }] : []),
+            ...(admin.email ? [{ email: admin.email }] : []),
+          ],
+        },
+      });
+
+      if (adminUser) {
+        await prisma.auditLog.create({
+          data: {
+            adminId: adminUser.id,
+            action: body.isEnabled === false ? 'PLUGIN_DISABLED' : 'PLUGIN_UPDATED',
+            targetId: body.slug,
+            details: JSON.stringify({
+              slug: body.slug,
+              isEnabled: updated.isEnabled,
+              changedKeys: body.config ? Object.keys(body.config) : [],
+            }),
+          },
+        });
+      }
+    } catch (auditErr) {
+      console.error('[plugins] audit log failed:', auditErr);
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error('[plugins] PATCH failed:', error);
+    return NextResponse.json({ message: error.message || 'Failed to update plugin' }, { status: 500 });
+  }
 }
