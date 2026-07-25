@@ -394,6 +394,8 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
               (sum, i) => sum + i.priceAtPurchase * i.quantity,
               0
             );
+            const afterDiscount = Math.max(0, subtotal - (order.discountAmount || 0));
+            const calculatedVat = Math.round(afterDiscount * 0.14 * 100) / 100;
             return (
               <div className="mt-6 pt-6 border-t border-slate-100 space-y-1.5 text-sm">
                 <div className="flex justify-between text-slate-600">
@@ -422,6 +424,18 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
                   <div className="flex justify-between text-slate-600">
                     <span>{t('Gift wrapping', 'تغليف هدية')}</span>
                     <span className="font-semibold text-slate-900">25 {currency}</span>
+                  </div>
+                )}
+                {calculatedVat > 0 && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>{t('VAT (14%)', 'ضريبة القيمة المضافة (14%)')}</span>
+                    <span className="font-semibold text-slate-900">
+                      {calculatedVat.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}{' '}
+                      {currency}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg pt-3 mt-2 border-t border-slate-100">

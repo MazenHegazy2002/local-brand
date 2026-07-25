@@ -10,6 +10,11 @@ import { useCartStore } from '@/lib/cartStore';
 function SuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
+  const displayOrderId = orderId
+    ? orderId.length > 20
+      ? `ORD-${orderId.substring(0, 8).toUpperCase()}`
+      : orderId
+    : 'ORD-XXXX-XXXX';
   const { data: session } = useSession();
   const isGuest = !session?.user;
   // Logged-in customers land on their dashboard; guests get the public
@@ -86,9 +91,7 @@ function SuccessContent() {
           <div className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">
             Order Reference
           </div>
-          <div className="text-xl font-bold text-[#1e3b8a] font-mono">
-            {orderId || 'LCB-XXXX-XXXX'}
-          </div>
+          <div className="text-xl font-bold text-[#1e3b8a] font-mono">{displayOrderId}</div>
         </div>
 
         {searchParams.get('fawryRef') && (
