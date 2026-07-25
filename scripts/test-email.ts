@@ -1,19 +1,32 @@
-// Run: npx tsx scripts/test-email.ts
-// Sends a test email via Resend to verify transactional mail is working.
-// Requires: RESEND_API_KEY and UPTIME_ALERT_EMAIL env vars.
+import fs from 'fs';
+import path from 'path';
+
+// Load .env files if present
+for (const file of ['.env.production', '.env.local', '.env']) {
+  const envPath = path.join(process.cwd(), file);
+  if (fs.existsSync(envPath)) {
+    const content = fs.readFileSync(envPath, 'utf8');
+    for (const line of content.split('\n')) {
+      const match = line.match(/^\s*([\w.-]+)\s*=\s*["']?([^"'\r\n]+)["']?/);
+      if (match && !process.env[match[1]]) {
+        process.env[match[1]] = match[2];
+      }
+    }
+  }
+}
 
 const RESEND_KEY = process.env.RESEND_API_KEY;
-const TO = process.env.UPTIME_ALERT_EMAIL ?? process.env.TEST_EMAIL;
+const TO = process.env.UPTIME_ALERT_EMAIL ?? process.env.TEST_EMAIL ?? 'mazentelda@gmail.com';
 
 async function main() {
   console.log('\n📧 Brandy transactional mail test\n');
 
-  if (!RESEND_KEY) {
-    console.error('❌ RESEND_API_KEY is not set. Add it to your .env and try again.');
-    process.exit(1);
-  }
-  if (!TO) {
-    console.error('❌ Set UPTIME_ALERT_EMAIL (or TEST_EMAIL) to the recipient address.');
+  if (!RESEND_KEY || RESEND_KEY.includes('re_your_key')) {
+    console.error('❌ RESEND_API_KEY is not set or contains placeholder.');
+    console.error('   Please replace "re_your_key_here" with your actual Resend API key (starts with "re_").');
+    console.error('   You can find your API key at: https://resend.com/api-keys\n');
+    console.error('   Command format:');
+    console.error('   $env:RESEND_API_KEY="re_REAL_KEY_HERE"; npx tsx scripts/test-email.ts\n');
     process.exit(1);
   }
 
