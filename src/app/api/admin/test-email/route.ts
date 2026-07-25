@@ -17,10 +17,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const resendKey = process.env.RESEND_API_KEY;
+  let resendKey = process.env.RESEND_API_KEY || '';
+  try {
+    const { getSetting } = await import('@/lib/admin-settings-registry');
+    const { readSecret } = await import('@/lib/secrets');
+    const dbKey = await getSetting<string>('RESEND_API_KEY').catch(() => '');
+    if (dbKey) {
+      resendKey = readSecret(dbKey) || dbKey;
+    }
+  } catch {
+    // ignore DB settings fallback error
+  }
+
   if (!resendKey) {
     return NextResponse.json(
-      { success: false, error: 'RESEND_API_KEY is not configured.' },
+      { success: false, error: 'RESEND_API_KEY is not configured in env or admin settings.' },
       { status: 503 }
     );
   }
