@@ -14,7 +14,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   const { to, subject, html } = options;
 
   let provider = 'resend';
-  let emailFrom = 'noreply@brandy.com';
+  let emailFrom = 'noreply@brandyy.shop';
   let emailFromName = 'Brandy';
   let resendKey = process.env.RESEND_API_KEY || '';
   let smtpHost = '';
@@ -25,7 +25,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
     const { getSetting } = await import('@/lib/admin-settings-registry');
     provider = await getSetting<string>('EMAIL_PROVIDER').catch(() => 'resend');
-    emailFrom = await getSetting<string>('EMAIL_FROM').catch(() => 'noreply@brandy.com');
+    emailFrom = await getSetting<string>('EMAIL_FROM').catch(() => 'noreply@brandyy.shop');
     emailFromName = await getSetting<string>('EMAIL_FROM_NAME').catch(() => 'Brandy');
     resendKey =
       (await getSetting<string>('RESEND_API_KEY').catch(() => '')) ||

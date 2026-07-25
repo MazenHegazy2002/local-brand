@@ -35,7 +35,7 @@ async function main() {
     method: 'POST',
     headers: { authorization: `Bearer ${RESEND_KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({
-      from: 'Brandy Test <noreply@brandy.eg>',
+      from: 'Brandy Test <noreply@brandyy.shop>',
       to: TO,
       subject: `[Brandy] Transactional mail test — ${now}`,
       html,

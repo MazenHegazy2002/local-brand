@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Brandy Test <noreply@brandy.eg>',
+      from: 'Brandy Test <noreply@brandyy.shop>',
       to,
       subject: `[Brandy] Test email — ${now}`,
       html,

@@ -119,7 +119,7 @@ export async function POST(req: Request) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'Brandy Alerts <alerts@brandy.eg>',
+          from: 'Brandy Alerts <alerts@brandyy.shop>',
           to: alertEmail,
           subject: title,
           text: body,
