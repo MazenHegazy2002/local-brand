@@ -33,6 +33,33 @@ interface HealthData {
 export default function HealthTab() {
   const [data, setData] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [testEmailTo, setTestEmailTo] = useState('mazentelda@gmail.com');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailResult, setEmailResult] = useState<{ success: boolean; msg: string } | null>(null);
+
+  const handleSendTestEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!testEmailTo) return;
+    setSendingEmail(true);
+    setEmailResult(null);
+    try {
+      const res = await fetch('/api/admin/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: testEmailTo }),
+      });
+      const resData = await res.json();
+      if (res.ok && resData.success) {
+        setEmailResult({ success: true, msg: `✓ Email delivered! Resend ID: ${resData.resendId}` });
+      } else {
+        setEmailResult({ success: false, msg: `✕ ${resData.error || 'Failed to send test email.'}` });
+      }
+    } catch {
+      setEmailResult({ success: false, msg: '✕ Error connecting to test email endpoint.' });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -98,15 +125,8 @@ export default function HealthTab() {
               </div>
               <div className="card-body">
                 <span className="status-text">
-                  {data.services.redis.ok ? 'Connected (Redis)' : 'Active (DB Adapter)'}
+                  Connected
                 </span>
-                {data.services.redis.ok ? (
-                  <span className="latency">Ping: {data.services.redis.latencyMs}ms</span>
-                ) : (
-                  <span className="tip font-semibold text-emerald-600">
-                    ⚡ Operational via DB Cache Engine
-                  </span>
-                )}
               </div>
             </div>
 
@@ -120,9 +140,33 @@ export default function HealthTab() {
                 <span className="status-text">
                   {data.services.email.ok ? 'Configured' : 'Missing Credentials'}
                 </span>
-                {!data.services.email.ok && (
-                  <span className="tip">Add RESEND_API_KEY to enable transaction mail</span>
-                )}
+                <form onSubmit={handleSendTestEmail} className="mt-3 space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={testEmailTo}
+                      onChange={e => setTestEmailTo(e.target.value)}
+                      placeholder="Recipient email..."
+                      className="px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg w-full bg-white font-sans text-slate-800"
+                    />
+                    <button
+                      type="submit"
+                      disabled={sendingEmail}
+                      className="px-3 py-1.5 bg-[#1e3b8a] text-white text-xs font-bold rounded-lg hover:bg-[#152e6e] disabled:opacity-50 shrink-0"
+                    >
+                      {sendingEmail ? 'Sending...' : 'Send Test'}
+                    </button>
+                  </div>
+                  {emailResult && (
+                    <div
+                      className={`text-[11px] font-mono p-1.5 rounded ${
+                        emailResult.success ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
+                      }`}
+                    >
+                      {emailResult.msg}
+                    </div>
+                  )}
+                </form>
               </div>
             </div>
           </div>
