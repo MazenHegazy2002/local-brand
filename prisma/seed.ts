@@ -908,7 +908,7 @@ async function main() {
       passwordHash: sellerPwHash,
       role: 'SELLER',
       loyaltyPoints: 0,
-      emailVerified: new Date(), // verified email is required to publish products
+      emailVerified: new Date(),
       avatarUrl: LOGO_URLS[0],
     },
   });
@@ -916,167 +916,14 @@ async function main() {
   const defaultSellerProfile = await prisma.sellerProfile.create({
     data: {
       userId: sellerUser.id,
-      storeName: 'Demo Store',
-      description: 'The default demo store showcasing sample products.',
+      storeName: 'Brandy Store',
+      description: 'Official Brandy Egypt store featuring authentic local Egyptian crafts.',
       status: 'ACTIVE',
       balance: 0,
       commissionRate: 0.15,
       logoUrl: LOGO_URLS[0],
     },
   });
-
-  const SELLER_BRANDS = [
-    {
-      name: 'Cairo Loom',
-      owner: 'Ahmed Hassan',
-      email: 'cairoloom@brandy.com',
-      desc: 'Premium Egyptian linen shirts and breathable summer garments.',
-    },
-    {
-      name: 'Alexandria Leatherworks',
-      owner: 'Mariam El-Sayed',
-      email: 'alexleather@brandy.com',
-      desc: 'Handcrafted genuine leather bags, belts, and accessories.',
-    },
-    {
-      name: 'Oasis Terracotta',
-      owner: 'Youssef Farouk',
-      email: 'oasisclay@brandy.com',
-      desc: 'Clay pots, kitchenware, and custom home accents from Tunis Village, Fayoum.',
-    },
-    {
-      name: 'Nile Threads',
-      owner: 'Sara Mostafa',
-      email: 'nilethreads@brandy.com',
-      desc: 'Organic Egyptian cotton basic tees, loungewear, and daily essentials.',
-    },
-    {
-      name: 'Giza Cotton Co.',
-      owner: 'Omar Khaled',
-      email: 'gizacotton@brandy.com',
-      desc: 'World-renowned Egyptian cotton bedding, bathrobes, and luxury linens.',
-    },
-    {
-      name: 'Damietta Woodcraft',
-      owner: 'Tarek Ibrahim',
-      email: 'damiettawood@brandy.com',
-      desc: 'Artisanal wood furniture, serving trays, and custom wooden home decor.',
-    },
-    {
-      name: 'Delta Electronics',
-      owner: 'Nour Adel',
-      email: 'deltatech@brandy.com',
-      desc: 'Smart smart accessories, custom power banks, and local tech hardware.',
-    },
-    {
-      name: 'Lotus Botanicals',
-      owner: 'Hana Sherif',
-      email: 'lotusbeauty@brandy.com',
-      desc: 'Natural Egyptian skincare, oils, and organic hair treatment remedies.',
-    },
-    {
-      name: 'Luxor Goldsmiths',
-      owner: 'Kareem Nasser',
-      email: 'luxorgold@brandy.com',
-      desc: 'Handmade sterling silver and gold-plated jewelry inspired by heritage.',
-    },
-    {
-      name: 'Nubian Heritage Crafts',
-      owner: 'Fatma Gamal',
-      email: 'nubiancrafts@brandy.com',
-      desc: 'Handwoven baskets, colorful rugs, and traditional home ornaments.',
-    },
-    {
-      name: 'Suez Activewear',
-      owner: 'Mahmoud Ali',
-      email: 'suezactive@brandy.com',
-      desc: 'Athletic wear, performance training jerseys, and Egyptian outdoor gear.',
-    },
-    {
-      name: 'Mansoura Loom',
-      owner: 'Layla Mahmoud',
-      email: 'mansouraloom@brandy.com',
-      desc: 'Premium knitwear, cozy cardigans, and seasonal Egyptian garments.',
-    },
-    {
-      name: 'Tanta Gourmet',
-      owner: 'Amr Salah',
-      email: 'tantagourmet@brandy.com',
-      desc: 'Artisanal local spices, organic honey, and sweet traditional delicacies.',
-    },
-    {
-      name: 'Siwa Organics',
-      owner: 'Dina Wael',
-      email: 'siwaorganics@brandy.com',
-      desc: 'Organic dates, premium olive oil, and natural bath salts from Siwa Oasis.',
-    },
-    {
-      name: 'Sinai Herbals',
-      owner: 'Hassan Fathy',
-      email: 'sinaiherbal@brandy.com',
-      desc: 'Organic Sinai teas, hand-harvested herbs, and therapeutic remedies.',
-    },
-    {
-      name: 'Port Said Gear',
-      owner: 'Khaled Tawfik',
-      email: 'portsaidgear@brandy.com',
-      desc: 'Premium travel bags, windbreakers, and durable Egyptian outdoor packs.',
-    },
-    {
-      name: 'Assiut Loom Heritage',
-      owner: 'Rania Samir',
-      email: 'assiutloom@brandy.com',
-      desc: 'Tally fabrics, traditional shawls, and ancient Assiut weaving designs.',
-    },
-    {
-      name: 'Qena Pottery',
-      owner: 'Mohsen Ezzat',
-      email: 'qenapottery@brandy.com',
-      desc: 'Porous water jars, clay planters, and functional terracotta storage.',
-    },
-    {
-      name: 'Kemet Fashion House',
-      owner: 'Nadia Refaat',
-      email: 'kemetfashion@brandy.com',
-      desc: 'Contemporary Egyptian streetwear and custom graphic tees.',
-    },
-    {
-      name: 'Pharaoh Timepieces',
-      owner: 'Sherif Mansour',
-      email: 'pharaohtime@brandy.com',
-      desc: 'Premium handcrafted wooden watches and local desk clocks.',
-    },
-  ];
-
-  const addedSellerProfiles = [defaultSellerProfile];
-  for (let i = 0; i < SELLER_BRANDS.length; i++) {
-    const brand = SELLER_BRANDS[i];
-    const logo = LOGO_URLS[(i + 1) % LOGO_URLS.length];
-    const u = await prisma.user.create({
-      data: {
-        name: brand.owner,
-        email: brand.email,
-        passwordHash: sellerPwHash, // reuse same hash for convenience
-        role: 'SELLER',
-        loyaltyPoints: 0,
-        emailVerified: new Date(), // verified email is required to publish products
-        avatarUrl: logo,
-      },
-    });
-    const sp = await prisma.sellerProfile.create({
-      data: {
-        userId: u.id,
-        storeName: brand.name,
-        description: brand.desc,
-        status: 'ACTIVE',
-        balance: 0,
-        commissionRate: 0.15,
-        logoUrl: logo,
-      },
-    });
-    addedSellerProfiles.push(sp);
-  }
-
   const buyerPwHash = await bcrypt.hash('user1234', 12);
   await prisma.user.create({
     data: {
@@ -1157,7 +1004,7 @@ async function main() {
     {
       name: 'Greater Cairo (Cairo, Giza, Qalyubia)',
       governorates: JSON.stringify(['Cairo', 'Giza', 'Qalyubia']),
-      rateEgp: 74.6, // Base 65 EGP + 14% VAT + 0.50 EGP stamp
+      rateEgp: 74.6,
       defaultCourier: 'Egypt Post (البريد المصري)',
       estDaysMin: 1,
       estDaysMax: 2,
@@ -1179,7 +1026,7 @@ async function main() {
         'Kafr El Sheikh',
         'Sharqia',
       ]),
-      rateEgp: 86.0, // Base 75 EGP + VAT & stamp
+      rateEgp: 86.0,
       defaultCourier: 'Egypt Post (البريد المصري)',
       estDaysMin: 2,
       estDaysMax: 3,
@@ -1192,7 +1039,7 @@ async function main() {
     {
       name: 'Canal Cities (Port Said, Ismailia, Suez)',
       governorates: JSON.stringify(['Port Said', 'Ismailia', 'Suez']),
-      rateEgp: 91.7, // Base 80 EGP + VAT & stamp
+      rateEgp: 91.7,
       defaultCourier: 'Egypt Post (البريد المصري)',
       estDaysMin: 2,
       estDaysMax: 4,
@@ -1205,7 +1052,7 @@ async function main() {
     {
       name: 'Middle Egypt (Fayoum, Beni Suef, Minya, Assiut)',
       governorates: JSON.stringify(['Faiyum', 'Beni Suef', 'Minya', 'Assiut']),
-      rateEgp: 97.4, // Base 85 EGP + VAT & stamp
+      rateEgp: 97.4,
       defaultCourier: 'Egypt Post (البريد المصري)',
       estDaysMin: 3,
       estDaysMax: 5,
@@ -1218,7 +1065,7 @@ async function main() {
     {
       name: 'Upper Egypt (Sohag, Qena, Luxor, Aswan)',
       governorates: JSON.stringify(['Sohag', 'Qena', 'Luxor', 'Aswan', 'Red Sea']),
-      rateEgp: 125.9, // Base 110 EGP + VAT & stamp
+      rateEgp: 125.9,
       defaultCourier: 'Egypt Post (البريد المصري)',
       estDaysMin: 3,
       estDaysMax: 5,
@@ -1231,7 +1078,7 @@ async function main() {
     {
       name: 'Frontier & Remote Governorates (Matrouh, Sinai, New Valley)',
       governorates: JSON.stringify(['Marsa Matrouh', 'New Valley', 'North Sinai', 'South Sinai']),
-      rateEgp: 137.3, // Base 120 EGP + VAT & stamp
+      rateEgp: 137.3,
       defaultCourier: 'Egypt Post (البريد المصري)',
       estDaysMin: 4,
       estDaysMax: 6,
@@ -1337,68 +1184,6 @@ async function main() {
     return `${colorAr}${sizeAr} - ${edAr}`;
   };
 
-  const getCategorySellers = (categorySlug: string, profiles: any[], defaultProfile: any) => {
-    const getProfile = (name: string) => {
-      const found = profiles.find(p => p.storeName === name);
-      if (!found) return defaultProfile;
-      return found;
-    };
-
-    const demoStore = defaultProfile;
-
-    switch (categorySlug) {
-      case 'women':
-        return [
-          getProfile('Cairo Loom'),
-          getProfile('Nile Threads'),
-          getProfile('Mansoura Loom'),
-          getProfile('Assiut Loom Heritage'),
-          getProfile('Kemet Fashion House'),
-          demoStore,
-        ];
-      case 'men':
-        return [
-          getProfile('Cairo Loom'),
-          getProfile('Nile Threads'),
-          getProfile('Mansoura Loom'),
-          getProfile('Kemet Fashion House'),
-          demoStore,
-        ];
-      case 'electronics':
-        return [getProfile('Delta Electronics'), demoStore];
-      case 'home':
-        return [
-          getProfile('Oasis Terracotta'),
-          getProfile('Giza Cotton Co.'),
-          getProfile('Damietta Woodcraft'),
-          getProfile('Nubian Heritage Crafts'),
-          getProfile('Qena Pottery'),
-          getProfile('Tanta Gourmet'),
-          getProfile('Siwa Organics'),
-          demoStore,
-        ];
-      case 'beauty':
-        return [getProfile('Lotus Botanicals'), getProfile('Sinai Herbals'), demoStore];
-      case 'sports':
-        return [getProfile('Suez Activewear'), demoStore];
-      case 'footwear':
-        return [getProfile('Alexandria Leatherworks'), getProfile('Suez Activewear'), demoStore];
-      case 'accessories':
-        return [
-          getProfile('Alexandria Leatherworks'),
-          getProfile('Port Said Gear'),
-          getProfile('Pharaoh Timepieces'),
-          demoStore,
-        ];
-      case 'kids':
-        return [getProfile('Nile Threads'), getProfile('Kemet Fashion House'), demoStore];
-      case 'jewelry':
-        return [getProfile('Luxor Goldsmiths'), demoStore];
-      default:
-        return [defaultProfile];
-    }
-  };
-
   for (const catData of CATALOG) {
     const categoryId = catMap[catData.slug];
     if (!categoryId) {
@@ -1406,71 +1191,57 @@ async function main() {
       continue;
     }
 
-    // Multiply catalog depth to populate category listings (4 copies of each seed item)
-    // to resolve B-027 (Category pages show single-digit inventory).
-    const editions = ['Collection', 'Special Edition', 'Signature Series', 'Classic Fit'];
+    // Keep exactly 3 products per category
+    const categoryProducts = catData.products.slice(0, 3);
 
-    for (const p of catData.products) {
-      for (let i = 0; i < editions.length; i++) {
-        const editionName = editions[i];
-        const categorySellers = getCategorySellers(
-          catData.slug,
-          addedSellerProfiles,
-          defaultSellerProfile
-        );
-        const targetSeller =
-          categorySellers[productCount % categorySellers.length] || defaultSellerProfile;
+    for (const p of categoryProducts) {
+      const title = p.title;
+      const titleAr = arTitles[p.title] || p.title;
+      const slug = p.slug;
 
-        const title = `${p.title} (${editionName})`;
-        const baseAr = arTitles[p.title] || p.title;
-        const edAr = arEditions[editionName] || editionName;
-        const titleAr = `${baseAr} (${edAr})`;
-        const slug = `${p.slug}-${editionName.toLowerCase().replace(/\s+/g, '-')}`;
+      const product = await prisma.product.create({
+        data: {
+          sellerId: defaultSellerProfile.id,
+          categoryId,
+          title,
+          titleAr,
+          slug,
+          description: `${p.description} High-quality Egyptian craftsmanship guaranteed.`,
+          descriptionAr: `وصف مترجم: ${p.description} جودة وإتقان مصري مضمون.`,
+          basePrice: p.basePrice,
+          published: true,
+          isFeatured: p.isFeatured,
+          condition: 'NEW',
+          countryOfOrigin: 'Egypt',
+          isVerifiedLocal: true,
+        },
+      });
+      productCount++;
 
-        const product = await prisma.product.create({
+      // Product image
+      await prisma.productImage.create({
+        data: { productId: product.id, url: p.img, isPrimary: true },
+      });
+
+      // Variants
+      for (let vi = 0; vi < p.variants.length; vi++) {
+        const v = p.variants[vi];
+        const attrs: Record<string, string> = {};
+        if (v.color) attrs.color = v.color;
+        if (v.size) attrs.size = v.size;
+
+        await prisma.productVariant.create({
           data: {
-            sellerId: targetSeller.id,
-            categoryId,
-            title,
-            titleAr,
-            slug,
-            description: `${p.description} Part of the exclusive ${editionName} curated by ${targetSeller.storeName}. High-quality Egyptian craftsmanship guaranteed.`,
-            descriptionAr: `وصف مترجم: ${p.description} جزء من الإصدار المميز ${edAr} المختار بعناية بواسطة ${targetSeller.storeName}. جودة وإتقان مصري مضمون.`,
-            basePrice: p.basePrice + i * 50, // slightly vary the prices
-            published: true,
-            isFeatured: i === 0 ? p.isFeatured : false,
-            condition: 'NEW',
-            countryOfOrigin: 'Egypt',
-            isVerifiedLocal: true,
+            productId: product.id,
+            sku: `${slug}-v${vi + 1}`,
+            title: v.label,
+            titleAr: getArabicVariantTitle(v.label, 'Standard'),
+            attributes: JSON.stringify(attrs),
+            price: v.price,
+            stockCount: v.stock,
           },
         });
-        productCount++;
-
-        // Product image
-        await prisma.productImage.create({
-          data: { productId: product.id, url: p.img, isPrimary: true },
-        });
-
-        // Variants
-        for (let vi = 0; vi < p.variants.length; vi++) {
-          const v = p.variants[vi];
-          const attrs: Record<string, string> = {};
-          if (v.color) attrs.color = v.color;
-          if (v.size) attrs.size = v.size;
-
-          await prisma.productVariant.create({
-            data: {
-              productId: product.id,
-              sku: `${slug}-v${vi + 1}`,
-              title: `${v.label} - ${editionName}`,
-              titleAr: getArabicVariantTitle(v.label, editionName),
-              attributes: JSON.stringify(attrs),
-              price: v.price + i * 50,
-              stockCount: v.stock,
-            },
-          });
-          variantCount++;
-        }
+        variantCount++;
       }
     }
   }
