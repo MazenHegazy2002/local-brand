@@ -726,7 +726,7 @@ const CATALOG: SeedCategory[] = [
         description:
           '925 sterling silver 45cm cable chain necklace. Timeless elegance for everyday wear.',
         basePrice: 999,
-        img: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=600&auto=format&fit=crop',
         isFeatured: true,
         variants: [
           { label: 'Silver - 40cm', color: 'Silver', size: '40cm', price: 999, stock: 10 },

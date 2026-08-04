@@ -70,17 +70,29 @@ const COLOR_MAP: Record<string, string> = {
 };
 
 // Generates background color or split-color linear gradients for swatches
-const getSwatchBackground = (colorName: string) => {
+const getSwatchBackground = (colorName: string): string => {
+  if (!colorName) return '#94a3b8';
   const name = colorName.toLowerCase().trim();
+
+  // Direct match
+  if (COLOR_MAP[name]) return COLOR_MAP[name];
+
+  // Check if name contains any color key (e.g. "sterling silver" -> "silver", "18k gold" -> "gold")
+  for (const [key, val] of Object.entries(COLOR_MAP)) {
+    if (name.includes(key)) return val;
+  }
+
+  // Multi-color split
   if (name.includes('/') || name.includes('-')) {
     const parts = name.split(/[\/-]/).map(p => p.trim());
     if (parts.length >= 2) {
-      const color1 = COLOR_MAP[parts[0]] || parts[0];
-      const color2 = COLOR_MAP[parts[1]] || parts[1];
+      const color1 = getSwatchBackground(parts[0]);
+      const color2 = getSwatchBackground(parts[1]);
       return `linear-gradient(135deg, ${color1} 50%, ${color2} 50%)`;
     }
   }
-  return COLOR_MAP[name] || name;
+
+  return '#94a3b8';
 };
 
 // Category slugs / name fragments that qualify for the Virtual Try-On button
