@@ -3,6 +3,7 @@ import withPWA from 'next-pwa';
 import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   // ─── Turbopack Configuration ────────────────────────────────────────────────
   turbopack: {},
 
