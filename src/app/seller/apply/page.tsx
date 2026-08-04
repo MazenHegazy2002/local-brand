@@ -6,6 +6,8 @@ import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui';
 import Link from 'next/link';
 
+import { GOVERNORATES } from '@/lib/governorates';
+
 // Benefits shown on the seller landing preview for unauthenticated visitors
 const BENEFITS = [
   {
@@ -51,6 +53,15 @@ export default function SellerApplicationPage() {
   const [taxNumber, setTaxNumber] = useState('');
   const [description, setDescription] = useState('');
   const [phone, setPhone] = useState('');
+
+  // Warehouse Pickup Address state
+  const [governorate, setGovernorate] = useState('Cairo');
+  const [city, setCity] = useState('');
+  const [pickupStreet, setPickupStreet] = useState('');
+  const [pickupBuilding, setPickupBuilding] = useState('');
+  const [pickupPhone, setPickupPhone] = useState('');
+  const [pickupContactName, setPickupContactName] = useState('');
+
   const [facebookUrl, setFacebookUrl] = useState('');
   const [instagramUrl, setInstagramUrl] = useState('');
   const [tiktokUrl, setTiktokUrl] = useState('');
@@ -73,6 +84,12 @@ export default function SellerApplicationPage() {
           taxNumber: taxNumber || undefined,
           description,
           phone: phone || undefined,
+          governorate,
+          city,
+          pickupStreet,
+          pickupBuilding: pickupBuilding || undefined,
+          pickupPhone: pickupPhone || phone,
+          pickupContactName: pickupContactName || undefined,
           facebookUrl: facebookUrl || undefined,
           instagramUrl: instagramUrl || undefined,
           tiktokUrl: tiktokUrl || undefined,
@@ -257,6 +274,95 @@ export default function SellerApplicationPage() {
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
                       placeholder="e.g. +2010XXXXXXXX"
                     />
+                  </div>
+                </div>
+
+                {/* Warehouse Pickup Address Section */}
+                <div className="border-t border-gray-100 pt-6">
+                  <h3 className="text-sm font-black text-gray-800 mb-2 uppercase tracking-wider flex items-center gap-2">
+                    <span>📍</span> Product Pickup Warehouse Address
+                  </h3>
+                  <p className="text-xs text-gray-500 mb-4">
+                    Couriers will dispatch drivers to this address to collect sold orders for delivery.
+                  </p>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Pickup Governorate *
+                        </label>
+                        <select
+                          required
+                          value={governorate}
+                          onChange={e => setGovernorate(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none bg-white text-sm"
+                        >
+                          {GOVERNORATES.map(g => (
+                            <option key={g.value} value={g.en}>
+                              {g.en} ({g.ar})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Pickup City / Area *
+                        </label>
+                        <input
+                          required
+                          type="text"
+                          value={city}
+                          onChange={e => setCity(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none text-sm"
+                          placeholder="e.g. Nasr City, Maadi, Dokki"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Detailed Pickup Street Address *
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        value={pickupStreet}
+                        onChange={e => setPickupStreet(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none text-sm"
+                        placeholder="Street name, Building number, Floor & Flat number"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Building / Landmark (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={pickupBuilding}
+                          onChange={e => setPickupBuilding(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none text-sm"
+                          placeholder="e.g. Opposite El-Ahly Club"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Pickup Contact Phone *
+                        </label>
+                        <input
+                          required
+                          type="text"
+                          value={pickupPhone}
+                          onChange={e => setPickupPhone(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none text-sm"
+                          placeholder="Courier driver contact phone"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 

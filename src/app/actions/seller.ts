@@ -1328,7 +1328,7 @@ export async function toggleProductPublished(productId: string, publish: boolean
     const [user, seller] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
-        select: { emailVerified: true },
+        select: { emailVerified: true, phone: true },
       }),
       prisma.sellerProfile.findUnique({ where: { userId } }),
     ]);
@@ -1356,6 +1356,17 @@ export async function toggleProductPublished(productId: string, publish: boolean
         return {
           error:
             'Your seller account is not active yet. Products can only go live after admin approval.',
+        };
+      }
+      const hasPickupAddress =
+        Boolean(seller.governorate?.trim()) &&
+        Boolean(seller.city?.trim()) &&
+        Boolean(seller.pickupStreet?.trim()) &&
+        Boolean((seller.pickupPhone || user?.phone)?.trim());
+      if (!hasPickupAddress) {
+        return {
+          error:
+            'Please complete your product pickup warehouse address (governorate, city, street address, and phone) in Seller Hub Settings before publishing products.',
         };
       }
     }

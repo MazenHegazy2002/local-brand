@@ -11,6 +11,12 @@ const SellerApplySchema = z.object({
   taxNumber: z.string().optional(),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   phone: z.string().min(5, 'Phone number must be at least 5 characters').max(20).optional(),
+  governorate: z.string().min(1, 'Pickup governorate is required'),
+  city: z.string().min(1, 'Pickup city/area is required'),
+  pickupStreet: z.string().min(5, 'Detailed pickup street address is required'),
+  pickupBuilding: z.string().optional(),
+  pickupPhone: z.string().min(5, 'Pickup contact phone number is required'),
+  pickupContactName: z.string().optional(),
   facebookUrl: z.string().url().or(z.literal('')).optional(),
   instagramUrl: z.string().url().or(z.literal('')).optional(),
   tiktokUrl: z.string().url().or(z.literal('')).optional(),
@@ -38,6 +44,12 @@ export async function POST(req: NextRequest) {
       taxNumber,
       description,
       phone,
+      governorate,
+      city,
+      pickupStreet,
+      pickupBuilding,
+      pickupPhone,
+      pickupContactName,
       facebookUrl,
       instagramUrl,
       tiktokUrl,
@@ -66,13 +78,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create the SellerProfile in PENDING_APPROVAL status
+    // Create the SellerProfile in PENDING_APPROVAL status with Pickup Address
     const profile = await prisma.sellerProfile.create({
       data: {
         userId,
         storeName: storeName.trim(),
         description: description.trim(),
         type,
+        governorate: governorate.trim(),
+        city: city.trim(),
+        pickupStreet: pickupStreet.trim(),
+        pickupBuilding: pickupBuilding?.trim() || null,
+        pickupPhone: pickupPhone.trim(),
+        pickupContactName: pickupContactName?.trim() || null,
         taxNumber: taxNumber || null,
         facebookUrl: facebookUrl || null,
         instagramUrl: instagramUrl || null,

@@ -14,6 +14,10 @@ interface SellerProfile {
   bankAccount: string;
   city: string;
   governorate: string;
+  pickupStreet: string;
+  pickupBuilding: string;
+  pickupPhone: string;
+  pickupContactName: string;
 }
 
 export default function SellerSettingsPage() {
@@ -35,6 +39,10 @@ export default function SellerSettingsPage() {
     bankAccount: '',
     city: '',
     governorate: '',
+    pickupStreet: '',
+    pickupBuilding: '',
+    pickupPhone: '',
+    pickupContactName: '',
   });
 
   useEffect(() => {
@@ -62,6 +70,10 @@ export default function SellerSettingsPage() {
             bankAccount: seller.bankAccount || '',
             city: seller.city || '',
             governorate: seller.governorate || '',
+            pickupStreet: seller.pickupStreet || '',
+            pickupBuilding: seller.pickupBuilding || '',
+            pickupPhone: seller.pickupPhone || '',
+            pickupContactName: seller.pickupContactName || '',
           });
         } else if (res.status !== 401 && res.status !== 403) {
           const d = await res.json().catch(() => ({}));
@@ -104,6 +116,10 @@ export default function SellerSettingsPage() {
             bankAccount: data.seller.bankAccount ?? p.bankAccount,
             city: data.seller.city ?? p.city,
             governorate: data.seller.governorate ?? p.governorate,
+            pickupStreet: data.seller.pickupStreet ?? p.pickupStreet,
+            pickupBuilding: data.seller.pickupBuilding ?? p.pickupBuilding,
+            pickupPhone: data.seller.pickupPhone ?? p.pickupPhone,
+            pickupContactName: data.seller.pickupContactName ?? p.pickupContactName,
           }));
         }
       }
@@ -232,31 +248,101 @@ export default function SellerSettingsPage() {
                   required
                 />
               </div>
+          <div className="card">
+            <h3 className="card-title mb-2">📍 Product Pickup & Warehouse Address</h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Shipping couriers dispatch drivers to this address to collect orders for buyer delivery.
+            </p>
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">City</label>
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  Pickup Governorate *
+                </label>
+                <select
+                  value={profile.governorate}
+                  onChange={e => setProfile({ ...profile, governorate: e.target.value })}
+                  className="input-field"
+                  required
+                >
+                  <option value="">Select Governorate</option>
+                  {GOVERNORATES.map(g => (
+                    <option key={g.value} value={g.en}>
+                      {g.en} ({g.ar})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  Pickup City / Area *
+                </label>
                 <input
                   type="text"
                   value={profile.city}
                   onChange={e => setProfile({ ...profile, city: e.target.value })}
                   className="input-field"
-                  placeholder="e.g. New Cairo, Maadi"
+                  placeholder="e.g. Nasr City, Maadi, Dokki"
+                  required
                 />
               </div>
+
               <div className="col-span-2">
-                <label className="block text-xs font-medium text-slate-500 mb-1">Governorate</label>
-                <select
-                  value={profile.governorate}
-                  onChange={e => setProfile({ ...profile, governorate: e.target.value })}
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  Detailed Street Address *
+                </label>
+                <input
+                  type="text"
+                  value={profile.pickupStreet}
+                  onChange={e => setProfile({ ...profile, pickupStreet: e.target.value })}
                   className="input-field"
-                >
-                  <option value="">Select Governorate</option>
-                  {GOVERNORATES.map(g => (
-                    <option key={g.value} value={g.value}>
-                      {g.en}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Street name, Building number, Floor & Flat number"
+                  required
+                />
               </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  Building / Landmark (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={profile.pickupBuilding}
+                  onChange={e => setProfile({ ...profile, pickupBuilding: e.target.value })}
+                  className="input-field"
+                  placeholder="e.g. Near Ahly Club"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  Pickup Contact Phone *
+                </label>
+                <input
+                  type="text"
+                  value={profile.pickupPhone}
+                  onChange={e => setProfile({ ...profile, pickupPhone: e.target.value })}
+                  className="input-field"
+                  placeholder="+2010XXXXXXXX"
+                  required
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  Pickup Contact Person Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={profile.pickupContactName}
+                  onChange={e => setProfile({ ...profile, pickupContactName: e.target.value })}
+                  className="input-field"
+                  placeholder="Name of person responsible for handover"
+                />
+              </div>
+            </div>
+          </div>
               <div className="col-span-2">
                 <label className="block text-xs font-medium text-slate-500 mb-1">
                   Store Description

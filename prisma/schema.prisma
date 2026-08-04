@@ -99,15 +99,19 @@ model SellerProfile {
   storeName      String       @unique
   description    String?
   logoUrl        String?
-  city           String?
-  governorate    String?
-  commissionRate Float        @default(0.15) // Platform takes 15%
-  status         SellerStatus @default(PENDING_APPROVAL)
-  bankAccount    String?
-  balance        Float        @default(0)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  deletedAt      DateTime?
+  city              String?
+  governorate       String?
+  pickupStreet      String? // Detailed Street, Building, Floor & Flat for courier pickup
+  pickupBuilding    String? // Building Name / Landmark (Optional)
+  pickupPhone       String? // Contact Phone for Courier Pickup
+  pickupContactName String? // Contact Person Name for Pickup Handover
+  commissionRate    Float        @default(0.15) // Platform takes 15%
+  status            SellerStatus @default(PENDING_APPROVAL)
+  bankAccount       String?
+  balance           Float        @default(0)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  deletedAt         DateTime?
 
   // Social media and business details (added for registration form / verification)
   facebookUrl    String?
