@@ -17,6 +17,10 @@ const SellerApplySchema = z.object({
   pickupBuilding: z.string().optional(),
   pickupPhone: z.string().min(5, 'Pickup contact phone number is required'),
   pickupContactName: z.string().optional(),
+  pickupGeo: z.string().optional(),
+  pickupZone: z.string().optional(),
+  pickupSubzone: z.string().optional(),
+  logisticsHub: z.string().optional(),
   facebookUrl: z.string().url().or(z.literal('')).optional(),
   instagramUrl: z.string().url().or(z.literal('')).optional(),
   tiktokUrl: z.string().url().or(z.literal('')).optional(),
@@ -50,6 +54,10 @@ export async function POST(req: NextRequest) {
       pickupBuilding,
       pickupPhone,
       pickupContactName,
+      pickupGeo,
+      pickupZone,
+      pickupSubzone,
+      logisticsHub,
       facebookUrl,
       instagramUrl,
       tiktokUrl,
@@ -78,7 +86,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create the SellerProfile in PENDING_APPROVAL status with Pickup Address
+    // Create the SellerProfile in PENDING_APPROVAL status with Pickup Address & Geolocation
     const profile = await prisma.sellerProfile.create({
       data: {
         userId,
@@ -91,6 +99,10 @@ export async function POST(req: NextRequest) {
         pickupBuilding: pickupBuilding?.trim() || null,
         pickupPhone: pickupPhone.trim(),
         pickupContactName: pickupContactName?.trim() || null,
+        pickupGeo: pickupGeo?.trim() || null,
+        pickupZone: pickupZone?.trim() || null,
+        pickupSubzone: pickupSubzone?.trim() || null,
+        logisticsHub: logisticsHub?.trim() || null,
         taxNumber: taxNumber || null,
         facebookUrl: facebookUrl || null,
         instagramUrl: instagramUrl || null,

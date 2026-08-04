@@ -105,6 +105,10 @@ model SellerProfile {
   pickupBuilding    String? // Building Name / Landmark (Optional)
   pickupPhone       String? // Contact Phone for Courier Pickup
   pickupContactName String? // Contact Person Name for Pickup Handover
+  pickupGeo         String? // Coordinates "lat,lng" e.g. "30.067807, 31.518141"
+  pickupZone        String? // District / Zone e.g. "قسم اول القاهرة الجديدة"
+  pickupSubzone     String? // Subzone
+  logisticsHub      String? // Hub name e.g. "المركز اللوجيستي الرئيسي"
   commissionRate    Float        @default(0.15) // Platform takes 15%
   status            SellerStatus @default(PENDING_APPROVAL)
   bankAccount       String?

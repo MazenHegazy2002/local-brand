@@ -269,6 +269,41 @@ export default function MaintenanceTab() {
             >
               📥 Download JSON Backup
             </a>
+            <a
+              href="/api/admin/export/merchant-warehouses"
+              download
+              className="maint-btn"
+              style={{ background: '#1e3b8a', color: '#ffffff', fontWeight: '700' }}
+            >
+              🏢 Export Merchant Warehouses (Merchant_Warehouses.xlsx)
+            </a>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/admin/export/orders/template', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'ALL' }),
+                  });
+                  if (!res.ok) throw new Error('Export failed');
+                  const blob = await res.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `Orders_Template_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                } catch (e) {
+                  alert('Export failed');
+                }
+              }}
+              className="maint-btn"
+              style={{ background: '#059669', color: '#ffffff', fontWeight: '700' }}
+            >
+              📦 Export Orders Template (NewTemplate.xlsx)
+            </button>
             <a href="/api/admin/export/orders" className="maint-btn">
               Export orders (CSV)
             </a>

@@ -18,6 +18,10 @@ interface SellerProfile {
   pickupBuilding: string;
   pickupPhone: string;
   pickupContactName: string;
+  pickupGeo: string;
+  pickupZone: string;
+  pickupSubzone: string;
+  logisticsHub: string;
 }
 
 export default function SellerSettingsPage() {
@@ -26,6 +30,7 @@ export default function SellerSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [gettingLocation, setGettingLocation] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -43,6 +48,10 @@ export default function SellerSettingsPage() {
     pickupBuilding: '',
     pickupPhone: '',
     pickupContactName: '',
+    pickupGeo: '',
+    pickupZone: '',
+    pickupSubzone: '',
+    logisticsHub: 'المركز اللوجيستي الرئيسي',
   });
 
   useEffect(() => {
@@ -74,6 +83,10 @@ export default function SellerSettingsPage() {
             pickupBuilding: seller.pickupBuilding || '',
             pickupPhone: seller.pickupPhone || '',
             pickupContactName: seller.pickupContactName || '',
+            pickupGeo: seller.pickupGeo || '',
+            pickupZone: seller.pickupZone || '',
+            pickupSubzone: seller.pickupSubzone || '',
+            logisticsHub: seller.logisticsHub || 'المركز اللوجيستي الرئيسي',
           });
         } else if (res.status !== 401 && res.status !== 403) {
           const d = await res.json().catch(() => ({}));
@@ -120,6 +133,10 @@ export default function SellerSettingsPage() {
             pickupBuilding: data.seller.pickupBuilding ?? p.pickupBuilding,
             pickupPhone: data.seller.pickupPhone ?? p.pickupPhone,
             pickupContactName: data.seller.pickupContactName ?? p.pickupContactName,
+            pickupGeo: data.seller.pickupGeo ?? p.pickupGeo,
+            pickupZone: data.seller.pickupZone ?? p.pickupZone,
+            pickupSubzone: data.seller.pickupSubzone ?? p.pickupSubzone,
+            logisticsHub: data.seller.logisticsHub ?? p.logisticsHub,
           }));
         }
       }
@@ -340,6 +357,66 @@ export default function SellerSettingsPage() {
                   className="input-field"
                   placeholder="Name of person responsible for handover"
                 />
+              </div>
+
+              {/* Geolocation & Map Pinning */}
+              <div className="col-span-2 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <label className="block text-xs font-bold text-slate-700">
+                    🗺️ Warehouse Geolocation Coordinates (Latitude, Longitude)
+                  </label>
+                  <button
+                    type="button"
+                    disabled={gettingLocation}
+                    onClick={() => {
+                      if (!navigator.geolocation) {
+                        alert('Geolocation is not supported by your browser.');
+                        return;
+                      }
+                      setGettingLocation(true);
+                      navigator.geolocation.getCurrentPosition(
+                        pos => {
+                          setGettingLocation(false);
+                          setProfile(p => ({
+                            ...p,
+                            pickupGeo: `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`,
+                          }));
+                        },
+                        err => {
+                          setGettingLocation(false);
+                          alert('Could not detect location: ' + err.message);
+                        },
+                        { enableHighAccuracy: true }
+                      );
+                    }}
+                    className="px-3 py-1.5 bg-[#1e3b8a] text-white text-xs font-bold rounded-lg hover:bg-[#152c6e] disabled:opacity-50 transition-colors"
+                  >
+                    {gettingLocation ? 'Detecting GPS...' : '📍 Detect Live GPS Location'}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-500 mb-1">Coordinates (Lat, Long)</label>
+                    <input
+                      type="text"
+                      value={profile.pickupGeo}
+                      onChange={e => setProfile({ ...profile, pickupGeo: e.target.value })}
+                      className="input-field font-mono text-xs"
+                      placeholder="e.g. 30.067807, 31.518141"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-500 mb-1">District / Zone</label>
+                    <input
+                      type="text"
+                      value={profile.pickupZone}
+                      onChange={e => setProfile({ ...profile, pickupZone: e.target.value })}
+                      className="input-field text-xs"
+                      placeholder="e.g. قسم اول القاهرة الجديدة"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

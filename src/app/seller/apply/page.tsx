@@ -61,6 +61,11 @@ export default function SellerApplicationPage() {
   const [pickupBuilding, setPickupBuilding] = useState('');
   const [pickupPhone, setPickupPhone] = useState('');
   const [pickupContactName, setPickupContactName] = useState('');
+  const [pickupGeo, setPickupGeo] = useState('');
+  const [pickupZone, setPickupZone] = useState('');
+  const [pickupSubzone, setPickupSubzone] = useState('');
+  const [logisticsHub, setLogisticsHub] = useState('المركز اللوجيستي الرئيسي');
+  const [gettingLocation, setGettingLocation] = useState(false);
 
   const [facebookUrl, setFacebookUrl] = useState('');
   const [instagramUrl, setInstagramUrl] = useState('');
@@ -90,6 +95,10 @@ export default function SellerApplicationPage() {
           pickupBuilding: pickupBuilding || undefined,
           pickupPhone: pickupPhone || phone,
           pickupContactName: pickupContactName || undefined,
+          pickupGeo: pickupGeo || undefined,
+          pickupZone: pickupZone || undefined,
+          pickupSubzone: pickupSubzone || undefined,
+          logisticsHub: logisticsHub || undefined,
           facebookUrl: facebookUrl || undefined,
           instagramUrl: instagramUrl || undefined,
           tiktokUrl: tiktokUrl || undefined,
@@ -361,6 +370,62 @@ export default function SellerApplicationPage() {
                           className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none text-sm"
                           placeholder="Courier driver contact phone"
                         />
+                      </div>
+                    </div>
+
+                    {/* Geolocation Coordinates & Map Pin */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <label className="block text-xs font-bold text-slate-700">
+                          🗺️ Warehouse Geolocation Coordinates (Latitude, Longitude)
+                        </label>
+                        <button
+                          type="button"
+                          disabled={gettingLocation}
+                          onClick={() => {
+                            if (!navigator.geolocation) {
+                              alert('Geolocation is not supported by your browser.');
+                              return;
+                            }
+                            setGettingLocation(true);
+                            navigator.geolocation.getCurrentPosition(
+                              pos => {
+                                setGettingLocation(false);
+                                setPickupGeo(`${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`);
+                              },
+                              err => {
+                                setGettingLocation(false);
+                                alert('Could not get live location: ' + err.message);
+                              },
+                              { enableHighAccuracy: true }
+                            );
+                          }}
+                          className="px-3 py-1.5 bg-[#1e3b8a] text-white text-xs font-bold rounded-lg hover:bg-[#16307a] transition-all disabled:opacity-50"
+                        >
+                          {gettingLocation ? 'Detecting GPS...' : '📍 Get Live GPS Location'}
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <input
+                            type="text"
+                            value={pickupGeo}
+                            onChange={e => setPickupGeo(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs font-mono bg-white outline-none"
+                            placeholder="e.g. 30.067807, 31.518141"
+                          />
+                          <p className="text-[10px] text-slate-400 mt-1">Format: Lat, Long (e.g. 30.067807, 31.518141)</p>
+                        </div>
+                        <div>
+                          <input
+                            type="text"
+                            value={pickupZone}
+                            onChange={e => setPickupZone(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white outline-none"
+                            placeholder="District / Zone (e.g. قسم اول القاهرة الجديدة)"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

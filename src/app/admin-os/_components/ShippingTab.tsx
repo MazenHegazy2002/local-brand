@@ -215,14 +215,34 @@ export default function ShippingTab() {
 
   return (
     <div>
-      <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-          Governorate Shipping Rates (أسعار شحن المحافظات)
-        </h2>
-        <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px', lineHeight: 1.5 }}>
-          Manage exact shipping fees individually across all 27 Egyptian governorates. Customized
-          governorates override the hardcoded fallback rates during cart calculation and checkout.
-        </p>
+      <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h2 style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+            Governorate Shipping Rates & Seller Warehouses (أسعار الشحن والمستودعات)
+          </h2>
+          <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px', lineHeight: 1.5 }}>
+            Manage exact shipping fees across all 27 Egyptian governorates and export seller pickup warehouses.
+          </p>
+        </div>
+        <a
+          href="/api/admin/export/merchant-warehouses"
+          download
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            backgroundColor: '#1e3b8a',
+            color: '#ffffff',
+            borderRadius: '8px',
+            fontSize: '13px',
+            fontWeight: 700,
+            textDecoration: 'none',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          }}
+        >
+          🏢 Download Merchant Warehouses Excel (Merchant_Warehouses.xlsx)
+        </a>
       </div>
 
       {msg && (
