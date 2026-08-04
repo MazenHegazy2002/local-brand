@@ -1,10 +1,19 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { forgotPasswordSchema } from '@/lib/validation';
+import { rateLimit } from '@/lib/rateLimit';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const rl = await rateLimit(req, { windowMs: 15 * 60 * 1000, maxRequests: 3 });
+    if (rl.limited) {
+      return NextResponse.json(
+        { message: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': '900' } }
+      );
+    }
+
     const body = await req.json();
     const validated = forgotPasswordSchema.safeParse(body);
 

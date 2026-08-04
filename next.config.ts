@@ -76,7 +76,7 @@ const nextConfig: NextConfig = {
           { key: 'Cross-Origin-Embedder-Policy', value: 'unsafe-none' },
           { key: 'Cross-Origin-Resource-Policy', value: 'same-site' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
           // HSTS: enforce HTTPS for 1 year, include subdomains, allow preloading
           {
             key: 'Strict-Transport-Security',

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
@@ -9,9 +9,19 @@ import {
   generateEmailVerificationEmail,
   generateSellerPendingEmail,
 } from '@/lib/email-verification';
+import { rateLimit } from '@/lib/rateLimit';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    // Rate limit: 5 registrations per 15 minutes per IP
+    const rl = await rateLimit(req, { windowMs: 15 * 60 * 1000, maxRequests: 5 });
+    if (rl.limited) {
+      return NextResponse.json(
+        { message: 'Too many registration attempts. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': '900', 'X-RateLimit-Remaining': '0' } }
+      );
+    }
+
     const body = await req.json();
     const validated = registerSchema.safeParse(body);
 

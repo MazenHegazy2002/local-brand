@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { BCRYPT_COST } from '@/lib/constants';
+import { rateLimit } from '@/lib/rateLimit';
 
 // Magic-link sign-in. The user submits an email; we either look up an
 // existing account or auto-create one (with an unguessable random
@@ -20,8 +21,16 @@ const requestSchema = z.object({
 
 const TOKEN_TTL_MS = 30 * 60 * 1000; // 30 minutes — long enough to find the email
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const rl = await rateLimit(req, { windowMs: 15 * 60 * 1000, maxRequests: 3 });
+    if (rl.limited) {
+      return NextResponse.json(
+        { message: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': '900' } }
+      );
+    }
+
     const body = await req.json();
     const parsed = requestSchema.safeParse(body);
     if (!parsed.success) {

@@ -93,17 +93,17 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
             key={`content-${idx}`}
             className="absolute inset-0 z-30 flex flex-col justify-center px-5 sm:px-8 md:px-14 text-white pointer-events-none"
           >
-            <div className="pointer-events-auto">
+            <div className="pointer-events-auto max-w-xl space-y-3 sm:space-y-4 md:space-y-6">
               {subtitle && (
-                <span className="text-[10px] sm:text-[11px] md:text-xs tracking-[0.1em] font-bold text-white/90 mb-2 sm:mb-3 uppercase block drop-shadow-md">
+                <span className="text-[10px] sm:text-[11px] md:text-xs tracking-[0.2em] font-bold text-white/70 uppercase block drop-shadow-md">
                   {subtitle}
                 </span>
               )}
-              <h1 className="text-3xl sm:text-4xl md:text-[56px] lg:text-[64px] font-black tracking-tight mb-4 sm:mb-6 md:mb-8 max-w-xl leading-[1.18] drop-shadow-lg">
+              <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.15] drop-shadow-lg">
                 {title}
               </h1>
 
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-1 sm:pt-2">
                 <Link
                   href={slide.linkUrl}
                   className="bg-[#fa9f00] hover:bg-[#e08e00] text-[#4d2800] font-black tracking-wide py-3 px-8 rounded-lg transition-colors text-center text-sm"

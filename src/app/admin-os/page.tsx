@@ -352,8 +352,25 @@ export default function AdminOS() {
 
   if (!mounted || (loading && !data))
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#1a1a2e] font-medium animate-pulse">
-        Initializing AdminOS...
+      <div className="flex h-screen bg-[#f8fafc]">
+        {/* Skeleton sidebar */}
+        <div className="w-56 bg-[#1a1a2e] flex flex-col p-4 gap-3">
+          <div className="h-8 w-28 bg-white/10 rounded animate-pulse mb-4" />
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-7 bg-white/5 rounded animate-pulse" style={{ width: `${70 + Math.random() * 30}%` }} />
+          ))}
+        </div>
+        {/* Skeleton content */}
+        <div className="flex-1 p-8 space-y-6">
+          <div className="h-8 w-48 bg-slate-200 rounded animate-pulse" />
+          <div className="grid grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-28 bg-white rounded-xl shadow-sm border border-slate-100 animate-pulse" />
+            ))}
+          </div>
+          <div className="h-64 bg-white rounded-xl shadow-sm border border-slate-100 animate-pulse" />
+          <p className="text-center text-xs text-slate-400 animate-pulse">Loading AdminOS…</p>
+        </div>
       </div>
     );
   if (error)
@@ -4687,7 +4704,16 @@ function PayoutsTab({ data }: PayoutsTabProps) {
           </div>
         </div>
         {escrowLoading && (
-          <div className="py-10 text-center text-xs text-slate-400">Loading escrow data…</div>
+          <div className="py-4 space-y-3 px-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <div className="h-4 w-32 bg-slate-100 rounded animate-pulse" />
+                <div className="h-4 w-20 bg-slate-100 rounded animate-pulse" />
+                <div className="h-4 w-24 bg-slate-100 rounded animate-pulse" />
+                <div className="flex-1 h-4 bg-slate-50 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
         )}
         {!escrowLoading && escrow.length === 0 && (
           <div className="py-10 text-center text-xs text-slate-400">
