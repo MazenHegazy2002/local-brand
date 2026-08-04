@@ -3430,6 +3430,9 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [busyOrderId, setBusyOrderId] = useState<string | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+  const [exporting, setExporting] = useState(false);
 
   const q = search.trim().toLowerCase();
   const orders = (data?.orders || []).filter((o: Order) => {
@@ -3439,6 +3442,53 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
       .toLowerCase()
       .includes(q);
   });
+
+  const toggleSelectAll = () => {
+    if (selectedOrderIds.length === orders.length) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(orders.map((o: Order) => o.id));
+    }
+  };
+
+  const toggleSelectOrder = (id: string) => {
+    setSelectedOrderIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleExportTemplateBatch = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch('/api/admin/export/orders/template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderIds: selectedOrderIds.length > 0 ? selectedOrderIds : undefined,
+          status: statusFilter,
+        }),
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Orders_NewTemplate_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast({
+        variant: 'success',
+        title: 'Excel Export Ready',
+        description: 'NewTemplate Excel file downloaded successfully.',
+      });
+    } catch (err) {
+      console.error('[admin/orders] export error:', err);
+      toast({ variant: 'error', title: 'Export Failed', description: 'Could not generate Excel template.' });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const sendUpdate = async (
     orderId: string,
@@ -3523,8 +3573,16 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
 
   return (
     <div className="card">
-      <div className="card-header">
+      <div className="card-header flex items-center justify-between flex-wrap gap-3">
         <div className="card-title">Platform Orders</div>
+        <button
+          type="button"
+          disabled={exporting}
+          onClick={handleExportTemplateBatch}
+          className="px-4 py-2 bg-[#059669] text-white text-xs font-bold rounded-lg hover:bg-[#047857] transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+        >
+          📦 Export {selectedOrderIds.length > 0 ? `Selected (${selectedOrderIds.length})` : 'All'} Orders (NewTemplate.xlsx)
+        </button>
       </div>
       <div className="flex items-center gap-3 mb-3 flex-wrap">
         <div className="relative flex-1 min-w-[220px]">
@@ -3579,10 +3637,21 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
         const customerLabel = o.user?.name || 'Guest';
         const isCancelled = o.status === 'CANCELLED' || o.status === 'RETURNED';
         const busy = busyOrderId === o.id;
+        const isSelected = selectedOrderIds.includes(o.id);
+
         return (
-          <div key={o.id} className="row-item flex-wrap gap-2">
+          <div key={o.id} className="row-item flex-wrap gap-2 items-center">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => toggleSelectOrder(o.id)}
+              className="w-4 h-4 rounded border-slate-300 text-[#534AB7] focus:ring-[#534AB7] cursor-pointer"
+            />
             <div style={{ flex: 1, minWidth: 180 }}>
-              <div style={{ fontSize: '12px', fontWeight: 600 }}>#ORD-{o.id.substring(0, 8)}</div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-xs text-slate-800">#ORD-{o.id.substring(0, 8)}</span>
+                <span className="text-[10px] text-slate-400">({new Date(o.createdAt).toLocaleDateString()})</span>
+              </div>
               <div style={{ fontSize: '11px', color: '#64748b' }}>
                 {customerLabel} · {o.items?.length || 0} items
               </div>
@@ -3611,6 +3680,24 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
                 </option>
               ))}
             </select>
+            <button
+              type="button"
+              onClick={() => setViewingOrder(o)}
+              className="action-btn text-xs font-bold"
+              style={{ borderColor: '#0284c7', color: '#0284c7' }}
+              title="View complete order details, pickup address & items"
+            >
+              Details 👁️
+            </button>
+            <a
+              href={`/api/admin/orders/${o.id}/export`}
+              download
+              className="action-btn text-xs font-bold flex items-center gap-1"
+              style={{ borderColor: '#059669', color: '#059669', textDecoration: 'none' }}
+              title="Download order Excel (NewTemplate.xlsx)"
+            >
+              Excel 📥
+            </a>
             {o.status === 'PROCESSING' && (
               <button
                 type="button"
@@ -3671,6 +3758,18 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
         </div>
       )}
 
+      {viewingOrder && (
+        <OrderDetailsModal
+          order={viewingOrder}
+          onClose={() => setViewingOrder(null)}
+          onEdit={() => {
+            const target = viewingOrder;
+            setViewingOrder(null);
+            setEditingOrder(target);
+          }}
+        />
+      )}
+
       {editingOrder && (
         <EditOrderModal
           order={editingOrder}
@@ -3681,6 +3780,181 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
           }}
         />
       )}
+    </div>
+  );
+}
+
+interface OrderDetailsModalProps {
+  order: Order;
+  onClose: () => void;
+  onEdit: () => void;
+}
+
+function OrderDetailsModal({ order, onClose, onEdit }: OrderDetailsModalProps) {
+  const address: any = safeParseSnapshot(order.shippingAddressSnapshot);
+  const items = order.items || [];
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box max-w-2xl w-full p-6 space-y-6" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between border-b pb-4">
+          <div>
+            <h2 className="text-lg font-black text-slate-900">Order #{order.id.slice(0, 8).toUpperCase()}</h2>
+            <p className="text-xs text-slate-500">Placed on {new Date(order.createdAt).toLocaleString()}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href={`/api/admin/orders/${order.id}/export`}
+              download
+              className="px-3 py-1.5 bg-[#059669] text-white text-xs font-bold rounded-lg hover:bg-[#047857] transition-all flex items-center gap-1"
+            >
+              📥 Export Excel (NewTemplate.xlsx)
+            </a>
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-700 text-lg font-bold px-2"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Status Badges */}
+        <div className="flex items-center gap-3 text-xs">
+          <span className="font-semibold text-slate-500">Status:</span>
+          <span className="px-2.5 py-1 bg-blue-50 text-blue-700 font-bold rounded-md border border-blue-200">
+            {order.status}
+          </span>
+          <span className="font-semibold text-slate-500 ml-2">Payment:</span>
+          <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 font-bold rounded-md border border-emerald-200">
+            {order.paymentMethod} ({order.paymentStatus || 'UNPAID'})
+          </span>
+        </div>
+
+        {/* Customer & Delivery Address */}
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+          <div className="text-xs font-bold text-slate-700 flex items-center gap-1">
+            📍 Delivery & Customer Address
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+            <div>
+              <span className="text-slate-500">Customer: </span>
+              <strong className="text-slate-800">{address.fullName || address.name || order.user?.name || 'Guest'}</strong>
+            </div>
+            <div>
+              <span className="text-slate-500">Phone: </span>
+              <strong className="text-slate-800">{address.phone || order.user?.phone || 'N/A'}</strong>
+            </div>
+            <div>
+              <span className="text-slate-500">Email: </span>
+              <span className="text-slate-700">{address.email || order.user?.email || order.guestEmail || 'N/A'}</span>
+            </div>
+            <div>
+              <span className="text-slate-500">Governorate / City: </span>
+              <strong className="text-slate-800">{address.governorate || 'Cairo'}, {address.city || ''}</strong>
+            </div>
+            <div className="md:col-span-2">
+              <span className="text-slate-500">Detailed Address: </span>
+              <span className="text-slate-800 font-medium">
+                {[address.street || address.address, address.building, address.floor ? `Floor ${address.floor}` : '', address.apartment ? `Apt ${address.apartment}` : ''].filter(Boolean).join(', ') || 'Egypt'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Items List & Seller Info */}
+        <div className="space-y-3">
+          <div className="text-xs font-bold text-slate-700 flex items-center justify-between">
+            <span>📦 Order Items ({items.length})</span>
+          </div>
+          <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden text-xs">
+            {items.map((item: any, idx: number) => {
+              const seller = item.variant?.product?.seller;
+              return (
+                <div key={item.id || idx} className="p-3 bg-white space-y-1">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-bold text-slate-800 text-sm">{item.productTitleSnapshot || item.variant?.product?.title}</div>
+                      <div className="text-slate-500 text-[11px] gap-2 flex flex-wrap mt-0.5">
+                        {item.selectedColor && <span>Color: <strong>{item.selectedColor}</strong></span>}
+                        {item.selectedSize && <span>Size: <strong>{item.selectedSize}</strong></span>}
+                        <span>Qty: <strong>{item.quantity}</strong></span>
+                        <span>Price: <strong>{(item.priceAtPurchase || 0).toLocaleString()} EGP</strong></span>
+                      </div>
+                    </div>
+                    <div className="text-right font-bold text-slate-900">
+                      {((item.priceAtPurchase || 0) * item.quantity).toLocaleString()} EGP
+                    </div>
+                  </div>
+                  {/* Seller Warehouse info */}
+                  {seller && (
+                    <div className="bg-amber-50/60 border border-amber-200/50 rounded-lg p-2 mt-2 text-[11px] text-amber-900">
+                      <div className="font-bold text-amber-950 flex items-center justify-between">
+                        <span>🏪 Seller: {seller.storeName} ({seller.governorate || seller.city || 'Cairo'})</span>
+                        {seller.pickupPhone && <span>📞 Pickup Phone: {seller.pickupPhone}</span>}
+                      </div>
+                      {seller.pickupStreet && (
+                        <div className="text-amber-800 mt-0.5">
+                          Pickup Warehouse: {[seller.pickupStreet, seller.pickupBuilding, seller.pickupZone].filter(Boolean).join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Order Notes & Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t text-xs">
+          <div>
+            <div className="font-bold text-slate-700 mb-1">📝 Special Instructions / Notes:</div>
+            <p className="text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-[11px]">
+              {order.orderNotes || 'No special notes provided.'}
+            </p>
+          </div>
+          <div className="space-y-1.5 text-right font-medium">
+            <div className="flex justify-between text-slate-500">
+              <span>Subtotal:</span>
+              <span>{(order.totalAmount - (order.shippingFee || 0) + (order.discountAmount || 0)).toLocaleString()} EGP</span>
+            </div>
+            {order.discountAmount > 0 && (
+              <div className="flex justify-between text-emerald-600">
+                <span>Discount:</span>
+                <span>-{order.discountAmount.toLocaleString()} EGP</span>
+              </div>
+            )}
+            <div className="flex justify-between text-slate-500">
+              <span>Shipping Fee:</span>
+              <span>{(order.shippingFee || 0).toLocaleString()} EGP</span>
+            </div>
+            <div className="flex justify-between text-sm font-black text-slate-900 pt-1 border-t">
+              <span>Total Amount:</span>
+              <span>{order.totalAmount.toLocaleString()} EGP</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex justify-between items-center pt-4 border-t">
+          <button
+            type="button"
+            onClick={onEdit}
+            className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-200 transition-all"
+          >
+            ✏️ Edit Order
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2 bg-slate-800 text-white text-xs font-bold rounded-lg hover:bg-slate-700 transition-all"
+          >
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
