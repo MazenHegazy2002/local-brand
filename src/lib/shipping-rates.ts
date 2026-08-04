@@ -9,8 +9,8 @@ export const EGYPT_POST_EXTRA_KG_RATE = 7.0; // 7.00 EGP per extra 1000g or frac
 export const EGYPT_POST_VAT_RATE = 0.14; // 14% Egyptian VAT
 export const EGYPT_POST_STAMP_FEE = 0.5; // 0.50 EGP administrative stamp fee
 
-export const DEFAULT_SHIPPING_BASE_RATE = 75;
-export const DEFAULT_SHIPPING_RATE = 86; // 75 EGP base + VAT & fee
+export const DEFAULT_SHIPPING_BASE_RATE = 65;
+export const DEFAULT_SHIPPING_RATE = 75; // 65 EGP base + VAT & stamp fee rounded UP to next integer (75 EGP)
 export const FREE_SHIPPING_THRESHOLD = 1000;
 
 // Alias mapping for alternate governorate spellings
@@ -854,9 +854,9 @@ export function getEgyptPostShippingRate({
     return subtotal;
   }
 
-  // Total incl. 14% VAT & 0.50 EGP administrative stamp fee
+  // Total incl. 14% VAT & 0.50 EGP administrative stamp fee, rounded UP to next whole EGP
   const total = subtotal * (1 + EGYPT_POST_VAT_RATE) + EGYPT_POST_STAMP_FEE;
-  return Math.round(total * 100) / 100;
+  return Math.ceil(Number(total.toFixed(4)));
 }
 
 /**

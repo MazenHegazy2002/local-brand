@@ -2496,8 +2496,15 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps
 
   return (
     <div className="card">
-      <div className="card-header">
+      <div className="card-header flex items-center justify-between flex-wrap gap-3">
         <div className="card-title">All Sellers</div>
+        <a
+          href="/api/admin/export/merchant-warehouses"
+          download
+          className="px-4 py-2 bg-[#1e3b8a] text-white text-xs font-bold rounded-lg hover:bg-[#16307a] transition-all shadow-sm flex items-center gap-2"
+        >
+          🏢 Download Merchant Warehouses Excel (Merchant_Warehouses.xlsx)
+        </a>
       </div>
       <SearchInput
         value={search}
