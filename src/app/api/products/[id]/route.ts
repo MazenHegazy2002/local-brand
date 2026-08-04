@@ -195,6 +195,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       }
     }
 
+    const { invalidateCache } = await import('@/lib/cache');
+    await invalidateCache('products:*');
+    await invalidateCache('product:detail:*');
+
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error('[products/[id]] PUT error:', error);
@@ -238,6 +242,10 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         published: false,
       },
     });
+
+    const { invalidateCache } = await import('@/lib/cache');
+    await invalidateCache('products:*');
+    await invalidateCache('product:detail:*');
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

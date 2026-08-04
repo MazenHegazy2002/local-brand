@@ -40,10 +40,11 @@ export const MAX_PRODUCT_COMPARE = 4;
 // ============================================================
 // CACHE TTL (seconds)
 // ============================================================
-export const CACHE_TTL_SHORT = 300; // 5 minutes
-export const CACHE_TTL_MEDIUM = 3600; // 1 hour
-export const CACHE_TTL_LONG = 86400; // 24 hours
-export const CACHE_TTL_WEEK = 604800; // 7 days
+export const CACHE_TTL_FAST = 60; // 1 minute (live stats, rate-limits)
+export const CACHE_TTL_SHORT = 300; // 5 minutes (products, banners, shipping)
+export const CACHE_TTL_MEDIUM = 1800; // 30 minutes (categories, pages)
+export const CACHE_TTL_LONG = 86400; // 24 hours (system settings, currencies)
+export const CACHE_TTL_WEEK = 604800; // 7 days (guest cart sessions)
 export const GUEST_CART_TTL_DAYS = 7;
 export const RECENTLY_VIEWED_TTL_DAYS = 30;
 

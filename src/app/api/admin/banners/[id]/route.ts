@@ -40,6 +40,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (endsAt !== undefined) data.endsAt = endsAt ? new Date(endsAt) : null;
 
     const banner = await prisma.homepageBanner.update({ where: { id }, data });
+    const { invalidateCache } = await import('@/lib/cache');
+    await invalidateCache('banners:*');
     return NextResponse.json({ banner });
   } catch (error: unknown) {
     const err = error as Error;
@@ -56,6 +58,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
     const { id } = await params;
     await prisma.homepageBanner.delete({ where: { id } });
+    const { invalidateCache } = await import('@/lib/cache');
+    await invalidateCache('banners:*');
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const err = error as Error;

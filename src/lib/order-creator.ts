@@ -279,7 +279,11 @@ export async function createOrderForUser(
     // Resolve dynamic shipping cost checking FREE_SHIPPING_THRESHOLD
     const { resolveShippingRate } = await import('@/lib/shipping-helper');
     const effectiveWeightGrams = totalWeightGrams > 0 ? totalWeightGrams : 1000;
-    let shippingFee = await resolveShippingRate(resolvedAddress.governorate, 'cairo', effectiveWeightGrams);
+    let shippingFee = await resolveShippingRate(
+      resolvedAddress.governorate,
+      'cairo',
+      effectiveWeightGrams
+    );
     try {
       const { getSetting } = await import('@/lib/admin-settings-registry');
       const freeShippingEnabled = await getSetting<boolean>('FREE_SHIPPING_ENABLED');

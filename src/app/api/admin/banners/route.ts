@@ -61,6 +61,9 @@ export async function POST(req: Request) {
       },
     });
 
+    const { invalidateCache } = await import('@/lib/cache');
+    await invalidateCache('banners:*');
+
     return NextResponse.json({ banner }, { status: 201 });
   } catch (error: unknown) {
     const err = error as Error;

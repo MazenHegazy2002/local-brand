@@ -24,16 +24,15 @@ export async function resolveShippingRate(
       for (const z of zones) {
         try {
           const list: string[] = JSON.parse(z.governorates);
-          if (
-            Array.isArray(list) &&
-            list.map((g) => normalizeGovernorateName(g)).includes(key)
-          ) {
+          if (Array.isArray(list) && list.map(g => normalizeGovernorateName(g)).includes(key)) {
             const baseRate = Number(z.rateEgp);
             // Check optional weight bands
             if (z.weightBandsJson) {
               try {
-                const bands: Array<{ maxGrams: number; rate: number }> = JSON.parse(z.weightBandsJson);
-                const matchingBand = bands.find((b) => weightGrams <= b.maxGrams);
+                const bands: Array<{ maxGrams: number; rate: number }> = JSON.parse(
+                  z.weightBandsJson
+                );
+                const matchingBand = bands.find(b => weightGrams <= b.maxGrams);
                 if (matchingBand) return matchingBand.rate;
               } catch {
                 // ignore invalid weight bands json

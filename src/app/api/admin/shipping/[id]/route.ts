@@ -52,6 +52,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     },
   });
 
+  const { invalidateCache } = await import('@/lib/cache');
+  await invalidateCache('shipping:*');
+
   return NextResponse.json({ zone });
 }
 
@@ -61,5 +64,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   const { id } = await params;
   await prisma.shippingZone.delete({ where: { id } });
+  const { invalidateCache } = await import('@/lib/cache');
+  await invalidateCache('shipping:*');
   return NextResponse.json({ success: true });
 }

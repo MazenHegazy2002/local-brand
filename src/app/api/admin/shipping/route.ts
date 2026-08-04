@@ -58,5 +58,8 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  const { invalidateCache } = await import('@/lib/cache');
+  await invalidateCache('shipping:*');
+
   return NextResponse.json({ zone }, { status: 201 });
 }

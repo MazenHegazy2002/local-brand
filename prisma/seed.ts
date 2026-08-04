@@ -1170,7 +1170,14 @@ async function main() {
     {
       name: 'Alexandria & Delta',
       governorates: JSON.stringify([
-        'Alexandria', 'Beheira', 'Gharbia', 'Monufia', 'Damietta', 'Dakahlia', 'Kafr El Sheikh', 'Sharqia',
+        'Alexandria',
+        'Beheira',
+        'Gharbia',
+        'Monufia',
+        'Damietta',
+        'Dakahlia',
+        'Kafr El Sheikh',
+        'Sharqia',
       ]),
       rateEgp: 86.0, // Base 75 EGP + VAT & stamp
       defaultCourier: 'Egypt Post (البريد المصري)',

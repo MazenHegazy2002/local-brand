@@ -1252,6 +1252,10 @@ export async function updateProduct(
       data,
     });
 
+    const { invalidateCache } = await import('@/lib/cache');
+    await invalidateCache('products:*');
+    await invalidateCache('product:detail:*');
+
     revalidatePath('/seller-hub');
     revalidatePath('/');
     revalidatePath('/shop');
@@ -1285,6 +1289,10 @@ export async function deleteProduct(productId: string) {
         published: false,
       },
     });
+
+    const { invalidateCache } = await import('@/lib/cache');
+    await invalidateCache('products:*');
+    await invalidateCache('product:detail:*');
 
     revalidatePath('/seller-hub');
     revalidatePath('/');
@@ -1356,6 +1364,10 @@ export async function toggleProductPublished(productId: string, publish: boolean
       where: { id: productId },
       data: { published: publish },
     });
+
+    const { invalidateCache } = await import('@/lib/cache');
+    await invalidateCache('products:*');
+    await invalidateCache('product:detail:*');
 
     revalidatePath('/seller-hub');
     revalidatePath('/');

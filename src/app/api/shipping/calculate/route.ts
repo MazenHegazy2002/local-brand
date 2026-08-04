@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { resolveShippingRate } from '@/lib/shipping-helper';
+import { getCachedShippingRate } from '@/lib/cache';
 import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping-rates';
 import { shippingCalculateSchema } from '@/lib/validation';
 
@@ -28,7 +28,8 @@ export async function POST(req: Request) {
     }
 
     const { governorate } = parsed.data;
-    const originGovernorate = typeof body?.originGovernorate === 'string' ? body.originGovernorate : 'cairo';
+    const originGovernorate =
+      typeof body?.originGovernorate === 'string' ? body.originGovernorate : 'cairo';
     const cartItems: Array<{ id?: string; qty?: number; quantity?: number }> = Array.isArray(
       body?.cartItems
     )
@@ -57,7 +58,7 @@ export async function POST(req: Request) {
       totalWeightGrams = 1000; // default 1 kg
     }
 
-    let shippingCost = await resolveShippingRate(governorate, originGovernorate, totalWeightGrams);
+    let shippingCost = await getCachedShippingRate(governorate, originGovernorate, totalWeightGrams);
 
     // Subtotal-based free shipping (when caller passed a subtotal).
     const subtotal: number | undefined =
