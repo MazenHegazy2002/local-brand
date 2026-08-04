@@ -121,7 +121,7 @@ export async function POST(req: Request) {
       const trackingNum = order.shipments?.[0]?.trackingNumber || `POST-${order.id.slice(0, 6).toUpperCase()}`;
 
       worksheet.addRow([
-        index + 1, // Package_Serial
+        '', // Package_Serial (Left blank for courier)
         fullDescription,
         Number(totalWeightKg),
         totalQty,
@@ -131,12 +131,12 @@ export async function POST(req: Request) {
         parsedAddress.phone || order.user?.phone || '',
         street,
         parsedAddress.governorate || parsedAddress.city || 'Cairo',
-        `#${order.id.slice(0, 8).toUpperCase()}`,
+        '', // Package_Ref. Number (Left blank for courier)
         merchantName,
         warehouseName,
         'YES',
         sellerContact,
-        trackingNum,
+        '', // Post_Id (Left blank for courier)
       ]);
     });
 
