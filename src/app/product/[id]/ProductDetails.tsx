@@ -541,7 +541,7 @@ export default function ProductDetails({
                       }`}
                     >
                       <span
-                        className="w-3.5 h-3.5 rounded-full border border-black/10 shrink-0"
+                        className="w-4 h-4 rounded-full border-2 border-slate-300 shadow-sm shrink-0"
                         style={{
                           backgroundColor:
                             colorHex.startsWith('#') || colorHex.startsWith('hsl')

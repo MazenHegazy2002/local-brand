@@ -414,7 +414,6 @@ export default function ProductCard({
               {uniqueColors.map(({ variant, colorName }) => {
                 const isSelected = selectedColor === colorName;
                 const bgStyle = getSwatchBackground(colorName);
-                const isWhite = colorName.toLowerCase() === 'white';
 
                 return (
                   <button
@@ -444,12 +443,10 @@ export default function ProductCard({
                       }
                     }}
                     title={colorName}
-                    className={`w-6 h-6 rounded-full transition-all duration-200 hover:scale-110 flex-shrink-0 ${
-                      isWhite
-                        ? 'border border-gray-300'
-                        : isSelected
-                          ? 'border-2 border-[#1e3b8a]'
-                          : 'border border-transparent'
+                    className={`w-6 h-6 rounded-full transition-all duration-200 hover:scale-110 flex-shrink-0 border-2 shadow-sm ${
+                      isSelected
+                        ? 'border-[#1e3b8a] ring-2 ring-[#1e3b8a] ring-offset-2 scale-105'
+                        : 'border-slate-300/90 dark:border-slate-600 hover:border-slate-400'
                     }`}
                     style={{
                       backgroundColor:
@@ -458,8 +455,6 @@ export default function ProductCard({
                         !bgStyle.startsWith('#') && !bgStyle.startsWith('hsl')
                           ? bgStyle
                           : undefined,
-                      outline: isSelected ? '2px solid #1e3b8a' : 'none',
-                      outlineOffset: '2px',
                     }}
                     aria-label={`Select ${colorName} color`}
                     aria-pressed={isSelected}
