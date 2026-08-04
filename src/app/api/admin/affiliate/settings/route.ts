@@ -19,7 +19,20 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
 
   const settings = await getGlobalSettings();
-  const tiers = await prisma.affiliateTierConfig.findMany({ orderBy: { minConversions: 'asc' } });
+  let tiers = await prisma.affiliateTierConfig.findMany({ orderBy: { minConversions: 'asc' } });
+
+  if (tiers.length === 0) {
+    const defaultTiers = [
+      { tier: 'STARTER' as const, name: 'Starter', minConversions: 0, commissionPct: 5 },
+      { tier: 'SILVER' as const, name: 'Silver', minConversions: 20, commissionPct: 6 },
+      { tier: 'GOLD' as const, name: 'Gold', minConversions: 84, commissionPct: 8 },
+      { tier: 'PLATINUM' as const, name: 'Platinum', minConversions: 200, commissionPct: 12 },
+    ];
+    await prisma.affiliateTierConfig.createMany({
+      data: defaultTiers.map(t => ({ ...t, isActive: true })),
+    });
+    tiers = await prisma.affiliateTierConfig.findMany({ orderBy: { minConversions: 'asc' } });
+  }
 
   return NextResponse.json({
     settings: {

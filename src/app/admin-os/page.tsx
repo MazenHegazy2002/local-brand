@@ -357,7 +357,11 @@ export default function AdminOS() {
         <div className="w-56 bg-[#1a1a2e] flex flex-col p-4 gap-3">
           <div className="h-8 w-28 bg-white/10 rounded animate-pulse mb-4" />
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-7 bg-white/5 rounded animate-pulse" style={{ width: `${70 + Math.random() * 30}%` }} />
+            <div
+              key={i}
+              className="h-7 bg-white/5 rounded animate-pulse"
+              style={{ width: `${70 + Math.random() * 30}%` }}
+            />
           ))}
         </div>
         {/* Skeleton content */}
@@ -365,7 +369,10 @@ export default function AdminOS() {
           <div className="h-8 w-48 bg-slate-200 rounded animate-pulse" />
           <div className="grid grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-28 bg-white rounded-xl shadow-sm border border-slate-100 animate-pulse" />
+              <div
+                key={i}
+                className="h-28 bg-white rounded-xl shadow-sm border border-slate-100 animate-pulse"
+              />
             ))}
           </div>
           <div className="h-64 bg-white rounded-xl shadow-sm border border-slate-100 animate-pulse" />
@@ -1224,6 +1231,18 @@ function AffiliateTab() {
                 </span>
               </div>
             ))}
+            {tiers.length === 0 && (
+              <div className="py-6 text-center text-xs text-slate-400">
+                No commission tiers found. Click reload to populate default tiers.
+                <button
+                  onClick={load}
+                  type="button"
+                  className="mt-2 px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold block mx-auto hover:bg-blue-700 transition-colors"
+                >
+                  Reload Default Tiers
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Buyer discount + bonuses */}
@@ -3469,9 +3488,7 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
   };
 
   const toggleSelectOrder = (id: string) => {
-    setSelectedOrderIds(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
+    setSelectedOrderIds(prev => (prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]));
   };
 
   const handleExportTemplateBatch = async () => {
@@ -3501,7 +3518,11 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
       });
     } catch (err) {
       console.error('[admin/orders] export error:', err);
-      toast({ variant: 'error', title: 'Export Failed', description: 'Could not generate Excel template.' });
+      toast({
+        variant: 'error',
+        title: 'Export Failed',
+        description: 'Could not generate Excel template.',
+      });
     } finally {
       setExporting(false);
     }
@@ -3598,7 +3619,8 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
           onClick={handleExportTemplateBatch}
           className="px-4 py-2 bg-[#059669] text-white text-xs font-bold rounded-lg hover:bg-[#047857] transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
         >
-          📦 Export {selectedOrderIds.length > 0 ? `Selected (${selectedOrderIds.length})` : 'All'} Orders (NewTemplate.xlsx)
+          📦 Export {selectedOrderIds.length > 0 ? `Selected (${selectedOrderIds.length})` : 'All'}{' '}
+          Orders (NewTemplate.xlsx)
         </button>
       </div>
       <div className="flex items-center gap-3 mb-3 flex-wrap">
@@ -3666,8 +3688,12 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
             />
             <div style={{ flex: 1, minWidth: 180 }}>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-xs text-slate-800">#ORD-{o.id.substring(0, 8)}</span>
-                <span className="text-[10px] text-slate-400">({new Date(o.createdAt).toLocaleDateString()})</span>
+                <span className="font-bold text-xs text-slate-800">
+                  #ORD-{o.id.substring(0, 8)}
+                </span>
+                <span className="text-[10px] text-slate-400">
+                  ({new Date(o.createdAt).toLocaleDateString()})
+                </span>
               </div>
               <div style={{ fontSize: '11px', color: '#64748b' }}>
                 {customerLabel} · {o.items?.length || 0} items
@@ -3817,8 +3843,12 @@ function OrderDetailsModal({ order, onClose, onEdit }: OrderDetailsModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between border-b pb-4">
           <div>
-            <h2 className="text-lg font-black text-slate-900">Order #{order.id.slice(0, 8).toUpperCase()}</h2>
-            <p className="text-xs text-slate-500">Placed on {new Date(order.createdAt).toLocaleString()}</p>
+            <h2 className="text-lg font-black text-slate-900">
+              Order #{order.id.slice(0, 8).toUpperCase()}
+            </h2>
+            <p className="text-xs text-slate-500">
+              Placed on {new Date(order.createdAt).toLocaleString()}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <a
@@ -3857,24 +3887,39 @@ function OrderDetailsModal({ order, onClose, onEdit }: OrderDetailsModalProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
             <div>
               <span className="text-slate-500">Customer: </span>
-              <strong className="text-slate-800">{address.fullName || address.name || order.user?.name || 'Guest'}</strong>
+              <strong className="text-slate-800">
+                {address.fullName || address.name || order.user?.name || 'Guest'}
+              </strong>
             </div>
             <div>
               <span className="text-slate-500">Phone: </span>
-              <strong className="text-slate-800">{address.phone || order.user?.phone || 'N/A'}</strong>
+              <strong className="text-slate-800">
+                {address.phone || order.user?.phone || 'N/A'}
+              </strong>
             </div>
             <div>
               <span className="text-slate-500">Email: </span>
-              <span className="text-slate-700">{address.email || order.user?.email || order.guestEmail || 'N/A'}</span>
+              <span className="text-slate-700">
+                {address.email || order.user?.email || order.guestEmail || 'N/A'}
+              </span>
             </div>
             <div>
               <span className="text-slate-500">Governorate / City: </span>
-              <strong className="text-slate-800">{address.governorate || 'Cairo'}, {address.city || ''}</strong>
+              <strong className="text-slate-800">
+                {address.governorate || 'Cairo'}, {address.city || ''}
+              </strong>
             </div>
             <div className="md:col-span-2">
               <span className="text-slate-500">Detailed Address: </span>
               <span className="text-slate-800 font-medium">
-                {[address.street || address.address, address.building, address.floor ? `Floor ${address.floor}` : '', address.apartment ? `Apt ${address.apartment}` : ''].filter(Boolean).join(', ') || 'Egypt'}
+                {[
+                  address.street || address.address,
+                  address.building,
+                  address.floor ? `Floor ${address.floor}` : '',
+                  address.apartment ? `Apt ${address.apartment}` : '',
+                ]
+                  .filter(Boolean)
+                  .join(', ') || 'Egypt'}
               </span>
             </div>
           </div>
@@ -3892,12 +3937,26 @@ function OrderDetailsModal({ order, onClose, onEdit }: OrderDetailsModalProps) {
                 <div key={item.id || idx} className="p-3 bg-white space-y-1">
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="font-bold text-slate-800 text-sm">{item.productTitleSnapshot || item.variant?.product?.title}</div>
+                      <div className="font-bold text-slate-800 text-sm">
+                        {item.productTitleSnapshot || item.variant?.product?.title}
+                      </div>
                       <div className="text-slate-500 text-[11px] gap-2 flex flex-wrap mt-0.5">
-                        {item.selectedColor && <span>Color: <strong>{item.selectedColor}</strong></span>}
-                        {item.selectedSize && <span>Size: <strong>{item.selectedSize}</strong></span>}
-                        <span>Qty: <strong>{item.quantity}</strong></span>
-                        <span>Price: <strong>{(item.priceAtPurchase || 0).toLocaleString()} EGP</strong></span>
+                        {item.selectedColor && (
+                          <span>
+                            Color: <strong>{item.selectedColor}</strong>
+                          </span>
+                        )}
+                        {item.selectedSize && (
+                          <span>
+                            Size: <strong>{item.selectedSize}</strong>
+                          </span>
+                        )}
+                        <span>
+                          Qty: <strong>{item.quantity}</strong>
+                        </span>
+                        <span>
+                          Price: <strong>{(item.priceAtPurchase || 0).toLocaleString()} EGP</strong>
+                        </span>
                       </div>
                     </div>
                     <div className="text-right font-bold text-slate-900">
@@ -3908,12 +3967,18 @@ function OrderDetailsModal({ order, onClose, onEdit }: OrderDetailsModalProps) {
                   {seller && (
                     <div className="bg-amber-50/60 border border-amber-200/50 rounded-lg p-2 mt-2 text-[11px] text-amber-900">
                       <div className="font-bold text-amber-950 flex items-center justify-between">
-                        <span>🏪 Seller: {seller.storeName} ({seller.governorate || seller.city || 'Cairo'})</span>
+                        <span>
+                          🏪 Seller: {seller.storeName} (
+                          {seller.governorate || seller.city || 'Cairo'})
+                        </span>
                         {seller.pickupPhone && <span>📞 Pickup Phone: {seller.pickupPhone}</span>}
                       </div>
                       {seller.pickupStreet && (
                         <div className="text-amber-800 mt-0.5">
-                          Pickup Warehouse: {[seller.pickupStreet, seller.pickupBuilding, seller.pickupZone].filter(Boolean).join(', ')}
+                          Pickup Warehouse:{' '}
+                          {[seller.pickupStreet, seller.pickupBuilding, seller.pickupZone]
+                            .filter(Boolean)
+                            .join(', ')}
                         </div>
                       )}
                     </div>
@@ -3935,7 +4000,14 @@ function OrderDetailsModal({ order, onClose, onEdit }: OrderDetailsModalProps) {
           <div className="space-y-1.5 text-right font-medium">
             <div className="flex justify-between text-slate-500">
               <span>Subtotal:</span>
-              <span>{(order.totalAmount - (order.shippingFee || 0) + (order.discountAmount || 0)).toLocaleString()} EGP</span>
+              <span>
+                {(
+                  order.totalAmount -
+                  (order.shippingFee || 0) +
+                  (order.discountAmount || 0)
+                ).toLocaleString()}{' '}
+                EGP
+              </span>
             </div>
             {order.discountAmount > 0 && (
               <div className="flex justify-between text-emerald-600">
