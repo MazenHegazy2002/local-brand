@@ -121,6 +121,7 @@ export async function createOrderForUser(
     }
 
     let subtotal = 0;
+    let totalWeightGrams = 0;
     let loyaltyPointsToAward = 0; // accumulated per-item loyalty points (Task 8)
     const orderItemsData: Array<{
       variantId: string;
@@ -174,6 +175,9 @@ export async function createOrderForUser(
       if (typeof pct === 'number' && pct > 0) {
         loyaltyPointsToAward += Math.round((pct / 100) * lineTotal);
       }
+
+      // Accumulate weight
+      totalWeightGrams += (variant.product.weightGrams ?? 500) * itemInput.quantity;
 
       orderItemsData.push({
         variantId: variant.id,
@@ -273,7 +277,9 @@ export async function createOrderForUser(
     const vatAmount = subtotalAfterDiscount * VAT_RATE;
 
     // Resolve dynamic shipping cost checking FREE_SHIPPING_THRESHOLD
-    let shippingFee = getShippingRate(resolvedAddress.governorate);
+    const { resolveShippingRate } = await import('@/lib/shipping-helper');
+    const effectiveWeightGrams = totalWeightGrams > 0 ? totalWeightGrams : 1000;
+    let shippingFee = await resolveShippingRate(resolvedAddress.governorate, 'cairo', effectiveWeightGrams);
     try {
       const { getSetting } = await import('@/lib/admin-settings-registry');
       const freeShippingEnabled = await getSetting<boolean>('FREE_SHIPPING_ENABLED');

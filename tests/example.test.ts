@@ -14,13 +14,13 @@ describe('Business Constants', () => {
   });
 
   it('gets shipping rate for known governorates', () => {
-    expect(getShippingRate('cairo')).toBe(40);
-    expect(getShippingRate('giza')).toBe(40);
-    expect(getShippingRate('alexandria')).toBe(55);
+    expect(getShippingRate('cairo')).toBe(74.6);
+    expect(getShippingRate('giza')).toBe(74.6);
+    expect(getShippingRate('alexandria')).toBe(86);
   });
 
   it('returns default shipping rate for unknown governorates', () => {
-    expect(getShippingRate('unknown')).toBe(75);
+    expect(getShippingRate('unknown')).toBe(86);
   });
 });
 

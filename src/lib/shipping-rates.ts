@@ -1,50 +1,297 @@
 // ============================================================
-// SHIPPING RATES (EGP) — Governorate-based
-// Keys are the lowercase normalised form of the governorate value
-// from src/lib/governorates.ts so they always match.
+// EGYPT POST SHIPPING RATES (EGP) — Governorate & Weight-based Matrix
+// Source of truth: Egypt_Post_Price_List_Updated-v2.xlsx
+// 27 x 27 Symmetric Governorate Shipping Matrix
 // ============================================================
-export const SHIPPING_RATES: Record<string, number> = {
-  // Greater Cairo + Alexandria
-  cairo: 40,
-  giza: 40,
-  qalyubia: 45,
-  alexandria: 55,
 
-  // Delta region
-  sharqia: 50,
-  dakahlia: 55,
-  gharbia: 55,
-  monufia: 50,
-  beheira: 55,
-  'kafr el sheikh': 60,
-  damietta: 60,
+export const EGYPT_POST_BASE_WEIGHT_GRAMS = 1000;
+export const EGYPT_POST_EXTRA_KG_RATE = 7.0; // 7.00 EGP per extra 1000g or fraction
+export const EGYPT_POST_VAT_RATE = 0.14; // 14% Egyptian VAT
+export const EGYPT_POST_STAMP_FEE = 0.5; // 0.50 EGP administrative stamp fee
 
-  // Canal cities
-  'port said': 60,
-  ismailia: 65,
-  suez: 65,
+export const DEFAULT_SHIPPING_BASE_RATE = 75;
+export const DEFAULT_SHIPPING_RATE = 86; // 75 EGP base + VAT & fee
+export const FREE_SHIPPING_THRESHOLD = 1000;
 
-  // Sinai
-  'north sinai': 110,
-  'south sinai': 120,
-
-  // Upper Egypt
-  faiyum: 50,
-  'beni suef': 50,
-  minya: 55,
-  assiut: 60,
-  sohag: 65,
-  qena: 70,
-  luxor: 80,
-  aswan: 80,
-
-  // Frontier
-  'red sea': 100,
-  'new valley': 90,
-  'marsa matrouh': 120,
+// Alias mapping for alternate governorate spellings
+const GOVERNORATE_ALIASES: Record<string, string> = {
+  qaliubia: 'qalyubia',
+  qalyubiya: 'qalyubia',
+  behira: 'beheira',
+  monoufia: 'monufia',
+  domitta: 'damietta',
+  sharkia: 'sharqia',
+  fayoum: 'faiyum',
+  'bani sweif': 'beni suef',
+  'benisuef': 'beni suef',
+  menia: 'minya',
+  souhage: 'sohag',
+  louxor: 'luxor',
 };
 
-export const DEFAULT_SHIPPING_RATE = 75;
-export const FREE_SHIPPING_THRESHOLD = 1000;
-export const WEIGHT_SURCHARGE_THRESHOLD = 1000; // grams
-export const WEIGHT_SURCHARGE_PER_500G = 10;
+/** Normalizes governorate strings to canonical keys. */
+export function normalizeGovernorateName(name: string): string {
+  if (!name) return 'cairo';
+  const key = name.toLowerCase().trim();
+  return GOVERNORATE_ALIASES[key] ?? key;
+}
+
+// 27 x 27 Base Shipping Rate Matrix (First 1,000g / 1 kg in EGP)
+export const EGYPT_POST_MATRIX: Record<string, Record<string, number>> = {
+  cairo: {
+    cairo: 65, giza: 65, qalyubia: 65,
+    alexandria: 75, beheira: 75, gharbia: 75, monufia: 75, damietta: 75, dakahlia: 75, 'kafr el sheikh': 75, sharqia: 75,
+    'port said': 80, ismailia: 80, suez: 80,
+    faiyum: 85, 'beni suef': 85, minya: 85, assiut: 85,
+    sohag: 110, qena: 110, aswan: 110, luxor: 110, 'red sea': 110,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  giza: {
+    cairo: 65, giza: 65, qalyubia: 65,
+    alexandria: 75, beheira: 75, gharbia: 75, monufia: 75, damietta: 75, dakahlia: 75, 'kafr el sheikh': 75, sharqia: 75,
+    'port said': 80, ismailia: 80, suez: 80,
+    faiyum: 85, 'beni suef': 85, minya: 85, assiut: 85,
+    sohag: 110, qena: 110, aswan: 110, luxor: 110, 'red sea': 110,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  qalyubia: {
+    cairo: 65, giza: 65, qalyubia: 65,
+    alexandria: 75, beheira: 75, gharbia: 75, monufia: 75, damietta: 75, dakahlia: 75, 'kafr el sheikh': 75, sharqia: 75,
+    'port said': 80, ismailia: 80, suez: 80,
+    faiyum: 85, 'beni suef': 85, minya: 85, assiut: 85,
+    sohag: 110, qena: 110, aswan: 110, luxor: 110, 'red sea': 110,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  alexandria: {
+    cairo: 75, giza: 75, qalyubia: 75, alexandria: 65, beheira: 75, gharbia: 75, monufia: 75, damietta: 75, dakahlia: 75, 'kafr el sheikh': 75, sharqia: 75,
+    'port said': 85, ismailia: 85, suez: 85,
+    faiyum: 100, 'beni suef': 100, minya: 100, assiut: 100,
+    sohag: 115, qena: 115, aswan: 115, luxor: 115, 'red sea': 115,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  beheira: {
+    cairo: 75, giza: 75, qalyubia: 75, alexandria: 75, beheira: 65, gharbia: 75, monufia: 75, damietta: 75, dakahlia: 75, 'kafr el sheikh': 75, sharqia: 75,
+    'port said': 85, ismailia: 85, suez: 85,
+    faiyum: 100, 'beni suef': 100, minya: 100, assiut: 100,
+    sohag: 115, qena: 115, aswan: 115, luxor: 115, 'red sea': 115,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  gharbia: {
+    cairo: 75, giza: 75, qalyubia: 75, alexandria: 75, beheira: 75, gharbia: 65, monufia: 75, damietta: 75, dakahlia: 75, 'kafr el sheikh': 75, sharqia: 75,
+    'port said': 85, ismailia: 85, suez: 85,
+    faiyum: 100, 'beni suef': 100, minya: 100, assiut: 100,
+    sohag: 115, qena: 115, aswan: 115, luxor: 115, 'red sea': 115,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  monufia: {
+    cairo: 75, giza: 75, qalyubia: 75, alexandria: 75, beheira: 75, gharbia: 75, monufia: 65, damietta: 75, dakahlia: 75, 'kafr el sheikh': 75, sharqia: 75,
+    'port said': 85, ismailia: 85, suez: 85,
+    faiyum: 100, 'beni suef': 100, minya: 100, assiut: 100,
+    sohag: 115, qena: 115, aswan: 115, luxor: 115, 'red sea': 115,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  damietta: {
+    cairo: 75, giza: 75, qalyubia: 75, alexandria: 75, beheira: 75, gharbia: 75, monufia: 75, damietta: 65, dakahlia: 75, 'kafr el sheikh': 75, sharqia: 75,
+    'port said': 85, ismailia: 85, suez: 85,
+    faiyum: 100, 'beni suef': 100, minya: 100, assiut: 100,
+    sohag: 115, qena: 115, aswan: 115, luxor: 115, 'red sea': 115,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  dakahlia: {
+    cairo: 75, giza: 75, qalyubia: 75, alexandria: 75, beheira: 75, gharbia: 75, monufia: 75, damietta: 75, dakahlia: 65, 'kafr el sheikh': 75, sharqia: 75,
+    'port said': 85, ismailia: 85, suez: 85,
+    faiyum: 100, 'beni suef': 100, minya: 100, assiut: 100,
+    sohag: 115, qena: 115, aswan: 115, luxor: 115, 'red sea': 115,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  'kafr el sheikh': {
+    cairo: 75, giza: 75, qalyubia: 75, alexandria: 75, beheira: 75, gharbia: 75, monufia: 75, damietta: 75, dakahlia: 75, 'kafr el sheikh': 65, sharqia: 75,
+    'port said': 85, ismailia: 85, suez: 85,
+    faiyum: 100, 'beni suef': 100, minya: 100, assiut: 100,
+    sohag: 115, qena: 115, aswan: 115, luxor: 115, 'red sea': 115,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  sharqia: {
+    cairo: 75, giza: 75, qalyubia: 75, alexandria: 75, beheira: 75, gharbia: 75, monufia: 75, damietta: 75, dakahlia: 75, 'kafr el sheikh': 75, sharqia: 65,
+    'port said': 80, ismailia: 80, suez: 80,
+    faiyum: 100, 'beni suef': 100, minya: 100, assiut: 100,
+    sohag: 115, qena: 115, aswan: 115, luxor: 115, 'red sea': 115,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  'port said': {
+    cairo: 80, giza: 80, qalyubia: 80, alexandria: 85, beheira: 85, gharbia: 85, monufia: 85, damietta: 85, dakahlia: 85, 'kafr el sheikh': 85, sharqia: 80,
+    'port said': 65, ismailia: 80, suez: 80,
+    faiyum: 100, 'beni suef': 100, minya: 100, assiut: 100,
+    sohag: 110, qena: 110, aswan: 110, luxor: 110, 'red sea': 110,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  ismailia: {
+    cairo: 80, giza: 80, qalyubia: 80, alexandria: 85, beheira: 85, gharbia: 85, monufia: 85, damietta: 85, dakahlia: 85, 'kafr el sheikh': 85, sharqia: 80,
+    'port said': 80, ismailia: 65, suez: 80,
+    faiyum: 100, 'beni suef': 100, minya: 100, assiut: 100,
+    sohag: 110, qena: 110, aswan: 110, luxor: 110, 'red sea': 110,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  suez: {
+    cairo: 80, giza: 80, qalyubia: 80, alexandria: 85, beheira: 85, gharbia: 85, monufia: 85, damietta: 85, dakahlia: 85, 'kafr el sheikh': 85, sharqia: 80,
+    'port said': 80, ismailia: 80, suez: 65,
+    faiyum: 100, 'beni suef': 100, minya: 100, assiut: 100,
+    sohag: 110, qena: 110, aswan: 110, luxor: 110, 'red sea': 110,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  faiyum: {
+    cairo: 85, giza: 85, qalyubia: 85, alexandria: 100, beheira: 100, gharbia: 100, monufia: 100, damietta: 100, dakahlia: 100, 'kafr el sheikh': 100, sharqia: 100,
+    'port said': 100, ismailia: 100, suez: 100,
+    faiyum: 65, 'beni suef': 85, minya: 85, assiut: 85,
+    sohag: 95, qena: 95, aswan: 95, luxor: 95, 'red sea': 95,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  'beni suef': {
+    cairo: 85, giza: 85, qalyubia: 85, alexandria: 100, beheira: 100, gharbia: 100, monufia: 100, damietta: 100, dakahlia: 100, 'kafr el sheikh': 100, sharqia: 100,
+    'port said': 100, ismailia: 100, suez: 100,
+    faiyum: 85, 'beni suef': 65, minya: 85, assiut: 85,
+    sohag: 95, qena: 95, aswan: 95, luxor: 95, 'red sea': 95,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  minya: {
+    cairo: 85, giza: 85, qalyubia: 85, alexandria: 100, beheira: 100, gharbia: 100, monufia: 100, damietta: 100, dakahlia: 100, 'kafr el sheikh': 100, sharqia: 100,
+    'port said': 100, ismailia: 100, suez: 100,
+    faiyum: 85, 'beni suef': 85, minya: 65, assiut: 85,
+    sohag: 95, qena: 95, aswan: 95, luxor: 95, 'red sea': 95,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  assiut: {
+    cairo: 85, giza: 85, qalyubia: 85, alexandria: 100, beheira: 100, gharbia: 100, monufia: 100, damietta: 100, dakahlia: 100, 'kafr el sheikh': 100, sharqia: 100,
+    'port said': 100, ismailia: 100, suez: 100,
+    faiyum: 85, 'beni suef': 85, minya: 85, assiut: 65,
+    sohag: 95, qena: 95, aswan: 95, luxor: 95, 'red sea': 95,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  sohag: {
+    cairo: 110, giza: 110, qalyubia: 110, alexandria: 115, beheira: 115, gharbia: 115, monufia: 115, damietta: 115, dakahlia: 115, 'kafr el sheikh': 115, sharqia: 115,
+    'port said': 110, ismailia: 110, suez: 110,
+    faiyum: 95, 'beni suef': 95, minya: 95, assiut: 95,
+    sohag: 65, qena: 85, aswan: 85, luxor: 85, 'red sea': 85,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  qena: {
+    cairo: 110, giza: 110, qalyubia: 110, alexandria: 115, beheira: 115, gharbia: 115, monufia: 115, damietta: 115, dakahlia: 115, 'kafr el sheikh': 115, sharqia: 115,
+    'port said': 110, ismailia: 110, suez: 110,
+    faiyum: 95, 'beni suef': 95, minya: 95, assiut: 95,
+    sohag: 85, qena: 65, aswan: 85, luxor: 85, 'red sea': 85,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  aswan: {
+    cairo: 110, giza: 110, qalyubia: 110, alexandria: 115, beheira: 115, gharbia: 115, monufia: 115, damietta: 115, dakahlia: 115, 'kafr el sheikh': 115, sharqia: 115,
+    'port said': 110, ismailia: 110, suez: 110,
+    faiyum: 95, 'beni suef': 95, minya: 95, assiut: 95,
+    sohag: 85, qena: 85, aswan: 65, luxor: 85, 'red sea': 85,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  luxor: {
+    cairo: 110, giza: 110, qalyubia: 110, alexandria: 115, beheira: 115, gharbia: 115, monufia: 115, damietta: 115, dakahlia: 115, 'kafr el sheikh': 115, sharqia: 115,
+    'port said': 110, ismailia: 110, suez: 110,
+    faiyum: 95, 'beni suef': 95, minya: 95, assiut: 95,
+    sohag: 85, qena: 85, aswan: 85, luxor: 65, 'red sea': 85,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  'red sea': {
+    cairo: 110, giza: 110, qalyubia: 110, alexandria: 115, beheira: 115, gharbia: 115, monufia: 115, damietta: 115, dakahlia: 115, 'kafr el sheikh': 115, sharqia: 115,
+    'port said': 110, ismailia: 110, suez: 110,
+    faiyum: 95, 'beni suef': 95, minya: 95, assiut: 95,
+    sohag: 85, qena: 85, aswan: 85, luxor: 85, 'red sea': 65,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  'marsa matrouh': {
+    cairo: 120, giza: 120, qalyubia: 120, alexandria: 120, beheira: 120, gharbia: 120, monufia: 120, damietta: 120, dakahlia: 120, 'kafr el sheikh': 120, sharqia: 120,
+    'port said': 120, ismailia: 120, suez: 120,
+    faiyum: 120, 'beni suef': 120, minya: 120, assiut: 120,
+    sohag: 120, qena: 120, aswan: 120, luxor: 120, 'red sea': 120,
+    'marsa matrouh': 65, 'new valley': 120, 'north sinai': 120, 'south sinai': 120,
+  },
+  'new valley': {
+    cairo: 120, giza: 120, qalyubia: 120, alexandria: 120, beheira: 120, gharbia: 120, monufia: 120, damietta: 120, dakahlia: 120, 'kafr el sheikh': 120, sharqia: 120,
+    'port said': 120, ismailia: 120, suez: 120,
+    faiyum: 120, 'beni suef': 120, minya: 120, assiut: 120,
+    sohag: 120, qena: 120, aswan: 120, luxor: 120, 'red sea': 120,
+    'marsa matrouh': 120, 'new valley': 65, 'north sinai': 120, 'south sinai': 120,
+  },
+  'north sinai': {
+    cairo: 120, giza: 120, qalyubia: 120, alexandria: 120, beheira: 120, gharbia: 120, monufia: 120, damietta: 120, dakahlia: 120, 'kafr el sheikh': 120, sharqia: 120,
+    'port said': 120, ismailia: 120, suez: 120,
+    faiyum: 120, 'beni suef': 120, minya: 120, assiut: 120,
+    sohag: 120, qena: 120, aswan: 120, luxor: 120, 'red sea': 120,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 65, 'south sinai': 120,
+  },
+  'south sinai': {
+    cairo: 120, giza: 120, qalyubia: 120, alexandria: 120, beheira: 120, gharbia: 120, monufia: 120, damietta: 120, dakahlia: 120, 'kafr el sheikh': 120, sharqia: 120,
+    'port said': 120, ismailia: 120, suez: 120,
+    faiyum: 120, 'beni suef': 120, minya: 120, assiut: 120,
+    sohag: 120, qena: 120, aswan: 120, luxor: 120, 'red sea': 120,
+    'marsa matrouh': 120, 'new valley': 120, 'north sinai': 120, 'south sinai': 65,
+  },
+};
+
+export interface EgyptPostShippingOptions {
+  origin?: string;
+  destination: string;
+  weightGrams?: number;
+  includeVatAndFee?: boolean;
+}
+
+/**
+ * Calculates the exact Egypt Post shipping rate using the official price matrix,
+ * weight surcharge formula (7 EGP / extra 1,000g), 14% VAT, and 0.50 EGP stamp fee.
+ */
+export function getEgyptPostShippingRate({
+  origin = 'cairo',
+  destination,
+  weightGrams = 1000,
+  includeVatAndFee = true,
+}: EgyptPostShippingOptions): number {
+  const origKey = normalizeGovernorateName(origin);
+  const destKey = normalizeGovernorateName(destination);
+
+  const baseRate = EGYPT_POST_MATRIX[origKey]?.[destKey] ?? DEFAULT_SHIPPING_BASE_RATE;
+
+  // Weight surcharge: 7 EGP per additional 1,000g or fraction above 1,000g
+  const overflowGrams = Math.max(0, weightGrams - EGYPT_POST_BASE_WEIGHT_GRAMS);
+  const extraKg = Math.ceil(overflowGrams / 1000);
+  const subtotal = baseRate + extraKg * EGYPT_POST_EXTRA_KG_RATE;
+
+  if (!includeVatAndFee) {
+    return subtotal;
+  }
+
+  // Total incl. 14% VAT & 0.50 EGP administrative stamp fee
+  const total = subtotal * (1 + EGYPT_POST_VAT_RATE) + EGYPT_POST_STAMP_FEE;
+  return Math.round(total * 100) / 100;
+}
+
+/**
+ * Single source of truth for shipping rates by destination governorate (originating from Cairo).
+ * Returns estimated total rate in EGP including VAT & stamp fee.
+ */
+export function getShippingRate(
+  destinationGovernorate: string,
+  originGovernorate: string = 'cairo',
+  weightGrams: number = 1000
+): number {
+  return getEgyptPostShippingRate({
+    origin: originGovernorate,
+    destination: destinationGovernorate,
+    weightGrams,
+    includeVatAndFee: true,
+  });
+}
+
+// Quick lookup object mapping destination governorates from Cairo to their estimated total EGP rates
+export const SHIPPING_RATES: Record<string, number> = new Proxy(
+  {},
+  {
+    get(_target, prop: string) {
+      if (typeof prop !== 'string') return DEFAULT_SHIPPING_RATE;
+      return getShippingRate(prop);
+    },
+  }
+);

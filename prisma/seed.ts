@@ -833,6 +833,7 @@ async function main() {
   await prisma.affiliateTierConfig.deleteMany();
   await prisma.affiliateGlobalSettings.deleteMany();
   await prisma.verificationToken.deleteMany();
+  await prisma.shippingZone.deleteMany();
   await prisma.user.deleteMany();
 
   // ── Categories (catalog scaffolding) ──────────────────────────────────────
@@ -1150,6 +1151,95 @@ async function main() {
     },
   });
   console.log('✅ Affiliate tiers and global settings seeded');
+
+  // ── Egypt Post Shipping Zones ──────────────────────────────────────────────
+  const egyptPostZones = [
+    {
+      name: 'Greater Cairo (Cairo, Giza, Qalyubia)',
+      governorates: JSON.stringify(['Cairo', 'Giza', 'Qalyubia']),
+      rateEgp: 74.6, // Base 65 EGP + 14% VAT + 0.50 EGP stamp
+      defaultCourier: 'Egypt Post (البريد المصري)',
+      estDaysMin: 1,
+      estDaysMax: 2,
+      weightBandsJson: JSON.stringify([
+        { maxGrams: 1000, rate: 74.6 },
+        { maxGrams: 2000, rate: 82.58 },
+        { maxGrams: 3000, rate: 90.56 },
+      ]),
+    },
+    {
+      name: 'Alexandria & Delta',
+      governorates: JSON.stringify([
+        'Alexandria', 'Beheira', 'Gharbia', 'Monufia', 'Damietta', 'Dakahlia', 'Kafr El Sheikh', 'Sharqia',
+      ]),
+      rateEgp: 86.0, // Base 75 EGP + VAT & stamp
+      defaultCourier: 'Egypt Post (البريد المصري)',
+      estDaysMin: 2,
+      estDaysMax: 3,
+      weightBandsJson: JSON.stringify([
+        { maxGrams: 1000, rate: 86.0 },
+        { maxGrams: 2000, rate: 93.98 },
+        { maxGrams: 3000, rate: 101.96 },
+      ]),
+    },
+    {
+      name: 'Canal Cities (Port Said, Ismailia, Suez)',
+      governorates: JSON.stringify(['Port Said', 'Ismailia', 'Suez']),
+      rateEgp: 91.7, // Base 80 EGP + VAT & stamp
+      defaultCourier: 'Egypt Post (البريد المصري)',
+      estDaysMin: 2,
+      estDaysMax: 4,
+      weightBandsJson: JSON.stringify([
+        { maxGrams: 1000, rate: 91.7 },
+        { maxGrams: 2000, rate: 99.68 },
+        { maxGrams: 3000, rate: 107.66 },
+      ]),
+    },
+    {
+      name: 'Middle Egypt (Fayoum, Beni Suef, Minya, Assiut)',
+      governorates: JSON.stringify(['Faiyum', 'Beni Suef', 'Minya', 'Assiut']),
+      rateEgp: 97.4, // Base 85 EGP + VAT & stamp
+      defaultCourier: 'Egypt Post (البريد المصري)',
+      estDaysMin: 3,
+      estDaysMax: 5,
+      weightBandsJson: JSON.stringify([
+        { maxGrams: 1000, rate: 97.4 },
+        { maxGrams: 2000, rate: 105.38 },
+        { maxGrams: 3000, rate: 113.36 },
+      ]),
+    },
+    {
+      name: 'Upper Egypt (Sohag, Qena, Luxor, Aswan)',
+      governorates: JSON.stringify(['Sohag', 'Qena', 'Luxor', 'Aswan', 'Red Sea']),
+      rateEgp: 125.9, // Base 110 EGP + VAT & stamp
+      defaultCourier: 'Egypt Post (البريد المصري)',
+      estDaysMin: 3,
+      estDaysMax: 5,
+      weightBandsJson: JSON.stringify([
+        { maxGrams: 1000, rate: 125.9 },
+        { maxGrams: 2000, rate: 133.88 },
+        { maxGrams: 3000, rate: 141.86 },
+      ]),
+    },
+    {
+      name: 'Frontier & Remote Governorates (Matrouh, Sinai, New Valley)',
+      governorates: JSON.stringify(['Marsa Matrouh', 'New Valley', 'North Sinai', 'South Sinai']),
+      rateEgp: 137.3, // Base 120 EGP + VAT & stamp
+      defaultCourier: 'Egypt Post (البريد المصري)',
+      estDaysMin: 4,
+      estDaysMax: 6,
+      weightBandsJson: JSON.stringify([
+        { maxGrams: 1000, rate: 137.3 },
+        { maxGrams: 2000, rate: 145.28 },
+        { maxGrams: 3000, rate: 153.26 },
+      ]),
+    },
+  ];
+
+  for (const zone of egyptPostZones) {
+    await prisma.shippingZone.create({ data: zone });
+  }
+  console.log('✅ Egypt Post Shipping Zones seeded');
 
   // ── Sample products ────────────────────────────────────────────────────────
   const allCategories = await prisma.category.findMany();

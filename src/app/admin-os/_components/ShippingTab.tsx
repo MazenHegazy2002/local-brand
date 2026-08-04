@@ -76,7 +76,7 @@ export default function ShippingTab() {
 
     setEditingGov(gov);
     setRateInput(custom ? String(custom.rateEgp) : String(defaultRate));
-    setCourierInput(custom?.defaultCourier ?? 'Aramex Egypt');
+    setCourierInput(custom?.defaultCourier ?? 'Egypt Post (البريد المصري)');
     setDaysMinInput(custom?.estDaysMin ? String(custom.estDaysMin) : '2');
     setDaysMaxInput(custom?.estDaysMax ? String(custom.estDaysMax) : '4');
     setMsg('');
@@ -377,7 +377,7 @@ export default function ShippingTab() {
                       color: '#64748b',
                     }}
                   >
-                    <span>{custom?.defaultCourier ?? 'Aramex Egypt'}</span>
+                    <span>{custom?.defaultCourier ?? 'Egypt Post (البريد المصري)'}</span>
                     <span style={{ fontSize: '11px', color: '#94a3b8' }}>
                       {custom?.estDaysMin && custom?.estDaysMax
                         ? `${custom.estDaysMin}-${custom.estDaysMax} days`
