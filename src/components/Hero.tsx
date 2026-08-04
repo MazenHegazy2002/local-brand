@@ -38,7 +38,7 @@ const FALLBACK_SLIDES: HeroSlide[] = [
 const FALLBACK_RIGHT_TOP: RightBannerSlide[] = [
   {
     imageUrl:
-      'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=75&w=600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=75&w=600&auto=format&fit=crop',
     title: 'Next-Gen Footwear',
     subtitle: 'Up to 40% Off Brands',
     linkUrl: '/shoes',

@@ -28,6 +28,22 @@ import type { Metadata } from 'next';
 
 export const revalidate = 60;
 
+export async function generateStaticParams() {
+  try {
+    const products = await prisma.product.findMany({
+      where: { published: true, deletedAt: null },
+      select: { id: true, slug: true },
+      take: 20,
+    });
+    return products.flatMap(p => [
+      { id: p.id },
+      { id: p.slug },
+    ]);
+  } catch {
+    return [];
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
