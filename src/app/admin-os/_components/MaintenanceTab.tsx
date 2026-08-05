@@ -231,7 +231,7 @@ export default function MaintenanceTab() {
         <div className="maint-card">
           <h3>🗄️ Database</h3>
           <p className="maint-card-desc">
-            Powered by Neon Postgres. Run migrations from the CLI:{' '}
+            Powered by PostgreSQL 16. Run migrations from the CLI:{' '}
             <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs">
               npm run db:migrate:deploy
             </code>
