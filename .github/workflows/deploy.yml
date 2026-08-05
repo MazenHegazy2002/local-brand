@@ -30,34 +30,12 @@ jobs:
       - name: TypeScript type check
         run: npx tsc --noEmit
 
-  build:
+  deploy:
     needs: lint-and-test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/localbrand:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/localbrand:${{ github.sha }}
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    steps:
-      - name: Deploy to server via SSH
+      - name: Deploy to Contabo Server via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -65,7 +43,8 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /opt/localbrand
-            docker-compose pull
-            docker-compose up -d --remove-orphans
-            docker-compose exec app npx prisma migrate deploy
-            echo "✅ Deployed successfully"
+            git fetch origin master
+            git reset --hard origin/master
+            docker-compose up -d --build --remove-orphans
+            docker-compose exec -T app npx prisma migrate deploy
+            echo "✅ Deployed successfully to Contabo server"
