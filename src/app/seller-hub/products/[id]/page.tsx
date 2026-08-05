@@ -551,13 +551,19 @@ export default function EditProductPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Weight (grams)
+                    Weight (KG) *
                   </label>
                   <input
                     type="number"
-                    value={form.weightGrams}
-                    onChange={e => setForm({ ...form, weightGrams: Number(e.target.value) })}
+                    step="0.01"
+                    min="0.01"
+                    placeholder="e.g. 0.5"
+                    value={form.weightGrams ? form.weightGrams / 1000 : ''}
+                    onChange={e =>
+                      setForm({ ...form, weightGrams: Math.round(Number(e.target.value) * 1000) })
+                    }
                     className="input-field"
+                    required
                   />
                 </div>
                 <div className="col-span-2">

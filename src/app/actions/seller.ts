@@ -1029,6 +1029,7 @@ interface ProductData {
   title: string;
   description?: string;
   basePrice: number;
+  weightKg: number;
   categoryId: string;
   flashSalePrice?: number;
   flashSaleEndsAt?: string;
@@ -1126,8 +1127,11 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
     }
     if (!data.basePrice || data.basePrice <= 0)
       return { error: 'Product price must be greater than zero.' };
+    if (!data.weightKg || Number(data.weightKg) <= 0)
+      return { error: 'Product weight (in KG) is required and must be greater than zero.' };
 
-    const { variants, ...rest } = data;
+    const weightGrams = Math.round(Number(data.weightKg) * 1000);
+    const { variants, weightKg, mainImage, ...rest } = data;
 
     // Enforce business rules for publishing:
     // 1. Must have at least one product image.
@@ -1170,6 +1174,7 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
     const product = await prisma.product.create({
       data: {
         ...rest,
+        weightGrams,
         published,
         sellerId: seller.id,
         slug,

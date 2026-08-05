@@ -80,6 +80,7 @@ interface NewProductState {
   title: string;
   description: string;
   basePrice: string | number;
+  weightKg: string | number;
   flashSalePrice: string | number;
   categoryId: string;
   mainImage?: string;
@@ -253,6 +254,7 @@ export default function SellerHub() {
     title: '',
     description: '',
     basePrice: '',
+    weightKg: '',
     flashSalePrice: '',
     categoryId: '',
     mainImage: '',
@@ -392,6 +394,8 @@ export default function SellerHub() {
       if (!newProduct.categoryId) throw new Error('Please select a category');
       if (!newProduct.basePrice || Number(newProduct.basePrice) <= 0)
         throw new Error('Base price is required');
+      if (!newProduct.weightKg || Number(newProduct.weightKg) <= 0)
+        throw new Error('Product weight in KG is required');
       if (variants.some((v: VariantState) => !v.price || Number(v.price) <= 0))
         throw new Error('All variant prices are required');
 
@@ -399,6 +403,7 @@ export default function SellerHub() {
       const res = (await createProduct({
         ...newProduct,
         basePrice: Number(newProduct.basePrice),
+        weightKg: Number(newProduct.weightKg),
         flashSalePrice:
           Number(newProduct.flashSalePrice) > 0 ? Number(newProduct.flashSalePrice) : undefined,
         variants: variants.map(v => ({
@@ -468,6 +473,7 @@ export default function SellerHub() {
       title: '',
       description: '',
       basePrice: '',
+      weightKg: '',
       flashSalePrice: '',
       categoryId: '',
       mainImage: '',
@@ -3004,9 +3010,11 @@ function AddProductModal({
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none resize-none"
               />
             </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
-                Category
+                Category *
               </label>
               <select
                 required
@@ -3024,7 +3032,7 @@ function AddProductModal({
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
-                Base Price (EGP)
+                Base Price (EGP) *
               </label>
               <input
                 required
@@ -3032,6 +3040,21 @@ function AddProductModal({
                 min="1"
                 value={newProduct.basePrice}
                 onChange={e => setNewProduct({ ...newProduct, basePrice: e.target.value })}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+                Weight (KG) <span className="text-red-500">*</span>
+              </label>
+              <input
+                required
+                type="number"
+                step="0.01"
+                min="0.01"
+                placeholder="e.g. 0.5"
+                value={newProduct.weightKg}
+                onChange={e => setNewProduct({ ...newProduct, weightKg: e.target.value })}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
