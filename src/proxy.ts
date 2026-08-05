@@ -139,11 +139,13 @@ function attachCsp(
   res.headers.set('Content-Security-Policy', csp);
 
   // Issue the CSRF token cookie if the browser doesn't have one yet.
+  const isHttps =
+    req.nextUrl.protocol === 'https:' || req.headers.get('x-forwarded-proto') === 'https';
   if (isNewCsrf && csrfToken) {
     res.cookies.set(CSRF_COOKIE, csrfToken, {
       httpOnly: false,
       sameSite: 'lax',
-      secure: !isDev,
+      secure: isHttps,
       path: '/',
       maxAge: 60 * 60 * 24, // 1 day
     });
@@ -152,7 +154,7 @@ function attachCsp(
     res.cookies.set(CSRF_COOKIE, token, {
       httpOnly: false,
       sameSite: 'lax',
-      secure: !isDev,
+      secure: isHttps,
       path: '/',
       maxAge: 60 * 60 * 24, // 1 day
     });

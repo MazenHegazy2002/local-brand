@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { csrfFetch } from '@/lib/csrf';
 
 interface Service {
   ok: boolean;
@@ -43,7 +44,7 @@ export default function HealthTab() {
     setSendingEmail(true);
     setEmailResult(null);
     try {
-      const res = await fetch('/api/admin/test-email', {
+      const res = await csrfFetch('/api/admin/test-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to: testEmailTo }),
@@ -52,7 +53,10 @@ export default function HealthTab() {
       if (res.ok && resData.success) {
         setEmailResult({ success: true, msg: `✓ Email delivered! Resend ID: ${resData.resendId}` });
       } else {
-        setEmailResult({ success: false, msg: `✕ ${resData.error || 'Failed to send test email.'}` });
+        setEmailResult({
+          success: false,
+          msg: `✕ ${resData.error || 'Failed to send test email.'}`,
+        });
       }
     } catch {
       setEmailResult({ success: false, msg: '✕ Error connecting to test email endpoint.' });
@@ -124,9 +128,7 @@ export default function HealthTab() {
                 <span className="dot" />
               </div>
               <div className="card-body">
-                <span className="status-text">
-                  Connected
-                </span>
+                <span className="status-text">Connected</span>
               </div>
             </div>
 
@@ -160,7 +162,9 @@ export default function HealthTab() {
                   {emailResult && (
                     <div
                       className={`text-[11px] font-mono p-1.5 rounded ${
-                        emailResult.success ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
+                        emailResult.success
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-rose-50 text-rose-700 border border-rose-200'
                       }`}
                     >
                       {emailResult.msg}
