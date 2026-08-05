@@ -50,6 +50,7 @@ export const CSRF_EXEMPT_PREFIXES = [
   '/api/payment/paymob',
   '/api/payment/fawry',
   '/api/admin/seed-catalog',
+  '/api/admin/test-email',
   '/api/vitals', // sendBeacon cannot set custom headers
 ];
 
