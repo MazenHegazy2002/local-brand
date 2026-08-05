@@ -45,6 +45,6 @@ jobs:
             cd /opt/localbrand
             git fetch origin master
             git reset --hard origin/master
-            docker-compose up -d --build --remove-orphans
+            docker-compose up -d --build --force-recreate --remove-orphans
             docker-compose exec -T app npx prisma migrate deploy
             echo "✅ Deployed successfully to Contabo server"
