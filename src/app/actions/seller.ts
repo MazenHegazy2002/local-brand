@@ -644,9 +644,9 @@ export async function getDashboardStats() {
         where: { email: { contains: '@gmail.com' } },
       });
       const affClickSum = await prisma.affiliate.aggregate({
-        _sum: { totalClicks: true },
+        _sum: { totalConversions: true },
       });
-      const realAffClicks = affClickSum._sum.totalClicks || 0;
+      const realAffClicks = affClickSum._sum?.totalConversions || 0;
 
       const rawGoogleScore = Math.max(1, gmailUsersCount * 3 + Math.floor(totalUsers * 0.3));
       const rawSocialScore = Math.max(1, realAffClicks * 2 + Math.floor(totalOrders * 0.25));
