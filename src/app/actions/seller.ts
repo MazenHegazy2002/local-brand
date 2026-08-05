@@ -640,6 +640,29 @@ export async function getDashboardStats() {
 
       const totalVisits = auditLogs.length * 3 + totalUsers * 5 + totalOrders;
 
+      const gmailUsersCount = await prisma.user.count({
+        where: { email: { contains: '@gmail.com' } },
+      });
+      const affClickSum = await prisma.affiliate.aggregate({
+        _sum: { totalClicks: true },
+      });
+      const realAffClicks = affClickSum._sum.totalClicks || 0;
+
+      const rawGoogleScore = Math.max(1, gmailUsersCount * 3 + Math.floor(totalUsers * 0.3));
+      const rawSocialScore = Math.max(1, realAffClicks * 2 + Math.floor(totalOrders * 0.25));
+      const rawDirectScore = Math.max(
+        1,
+        totalUsers +
+          totalOrders +
+          auditLogs.length -
+          Math.floor((rawGoogleScore + rawSocialScore) / 2)
+      );
+
+      const sumScores = rawGoogleScore + rawSocialScore + rawDirectScore;
+      const googlePct = Math.min(90, Math.max(5, Math.round((rawGoogleScore / sumScores) * 100)));
+      const socialPct = Math.min(90, Math.max(5, Math.round((rawSocialScore / sumScores) * 100)));
+      const directPct = Math.max(5, 100 - googlePct - socialPct);
+
       const stats = {
         revenue: totalRevenue,
         platformFees: totalPlatformFees,
@@ -655,9 +678,9 @@ export async function getDashboardStats() {
         topSellingProducts,
         dailyAnalytics,
         trafficSources: [
-          { name: 'Direct Traffic', percentage: 65, color: '#10b981' },
-          { name: 'Google Search', percentage: 25, color: '#3b82f6' },
-          { name: 'Social Media', percentage: 10, color: '#8b5cf6' },
+          { name: 'Direct Traffic', percentage: directPct, color: '#10b981' },
+          { name: 'Google Search & Auth', percentage: googlePct, color: '#3b82f6' },
+          { name: 'Social & Affiliate', percentage: socialPct, color: '#8b5cf6' },
         ],
         topCountries,
       };
