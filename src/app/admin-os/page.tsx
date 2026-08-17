@@ -114,9 +114,19 @@ export default function AdminOS() {
 
   useEffect(() => {
     setMounted(true);
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
+    const handleResize = () => {
+      if (window.innerWidth > 900) {
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
     return () => {
+      window.removeEventListener('resize', handleResize);
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
     };
@@ -134,6 +144,9 @@ export default function AdminOS() {
   // Taxonomy Form State
   const [taxType, setTaxType] = useState<'category' | 'tag' | 'collection'>('category');
   const [taxName, setTaxName] = useState('');
+
+  // Selected Seller Modal State
+  const [selectedSeller, setSelectedSeller] = useState<any>(null);
 
   // Create User Modal State
   const [showCreateUser, setShowCreateUser] = useState(false);
@@ -624,6 +637,7 @@ export default function AdminOS() {
               data={data}
               handleStatusUpdate={handleStatusUpdate}
               actionLoading={actionLoading}
+              onSelectSeller={setSelectedSeller}
             />
           )}
           {activeTab === 'sellers' && data && (
@@ -631,6 +645,7 @@ export default function AdminOS() {
               data={data}
               handleStatusUpdate={handleStatusUpdate}
               actionLoading={actionLoading}
+              onSelectSeller={setSelectedSeller}
             />
           )}
           {activeTab === 'users' && data && (
@@ -702,6 +717,17 @@ export default function AdminOS() {
           }}
           loading={editUserLoading}
           error={editUserError}
+        />
+      )}
+
+      {/* Seller Application & Profile Details Modal */}
+      {selectedSeller && (
+        <SellerDetailsModal
+          seller={selectedSeller}
+          allOrders={data?.orders || []}
+          onClose={() => setSelectedSeller(null)}
+          handleStatusUpdate={handleStatusUpdate}
+          actionLoading={actionLoading}
         />
       )}
 
@@ -1988,9 +2014,15 @@ interface OverviewTabProps {
   data: DashboardData;
   handleStatusUpdate: (id: string, status: SellerStatus) => Promise<void>;
   actionLoading: string | null;
+  onSelectSeller?: (seller: SellerProfile) => void;
 }
 
-function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabProps) {
+function OverviewTab({
+  data,
+  handleStatusUpdate,
+  actionLoading,
+  onSelectSeller,
+}: OverviewTabProps) {
   const stats = (data?.stats as any) || {};
   const gmvChangePct = typeof stats.gmvChangePct === 'number' ? stats.gmvChangePct : 0;
 
@@ -2385,16 +2417,34 @@ function OverviewTab({ data, handleStatusUpdate, actionLoading }: OverviewTabPro
         </div>
 
         <div className="card">
-          <div className="card-header">
+          <div className="card-header flex items-center justify-between">
             <div className="card-title">Pending Seller Approvals</div>
+            <span className="text-[11px] text-slate-400 font-medium">
+              Click to inspect registration form
+            </span>
           </div>
-          {data?.pendingSellers?.slice(0, 3).map((s: SellerProfile) => (
+          {data?.pendingSellers?.slice(0, 5).map((s: SellerProfile) => (
             <div key={s.id} className="row-item">
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '12px', fontWeight: 500 }}>{s.storeName}</div>
+                <div
+                  onClick={() => onSelectSeller?.(s)}
+                  style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b', cursor: 'pointer' }}
+                  className="hover:underline hover:text-indigo-600 flex items-center gap-1.5"
+                  title="Click to view seller registration form data"
+                >
+                  <span>{s.storeName}</span>
+                  <span className="text-[10px] text-indigo-500 font-normal">👁️ View Form</span>
+                </div>
                 <div style={{ fontSize: '11px', color: '#64748b' }}>{s.user?.email}</div>
               </div>
               <div style={{ display: 'flex', gap: '5px' }}>
+                <button
+                  onClick={() => onSelectSeller?.(s)}
+                  className="action-btn"
+                  style={{ borderColor: '#64748b', color: '#475569', background: '#f8fafc' }}
+                >
+                  View Data
+                </button>
                 <button
                   disabled={actionLoading === s.id}
                   onClick={() => handleStatusUpdate(s.id, 'ACTIVE')}
@@ -2427,6 +2477,7 @@ interface SellersTabProps {
   data: DashboardData;
   handleStatusUpdate: (id: string, status: SellerStatus) => Promise<void>;
   actionLoading: string | null;
+  onSelectSeller?: (seller: SellerProfile) => void;
 }
 
 /**
@@ -2482,12 +2533,8 @@ function SearchInput({
   );
 }
 
-function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps) {
+function SellersTab({ data, handleStatusUpdate, actionLoading, onSelectSeller }: SellersTabProps) {
   const [search, setSearch] = useState('');
-  const [selectedSeller, setSelectedSeller] = useState<any>(null);
-  const [commissionInput, setCommissionInput] = useState('');
-  const [commissionSaving, setCommissionSaving] = useState(false);
-  const [commissionMsg, setCommissionMsg] = useState<string | null>(null);
   const q = search.trim().toLowerCase();
   const sellers = (data?.sellers || []).filter((s: SellerProfile) => {
     if (!q) return true;
@@ -2495,46 +2542,6 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps
       .toLowerCase()
       .includes(q);
   });
-
-  // Derive per-seller order stats from the shared orders list
-  function getSellerStats(seller: any) {
-    const allOrders: any[] = data?.orders || [];
-    const productIds = new Set((seller.products || []).map((p: any) => p.id));
-    const sellerOrders = allOrders.filter((o: any) =>
-      o.items?.some((item: any) => productIds.has(item.variant?.productId))
-    );
-    const revenue = sellerOrders.reduce((acc: number, o: any) => acc + (o.totalAmount ?? 0), 0);
-    const delivered = sellerOrders.filter((o: any) => o.status === 'DELIVERED').length;
-    const returned = sellerOrders.filter((o: any) => o.status === 'RETURNED').length;
-    return { orderCount: sellerOrders.length, revenue, delivered, returned };
-  }
-
-  function openSellerModal(s: any) {
-    setSelectedSeller(s);
-    setCommissionInput(String(Math.round((s.commissionRate ?? 0.15) * 100)));
-    setCommissionMsg(null);
-  }
-
-  async function handleSaveCommission() {
-    if (!selectedSeller) return;
-    const pct = parseFloat(commissionInput);
-    if (isNaN(pct) || pct < 0 || pct > 100) {
-      setCommissionMsg('Enter a valid percentage (0–100)');
-      return;
-    }
-    setCommissionSaving(true);
-    setCommissionMsg(null);
-    const res = (await updateSellerCommission(selectedSeller.id, pct / 100)) as {
-      error?: string;
-    };
-    setCommissionSaving(false);
-    if (res?.error) {
-      setCommissionMsg(`Error: ${res.error}`);
-    } else {
-      setCommissionMsg(`Saved — ${pct}% commission applied`);
-      setSelectedSeller((prev: any) => ({ ...prev, commissionRate: pct / 100 }));
-    }
-  }
 
   return (
     <div className="card">
@@ -2563,7 +2570,13 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps
       {sellers.map((s: any) => (
         <div key={s.id} className="row-item">
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '12px', fontWeight: 500 }}>{s.storeName}</div>
+            <div
+              onClick={() => onSelectSeller?.(s)}
+              style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b', cursor: 'pointer' }}
+              className="hover:underline hover:text-indigo-600"
+            >
+              {s.storeName}
+            </div>
             <div style={{ fontSize: '11px', color: '#64748b' }}>{s.user?.name}</div>
           </div>
           <div className="w-32 flex justify-center">
@@ -2578,7 +2591,7 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps
           </div>
           <div className="w-48 text-right flex justify-end gap-2">
             <button
-              onClick={() => openSellerModal(s)}
+              onClick={() => onSelectSeller?.(s)}
               className="action-btn"
               style={{ background: '#f1f5f9', color: '#475569' }}
             >
@@ -2601,599 +2614,795 @@ function SellersTab({ data, handleStatusUpdate, actionLoading }: SellersTabProps
           {q ? `No sellers match "${search}".` : 'No sellers yet.'}
         </div>
       )}
+    </div>
+  );
+}
 
-      {selectedSeller &&
-        (() => {
-          const stats = getSellerStats(selectedSeller);
-          const heldBalance = (selectedSeller as any).heldBalance ?? 0;
-          const nextReleaseAt = (selectedSeller as any).nextReleaseAt ?? null;
-          return (
-            <div
-              style={{
-                position: 'fixed',
-                inset: 0,
-                background: 'rgba(15, 23, 42, 0.65)',
-                backdropFilter: 'blur(4px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 9999,
-                padding: '24px',
-              }}
-              onClick={() => setSelectedSeller(null)}
-            >
+interface SellerDetailsModalProps {
+  seller: any;
+  allOrders: any[];
+  onClose: () => void;
+  handleStatusUpdate: (id: string, status: SellerStatus) => Promise<void>;
+  actionLoading: string | null;
+}
+
+function SellerDetailsModal({
+  seller,
+  allOrders,
+  onClose,
+  handleStatusUpdate,
+  actionLoading,
+}: SellerDetailsModalProps) {
+  const [commissionInput, setCommissionInput] = useState(
+    String(Math.round((seller.commissionRate ?? 0.15) * 100))
+  );
+  const [commissionSaving, setCommissionSaving] = useState(false);
+  const [commissionMsg, setCommissionMsg] = useState<string | null>(null);
+
+  const productIds = new Set((seller.products || []).map((p: any) => p.id));
+  const sellerOrders = (allOrders || []).filter((o: any) =>
+    o.items?.some((item: any) => productIds.has(item.variant?.productId))
+  );
+  const revenue = sellerOrders.reduce((acc: number, o: any) => acc + (o.totalAmount ?? 0), 0);
+  const delivered = sellerOrders.filter((o: any) => o.status === 'DELIVERED').length;
+  const returned = sellerOrders.filter((o: any) => o.status === 'RETURNED').length;
+  const stats = { orderCount: sellerOrders.length, revenue, delivered, returned };
+
+  const heldBalance = seller.heldBalance ?? 0;
+  const nextReleaseAt = seller.nextReleaseAt ?? null;
+
+  async function handleSaveCommission() {
+    const pct = parseFloat(commissionInput);
+    if (isNaN(pct) || pct < 0 || pct > 100) {
+      setCommissionMsg('Enter a valid percentage (0–100)');
+      return;
+    }
+    setCommissionSaving(true);
+    setCommissionMsg(null);
+    const res = (await updateSellerCommission(seller.id, pct / 100)) as {
+      error?: string;
+    };
+    setCommissionSaving(false);
+    if (res?.error) {
+      setCommissionMsg(`Error: ${res.error}`);
+    } else {
+      setCommissionMsg(`Saved — ${pct}% commission applied`);
+      seller.commissionRate = pct / 100;
+    }
+  }
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(15, 23, 42, 0.65)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '24px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: '#ffffff',
+          borderRadius: '20px',
+          width: '820px',
+          maxWidth: '100%',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding: '24px',
+            borderBottom: '1px solid #f1f5f9',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {seller.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={seller.logoUrl}
+                alt={seller.storeName}
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '14px',
+                  objectFit: 'cover',
+                  border: '1px solid #e2e8f0',
+                }}
+              />
+            ) : (
               <div
                 style={{
-                  background: '#ffffff',
-                  borderRadius: '20px',
-                  width: '760px',
-                  maxWidth: '100%',
-                  maxHeight: '90vh',
-                  overflow: 'auto',
-                  boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg,#eef2ff,#c7d2fe)',
                   display: 'flex',
-                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '26px',
+                  fontWeight: '800',
+                  color: '#4f46e5',
                 }}
-                onClick={e => e.stopPropagation()}
               >
-                {/* ── Header ── */}
-                <div
+                {seller.storeName?.[0]?.toUpperCase() || 'S'}
+              </div>
+            )}
+            <div>
+              <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#1e293b', margin: 0 }}>
+                {seller.storeName}
+              </h3>
+              <p style={{ fontSize: '13px', color: '#64748b', margin: '3px 0 6px 0' }}>
+                Owned by <strong>{seller.user?.name}</strong>
+                {seller.governorate
+                  ? ` · ${seller.governorate}${seller.city ? `, ${seller.city}` : ''}`
+                  : ''}
+              </p>
+              <span
+                className={`badge ${seller.status === 'ACTIVE' ? 'b-active' : seller.status === 'PENDING_APPROVAL' ? 'b-pending' : 'b-banned'}`}
+              >
+                {seller.status}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              disabled={actionLoading === seller.id}
+              onClick={async () => {
+                await handleStatusUpdate(seller.id, 'ACTIVE');
+                onClose();
+              }}
+              style={{
+                padding: '7px 16px',
+                borderRadius: '8px',
+                background: '#e6f4ea',
+                border: '1px solid #0F6E56',
+                color: '#085041',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: 'pointer',
+              }}
+            >
+              Approve Seller
+            </button>
+            <button
+              disabled={actionLoading === seller.id}
+              onClick={async () => {
+                await handleStatusUpdate(seller.id, 'SUSPENDED');
+                onClose();
+              }}
+              style={{
+                padding: '7px 16px',
+                borderRadius: '8px',
+                background: '#fce8e6',
+                border: '1px solid #A32D2D',
+                color: '#791F1F',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: 'pointer',
+              }}
+            >
+              Reject / Suspend
+            </button>
+            <button
+              onClick={onClose}
+              style={{
+                border: 'none',
+                background: 'none',
+                fontSize: '22px',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                lineHeight: 1,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* 📋 Registration & Business Details Card */}
+          <div
+            style={{
+              background: '#f8fafc',
+              borderRadius: '16px',
+              padding: '20px',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <h4
+              style={{
+                fontSize: '12px',
+                fontWeight: '800',
+                textTransform: 'uppercase',
+                color: '#475569',
+                letterSpacing: '0.05em',
+                marginBottom: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              📋 Registration & Business Form Data
+            </h4>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '16px',
+                fontSize: '12px',
+              }}
+            >
+              <div>
+                <span
                   style={{
-                    padding: '24px',
-                    borderBottom: '1px solid #f1f5f9',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
+                    color: '#94a3b8',
+                    display: 'block',
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    {selectedSeller.logoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={selectedSeller.logoUrl}
-                        alt={selectedSeller.storeName}
-                        style={{
-                          width: '64px',
-                          height: '64px',
-                          borderRadius: '14px',
-                          objectFit: 'cover',
-                          border: '1px solid #e2e8f0',
-                        }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: '64px',
-                          height: '64px',
-                          borderRadius: '14px',
-                          background: 'linear-gradient(135deg,#eef2ff,#c7d2fe)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '26px',
-                          fontWeight: '800',
-                          color: '#4f46e5',
-                        }}
-                      >
-                        {selectedSeller.storeName?.[0]?.toUpperCase() || 'S'}
-                      </div>
-                    )}
-                    <div>
-                      <h3
-                        style={{ fontSize: '20px', fontWeight: '800', color: '#1e293b', margin: 0 }}
-                      >
-                        {selectedSeller.storeName}
-                      </h3>
-                      <p style={{ fontSize: '13px', color: '#64748b', margin: '3px 0 6px 0' }}>
-                        Owned by <strong>{selectedSeller.user?.name}</strong>
-                        {selectedSeller.governorate
-                          ? ` · ${selectedSeller.governorate}${selectedSeller.city ? `, ${selectedSeller.city}` : ''}`
-                          : ''}
-                      </p>
-                      <span
-                        className={`badge ${selectedSeller.status === 'ACTIVE' ? 'b-active' : selectedSeller.status === 'PENDING_APPROVAL' ? 'b-pending' : 'b-banned'}`}
-                      >
-                        {selectedSeller.status}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setSelectedSeller(null)}
-                    style={{
-                      border: 'none',
-                      background: 'none',
-                      fontSize: '20px',
-                      color: '#94a3b8',
-                      cursor: 'pointer',
-                      padding: '4px',
-                      lineHeight: 1,
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
+                  Business Type
+                </span>
+                <strong style={{ color: '#1e293b', fontSize: '13px' }}>
+                  {seller.type === 'BUSINESS' ? '🏢 Company (Business)' : '👤 Individual'}
+                </strong>
+              </div>
 
-                {/* ── Body ── */}
-                <div
-                  style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}
+              <div>
+                <span
+                  style={{
+                    color: '#94a3b8',
+                    display: 'block',
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                  }}
                 >
-                  {/* Order stats strip */}
-                  <div
-                    style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px' }}
-                  >
-                    {[
-                      { label: 'Total Orders', value: stats.orderCount, color: '#4f46e5' },
-                      {
-                        label: 'Total Revenue',
-                        value: `${stats.revenue.toLocaleString()} EGP`,
-                        color: '#059669',
-                      },
-                      { label: 'Delivered', value: stats.delivered, color: '#0ea5e9' },
-                      { label: 'Returns', value: stats.returned, color: '#ef4444' },
-                    ].map(card => (
-                      <div
-                        key={card.label}
-                        style={{
-                          background: '#f8fafc',
-                          borderRadius: '12px',
-                          padding: '14px',
-                          border: '1px solid #e2e8f0',
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontSize: '10px',
-                            fontWeight: '700',
-                            textTransform: 'uppercase',
-                            color: '#94a3b8',
-                            letterSpacing: '0.05em',
-                            marginBottom: '6px',
-                          }}
-                        >
-                          {card.label}
-                        </div>
-                        <div style={{ fontSize: '18px', fontWeight: '800', color: card.color }}>
-                          {card.value}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  Tax Registration Number
+                </span>
+                <strong style={{ color: '#1e293b', fontSize: '13px', fontFamily: 'monospace' }}>
+                  {seller.taxNumber || 'Not provided'}
+                </strong>
+              </div>
 
-                  {/* Wallet / Escrow */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                    <div
-                      style={{
-                        background: '#f0fdf4',
-                        borderRadius: '12px',
-                        padding: '16px',
-                        border: '1px solid #bbf7d0',
-                      }}
+              <div>
+                <span
+                  style={{
+                    color: '#94a3b8',
+                    display: 'block',
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Governorate & City
+                </span>
+                <strong style={{ color: '#1e293b', fontSize: '13px' }}>
+                  {seller.governorate
+                    ? `${seller.governorate}${seller.city ? `, ${seller.city}` : ''}`
+                    : 'Not specified'}
+                </strong>
+              </div>
+
+              <div style={{ gridColumn: '1 / -1' }}>
+                <span
+                  style={{
+                    color: '#94a3b8',
+                    display: 'block',
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    marginBottom: '4px',
+                  }}
+                >
+                  Store Description
+                </span>
+                <div
+                  style={{
+                    background: '#ffffff',
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5e1',
+                    color: '#334155',
+                    fontSize: '13px',
+                    lineHeight: '1.5',
+                  }}
+                >
+                  {seller.description || 'No store description provided during registration.'}
+                </div>
+              </div>
+
+              <div>
+                <span
+                  style={{
+                    color: '#94a3b8',
+                    display: 'block',
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    marginBottom: '4px',
+                  }}
+                >
+                  Social Media Links
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {seller.facebookUrl ? (
+                    <a
+                      href={seller.facebookUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: '#2563eb', fontWeight: 600, textDecoration: 'underline' }}
                     >
-                      <div
-                        style={{
-                          fontSize: '10px',
-                          fontWeight: '700',
-                          textTransform: 'uppercase',
-                          color: '#15803d',
-                          letterSpacing: '0.05em',
-                          marginBottom: '6px',
-                        }}
-                      >
-                        Mature Funds (Available)
-                      </div>
-                      <div style={{ fontSize: '22px', fontWeight: '800', color: '#15803d' }}>
-                        {selectedSeller.balance?.toLocaleString() ?? '0'}{' '}
-                        <span style={{ fontSize: '13px', color: '#4ade80' }}>EGP</span>
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#166534', marginTop: '4px' }}>
-                        Past 14-day escrow window
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        background: '#fffbeb',
-                        borderRadius: '12px',
-                        padding: '16px',
-                        border: '1px solid #fde68a',
-                      }}
+                      📘 Facebook Page
+                    </a>
+                  ) : (
+                    <span style={{ color: '#94a3b8' }}>Facebook: None</span>
+                  )}
+                  {seller.instagramUrl ? (
+                    <a
+                      href={seller.instagramUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: '#db2777', fontWeight: 600, textDecoration: 'underline' }}
                     >
-                      <div
-                        style={{
-                          fontSize: '10px',
-                          fontWeight: '700',
-                          textTransform: 'uppercase',
-                          color: '#b45309',
-                          letterSpacing: '0.05em',
-                          marginBottom: '6px',
-                        }}
-                      >
-                        In Escrow (Held)
-                      </div>
-                      <div style={{ fontSize: '22px', fontWeight: '800', color: '#b45309' }}>
-                        {heldBalance.toLocaleString()}{' '}
-                        <span style={{ fontSize: '13px', color: '#fbbf24' }}>EGP</span>
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#92400e', marginTop: '4px' }}>
-                        {nextReleaseAt
-                          ? `Next release: ${new Date(nextReleaseAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
-                          : 'No pending escrow'}
-                      </div>
-                    </div>
-                  </div>
+                      📷 Instagram Page
+                    </a>
+                  ) : (
+                    <span style={{ color: '#94a3b8' }}>Instagram: None</span>
+                  )}
+                  {seller.tiktokUrl ? (
+                    <a
+                      href={seller.tiktokUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: '#0f172a', fontWeight: 600, textDecoration: 'underline' }}
+                    >
+                      🎵 TikTok Account
+                    </a>
+                  ) : (
+                    <span style={{ color: '#94a3b8' }}>TikTok: None</span>
+                  )}
+                </div>
+              </div>
 
-                  {/* Owner & Commission row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                    {/* Owner */}
-                    <div>
-                      <h4
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          textTransform: 'uppercase',
-                          color: '#94a3b8',
-                          letterSpacing: '0.05em',
-                          marginBottom: '10px',
-                        }}
-                      >
-                        👤 Owner Details
-                      </h4>
-                      <ul
-                        style={{
-                          listStyle: 'none',
-                          padding: 0,
-                          margin: 0,
-                          fontSize: '12px',
-                          color: '#334155',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '7px',
-                        }}
-                      >
-                        <li>
-                          <strong>Email:</strong> {selectedSeller.user?.email}
-                        </li>
-                        <li>
-                          <strong>Phone:</strong> {selectedSeller.user?.phone || 'Not provided'}
-                        </li>
-                        <li>
-                          <strong>Email verified:</strong>{' '}
-                          {selectedSeller.user?.emailVerified
-                            ? `✅ ${new Date(selectedSeller.user.emailVerified).toLocaleDateString()}`
-                            : '❌ Unverified'}
-                        </li>
-                        <li>
-                          <strong>Joined:</strong>{' '}
-                          {new Date(
-                            selectedSeller.user?.createdAt || selectedSeller.createdAt
-                          ).toLocaleDateString()}
-                        </li>
-                        <li>
-                          <strong>Bank account:</strong>{' '}
-                          {selectedSeller.bankAccount || (
-                            <em style={{ color: '#94a3b8' }}>Not configured</em>
-                          )}
-                        </li>
-                      </ul>
-                    </div>
-
-                    {/* Commission editor */}
-                    <div>
-                      <h4
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          textTransform: 'uppercase',
-                          color: '#94a3b8',
-                          letterSpacing: '0.05em',
-                          marginBottom: '10px',
-                        }}
-                      >
-                        ⚙️ Platform Commission
-                      </h4>
-                      <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '10px' }}>
-                        Override the per-seller commission rate. Default is 15%.
-                      </p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input
-                          type="number"
-                          min={0}
-                          max={100}
-                          step={0.5}
-                          value={commissionInput}
-                          onChange={e => setCommissionInput(e.target.value)}
-                          style={{
-                            width: '80px',
-                            padding: '6px 8px',
-                            borderRadius: '8px',
-                            border: '1px solid #e2e8f0',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            textAlign: 'center',
-                          }}
-                        />
-                        <span style={{ fontSize: '13px', color: '#64748b' }}>%</span>
-                        <button
-                          onClick={handleSaveCommission}
-                          disabled={commissionSaving}
-                          style={{
-                            padding: '7px 14px',
-                            borderRadius: '8px',
-                            background: commissionSaving ? '#e2e8f0' : '#4f46e5',
-                            border: 'none',
-                            color: commissionSaving ? '#94a3b8' : '#fff',
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            cursor: commissionSaving ? 'default' : 'pointer',
-                          }}
-                        >
-                          {commissionSaving ? 'Saving…' : 'Save'}
-                        </button>
+              <div>
+                <span
+                  style={{
+                    color: '#94a3b8',
+                    display: 'block',
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    marginBottom: '4px',
+                  }}
+                >
+                  Courier Pickup & Address
+                </span>
+                <div
+                  style={{
+                    color: '#334155',
+                    lineHeight: '1.5',
+                    background: '#ffffff',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5e1',
+                  }}
+                >
+                  {seller.pickupStreet || seller.pickupBuilding || seller.pickupZone ? (
+                    <>
+                      <div>
+                        <strong>Address:</strong>{' '}
+                        {[
+                          seller.pickupStreet,
+                          seller.pickupBuilding,
+                          seller.pickupZone,
+                          seller.pickupSubzone,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
                       </div>
-                      {commissionMsg && (
-                        <p
-                          style={{
-                            fontSize: '11px',
-                            marginTop: '6px',
-                            color: commissionMsg.startsWith('Error') ? '#ef4444' : '#059669',
-                          }}
-                        >
-                          {commissionMsg}
-                        </p>
+                      {seller.pickupContactName && (
+                        <div>
+                          <strong>Contact:</strong> {seller.pickupContactName}
+                        </div>
                       )}
-                    </div>
-                  </div>
-
-                  {/* Products */}
-                  <div>
-                    <h4
-                      style={{
-                        fontSize: '11px',
-                        fontWeight: '700',
-                        textTransform: 'uppercase',
-                        color: '#94a3b8',
-                        letterSpacing: '0.05em',
-                        marginBottom: '10px',
-                      }}
-                    >
-                      📦 Listings ({selectedSeller.products?.length || 0})
-                    </h4>
-                    {selectedSeller.products && selectedSeller.products.length > 0 ? (
-                      <div
-                        style={{
-                          maxHeight: '160px',
-                          overflow: 'auto',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '8px',
-                          background: '#f8fafc',
-                        }}
-                      >
-                        <table
-                          style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}
-                        >
-                          <thead>
-                            <tr
-                              style={{
-                                borderBottom: '1px solid #e2e8f0',
-                                color: '#64748b',
-                                position: 'sticky',
-                                top: 0,
-                                background: '#f8fafc',
-                              }}
-                            >
-                              <th
-                                style={{
-                                  padding: '8px 12px',
-                                  textAlign: 'left',
-                                  fontWeight: '600',
-                                }}
-                              >
-                                Product
-                              </th>
-                              <th
-                                style={{
-                                  padding: '8px 12px',
-                                  textAlign: 'right',
-                                  fontWeight: '600',
-                                }}
-                              >
-                                Status
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {selectedSeller.products.map((p: any) => (
-                              <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <td style={{ padding: '7px 12px', color: '#1e293b' }}>{p.title}</td>
-                                <td style={{ padding: '7px 12px', textAlign: 'right' }}>
-                                  <span
-                                    className={`badge ${p.published ? 'b-active' : 'b-pending'}`}
-                                    style={{ fontSize: '9px' }}
-                                  >
-                                    {p.published ? 'LIVE' : 'DRAFT'}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <p
-                        style={{
-                          fontSize: '12px',
-                          color: '#94a3b8',
-                          fontStyle: 'italic',
-                          margin: 0,
-                        }}
-                      >
-                        No listings yet.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Payouts */}
-                  <div>
-                    <h4
-                      style={{
-                        fontSize: '11px',
-                        fontWeight: '700',
-                        textTransform: 'uppercase',
-                        color: '#94a3b8',
-                        letterSpacing: '0.05em',
-                        marginBottom: '10px',
-                      }}
-                    >
-                      💸 Payout History ({selectedSeller.payouts?.length || 0})
-                    </h4>
-                    {selectedSeller.payouts && selectedSeller.payouts.length > 0 ? (
-                      <div
-                        style={{
-                          maxHeight: '150px',
-                          overflow: 'auto',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '8px',
-                          background: '#f8fafc',
-                        }}
-                      >
-                        <table
-                          style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}
-                        >
-                          <thead>
-                            <tr
-                              style={{
-                                borderBottom: '1px solid #e2e8f0',
-                                color: '#64748b',
-                                position: 'sticky',
-                                top: 0,
-                                background: '#f8fafc',
-                              }}
-                            >
-                              <th
-                                style={{
-                                  padding: '8px 12px',
-                                  textAlign: 'left',
-                                  fontWeight: '600',
-                                }}
-                              >
-                                Date
-                              </th>
-                              <th
-                                style={{
-                                  padding: '8px 12px',
-                                  textAlign: 'right',
-                                  fontWeight: '600',
-                                }}
-                              >
-                                Amount
-                              </th>
-                              <th
-                                style={{
-                                  padding: '8px 12px',
-                                  textAlign: 'right',
-                                  fontWeight: '600',
-                                }}
-                              >
-                                Status
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {selectedSeller.payouts.map((pay: any) => (
-                              <tr key={pay.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <td style={{ padding: '7px 12px', color: '#1e293b' }}>
-                                  {new Date(pay.createdAt).toLocaleDateString()}
-                                </td>
-                                <td
-                                  style={{
-                                    padding: '7px 12px',
-                                    textAlign: 'right',
-                                    fontWeight: '600',
-                                  }}
-                                >
-                                  {pay.amount.toLocaleString()} EGP
-                                </td>
-                                <td style={{ padding: '7px 12px', textAlign: 'right' }}>
-                                  <span
-                                    className={`badge ${pay.status === 'COMPLETED' ? 'b-active' : pay.status === 'PENDING' ? 'b-pending' : 'b-banned'}`}
-                                    style={{ fontSize: '9px' }}
-                                  >
-                                    {pay.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <p
-                        style={{
-                          fontSize: '12px',
-                          color: '#94a3b8',
-                          fontStyle: 'italic',
-                          margin: 0,
-                        }}
-                      >
-                        No payout requests yet.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* ── Footer ── */}
-                <div
-                  style={{
-                    padding: '16px 24px',
-                    borderTop: '1px solid #f1f5f9',
-                    background: '#f8fafc',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    borderBottomLeftRadius: '20px',
-                    borderBottomRightRadius: '20px',
-                  }}
-                >
-                  <button
-                    disabled={actionLoading === selectedSeller.id}
-                    onClick={() =>
-                      handleStatusUpdate(
-                        selectedSeller.id,
-                        selectedSeller.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'
-                      )
-                    }
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      background: selectedSeller.status === 'ACTIVE' ? '#fef2f2' : '#f0fdf4',
-                      border: 'none',
-                      color: selectedSeller.status === 'ACTIVE' ? '#ef4444' : '#15803d',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {selectedSeller.status === 'ACTIVE' ? 'Suspend Seller' : 'Activate Seller'}
-                  </button>
-                  <button
-                    onClick={() => setSelectedSeller(null)}
-                    style={{
-                      padding: '8px 20px',
-                      borderRadius: '8px',
-                      background: '#f1f5f9',
-                      border: 'none',
-                      color: '#475569',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Close
-                  </button>
+                      {seller.pickupPhone && (
+                        <div>
+                          <strong>Phone:</strong> {seller.pickupPhone}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <em style={{ color: '#94a3b8' }}>No pickup address configured yet</em>
+                  )}
                 </div>
               </div>
             </div>
-          );
-        })()}
+          </div>
+
+          {/* Stats Cards Row */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px' }}>
+            {[
+              { label: 'Total Orders', value: stats.orderCount, color: '#4f46e5' },
+              {
+                label: 'Total Revenue',
+                value: `${stats.revenue.toLocaleString()} EGP`,
+                color: '#059669',
+              },
+              { label: 'Delivered', value: stats.delivered, color: '#0ea5e9' },
+              { label: 'Returns', value: stats.returned, color: '#ef4444' },
+            ].map(card => (
+              <div
+                key={card.label}
+                style={{
+                  background: '#f8fafc',
+                  borderRadius: '12px',
+                  padding: '14px',
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    color: '#94a3b8',
+                    letterSpacing: '0.05em',
+                    marginBottom: '6px',
+                  }}
+                >
+                  {card.label}
+                </div>
+                <div style={{ fontSize: '18px', fontWeight: '800', color: card.color }}>
+                  {card.value}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Wallet / Escrow */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div
+              style={{
+                background: '#f0fdf4',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid #bbf7d0',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '10px',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  color: '#15803d',
+                  letterSpacing: '0.05em',
+                  marginBottom: '6px',
+                }}
+              >
+                Mature Funds (Available)
+              </div>
+              <div style={{ fontSize: '22px', fontWeight: '800', color: '#15803d' }}>
+                {seller.balance?.toLocaleString() ?? '0'}{' '}
+                <span style={{ fontSize: '13px', color: '#4ade80' }}>EGP</span>
+              </div>
+              <div style={{ fontSize: '11px', color: '#166534', marginTop: '4px' }}>
+                Past 14-day escrow window
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: '#fffbeb',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid #fde68a',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '10px',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  color: '#b45309',
+                  letterSpacing: '0.05em',
+                  marginBottom: '6px',
+                }}
+              >
+                In Escrow (Held)
+              </div>
+              <div style={{ fontSize: '22px', fontWeight: '800', color: '#b45309' }}>
+                {heldBalance.toLocaleString()}{' '}
+                <span style={{ fontSize: '13px', color: '#fbbf24' }}>EGP</span>
+              </div>
+              <div style={{ fontSize: '11px', color: '#92400e', marginTop: '4px' }}>
+                {nextReleaseAt
+                  ? `Next release: ${new Date(nextReleaseAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
+                  : 'No pending escrow'}
+              </div>
+            </div>
+          </div>
+
+          {/* Owner & Commission */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <h4
+                style={{
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  color: '#94a3b8',
+                  letterSpacing: '0.05em',
+                  marginBottom: '10px',
+                }}
+              >
+                👤 Owner Details
+              </h4>
+              <ul
+                style={{
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: 0,
+                  fontSize: '12px',
+                  color: '#334155',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '7px',
+                }}
+              >
+                <li>
+                  <strong>Name:</strong> {seller.user?.name || 'Not provided'}
+                </li>
+                <li>
+                  <strong>Email:</strong> {seller.user?.email}
+                </li>
+                <li>
+                  <strong>Phone:</strong> {seller.user?.phone || 'Not provided'}
+                </li>
+                <li>
+                  <strong>Email verified:</strong>{' '}
+                  {seller.user?.emailVerified
+                    ? `✅ ${new Date(seller.user.emailVerified).toLocaleDateString()}`
+                    : '❌ Unverified'}
+                </li>
+                <li>
+                  <strong>Joined:</strong>{' '}
+                  {new Date(seller.user?.createdAt || seller.createdAt).toLocaleDateString()}
+                </li>
+                <li>
+                  <strong>Bank account:</strong>{' '}
+                  {seller.bankAccount || <em style={{ color: '#94a3b8' }}>Not configured</em>}
+                </li>
+              </ul>
+            </div>
+
+            {/* Commission editor */}
+            <div>
+              <h4
+                style={{
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  color: '#94a3b8',
+                  letterSpacing: '0.05em',
+                  marginBottom: '10px',
+                }}
+              >
+                ⚙️ Platform Commission
+              </h4>
+              <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '10px' }}>
+                Override the per-seller commission rate. Default is 15%.
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  value={commissionInput}
+                  onChange={e => setCommissionInput(e.target.value)}
+                  style={{
+                    width: '80px',
+                    padding: '6px 8px',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    textAlign: 'center',
+                  }}
+                />
+                <span style={{ fontSize: '13px', color: '#64748b' }}>%</span>
+                <button
+                  onClick={handleSaveCommission}
+                  disabled={commissionSaving}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: '8px',
+                    background: commissionSaving ? '#e2e8f0' : '#4f46e5',
+                    border: 'none',
+                    color: commissionSaving ? '#94a3b8' : '#fff',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    cursor: commissionSaving ? 'default' : 'pointer',
+                  }}
+                >
+                  {commissionSaving ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+              {commissionMsg && (
+                <p
+                  style={{
+                    fontSize: '11px',
+                    marginTop: '6px',
+                    color: commissionMsg.startsWith('Error') ? '#ef4444' : '#059669',
+                  }}
+                >
+                  {commissionMsg}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Listings */}
+          <div>
+            <h4
+              style={{
+                fontSize: '11px',
+                fontWeight: '700',
+                textTransform: 'uppercase',
+                color: '#94a3b8',
+                letterSpacing: '0.05em',
+                marginBottom: '10px',
+              }}
+            >
+              📦 Listings ({seller.products?.length || 0})
+            </h4>
+            {seller.products && seller.products.length > 0 ? (
+              <div
+                style={{
+                  maxHeight: '160px',
+                  overflow: 'auto',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  background: '#f8fafc',
+                }}
+              >
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <thead>
+                    <tr
+                      style={{
+                        borderBottom: '1px solid #e2e8f0',
+                        color: '#64748b',
+                        position: 'sticky',
+                        top: 0,
+                        background: '#f8fafc',
+                      }}
+                    >
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: '600' }}>
+                        Product
+                      </th>
+                      <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: '600' }}>
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {seller.products.map((p: any) => (
+                      <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '7px 12px', color: '#1e293b' }}>{p.title}</td>
+                        <td style={{ padding: '7px 12px', textAlign: 'right' }}>
+                          <span
+                            className={`badge ${p.published ? 'b-active' : 'b-pending'}`}
+                            style={{ fontSize: '9px' }}
+                          >
+                            {p.published ? 'LIVE' : 'DRAFT'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic', margin: 0 }}>
+                No listings yet.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div
+          style={{
+            padding: '16px 24px',
+            borderTop: '1px solid #f1f5f9',
+            background: '#f8fafc',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottomLeftRadius: '20px',
+            borderBottomRightRadius: '20px',
+          }}
+        >
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              disabled={actionLoading === seller.id}
+              onClick={async () => {
+                await handleStatusUpdate(seller.id, 'ACTIVE');
+                onClose();
+              }}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                color: '#15803d',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+              }}
+            >
+              Approve Seller
+            </button>
+            <button
+              disabled={actionLoading === seller.id}
+              onClick={async () => {
+                await handleStatusUpdate(seller.id, 'SUSPENDED');
+                onClose();
+              }}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
+                color: '#ef4444',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+              }}
+            >
+              Reject / Suspend Seller
+            </button>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '8px 20px',
+              borderRadius: '8px',
+              background: '#f1f5f9',
+              border: 'none',
+              color: '#475569',
+              fontSize: '12px',
+              fontWeight: '600',
+              cursor: 'pointer',
+            }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

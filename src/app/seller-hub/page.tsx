@@ -209,9 +209,19 @@ export default function SellerHub() {
 
   useEffect(() => {
     setMounted(true);
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
+    const handleResize = () => {
+      if (window.innerWidth > 900) {
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
     return () => {
+      window.removeEventListener('resize', handleResize);
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
     };
@@ -839,6 +849,7 @@ export default function SellerHub() {
           .db {
             flex-direction: column;
             height: auto;
+            min-height: 100dvh;
             overflow: auto;
           }
           .sidebar {
@@ -846,25 +857,37 @@ export default function SellerHub() {
             height: auto;
             min-width: 0;
             flex-direction: row;
-            flex-wrap: wrap;
-            padding: 8px;
-            gap: 4px;
+            flex-wrap: nowrap;
+            padding: 8px 12px;
+            gap: 6px;
             overflow-x: auto;
-            overflow-y: visible;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
           }
           .sidebar .nav-item {
-            padding: 6px 10px !important;
-            font-size: 12px !important;
+            padding: 8px 12px !important;
+            font-size: 13px !important;
+            white-space: nowrap;
+            flex-shrink: 0;
+            border-right: none !important;
+            border-bottom: 3px solid transparent;
+          }
+          .sidebar .nav-item.active {
+            border-bottom-color: #4ade80 !important;
           }
           .sidebar .logo {
-            padding: 8px 12px !important;
+            padding: 6px 10px !important;
+            flex-shrink: 0;
           }
           .main {
             height: auto;
+            min-height: 0;
+            overflow: visible;
           }
           .tab-content {
             overflow: visible;
             flex: none;
+            padding: 12px 14px;
           }
           .overview-wrap {
             flex: none;
@@ -874,11 +897,26 @@ export default function SellerHub() {
             grid-template-columns: 1fr;
           }
           .chart-bars {
-            min-height: 140px;
+            min-height: 160px;
             flex: none;
           }
           .stats-row {
             grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+          }
+        }
+        @media (max-width: 480px) {
+          .stats-row {
+            grid-template-columns: 1fr;
+          }
+          .topbar {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+          }
+          .add-product-btn {
+            width: 100%;
+            justify-content: center;
           }
         }
         .nav-item {
