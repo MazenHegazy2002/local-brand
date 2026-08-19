@@ -14,6 +14,7 @@
 // running ping checks hit dedicated endpoints.
 
 import React, { useEffect, useState } from 'react';
+import BuyerAnnouncementPopup from '@/components/BuyerAnnouncementPopup';
 
 interface SystemHealth {
   db: { ok: boolean; latencyMs: number; message?: string };
@@ -38,6 +39,17 @@ export default function MaintenanceTab() {
   } | null>(null);
   const [seoBusy, setSeoBusy] = useState(false);
 
+  // Buyer Pop-up Announcement state
+  const [buyerPopupEnabled, setBuyerPopupEnabled] = useState(false);
+  const [buyerPopupTitle, setBuyerPopupTitle] = useState('Important Notice');
+  const [buyerPopupTitleAr, setBuyerPopupTitleAr] = useState('تنويه هام');
+  const [buyerPopupMessage, setBuyerPopupMessage] = useState('');
+  const [buyerPopupMessageAr, setBuyerPopupMessageAr] = useState('');
+  const [buyerPopupType, setBuyerPopupType] = useState('info');
+  const [buyerPopupTarget, setBuyerPopupTarget] = useState('all');
+  const [buyerPopupId, setBuyerPopupId] = useState('v1');
+  const [showLivePreview, setShowLivePreview] = useState(false);
+
   const loadCurrent = async () => {
     try {
       const res = await fetch('/api/admin/settings');
@@ -49,6 +61,15 @@ export default function MaintenanceTab() {
       setReadOnlyMode(get('READ_ONLY_MODE') === 'true');
       setAllowAdmin(get('MAINTENANCE_ALLOW_ADMIN') !== 'false');
       setMaintMessage(get('MAINTENANCE_MESSAGE') ?? '');
+
+      setBuyerPopupEnabled(get('BUYER_POPUP_ENABLED') === 'true');
+      setBuyerPopupTitle(get('BUYER_POPUP_TITLE') ?? 'Important Notice');
+      setBuyerPopupTitleAr(get('BUYER_POPUP_TITLE_AR') ?? 'تنويه هام');
+      setBuyerPopupMessage(get('BUYER_POPUP_MESSAGE') ?? '');
+      setBuyerPopupMessageAr(get('BUYER_POPUP_MESSAGE_AR') ?? '');
+      setBuyerPopupType(get('BUYER_POPUP_TYPE') ?? 'info');
+      setBuyerPopupTarget(get('BUYER_POPUP_TARGET') ?? 'all');
+      setBuyerPopupId(get('BUYER_POPUP_ID') ?? 'v1');
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Load failed');
     }
@@ -115,6 +136,29 @@ export default function MaintenanceTab() {
     }
   };
 
+  const saveMultipleSettings = async (updates: Array<{ key: string; value: unknown }>) => {
+    setBusy('buyer_popup_all');
+    setErr(null);
+    setInfo(null);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.message || 'Save failed');
+      }
+      setInfo('Saved all buyer pop-up announcement settings successfully!');
+      await loadCurrent();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const clearCache = async (pattern: string) => {
     setBusy('cache');
     setErr(null);
@@ -141,6 +185,209 @@ export default function MaintenanceTab() {
       {info && <div className="maint-info">{info}</div>}
 
       <div className="maint-grid">
+        {/* Buyer Broadcast Pop-up Announcement */}
+        <div
+          className="maint-card"
+          style={{ gridColumn: '1 / -1', background: '#fafafc', border: '1px solid #e0e7ff' }}
+        >
+          <div className="maint-card-head">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">📣</span>
+              <div>
+                <h3 className="text-base font-bold text-slate-800">
+                  Buyer Broadcast Pop-up Announcement
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Configure a pop-up message to display to buyers visiting the online store or
+                  dashboard.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowLivePreview(!showLivePreview)}
+                className="px-3 py-1 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors"
+              >
+                {showLivePreview ? '👁️ Hide Live Preview' : '👁️ Show Live Preview'}
+              </button>
+              <Toggle
+                value={buyerPopupEnabled}
+                onChange={v => {
+                  setBuyerPopupEnabled(v);
+                  saveSetting('BUYER_POPUP_ENABLED', v);
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            {/* Title English */}
+            <div>
+              <label className="maint-label">Title (English)</label>
+              <input
+                type="text"
+                className="maint-input"
+                value={buyerPopupTitle}
+                onChange={e => setBuyerPopupTitle(e.target.value)}
+                onBlur={() => saveSetting('BUYER_POPUP_TITLE', buyerPopupTitle)}
+                placeholder="Important Notice"
+              />
+            </div>
+
+            {/* Title Arabic */}
+            <div>
+              <label className="maint-label">Title (Arabic - العنوان)</label>
+              <input
+                type="text"
+                className="maint-input"
+                dir="rtl"
+                value={buyerPopupTitleAr}
+                onChange={e => setBuyerPopupTitleAr(e.target.value)}
+                onBlur={() => saveSetting('BUYER_POPUP_TITLE_AR', buyerPopupTitleAr)}
+                placeholder="تنويه هام"
+              />
+            </div>
+
+            {/* Message English */}
+            <div>
+              <label className="maint-label">Message Text (English)</label>
+              <textarea
+                className="maint-input"
+                rows={3}
+                value={buyerPopupMessage}
+                onChange={e => setBuyerPopupMessage(e.target.value)}
+                onBlur={() => saveSetting('BUYER_POPUP_MESSAGE', buyerPopupMessage)}
+                placeholder="Type the message to show buyers..."
+              />
+            </div>
+
+            {/* Message Arabic */}
+            <div>
+              <label className="maint-label">Message Text (Arabic - نص الرسالة)</label>
+              <textarea
+                className="maint-input"
+                rows={3}
+                dir="rtl"
+                value={buyerPopupMessageAr}
+                onChange={e => setBuyerPopupMessageAr(e.target.value)}
+                onBlur={() => saveSetting('BUYER_POPUP_MESSAGE_AR', buyerPopupMessageAr)}
+                placeholder="اكتب نص الرسالة بالعربية..."
+              />
+            </div>
+
+            {/* Style / Type */}
+            <div>
+              <label className="maint-label">Pop-up Style / Theme</label>
+              <select
+                className="maint-input"
+                value={buyerPopupType}
+                onChange={e => {
+                  const val = e.target.value;
+                  setBuyerPopupType(val);
+                  saveSetting('BUYER_POPUP_TYPE', val);
+                }}
+              >
+                <option value="info">ℹ️ Information (Blue Banner)</option>
+                <option value="warning">⚠️ Warning (Amber Banner)</option>
+                <option value="danger">🚨 Urgent Alert (Red Banner)</option>
+                <option value="success">🎉 Special Offer / Announcement (Green Banner)</option>
+              </select>
+            </div>
+
+            {/* Target Audience */}
+            <div>
+              <label className="maint-label">Target Audience / Display Location</label>
+              <select
+                className="maint-input"
+                value={buyerPopupTarget}
+                onChange={e => {
+                  const val = e.target.value;
+                  setBuyerPopupTarget(val);
+                  saveSetting('BUYER_POPUP_TARGET', val);
+                }}
+              >
+                <option value="all">🌐 All Visitors (Storefront & Dashboard)</option>
+                <option value="dashboard">📊 Dashboard Pages Only (/dashboard)</option>
+                <option value="logged_in">👤 Logged-in Buyers Only</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Version ID & Actions */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-slate-200">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-slate-700 whitespace-nowrap">
+                Version ID:
+              </label>
+              <input
+                type="text"
+                className="maint-input"
+                style={{ width: '120px', padding: '4px 8px', fontSize: '12px' }}
+                value={buyerPopupId}
+                onChange={e => setBuyerPopupId(e.target.value)}
+                onBlur={() => saveSetting('BUYER_POPUP_ID', buyerPopupId)}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const newId = `v${Date.now().toString().slice(-6)}`;
+                  setBuyerPopupId(newId);
+                  saveSetting('BUYER_POPUP_ID', newId);
+                }}
+                className="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-300 font-medium transition-colors"
+                title="Bumping version clears dismissal history for buyers so everyone sees the updated pop-up"
+              >
+                🔄 Re-trigger for All Buyers (Bump ID)
+              </button>
+            </div>
+
+            <button
+              type="button"
+              disabled={busy === 'buyer_popup_all'}
+              onClick={() => {
+                saveMultipleSettings([
+                  { key: 'BUYER_POPUP_ENABLED', value: buyerPopupEnabled },
+                  { key: 'BUYER_POPUP_TITLE', value: buyerPopupTitle },
+                  { key: 'BUYER_POPUP_TITLE_AR', value: buyerPopupTitleAr },
+                  { key: 'BUYER_POPUP_MESSAGE', value: buyerPopupMessage },
+                  { key: 'BUYER_POPUP_MESSAGE_AR', value: buyerPopupMessageAr },
+                  { key: 'BUYER_POPUP_TYPE', value: buyerPopupType },
+                  { key: 'BUYER_POPUP_TARGET', value: buyerPopupTarget },
+                  { key: 'BUYER_POPUP_ID', value: buyerPopupId },
+                ]);
+              }}
+              className="maint-btn"
+              style={{
+                width: 'auto',
+                background: '#3b82f6',
+                color: '#fff',
+                fontWeight: 600,
+                padding: '6px 16px',
+              }}
+            >
+              {busy === 'buyer_popup_all' ? 'Saving…' : '💾 Save All Pop-up Settings'}
+            </button>
+          </div>
+
+          {/* Live preview component */}
+          {showLivePreview && (
+            <BuyerAnnouncementPopup
+              previewData={{
+                enabled: buyerPopupEnabled,
+                title: buyerPopupTitle,
+                titleAr: buyerPopupTitleAr,
+                message: buyerPopupMessage,
+                messageAr: buyerPopupMessageAr,
+                type: buyerPopupType,
+                target: buyerPopupTarget,
+                popupId: buyerPopupId,
+              }}
+              onPreviewClose={() => setShowLivePreview(false)}
+            />
+          )}
+        </div>
+
         {/* Maintenance mode */}
         <div className="maint-card">
           <div className="maint-card-head">

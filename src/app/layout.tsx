@@ -7,6 +7,7 @@ import AuthProvider from '@/providers/SessionProvider';
 import { cookies, headers } from 'next/headers';
 import GoogleTranslate from '@/components/GoogleTranslate';
 import ExitIntentPopup from '@/components/ExitIntentPopup';
+import BuyerAnnouncementPopup from '@/components/BuyerAnnouncementPopup';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -183,6 +184,7 @@ export default async function RootLayout({
                 <CookieConsent />
                 <InstallPrompt />
                 <ExitIntentPopup />
+                <BuyerAnnouncementPopup />
                 <VisitorTracker />
               </AuthProvider>
             </ConfirmProvider>
