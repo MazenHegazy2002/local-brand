@@ -207,17 +207,26 @@ export default function MaintenanceTab() {
               <button
                 type="button"
                 onClick={() => setShowLivePreview(!showLivePreview)}
-                className="px-3 py-1 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors"
               >
                 {showLivePreview ? '👁️ Hide Live Preview' : '👁️ Show Live Preview'}
               </button>
-              <Toggle
-                value={buyerPopupEnabled}
-                onChange={v => {
-                  setBuyerPopupEnabled(v);
-                  saveSetting('BUYER_POPUP_ENABLED', v);
-                }}
-              />
+              <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+                <span
+                  className={`text-xs font-bold ${
+                    buyerPopupEnabled ? 'text-emerald-600' : 'text-slate-500'
+                  }`}
+                >
+                  {buyerPopupEnabled ? '🟢 Pop-up ACTIVE' : '🔴 Disabled'}
+                </span>
+                <Toggle
+                  value={buyerPopupEnabled}
+                  onChange={v => {
+                    setBuyerPopupEnabled(v);
+                    saveSetting('BUYER_POPUP_ENABLED', v);
+                  }}
+                />
+              </div>
             </div>
           </div>
 
@@ -346,6 +355,8 @@ export default function MaintenanceTab() {
               type="button"
               disabled={busy === 'buyer_popup_all'}
               onClick={() => {
+                const freshVersionId = `v${Date.now().toString().slice(-6)}`;
+                setBuyerPopupId(freshVersionId);
                 saveMultipleSettings([
                   { key: 'BUYER_POPUP_ENABLED', value: buyerPopupEnabled },
                   { key: 'BUYER_POPUP_TITLE', value: buyerPopupTitle },
@@ -354,7 +365,7 @@ export default function MaintenanceTab() {
                   { key: 'BUYER_POPUP_MESSAGE_AR', value: buyerPopupMessageAr },
                   { key: 'BUYER_POPUP_TYPE', value: buyerPopupType },
                   { key: 'BUYER_POPUP_TARGET', value: buyerPopupTarget },
-                  { key: 'BUYER_POPUP_ID', value: buyerPopupId },
+                  { key: 'BUYER_POPUP_ID', value: freshVersionId },
                 ]);
               }}
               className="maint-btn"
@@ -366,7 +377,7 @@ export default function MaintenanceTab() {
                 padding: '6px 16px',
               }}
             >
-              {busy === 'buyer_popup_all' ? 'Saving…' : '💾 Save All Pop-up Settings'}
+              {busy === 'buyer_popup_all' ? 'Broadcasting…' : '🚀 Save & Broadcast to All Buyers'}
             </button>
           </div>
 

@@ -38,7 +38,7 @@ export default function BuyerAnnouncementPopup({
   const { lang } = useLanguage();
   const isRtl = lang === 'ar';
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
 
   const isSuppressed = !previewData && SUPPRESSED_PREFIXES.some(p => pathname.startsWith(p));
 
@@ -54,11 +54,12 @@ export default function BuyerAnnouncementPopup({
   // Fetch popup announcement data when running live on buyer site
   useEffect(() => {
     if (previewData || isSuppressed) return;
+    if (sessionStatus === 'loading') return;
 
     let isMounted = true;
     const fetchPopup = async () => {
       try {
-        const res = await fetch('/api/announcements/popup');
+        const res = await fetch(`/api/announcements/popup?_t=${Date.now()}`);
         if (!res.ok) return;
         const json: PopupAnnouncementData = await res.json();
         if (!isMounted) return;
@@ -100,7 +101,7 @@ export default function BuyerAnnouncementPopup({
     return () => {
       isMounted = false;
     };
-  }, [previewData, isSuppressed, pathname, session]);
+  }, [previewData, isSuppressed, pathname, session, sessionStatus]);
 
   if (isSuppressed || !isOpen || !data || (!previewData && loading)) return null;
 
