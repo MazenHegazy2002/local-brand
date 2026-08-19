@@ -54,6 +54,16 @@ export async function POST(req: NextRequest) {
           role: 'BUYER',
         },
       });
+
+      // Send admin alert for new user created via magic link
+      const { notifyAdminNewRegistration } = await import('@/lib/admin-registration-alerts');
+      notifyAdminNewRegistration({
+        type: 'CUSTOMER',
+        userId: user.id,
+        name: fallbackName,
+        email,
+        role: 'BUYER',
+      }).catch(err => console.error('[magic-link] Admin notification error:', err));
     } else if (user.deletedAt) {
       // Don't leak deletion state — pretend success.
       return NextResponse.json(

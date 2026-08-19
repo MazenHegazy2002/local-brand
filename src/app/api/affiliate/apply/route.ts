@@ -11,6 +11,7 @@ import bcrypt from 'bcryptjs';
 import { BCRYPT_COST } from '@/lib/constants';
 import { sendEmail } from '@/lib/email';
 import { generateEmailVerificationEmail } from '@/lib/email-verification';
+import { notifyAdminNewRegistration } from '@/lib/admin-registration-alerts';
 
 const ApplySchema = z.object({
   requestedCode: z
@@ -295,6 +296,23 @@ export async function POST(req: NextRequest) {
       }
     }
   }
+
+  // Send admin notification to mazenhegazy6@gmail.com
+  notifyAdminNewRegistration({
+    type: 'AFFILIATE',
+    userId,
+    name: userName || name || 'Affiliate Applicant',
+    email: email || session?.user?.email || '',
+    phone: phone || whatsapp || null,
+    role: 'AFFILIATE',
+    affiliateCode: affiliate.promoCode,
+    whatsapp: whatsapp || undefined,
+    socialLinks: platform
+      ? `${platform}${platformFollowers ? ` (${platformFollowers} followers)` : ''}`
+      : undefined,
+    promotionMethod: categoryFocus || undefined,
+    notes: applicationNote || undefined,
+  }).catch(err => console.error('[affiliate apply] Admin notification error:', err));
 
   return NextResponse.json(
     { success: true, affiliateId: affiliate.id, promoCode: affiliate.promoCode },

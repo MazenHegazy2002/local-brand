@@ -1796,6 +1796,17 @@ export async function adminCreateUser(formData: {
       });
     }
 
+    // Send admin notification to mazenhegazy6@gmail.com
+    const { notifyAdminNewRegistration } = await import('@/lib/admin-registration-alerts');
+    notifyAdminNewRegistration({
+      type: formData.role === Role.SELLER ? 'SELLER' : 'CUSTOMER',
+      userId: newUser.id,
+      name: formData.name.trim(),
+      email: formData.email.toLowerCase().trim(),
+      role: formData.role,
+      storeName: formData.role === Role.SELLER ? formData.storeName?.trim() : undefined,
+    }).catch(err => console.error('[adminCreateUser] Admin notification error:', err));
+
     revalidatePath('/admin-os');
     return { success: true, userId: newUser.id };
   } catch (err: unknown) {

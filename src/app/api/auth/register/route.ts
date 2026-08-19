@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { registerSchema } from '@/lib/validation';
 import { sendEmail } from '@/lib/email';
+import { notifyAdminNewRegistration } from '@/lib/admin-registration-alerts';
 import { BCRYPT_COST } from '@/lib/constants';
 import {
   generateEmailVerificationEmail,
@@ -122,6 +123,24 @@ export async function POST(req: NextRequest) {
         html: generateSellerPendingEmail(name, storeName),
       });
     }
+
+    // Send admin alert email & in-app notification to mazenhegazy6@gmail.com
+    notifyAdminNewRegistration({
+      type: userRole === 'SELLER' ? 'SELLER' : 'CUSTOMER',
+      userId: user.id,
+      name,
+      email,
+      phone,
+      role: userRole,
+      storeName: userRole === 'SELLER' ? storeName : undefined,
+      sellerType: userRole === 'SELLER' ? type : undefined,
+      taxNumber: userRole === 'SELLER' ? taxNumber : undefined,
+      description: userRole === 'SELLER' ? description : undefined,
+      facebookUrl: userRole === 'SELLER' ? facebookUrl : undefined,
+      instagramUrl: userRole === 'SELLER' ? instagramUrl : undefined,
+      tiktokUrl: userRole === 'SELLER' ? tiktokUrl : undefined,
+      logoUrl: userRole === 'SELLER' ? logoUrl : undefined,
+    }).catch(err => console.error('[register] Admin notification error:', err));
 
     return NextResponse.json(
       {

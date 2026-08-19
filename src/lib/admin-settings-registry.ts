@@ -848,6 +848,15 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     defaultValue: 'support@brandy.com',
   },
   {
+    key: 'ADMIN_NOTIFICATION_EMAIL',
+    category: 'email',
+    type: 'text',
+    label: 'Admin Alert Email Address',
+    defaultValue: 'mazenhegazy6@gmail.com',
+    description:
+      'Email address that receives administrative alerts when new customers, sellers, or affiliates register.',
+  },
+  {
     key: 'EMAIL_PROVIDER',
     category: 'email',
     type: 'select',

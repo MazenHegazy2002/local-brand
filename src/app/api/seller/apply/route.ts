@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { sendEmail } from '@/lib/email';
+import { notifyAdminNewRegistration } from '@/lib/admin-registration-alerts';
 
 const SellerApplySchema = z.object({
   storeName: z.string().min(2, 'Store name must be at least 2 characters').max(100),
@@ -138,6 +139,28 @@ export async function POST(req: NextRequest) {
         console.error('[seller application] Failed to send email:', emailErr);
       }
     }
+
+    // Send admin notification to mazenhegazy6@gmail.com
+    notifyAdminNewRegistration({
+      type: 'SELLER',
+      userId,
+      name: recipientName,
+      email: recipientEmail || user?.email || session.user.email || '',
+      phone: phone || user?.phone || null,
+      role: 'SELLER',
+      storeName: storeName.trim(),
+      sellerType: type,
+      description: description.trim(),
+      taxNumber: taxNumber || null,
+      governorate: governorate.trim(),
+      city: city.trim(),
+      pickupStreet: pickupStreet.trim(),
+      pickupPhone: pickupPhone.trim(),
+      facebookUrl: facebookUrl || null,
+      instagramUrl: instagramUrl || null,
+      tiktokUrl: tiktokUrl || null,
+      logoUrl: logoUrl || null,
+    }).catch(err => console.error('[seller apply] Admin notification error:', err));
 
     return NextResponse.json({ success: true, profileId: profile.id }, { status: 201 });
   } catch (error: unknown) {
