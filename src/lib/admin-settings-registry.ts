@@ -1367,6 +1367,7 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     type: 'toggle',
     label: 'Read-only mode (browse but no checkout)',
     defaultValue: false,
+    exposeToClient: true,
   },
   {
     key: 'FEATURE_FLAGS_JSON',
@@ -1669,6 +1670,9 @@ export async function setSetting(key: string, value: unknown, adminId?: string):
     }
     if (key === 'MAINTENANCE_ALLOW_ADMIN') {
       await redis.set('settings:maintenance:allowAdmin', value ? '1' : '0', 'EX', 600);
+    }
+    if (key === 'READ_ONLY_MODE') {
+      await redis.set('settings:readonly', value ? '1' : '0', 'EX', 600);
     }
   } catch {
     // Redis hiccup is non-fatal — the cache will catch up on the next write.

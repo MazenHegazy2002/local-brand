@@ -11,6 +11,7 @@ export async function GET() {
     const type = await getSetting<string>('BUYER_POPUP_TYPE');
     const target = await getSetting<string>('BUYER_POPUP_TARGET');
     const popupId = await getSetting<string>('BUYER_POPUP_ID');
+    const readOnlyMode = await getSetting<boolean>('READ_ONLY_MODE');
 
     return NextResponse.json(
       {
@@ -22,17 +23,18 @@ export async function GET() {
         type: type || 'info',
         target: target || 'all',
         popupId: popupId || 'v1',
+        readOnlyMode: Boolean(readOnlyMode),
       },
       {
         headers: {
-          'Cache-Control': 'public, max-age=10, stale-while-revalidate=30',
+          'Cache-Control': 'public, max-age=5, stale-while-revalidate=15',
         },
       }
     );
   } catch (error: unknown) {
     const err = error as Error;
     return NextResponse.json(
-      { message: err.message || 'Failed to fetch popup announcement' },
+      { message: err.message || 'Failed to fetch settings' },
       { status: 500 }
     );
   }

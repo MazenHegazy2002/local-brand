@@ -20,6 +20,18 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const [promoApplied, setPromoApplied] = useState<{ code: string; discount: number } | null>(null);
   const [promoError, setPromoError] = useState('');
   const [applyingPromo, setApplyingPromo] = useState(false);
+  const [isReadOnly, setIsReadOnly] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch('/api/announcements/popup')
+      .then(res => res.json())
+      .then(d => {
+        if (d?.readOnlyMode) setIsReadOnly(true);
+        else setIsReadOnly(false);
+      })
+      .catch(() => {});
+  }, [isOpen]);
 
   const applyPromo = async () => {
     const code = promoCode.trim().toUpperCase();
@@ -258,13 +270,25 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             )}
             <p className="text-xs text-gray-400">Shipping & taxes calculated at checkout</p>
 
-            <Link
-              href={promoApplied ? `/checkout?promo=${promoApplied.code}` : '/checkout'}
-              onClick={onClose}
-              className="block text-center w-full bg-[hsl(var(--primary))] text-white py-3.5 rounded-xl font-bold hover:opacity-90 transition-all"
-            >
-              Checkout — {Math.max(0, total() - (promoApplied?.discount ?? 0)).toLocaleString()} EGP
-            </Link>
+            {isReadOnly ? (
+              <div className="w-full bg-amber-50 text-amber-900 border border-amber-300 py-3 px-4 rounded-xl font-bold text-center text-xs space-y-1">
+                <p className="font-bold flex items-center justify-center gap-1">
+                  <span>👀</span> Read-Only Mode Active
+                </p>
+                <p className="text-[11px] text-amber-800 font-normal">
+                  Checkout is temporarily paused. Cart items are saved!
+                </p>
+              </div>
+            ) : (
+              <Link
+                href={promoApplied ? `/checkout?promo=${promoApplied.code}` : '/checkout'}
+                onClick={onClose}
+                className="block text-center w-full bg-[hsl(var(--primary))] text-white py-3.5 rounded-xl font-bold hover:opacity-90 transition-all"
+              >
+                Checkout — {Math.max(0, total() - (promoApplied?.discount ?? 0)).toLocaleString()}{' '}
+                EGP
+              </Link>
+            )}
 
             <button
               onClick={clearCart}

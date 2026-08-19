@@ -89,6 +89,17 @@ function CheckoutPageInner() {
   const [orderNotes, setOrderNotes] = useState('');
   const [giftWrapping, setGiftWrapping] = useState(false);
   const [showInstallments, setShowInstallments] = useState(false);
+  const [isReadOnly, setIsReadOnly] = useState(false);
+
+  // Fetch Read-Only mode setting on mount
+  useEffect(() => {
+    fetch('/api/announcements/popup')
+      .then(res => res.json())
+      .then(d => {
+        if (d?.readOnlyMode) setIsReadOnly(true);
+      })
+      .catch(() => {});
+  }, []);
 
   // Pre-fill promo code from ?promo= URL param (passed by CartDrawer) and auto-apply
   useEffect(() => {
@@ -385,6 +396,15 @@ function CheckoutPageInner() {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) return;
+
+    if (isReadOnly) {
+      setError(
+        lang === 'ar'
+          ? 'المتجر حالياً في وضع القراءة فقط. الدفع وإتمام الطلبات متوقف مؤقتاً.'
+          : 'Store is currently in Read-Only Mode. Checkout and order placement are temporarily paused.'
+      );
+      return;
+    }
 
     // Basic client-side validation
     if (
@@ -704,6 +724,26 @@ function CheckoutPageInner() {
           <div className="flex flex-col lg:flex-row gap-8 items-start">
             {/* Left Column - Forms */}
             <div className="w-full lg:w-2/3 space-y-6">
+              {isReadOnly && (
+                <div
+                  className="bg-amber-50 text-amber-900 p-4 rounded-xl border border-amber-300 font-medium flex items-center gap-3 shadow-sm"
+                  style={{ textAlign: isRTL ? 'right' : 'left' }}
+                >
+                  <span className="text-2xl shrink-0">👀</span>
+                  <div>
+                    <h4 className="font-bold text-sm">
+                      {lang === 'ar'
+                        ? 'المتجر حالياً في وضع القراءة فقط'
+                        : 'Store is in Read-Only Mode'}
+                    </h4>
+                    <p className="text-xs text-amber-800 mt-0.5">
+                      {lang === 'ar'
+                        ? 'يمكنك التصفح وإضافة المنتجات للسلة، ولكن عملية الشراء والدفع متوقفة مؤقتاً وسنعود قريباً!'
+                        : 'Browsing and adding to cart are allowed, but checkout and order placement are temporarily paused. We will be back soon!'}
+                    </p>
+                  </div>
+                </div>
+              )}
               {cartNotice && (
                 <div
                   className="bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-200 font-medium flex items-start justify-between gap-3"
@@ -1423,12 +1463,16 @@ function CheckoutPageInner() {
                 <button
                   type="submit"
                   form="checkout-form"
-                  disabled={isLoading}
-                  className="w-full bg-[#1e3b8a] hover:bg-[#152c6e] text-white font-bold py-4 rounded-xl shadow-lg transition-colors disabled:opacity-50"
+                  disabled={isLoading || isReadOnly}
+                  className="w-full bg-[#1e3b8a] hover:bg-[#152c6e] text-white font-bold py-4 rounded-xl shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading
-                    ? t('Processing')
-                    : `${t('PlaceOrder')} — ${grandTotal.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} ${t('EGP')}`}
+                  {isReadOnly
+                    ? lang === 'ar'
+                      ? 'الشراء متوقف مؤقتاً (وضع القراءة فقط)'
+                      : 'Checkout Temporarily Paused (Read-Only Mode)'
+                    : isLoading
+                      ? t('Processing')
+                      : `${t('PlaceOrder')} — ${grandTotal.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} ${t('EGP')}`}
                 </button>
 
                 <div className="mt-4 text-xs text-center text-gray-500 flex items-center justify-center gap-2">

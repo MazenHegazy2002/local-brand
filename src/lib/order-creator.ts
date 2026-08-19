@@ -20,6 +20,7 @@ import {
 } from '@/generated/client';
 import { VAT_RATE, MAX_DISCOUNT_PCT, getShippingRate, LOYALTY_POINT_VALUE } from '@/lib/constants';
 import { createOrderSchema } from '@/lib/validation';
+import { getSetting } from '@/lib/admin-settings-registry';
 
 export interface CreateOrderResult {
   success?: boolean;
@@ -34,6 +35,15 @@ export async function createOrderForUser(
   referralSlug?: string | null
 ): Promise<CreateOrderResult> {
   try {
+    // ── 0. Guard Read-Only Mode ───────────────────────────────────────────────
+    const isReadOnly = await getSetting<boolean>('READ_ONLY_MODE');
+    if (isReadOnly) {
+      return {
+        error:
+          'Checkout is temporarily paused because the store is in read-only mode. Please try again later.',
+      };
+    }
+
     // ── 1. Validate Input ─────────────────────────────────────────────────────
     const validated = createOrderSchema.safeParse(formData);
     if (!validated.success) {

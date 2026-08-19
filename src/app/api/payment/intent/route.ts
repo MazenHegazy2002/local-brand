@@ -13,6 +13,7 @@ import {
 import { SessionUser, ProductImage } from '@/types';
 import type Stripe from 'stripe';
 import crypto from 'crypto';
+import { getSetting } from '@/lib/admin-settings-registry';
 
 // Stripe payment intent. Real keys provided via env (STRIPE_SECRET_KEY).
 let stripe: Stripe | null = null;
@@ -30,6 +31,14 @@ async function getStripe() {
 
 export async function POST(req: Request) {
   try {
+    const isReadOnly = await getSetting<boolean>('READ_ONLY_MODE');
+    if (isReadOnly) {
+      return NextResponse.json(
+        { message: 'Store is currently in read-only mode. Checkout is temporarily paused.' },
+        { status: 403 }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });

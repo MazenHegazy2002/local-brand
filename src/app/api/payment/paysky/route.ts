@@ -13,6 +13,7 @@ import {
   signLightboxRequest,
   toPiasters,
 } from '@/lib/paysky';
+import { getSetting } from '@/lib/admin-settings-registry';
 
 /**
  * POST /api/payment/paysky
@@ -46,6 +47,14 @@ const paySkySchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    const isReadOnly = await getSetting<boolean>('READ_ONLY_MODE');
+    if (isReadOnly) {
+      return NextResponse.json(
+        { message: 'Store is currently in read-only mode. Checkout is temporarily paused.' },
+        { status: 403 }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
