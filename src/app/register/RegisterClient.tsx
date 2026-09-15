@@ -34,7 +34,7 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role, storeName, phone }),
+        body: JSON.stringify({ name, email, password, role: 'BUYER', phone }),
       });
 
       const data = await res.json();
@@ -43,12 +43,7 @@ export default function RegisterPage() {
         throw new Error(data.message || 'Registration failed');
       }
 
-      // Always go to email-verification step now
-      if (role === 'SELLER') {
-        setStep('seller-pending');
-      } else {
-        setStep('check-email');
-      }
+      setStep('check-email');
     } catch (error: unknown) {
       setError((error as Error).message);
     } finally {
@@ -159,24 +154,31 @@ export default function RegisterPage() {
           </span>
         </Link>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-[hsl(var(--foreground))]">
-          {role === 'SELLER' ? 'Become a Seller' : 'Join the Movement'}
+          Join the Movement
         </h2>
         <p className="mt-2 text-center text-sm text-[hsl(var(--muted-foreground))]">
-          {role === 'SELLER'
-            ? 'Start selling your products to thousands of customers'
-            : 'Already have an account? '}
-          {role !== 'SELLER' && (
-            <Link
-              href="/login"
-              className="font-medium text-[hsl(var(--primary))] hover:text-[hsl(var(--primary-dark))]"
-            >
-              Sign in
-            </Link>
-          )}
+          Already have an account?{' '}
+          <Link
+            href="/login"
+            className="font-medium text-[hsl(var(--primary))] hover:text-[hsl(var(--primary-dark))]"
+          >
+            Sign in
+          </Link>
         </p>
+
+        {/* Dedicated Seller Banner */}
+        <div className="mt-4 bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-center text-xs text-indigo-900 flex items-center justify-between gap-2">
+          <span>Are you a brand owner or seller?</span>
+          <Link
+            href="/become-seller"
+            className="font-bold text-indigo-600 hover:text-indigo-800 underline shrink-0"
+          >
+            Become a Seller →
+          </Link>
+        </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10 border border-gray-100">
           <form className="space-y-5" onSubmit={handleSubmit}>
             {error && (
@@ -185,30 +187,6 @@ export default function RegisterPage() {
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
                 </svg>
                 {error}
-              </div>
-            )}
-
-            {/* Account Type Toggle */}
-            <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
-              <button
-                type="button"
-                onClick={() => setRole('BUYER')}
-                className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-colors ${role === 'BUYER' ? 'bg-white shadow border border-gray-200 text-[hsl(var(--primary))]' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                Customer
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole('SELLER')}
-                className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-colors ${role === 'SELLER' ? 'bg-white shadow border border-gray-200 text-[hsl(var(--primary))]' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                Seller
-              </button>
-            </div>
-
-            {role === 'SELLER' && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-                ⚠️ Seller accounts require admin approval before you can list products.
               </div>
             )}
 
@@ -304,9 +282,7 @@ export default function RegisterPage() {
                 disabled={isLoading}
                 className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-colors bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-dark))] disabled:opacity-50"
               >
-                {isLoading
-                  ? 'Creating account...'
-                  : `Create ${role === 'SELLER' ? 'Seller' : 'Customer'} Account`}
+                {isLoading ? 'Creating account...' : 'Create Customer Account'}
               </button>
             </div>
 

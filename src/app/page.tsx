@@ -518,7 +518,7 @@ export default async function Home() {
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <a
-            href="/seller/apply"
+            href="/become-seller"
             style={{
               background: '#fff',
               color: '#1e3b8a',

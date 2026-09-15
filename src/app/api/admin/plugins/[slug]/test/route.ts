@@ -67,13 +67,24 @@ async function runTest(slug: string, config: Record<string, string>): Promise<st
 
     case 'virtual-tryon': {
       const keys = config.apiKeys ? readSecret(config.apiKeys) : undefined;
-      if (!keys) return 'No Gemini API key(s) configured';
+      if (!keys) return 'No API key(s) configured';
       const firstKey = keys.split(',')[0].trim();
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models?key=${firstKey}`
-      );
-      if (!res.ok) return `Gemini returned ${res.status}`;
-      return 'Connected — Gemini API key accepted';
+      const baseUrl = config.baseUrl?.trim();
+
+      if (baseUrl || firstKey.startsWith('sk-')) {
+        const targetUrl = (baseUrl || 'http://localhost:20128/v1').replace(/\/+$/, '') + '/models';
+        const res = await fetch(targetUrl, {
+          headers: { Authorization: `Bearer ${firstKey}` },
+        });
+        if (!res.ok) return `OmniRoute/Proxy returned ${res.status}`;
+        return 'Connected — Custom AI API key & endpoint accepted';
+      } else {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models?key=${firstKey}`
+        );
+        if (!res.ok) return `Gemini returned ${res.status}`;
+        return 'Connected — Gemini API key accepted';
+      }
     }
 
     default: {

@@ -419,11 +419,27 @@ export const PLUGIN_REGISTRY: PluginDefinition[] = [
     fields: [
       {
         key: 'apiKeys',
-        label: 'Gemini API Keys (comma-separated)',
+        label: 'Gemini / OmniRoute API Keys (comma-separated)',
         description:
-          'One or more Google AI Studio keys separated by commas. Multiple keys rotate automatically to handle quota limits.',
+          'One or more Google AI Studio or OmniRoute keys separated by commas. Multiple keys rotate automatically.',
         type: 'secret',
         required: true,
+      },
+      {
+        key: 'baseUrl',
+        label: 'API Base URL',
+        description:
+          'Optional base URL for local AI proxy like OmniRoute (e.g. http://localhost:20128/v1). Leave empty for default Google AI Studio.',
+        type: 'url',
+        required: false,
+      },
+      {
+        key: 'model',
+        label: 'Model Name',
+        description:
+          'Optional custom model name (e.g. agy/gemini-3.1-flash-lite). Defaults to gemini-2.5-flash-image.',
+        type: 'text',
+        required: false,
       },
     ],
   },

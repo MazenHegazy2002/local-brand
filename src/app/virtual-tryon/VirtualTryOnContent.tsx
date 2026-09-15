@@ -6,28 +6,38 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
 const LOADING_MESSAGES = [
-  'Analyzing the garment…',
-  'Fitting it to your body…',
-  'Adjusting lighting and shadows…',
-  'Making it look realistic…',
-  'Almost there…',
+  'Analyzing garment drape and texture…',
+  'Aligning posture and body proportions…',
+  'Synthesizing photorealistic studio lighting…',
+  'Rendering final high-definition look…',
+  'Polishing details…',
 ];
 
 export default function VirtualTryOnContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const productImageUrl = searchParams.get('product_image') ?? '';
+  const queryProductImageUrl = searchParams.get('product_image') ?? '';
   const colorParam = searchParams.get('color') ?? '';
   const productTitle = searchParams.get('title') ?? 'Product';
 
   // ── State ──────────────────────────────────────────────────────────────
-  const [userPhoto, setUserPhoto] = useState<string | null>(null);
-  const [result, setResult] = useState<string | null>(null);
+  const [customProductImage, setCustomProductImage] = useState<string | null>(
+    queryProductImageUrl ? null : '/tryon/sample_denim_outfit.jpg'
+  );
+  const [userPhoto, setUserPhoto] = useState<string | null>(
+    queryProductImageUrl ? null : '/tryon/sample_man.jpg'
+  );
+  const [result, setResult] = useState<string | null>(
+    queryProductImageUrl ? null : '/tryon/denim_jacket_tryon.jpg'
+  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progressMsg, setProgressMsg] = useState(LOADING_MESSAGES[0]);
+  const [isDemoMode, setIsDemoMode] = useState(!queryProductImageUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const activeProductImageUrl = customProductImage || queryProductImageUrl;
 
   // Rotate loading messages while generating
   useEffect(() => {
@@ -36,16 +46,15 @@ export default function VirtualTryOnContent() {
     const id = setInterval(() => {
       i = (i + 1) % LOADING_MESSAGES.length;
       setProgressMsg(LOADING_MESSAGES[i]);
-    }, 3000);
+    }, 2800);
     return () => clearInterval(id);
   }, [isGenerating]);
 
   // Handle user photo selection
-  // Convert any uploaded image to JPEG via canvas so Gemini always gets a
-  // supported MIME type (HEIC, BMP, TIFF, WebP, etc. would otherwise fail).
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setIsDemoMode(false);
     const reader = new FileReader();
     reader.onloadend = () => {
       const img = new Image();
@@ -55,16 +64,13 @@ export default function VirtualTryOnContent() {
         canvas.height = img.naturalHeight;
         const ctx = canvas.getContext('2d');
         if (!ctx) {
-          // Fallback — just use the raw data URL as-is
           setUserPhoto(reader.result as string);
           return;
         }
         ctx.drawImage(img, 0, 0);
-        // Always produce image/jpeg regardless of the original format
         setUserPhoto(canvas.toDataURL('image/jpeg', 0.92));
       };
       img.onerror = () => {
-        // If canvas decode fails, fall back to raw data URL
         setUserPhoto(reader.result as string);
       };
       img.src = reader.result as string;
@@ -72,9 +78,19 @@ export default function VirtualTryOnContent() {
     reader.readAsDataURL(file);
   };
 
-  // Handle generate
+  // 1-Click Load Demo Look (Denim Jacket Outfit & Model)
+  const handleLoadDemoLook = () => {
+    setIsDemoMode(true);
+    setCustomProductImage('/tryon/sample_denim_outfit.jpg');
+    setUserPhoto('/tryon/sample_man.jpg');
+    setError(null);
+    setResult('/tryon/denim_jacket_tryon.jpg');
+  };
+
+  // Handle live generate
   const handleGenerate = async () => {
-    if (!userPhoto) return;
+    if (!userPhoto || !activeProductImageUrl) return;
+
     setIsGenerating(true);
     setError(null);
     setResult(null);
@@ -85,8 +101,9 @@ export default function VirtualTryOnContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          productImageUrl,
+          productImageUrl: activeProductImageUrl,
           userPhotoBase64: userPhoto,
+          productTitle: productTitle || 'Garment Fit',
         }),
       });
 
@@ -97,6 +114,7 @@ export default function VirtualTryOnContent() {
       }
 
       setResult(data.result);
+      setIsDemoMode(false);
     } catch (err: any) {
       setError(err.message ?? 'Unexpected error. Please try again.');
     } finally {
@@ -108,7 +126,7 @@ export default function VirtualTryOnContent() {
     if (!result) return;
     const a = document.createElement('a');
     a.href = result;
-    a.download = `try-on-${Date.now()}.png`;
+    a.download = `try-on-denim-look-${Date.now()}.jpg`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -118,7 +136,7 @@ export default function VirtualTryOnContent() {
     <main className="min-h-screen bg-[#f9f8f6]">
       <Navbar />
 
-      {/* Header */}
+      {/* Breadcrumb Header */}
       <div className="bg-white border-b border-gray-100 py-3">
         <div className="container mx-auto px-4 text-xs font-semibold text-gray-500 flex items-center gap-2">
           <Link href="/" className="hover:text-[#1e3b8a] transition-colors">
@@ -140,38 +158,83 @@ export default function VirtualTryOnContent() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-10">
-        {/* Page title */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-black text-slate-900 mb-2">✨ Virtual Try-On</h1>
-          <p className="text-slate-500 text-sm max-w-xl">
-            Upload a clear photo of yourself and our AI will show you exactly how this item looks on
-            you — no changing rooms needed.
-            {colorParam && (
-              <span className="font-semibold text-slate-700"> Color: {colorParam}.</span>
-            )}
-          </p>
+      <div className="container mx-auto px-4 py-8">
+        {/* Page title + Demo button */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+              <span>✨ Virtual Try-On</span>
+              <span className="text-xs bg-blue-100 text-blue-800 border border-blue-200 font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                AI Studio Fitting
+              </span>
+            </h1>
+            <p className="text-slate-500 text-sm max-w-xl mt-1">
+              Upload your photo to see how this piece fits you in realistic studio lighting — no
+              changing rooms needed.
+              {colorParam && (
+                <span className="font-semibold text-slate-700"> Color: {colorParam}.</span>
+              )}
+            </p>
+          </div>
+
+          {/* Quick Demo Button */}
+          <button
+            onClick={handleLoadDemoLook}
+            className="self-start md:self-auto px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm active:scale-95"
+          >
+            <span className="text-sm">⚡</span>
+            <span>Load Sample Look (Denim Outfit)</span>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* ── Column 1: Product image ── */}
           <div className="space-y-3">
-            <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">Garment</h2>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden aspect-square flex items-center justify-center">
-              {productImageUrl ? (
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">
+                Garment
+              </h2>
+              {customProductImage && (
+                <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                  Sample Outfit
+                </span>
+              )}
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden aspect-square flex items-center justify-center relative group">
+              {activeProductImageUrl ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={productImageUrl} alt="Product" className="w-full h-full object-cover" />
+                <img
+                  src={activeProductImageUrl}
+                  alt="Product"
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <span className="text-gray-400 text-sm">No product image</span>
+                <div className="text-center p-6 space-y-2">
+                  <span className="text-3xl">🧥</span>
+                  <p className="text-gray-400 text-xs font-semibold">No product selected</p>
+                  <button
+                    onClick={handleLoadDemoLook}
+                    className="text-xs text-[#1e3b8a] font-bold hover:underline block pt-1"
+                  >
+                    Load Sample Look
+                  </button>
+                </div>
               )}
             </div>
           </div>
 
           {/* ── Column 2: Your photo ── */}
           <div className="space-y-3">
-            <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">
-              Your Photo
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">
+                Your Photo
+              </h2>
+              {isDemoMode && (
+                <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                  Sample Model
+                </span>
+              )}
+            </div>
             <div
               onClick={() => fileInputRef.current?.click()}
               className={`bg-white rounded-2xl border-2 border-dashed shadow-sm overflow-hidden aspect-square flex flex-col items-center justify-center cursor-pointer transition-all hover:border-[#1e3b8a] ${
@@ -201,7 +264,7 @@ export default function VirtualTryOnContent() {
                   <p className="text-sm font-semibold text-slate-600">Click to upload your photo</p>
                   <p className="text-xs text-slate-400">PNG, JPG, HEIC — Max 10 MB</p>
                   <p className="text-xs text-slate-400 max-w-[180px]">
-                    Best results: full-body or waist-up, good lighting, plain background
+                    Best results: full-body or waist-up, good lighting
                   </p>
                 </div>
               )}
@@ -214,24 +277,44 @@ export default function VirtualTryOnContent() {
               onChange={handlePhotoSelect}
             />
             {userPhoto && (
-              <button
-                onClick={() => setUserPhoto(null)}
-                className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                Remove photo
-              </button>
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => {
+                    setUserPhoto(null);
+                    setIsDemoMode(false);
+                  }}
+                  className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  Remove photo
+                </button>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs text-[#1e3b8a] font-bold hover:underline"
+                >
+                  Upload different photo
+                </button>
+              </div>
             )}
           </div>
 
           {/* ── Column 3: Result ── */}
           <div className="space-y-3">
-            <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">Result</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">
+                Result
+              </h2>
+              {result && (
+                <span className="text-[10px] font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded border border-green-200">
+                  Photorealistic Fit
+                </span>
+              )}
+            </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden aspect-square flex flex-col items-center justify-center relative">
               {isGenerating ? (
                 <div className="text-center space-y-4 p-6">
                   <div className="w-16 h-16 border-4 border-slate-100 border-t-[#1e3b8a] rounded-full animate-spin mx-auto" />
                   <p className="text-sm font-semibold text-slate-700">{progressMsg}</p>
-                  <p className="text-xs text-slate-400">This takes 15–30 seconds</p>
+                  <p className="text-xs text-slate-400">Running AI Studio Try-On…</p>
                 </div>
               ) : result ? (
                 <>
@@ -260,13 +343,16 @@ export default function VirtualTryOnContent() {
                   <p className="text-sm font-semibold text-slate-500">
                     Your result will appear here
                   </p>
+                  <p className="text-xs text-slate-400">
+                    Click &quot;Try It On&quot; to generate your fit
+                  </p>
                 </div>
               )}
             </div>
             {result && (
               <button
                 onClick={handleDownload}
-                className="w-full py-3 bg-[#1e3b8a] hover:bg-[#152c6e] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-colors"
+                className="w-full py-3 bg-[#1e3b8a] hover:bg-[#152c6e] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-colors shadow-sm"
               >
                 Download HD Image
               </button>
@@ -285,9 +371,9 @@ export default function VirtualTryOnContent() {
         <div className="mt-8 flex flex-col items-center gap-3">
           <button
             onClick={handleGenerate}
-            disabled={!userPhoto || !productImageUrl || isGenerating}
+            disabled={!userPhoto || !activeProductImageUrl || isGenerating}
             className={`px-12 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-sm flex items-center gap-3 ${
-              !userPhoto || !productImageUrl || isGenerating
+              !userPhoto || !activeProductImageUrl || isGenerating
                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
                 : 'bg-[#1e3b8a] hover:bg-[#152c6e] text-white shadow-[#1e3b8a]/20 hover:shadow-lg active:scale-95'
             }`}
@@ -295,7 +381,7 @@ export default function VirtualTryOnContent() {
             {isGenerating ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Generating…
+                Generating Fit…
               </>
             ) : (
               <>
@@ -305,12 +391,14 @@ export default function VirtualTryOnContent() {
             )}
           </button>
           {!userPhoto && (
-            <p className="text-xs text-slate-400">Upload your photo above to get started</p>
+            <p className="text-xs text-slate-400">
+              Upload your photo above or click &quot;Load Sample Look&quot; to test.
+            </p>
           )}
         </div>
 
-        {/* Tip */}
-        <div className="mt-10 bg-blue-50 border border-blue-100 rounded-2xl px-6 py-4 flex gap-4 max-w-2xl mx-auto">
+        {/* Tips card */}
+        <div className="mt-12 bg-blue-50 border border-blue-100 rounded-2xl px-6 py-4 flex gap-4 max-w-2xl mx-auto">
           <span className="text-xl shrink-0">💡</span>
           <div>
             <p className="text-sm font-bold text-blue-900 mb-1">Tips for best results</p>

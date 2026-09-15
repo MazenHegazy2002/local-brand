@@ -205,7 +205,7 @@ export default function Navbar() {
             {/* Start Selling CTA — shown to guests and buyers only */}
             {(!session || role === 'BUYER') && (
               <Link
-                href="/seller/apply"
+                href="/become-seller"
                 className="hidden lg:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-[hsl(var(--accent))] text-[hsl(var(--primary))] hover:opacity-90 transition-opacity shrink-0"
               >
                 <Store size={13} />

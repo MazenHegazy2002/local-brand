@@ -13,7 +13,7 @@ const FOOTER_LINKS = {
     { label: 'Brands', href: '/brands' },
   ],
   sell: [
-    { label: 'Start Selling', href: '/seller/apply' },
+    { label: 'Start Selling', href: '/become-seller' },
     { label: 'Seller Hub', href: '/seller-hub' },
     { label: 'Seller Terms', href: '/legal/seller-terms' },
     { label: 'Affiliate Program', href: '/affiliate' },

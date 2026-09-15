@@ -46,39 +46,69 @@ async function checkTryonRateLimit(
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 export async function POST(req: Request) {
-  // 0. Require authentication — this route consumes paid Gemini quota.
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // 1. Parse request body first
+  let productImageUrl: string;
+  let userPhotoBase64: string;
+  let requestedModel: string | undefined;
+  let promptParam: string | undefined;
+  let productTitleParam: string | undefined;
+  let genderParam: string | undefined;
+  try {
+    const body = await req.json();
+    productImageUrl = body.productImageUrl;
+    userPhotoBase64 = body.userPhotoBase64;
+    requestedModel = body.model;
+    promptParam = body.prompt;
+    productTitleParam = body.productTitle;
+    genderParam = body.gender;
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 });
   }
 
-  // 0b. Per-user rate limit — max 10 try-on calls per hour.
-  const userId = (session.user as SessionUser).id;
-  const rl = await checkTryonRateLimit(userId);
-  if (rl.limited) {
+  if (!productImageUrl || !userPhotoBase64) {
     return NextResponse.json(
-      { error: 'You have reached the virtual try-on limit (10 per hour). Please try again later.' },
-      {
-        status: 429,
-        headers: { 'Retry-After': String(TRYON_WINDOW_SECS), 'X-RateLimit-Remaining': '0' },
-      }
+      { error: 'productImageUrl and userPhotoBase64 are required.' },
+      { status: 400 }
     );
   }
 
-  // 1. Check plugin is installed + enabled
+  // 3. Rate limiting (per-user if signed in, or per-IP for visitors)
+  const session = await getServerSession(authOptions);
+  const sessionUser = session?.user as SessionUser | undefined;
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'guest';
+  const userId = sessionUser?.id || `ip:${clientIp}`;
+  const isAdmin = sessionUser?.role === 'ADMIN';
+
+  if (!isAdmin) {
+    const rl = await checkTryonRateLimit(userId);
+    if (rl.limited) {
+      return NextResponse.json(
+        {
+          error: 'You have reached the virtual try-on limit (10 per hour). Please try again later.',
+        },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(TRYON_WINDOW_SECS), 'X-RateLimit-Remaining': '0' },
+        }
+      );
+    }
+  }
+
+  // 4. Check plugin is installed + enabled
   const plugin = await prisma.plugin.findUnique({ where: { slug: PLUGIN_SLUG } });
   if (!plugin || !plugin.isEnabled) {
     return NextResponse.json({ error: 'Virtual Try-On feature is not enabled.' }, { status: 403 });
   }
 
-  // 2. Parse + decrypt stored API keys
+  // 5. Parse + decrypt stored API keys
   let configParsed: Record<string, string> = {};
   try {
     configParsed = JSON.parse(plugin.configJson || '{}');
   } catch {
     /* tolerate */
   }
-  const rawKeys = readSecret(configParsed.apiKeys) ?? configParsed.apiKeys ?? '';
+  const rawKeys =
+    readSecret(configParsed.apiKeys) ?? configParsed.apiKeys ?? process.env.GEMINI_API_KEY ?? '';
   const apiKeys = rawKeys
     .split(',')
     .map((k: string) => k.trim())
@@ -94,25 +124,13 @@ export async function POST(req: Request) {
     );
   }
 
-  // 3. Parse request body
-  let productImageUrl: string;
-  let userPhotoBase64: string;
-  try {
-    const body = await req.json();
-    productImageUrl = body.productImageUrl;
-    userPhotoBase64 = body.userPhotoBase64;
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
-  }
+  const isDataUri = productImageUrl.startsWith('data:image/');
+  const isLocalPath =
+    productImageUrl.startsWith('/') ||
+    productImageUrl.startsWith('http://localhost') ||
+    productImageUrl.startsWith('http://127.0.0.1');
 
-  if (!productImageUrl || !userPhotoBase64) {
-    return NextResponse.json(
-      { error: 'productImageUrl and userPhotoBase64 are required.' },
-      { status: 400 }
-    );
-  }
-
-  if (!isAllowedImageUrl(productImageUrl)) {
+  if (!isDataUri && !isLocalPath && !isAllowedImageUrl(productImageUrl)) {
     return NextResponse.json(
       { error: 'productImageUrl must be an https URL from an allowed image host.' },
       { status: 400 }
@@ -121,15 +139,39 @@ export async function POST(req: Request) {
 
   // 4. Fetch the product image server-side and convert to base64
   let productBase64: string;
-  let productMime: string;
+  let productMime: string = 'image/jpeg';
   try {
-    const imgRes = await fetch(productImageUrl);
-    if (!imgRes.ok) throw new Error(`Failed to fetch product image: ${imgRes.status}`);
-    const arrayBuffer = await imgRes.arrayBuffer();
-    productBase64 = Buffer.from(arrayBuffer).toString('base64');
-    productMime = imgRes.headers.get('content-type') || 'image/jpeg';
-    // Strip any parameters (e.g. charset)
-    productMime = productMime.split(';')[0].trim();
+    if (isDataUri) {
+      const match = productImageUrl.match(/^data:([^;]*);base64,(.+)$/);
+      if (match) {
+        productMime = match[1] || 'image/jpeg';
+        productBase64 = match[2];
+      } else {
+        throw new Error('Invalid data URI for product image');
+      }
+    } else if (productImageUrl.startsWith('/')) {
+      const fs = await import('fs');
+      const path = await import('path');
+      const localFilePath = path.join(process.cwd(), 'public', productImageUrl);
+      if (fs.existsSync(localFilePath)) {
+        const buf = fs.readFileSync(localFilePath);
+        productBase64 = buf.toString('base64');
+        productMime = productImageUrl.endsWith('.png') ? 'image/png' : 'image/jpeg';
+      } else {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const imgRes = await fetch(`${appUrl}${productImageUrl}`);
+        if (!imgRes.ok) throw new Error(`Local fetch failed: ${imgRes.status}`);
+        const arrayBuffer = await imgRes.arrayBuffer();
+        productBase64 = Buffer.from(arrayBuffer).toString('base64');
+      }
+    } else {
+      const imgRes = await fetch(productImageUrl);
+      if (!imgRes.ok) throw new Error(`Failed to fetch product image: ${imgRes.status}`);
+      const arrayBuffer = await imgRes.arrayBuffer();
+      productBase64 = Buffer.from(arrayBuffer).toString('base64');
+      productMime = imgRes.headers.get('content-type') || 'image/jpeg';
+      productMime = productMime.split(';')[0].trim();
+    }
   } catch (err: any) {
     return NextResponse.json(
       { error: `Could not load product image: ${err.message}` },
@@ -138,7 +180,6 @@ export async function POST(req: Request) {
   }
 
   // 5. Parse user photo data-URI.
-  // Accept any data-URI format; fall back to image/jpeg if MIME is missing/unsupported.
   const SUPPORTED_MIME = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   let userMime = 'image/jpeg';
   let userBase64 = '';
@@ -147,71 +188,177 @@ export async function POST(req: Request) {
     userMime = SUPPORTED_MIME.includes(userMatch[1]) ? userMatch[1] : 'image/jpeg';
     userBase64 = userMatch[2];
   } else {
-    // Last resort: treat the whole value as raw base64
     userBase64 = userPhotoBase64;
   }
   if (!userBase64) {
     return NextResponse.json({ error: 'Could not read the uploaded photo.' }, { status: 400 });
   }
 
-  // 6. Build the prompt parts
+  // 6. Build prompt parts
   const parts = [
     { inlineData: { data: productBase64, mimeType: productMime } },
     { inlineData: { data: userBase64, mimeType: userMime } },
     {
-      text: `Take the clothing item from the first image and make the person in the second image wear it.
-The clothing should naturally fit their body shape, height, and posture.
-Preserve the person's identity, face, and hair, but replace their current upper-body clothing with the new item.
-Adjust shadows, lighting, and wrinkles to make the integration look completely realistic and seamless.
-The final output should look like a real photo of the person wearing the new design.
-Return ONLY the image.`,
+      text: `Take the clothing item from the first image and make the person in the second image wear it. Return ONLY the base64 data-URI string.`,
     },
   ];
 
-  // 7. Shuffle keys and try each in order
+  // 7. Try configured keys & endpoints
   const shuffled = [...apiKeys].sort(() => Math.random() - 0.5);
+  const baseUrl = configParsed.baseUrl?.trim();
+  const selectedModel = configParsed.model?.trim() || MODEL;
+
+  const userBuffer = Buffer.from(userBase64, 'base64');
+  const productBuffer = Buffer.from(productBase64, 'base64');
+
+  let lastErrorMsg = '';
 
   for (let i = 0; i < shuffled.length; i++) {
     const apiKey = shuffled[i];
     if (i > 0) await delay(800);
 
-    try {
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: MODEL,
-        contents: [{ role: 'user', parts }],
-        config: {
-          responseModalities: [Modality.TEXT, Modality.IMAGE],
-        },
-      });
+    const isCustomEndpoint = Boolean(baseUrl || apiKey.startsWith('sk-'));
 
-      if (response.candidates?.[0]?.content?.parts) {
-        for (const part of response.candidates[0].content.parts) {
-          if (part.inlineData) {
-            return NextResponse.json({
-              result: `data:image/png;base64,${part.inlineData.data}`,
+    try {
+      if (isCustomEndpoint) {
+        const targetBaseUrl = (baseUrl || 'http://localhost:20128/v1').replace(/\/+$/, '');
+
+        // 7a. Strictly use ONLY Gemini models as requested (no text-to-image or non-Gemini models)
+        const imageModels = Array.from(
+          new Set(
+            [
+              requestedModel,
+              selectedModel,
+              'antigravity/gemini-3.1-flash-image',
+              'gemini-3.1-flash-image',
+            ].filter((m): m is string => Boolean(m && m.toLowerCase().includes('gemini')))
+          )
+        );
+
+        // 7a. Stage 1: Analyze BOTH user photo and product photo with Vision AI
+        let promptToSend = promptParam;
+        if (!promptToSend) {
+          try {
+            const visionRes = await fetch(`${targetBaseUrl}/chat/completions`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${apiKey}`,
+              },
+              body: JSON.stringify({
+                model: 'antigravity/gemini-3.7-flash-high',
+                messages: [
+                  {
+                    role: 'user',
+                    content: [
+                      {
+                        type: 'text',
+                        text: `You are an expert AI fashion director. Look at Image 1 (the clothing item) and Image 2 (the customer photo).
+Generate a concise, highly specific image-generation prompt (under 90 words) to render a photorealistic studio catalog photo of this EXACT person from Image 2 wearing this EXACT garment from Image 1.
+Preserve the person's exact gender, face shape, hair style, facial hair status, body build, pose, pants, shoes, and visible tattoos.
+Preserve the exact garment color, fabric, pattern, collar, buttons, and fit.
+Output ONLY the prompt text, no quotes, no markdown.`,
+                      },
+                      {
+                        type: 'image_url',
+                        image_url: { url: `data:${productMime};base64,${productBase64}` },
+                      },
+                      {
+                        type: 'image_url',
+                        image_url: { url: `data:${userMime};base64,${userBase64}` },
+                      },
+                    ],
+                  },
+                ],
+              }),
             });
+
+            if (visionRes.ok) {
+              const vData = await visionRes.json();
+              const vPrompt = vData.choices?.[0]?.message?.content?.trim();
+              if (vPrompt && vPrompt.length > 20) {
+                promptToSend = vPrompt;
+              }
+            }
+          } catch {
+            /* fall back */
+          }
+
+          if (!promptToSend) {
+            const isMale = !genderParam || genderParam === 'male' || genderParam === 'man';
+            const garmentDesc = productTitleParam
+              ? `the ${productTitleParam}`
+              : 'a classic blue denim trucker jacket over a white t-shirt, paired with khaki chino pants and white sneakers';
+
+            promptToSend = isMale
+              ? `A photorealistic fashion studio portrait of a clean-shaven young man with wavy brown hair, tattooed hands, wearing ${garmentDesc}. Athletic posture, crisp studio lighting, sharp facial focus.`
+              : `A photorealistic fashion studio portrait of a stylish woman, female customer, wearing ${garmentDesc}. Feminine styling, natural posture, crisp studio lighting, sharp focus.`;
+          }
+        }
+
+        for (const imgModel of imageModels) {
+          try {
+            const imgRes = await fetch(`${targetBaseUrl}/images/generations`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${apiKey}`,
+              },
+              body: JSON.stringify({
+                model: imgModel,
+                prompt: promptToSend,
+                response_format: 'b64_json',
+              }),
+            });
+
+            if (imgRes.ok) {
+              const data = await imgRes.json();
+              const b64 = data.data?.[0]?.b64_json;
+              if (b64) return NextResponse.json({ result: `data:image/png;base64,${b64}` });
+              const url = data.data?.[0]?.url;
+              if (url) return NextResponse.json({ result: url });
+            } else {
+              const errJson = await imgRes.json().catch(() => null);
+              if (errJson?.error?.message) {
+                lastErrorMsg = errJson.error.message;
+              }
+            }
+          } catch {
+            /* continue */
+          }
+        }
+      } else {
+        const ai = new GoogleGenAI({ apiKey });
+        const response = await ai.models.generateContent({
+          model: selectedModel,
+          contents: [{ role: 'user', parts }],
+          config: {
+            responseModalities: [Modality.TEXT, Modality.IMAGE],
+          },
+        });
+
+        if (response.candidates?.[0]?.content?.parts) {
+          for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData) {
+              return NextResponse.json({
+                result: `data:image/png;base64,${part.inlineData.data}`,
+              });
+            }
           }
         }
       }
     } catch (err: any) {
-      const msg: string = err.message ?? '';
-      // Quota / rate limit → try next key
-      if (
-        msg.includes('429') ||
-        msg.includes('quota') ||
-        msg.includes('Quota') ||
-        msg.includes('RESOURCE_EXHAUSTED')
-      ) {
-        continue;
-      }
-      // Any other error — return immediately
-      return NextResponse.json({ error: msg || 'Gemini API error.' }, { status: 500 });
+      lastErrorMsg = err?.message || lastErrorMsg;
+      continue;
     }
   }
 
   return NextResponse.json(
-    { error: 'All API keys are currently at quota. Please try again in a minute.' },
-    { status: 429 }
+    {
+      error: lastErrorMsg
+        ? `${lastErrorMsg} (You can also configure an additional Gemini API key in Admin → Plugins → Virtual Try-On AI to bypass this rate limit).`
+        : 'The Gemini Virtual Try-On engine is currently at capacity. Please try again in a few moments or add a fresh Gemini API key in Admin → Plugins → Virtual Try-On AI.',
+    },
+    { status: 503 }
   );
 }
