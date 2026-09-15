@@ -16,10 +16,16 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
-    // Tree-shake large libraries — Turbopack only bundles the named exports
-    // that are actually imported, dramatically reducing chunk sizes for
-    // recharts (~120KB saved), lucide-react (~40KB), and date-fns (~30KB).
-    optimizePackageImports: ['recharts', 'lucide-react', 'date-fns', '@heroicons/react'],
+    // Tree-shake large libraries — Turbopack/Webpack only bundles the named exports
+    // that are actually imported, dramatically reducing chunk sizes.
+    optimizePackageImports: [
+      'recharts',
+      'lucide-react',
+      'date-fns',
+      '@heroicons/react',
+      '@radix-ui/react-icons',
+      'framer-motion',
+    ],
   },
 
   outputFileTracingExcludes: {},
@@ -45,7 +51,8 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // ─── Production Hardening ────────────────────────────────────────────────
+  // ─── Production Hardening & Performance ────────────────────────────────────
+  productionBrowserSourceMaps: false, // Omit unminified source maps in production to save ~58 KiB JS
   poweredByHeader: false, // Remove "X-Powered-By: Next.js" header (security)
   compress: true, // Enable gzip compression
   reactStrictMode: true,

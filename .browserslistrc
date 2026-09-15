@@ -1,0 +1,6 @@
+# Modern evergreen browser target definitions for Next.js / SWC
+# Prevents injection of legacy ES5/ES6 polyfills and shims into production bundles
+defaults
+not IE 11
+not dead
+> 0.2%
