@@ -242,9 +242,10 @@ export async function POST(req: Request) {
         let promptToSend = promptParam;
         if (!promptToSend) {
           const chatModels = [
-            'gemini-2.5-flash',
+            'antigravity/gemini-2.5-flash',
             'antigravity/gemini-3.7-flash-high',
             'google/gemini-2.5-flash',
+            'openrouter/google/gemini-2.5-flash',
           ];
 
           for (const cModel of chatModels) {
