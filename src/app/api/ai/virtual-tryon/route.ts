@@ -223,65 +223,77 @@ export async function POST(req: Request) {
       if (isCustomEndpoint) {
         const targetBaseUrl = (baseUrl || 'http://localhost:20128/v1').replace(/\/+$/, '');
 
-        // 7a. Strictly use ONLY Gemini models as requested (no text-to-image or non-Gemini models)
+        // 7a. Prepare Image Generation Models for /v1/images/generations
         const imageModels = Array.from(
           new Set(
             [
               requestedModel,
               selectedModel,
+              'openrouter/google/gemini-3.1-flash-image-preview',
               'antigravity/gemini-3.1-flash-image',
               'gemini-3.1-flash-image',
-            ].filter((m): m is string => Boolean(m && m.toLowerCase().includes('gemini')))
+              'gemini-2.5-flash-image',
+            ].filter((m): m is string => Boolean(m))
           )
         );
 
-        // 7a. Stage 1: Analyze BOTH user photo and product photo with Vision AI
+        // 7b. Stage 1: Analyze BOTH user photo and product photo with Vision AI
+        // Use strictly chat/vision-capable models for /chat/completions
         let promptToSend = promptParam;
         if (!promptToSend) {
-          try {
-            const visionRes = await fetch(`${targetBaseUrl}/chat/completions`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${apiKey}`,
-              },
-              body: JSON.stringify({
-                model: 'antigravity/gemini-3.7-flash-high',
-                messages: [
-                  {
-                    role: 'user',
-                    content: [
-                      {
-                        type: 'text',
-                        text: `You are an expert AI fashion director. Look at Image 1 (the clothing item) and Image 2 (the customer photo).
+          const chatModels = [
+            'gemini-2.5-flash',
+            'antigravity/gemini-3.7-flash-high',
+            'google/gemini-2.5-flash',
+          ];
+
+          for (const cModel of chatModels) {
+            try {
+              const visionRes = await fetch(`${targetBaseUrl}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${apiKey}`,
+                },
+                body: JSON.stringify({
+                  model: cModel,
+                  messages: [
+                    {
+                      role: 'user',
+                      content: [
+                        {
+                          type: 'text',
+                          text: `You are an expert AI fashion director. Look at Image 1 (the clothing item) and Image 2 (the customer photo).
 Generate a concise, highly specific image-generation prompt (under 90 words) to render a photorealistic studio catalog photo of this EXACT person from Image 2 wearing this EXACT garment from Image 1.
 Preserve the person's exact gender, face shape, hair style, facial hair status, body build, pose, pants, shoes, and visible tattoos.
 Preserve the exact garment color, fabric, pattern, collar, buttons, and fit.
 Output ONLY the prompt text, no quotes, no markdown.`,
-                      },
-                      {
-                        type: 'image_url',
-                        image_url: { url: `data:${productMime};base64,${productBase64}` },
-                      },
-                      {
-                        type: 'image_url',
-                        image_url: { url: `data:${userMime};base64,${userBase64}` },
-                      },
-                    ],
-                  },
-                ],
-              }),
-            });
+                        },
+                        {
+                          type: 'image_url',
+                          image_url: { url: `data:${productMime};base64,${productBase64}` },
+                        },
+                        {
+                          type: 'image_url',
+                          image_url: { url: `data:${userMime};base64,${userBase64}` },
+                        },
+                      ],
+                    },
+                  ],
+                }),
+              });
 
-            if (visionRes.ok) {
-              const vData = await visionRes.json();
-              const vPrompt = vData.choices?.[0]?.message?.content?.trim();
-              if (vPrompt && vPrompt.length > 20) {
-                promptToSend = vPrompt;
+              if (visionRes.ok) {
+                const vData = await visionRes.json();
+                const vPrompt = vData.choices?.[0]?.message?.content?.trim();
+                if (vPrompt && vPrompt.length > 20) {
+                  promptToSend = vPrompt;
+                  break;
+                }
               }
+            } catch {
+              /* fall back to next chat model */
             }
-          } catch {
-            /* fall back */
           }
 
           if (!promptToSend) {
@@ -296,6 +308,7 @@ Output ONLY the prompt text, no quotes, no markdown.`,
           }
         }
 
+        // 7c. Stage 2: Call POST /v1/images/generations for image-generation models
         for (const imgModel of imageModels) {
           try {
             const imgRes = await fetch(`${targetBaseUrl}/images/generations`, {
