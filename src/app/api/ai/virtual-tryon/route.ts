@@ -22,7 +22,7 @@ import { isAllowedImageUrl } from '@/lib/allowed-image-hosts';
 import { SessionUser } from '@/types';
 
 const PLUGIN_SLUG = 'virtual-tryon';
-const MODEL = 'gemini-2.5-flash-image';
+const MODEL = 'antigravity/gemini-3.1-flash-image';
 
 // Rate limit: 10 virtual try-on calls per user per hour to control Gemini API spend.
 const TRYON_LIMIT = 10;
@@ -224,17 +224,15 @@ export async function POST(req: Request) {
         const targetBaseUrl = (baseUrl || 'http://localhost:20128/v1').replace(/\/+$/, '');
 
         // 7a. Prepare Image Generation Models for /v1/images/generations
+        const rawImageModels = [
+          requestedModel,
+          selectedModel,
+          'antigravity/gemini-3.1-flash-image',
+          'openrouter/google/gemini-3.1-flash-image-preview',
+        ].filter((m): m is string => Boolean(m));
+
         const imageModels = Array.from(
-          new Set(
-            [
-              requestedModel,
-              selectedModel,
-              'openrouter/google/gemini-3.1-flash-image-preview',
-              'antigravity/gemini-3.1-flash-image',
-              'gemini-3.1-flash-image',
-              'gemini-2.5-flash-image',
-            ].filter((m): m is string => Boolean(m))
-          )
+          new Set(rawImageModels.map(m => (!m.includes('/') ? `antigravity/${m}` : m)))
         );
 
         // 7b. Stage 1: Analyze BOTH user photo and product photo with Vision AI
