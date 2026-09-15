@@ -79,7 +79,7 @@ export default function Plugins() {
   const facebookPageId = process.env.NEXT_PUBLIC_FACEBOOK_PAGE_ID;
 
   // Social handles and support variables with realistic defaults
-  const whatsappPhone = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '201090123456';
+  const whatsappPhone = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '201020960757';
   const telegramUsername = process.env.NEXT_PUBLIC_TELEGRAM_USERNAME || 'BrandyEgypt';
   const instagramUsername = process.env.NEXT_PUBLIC_INSTAGRAM_USERNAME || 'brandy.egypt';
   const facebookUsername = process.env.NEXT_PUBLIC_FACEBOOK_USERNAME || 'brandy.egypt';

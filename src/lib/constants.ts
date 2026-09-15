@@ -100,8 +100,8 @@ export const MAX_IMAGES_PER_PRODUCT = 10;
 export const PLATFORM_NAME = process.env.NEXT_PUBLIC_SITE_NAME || 'Brandy';
 export const PLATFORM_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop';
 export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@brandyy.shop';
-export const CONTACT_PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE || '+201094379477';
-export const CONTACT_WHATSAPP = process.env.NEXT_PUBLIC_CONTACT_WHATSAPP || '+201094379477';
+export const CONTACT_PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE || '+20 10 20960757';
+export const CONTACT_WHATSAPP = process.env.NEXT_PUBLIC_CONTACT_WHATSAPP || '+20 10 20960757';
 
 // ============================================================
 // PAYMENT GATEWAYS
