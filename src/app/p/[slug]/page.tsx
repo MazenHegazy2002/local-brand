@@ -8,7 +8,7 @@
 // catalog defaults from `admin-settings-registry.ts`.
 export const dynamic = 'force-dynamic';
 
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { PageStatus } from '@/generated/client';
@@ -204,7 +204,14 @@ function CmsFaqBlock({ items }: any) {
 export default async function CmsPage({ params }: PageProps) {
   const { slug } = await params;
   const page = await loadPage(slug);
-  if (!page) notFound();
+  if (!page) {
+    if (slug === 'faq') redirect('/help/faq');
+    if (slug === 'privacy') redirect('/legal/privacy-policy');
+    if (slug === 'terms') redirect('/legal/seller-terms');
+    if (slug === 'how-it-works') redirect('/how-it-works');
+    if (slug === 'blog') redirect('/blog');
+    notFound();
+  }
 
   const reqHeaders = await headers();
   const lang = reqHeaders.get('x-lang') || 'en';
