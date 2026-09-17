@@ -163,7 +163,7 @@ export default function SellerSettingsPage() {
         setMessage({ type: 'error', text: data.message || 'Upload failed' });
         return;
       }
-      if (data.url.startsWith('data:') && data.url.length > 700 * 1024) {
+      if (data.url.startsWith('data:') && data.url.length > 5 * 1024 * 1024) {
         setMessage({
           type: 'error',
           text: 'Logo is too large after compression. Pick a smaller image.',
@@ -265,161 +265,166 @@ export default function SellerSettingsPage() {
                   required
                 />
               </div>
-          <div className="card">
-            <h3 className="card-title mb-2">📍 Product Pickup & Warehouse Address</h3>
-            <p className="text-xs text-slate-500 mb-4">
-              Shipping couriers dispatch drivers to this address to collect orders for buyer delivery.
-            </p>
+              <div className="card">
+                <h3 className="card-title mb-2">📍 Product Pickup & Warehouse Address</h3>
+                <p className="text-xs text-slate-500 mb-4">
+                  Shipping couriers dispatch drivers to this address to collect orders for buyer
+                  delivery.
+                </p>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Pickup Governorate *
-                </label>
-                <select
-                  value={profile.governorate}
-                  onChange={e => setProfile({ ...profile, governorate: e.target.value })}
-                  className="input-field"
-                  required
-                >
-                  <option value="">Select Governorate</option>
-                  {GOVERNORATES.map(g => (
-                    <option key={g.value} value={g.en}>
-                      {g.en} ({g.ar})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Pickup City / Area *
-                </label>
-                <input
-                  type="text"
-                  value={profile.city}
-                  onChange={e => setProfile({ ...profile, city: e.target.value })}
-                  className="input-field"
-                  placeholder="e.g. Nasr City, Maadi, Dokki"
-                  required
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Detailed Street Address *
-                </label>
-                <input
-                  type="text"
-                  value={profile.pickupStreet}
-                  onChange={e => setProfile({ ...profile, pickupStreet: e.target.value })}
-                  className="input-field"
-                  placeholder="Street name, Building number, Floor & Flat number"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Building / Landmark (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={profile.pickupBuilding}
-                  onChange={e => setProfile({ ...profile, pickupBuilding: e.target.value })}
-                  className="input-field"
-                  placeholder="e.g. Near Ahly Club"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Pickup Contact Phone *
-                </label>
-                <input
-                  type="text"
-                  value={profile.pickupPhone}
-                  onChange={e => setProfile({ ...profile, pickupPhone: e.target.value })}
-                  className="input-field"
-                  placeholder="+2010XXXXXXXX"
-                  required
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Pickup Contact Person Name (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={profile.pickupContactName}
-                  onChange={e => setProfile({ ...profile, pickupContactName: e.target.value })}
-                  className="input-field"
-                  placeholder="Name of person responsible for handover"
-                />
-              </div>
-
-              {/* Geolocation & Map Pinning */}
-              <div className="col-span-2 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <label className="block text-xs font-bold text-slate-700">
-                    🗺️ Warehouse Geolocation Coordinates (Latitude, Longitude)
-                  </label>
-                  <button
-                    type="button"
-                    disabled={gettingLocation}
-                    onClick={() => {
-                      if (!navigator.geolocation) {
-                        alert('Geolocation is not supported by your browser.');
-                        return;
-                      }
-                      setGettingLocation(true);
-                      navigator.geolocation.getCurrentPosition(
-                        pos => {
-                          setGettingLocation(false);
-                          setProfile(p => ({
-                            ...p,
-                            pickupGeo: `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`,
-                          }));
-                        },
-                        err => {
-                          setGettingLocation(false);
-                          alert('Could not detect location: ' + err.message);
-                        },
-                        { enableHighAccuracy: true }
-                      );
-                    }}
-                    className="px-3 py-1.5 bg-[#1e3b8a] text-white text-xs font-bold rounded-lg hover:bg-[#152c6e] disabled:opacity-50 transition-colors"
-                  >
-                    {gettingLocation ? 'Detecting GPS...' : '📍 Detect Live GPS Location'}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[11px] font-medium text-slate-500 mb-1">Coordinates (Lat, Long)</label>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">
+                      Pickup Governorate *
+                    </label>
+                    <select
+                      value={profile.governorate}
+                      onChange={e => setProfile({ ...profile, governorate: e.target.value })}
+                      className="input-field"
+                      required
+                    >
+                      <option value="">Select Governorate</option>
+                      {GOVERNORATES.map(g => (
+                        <option key={g.value} value={g.en}>
+                          {g.en} ({g.ar})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">
+                      Pickup City / Area *
+                    </label>
                     <input
                       type="text"
-                      value={profile.pickupGeo}
-                      onChange={e => setProfile({ ...profile, pickupGeo: e.target.value })}
-                      className="input-field font-mono text-xs"
-                      placeholder="e.g. 30.067807, 31.518141"
+                      value={profile.city}
+                      onChange={e => setProfile({ ...profile, city: e.target.value })}
+                      className="input-field"
+                      placeholder="e.g. Nasr City, Maadi, Dokki"
+                      required
                     />
                   </div>
-                  <div>
-                    <label className="block text-[11px] font-medium text-slate-500 mb-1">District / Zone</label>
+
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-slate-500 mb-1">
+                      Detailed Street Address *
+                    </label>
                     <input
                       type="text"
-                      value={profile.pickupZone}
-                      onChange={e => setProfile({ ...profile, pickupZone: e.target.value })}
-                      className="input-field text-xs"
-                      placeholder="e.g. قسم اول القاهرة الجديدة"
+                      value={profile.pickupStreet}
+                      onChange={e => setProfile({ ...profile, pickupStreet: e.target.value })}
+                      className="input-field"
+                      placeholder="Street name, Building number, Floor & Flat number"
+                      required
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">
+                      Building / Landmark (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={profile.pickupBuilding}
+                      onChange={e => setProfile({ ...profile, pickupBuilding: e.target.value })}
+                      className="input-field"
+                      placeholder="e.g. Near Ahly Club"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">
+                      Pickup Contact Phone *
+                    </label>
+                    <input
+                      type="text"
+                      value={profile.pickupPhone}
+                      onChange={e => setProfile({ ...profile, pickupPhone: e.target.value })}
+                      className="input-field"
+                      placeholder="+2010XXXXXXXX"
+                      required
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-slate-500 mb-1">
+                      Pickup Contact Person Name (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={profile.pickupContactName}
+                      onChange={e => setProfile({ ...profile, pickupContactName: e.target.value })}
+                      className="input-field"
+                      placeholder="Name of person responsible for handover"
+                    />
+                  </div>
+
+                  {/* Geolocation & Map Pinning */}
+                  <div className="col-span-2 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <label className="block text-xs font-bold text-slate-700">
+                        🗺️ Warehouse Geolocation Coordinates (Latitude, Longitude)
+                      </label>
+                      <button
+                        type="button"
+                        disabled={gettingLocation}
+                        onClick={() => {
+                          if (!navigator.geolocation) {
+                            alert('Geolocation is not supported by your browser.');
+                            return;
+                          }
+                          setGettingLocation(true);
+                          navigator.geolocation.getCurrentPosition(
+                            pos => {
+                              setGettingLocation(false);
+                              setProfile(p => ({
+                                ...p,
+                                pickupGeo: `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`,
+                              }));
+                            },
+                            err => {
+                              setGettingLocation(false);
+                              alert('Could not detect location: ' + err.message);
+                            },
+                            { enableHighAccuracy: true }
+                          );
+                        }}
+                        className="px-3 py-1.5 bg-[#1e3b8a] text-white text-xs font-bold rounded-lg hover:bg-[#152c6e] disabled:opacity-50 transition-colors"
+                      >
+                        {gettingLocation ? 'Detecting GPS...' : '📍 Detect Live GPS Location'}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-500 mb-1">
+                          Coordinates (Lat, Long)
+                        </label>
+                        <input
+                          type="text"
+                          value={profile.pickupGeo}
+                          onChange={e => setProfile({ ...profile, pickupGeo: e.target.value })}
+                          className="input-field font-mono text-xs"
+                          placeholder="e.g. 30.067807, 31.518141"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-medium text-slate-500 mb-1">
+                          District / Zone
+                        </label>
+                        <input
+                          type="text"
+                          value={profile.pickupZone}
+                          onChange={e => setProfile({ ...profile, pickupZone: e.target.value })}
+                          className="input-field text-xs"
+                          placeholder="e.g. قسم اول القاهرة الجديدة"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
               <div className="col-span-2">
                 <label className="block text-xs font-medium text-slate-500 mb-1">
                   Store Description

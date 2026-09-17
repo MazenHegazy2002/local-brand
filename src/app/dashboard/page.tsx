@@ -1409,7 +1409,7 @@ function SettingsTab({
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const d = await res.json();
       if (!res.ok || !d.url) throw new Error(d.message || 'Upload failed');
-      if (d.url.startsWith('data:') && d.url.length > 700 * 1024) {
+      if (d.url.startsWith('data:') && d.url.length > 5 * 1024 * 1024) {
         throw new Error('Avatar is too large after compression. Pick a smaller image.');
       }
       setAvatar(d.url);

@@ -354,10 +354,8 @@ export default function SellerHub() {
       // Hard guard: if the server returned a base64 data URL that's still
       // too big to be embedded in a server-action payload, refuse the
       // upload with a clear message instead of crashing the next render.
-      if (data.url.startsWith('data:') && data.url.length > 700 * 1024) {
-        throw new Error(
-          'Image is too large after compression. Please pick a smaller photo, or ask the platform admin to enable Vercel Blob / Cloudinary so images can be hosted externally.'
-        );
+      if (data.url.startsWith('data:') && data.url.length > 5 * 1024 * 1024) {
+        throw new Error('Image is too large after compression. Please pick a smaller photo.');
       }
 
       // Swap the local preview for the uploaded URL.
@@ -2812,7 +2810,7 @@ function SettingsTab({ data }: { data: DashboardData }) {
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const d = await res.json();
       if (!res.ok || !d.url) throw new Error(d.message || 'Upload failed');
-      if (d.url.startsWith('data:') && d.url.length > 700 * 1024) {
+      if (d.url.startsWith('data:') && d.url.length > 5 * 1024 * 1024) {
         throw new Error('Logo is too large after compression. Pick a smaller image.');
       }
       setForm(f => ({ ...f, logoUrl: d.url }));
@@ -3171,10 +3169,8 @@ function AddProductModal({
                     const res = await fetch('/api/upload', { method: 'POST', body: fd });
                     const d = await res.json();
                     if (!res.ok || !d.url) throw new Error(d.message || 'Upload failed');
-                    if (d.url.startsWith('data:') && d.url.length > 700 * 1024) {
-                      throw new Error(
-                        'Image too large. Pick a smaller photo or enable cloud hosting.'
-                      );
+                    if (d.url.startsWith('data:') && d.url.length > 5 * 1024 * 1024) {
+                      throw new Error('Image too large. Pick a smaller photo.');
                     }
                     setNewProduct({ ...newProduct, mainImage: d.url, mainImageUploading: false });
                   } catch (err) {

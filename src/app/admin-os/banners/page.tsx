@@ -95,7 +95,7 @@ export default function AdminBannersPage() {
         toast({ title: d.message || 'Banner upload failed', variant: 'error' });
         return;
       }
-      if (d.url.startsWith('data:') && d.url.length > 700 * 1024) {
+      if (d.url.startsWith('data:') && d.url.length > 5 * 1024 * 1024) {
         toast({
           title:
             'Banner is too large after compression. Pick a smaller image, or configure Vercel Blob / Cloudinary on the server.',

@@ -325,7 +325,7 @@ export default function EditProductPage() {
       if (!res.ok || !data.url) {
         throw new Error(data.message || 'Upload failed');
       }
-      if (data.url.startsWith('data:') && data.url.length > 700 * 1024) {
+      if (data.url.startsWith('data:') && data.url.length > 5 * 1024 * 1024) {
         throw new Error('Image is too large after compression. Pick a smaller photo.');
       }
 
