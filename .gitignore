@@ -72,3 +72,5 @@ nul
 /test-results
 .env*.local
 emails.log
+jarvis/
+/jarvis
