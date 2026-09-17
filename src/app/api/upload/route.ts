@@ -47,20 +47,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // In dev without a cloud storage provider, images are stored as base64
-    // data URLs directly in the database — enforce a 2 MB cap to prevent DB
-    // bloat from large dev uploads.
-    const isDevFallback =
-      process.env.NODE_ENV !== 'production' &&
-      !process.env.BLOB_READ_WRITE_TOKEN &&
-      !process.env.CLOUDINARY_CLOUD_NAME;
+    // When no cloud storage provider is configured, images fall back to base64
+    // data URLs — enforce a 5 MB cap to prevent network timeouts and DB bloat.
+    const isFallbackMode = !process.env.BLOB_READ_WRITE_TOKEN && !process.env.CLOUDINARY_CLOUD_NAME;
 
-    if (isDevFallback && file.size > 2 * 1024 * 1024) {
+    if (isFallbackMode && file.size > 5 * 1024 * 1024) {
       return NextResponse.json(
         {
           message:
-            'Dev mode: image must be ≤ 2 MB when no cloud storage is configured ' +
-            '(configure BLOB_READ_WRITE_TOKEN or Cloudinary to lift this limit).',
+            'Image must be ≤ 5 MB when no cloud storage (Vercel Blob / Cloudinary) is configured. ' +
+            'Please choose a smaller image or configure cloud storage credentials.',
         },
         { status: 400 }
       );

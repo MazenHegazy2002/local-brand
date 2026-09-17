@@ -52,6 +52,8 @@ export const CSRF_EXEMPT_PREFIXES = [
   '/api/admin/seed-catalog',
   '/api/admin/test-email',
   '/api/vitals', // sendBeacon cannot set custom headers
+  '/api/upload',
+  '/api/products/bulk-upload',
 ];
 
 export function isCsrfExempt(pathname: string): boolean {

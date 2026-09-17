@@ -24,17 +24,30 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
 
   try {
     const { getSetting } = await import('@/lib/admin-settings-registry');
+    const { readSecret } = await import('@/lib/secrets');
     provider = await getSetting<string>('EMAIL_PROVIDER').catch(() => 'resend');
-    emailFrom = await getSetting<string>('EMAIL_FROM').catch(() => 'noreply@brandyy.shop');
+    emailFrom =
+      (await getSetting<string>('EMAIL_FROM').catch(() => '')) ||
+      process.env.RESEND_FROM_ADDRESS ||
+      'noreply@brandyy.shop';
     emailFromName = await getSetting<string>('EMAIL_FROM_NAME').catch(() => 'Brandy');
-    resendKey =
-      (await getSetting<string>('RESEND_API_KEY').catch(() => '')) ||
-      process.env.RESEND_API_KEY ||
-      '';
+
+    const dbResendKeyRaw = await getSetting<string>('RESEND_API_KEY').catch(() => '');
+    const dbResendKey = dbResendKeyRaw ? readSecret(dbResendKeyRaw) || dbResendKeyRaw : '';
+    const envResendKey = process.env.RESEND_API_KEY || '';
+
+    const isValidKey = (k: string) => k.startsWith('re_') && !k.includes('re_your_key');
+    resendKey = isValidKey(dbResendKey)
+      ? dbResendKey
+      : isValidKey(envResendKey)
+        ? envResendKey
+        : '';
+
     smtpHost = await getSetting<string>('SMTP_HOST').catch(() => '');
     smtpPort = await getSetting<number>('SMTP_PORT').catch(() => 587);
     smtpUser = await getSetting<string>('SMTP_USER').catch(() => '');
-    smtpPass = await getSetting<string>('SMTP_PASS').catch(() => '');
+    const rawSmtpPass = await getSetting<string>('SMTP_PASS').catch(() => '');
+    smtpPass = rawSmtpPass ? readSecret(rawSmtpPass) || rawSmtpPass : '';
   } catch (err) {
     console.error('[email] failed to fetch admin settings, using env fallbacks:', err);
   }
