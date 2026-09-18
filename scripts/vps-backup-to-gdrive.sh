@@ -58,7 +58,7 @@ echo "📤 Uploading database backup to Google Drive..."
 if [ -f "${DB_DUMP_FILE}" ]; then
   if command -v rclone >/dev/null 2>&1 && rclone listremotes | grep -q "gdrive:"; then
     echo "Using rclone for Google Drive upload..."
-    rclone copy "${DB_DUMP_FILE}" "gdrive:${GDRIVE_FOLDER_ID}" && echo "✅ rclone uploaded ${DB_DUMP_FILE}" || true
+    rclone copy "${DB_DUMP_FILE}" "gdrive:" && echo "✅ rclone uploaded ${DB_DUMP_FILE}" || true
   else
     npx tsx scripts/backup-to-gdrive.ts "${DB_DUMP_FILE}" || \
     docker-compose exec -T -e GOOGLE_DRIVE_FOLDER_ID="${GDRIVE_FOLDER_ID}" app npx tsx scripts/backup-to-gdrive.ts "backups/$(basename "${DB_DUMP_FILE}")" || \
@@ -70,7 +70,7 @@ echo "📤 Uploading system archive to Google Drive..."
 if [ -f "${SYS_DUMP_FILE}" ]; then
   if command -v rclone >/dev/null 2>&1 && rclone listremotes | grep -q "gdrive:"; then
     echo "Using rclone for Google Drive upload..."
-    rclone copy "${SYS_DUMP_FILE}" "gdrive:${GDRIVE_FOLDER_ID}" && echo "✅ rclone uploaded ${SYS_DUMP_FILE}" || true
+    rclone copy "${SYS_DUMP_FILE}" "gdrive:" && echo "✅ rclone uploaded ${SYS_DUMP_FILE}" || true
   else
     npx tsx scripts/backup-to-gdrive.ts "${SYS_DUMP_FILE}" || \
     docker-compose exec -T -e GOOGLE_DRIVE_FOLDER_ID="${GDRIVE_FOLDER_ID}" app npx tsx scripts/backup-to-gdrive.ts "backups/$(basename "${SYS_DUMP_FILE}")" || \
