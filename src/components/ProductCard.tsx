@@ -8,88 +8,7 @@ import { Badge, PriceDisplay, RatingStars, useToast } from '@/components/ui';
 import type { Product, Tag, ProductVariant, ProductImage } from '@/types';
 import { useCartStore } from '@/lib/cartStore';
 import { useLanguage } from '@/providers/LanguageContext';
-
-// Comprehensive color map to convert variant color strings to hex/HSL color codes
-const COLOR_MAP: Record<string, string> = {
-  black: '#0f172a',
-  white: '#f8fafc',
-  red: '#dc2626',
-  blue: '#2563eb',
-  green: '#16a34a',
-  yellow: '#eab308',
-  pink: '#db2777',
-  purple: '#9333ea',
-  orange: '#ea580c',
-  gray: '#64748b',
-  grey: '#64748b',
-  brown: '#78350f',
-  beige: '#f5f5dc',
-  navy: '#1e3a8a',
-  maroon: '#7f1d1d',
-  teal: '#0d9488',
-  gold: '#d97706',
-  silver: '#cbd5e1',
-  lavender: '#e9d5ff',
-  olive: '#808000',
-  cream: '#fef3c7',
-  charcoal: '#334155',
-  indigo: '#4f46e5',
-  violet: '#7c3aed',
-  khaki: '#f0e68c',
-  cyan: '#0891b2',
-  magenta: '#c026d3',
-  turquoise: '#06b6d4',
-  mustard: '#ca8a04',
-  burgundy: '#881337',
-  plum: '#4a0e4e',
-  mint: '#6ee7b7',
-  sky: '#38bdf8',
-  peach: '#ffebd2',
-  coral: '#f87171',
-  bronze: '#cd7f32',
-  copper: '#b87333',
-  lilac: '#d8b4fe',
-  apricot: '#ffb7c5',
-  amber: '#f59e0b',
-  emerald: '#10b981',
-  sapphire: '#1d4ed8',
-  rust: '#b45309',
-  chocolate: '#4a3728',
-  sand: '#f59e0b',
-  camel: '#c2b280',
-  tan: '#d2b48c',
-  terracotta: '#c35237',
-  denim: '#3b82f6',
-  mauve: '#e0b0ff',
-  sage: '#9caf88',
-  taupe: '#483c32',
-};
-
-// Generates background color or split-color linear gradients for swatches
-const getSwatchBackground = (colorName: string): string => {
-  if (!colorName) return '#94a3b8';
-  const name = colorName.toLowerCase().trim();
-
-  // Direct match
-  if (COLOR_MAP[name]) return COLOR_MAP[name];
-
-  // Check if name contains any color key (e.g. "sterling silver" -> "silver", "18k gold" -> "gold")
-  for (const [key, val] of Object.entries(COLOR_MAP)) {
-    if (name.includes(key)) return val;
-  }
-
-  // Multi-color split
-  if (name.includes('/') || name.includes('-')) {
-    const parts = name.split(/[\/-]/).map(p => p.trim());
-    if (parts.length >= 2) {
-      const color1 = getSwatchBackground(parts[0]);
-      const color2 = getSwatchBackground(parts[1]);
-      return `linear-gradient(135deg, ${color1} 50%, ${color2} 50%)`;
-    }
-  }
-
-  return '#94a3b8';
-};
+import { COLOR_MAP, getSwatchBackground, getSwatchStyle } from '@/lib/colors';
 
 type LegacyProduct = {
   id: number | string;
@@ -460,14 +379,7 @@ export default function ProductCard({
                         ? 'border-[#1e3b8a] ring-2 ring-[#1e3b8a] ring-offset-2 scale-105'
                         : 'border-slate-300/90 dark:border-slate-600 hover:border-slate-400'
                     }`}
-                    style={{
-                      backgroundColor:
-                        bgStyle.startsWith('#') || bgStyle.startsWith('hsl') ? bgStyle : undefined,
-                      background:
-                        !bgStyle.startsWith('#') && !bgStyle.startsWith('hsl')
-                          ? bgStyle
-                          : undefined,
-                    }}
+                    style={getSwatchStyle(colorName)}
                     aria-label={`Select ${colorName} color`}
                     aria-pressed={isSelected}
                   />

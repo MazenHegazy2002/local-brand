@@ -33,35 +33,11 @@ export interface NewRegistrationNotificationParams {
   notes?: string;
 }
 
-export const DEFAULT_ADMIN_EMAILS = ['mazenhegazy6@gmail.com', 'mazenheg168@gmail.com'];
+export const DEFAULT_ADMIN_EMAILS = ['mazenhegazy6@gmail.com'];
 
 export async function getAdminRecipientEmails(): Promise<string[]> {
-  const recipients = new Set<string>(DEFAULT_ADMIN_EMAILS);
-
-  try {
-    const customAdminEmail = await getSetting<string>('ADMIN_NOTIFICATION_EMAIL').catch(() => '');
-    if (customAdminEmail && customAdminEmail.includes('@')) {
-      recipients.add(customAdminEmail.trim().toLowerCase());
-    }
-  } catch {
-    /* ignore */
-  }
-
-  try {
-    const adminUsers = await prisma.user.findMany({
-      where: { role: 'ADMIN', deletedAt: null },
-      select: { email: true },
-    });
-    for (const a of adminUsers) {
-      if (a.email && a.email.includes('@')) {
-        recipients.add(a.email.trim().toLowerCase());
-      }
-    }
-  } catch {
-    /* ignore */
-  }
-
-  return Array.from(recipients);
+  // Alerts strictly sent to mazenhegazy6@gmail.com only
+  return ['mazenhegazy6@gmail.com'];
 }
 
 export function generateAdminRegistrationEmailHtml(
