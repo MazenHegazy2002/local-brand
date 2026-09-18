@@ -55,7 +55,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
     const fs = await import('fs');
     const path = await import('path');
-    const workspaceRoot = 'c:/Users/Mazen/Desktop/Apps Store/Local brand';
+    const workspaceRoot = process.cwd();
     const logPath = path.join(workspaceRoot, 'emails.log');
     const timestamp = new Date().toISOString();
     const logEntry = `[${timestamp}] TO: ${to}\nSUBJECT: ${subject}\nHTML:\n${html}\n${'='.repeat(80)}\n\n`;

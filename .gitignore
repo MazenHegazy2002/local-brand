@@ -76,3 +76,5 @@ jarvis/
 /jarvis
 .vscode/
 client_secret*.json
+backups/
+*.sql.gz
