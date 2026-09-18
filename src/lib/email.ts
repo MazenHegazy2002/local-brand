@@ -26,10 +26,9 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     const { getSetting } = await import('@/lib/admin-settings-registry');
     const { readSecret } = await import('@/lib/secrets');
     provider = await getSetting<string>('EMAIL_PROVIDER').catch(() => 'resend');
-    emailFrom =
-      (await getSetting<string>('EMAIL_FROM').catch(() => '')) ||
-      process.env.RESEND_FROM_ADDRESS ||
-      'noreply@brandyy.shop';
+    const rawEmailFrom = await getSetting<string>('EMAIL_FROM').catch(() => '');
+    const validFrom = rawEmailFrom && !rawEmailFrom.includes('brandy.com') ? rawEmailFrom : '';
+    emailFrom = validFrom || process.env.RESEND_FROM_ADDRESS || 'noreply@brandyy.shop';
     emailFromName = await getSetting<string>('EMAIL_FROM_NAME').catch(() => 'Brandy');
 
     const dbResendKeyRaw = await getSetting<string>('RESEND_API_KEY').catch(() => '');
@@ -100,16 +99,17 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       const { Resend } = await import('resend');
       const resend = new Resend(resendKey);
       const fromAddress = `"${emailFromName}" <${emailFrom}>`;
-      const { error } = await resend.emails.send({
+      const { data, error } = await resend.emails.send({
         from: fromAddress,
         to,
         subject,
         html,
       });
       if (error) {
-        console.error('[email] Resend rejected the message:', error);
+        console.error('[email] Resend rejected the message:', JSON.stringify(error));
         return false;
       }
+      console.log('[email] Resend successfully sent email. ID:', data?.id);
       return true;
     } catch (err) {
       console.error('[email] Failed to send via Resend:', err);

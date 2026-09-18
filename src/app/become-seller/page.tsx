@@ -46,6 +46,7 @@ export default function BecomeSellerPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<Step>('form');
+  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
 
   useEffect(() => {
     try {
@@ -150,6 +151,34 @@ export default function BecomeSellerPage() {
                 Seller Hub!
               </li>
             </ol>
+
+            <div className="pt-3 border-t border-amber-200/60 flex items-center justify-between text-xs">
+              <span className="text-amber-900">Didn&apos;t get the verification link?</span>
+              <button
+                type="button"
+                onClick={async () => {
+                  setResendStatus('sending');
+                  try {
+                    await fetch('/api/auth/resend-verification', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email }),
+                    });
+                    setResendStatus('sent');
+                  } catch {
+                    setResendStatus('idle');
+                  }
+                }}
+                disabled={resendStatus !== 'idle'}
+                className="font-bold text-[hsl(var(--primary))] hover:underline disabled:opacity-60"
+              >
+                {resendStatus === 'sending'
+                  ? 'Sending...'
+                  : resendStatus === 'sent'
+                    ? '✓ Email Sent!'
+                    : 'Resend Email'}
+              </button>
+            </div>
           </div>
 
           <Link

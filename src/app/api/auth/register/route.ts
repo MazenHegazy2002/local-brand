@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
       data: { email, token, expires },
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop';
     const verifyUrl = `${appUrl}/api/auth/verify-email?token=${token}`;
 
     // Send email verification link

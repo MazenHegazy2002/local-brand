@@ -443,7 +443,7 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     category: 'contact',
     type: 'text',
     label: 'Public contact email',
-    defaultValue: 'support@brandy.com',
+    defaultValue: 'support@brandyy.shop',
     exposeToClient: true,
   },
   {
@@ -831,7 +831,7 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     category: 'email',
     type: 'text',
     label: 'From address',
-    defaultValue: 'noreply@brandy.com',
+    defaultValue: 'noreply@brandyy.shop',
   },
   {
     key: 'EMAIL_FROM_NAME',
@@ -845,7 +845,7 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     category: 'email',
     type: 'text',
     label: 'Reply-To address',
-    defaultValue: 'support@brandy.com',
+    defaultValue: 'support@brandyy.shop',
   },
   {
     key: 'ADMIN_NOTIFICATION_EMAIL',

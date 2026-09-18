@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       data: { email, token, expires },
     });
 
-    const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/verify-email?token=${token}`;
+    const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop'}/api/auth/verify-email?token=${token}`;
 
     await sendEmail({
       to: email,
