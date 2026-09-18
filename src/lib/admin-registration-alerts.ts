@@ -177,6 +177,11 @@ export function generateAdminRegistrationEmailHtml(
                 </tr>`
               : ''
           }
+          ${
+            params.affiliateCode
+              ? `<tr><td style="padding: 4px 0; color: #78350f; font-weight: 600;">Referred By:</td><td style="padding: 4px 0; color: #451a03; font-weight: 700;">🏷️ ${params.affiliateCode}</td></tr>`
+              : ''
+          }
         </table>
       </div>
       `
@@ -184,7 +189,7 @@ export function generateAdminRegistrationEmailHtml(
       }
 
       ${
-        params.affiliateCode || params.whatsapp
+        params.type === 'AFFILIATE' && (params.affiliateCode || params.whatsapp)
           ? `
       <!-- Affiliate Details -->
       <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px 16px; margin-bottom: 24px;">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import PasswordStrength from '@/components/PasswordStrength';
 
@@ -42,9 +42,31 @@ export default function BecomeSellerPage() {
   const [instagramUrl, setInstagramUrl] = useState('');
   const [facebookUrl, setFacebookUrl] = useState('');
   const [tiktokUrl, setTiktokUrl] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<Step>('form');
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const refParam = params.get('ref') || params.get('code') || params.get('promo');
+      if (refParam) {
+        setReferralCode(refParam.toUpperCase().replace(/[^A-Z0-9_-]/g, ''));
+        return;
+      }
+      const match = document.cookie.match(/(?:^|;\s*)brandy_ref=([^;]+)/);
+      if (match && match[1]) {
+        setReferralCode(
+          decodeURIComponent(match[1])
+            .toUpperCase()
+            .replace(/[^A-Z0-9_-]/g, '')
+        );
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +101,7 @@ export default function BecomeSellerPage() {
           instagramUrl: instagramUrl || undefined,
           facebookUrl: facebookUrl || undefined,
           tiktokUrl: tiktokUrl || undefined,
+          referralCode: referralCode.trim() ? referralCode.trim().toUpperCase() : undefined,
         }),
       });
 
@@ -421,6 +444,33 @@ export default function BecomeSellerPage() {
                       className="px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-xs focus:outline-none focus:border-[hsl(var(--primary))] bg-white"
                     />
                   </div>
+                </div>
+
+                {/* Referral / Promo Code */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Referral / Promo Code{' '}
+                    <span className="text-gray-400 font-normal">(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="e.g. PARTNER10 or affiliate code"
+                      value={referralCode}
+                      onChange={e =>
+                        setReferralCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))
+                      }
+                      maxLength={30}
+                      className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white uppercase tracking-wider font-mono"
+                    />
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm select-none pointer-events-none">
+                      🏷️
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Were you referred by an affiliate or partner? Enter their promo/referral code
+                    here.
+                  </p>
                 </div>
 
                 {/* Submit Button */}

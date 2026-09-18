@@ -42,6 +42,31 @@ export async function POST(req: NextRequest) {
     const tiktokUrl: string = (body.tiktokUrl as string | undefined)?.trim() || '';
     const logoUrl: string = (body.logoUrl as string | undefined)?.trim() || '';
 
+    // Check if referral/promo code was provided or present in cookies
+    const candidateCode =
+      (body.referralCode as string | undefined)?.trim() ||
+      req.cookies.get('brandy_ref')?.value?.trim();
+
+    let referredBySlug: string | null = null;
+    if (candidateCode) {
+      const affiliate = await prisma.affiliate.findFirst({
+        where: {
+          OR: [
+            { promoCode: candidateCode.toUpperCase() },
+            { referralSlug: candidateCode.toUpperCase() },
+          ],
+          status: 'ACTIVE',
+        },
+        select: { referralSlug: true },
+      });
+      if (affiliate) {
+        referredBySlug = affiliate.referralSlug;
+      } else {
+        // Fallback: store the provided code directly as referredBySlug
+        referredBySlug = candidateCode.toUpperCase();
+      }
+    }
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -62,6 +87,7 @@ export async function POST(req: NextRequest) {
         passwordHash: hashedPassword,
         role: userRole,
         phone: phone || null,
+        referredBySlug,
       },
     });
 
@@ -140,6 +166,7 @@ export async function POST(req: NextRequest) {
       instagramUrl: userRole === 'SELLER' ? instagramUrl : undefined,
       tiktokUrl: userRole === 'SELLER' ? tiktokUrl : undefined,
       logoUrl: userRole === 'SELLER' ? logoUrl : undefined,
+      affiliateCode: referredBySlug || candidateCode || undefined,
     }).catch(err => console.error('[register] Admin notification error:', err));
 
     return NextResponse.json(
