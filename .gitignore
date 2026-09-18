@@ -76,6 +76,10 @@ jarvis/
 /jarvis
 .vscode/
 client_secret*.json
+*service*account*.json
+medical-lms*.json
+gdrive-credentials.json
+google-service-account.json
 backups/
 *.sql.gz
 public/tryon/
