@@ -10,8 +10,21 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to an error reporting service
     console.error(error);
+    try {
+      fetch('/api/alerts/error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: error?.message || 'Unknown client error',
+          stack: error?.stack,
+          path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+          context: error?.digest ? `Digest: ${error.digest}` : undefined,
+        }),
+      }).catch(() => {});
+    } catch {
+      // ignore
+    }
   }, [error]);
 
   return (
@@ -36,8 +49,8 @@ export default function Error({
         Something went wrong!
       </h2>
       <p className="mb-8 max-w-md text-muted-foreground">
-        We apologize for the inconvenience. An unexpected error occurred. 
-        Our team has been notified and we're working to fix it.
+        We apologize for the inconvenience. An unexpected error occurred. Our team has been notified
+        and we're working to fix it.
       </p>
       <div className="flex gap-4">
         <button

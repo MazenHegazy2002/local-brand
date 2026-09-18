@@ -467,6 +467,30 @@ export async function createOrderForUser(
             html: m.generateOrderConfirmationEmail(orderWithItems, null),
           });
         }
+
+        // Notify Admins of the new order
+        try {
+          const { notifyAdminNewOrder } = await import('@/lib/admin-registration-alerts');
+          const customerName = resolvedAddress.fullName || 'Customer';
+          const customerEmail = userId
+            ? (await prisma.user.findUnique({ where: { id: userId }, select: { email: true } }))
+                ?.email ||
+              guestEmail ||
+              'Unknown'
+            : guestEmail || 'Guest';
+
+          await notifyAdminNewOrder({
+            orderId: order.id,
+            totalAmount: order.totalAmount,
+            paymentMethod: order.paymentMethod,
+            customerName,
+            customerEmail,
+            itemCount: orderWithItems.items?.length || 0,
+            shippingAddress: `${resolvedAddress.street || ''}, ${resolvedAddress.city || ''}`,
+          });
+        } catch (adminAlertErr) {
+          console.error('Failed to notify admin of new order:', adminAlertErr);
+        }
       } catch (err) {
         console.error('Order confirmation email failed:', err);
       }
@@ -489,6 +513,20 @@ export async function createOrderForUser(
   } catch (error: unknown) {
     const err = error as Error;
     console.error('createOrderForUser error:', err);
+
+    // Notify admins of order creation failure
+    try {
+      const { notifyAdminError } = await import('@/lib/admin-registration-alerts');
+      void notifyAdminError({
+        message: `Order Creation Failed: ${err.message}`,
+        stack: err.stack,
+        path: 'createOrderForUser',
+        userId: userId || undefined,
+      });
+    } catch {
+      // ignore
+    }
+
     return { error: err.message || 'Failed to create order' };
   }
 }

@@ -33,7 +33,36 @@ export interface NewRegistrationNotificationParams {
   notes?: string;
 }
 
-const PRIMARY_ADMIN_EMAIL = 'mazenhegazy6@gmail.com';
+export const DEFAULT_ADMIN_EMAILS = ['mazenhegazy6@gmail.com', 'mazenheg168@gmail.com'];
+
+export async function getAdminRecipientEmails(): Promise<string[]> {
+  const recipients = new Set<string>(DEFAULT_ADMIN_EMAILS);
+
+  try {
+    const customAdminEmail = await getSetting<string>('ADMIN_NOTIFICATION_EMAIL').catch(() => '');
+    if (customAdminEmail && customAdminEmail.includes('@')) {
+      recipients.add(customAdminEmail.trim().toLowerCase());
+    }
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    const adminUsers = await prisma.user.findMany({
+      where: { role: 'ADMIN', deletedAt: null },
+      select: { email: true },
+    });
+    for (const a of adminUsers) {
+      if (a.email && a.email.includes('@')) {
+        recipients.add(a.email.trim().toLowerCase());
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
+  return Array.from(recipients);
+}
 
 export function generateAdminRegistrationEmailHtml(
   params: NewRegistrationNotificationParams,
@@ -234,7 +263,7 @@ export function generateAdminRegistrationEmailHtml(
 
     <!-- Footer -->
     <div style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 18px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
-      <p style="margin: 0;">This is an automated administrative alert sent to ${PRIMARY_ADMIN_EMAIL}.</p>
+      <p style="margin: 0;">This is an automated administrative alert sent to Brandy Administrators.</p>
       <p style="margin: 4px 0 0;">© 2026 Brandy. All rights reserved.</p>
     </div>
 
@@ -258,20 +287,10 @@ export async function notifyAdminNewRegistration(
     const { subject, html } = generateAdminRegistrationEmailHtml(params, appUrl);
 
     // List of admin recipient emails
-    const recipientEmails = new Set<string>([PRIMARY_ADMIN_EMAIL]);
+    const recipientEmails = await getAdminRecipientEmails();
 
-    // Also check if custom notification email is configured in admin settings
-    try {
-      const customAdminEmail = await getSetting<string>('ADMIN_NOTIFICATION_EMAIL').catch(() => '');
-      if (customAdminEmail && customAdminEmail.includes('@')) {
-        recipientEmails.add(customAdminEmail.trim().toLowerCase());
-      }
-    } catch {
-      /* ignore */
-    }
-
-    // 1. Send Email Notification to mazenhegazy6@gmail.com (and any secondary admin)
-    const emailPromises = Array.from(recipientEmails).map(to =>
+    // 1. Send Email Notification to all admins
+    const emailPromises = recipientEmails.map(to =>
       sendEmail({
         to,
         subject,
@@ -322,5 +341,183 @@ export async function notifyAdminNewRegistration(
     await Promise.allSettled([...emailPromises, adminNotificationPromise]);
   } catch (err) {
     console.error('[admin-registration-alerts] Error notifying admin of new registration:', err);
+  }
+}
+
+// ============================================================================
+// NEW ORDER ADMIN ALERT
+// ============================================================================
+
+export interface NewOrderAlertParams {
+  orderId: string;
+  totalAmount: number;
+  paymentMethod: string;
+  customerName: string;
+  customerEmail: string;
+  itemCount: number;
+  itemsSummary?: string;
+  shippingAddress?: string;
+}
+
+export function generateAdminNewOrderEmailHtml(
+  params: NewOrderAlertParams,
+  appUrl: string
+): { subject: string; html: string } {
+  const shortId = params.orderId.slice(0, 8);
+  const subject = `🛍️ New Order #${shortId} placed (${params.totalAmount.toLocaleString()} EGP)`;
+  const nowStr = new Date().toLocaleString('en-US', {
+    timeZone: 'Africa/Cairo',
+    dateStyle: 'full',
+    timeStyle: 'medium',
+  });
+  const adminLink = `${appUrl}/admin-os?tab=orders`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; padding: 24px; margin: 0;">
+  <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);">
+    <div style="background: #1e3b8a; color: #ffffff; padding: 28px 24px; text-align: center;">
+      <h1 style="margin: 0; font-size: 22px; font-weight: 800;">🛍️ NEW ORDER RECEIVED!</h1>
+      <p style="margin: 6px 0 0; opacity: 0.9; font-size: 13px;">Brandy Order Processing System</p>
+    </div>
+    <div style="padding: 24px;">
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: center;">
+        <span style="font-size: 13px; color: #166534; font-weight: 600; display: block;">Order Total</span>
+        <strong style="font-size: 26px; color: #15803d; font-weight: 900;">${params.totalAmount.toLocaleString()} EGP</strong>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px;">
+        <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600; width: 35%;">Order ID:</td><td style="padding: 8px 0; color: #0f172a; font-family: monospace; font-weight: 700;">#${params.orderId}</td></tr>
+        <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Customer:</td><td style="padding: 8px 0; color: #0f172a; font-weight: 700;">${params.customerName}</td></tr>
+        <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Email:</td><td style="padding: 8px 0; color: #1e3b8a;"><a href="mailto:${params.customerEmail}" style="color: #1e3b8a; text-decoration: none;">${params.customerEmail}</a></td></tr>
+        <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Items Count:</td><td style="padding: 8px 0; color: #0f172a;">${params.itemCount} items</td></tr>
+        <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Payment Method:</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${params.paymentMethod}</td></tr>
+        ${params.shippingAddress ? `<tr><td style="padding: 8px 0; color: #64748b; font-weight: 600; vertical-align: top;">Shipping Address:</td><td style="padding: 8px 0; color: #0f172a;">${params.shippingAddress}</td></tr>` : ''}
+        <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600;">Cairo Time:</td><td style="padding: 8px 0; color: #0f172a;">${nowStr}</td></tr>
+      </table>
+      <div style="text-align: center; margin-top: 24px;">
+        <a href="${adminLink}" style="display: inline-block; background: #1e3b8a; color: #ffffff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 13px;">
+          View in Admin OS →
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  return { subject, html };
+}
+
+export async function notifyAdminNewOrder(params: NewOrderAlertParams): Promise<void> {
+  try {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop';
+    const { subject, html } = generateAdminNewOrderEmailHtml(params, appUrl);
+    const recipients = await getAdminRecipientEmails();
+
+    const emailPromises = recipients.map(to =>
+      sendEmail({ to, subject, html }).catch(err => {
+        console.error(`[admin-alerts] Failed to send new order alert to ${to}:`, err);
+      })
+    );
+
+    await Promise.allSettled(emailPromises);
+  } catch (err) {
+    console.error('[admin-alerts] Error notifying admin of new order:', err);
+  }
+}
+
+// ============================================================================
+// APPLICATION / CRITICAL ERROR ADMIN ALERT
+// ============================================================================
+
+export interface ErrorAlertParams {
+  message: string;
+  stack?: string;
+  path?: string;
+  userId?: string;
+  userEmail?: string;
+  context?: string;
+}
+
+// Rate limiting map for error alerts: max 1 alert per 2 minutes per unique error
+const errorAlertThrottle = new Map<string, number>();
+
+export async function notifyAdminError(params: ErrorAlertParams): Promise<void> {
+  try {
+    const errorKey = `${params.path || ''}:${params.message.slice(0, 100)}`;
+    const now = Date.now();
+    const lastSent = errorAlertThrottle.get(errorKey);
+    if (lastSent && now - lastSent < 120_000) {
+      // Throttle duplicates within 2 minutes to prevent email flooding
+      return;
+    }
+    errorAlertThrottle.set(errorKey, now);
+
+    // Prune stale cache entries
+    if (errorAlertThrottle.size > 100) {
+      for (const [k, time] of errorAlertThrottle.entries()) {
+        if (now - time > 300_000) errorAlertThrottle.delete(k);
+      }
+    }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop';
+    const nowStr = new Date().toLocaleString('en-US', {
+      timeZone: 'Africa/Cairo',
+      dateStyle: 'full',
+      timeStyle: 'medium',
+    });
+
+    const subject = `🚨 Error Alert: ${params.message.slice(0, 50)}`;
+    const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; padding: 24px; margin: 0;">
+  <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #fee2e2; box-shadow: 0 4px 20px rgba(220, 38, 38, 0.08);">
+    <div style="background: #b91c1c; color: #ffffff; padding: 28px 24px; text-align: center;">
+      <h1 style="margin: 0; font-size: 22px; font-weight: 800;">🚨 SYSTEM ERROR ALERT</h1>
+      <p style="margin: 6px 0 0; opacity: 0.9; font-size: 13px;">Brandy Automated Health Monitor</p>
+    </div>
+    <div style="padding: 24px;">
+      <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px; margin-bottom: 20px;">
+        <strong style="color: #991b1b; font-size: 13px; display: block; margin-bottom: 6px;">Error Message:</strong>
+        <code style="color: #7f1d1d; font-size: 13px; font-family: monospace; word-break: break-all;">${params.message}</code>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px;">
+        ${params.path ? `<tr><td style="padding: 6px 0; color: #64748b; font-weight: 600; width: 30%;">Path / Route:</td><td style="padding: 6px 0; color: #0f172a; font-family: monospace;">${params.path}</td></tr>` : ''}
+        ${params.userEmail ? `<tr><td style="padding: 6px 0; color: #64748b; font-weight: 600;">Affected User:</td><td style="padding: 6px 0; color: #0f172a;">${params.userEmail}</td></tr>` : ''}
+        ${params.context ? `<tr><td style="padding: 6px 0; color: #64748b; font-weight: 600;">Context:</td><td style="padding: 6px 0; color: #0f172a;">${params.context}</td></tr>` : ''}
+        <tr><td style="padding: 6px 0; color: #64748b; font-weight: 600;">Cairo Time:</td><td style="padding: 6px 0; color: #0f172a;">${nowStr}</td></tr>
+      </table>
+      ${
+        params.stack
+          ? `
+      <div style="margin-bottom: 20px;">
+        <span style="font-size: 12px; font-weight: 600; color: #64748b; display: block; margin-bottom: 6px;">Stack Trace:</span>
+        <pre style="background: #1e293b; color: #f8fafc; padding: 12px; border-radius: 8px; font-size: 11px; overflow-x: auto; white-space: pre-wrap; font-family: monospace; margin: 0; max-height: 250px;">${params.stack.slice(0, 1500)}</pre>
+      </div>`
+          : ''
+      }
+      <div style="text-align: center; margin-top: 24px;">
+        <a href="${appUrl}/admin-os" style="display: inline-block; background: #1e3b8a; color: #ffffff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 13px;">
+          Open Admin OS →
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const recipients = await getAdminRecipientEmails();
+    const emailPromises = recipients.map(to =>
+      sendEmail({ to, subject, html }).catch(err => {
+        console.error(`[admin-alerts] Failed to send error alert to ${to}:`, err);
+      })
+    );
+
+    await Promise.allSettled(emailPromises);
+  } catch (err) {
+    console.error('[admin-alerts] Failed to notify admin of error:', err);
   }
 }
