@@ -1035,6 +1035,7 @@ interface ProductData {
   flashSaleEndsAt?: string;
   published?: boolean;
   mainImage?: string;
+  mainImageUploading?: boolean;
   variants?: {
     color?: string;
     price?: number;
@@ -1131,7 +1132,7 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
       return { error: 'Product weight (in KG) is required and must be greater than zero.' };
 
     const weightGrams = Math.round(Number(data.weightKg) * 1000);
-    const { variants, weightKg, mainImage, ...rest } = data;
+    const { variants, weightKg, mainImage, mainImageUploading, ...rest } = data;
 
     // Enforce business rules for publishing:
     // 1. Must have at least one product image.

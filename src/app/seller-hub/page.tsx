@@ -414,8 +414,9 @@ export default function SellerHub() {
         throw new Error('All variant prices are required');
 
       const mainImageUrl = newProduct.mainImage || undefined;
+      const { mainImageUploading: _uiUploading, ...productData } = newProduct;
       const res = (await createProduct({
-        ...newProduct,
+        ...productData,
         basePrice: Number(newProduct.basePrice),
         weightKg: Number(newProduct.weightKg),
         flashSalePrice:
@@ -440,6 +441,18 @@ export default function SellerHub() {
       await refreshData();
     } catch (error: unknown) {
       const err = error as Error;
+      if (
+        err.message?.includes('Server Action') ||
+        err.message?.includes('not found on the server')
+      ) {
+        toast({
+          variant: 'error',
+          title: 'Update Available',
+          description: 'The app was updated. Refreshing the page to load the latest version...',
+        });
+        setTimeout(() => window.location.reload(), 1500);
+        return;
+      }
       toast({ variant: 'error', title: 'Creation Failed', description: err.message });
     } finally {
       setIsSubmitting(false);

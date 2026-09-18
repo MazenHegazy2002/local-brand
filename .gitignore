@@ -74,3 +74,5 @@ nul
 emails.log
 jarvis/
 /jarvis
+.vscode/
+client_secret*.json
