@@ -64,17 +64,21 @@ export async function POST(req: Request) {
 
     // Priority 1: Vercel Blob
     if (process.env.BLOB_READ_WRITE_TOKEN) {
-      const blob = await put(`brandy/products/${Date.now()}-${file.name}`, file, {
-        access: 'public',
-      });
-      return NextResponse.json(
-        {
-          url: blob.url,
-          publicId: blob.pathname,
-          mockMode: false,
-        },
-        { status: 200 }
-      );
+      try {
+        const blob = await put(`brandy/products/${Date.now()}-${file.name}`, file, {
+          access: 'public',
+        });
+        return NextResponse.json(
+          {
+            url: blob.url,
+            publicId: blob.pathname,
+            mockMode: false,
+          },
+          { status: 200 }
+        );
+      } catch (blobErr) {
+        console.warn('Vercel Blob upload failed, attempting fallbacks:', blobErr);
+      }
     }
 
     // Priority 2: Cloudinary
@@ -83,39 +87,43 @@ export async function POST(req: Request) {
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
     if (cloudName && apiKey && apiSecret) {
-      const cloudinary = (await import('cloudinary')).v2;
-      cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
+      try {
+        const cloudinary = (await import('cloudinary')).v2;
+        cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
 
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
 
-      const result = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
-            {
-              folder: 'brandy/products',
-              transformation: [
-                { width: 1200, height: 1200, crop: 'limit' },
-                { quality: 'auto', fetch_format: 'auto' },
-              ],
-            },
-            (err, result) => {
-              if (err) reject(err);
-              else resolve(result as CloudinaryUploadResult);
-            }
-          )
-          .end(buffer);
-      });
+        const result = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream(
+              {
+                folder: 'brandy/products',
+                transformation: [
+                  { width: 1200, height: 1200, crop: 'limit' },
+                  { quality: 'auto', fetch_format: 'auto' },
+                ],
+              },
+              (err, result) => {
+                if (err) reject(err);
+                else resolve(result as CloudinaryUploadResult);
+              }
+            )
+            .end(buffer);
+        });
 
-      return NextResponse.json(
-        {
-          url: result.secure_url,
-          publicId: result.public_id,
-          width: result.width,
-          height: result.height,
-        },
-        { status: 200 }
-      );
+        return NextResponse.json(
+          {
+            url: result.secure_url,
+            publicId: result.public_id,
+            width: result.width,
+            height: result.height,
+          },
+          { status: 200 }
+        );
+      } catch (cloudErr) {
+        console.warn('Cloudinary upload failed, falling back to base64 data URL:', cloudErr);
+      }
     }
 
     // Dev / unconfigured mode: return the file itself as a base64 data URL
