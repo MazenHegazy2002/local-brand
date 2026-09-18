@@ -7,6 +7,7 @@ import Link from 'next/link';
 import {
   getDashboardStats,
   updateSellerStatus,
+  adminDeleteSeller,
   updateSellerCommission,
   seedTestData,
   createTaxonomy,
@@ -208,6 +209,42 @@ export default function AdminOS() {
         variant: 'error',
         title: 'Update Failed',
         description: error.message || 'Failed to update status',
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeleteSeller = async (seller: any) => {
+    const confirmed = await confirm({
+      title: 'Delete Seller Account',
+      message: `Are you sure you want to delete seller account "${seller.storeName}" (${seller.user?.email || seller.user?.name || 'No email'})? This action cannot be undone.`,
+      type: 'danger',
+    });
+    if (!confirmed) return;
+
+    setActionLoading(seller.id);
+    try {
+      const res = (await adminDeleteSeller(seller.id)) as { error?: string; message?: string };
+      if (res?.error) {
+        toast({ variant: 'error', title: 'Delete Failed', description: res.error });
+        return;
+      }
+      toast({
+        variant: 'success',
+        title: 'Account Deleted',
+        description: res?.message || 'Seller account deleted successfully.',
+      });
+      if (selectedSeller?.id === seller.id) {
+        setSelectedSeller(null);
+      }
+      await refreshData();
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast({
+        variant: 'error',
+        title: 'Delete Failed',
+        description: error.message || 'Failed to delete seller account.',
       });
     } finally {
       setActionLoading(null);
@@ -644,6 +681,7 @@ export default function AdminOS() {
             <SellersTab
               data={data}
               handleStatusUpdate={handleStatusUpdate}
+              onDeleteSeller={handleDeleteSeller}
               actionLoading={actionLoading}
               onSelectSeller={setSelectedSeller}
             />
@@ -727,6 +765,7 @@ export default function AdminOS() {
           allOrders={data?.orders || []}
           onClose={() => setSelectedSeller(null)}
           handleStatusUpdate={handleStatusUpdate}
+          onDeleteSeller={handleDeleteSeller}
           actionLoading={actionLoading}
         />
       )}
@@ -2476,6 +2515,7 @@ function OverviewTab({
 interface SellersTabProps {
   data: DashboardData;
   handleStatusUpdate: (id: string, status: SellerStatus) => Promise<void>;
+  onDeleteSeller?: (seller: any) => Promise<void>;
   actionLoading: string | null;
   onSelectSeller?: (seller: SellerProfile) => void;
 }
@@ -2533,7 +2573,13 @@ function SearchInput({
   );
 }
 
-function SellersTab({ data, handleStatusUpdate, actionLoading, onSelectSeller }: SellersTabProps) {
+function SellersTab({
+  data,
+  handleStatusUpdate,
+  onDeleteSeller,
+  actionLoading,
+  onSelectSeller,
+}: SellersTabProps) {
   const [search, setSearch] = useState('');
   const q = search.trim().toLowerCase();
   const sellers = (data?.sellers || []).filter((s: SellerProfile) => {
@@ -2565,7 +2611,7 @@ function SellersTab({ data, handleStatusUpdate, actionLoading, onSelectSeller }:
         <span className="flex-1">Store Name / Owner</span>
         <span className="w-32 text-center">Status</span>
         <span className="w-32 text-right">Balance</span>
-        <span className="w-48 text-right">Actions</span>
+        <span className="w-56 text-right">Actions</span>
       </div>
       {sellers.map((s: any) => (
         <div key={s.id} className="row-item">
@@ -2589,7 +2635,7 @@ function SellersTab({ data, handleStatusUpdate, actionLoading, onSelectSeller }:
           <div className="w-32 text-right text-sm font-medium">
             {s.balance?.toLocaleString()} EGP
           </div>
-          <div className="w-48 text-right flex justify-end gap-2">
+          <div className="w-56 text-right flex justify-end gap-2 items-center">
             <button
               onClick={() => onSelectSeller?.(s)}
               className="action-btn"
@@ -2606,6 +2652,24 @@ function SellersTab({ data, handleStatusUpdate, actionLoading, onSelectSeller }:
             >
               {s.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
             </button>
+            {(s.status === 'SUSPENDED' ||
+              s.status === 'BANNED' ||
+              s.status === 'PENDING_APPROVAL') && (
+              <button
+                disabled={actionLoading === s.id}
+                onClick={() => onDeleteSeller?.(s)}
+                className="action-btn"
+                style={{
+                  background: '#fef2f2',
+                  color: '#dc2626',
+                  borderColor: '#fecaca',
+                  fontWeight: 600,
+                }}
+                title="Delete seller account"
+              >
+                Delete
+              </button>
+            )}
           </div>
         </div>
       ))}
@@ -2623,6 +2687,7 @@ interface SellerDetailsModalProps {
   allOrders: any[];
   onClose: () => void;
   handleStatusUpdate: (id: string, status: SellerStatus) => Promise<void>;
+  onDeleteSeller?: (seller: any) => Promise<void>;
   actionLoading: string | null;
 }
 
@@ -2631,6 +2696,7 @@ function SellerDetailsModal({
   allOrders,
   onClose,
   handleStatusUpdate,
+  onDeleteSeller,
   actionLoading,
 }: SellerDetailsModalProps) {
   const [commissionInput, setCommissionInput] = useState(
@@ -2801,6 +2867,28 @@ function SellerDetailsModal({
             >
               Reject / Suspend
             </button>
+            {(seller.status === 'SUSPENDED' ||
+              seller.status === 'BANNED' ||
+              seller.status === 'PENDING_APPROVAL') && (
+              <button
+                disabled={actionLoading === seller.id}
+                onClick={async () => {
+                  await onDeleteSeller?.(seller);
+                }}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: '8px',
+                  background: '#dc2626',
+                  border: '1px solid #b91c1c',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                }}
+              >
+                🗑️ Delete Account
+              </button>
+            )}
             <button
               onClick={onClose}
               style={{
@@ -3385,6 +3473,28 @@ function SellerDetailsModal({
             >
               Reject / Suspend Seller
             </button>
+            {(seller.status === 'SUSPENDED' ||
+              seller.status === 'BANNED' ||
+              seller.status === 'PENDING_APPROVAL') && (
+              <button
+                disabled={actionLoading === seller.id}
+                onClick={async () => {
+                  await onDeleteSeller?.(seller);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  background: '#dc2626',
+                  border: '1px solid #b91c1c',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                🗑️ Delete Account
+              </button>
+            )}
           </div>
           <button
             onClick={onClose}

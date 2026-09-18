@@ -319,6 +319,7 @@ export async function getDashboardStats() {
 
     if (role === 'ADMIN') {
       const sellers = await prisma.sellerProfile.findMany({
+        where: { deletedAt: null },
         include: {
           user: {
             select: {
@@ -1849,6 +1850,161 @@ export async function adminUpdateUser(
   }
 }
 
+export async function adminDeleteSeller(sellerId: string) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      console.error('[adminDeleteSeller] No session found');
+      return { error: 'Unauthorized: No session found. Please refresh and try again.' };
+    }
+
+    const userRole = (session.user as SessionUser).role;
+    if (userRole !== Role.ADMIN) {
+      console.error(`[adminDeleteSeller] Unauthorized access attempt by role: ${userRole}`);
+      return { error: `Unauthorized: Admin role required (Current role: ${userRole})` };
+    }
+
+    const adminId = await getRealUserId(session);
+
+    const seller = await prisma.sellerProfile.findUnique({
+      where: { id: sellerId },
+      include: {
+        user: true,
+        products: {
+          select: {
+            id: true,
+            variants: {
+              select: {
+                id: true,
+                _count: { select: { orderItems: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!seller) return { error: 'Seller profile not found.' };
+
+    // Check if any product variant of this seller has been ordered
+    const hasOrderItems = seller.products.some(p => p.variants.some(v => v._count.orderItems > 0));
+
+    // Check if the seller's user account has dependent activities (buyer orders, reviews, etc.)
+    const userActivity = await prisma.user.findUnique({
+      where: { id: seller.userId },
+      include: {
+        _count: {
+          select: { orders: true, reviews: true, auditLogs: true, productQAs: true },
+        },
+      },
+    });
+
+    const hasUserActivity =
+      userActivity &&
+      (userActivity._count.orders > 0 ||
+        userActivity._count.reviews > 0 ||
+        userActivity._count.auditLogs > 0 ||
+        userActivity._count.productQAs > 0);
+
+    const now = new Date();
+
+    if (hasOrderItems || hasUserActivity) {
+      // Soft-delete to preserve receipts, escrow calculations, and order audit trail
+      const crypto = await import('crypto');
+      const lockHash = await bcrypt.hash(crypto.randomBytes(48).toString('hex'), BCRYPT_COST);
+
+      // Unpublish and soft-delete all products
+      await prisma.product.updateMany({
+        where: { sellerId: seller.id },
+        data: {
+          published: false,
+          deletedAt: now,
+        },
+      });
+
+      // Soft-delete seller profile, free up unique storeName, and set status to BANNED
+      await prisma.sellerProfile.update({
+        where: { id: seller.id },
+        data: {
+          status: SellerStatus.BANNED,
+          deletedAt: now,
+          storeName: `${seller.storeName}_deleted_${seller.id.substring(0, 6)}`,
+        },
+      });
+
+      // Anonymize & soft-delete user login credentials
+      await prisma.user.update({
+        where: { id: seller.userId },
+        data: {
+          deletedAt: now,
+          email: `deleted_seller_${seller.id.substring(0, 8)}@brandy.invalid`,
+          name: 'Deleted Seller',
+          passwordHash: lockHash,
+        },
+      });
+
+      if (adminId) {
+        await prisma.auditLog.create({
+          data: {
+            adminId,
+            action: 'DELETE_SELLER',
+            targetId: sellerId,
+            details: `Seller ${seller.storeName} soft-deleted and archived.`,
+          },
+        });
+      }
+
+      revalidatePath('/admin-os');
+      return { success: true, message: 'Seller account deleted (archived due to order history).' };
+    }
+
+    // Hard-delete if no orders or dependent records exist:
+    // 1. Delete all products belonging to the seller (cascades to images, variants, cart items, etc.)
+    await prisma.product.deleteMany({
+      where: { sellerId: seller.id },
+    });
+
+    // 2. Delete payouts if any
+    await prisma.payout.deleteMany({
+      where: { sellerId: seller.id },
+    });
+
+    // 3. Delete the seller profile
+    await prisma.sellerProfile.delete({
+      where: { id: seller.id },
+    });
+
+    // 4. Delete the associated user account if role is SELLER
+    if (seller.user.role === Role.SELLER) {
+      await prisma.address.deleteMany({ where: { userId: seller.userId } });
+      await prisma.notification.deleteMany({ where: { userId: seller.userId } });
+      await prisma.cartItem.deleteMany({ where: { userId: seller.userId } });
+      await prisma.wishlist.deleteMany({ where: { userId: seller.userId } });
+      await prisma.passwordResetToken.deleteMany({ where: { email: seller.user.email } });
+      await prisma.user.delete({ where: { id: seller.userId } });
+    }
+
+    if (adminId) {
+      await prisma.auditLog.create({
+        data: {
+          adminId,
+          action: 'DELETE_SELLER',
+          targetId: sellerId,
+          details: `Seller ${seller.storeName} (${seller.user.email}) permanently deleted.`,
+        },
+      });
+    }
+
+    revalidatePath('/admin-os');
+    return { success: true, message: 'Seller account deleted successfully.' };
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error('[adminDeleteSeller] Error:', err);
+    return { error: error.message || 'Failed to delete seller account.' };
+  }
+}
+
 export async function adminDeleteUser(userId: string) {
   try {
     const session = await getServerSession(authOptions);
@@ -1877,11 +2033,34 @@ export async function adminDeleteUser(userId: string) {
 
     if (!user) return { error: 'User not found.' };
 
+    // Check if user has a seller profile with products/orders
+    const sellerProfile = await prisma.sellerProfile.findUnique({
+      where: { userId },
+      include: {
+        products: {
+          select: {
+            id: true,
+            variants: {
+              select: {
+                id: true,
+                _count: { select: { orderItems: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const sellerHasOrders = sellerProfile?.products.some(p =>
+      p.variants.some(v => v._count.orderItems > 0)
+    );
+
     if (
       user._count.orders > 0 ||
       user._count.reviews > 0 ||
       user._count.auditLogs > 0 ||
-      user._count.productQAs > 0
+      user._count.productQAs > 0 ||
+      sellerHasOrders
     ) {
       // If user has records, perform a "Soft Delete" instead of hard delete to preserve data integrity
       const crypto = await import('crypto');
@@ -1897,17 +2076,39 @@ export async function adminDeleteUser(userId: string) {
         },
       });
 
-      // If it's a seller, also deactivate profile
-      await prisma.sellerProfile.updateMany({
-        where: { userId },
-        data: { status: SellerStatus.BANNED, deletedAt: new Date() },
-      });
+      // If it's a seller, also unpublish products & deactivate profile
+      if (sellerProfile) {
+        await prisma.product.updateMany({
+          where: { sellerId: sellerProfile.id },
+          data: { published: false, deletedAt: new Date() },
+        });
+
+        await prisma.sellerProfile.update({
+          where: { id: sellerProfile.id },
+          data: {
+            status: SellerStatus.BANNED,
+            deletedAt: new Date(),
+            storeName: `${sellerProfile.storeName}_deleted_${sellerProfile.id.substring(0, 6)}`,
+          },
+        });
+      }
 
       revalidatePath('/admin-os');
       return { success: true, message: 'User soft-deleted due to existing activity records.' };
     }
 
     // Hard delete if no dependent records
+    if (sellerProfile) {
+      await prisma.product.deleteMany({ where: { sellerId: sellerProfile.id } });
+      await prisma.payout.deleteMany({ where: { sellerId: sellerProfile.id } });
+      await prisma.sellerProfile.delete({ where: { id: sellerProfile.id } });
+    }
+
+    await prisma.address.deleteMany({ where: { userId } });
+    await prisma.notification.deleteMany({ where: { userId } });
+    await prisma.cartItem.deleteMany({ where: { userId } });
+    await prisma.wishlist.deleteMany({ where: { userId } });
+    await prisma.passwordResetToken.deleteMany({ where: { email: user.email } });
     await prisma.user.delete({ where: { id: userId } });
 
     revalidatePath('/admin-os');
