@@ -78,3 +78,4 @@ jarvis/
 client_secret*.json
 backups/
 *.sql.gz
+public/tryon/
