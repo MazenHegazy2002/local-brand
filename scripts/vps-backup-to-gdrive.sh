@@ -10,6 +10,15 @@ set -eo pipefail
 APP_DIR="${APP_DIR:-/opt/localbrand}"
 BACKUP_DIR="${APP_DIR}/backups"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
+
+# Source .env if present so Google Drive credentials and configs are exported
+if [ -f "${APP_DIR}/.env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "${APP_DIR}/.env" 2>/dev/null || true
+  set +a
+fi
+
 GDRIVE_FOLDER_ID="${GOOGLE_DRIVE_FOLDER_ID:-1i4KjZxZDvkm_uibTCyjWQuuilKmuLMHW}"
 
 mkdir -p "${BACKUP_DIR}"
@@ -44,17 +53,29 @@ tar -czf "${SYS_DUMP_FILE}" \
 
 echo "✅ System archive created: ${SYS_DUMP_FILE} ($(du -h "${SYS_DUMP_FILE}" | cut -f1))"
 
-# 3. Upload to Google Drive via App container or Node
+# 3. Upload to Google Drive
 echo "📤 Uploading database backup to Google Drive..."
 if [ -f "${DB_DUMP_FILE}" ]; then
-  docker-compose exec -T -e GOOGLE_DRIVE_FOLDER_ID="${GDRIVE_FOLDER_ID}" app npx tsx scripts/backup-to-gdrive.ts "backups/$(basename "${DB_DUMP_FILE}")" || \
-  npx tsx scripts/backup-to-gdrive.ts "${DB_DUMP_FILE}" || true
+  if command -v rclone >/dev/null 2>&1 && rclone listremotes | grep -q "gdrive:"; then
+    echo "Using rclone for Google Drive upload..."
+    rclone copy "${DB_DUMP_FILE}" "gdrive:${GDRIVE_FOLDER_ID}" && echo "✅ rclone uploaded ${DB_DUMP_FILE}" || true
+  else
+    npx tsx scripts/backup-to-gdrive.ts "${DB_DUMP_FILE}" || \
+    docker-compose exec -T -e GOOGLE_DRIVE_FOLDER_ID="${GDRIVE_FOLDER_ID}" app npx tsx scripts/backup-to-gdrive.ts "backups/$(basename "${DB_DUMP_FILE}")" || \
+    echo "⚠️ Google Drive upload skipped (credentials not configured yet)"
+  fi
 fi
 
 echo "📤 Uploading system archive to Google Drive..."
 if [ -f "${SYS_DUMP_FILE}" ]; then
-  docker-compose exec -T -e GOOGLE_DRIVE_FOLDER_ID="${GDRIVE_FOLDER_ID}" app npx tsx scripts/backup-to-gdrive.ts "backups/$(basename "${SYS_DUMP_FILE}")" || \
-  npx tsx scripts/backup-to-gdrive.ts "${SYS_DUMP_FILE}" || true
+  if command -v rclone >/dev/null 2>&1 && rclone listremotes | grep -q "gdrive:"; then
+    echo "Using rclone for Google Drive upload..."
+    rclone copy "${SYS_DUMP_FILE}" "gdrive:${GDRIVE_FOLDER_ID}" && echo "✅ rclone uploaded ${SYS_DUMP_FILE}" || true
+  else
+    npx tsx scripts/backup-to-gdrive.ts "${SYS_DUMP_FILE}" || \
+    docker-compose exec -T -e GOOGLE_DRIVE_FOLDER_ID="${GDRIVE_FOLDER_ID}" app npx tsx scripts/backup-to-gdrive.ts "backups/$(basename "${SYS_DUMP_FILE}")" || \
+    echo "⚠️ Google Drive upload skipped (credentials not configured yet)"
+  fi
 fi
 
 # 4. Prune local backups older than 14 days to prevent disk space exhaustion

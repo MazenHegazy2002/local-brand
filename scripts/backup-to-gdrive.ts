@@ -8,7 +8,18 @@
 
 import fs from 'fs';
 import path from 'path';
-import { generateFullDatabaseBackup } from '../src/lib/backup-exporter';
+
+// Load .env if present
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const dotenv = require('dotenv');
+  dotenv.config();
+  dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+  dotenv.config({ path: path.resolve(__dirname, '../.env') });
+} catch {
+  // dotenv optional
+}
+
 import { getGoogleDriveCredentials, uploadFileToGoogleDrive } from '../src/lib/gdrive';
 
 const DEFAULT_FOLDER_ID = '1i4KjZxZDvkm_uibTCyjWQuuilKmuLMHW';
@@ -59,6 +70,7 @@ async function main() {
 
   // Full database export mode
   console.log('📊 Exporting database tables and system state...');
+  const { generateFullDatabaseBackup } = await import('../src/lib/backup-exporter');
   const backup = await generateFullDatabaseBackup();
   console.log(
     `✅ Exported ${backup.payload.totalRecords} records across ${Object.keys(backup.payload.tables).length} tables.`
