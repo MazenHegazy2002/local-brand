@@ -157,6 +157,34 @@ export async function GET(req: Request) {
       }
     }
 
+    // ── Upload to Google Drive ────────────────────────────────────────────────
+    let gdriveFileId: string | null = null;
+    let gdriveError: string | null = null;
+
+    try {
+      const { getGoogleDriveCredentials, uploadFileToGoogleDrive } = await import('@/lib/gdrive');
+      const gdriveCreds = getGoogleDriveCredentials();
+      const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID || '1i4KjZxZDvkm_uibTCyjWQuuilKmuLMHW';
+
+      if (gdriveCreds) {
+        const zlib = await import('zlib');
+        const compressed = zlib.gzipSync(Buffer.from(json, 'utf-8'), { level: 9 });
+        const gdriveFileName = `brandy-backup-${dateLabel}.json.gz`;
+
+        const uploadResult = await uploadFileToGoogleDrive({
+          folderId,
+          fileName: gdriveFileName,
+          mimeType: 'application/gzip',
+          body: compressed,
+          credentials: gdriveCreds,
+        });
+        gdriveFileId = uploadResult.fileId;
+      }
+    } catch (gErr: any) {
+      console.error('[cron/backup] Google Drive upload failed:', gErr);
+      gdriveError = gErr.message || 'Google Drive upload error';
+    }
+
     const durationMs = Date.now() - startedAt;
 
     return NextResponse.json({
@@ -165,6 +193,9 @@ export async function GET(req: Request) {
       filename,
       blobUrl,
       storage: blobUrl ? 'vercel-blob' : 'none (BLOB_READ_WRITE_TOKEN not set)',
+      gdrive: gdriveFileId
+        ? { success: true, fileId: gdriveFileId, folderId: '1i4KjZxZDvkm_uibTCyjWQuuilKmuLMHW' }
+        : { success: false, reason: gdriveError || 'Google credentials not configured' },
       prunedCount,
       retentionDays: RETENTION_DAYS,
       rowCounts: Object.fromEntries(Object.entries(backup.tables).map(([k, v]) => [k, v.count])),

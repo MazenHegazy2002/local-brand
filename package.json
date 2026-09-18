@@ -24,7 +24,8 @@
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:restore": "tsx prisma/restore.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "backup:gdrive": "tsx scripts/backup-to-gdrive.ts"
   },
   "dependencies": {
     "@google/genai": "^2.6.0",

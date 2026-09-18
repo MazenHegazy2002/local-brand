@@ -1,0 +1,22 @@
+name: Daily Backup to Google Drive
+
+on:
+  schedule:
+    # Runs daily at 03:00 UTC (05:00 AM Cairo time)
+    - cron: '0 3 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  backup-to-gdrive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute Daily Backup on VPS via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /opt/localbrand
+            chmod +x scripts/vps-backup-to-gdrive.sh
+            ./scripts/vps-backup-to-gdrive.sh

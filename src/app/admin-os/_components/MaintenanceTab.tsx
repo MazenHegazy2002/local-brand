@@ -50,6 +50,40 @@ export default function MaintenanceTab() {
   const [buyerPopupId, setBuyerPopupId] = useState('v1');
   const [showLivePreview, setShowLivePreview] = useState(false);
 
+  // Google Drive Backup state
+  const [gdriveBackupBusy, setGdriveBackupBusy] = useState(false);
+  const [gdriveBackupMsg, setGdriveBackupMsg] = useState<{
+    success: boolean;
+    text: string;
+    link?: string;
+  } | null>(null);
+
+  const triggerGdriveBackup = async () => {
+    setGdriveBackupBusy(true);
+    setGdriveBackupMsg(null);
+    try {
+      const res = await fetch('/api/admin/backup/gdrive', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Backup to Google Drive failed');
+      }
+      setGdriveBackupMsg({
+        success: true,
+        text: `Backup uploaded successfully! File: ${data.fileName} (${data.compressedSizeKb} KB, ${data.totalRecords} records)`,
+        link:
+          data.folderUrl ||
+          'https://drive.google.com/drive/folders/1i4KjZxZDvkm_uibTCyjWQuuilKmuLMHW',
+      });
+    } catch (e: any) {
+      setGdriveBackupMsg({
+        success: false,
+        text: e.message || 'Backup failed',
+      });
+    } finally {
+      setGdriveBackupBusy(false);
+    }
+  };
+
   const loadCurrent = async () => {
     try {
       const res = await fetch('/api/admin/settings');
@@ -518,7 +552,62 @@ export default function MaintenanceTab() {
         {/* Backups */}
         <div className="maint-card">
           <h3>💾 Backups & exports</h3>
-          <p className="maint-card-desc">Daily backups handled by Neon. On-demand exports below.</p>
+          <p className="maint-card-desc">Daily backups to Google Drive & on-demand exports.</p>
+
+          {/* Google Drive Dedicated Card */}
+          <div className="p-3.5 my-3 rounded-xl bg-blue-50/80 dark:bg-slate-800/80 border border-blue-200 dark:border-blue-900 text-xs text-blue-950 dark:text-blue-200 flex flex-col gap-2 shadow-sm">
+            <div className="flex items-center justify-between font-bold">
+              <span className="flex items-center gap-1.5">
+                <span>☁️</span> Google Drive Backup
+              </span>
+              <a
+                href="https://drive.google.com/drive/folders/1i4KjZxZDvkm_uibTCyjWQuuilKmuLMHW"
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-600 dark:text-blue-400 underline font-semibold hover:text-blue-800"
+              >
+                Open in Drive ↗
+              </a>
+            </div>
+            <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
+              Target Folder:{' '}
+              <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded font-mono border border-blue-100 dark:border-slate-700">
+                1i4KjZxZDvkm_uibTCyjWQuuilKmuLMHW
+              </code>
+            </p>
+            <button
+              type="button"
+              disabled={gdriveBackupBusy}
+              onClick={triggerGdriveBackup}
+              className="mt-1 px-4 py-2.5 bg-[#1e3b8a] hover:bg-[#152a65] text-white rounded-xl font-bold text-xs shadow transition-all disabled:opacity-60 flex items-center justify-center gap-2 active:scale-95"
+            >
+              {gdriveBackupBusy
+                ? '⏳ Backing up to Google Drive...'
+                : '🚀 Backup to Google Drive Now'}
+            </button>
+            {gdriveBackupMsg && (
+              <div
+                className={`mt-1 p-2.5 rounded-lg text-xs font-semibold ${
+                  gdriveBackupMsg.success
+                    ? 'bg-green-100 text-green-900 border border-green-300 dark:bg-green-900/40 dark:text-green-200 dark:border-green-800'
+                    : 'bg-red-100 text-red-900 border border-red-300 dark:bg-red-900/40 dark:text-red-200 dark:border-red-800'
+                }`}
+              >
+                {gdriveBackupMsg.text}
+                {gdriveBackupMsg.link && (
+                  <a
+                    href={gdriveBackupMsg.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block mt-1 underline font-bold"
+                  >
+                    View in Google Drive ↗
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="flex flex-col gap-2 mt-3">
             <a
               href="/api/admin/backup"
