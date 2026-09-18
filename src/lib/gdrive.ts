@@ -1,4 +1,6 @@
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 
 export interface GoogleDriveCredentials {
   clientEmail: string;
@@ -21,23 +23,67 @@ export interface UploadFileResult {
 
 /**
  * Returns Google Drive credentials from environment variables or settings.
- * Supports GOOGLE_SERVICE_ACCOUNT_JSON (full JSON) or separate EMAIL + PRIVATE_KEY.
+ * Supports GOOGLE_SERVICE_ACCOUNT_JSON (full JSON or file path),
+ * standard google-service-account.json files, or separate EMAIL + PRIVATE_KEY.
  */
 export function getGoogleDriveCredentials(): GoogleDriveCredentials | null {
-  // 1. Try full JSON blob
-  const jsonStr = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  if (jsonStr) {
+  function tryParseJson(str: string): any {
     try {
-      const parsed = JSON.parse(jsonStr);
-      if (parsed.client_email && parsed.private_key) {
-        return {
-          clientEmail: parsed.client_email,
-          privateKey: parsed.private_key,
-        };
-      }
+      let p = JSON.parse(str);
+      if (typeof p === 'string') p = JSON.parse(p);
+      return p;
     } catch {
-      /* ignore json parse errors */
+      try {
+        const cleaned = str.replace(/\\"/g, '"');
+        let p = JSON.parse(cleaned);
+        if (typeof p === 'string') p = JSON.parse(p);
+        return p;
+      } catch {
+        return null;
+      }
     }
+  }
+
+  // 1. Try GOOGLE_SERVICE_ACCOUNT_JSON env var (either JSON content or file path)
+  let rawJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+
+  // Check if it's a file path
+  if (rawJson && fs.existsSync(rawJson)) {
+    try {
+      rawJson = fs.readFileSync(rawJson, 'utf-8');
+    } catch {
+      /* ignore read errors */
+    }
+  }
+
+  let parsed = rawJson ? tryParseJson(rawJson) : null;
+
+  // Auto-detect standard service account file paths if env var not set or invalid
+  if (!parsed) {
+    const candidateFiles = [
+      path.resolve(process.cwd(), 'google-service-account.json'),
+      path.resolve(process.cwd(), 'medical-lms-485318-2d4be2c8d4df.json'),
+      '/opt/localbrand/google-service-account.json',
+      '/opt/localbrand/medical-lms-485318-2d4be2c8d4df.json',
+    ];
+    for (const f of candidateFiles) {
+      if (fs.existsSync(f)) {
+        try {
+          const content = fs.readFileSync(f, 'utf-8');
+          parsed = tryParseJson(content);
+          if (parsed?.client_email && parsed?.private_key) break;
+        } catch {
+          /* continue */
+        }
+      }
+    }
+  }
+
+  if (parsed && parsed.client_email && parsed.private_key) {
+    return {
+      clientEmail: parsed.client_email,
+      privateKey: parsed.private_key.replace(/\\n/g, '\n'),
+    };
   }
 
   // 2. Try separate env vars
@@ -45,7 +91,6 @@ export function getGoogleDriveCredentials(): GoogleDriveCredentials | null {
   let privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
 
   if (clientEmail && privateKey) {
-    // Replace literal escaped newlines with actual newlines if present
     privateKey = privateKey.replace(/\\n/g, '\n');
     return { clientEmail, privateKey };
   }

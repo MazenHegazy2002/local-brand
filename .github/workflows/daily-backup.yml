@@ -4,7 +4,12 @@ on:
   schedule:
     # Runs daily at 03:00 UTC (05:00 AM Cairo time)
     - cron: '0 3 * * *'
-  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      gdrive_b64:
+        description: 'Base64 encoded service account JSON to sync to VPS'
+        required: false
+        default: ''
 
 jobs:
   backup-to-gdrive:
@@ -16,7 +21,16 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          timeout: 60s
+          command_timeout: 15m
           script: |
             cd /opt/localbrand
+            git fetch origin master
+            git reset --hard origin/master
+            if [ -n "${{ inputs.gdrive_b64 }}" ]; then
+              echo "${{ inputs.gdrive_b64 }}" | base64 -d > google-service-account.json
+              chmod 600 google-service-account.json
+              echo "✅ Synced google-service-account.json to VPS"
+            fi
             chmod +x scripts/vps-backup-to-gdrive.sh
             ./scripts/vps-backup-to-gdrive.sh
