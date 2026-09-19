@@ -113,7 +113,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: process.env.GOOGLE_SITE_VERIFICATION || 'google-site-verification-code',
+    google: process.env.GOOGLE_SITE_VERIFICATION || 'google7e253040c3638fad',
     other: {
       'facebook-domain-verification':
         process.env.FACEBOOK_DOMAIN_VERIFICATION || 'facebook-domain-verification-code',
