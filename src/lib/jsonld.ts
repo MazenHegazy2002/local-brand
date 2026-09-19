@@ -179,11 +179,6 @@ export function organizationJsonLd() {
       addressRegion: 'Cairo Governorate',
       addressCountry: 'EG',
     },
-    geo: {
-      '@type': 'GeoCoordinates',
-      latitude: 30.0444,
-      longitude: 31.2357,
-    },
     areaServed: {
       '@type': 'Country',
       name: 'Egypt',
@@ -204,10 +199,14 @@ export function organizationJsonLd() {
       name: 'Brandy Local Products Catalog',
       url: `${PLATFORM_URL}/shop`,
     },
-    currenciesAccepted: 'EGP',
-    paymentAccepted:
-      'Cash on Delivery, Credit Card, Debit Card, Vodafone Cash, Orange Cash, Etisalat Cash, WE Pay, Fawry, InstaPay',
-    priceRange: 'EGP',
+    acceptedPaymentMethod: [
+      { '@type': 'PaymentMethod', name: 'Cash on Delivery' },
+      { '@type': 'PaymentMethod', name: 'Credit Card' },
+      { '@type': 'PaymentMethod', name: 'Debit Card' },
+      { '@type': 'PaymentMethod', name: 'Mobile Wallet' },
+      { '@type': 'PaymentMethod', name: 'Fawry' },
+      { '@type': 'PaymentMethod', name: 'InstaPay' },
+    ],
     sameAs: [
       'https://www.facebook.com/brandy.egypt',
       'https://www.instagram.com/brandy.egypt',
