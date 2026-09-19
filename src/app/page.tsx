@@ -457,7 +457,9 @@ export default async function Home() {
               <div>
                 <div className="text-[#d97706] font-bold text-xs mb-1">★★★★★</div>
                 <div className="font-bold text-slate-800 text-xs">Farida K.</div>
-                <div className="text-[10px] text-slate-400">Verified Buyer, Mansoura</div>
+                <div className="text-[10px] text-slate-600 font-medium">
+                  Verified Buyer, Mansoura
+                </div>
               </div>
             </div>
 
@@ -469,7 +471,9 @@ export default async function Home() {
               <div>
                 <div className="text-[#d97706] font-bold text-xs mb-1">★★★★★</div>
                 <div className="font-bold text-slate-800 text-xs">Tarek M.</div>
-                <div className="text-[10px] text-slate-400">Verified Buyer, Alexandria</div>
+                <div className="text-[10px] text-slate-600 font-medium">
+                  Verified Buyer, Alexandria
+                </div>
               </div>
             </div>
 
@@ -481,7 +485,7 @@ export default async function Home() {
               <div>
                 <div className="text-[#d97706] font-bold text-xs mb-1">★★★★★</div>
                 <div className="font-bold text-slate-800 text-xs">Yasmine A.</div>
-                <div className="text-[10px] text-slate-400">Verified Buyer, Cairo</div>
+                <div className="text-[10px] text-slate-600 font-medium">Verified Buyer, Cairo</div>
               </div>
             </div>
           </div>
@@ -543,6 +547,7 @@ export default async function Home() {
           </a>
           <a
             href="/legal/seller-terms"
+            aria-label="Learn more about seller terms and requirements"
             style={{
               border: '1.5px solid rgba(255,255,255,0.4)',
               color: '#fff',
@@ -554,7 +559,7 @@ export default async function Home() {
               display: 'inline-block',
             }}
           >
-            Learn more
+            Learn more about seller terms
           </a>
         </div>
       </section>

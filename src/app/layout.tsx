@@ -162,12 +162,10 @@ export default async function RootLayout({
   const _lang = isArabic ? 'ar' : 'en';
 
   // Build preconnect list dynamically so only configured services are hinted.
-  // Image CDNs are always preconnected because they serve the LCP hero image.
-  const preconnectHosts: string[] = [
-    'https://images.unsplash.com',
-    'https://res.cloudinary.com',
-    'https://lh3.googleusercontent.com',
-  ];
+  // Image CDNs are hinted only if configured to avoid unused preconnect warnings.
+  const preconnectHosts: string[] = ['https://images.unsplash.com'];
+  if (process.env.CLOUDINARY_CLOUD_NAME) preconnectHosts.push('https://res.cloudinary.com');
+  if (process.env.GOOGLE_CLIENT_ID) preconnectHosts.push('https://lh3.googleusercontent.com');
   if (process.env.SENTRY_DSN) preconnectHosts.push('https://o0.ingest.sentry.io');
   if (process.env.NEXT_PUBLIC_GA_ID)
     preconnectHosts.push('https://www.google-analytics.com', 'https://www.googletagmanager.com');
@@ -176,7 +174,7 @@ export default async function RootLayout({
   if (process.env.BLOB_READ_WRITE_TOKEN) preconnectHosts.push('https://blob.vercel-storage.com');
 
   return (
-    <html lang={_lang} dir={dir}>
+    <html lang={_lang} dir={dir} suppressHydrationWarning>
       <head>
         {preconnectHosts.map(href => (
           <link key={href} rel="preconnect" href={href} crossOrigin="anonymous" />
@@ -189,6 +187,7 @@ export default async function RootLayout({
         <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM Knowledge Base" />
       </head>
       <body
+        suppressHydrationWarning
         className={`${inter.variable} ${outfit.variable} ${cairo.variable} ${isArabic ? 'font-cairo' : ''} bg-[hsl(var(--background))] text-[hsl(var(--foreground))] antialiased`}
       >
         <a
@@ -218,8 +217,12 @@ export default async function RootLayout({
         </LanguageProvider>
         <Plugins />
         <CsrfProvider />
-        <Analytics />
-        <SpeedInsights />
+        {process.env.VERCEL === '1' && (
+          <>
+            <Analytics />
+            <SpeedInsights />
+          </>
+        )}
         <WebVitalsReporter />
       </body>
     </html>

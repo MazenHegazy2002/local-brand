@@ -61,6 +61,7 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
           style={{ objectFit: 'cover' }}
           className={`z-0 mix-blend-multiply transition-opacity duration-1000 ${currentSlide === idx ? 'opacity-100' : 'opacity-0'}`}
           priority={idx === 0}
+          fetchPriority={idx === 0 ? 'high' : 'auto'}
           loading={idx === 0 ? undefined : 'lazy'}
         />
       ))}
@@ -71,14 +72,20 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
 
       {/* Slider dots — only show when there's more than one slide */}
       {slides.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex gap-2">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1">
           {slides.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentSlide(idx)}
               aria-label={`Go to slide ${idx + 1}`}
-              className={`w-2.5 h-2.5 rounded-full transition-all ${currentSlide === idx ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/80'}`}
-            />
+              className="p-3 flex items-center justify-center focus:outline-none"
+            >
+              <span
+                className={`h-2.5 rounded-full transition-all block ${
+                  currentSlide === idx ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/80 w-2.5'
+                }`}
+              />
+            </button>
           ))}
         </div>
       )}

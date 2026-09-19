@@ -187,7 +187,11 @@ export async function proxy(req: NextRequest) {
   }
 
   // 1. Rate Limiting for API routes
-  if (targetPathname.startsWith('/api') && !targetPathname.startsWith('/api/auth/session')) {
+  if (
+    targetPathname.startsWith('/api') &&
+    !targetPathname.startsWith('/api/auth/session') &&
+    !targetPathname.startsWith('/api/images')
+  ) {
     const result = await rateLimit(req);
     if (result.limited) {
       return NextResponse.json(

@@ -18,14 +18,14 @@ export default function PromoBanner({
   ctaHref = '/shop',
   id = 'default',
 }: PromoBannerProps) {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     try {
       const dismissed = localStorage.getItem(`${DISMISS_KEY}:${id}`);
-      if (!dismissed) setVisible(true);
+      if (dismissed) setVisible(false);
     } catch {
-      setVisible(true);
+      // ignore
     }
   }, [id]);
 

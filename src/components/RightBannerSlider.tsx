@@ -59,9 +59,9 @@ export default function RightBannerSlider({ slides }: { slides: RightBannerSlide
           />
           <div className="absolute inset-0 z-10 bg-gradient-to-t from-gray-900/90 to-transparent" />
           <div className="absolute bottom-0 left-0 p-6 z-20 w-full text-left">
-            <h3 className="text-white text-xl md:text-2xl font-bold mb-1 tracking-tight">
+            <h2 className="text-white text-xl md:text-2xl font-bold mb-1 tracking-tight">
               {slide.title}
-            </h3>
+            </h2>
             {slide.subtitle && (
               <span className="text-white/70 text-sm font-medium">{slide.subtitle}</span>
             )}
@@ -70,16 +70,20 @@ export default function RightBannerSlider({ slides }: { slides: RightBannerSlide
       ))}
 
       {slides.length > 1 && (
-        <div className="absolute bottom-4 right-4 z-30 flex gap-1.5">
+        <div className="absolute bottom-3 right-3 z-30 flex items-center gap-0.5">
           {slides.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentSlide(idx)}
               aria-label={`Go to slide ${idx + 1}`}
-              className={`w-1.5 h-1.5 rounded-full transition-all ${
-                currentSlide === idx ? 'bg-white w-4' : 'bg-white/50 hover:bg-white/80'
-              }`}
-            />
+              className="p-2.5 flex items-center justify-center focus:outline-none"
+            >
+              <span
+                className={`h-1.5 rounded-full transition-all block ${
+                  currentSlide === idx ? 'bg-white w-4' : 'bg-white/50 hover:bg-white/80 w-1.5'
+                }`}
+              />
+            </button>
           ))}
         </div>
       )}

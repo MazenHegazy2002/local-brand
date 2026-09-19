@@ -23,6 +23,7 @@ import RecentlyViewed from '@/components/RecentlyViewed';
 import { PLATFORM_URL } from '@/lib/constants';
 import { productJsonLd, breadcrumbJsonLd, jsonLdScript } from '@/lib/jsonld';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
+import { sanitizeProduct } from '@/lib/sanitize-product';
 import type { Product as ProductType, Review, ProductQA } from '@/types';
 import type { Metadata } from 'next';
 
@@ -120,10 +121,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   const baseUrl = PLATFORM_URL;
 
-  // Run plugin check in parallel with the product query
-  const session = await getServerSession(authOptions);
+  let session: any = null;
+  try {
+    session = await getServerSession(authOptions);
+  } catch {
+    session = null;
+  }
 
-  const [product, virtualTryOnEnabled] = await Promise.all([
+  const [rawProduct, virtualTryOnEnabled] = await Promise.all([
     prisma.product.findFirst({
       where: {
         OR: [{ id }, { slug: id }],
@@ -142,6 +147,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     }),
     isVirtualTryOnEnabled(),
   ]);
+
+  const product = rawProduct ? sanitizeProduct(rawProduct) : null;
 
   if (!product) {
     return (

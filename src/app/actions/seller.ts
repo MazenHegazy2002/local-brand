@@ -8,6 +8,7 @@ import { OrderStatus, SellerStatus, OrderItemStatus, Role, PayoutStatus } from '
 import bcrypt from 'bcryptjs';
 import { BCRYPT_COST } from '@/lib/constants';
 import { getCachedData } from '@/lib/cache';
+import { sanitizeProducts } from '@/lib/sanitize-product';
 
 import type { Session } from 'next-auth';
 import type { Review, SessionUser } from '@/types';
@@ -720,7 +721,7 @@ export async function getDashboardStats() {
 
 export async function getHomepageData() {
   return getCachedData(
-    'homepage:data:v2',
+    'homepage:data:v3',
     async () => {
       try {
         const categories = await prisma.category.findMany({
@@ -827,7 +828,12 @@ export async function getHomepageData() {
           }
         }
 
-        return { categories, bestsellers, newArrivals, recommended };
+        return {
+          categories,
+          bestsellers: sanitizeProducts(bestsellers),
+          newArrivals: sanitizeProducts(newArrivals),
+          recommended: sanitizeProducts(recommended),
+        };
       } catch (err: unknown) {
         const error = err as Error;
         console.error('[getHomepageData] Error:', error);

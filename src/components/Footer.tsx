@@ -111,11 +111,11 @@ export default function Footer() {
             <Link href="/" className="text-xl font-black tracking-tight text-white">
               {PLATFORM_NAME}
             </Link>
-            <p className="mt-3 text-sm text-white/60 leading-relaxed max-w-xs">
+            <p className="mt-3 text-sm text-white/80 leading-relaxed max-w-xs">
               Egypt&apos;s marketplace for local sellers. Discover authentic Egyptian brands and
               shop with confidence.
             </p>
-            <div className="mt-4 space-y-1 text-sm text-white/60">
+            <div className="mt-4 space-y-1 text-sm text-white/80">
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
                 className="flex items-center gap-2 hover:text-white transition-colors"
@@ -191,13 +191,13 @@ export default function Footer() {
 
           {/* Shop column */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-white/40 mb-4">Shop</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-white/80 mb-4">Shop</h3>
             <ul className="space-y-2.5">
               {FOOTER_LINKS.shop.map(link => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-white/70 hover:text-white transition-colors"
+                    className="text-sm text-white/85 hover:text-white transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -208,13 +208,13 @@ export default function Footer() {
 
           {/* Sell column */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-white/40 mb-4">Sell</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-white/80 mb-4">Sell</h3>
             <ul className="space-y-2.5">
               {FOOTER_LINKS.sell.map(link => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-white/70 hover:text-white transition-colors"
+                    className="text-sm text-white/85 hover:text-white transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -225,13 +225,13 @@ export default function Footer() {
 
           {/* Help column */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-white/40 mb-4">Help</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-white/80 mb-4">Help</h3>
             <ul className="space-y-2.5">
               {FOOTER_LINKS.help.map(link => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-white/70 hover:text-white transition-colors"
+                    className="text-sm text-white/85 hover:text-white transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -242,7 +242,7 @@ export default function Footer() {
 
           {/* Legal column */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-white/40 mb-4">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-white/80 mb-4">
               Legal
             </h3>
             <ul className="space-y-2.5">
@@ -250,7 +250,7 @@ export default function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-white/70 hover:text-white transition-colors"
+                    className="text-sm text-white/85 hover:text-white transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -261,10 +261,10 @@ export default function Footer() {
 
           {/* Newsletter column */}
           <div className="col-span-2 md:col-span-1">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-white/40 mb-4">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-white/80 mb-4">
               Newsletter
             </h3>
-            <p className="text-xs text-white/60 mb-3 leading-relaxed">
+            <p className="text-xs text-white/80 mb-3 leading-relaxed">
               Subscribe to get updates on new arrivals, discount offers, and local brands.
             </p>
             <form onSubmit={handleSubscribe} className="space-y-2">
@@ -295,7 +295,7 @@ export default function Footer() {
 
       {/* Bottom bar */}
       <div className="border-t border-white/10">
-        <div className="container mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/40">
+        <div className="container mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/75">
           <p>
             © {year} {PLATFORM_NAME} (brandyy.shop). All rights reserved.
           </p>

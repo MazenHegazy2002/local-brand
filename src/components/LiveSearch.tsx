@@ -145,7 +145,8 @@ export default function LiveSearch() {
         />
         <button
           type="submit"
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/85 hover:text-white transition-colors"
+          aria-label="Search"
+          className="absolute right-1 top-1/2 -translate-y-1/2 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-white/85 hover:text-white transition-colors"
         >
           {isSearching ? (
             <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">

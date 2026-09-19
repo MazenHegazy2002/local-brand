@@ -409,6 +409,8 @@ export default function ProductCard({
                         e.stopPropagation();
                         setSelectedSize(sz);
                       }}
+                      aria-label={`Select size ${sz}`}
+                      aria-pressed={isSelected}
                       className={`px-2 py-0.5 text-[9px] font-black rounded border transition-all duration-200 ${
                         isSelected
                           ? 'bg-[hsl(var(--primary))] text-white border-transparent shadow-sm'

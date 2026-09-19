@@ -278,7 +278,8 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="flex items-center gap-1.5 text-sm font-semibold text-white/85 hover:text-white transition-colors"
+                aria-label={t('SignIn') || 'Sign In'}
+                className="flex items-center gap-1.5 text-sm font-semibold text-white/85 hover:text-white transition-colors p-1"
               >
                 <User size={20} />
                 <span className="hidden sm:inline">{t('SignIn')}</span>
