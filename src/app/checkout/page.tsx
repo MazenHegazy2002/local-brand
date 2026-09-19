@@ -1361,13 +1361,23 @@ function CheckoutPageInner() {
                       className="flex gap-4 py-3"
                       style={{ direction: isRTL ? 'rtl' : 'ltr' }}
                     >
-                      <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden shrink-0">
-                        {item.image && item.image.startsWith('http') ? (
+                      <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
+                        {item.image ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={item.image}
                             alt={item.name}
                             className="w-full h-full object-cover"
+                            onError={e => {
+                              e.currentTarget.style.display = 'none';
+                              const parent = e.currentTarget.parentElement;
+                              if (parent && !parent.querySelector('.fallback-emoji')) {
+                                const span = document.createElement('span');
+                                span.className = 'fallback-emoji text-xl';
+                                span.textContent = '📦';
+                                parent.appendChild(span);
+                              }
+                            }}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-xl">

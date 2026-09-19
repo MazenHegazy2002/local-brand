@@ -152,13 +152,23 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
               >
                 <div className="w-20 h-20 rounded-xl bg-gray-100 flex items-center justify-center text-2xl overflow-hidden shrink-0">
-                  {item.image && item.image.startsWith('http') ? (
+                  {item.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={item.image}
                       alt={item.name}
                       className="w-full h-full object-cover"
                       loading="lazy"
+                      onError={e => {
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent && !parent.querySelector('.fallback-emoji')) {
+                          const span = document.createElement('span');
+                          span.className = 'fallback-emoji';
+                          span.textContent = item.emoji ?? '📦';
+                          parent.appendChild(span);
+                        }
+                      }}
                     />
                   ) : (
                     (item.emoji ?? '📦')
