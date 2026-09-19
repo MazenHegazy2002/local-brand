@@ -272,15 +272,16 @@ export default function ProductCard({
     >
       <Link
         href={`/product/${displayId}`}
+        aria-label={`View ${displayName}${productBrand ? ` by ${productBrand}` : ''} (${displayId.slice(-4)})`}
         className="block overflow-hidden relative aspect-[4/5] shrink-0 bg-gray-50"
       >
         <Image
           src={activeImage || displayImage || '/placeholder.png'}
           alt={displayName}
           fill
-          sizes="(max-width: 640px) 70vw, (max-width: 1024px) 33vw, 220px"
+          sizes="(max-width: 480px) 45vw, (max-width: 768px) 48vw, (max-width: 1024px) 33vw, 220px"
           className="object-cover transition-transform duration-700 group-hover:scale-115"
-          loading={index !== undefined && index < 2 ? 'eager' : 'lazy'}
+          loading="lazy"
         />
         {/* Wishlist Button Overlay */}
         <div className="absolute top-4 right-4 z-20">
@@ -319,15 +320,19 @@ export default function ProductCard({
 
       <div className="p-5 flex flex-col flex-1 justify-between bg-transparent">
         <div>
-          {/* Brand slug */}
+          {/* Brand slug with sufficient touch target area */}
           <Link
             href={`/brand/${productBrandSlug}`}
-            className="text-[#1e3b8a] dark:text-[#6b8ff5] text-xs font-bold uppercase tracking-wider mb-1.5 block hover:underline"
+            className="text-[#1e3b8a] dark:text-[#6b8ff5] text-xs font-bold uppercase tracking-wider min-h-[32px] inline-flex items-center py-1 hover:underline"
           >
             {productBrand}
           </Link>
-          {/* Title */}
-          <Link href={`/product/${displayId}`}>
+          {/* Title with matching unique accessible name */}
+          <Link
+            href={`/product/${displayId}`}
+            aria-label={`View ${displayName}${productBrand ? ` by ${productBrand}` : ''} (${displayId.slice(-4)})`}
+            className="block min-h-[36px] py-1"
+          >
             <h3 className="text-[15px] font-bold text-slate-900 dark:text-slate-100 line-clamp-2 mb-2 hover:text-[#1e3b8a] dark:hover:text-[#6b8ff5] transition-colors leading-tight">
               {displayName}
             </h3>
@@ -411,7 +416,7 @@ export default function ProductCard({
                       }}
                       aria-label={`Select size ${sz}`}
                       aria-pressed={isSelected}
-                      className={`px-2 py-0.5 text-[9px] font-black rounded border transition-colors duration-150 ${
+                      className={`px-2 py-0.5 text-[9px] font-black rounded border active:scale-95 ${
                         isSelected
                           ? 'bg-[hsl(var(--primary))] text-white border-transparent shadow-sm'
                           : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 border-slate-200/40'

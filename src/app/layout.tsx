@@ -161,17 +161,15 @@ export default async function RootLayout({
   const dir = isArabic ? 'rtl' : 'ltr';
   const _lang = isArabic ? 'ar' : 'en';
 
-  // Build preconnect list dynamically so only configured services are hinted.
-  // Image CDNs are hinted only if configured to avoid unused preconnect warnings.
-  const preconnectHosts: string[] = ['https://images.unsplash.com'];
-  if (process.env.CLOUDINARY_CLOUD_NAME) preconnectHosts.push('https://res.cloudinary.com');
-  if (process.env.GOOGLE_CLIENT_ID) preconnectHosts.push('https://lh3.googleusercontent.com');
+  // Build preconnect list dynamically for client-loaded third-party services.
+  // We do NOT hint image CDNs (Unsplash, Cloudinary) because Next.js optimizes
+  // all images via the same-origin /_next/image proxy.
+  const preconnectHosts: string[] = [];
   if (process.env.SENTRY_DSN) preconnectHosts.push('https://o0.ingest.sentry.io');
   if (process.env.NEXT_PUBLIC_GA_ID)
     preconnectHosts.push('https://www.google-analytics.com', 'https://www.googletagmanager.com');
   if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) preconnectHosts.push('https://client.crisp.chat');
   if (process.env.NEXT_PUBLIC_HOTJAR_ID) preconnectHosts.push('https://static.hotjar.com');
-  if (process.env.BLOB_READ_WRITE_TOKEN) preconnectHosts.push('https://blob.vercel-storage.com');
 
   return (
     <html lang={_lang} dir={dir} suppressHydrationWarning>

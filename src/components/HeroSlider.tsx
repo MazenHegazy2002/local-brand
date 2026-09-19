@@ -29,6 +29,11 @@ const SLIDE_DURATION_MS = 5000;
 export default function HeroSlider({ slides }: HeroSliderProps) {
   const { t } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Auto-advance only when there's more than one slide.
   useEffect(() => {
@@ -51,20 +56,24 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
 
   return (
     <>
-      {slides.map((slide, idx) => (
-        <Image
-          key={`${slide.imageUrl}-${idx}`}
-          src={slide.imageUrl}
-          alt={renderText(slide.title, slide.isI18nKey)}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 850px"
-          style={{ objectFit: 'cover' }}
-          className={`z-0 mix-blend-multiply transition-opacity duration-1000 ${currentSlide === idx ? 'opacity-100' : 'opacity-0'}`}
-          priority={idx === 0}
-          fetchPriority={idx === 0 ? 'high' : 'auto'}
-          loading={idx === 0 ? undefined : 'lazy'}
-        />
-      ))}
+      {slides.map((slide, idx) => {
+        // Only load non-active slides after initial hydration so initial paint only loads slide 0
+        if (idx > 0 && !mounted && currentSlide !== idx) return null;
+        return (
+          <Image
+            key={`${slide.imageUrl}-${idx}`}
+            src={slide.imageUrl}
+            alt={renderText(slide.title, slide.isI18nKey)}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1200px"
+            style={{ objectFit: 'cover' }}
+            className={`z-0 mix-blend-multiply transition-opacity duration-1000 ${currentSlide === idx ? 'opacity-100' : 'opacity-0'}`}
+            priority={idx === 0}
+            fetchPriority={idx === 0 ? 'high' : 'auto'}
+            loading={idx === 0 ? undefined : 'lazy'}
+          />
+        );
+      })}
 
       {/* Deep Blue Overlay */}
       <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#032094]/90 to-[#0d5eed]/70 mix-blend-multiply pointer-events-none" />
