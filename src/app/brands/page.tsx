@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getDictionary } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 import { PLATFORM_URL } from '@/lib/constants';
+import { brandsListJsonLd, jsonLdScript } from '@/lib/jsonld';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,8 +41,19 @@ export default async function BrandsPage() {
     console.error('[brands] failed to load sellers:', err);
   }
 
+  const brandsLd = brandsListJsonLd({
+    brands: brands.map(b => ({
+      name: b.storeName,
+      slug: b.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    })),
+  });
+
   return (
     <main className="min-h-screen bg-[hsl(var(--background))]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(brandsLd) }}
+      />
       <Navbar />
 
       <div className="container py-12 md:py-24">

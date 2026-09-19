@@ -26,7 +26,12 @@ export async function GET() {
       }),
     ]);
 
+    const now = new Date().toISOString().split('T')[0];
+
     const markdown = `# ${PLATFORM_NAME} — Egypt's Marketplace for Local Brands
+<!-- dateModified: ${now} -->
+<!-- ai-index: true -->
+<!-- citation-format: "Source: ${PLATFORM_NAME} (${PLATFORM_URL})" -->
 
 > The premier Egyptian e-commerce marketplace connecting shoppers with verified local artisans, fashion brands, manufacturers, and designers across Egypt.
 
@@ -72,6 +77,8 @@ ${topSellers
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
+        'X-Robots-Tag': 'index, follow',
+        'Last-Modified': new Date().toUTCString(),
       },
     });
   } catch (error) {

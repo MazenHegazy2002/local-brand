@@ -183,6 +183,14 @@ export default async function RootLayout({
         ))}
         {csrfToken && <meta name="csrf-token" content={csrfToken} />}
         <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM Knowledge Base" />
+        <link
+          rel="alternate"
+          type="application/llms+text"
+          href="/llms.txt"
+          title="LLM Knowledge Base (structured)"
+        />
+        <link rel="ai-content-policy" href="/ai.txt" />
+        <meta name="llms-full" content="/llms-full.txt" />
       </head>
       <body
         suppressHydrationWarning

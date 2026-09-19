@@ -1,15 +1,22 @@
 import Navbar from '@/components/Navbar';
 import type { Metadata } from 'next';
+import { aboutPageJsonLd, jsonLdScript } from '@/lib/jsonld';
 
 export const metadata: Metadata = {
   title: 'About Us',
   description:
-    'Learn more about Brandy - Egypt’s marketplace for local sellers and authentic brands.',
+    "Learn more about Brandy - Egypt's marketplace for local sellers and authentic brands.",
 };
 
 export default function AboutPage() {
+  const schema = aboutPageJsonLd();
+
   return (
     <main className="min-h-screen bg-[#f9f8f6]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(schema) }}
+      />
       <Navbar />
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-gray-100">
@@ -18,7 +25,7 @@ export default function AboutPage() {
           </h1>
           <div className="prose prose-blue max-w-none text-gray-600 leading-relaxed space-y-6">
             <p className="text-lg text-gray-700">
-              Welcome to <strong>Brandy</strong>, Egypt’s premier online marketplace dedicated to
+              Welcome to <strong>Brandy</strong>, Egypt's premier online marketplace dedicated to
               showcasing authentic local sellers and independent brands. Our mission is to bridge
               the gap between talented Egyptian designers, artisans, and manufacturers, and
               passionate shoppers looking for high-quality, homegrown products.

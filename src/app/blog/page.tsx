@@ -1,5 +1,6 @@
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
+import { blogJsonLd, jsonLdScript, type BlogArticle } from '@/lib/jsonld';
 
 export const metadata = {
   title: 'Blog & Local Brand Stories — Brandy',
@@ -51,8 +52,14 @@ const ARTICLES = [
 ];
 
 export default function BlogPage() {
+  const schema = blogJsonLd(ARTICLES as BlogArticle[]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[hsl(var(--background))] via-white to-[hsl(var(--accent)/0.06)] text-[hsl(var(--foreground))]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(schema) }}
+      />
       <Navbar />
 
       {/* Hero Header */}

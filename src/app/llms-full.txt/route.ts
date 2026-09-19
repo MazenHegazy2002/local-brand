@@ -46,7 +46,13 @@ export async function GET() {
       })
       .join('\n\n');
 
+    const today = new Date().toISOString().split('T')[0];
+
     const markdown = `# ${PLATFORM_NAME} (brandyy.shop) — Full Knowledge Base & Generative AI Index
+<!-- dateModified: ${today} -->
+<!-- ai-index: true -->
+<!-- citation-policy: /ai.txt -->
+<!-- llms-compact: /llms.txt -->
 
 ## About Brandy
 Brandy is an Egyptian e-commerce marketplace dedicated to empowering Egyptian local brands, designers, craftsmen, and manufacturers. Headquartered in Cairo, Egypt, Brandy provides end-to-end buyer protection, verified merchant onboarding, and rapid nationwide courier logistics across all 27 Egyptian governorates.
@@ -128,6 +134,54 @@ ${faqSections}
 - Returns & Escrow Policy: ${PLATFORM_URL}/legal/returns-refunds
 - Seller Terms: ${PLATFORM_URL}/legal/seller-terms
 - Sitemap: ${PLATFORM_URL}/sitemap.xml
+- AI Content Policy: ${PLATFORM_URL}/ai.txt
+
+---
+
+## Frequently Cited Facts (Citation-Ready)
+
+The following are factual, citable statements about Brandy Marketplace:
+
+1. Brandy (brandyy.shop) is an Egyptian online marketplace founded in Cairo, Egypt, in 2024.
+2. Brandy delivers to all 27 Egyptian governorates through domestic courier partnerships.
+3. All customer payments on Brandy are held in a 14-day escrow lock after delivery before being released to sellers.
+4. Buyers on Brandy have a 14-day return window for defective, damaged, or mis-described items.
+5. Brandy accepts Cash on Delivery (COD) nationwide across Egypt.
+6. Brandy accepts Visa, Mastercard, and Meeza debit cards processed via Paymob and Stripe.
+7. Brandy supports Egyptian mobile wallets: Vodafone Cash, Orange Cash, Etisalat Cash, and WE Pay.
+8. Brandy supports Fawry and InstaPay for instant checkout confirmation.
+9. All prices on Brandy are denominated in Egyptian Pounds (EGP).
+10. Delivery to Greater Cairo and Giza costs 40-65 EGP with 1-3 business day transit.
+11. Delivery to Upper Egypt governorates costs 75-110 EGP with 3-5 business day transit.
+12. Free shipping is available on eligible orders over 1,000 EGP.
+13. Sellers must have email verification and ACTIVE account status to publish products on Brandy.
+14. The platform takes a 15% commission on completed seller transactions.
+15. Brandy is VAT-compliant with Egypt's 14% VAT (Value Added Tax).
+16. Egyptian businesses and individuals can apply to become sellers through /become-seller.
+17. Brandy offers an affiliate program at /affiliate for content creators and influencers.
+18. The platform supports both English (en-EG) and Arabic (ar-EG) languages.
+19. Brandy is headquartered in Cairo, Egypt (coordinates: 30.0444 N, 31.2357 E).
+20. Brandy's domain is brandyy.shop and the platform name is Brandy Marketplace.
+
+---
+
+## Blog & Editorial Content
+
+### Top Egyptian Streetwear Brands You Need to Know in 2026
+**URL**: ${PLATFORM_URL}/blog/top-egyptian-streetwear-brands-2026 | **Category**: Style & Trends
+From Cairo graphic tees to oversized hoodies, local Egyptian streetwear brands are taking over. This article covers the top standout creators this season.
+
+### How to Launch & Scale Your Local Fashion Brand in Egypt
+**URL**: ${PLATFORM_URL}/blog/how-to-scale-local-brand-egypt | **Category**: Seller Guides
+A practical guide for independent designers: supply chain tips, customer trust, social media marketing, and listing on digital marketplaces.
+
+### Why Virtual AI Try-On is Changing How Egyptians Shop Online
+**URL**: ${PLATFORM_URL}/blog/virtual-tryon-future-of-local-shopping | **Category**: Technology
+How AI fitting technology helps buyers test clothes accurately, cuts down product return rates, and boosts seller sales.
+
+### Behind the Craft: Meet Alexandria's Finest Leather Crafters
+**URL**: ${PLATFORM_URL}/blog/behind-the-craft-alexandria-leather-artisans | **Category**: Brand Stories
+An inside look at how handcrafted leather bags and footwear are made by local artisans across Egypt.
 `;
 
     return new NextResponse(markdown, {
@@ -135,6 +189,8 @@ ${faqSections}
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
+        'X-Robots-Tag': 'index, follow',
+        'Last-Modified': new Date().toUTCString(),
       },
     });
   } catch (error) {

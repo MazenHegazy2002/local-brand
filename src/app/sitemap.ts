@@ -146,6 +146,43 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'yearly',
       priority: 0.2,
     },
+    {
+      url: `${baseUrl}/ai.txt`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    // Blog articles (static)
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/blog/top-egyptian-streetwear-brands-2026`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/blog/how-to-scale-local-brand-egypt`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/blog/virtual-tryon-future-of-local-shopping`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.55,
+    },
+    {
+      url: `${baseUrl}/blog/behind-the-craft-alexandria-leather-artisans`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.55,
+    },
   ];
 
   let dynamicRoutes: MetadataRoute.Sitemap = [];

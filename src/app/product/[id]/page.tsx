@@ -21,7 +21,7 @@ import ProductDetails from './ProductDetails';
 import RelatedProducts from '@/components/RelatedProducts';
 import RecentlyViewed from '@/components/RecentlyViewed';
 import { PLATFORM_URL } from '@/lib/constants';
-import { productJsonLd, breadcrumbJsonLd, jsonLdScript } from '@/lib/jsonld';
+import { productJsonLd, breadcrumbJsonLd, reviewsJsonLd, jsonLdScript } from '@/lib/jsonld';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { sanitizeProduct } from '@/lib/sanitize-product';
 import type { Product as ProductType, Review, ProductQA } from '@/types';
@@ -249,23 +249,39 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       initialQuestions = [];
     }
 
-    const jsonLd = productJsonLd({
-      id: product.slug,
-      title: product.title,
-      description: product.description,
-      images: product.images.map(img => img.url),
-      brand: product.seller?.storeName,
-      category: product.category?.name,
-      price: product.flashSalePrice || product.basePrice,
-      availability: product.variants.some(v => v.stockCount > 0) ? 'in-stock' : 'out-of-stock',
-      aggregateRating:
-        product.reviews.length > 0
-          ? {
-              value: avgRating,
-              count: product.reviews.length,
-            }
-          : undefined,
-    });
+    const jsonLd = {
+      ...productJsonLd({
+        id: product.slug,
+        title: product.title,
+        description: product.description,
+        images: product.images.map(img => img.url),
+        brand: product.seller?.storeName,
+        category: product.category?.name,
+        price: product.flashSalePrice || product.basePrice,
+        availability: product.variants.some(v => v.stockCount > 0) ? 'in-stock' : 'out-of-stock',
+        aggregateRating:
+          product.reviews.length > 0
+            ? {
+                value: avgRating,
+                count: product.reviews.length,
+              }
+            : undefined,
+      }),
+      // Attach individual Review nodes for richer AI + rich-snippet signals
+      ...(product.reviews.length > 0
+        ? {
+            review: reviewsJsonLd(
+              product.reviews.map(r => ({
+                author: r.user?.name || 'Verified Buyer',
+                rating: r.rating,
+                body: r.comment || '',
+                datePublished:
+                  r.createdAt instanceof Date ? r.createdAt.toISOString().split('T')[0] : undefined,
+              }))
+            ),
+          }
+        : {}),
+    };
 
     const breadcrumbLd = breadcrumbJsonLd({
       items: [

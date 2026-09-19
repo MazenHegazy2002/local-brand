@@ -37,7 +37,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       // Standard search engine web crawlers
       {
         userAgent: '*',
-        allow: ['/', '/api/og', '/llms.txt', '/llms-full.txt'],
+        allow: ['/', '/api/og', '/llms.txt', '/llms-full.txt', '/ai.txt'],
         disallow: disallowedPaths,
       },
       // Generative AI Search Bots (ChatGPT / SearchGPT, Perplexity, Anthropic, Apple Intelligence, Google Gemini)
