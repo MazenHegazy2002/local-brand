@@ -21,7 +21,7 @@ import ProductDetails from './ProductDetails';
 import RelatedProducts from '@/components/RelatedProducts';
 import RecentlyViewed from '@/components/RecentlyViewed';
 import { PLATFORM_URL } from '@/lib/constants';
-import { breadcrumbJsonLd, jsonLdScript } from '@/lib/jsonld';
+import { productJsonLd, breadcrumbJsonLd, jsonLdScript } from '@/lib/jsonld';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import type { Product as ProductType, Review, ProductQA } from '@/types';
 import type { Metadata } from 'next';
@@ -35,10 +35,7 @@ export async function generateStaticParams() {
       select: { id: true, slug: true },
       take: 20,
     });
-    return products.flatMap(p => [
-      { id: p.id },
-      { id: p.slug },
-    ]);
+    return products.flatMap(p => [{ id: p.id }, { id: p.slug }]);
   } catch {
     return [];
   }
@@ -77,20 +74,42 @@ export async function generateMetadata({
     `Shop ${product.title} from ${product.seller?.storeName} on Brandy — Egypt's local marketplace. Price: ${price} EGP.`;
   const arabicDescription = `تسوق ${product.title} من ${product.seller?.storeName} على Brandy — السوق المحلي المصري. السعر: ${price} جنيه.`;
 
+  const productUrl = `${PLATFORM_URL}/product/${product.slug}`;
+  const ogImageUrl = `${PLATFORM_URL}/api/og?title=${encodeURIComponent(product.title)}&price=${price}&brand=${encodeURIComponent(product.seller?.storeName || '')}&category=${encodeURIComponent(product.category?.name || '')}`;
+
   return {
     title: product.seller?.storeName
       ? `${product.title} — ${product.seller.storeName}`
       : product.title,
     description,
-    alternates: { languages: { 'ar-EG': arabicDescription } },
+    alternates: {
+      canonical: productUrl,
+      languages: {
+        'en-EG': productUrl,
+        'ar-EG': `${productUrl}?lang=ar`,
+        'x-default': productUrl,
+      },
+    },
     openGraph: {
       title: product.title,
       description,
-      url: `${PLATFORM_URL}/product/${product.slug}`,
-      images: image ? [{ url: image, width: 800, height: 800 }] : undefined,
+      url: productUrl,
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: product.title,
+        },
+      ],
       type: 'website',
     },
-    twitter: { card: 'summary_large_image', title: product.title, description },
+    twitter: {
+      card: 'summary_large_image',
+      title: product.title,
+      description,
+      images: [ogImageUrl],
+    },
   };
 }
 
@@ -193,31 +212,23 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     });
   }
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.title,
+  const jsonLd = productJsonLd({
+    id: product.slug,
+    title: product.title,
     description: product.description,
-    image: product.images.map(img => img.url),
-    brand: { '@type': 'Brand', name: product.seller?.storeName },
-    offers: {
-      '@type': 'Offer',
-      priceCurrency: 'EGP',
-      price: product.flashSalePrice || product.basePrice,
-      availability: product.variants.some(v => v.stockCount > 0)
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock',
-      seller: { '@type': 'Organization', name: 'Brandy' },
-    },
+    images: product.images.map(img => img.url),
+    brand: product.seller?.storeName,
+    category: product.category?.name,
+    price: product.flashSalePrice || product.basePrice,
+    availability: product.variants.some(v => v.stockCount > 0) ? 'in-stock' : 'out-of-stock',
     aggregateRating:
       product.reviews.length > 0
         ? {
-            '@type': 'AggregateRating',
-            ratingValue: avgRating,
-            reviewCount: product.reviews.length,
+            value: avgRating,
+            count: product.reviews.length,
           }
         : undefined,
-  };
+  });
 
   const breadcrumbLd = breadcrumbJsonLd({
     items: [

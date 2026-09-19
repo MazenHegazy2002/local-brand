@@ -15,23 +15,65 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     // fallback
   }
 
+  const disallowedPaths = [
+    '/api/',
+    '/admin/',
+    '/admin-os/',
+    '/admin-os/*',
+    '/dashboard/',
+    '/dashboard/*',
+    '/seller-hub/',
+    '/seller-hub/*',
+    '/checkout',
+    '/checkout/*',
+    '/payment/',
+    '/payment/*',
+    '/account/',
+    '/account/*',
+  ];
+
   return {
     rules: [
+      // Standard search engine web crawlers
       {
         userAgent: '*',
-        allow: '/',
-        disallow: [
-          '/api/',
-          '/admin/',
-          '/admin-os/',
-          '/dashboard/',
-          '/dashboard/*',
-          '/seller-hub/',
-          '/seller-hub/*',
-          '/checkout',
-          '/payment/',
-          '/account/',
+        allow: ['/', '/api/og', '/llms.txt', '/llms-full.txt'],
+        disallow: disallowedPaths,
+      },
+      // Generative AI Search Bots (ChatGPT / SearchGPT, Perplexity, Anthropic, Apple Intelligence, Google Gemini)
+      {
+        userAgent: [
+          'GPTBot',
+          'ChatGPT-User',
+          'OAI-SearchBot',
+          'PerplexityBot',
+          'ClaudeBot',
+          'anthropic-ai',
+          'Google-Extended',
+          'GoogleOther',
+          'Applebot',
+          'Applebot-Extended',
+          'cohere-ai',
+          'Amazonbot',
+          'Bingbot',
         ],
+        allow: [
+          '/',
+          '/shop',
+          '/product/*',
+          '/category/*',
+          '/brand/*',
+          '/brands',
+          '/categories',
+          '/flash-sales',
+          '/lookbook',
+          '/help/*',
+          '/legal/*',
+          '/llms.txt',
+          '/llms-full.txt',
+          '/api/og',
+        ],
+        disallow: disallowedPaths,
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

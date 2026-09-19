@@ -20,18 +20,108 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Static pages — public content pages only (auth/account pages excluded)
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: baseUrl, lastModified: now, changeFrequency: 'daily', priority: 1 },
-    { url: `${baseUrl}/shop`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
-    { url: `${baseUrl}/flash-sales`, lastModified: now, changeFrequency: 'hourly', priority: 0.9 },
-    { url: `${baseUrl}/categories`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
-    { url: `${baseUrl}/brands`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${baseUrl}/lookbook`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${baseUrl}/affiliate`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${baseUrl}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${baseUrl}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${baseUrl}/help`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${baseUrl}/help/faq`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${baseUrl}/legal`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
+    {
+      url: baseUrl,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 1,
+      alternates: {
+        languages: {
+          'en-EG': baseUrl,
+          'ar-EG': `${baseUrl}?lang=ar`,
+        },
+      },
+    },
+    {
+      url: `${baseUrl}/shop`,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 0.9,
+      alternates: {
+        languages: {
+          'en-EG': `${baseUrl}/shop`,
+          'ar-EG': `${baseUrl}/shop?lang=ar`,
+        },
+      },
+    },
+    {
+      url: `${baseUrl}/flash-sales`,
+      lastModified: now,
+      changeFrequency: 'hourly',
+      priority: 0.9,
+      alternates: {
+        languages: {
+          'en-EG': `${baseUrl}/flash-sales`,
+          'ar-EG': `${baseUrl}/flash-sales?lang=ar`,
+        },
+      },
+    },
+    {
+      url: `${baseUrl}/categories`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/brands`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/lookbook`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/llms.txt`,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/llms-full.txt`,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/affiliate`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/about`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/contact`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/help`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/help/faq`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/legal`,
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.2,
+    },
     {
       url: `${baseUrl}/legal/privacy-policy`,
       lastModified: now,
@@ -42,13 +132,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/legal/returns-refunds`,
       lastModified: now,
       changeFrequency: 'yearly',
-      priority: 0.2,
+      priority: 0.3,
     },
     {
       url: `${baseUrl}/legal/shipping-policy`,
       lastModified: now,
       changeFrequency: 'yearly',
-      priority: 0.2,
+      priority: 0.3,
     },
     {
       url: `${baseUrl}/legal/seller-terms`,
@@ -64,16 +154,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Product pages (max 1000 per sitemap)
     const products = await prisma.product.findMany({
       where: { published: true, deletedAt: null },
-      select: { id: true, slug: true, updatedAt: true },
+      select: {
+        id: true,
+        slug: true,
+        updatedAt: true,
+        images: { where: { isPrimary: true }, take: 1, select: { url: true } },
+      },
       take: 1000,
     });
 
-    const productRoutes = products.map(p => ({
-      url: `${baseUrl}/product/${p.slug}`,
-      lastModified: p.updatedAt,
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    }));
+    const productRoutes = products.map(p => {
+      const imgUrl = p.images?.[0]?.url;
+      const validImg = imgUrl && imgUrl.startsWith('http') ? [imgUrl] : undefined;
+      return {
+        url: `${baseUrl}/product/${p.slug}`,
+        lastModified: p.updatedAt,
+        changeFrequency: 'weekly' as const,
+        priority: 0.85,
+        images: validImg,
+        alternates: {
+          languages: {
+            'en-EG': `${baseUrl}/product/${p.slug}`,
+            'ar-EG': `${baseUrl}/product/${p.slug}?lang=ar`,
+          },
+        },
+      };
+    });
 
     // Category pages
     const categories = await prisma.category.findMany({
@@ -84,7 +190,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/category/${c.slug}`,
       lastModified: now,
       changeFrequency: 'weekly' as const,
-      priority: 0.7,
+      priority: 0.8,
+      alternates: {
+        languages: {
+          'en-EG': `${baseUrl}/category/${c.slug}`,
+          'ar-EG': `${baseUrl}/category/${c.slug}?lang=ar`,
+        },
+      },
     }));
 
     // Brand pages
@@ -93,12 +205,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       select: { storeName: true, updatedAt: true },
     });
 
-    const brandRoutes = sellers.map(s => ({
-      url: `${baseUrl}/brand/${s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-      lastModified: s.updatedAt,
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
-    }));
+    const brandRoutes = sellers.map(s => {
+      const slug = s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      return {
+        url: `${baseUrl}/brand/${slug}`,
+        lastModified: s.updatedAt,
+        changeFrequency: 'weekly' as const,
+        priority: 0.75,
+        alternates: {
+          languages: {
+            'en-EG': `${baseUrl}/brand/${slug}`,
+            'ar-EG': `${baseUrl}/brand/${slug}?lang=ar`,
+          },
+        },
+      };
+    });
 
     dynamicRoutes = [...productRoutes, ...categoryRoutes, ...brandRoutes];
   } catch {

@@ -25,13 +25,32 @@ export async function generateMetadata({
   if (!category) return { title: 'Category Not Found' };
 
   const en = `Shop ${category.name} from Egyptian local sellers on Brandy. ${category._count.products} products available.`;
-  const ar = `تسوق ${category.name} من البائعين المحليين المصريين على Brandy.`;
+  const categoryUrl = `${PLATFORM_URL}/category/${slug}`;
+  const ogImageUrl = `${PLATFORM_URL}/api/og?title=${encodeURIComponent(category.name)}&category=Category&badge=${encodeURIComponent(`${category._count.products} Local Products`)}`;
 
   return {
-    title: category.name,
+    title: `${category.name} — Egyptian Local Brands`,
     description: en,
-    alternates: { languages: { 'ar-EG': ar } },
-    openGraph: { title: category.name, description: en },
+    alternates: {
+      canonical: categoryUrl,
+      languages: {
+        'en-EG': categoryUrl,
+        'ar-EG': `${categoryUrl}?lang=ar`,
+        'x-default': categoryUrl,
+      },
+    },
+    openGraph: {
+      title: `${category.name} — Egyptian Local Brands`,
+      description: en,
+      url: categoryUrl,
+      images: [{ url: ogImageUrl, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: category.name,
+      description: en,
+      images: [ogImageUrl],
+    },
   };
 }
 
@@ -75,7 +94,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: `${category.name} — Brandy`,
+    name: `${category.name} — Egyptian Local Brands`,
     description: `Shop ${category.name} from Egyptian local sellers on Brandy.`,
     url: `${PLATFORM_URL}/category/${category.slug}`,
     mainEntity: {
@@ -84,7 +103,13 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       itemListElement: category.products.map((product, index) => ({
         '@type': 'ListItem',
         position: index + 1,
-        url: `${PLATFORM_URL}/product/${product.id}`,
+        name: product.title,
+        url: `${PLATFORM_URL}/product/${product.slug || product.id}`,
+        image: product.images[0]?.url
+          ? product.images[0].url.startsWith('http')
+            ? product.images[0].url
+            : `${PLATFORM_URL}${product.images[0].url}`
+          : undefined,
       })),
     },
   };

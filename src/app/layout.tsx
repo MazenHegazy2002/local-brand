@@ -45,7 +45,21 @@ export const metadata: Metadata = {
     template: '%s | Brandy',
   },
   description:
-    'Discover authentic Egyptian local sellers on Brandy. Shop fashion, electronics, home goods and more from verified Egyptian sellers. Fast delivery across Egypt.',
+    'Discover authentic Egyptian local sellers on Brandy. Shop fashion, electronics, home goods, watches and more from verified Egyptian sellers. Fast delivery across Egypt with 14-day escrow protection.',
+  keywords: [
+    'Egyptian local brands',
+    'Made in Egypt',
+    'Brandy Egypt',
+    'Brandy marketplace',
+    'براندات مصرية',
+    'تسوق اونلاين مصر',
+    'ماركات محلية مصرية',
+    'ساعات يد مصرية',
+    'ملابس براندات محلية',
+    'احذية وحقائب محلية',
+    'سوق مصري',
+    'الدفع عند الاستلام مصر',
+  ],
   authors: [{ name: 'Brandy' }],
   creator: 'Brandy',
   publisher: 'Brandy',
@@ -63,20 +77,29 @@ export const metadata: Metadata = {
     siteName: 'Brandy',
     title: 'Brandy — Egyptian Marketplace for Local Sellers',
     description:
-      'Discover authentic Egyptian local sellers on Brandy. Shop fashion, electronics, home goods and more from verified Egyptian sellers. Fast delivery across Egypt.',
+      'Discover authentic Egyptian local sellers on Brandy. Shop fashion, electronics, home goods and more from verified Egyptian sellers. Fast delivery across Egypt with 14-day escrow buyer protection.',
     url: process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop',
-    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+    images: [{ url: '/api/og?badge=Egyptian+Local+Marketplace', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Brandy — Egyptian Marketplace',
-    description: 'Discover authentic Egyptian local sellers on Brandy.',
-    images: ['/og-image.png'],
+    description: 'Discover authentic Egyptian local sellers on Brandy. Fast delivery across Egypt.',
+    images: ['/api/og?badge=Egyptian+Local+Marketplace'],
     site: '@brandyeg',
-    // Set NEXT_PUBLIC_TWITTER_HANDLE in your env (e.g. "@yourbrand")
     ...(process.env.NEXT_PUBLIC_TWITTER_HANDLE
       ? { creator: process.env.NEXT_PUBLIC_TWITTER_HANDLE }
       : {}),
+  },
+  other: {
+    'geo.region': 'EG',
+    'geo.placename': 'Cairo, Egypt',
+    'geo.position': '30.0444;31.2357',
+    ICBM: '30.0444, 31.2357',
+    target_country: 'EG',
+    coverage: 'Egypt',
+    distribution: 'Global',
+    rating: 'General',
   },
   robots: {
     index: true,
@@ -161,6 +184,7 @@ export default async function RootLayout({
           <link key={`dns-${href}`} rel="dns-prefetch" href={href} />
         ))}
         {csrfToken && <meta name="csrf-token" content={csrfToken} />}
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM Knowledge Base" />
       </head>
       <body
         className={`${inter.variable} ${outfit.variable} ${cairo.variable} ${isArabic ? 'font-cairo' : ''} bg-[hsl(var(--background))] text-[hsl(var(--foreground))] antialiased`}

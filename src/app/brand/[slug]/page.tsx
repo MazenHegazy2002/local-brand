@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { Product, ProductImage } from '@/types';
 import type { Metadata } from 'next';
 import { PLATFORM_URL } from '@/lib/constants';
-import { breadcrumbJsonLd, jsonLdScript } from '@/lib/jsonld';
+import { breadcrumbJsonLd, brandStoreJsonLd, jsonLdScript } from '@/lib/jsonld';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 export async function generateMetadata({
@@ -18,7 +18,7 @@ export async function generateMetadata({
 
   const sellers = await prisma.sellerProfile.findMany({
     where: { status: 'ACTIVE', deletedAt: null },
-    select: { storeName: true },
+    select: { storeName: true, description: true, logoUrl: true },
   });
 
   const seller = sellers.find(
@@ -27,15 +27,35 @@ export async function generateMetadata({
 
   if (!seller) return { title: 'Brand Not Found' };
 
-  const description = `Shop ${seller.storeName} products on Brandy — Egypt's marketplace for local sellers. Authentic Egyptian brand.`;
+  const description =
+    seller.description ||
+    `Shop authentic ${seller.storeName} products on Brandy — Egypt's marketplace for local sellers. Verified Egyptian brand.`;
+  const brandUrl = `${PLATFORM_URL}/brand/${slug}`;
+  const ogImageUrl = `${PLATFORM_URL}/api/og?brand=${encodeURIComponent(seller.storeName)}&title=${encodeURIComponent(seller.storeName)}&badge=Verified+Egyptian+Brand`;
 
   return {
-    title: seller.storeName,
+    title: `${seller.storeName} — Egyptian Local Brand`,
     description,
+    alternates: {
+      canonical: brandUrl,
+      languages: {
+        'en-EG': brandUrl,
+        'ar-EG': `${brandUrl}?lang=ar`,
+        'x-default': brandUrl,
+      },
+    },
     openGraph: {
+      title: `${seller.storeName} — Egyptian Local Brand`,
+      description,
+      url: brandUrl,
+      images: [{ url: ogImageUrl, width: 1200, height: 630 }],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
       title: seller.storeName,
       description,
-      type: 'website',
+      images: [ogImageUrl],
     },
   };
 }
@@ -69,8 +89,20 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
     ],
   });
 
+  const brandLd = brandStoreJsonLd({
+    name: seller.storeName,
+    slug,
+    description: seller.description,
+    logoUrl: seller.logoUrl,
+    productCount: seller.products.length,
+  });
+
   return (
     <main className="min-h-screen bg-[hsl(var(--background))]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(brandLd) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbLd) }}
