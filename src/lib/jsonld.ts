@@ -98,6 +98,7 @@ export function productJsonLd(input: ProductJsonLdInput) {
         merchantReturnDays: 14,
         returnMethod: 'https://schema.org/ReturnByMail',
         returnFees: 'https://schema.org/ReturnFeesCustomerResponsibility',
+        refundType: 'https://schema.org/FullRefund',
       },
       shippingDetails: {
         '@type': 'OfferShippingDetails',
@@ -175,8 +176,10 @@ export function organizationJsonLd() {
       "Brandy is Egypt's leading marketplace for authentic local Egyptian brands, designers, and artisans with nationwide shipping and 14-day escrow protection.",
     address: {
       '@type': 'PostalAddress',
+      streetAddress: 'Downtown',
       addressLocality: 'Cairo',
       addressRegion: 'Cairo Governorate',
+      postalCode: '11511',
       addressCountry: 'EG',
     },
     areaServed: {
@@ -227,6 +230,7 @@ export function organizationJsonLd() {
       merchantReturnDays: 14,
       returnMethod: 'https://schema.org/ReturnByMail',
       returnFees: 'https://schema.org/ReturnFeesCustomerResponsibility',
+      refundType: 'https://schema.org/FullRefund',
     },
   };
 }
@@ -281,6 +285,10 @@ export function brandStoreJsonLd(input: BrandStoreJsonLdInput) {
     },
     address: {
       '@type': 'PostalAddress',
+      streetAddress: 'Downtown',
+      addressLocality: 'Cairo',
+      addressRegion: 'Cairo Governorate',
+      postalCode: '11511',
       addressCountry: 'EG',
     },
     currenciesAccepted: 'EGP',
@@ -341,8 +349,10 @@ export function aboutPageJsonLd() {
       logo: `${PLATFORM_URL}/logo.png`,
       address: {
         '@type': 'PostalAddress',
+        streetAddress: 'Downtown',
         addressLocality: 'Cairo',
         addressRegion: 'Cairo Governorate',
+        postalCode: '11511',
         addressCountry: 'EG',
       },
       areaServed: { '@type': 'Country', name: 'Egypt' },
