@@ -57,7 +57,7 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
           src={slide.imageUrl}
           alt={renderText(slide.title, slide.isI18nKey)}
           fill
-          sizes="(max-width: 1024px) 100vw, 67vw"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 850px"
           style={{ objectFit: 'cover' }}
           className={`z-0 mix-blend-multiply transition-opacity duration-1000 ${currentSlide === idx ? 'opacity-100' : 'opacity-0'}`}
           priority={idx === 0}
@@ -81,7 +81,7 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
               className="p-3 flex items-center justify-center focus:outline-none"
             >
               <span
-                className={`h-2.5 rounded-full transition-all block ${
+                className={`h-2.5 rounded-full transition-[opacity,background-color] duration-200 block ${
                   currentSlide === idx ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/80 w-2.5'
                 }`}
               />

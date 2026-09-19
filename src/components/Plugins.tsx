@@ -546,7 +546,7 @@ export default function Plugins() {
                   right: 0,
                   bottom: 0,
                   borderRadius: '50%',
-                  boxShadow: '0 0 0 0 hsla(var(--primary), 0.6)',
+                  border: '2px solid hsl(var(--primary))',
                   animation: 'fab-ring-pulse 2s infinite',
                   pointerEvents: 'none',
                 }}
@@ -572,13 +572,16 @@ export default function Plugins() {
         }
         @keyframes fab-ring-pulse {
           0% {
-            box-shadow: 0 0 0 0 hsla(var(--primary), 0.7);
+            transform: scale(1);
+            opacity: 0.7;
           }
           70% {
-            box-shadow: 0 0 0 15px hsla(var(--primary), 0);
+            transform: scale(1.35);
+            opacity: 0;
           }
           100% {
-            box-shadow: 0 0 0 0 hsla(var(--primary), 0);
+            transform: scale(1.35);
+            opacity: 0;
           }
         }
       `}</style>

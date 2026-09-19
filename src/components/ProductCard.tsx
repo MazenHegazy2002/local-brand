@@ -278,7 +278,7 @@ export default function ProductCard({
           src={activeImage || displayImage || '/placeholder.png'}
           alt={displayName}
           fill
-          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          sizes="(max-width: 640px) 70vw, (max-width: 1024px) 33vw, 220px"
           className="object-cover transition-transform duration-700 group-hover:scale-115"
           loading={index !== undefined && index < 2 ? 'eager' : 'lazy'}
         />
@@ -411,7 +411,7 @@ export default function ProductCard({
                       }}
                       aria-label={`Select size ${sz}`}
                       aria-pressed={isSelected}
-                      className={`px-2 py-0.5 text-[9px] font-black rounded border transition-all duration-200 ${
+                      className={`px-2 py-0.5 text-[9px] font-black rounded border transition-colors duration-150 ${
                         isSelected
                           ? 'bg-[hsl(var(--primary))] text-white border-transparent shadow-sm'
                           : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 border-slate-200/40'
