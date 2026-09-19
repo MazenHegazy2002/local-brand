@@ -74,6 +74,7 @@ export async function getCachedBanners() {
           imageUrl: true,
           linkUrl: true,
           ctaLabel: true,
+          position: true,
         },
       }),
     CACHE_TTL_SHORT // 5 minutes

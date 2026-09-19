@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache';
 import { OrderStatus, SellerStatus, OrderItemStatus, Role, PayoutStatus } from '@/generated/client';
 import bcrypt from 'bcryptjs';
 import { BCRYPT_COST } from '@/lib/constants';
+import { getCachedData } from '@/lib/cache';
 
 import type { Session } from 'next-auth';
 import type { Review, SessionUser } from '@/types';
@@ -718,115 +719,123 @@ export async function getDashboardStats() {
 }
 
 export async function getHomepageData() {
-  try {
-    const categories = await prisma.category.findMany({
-      take: 6,
-      where: { parentId: null },
-    });
+  return getCachedData(
+    'homepage:data:v2',
+    async () => {
+      try {
+        const categories = await prisma.category.findMany({
+          take: 6,
+          where: { parentId: null },
+        });
 
-    const { getSetting } = await import('@/lib/admin-settings-registry');
-    const bestSellersSlug = await getSetting<string>('HOMEPAGE_BEST_SELLERS_CAT').catch(() => '');
-    const newArrivalsSlug = await getSetting<string>('HOMEPAGE_NEW_ARRIVALS_CAT').catch(() => '');
-    const recommendedSlug = await getSetting<string>('HOMEPAGE_RECOMMENDED_CAT').catch(() => '');
+        const { getSetting } = await import('@/lib/admin-settings-registry');
+        const [bestSellersSlug, newArrivalsSlug, recommendedSlug] = await Promise.all([
+          getSetting<string>('HOMEPAGE_BEST_SELLERS_CAT').catch(() => ''),
+          getSetting<string>('HOMEPAGE_NEW_ARRIVALS_CAT').catch(() => ''),
+          getSetting<string>('HOMEPAGE_RECOMMENDED_CAT').catch(() => ''),
+        ]);
 
-    let bestsellers: any[] = [];
-    if (bestSellersSlug) {
-      bestsellers = await prisma.product.findMany({
-        where: { published: true, category: { slug: bestSellersSlug }, deletedAt: null },
-        include: {
-          images: true,
-          variants: true,
-          seller: { select: { storeName: true } },
-          reviews: { select: { rating: true } },
-        },
-        take: 6,
-      });
-    }
-    if (bestsellers.length === 0) {
-      bestsellers = await prisma.product.findMany({
-        where: { isFeatured: true, published: true, deletedAt: null },
-        include: {
-          images: true,
-          variants: true,
-          seller: { select: { storeName: true } },
-          reviews: { select: { rating: true } },
-        },
-        take: 6,
-      });
-    }
+        let bestsellers: any[] = [];
+        if (bestSellersSlug) {
+          bestsellers = await prisma.product.findMany({
+            where: { published: true, category: { slug: bestSellersSlug }, deletedAt: null },
+            include: {
+              images: true,
+              variants: true,
+              seller: { select: { storeName: true } },
+              reviews: { select: { rating: true } },
+            },
+            take: 6,
+          });
+        }
+        if (bestsellers.length === 0) {
+          bestsellers = await prisma.product.findMany({
+            where: { isFeatured: true, published: true, deletedAt: null },
+            include: {
+              images: true,
+              variants: true,
+              seller: { select: { storeName: true } },
+              reviews: { select: { rating: true } },
+            },
+            take: 6,
+          });
+        }
 
-    let newArrivals: any[] = [];
-    if (newArrivalsSlug) {
-      newArrivals = await prisma.product.findMany({
-        where: { published: true, category: { slug: newArrivalsSlug }, deletedAt: null },
-        include: {
-          images: true,
-          variants: true,
-          seller: { select: { storeName: true } },
-          reviews: { select: { rating: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 6,
-      });
-    }
-    if (newArrivals.length === 0) {
-      newArrivals = await prisma.product.findMany({
-        where: { published: true, deletedAt: null },
-        include: {
-          images: true,
-          variants: true,
-          seller: { select: { storeName: true } },
-          reviews: { select: { rating: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 6,
-      });
-    }
+        let newArrivals: any[] = [];
+        if (newArrivalsSlug) {
+          newArrivals = await prisma.product.findMany({
+            where: { published: true, category: { slug: newArrivalsSlug }, deletedAt: null },
+            include: {
+              images: true,
+              variants: true,
+              seller: { select: { storeName: true } },
+              reviews: { select: { rating: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 6,
+          });
+        }
+        if (newArrivals.length === 0) {
+          newArrivals = await prisma.product.findMany({
+            where: { published: true, deletedAt: null },
+            include: {
+              images: true,
+              variants: true,
+              seller: { select: { storeName: true } },
+              reviews: { select: { rating: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 6,
+          });
+        }
 
-    let recommended: any[] = [];
-    if (recommendedSlug) {
-      recommended = await prisma.product.findMany({
-        where: { published: true, category: { slug: recommendedSlug }, deletedAt: null },
-        include: {
-          images: true,
-          variants: true,
-          seller: { select: { storeName: true } },
-          reviews: { select: { rating: true } },
-        },
-        take: 6,
-      });
-    }
-    if (recommended.length === 0) {
-      // Exclude products already shown in newArrivals to avoid duplicates
-      const excludeIds = newArrivals.map((p: any) => p.id);
-      recommended = await prisma.product.findMany({
-        where: {
-          published: true,
-          deletedAt: null,
-          isFeatured: true,
-          id: excludeIds.length > 0 ? { notIn: excludeIds } : undefined,
-        },
-        include: {
-          images: true,
-          variants: true,
-          seller: { select: { storeName: true } },
-          reviews: { select: { rating: true } },
-        },
-        take: 6,
-        orderBy: { updatedAt: 'desc' },
-      });
-      // If still empty (no featured products), pick from bestsellers excluding newArrivals
-      if (recommended.length === 0) {
-        recommended = bestsellers.filter((p: any) => !excludeIds.includes(p.id)).slice(0, 6);
+        let recommended: any[] = [];
+        if (recommendedSlug) {
+          recommended = await prisma.product.findMany({
+            where: { published: true, category: { slug: recommendedSlug }, deletedAt: null },
+            include: {
+              images: true,
+              variants: true,
+              seller: { select: { storeName: true } },
+              reviews: { select: { rating: true } },
+            },
+            take: 6,
+          });
+        }
+        if (recommended.length === 0) {
+          // Exclude products already shown in newArrivals to avoid duplicates
+          const excludeIds = newArrivals.map((p: any) => p.id);
+          recommended = await prisma.product.findMany({
+            where: {
+              published: true,
+              deletedAt: null,
+              isFeatured: true,
+              id: excludeIds.length > 0 ? { notIn: excludeIds } : undefined,
+            },
+            include: {
+              images: true,
+              variants: true,
+              seller: { select: { storeName: true } },
+              reviews: { select: { rating: true } },
+            },
+            take: 6,
+            orderBy: { updatedAt: 'desc' },
+          });
+          // If still empty (no featured products), pick from bestsellers excluding newArrivals
+          if (recommended.length === 0) {
+            recommended = bestsellers.filter((p: any) => !excludeIds.includes(p.id)).slice(0, 6);
+          }
+        }
+
+        return { categories, bestsellers, newArrivals, recommended };
+      } catch (err: unknown) {
+        const error = err as Error;
+        console.error('[getHomepageData] Error:', error);
+        return { categories: [], bestsellers: [], newArrivals: [], recommended: [] };
       }
-    }
-
-    return { categories, bestsellers, newArrivals, recommended };
-  } catch (err: unknown) {
-    const error = err as Error;
-    console.error('[getHomepageData] Error:', error);
-    return { categories: [], bestsellers: [], newArrivals: [], recommended: [] };
-  }
+    },
+    120 // Cache for 2 minutes
+  );
 }
 
 export async function updateSellerStatus(sellerId: string, status: SellerStatus) {

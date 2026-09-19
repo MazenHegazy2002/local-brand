@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { getCachedBanners } from '@/lib/cache';
 import HeroSlider, { type HeroSlide } from './HeroSlider';
 import RightBannerSlider, { type RightBannerSlide } from './RightBannerSlider';
 
@@ -57,15 +57,7 @@ const FALLBACK_RIGHT_BOTTOM: RightBannerSlide[] = [
 
 async function loadBanners() {
   try {
-    const now = new Date();
-    const banners = await prisma.homepageBanner.findMany({
-      where: {
-        isActive: true,
-        OR: [{ startsAt: null }, { startsAt: { lte: now } }],
-        AND: [{ OR: [{ endsAt: null }, { endsAt: { gte: now } }] }],
-      },
-      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
-    });
+    const banners = (await getCachedBanners()) || [];
 
     const sliderBanners = banners.filter(
       b => Number(b.position) === 0 || Number(b.position) < 0 || Number(b.position) > 2

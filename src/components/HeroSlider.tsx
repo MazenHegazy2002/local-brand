@@ -61,6 +61,7 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
           style={{ objectFit: 'cover' }}
           className={`z-0 mix-blend-multiply transition-opacity duration-1000 ${currentSlide === idx ? 'opacity-100' : 'opacity-0'}`}
           priority={idx === 0}
+          loading={idx === 0 ? undefined : 'lazy'}
         />
       ))}
 

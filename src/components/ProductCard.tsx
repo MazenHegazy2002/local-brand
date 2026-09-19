@@ -280,7 +280,7 @@ export default function ProductCard({
           fill
           sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className="object-cover transition-transform duration-700 group-hover:scale-115"
-          priority={index ? index < 4 : false}
+          loading={index !== undefined && index < 2 ? 'eager' : 'lazy'}
         />
         {/* Wishlist Button Overlay */}
         <div className="absolute top-4 right-4 z-20">

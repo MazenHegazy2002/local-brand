@@ -54,7 +54,8 @@ export default function RightBannerSlider({ slides }: { slides: RightBannerSlide
             style={coverStyle}
             alt={slide.title}
             className="z-0"
-            priority={idx === 0}
+            priority={false}
+            loading="lazy"
           />
           <div className="absolute inset-0 z-10 bg-gradient-to-t from-gray-900/90 to-transparent" />
           <div className="absolute bottom-0 left-0 p-6 z-20 w-full text-left">

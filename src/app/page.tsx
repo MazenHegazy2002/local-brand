@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import Link from 'next/link';
@@ -159,22 +161,29 @@ export default async function Home() {
     if (d) dict = d;
 
     const { getSetting } = await import('@/lib/admin-settings-registry');
-    aboutTitle = await getSetting<string>('HOMEPAGE_ABOUT_TITLE').catch(() => 'About Brandy');
-    aboutDesc = await getSetting<string>('HOMEPAGE_ABOUT_DESC').catch(() => aboutDesc);
-    prop1Title = await getSetting<string>('HOMEPAGE_PROP1_TITLE').catch(
-      () => 'Supporting Local Talent'
-    );
-    prop1Desc = await getSetting<string>('HOMEPAGE_PROP1_DESC').catch(() => prop1Desc);
-    prop2Title = await getSetting<string>('HOMEPAGE_PROP2_TITLE').catch(
-      () => 'Verified Quality Brands'
-    );
-    prop2Desc = await getSetting<string>('HOMEPAGE_PROP2_DESC').catch(() => prop2Desc);
-    prop3Title = await getSetting<string>('HOMEPAGE_PROP3_TITLE').catch(
-      () => '14-Day Escrow Guarantee'
-    );
-    prop3Desc = await getSetting<string>('HOMEPAGE_PROP3_DESC').catch(() => prop3Desc);
-    howTitle = await getSetting<string>('HOMEPAGE_HOW_TITLE').catch(() => 'How it Works');
-    howDesc = await getSetting<string>('HOMEPAGE_HOW_DESC').catch(() => howDesc);
+    const [aTitle, aDesc, p1Title, p1Desc, p2Title, p2Desc, p3Title, p3Desc, hTitle, hDesc] =
+      await Promise.all([
+        getSetting<string>('HOMEPAGE_ABOUT_TITLE').catch(() => 'About Brandy'),
+        getSetting<string>('HOMEPAGE_ABOUT_DESC').catch(() => aboutDesc),
+        getSetting<string>('HOMEPAGE_PROP1_TITLE').catch(() => 'Supporting Local Talent'),
+        getSetting<string>('HOMEPAGE_PROP1_DESC').catch(() => prop1Desc),
+        getSetting<string>('HOMEPAGE_PROP2_TITLE').catch(() => 'Verified Quality Brands'),
+        getSetting<string>('HOMEPAGE_PROP2_DESC').catch(() => prop2Desc),
+        getSetting<string>('HOMEPAGE_PROP3_TITLE').catch(() => '14-Day Escrow Guarantee'),
+        getSetting<string>('HOMEPAGE_PROP3_DESC').catch(() => prop3Desc),
+        getSetting<string>('HOMEPAGE_HOW_TITLE').catch(() => 'How it Works'),
+        getSetting<string>('HOMEPAGE_HOW_DESC').catch(() => howDesc),
+      ]);
+    aboutTitle = aTitle;
+    aboutDesc = aDesc;
+    prop1Title = p1Title;
+    prop1Desc = p1Desc;
+    prop2Title = p2Title;
+    prop2Desc = p2Desc;
+    prop3Title = p3Title;
+    prop3Desc = p3Desc;
+    howTitle = hTitle;
+    howDesc = hDesc;
   } catch (e) {
     console.error('Critical SSR Error:', e);
   }
