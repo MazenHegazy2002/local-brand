@@ -163,23 +163,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       take: 1000,
     });
 
-    const productRoutes = products.map(p => {
-      const imgUrl = p.images?.[0]?.url;
-      const validImg = imgUrl && imgUrl.startsWith('http') ? [imgUrl] : undefined;
-      return {
-        url: `${baseUrl}/product/${p.slug}`,
-        lastModified: p.updatedAt,
-        changeFrequency: 'weekly' as const,
-        priority: 0.85,
-        images: validImg,
-        alternates: {
-          languages: {
-            'en-EG': `${baseUrl}/product/${p.slug}`,
-            'ar-EG': `${baseUrl}/product/${p.slug}?lang=ar`,
-          },
+    const productRoutes = products.map(p => ({
+      url: `${baseUrl}/product/${p.slug}`,
+      lastModified: p.updatedAt,
+      changeFrequency: 'weekly' as const,
+      priority: 0.85,
+      alternates: {
+        languages: {
+          'en-EG': `${baseUrl}/product/${p.slug}`,
+          'ar-EG': `${baseUrl}/product/${p.slug}?lang=ar`,
         },
-      };
-    });
+      },
+    }));
 
     // Category pages
     const categories = await prisma.category.findMany({
