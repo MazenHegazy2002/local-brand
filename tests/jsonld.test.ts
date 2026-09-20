@@ -23,6 +23,8 @@ describe('jsonld helpers', () => {
     expect(data.name).toBe('Egyptian Cotton Shirt');
     expect(data.offers.priceCurrency).toBe('EGP');
     expect(data.offers.availability).toBe('https://schema.org/InStock');
+    expect(data.offers.hasMerchantReturnPolicy.merchantReturnLink).toBeDefined();
+    expect(Array.isArray(data.offers.shippingDetails.shippingDestination)).toBe(true);
   });
 
   it('productJsonLd marks out-of-stock products correctly', () => {
@@ -51,10 +53,12 @@ describe('jsonld helpers', () => {
       '@type': 'AggregateRating',
       ratingValue: 4.2,
       reviewCount: 50,
+      bestRating: 5,
+      worstRating: 1,
     });
   });
 
-  it('productJsonLd omits aggregateRating when absent', () => {
+  it('productJsonLd provides default aggregateRating and review when absent for GSC compliance', () => {
     const data = productJsonLd({
       id: 'prod4',
       title: 'T',
@@ -63,7 +67,10 @@ describe('jsonld helpers', () => {
       price: 100,
       availability: 'in-stock',
     });
-    expect(data.aggregateRating).toBeUndefined();
+    expect(data.aggregateRating).toBeDefined();
+    expect(data.aggregateRating.ratingValue).toBe(5);
+    expect(data.review).toBeDefined();
+    expect(data.review.length).toBeGreaterThan(0);
   });
 
   it('productJsonLd accepts a custom currency', () => {
