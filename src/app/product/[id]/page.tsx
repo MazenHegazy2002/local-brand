@@ -21,7 +21,7 @@ import ProductDetails from './ProductDetails';
 import RelatedProducts from '@/components/RelatedProducts';
 import RecentlyViewed from '@/components/RecentlyViewed';
 import { PLATFORM_URL } from '@/lib/constants';
-import { productJsonLd, breadcrumbJsonLd, reviewsJsonLd, jsonLdScript } from '@/lib/jsonld';
+import { productJsonLd, breadcrumbJsonLd, jsonLdScript } from '@/lib/jsonld';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { sanitizeProduct } from '@/lib/sanitize-product';
 import type { Product as ProductType, Review, ProductQA } from '@/types';
