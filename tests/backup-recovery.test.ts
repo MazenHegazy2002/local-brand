@@ -15,8 +15,18 @@
  * model's findMany return value in beforeEach.
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { prisma } from '@/lib/prisma';
+
+jest.mock('@/lib/gdrive', () => ({
+  uploadFileToGoogleDrive: jest
+    .fn<any>()
+    .mockResolvedValue({ id: 'mock-gdrive-id', name: 'backup.json' }),
+  getGoogleDriveCredentials: jest
+    .fn<any>()
+    .mockReturnValue({ client_email: 'test@gdrive.com', private_key: 'key' }),
+}));
+
 import { GET } from '@/app/api/cron/backup/route';
 
 type MockFn = jest.Mock<any>;

@@ -1166,10 +1166,11 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
     }
 
     // Generate unique slug
-    const baseSlug = data.title
+    const rawSlug = data.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
+    const baseSlug = rawSlug || `product-${Date.now().toString(36)}`;
     let slug = baseSlug;
     let counter = 0;
 

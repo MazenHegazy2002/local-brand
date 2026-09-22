@@ -27,20 +27,7 @@ import { sanitizeProduct } from '@/lib/sanitize-product';
 import type { Product as ProductType, Review, ProductQA } from '@/types';
 import type { Metadata } from 'next';
 
-export const revalidate = 60;
-
-export async function generateStaticParams() {
-  try {
-    const products = await prisma.product.findMany({
-      where: { published: true, deletedAt: null },
-      select: { id: true, slug: true },
-      take: 20,
-    });
-    return products.flatMap(p => [{ id: p.id }, { id: p.slug }]);
-  } catch {
-    return [];
-  }
-}
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({
   params,
@@ -250,7 +237,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     }
 
     const jsonLd = productJsonLd({
-      id: product.slug,
+      id: product.slug?.trim() || product.id,
       title: product.title,
       description: product.description,
       images: product.images.map(img => img.url),

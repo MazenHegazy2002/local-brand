@@ -200,18 +200,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       take: 1000,
     });
 
-    const productRoutes = products.map(p => ({
-      url: `${baseUrl}/product/${p.slug}`,
-      lastModified: p.updatedAt,
-      changeFrequency: 'weekly' as const,
-      priority: 0.85,
-      alternates: {
-        languages: {
-          'en-EG': `${baseUrl}/product/${p.slug}`,
-          'ar-EG': `${baseUrl}/product/${p.slug}?lang=ar`,
+    const productRoutes = products.map(p => {
+      const slugOrId = p.slug?.trim() || p.id;
+      return {
+        url: `${baseUrl}/product/${slugOrId}`,
+        lastModified: p.updatedAt,
+        changeFrequency: 'weekly' as const,
+        priority: 0.85,
+        alternates: {
+          languages: {
+            'en-EG': `${baseUrl}/product/${slugOrId}`,
+            'ar-EG': `${baseUrl}/product/${slugOrId}?lang=ar`,
+          },
         },
-      },
-    }));
+      };
+    });
 
     // Category pages
     const categories = await prisma.category.findMany({
