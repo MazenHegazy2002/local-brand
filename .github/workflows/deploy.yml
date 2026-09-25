@@ -8,6 +8,7 @@ on:
 
 jobs:
   lint-and-test:
+    name: Lint & Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,12 +31,47 @@ jobs:
       - name: TypeScript type check
         run: npx tsc --noEmit
 
-  deploy:
-    needs: lint-and-test
+  build-and-push:
+    name: Build & Push Docker Image (GHCR)
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    permissions:
+      contents: read
+      packages: write
     steps:
-      - name: Deploy to Contabo Server via SSH
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lowercase repository name for GHCR tag
+        id: repo
+        run: echo "REPO_NAME=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ steps.repo.outputs.REPO_NAME }}:latest
+            ghcr.io/${{ steps.repo.outputs.REPO_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Fast Deploy to Contabo VPS
+    needs: [lint-and-test, build-and-push]
+    runs-on: ubuntu-latest
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
+    steps:
+      - name: Fast Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -47,7 +83,8 @@ jobs:
             cd /opt/localbrand
             git fetch origin master
             git reset --hard origin/master
-            docker-compose up -d --build --force-recreate --remove-orphans
+            docker-compose pull app || true
+            docker-compose up -d --force-recreate --remove-orphans
             docker-compose exec -T app npx prisma@6.2.1 migrate deploy
             docker image prune -f
-            echo "✅ Deployed successfully to Contabo server"
+            echo "⚡ Deployed pre-built container successfully to Contabo VPS"

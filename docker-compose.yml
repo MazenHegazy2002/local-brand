@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   app:
+    image: ghcr.io/mazenhegazy2002/local-brand:latest
     build: .
     ports:
       - "127.0.0.1:3000:3000"
