@@ -93,8 +93,9 @@ export default function Plugins() {
 
   const wppUrl = `https://wa.me/${whatsappPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(activeWppMessage)}`;
   const tgUrl = `https://t.me/${telegramUsername}`;
-  const igUrl = `https://instagram.com/${instagramUsername}`;
-  const fbUrl = `https://m.me/${facebookUsername}`;
+  const igUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/brandyy.eg/';
+  const fbUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL || 'https://www.facebook.com/profile.php?id=61592841315018';
+  const ttUrl = process.env.NEXT_PUBLIC_TIKTOK_URL || 'https://www.tiktok.com/@brandyyeg/';
 
   const isRtl = lang === 'ar';
 
@@ -509,6 +510,35 @@ export default function Plugins() {
                   <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
                 </svg>
                 <span>{isRtl ? 'مراسلة فيسبوك' : 'Messenger Chat'}</span>
+              </a>
+
+              {/* E. TikTok Channel */}
+              <a
+                href={ttUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 14px',
+                  borderRadius: '24px',
+                  backgroundColor: '#000000',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+                  transition: 'transform 0.2s',
+                  width: 'max-content',
+                  alignSelf: isRtl ? 'flex-start' : 'flex-end',
+                }}
+                className="hover:scale-105 notranslate"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.12 8.12 0 004.84 1.56V6.79a4.84 4.84 0 01-1.07-.1z" />
+                </svg>
+                <span>{isRtl ? 'تيك توك' : 'TikTok Profile'}</span>
               </a>
             </div>
           )}

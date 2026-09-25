@@ -234,9 +234,9 @@ export function organizationJsonLd() {
       { '@type': 'PaymentMethod', name: 'InstaPay' },
     ],
     sameAs: [
-      'https://www.facebook.com/brandy.egypt',
-      'https://www.instagram.com/brandy.egypt',
-      'https://www.tiktok.com/@brandy.egypt',
+      'https://www.facebook.com/profile.php?id=61592841315018',
+      'https://www.instagram.com/brandyy.eg/',
+      'https://www.tiktok.com/@brandyyeg/',
     ],
     contactPoint: {
       '@type': 'ContactPoint',
@@ -380,9 +380,9 @@ export function aboutPageJsonLd() {
       },
       areaServed: { '@type': 'Country', name: 'Egypt' },
       sameAs: [
-        'https://www.facebook.com/brandy.egypt',
-        'https://www.instagram.com/brandy.egypt',
-        'https://www.tiktok.com/@brandy.egypt',
+        'https://www.facebook.com/profile.php?id=61592841315018',
+        'https://www.instagram.com/brandyy.eg/',
+        'https://www.tiktok.com/@brandyyeg/',
       ],
     },
   };
