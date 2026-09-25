@@ -503,7 +503,7 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     category: 'social',
     type: 'url',
     label: 'Facebook URL',
-    defaultValue: '',
+    defaultValue: 'https://www.facebook.com/profile.php?id=61592841315018',
     exposeToClient: true,
   },
   {
@@ -511,7 +511,7 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     category: 'social',
     type: 'url',
     label: 'Instagram URL',
-    defaultValue: '',
+    defaultValue: 'https://www.instagram.com/brandyy.eg/',
     exposeToClient: true,
   },
   {
@@ -519,7 +519,7 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     category: 'social',
     type: 'url',
     label: 'TikTok URL',
-    defaultValue: '',
+    defaultValue: 'https://www.tiktok.com/@brandyyeg/',
     exposeToClient: true,
   },
   {
