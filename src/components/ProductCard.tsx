@@ -81,19 +81,25 @@ export default function ProductCard({
   const uniqueColors = React.useMemo(() => {
     const colorMap = new Map<string, { variant: ProductVariant; colorName: string }>();
     variants.forEach(v => {
+      let color = '';
       try {
         const attrs = JSON.parse(v.attributes || '{}');
-        const color = attrs.color || attrs.Color;
-        if (color) {
-          const colorName = String(color).trim();
-          const key = colorName.toLowerCase();
-          // Prefer in-stock variant if there are duplicates for the same color
-          if (!colorMap.has(key) || (!colorMap.get(key)!.variant.stockCount && v.stockCount)) {
-            colorMap.set(key, { variant: v, colorName });
-          }
-        }
+        color = String(attrs.color || attrs.Color || '').trim();
       } catch (_e) {
-        // Ignore parsing errors
+        if (v.title && v.title.includes('-')) {
+          const parts = v.title.split('-').map(p => p.trim());
+          if (parts.length >= 2) color = parts[0];
+        }
+      }
+      if (!color && v.title) {
+        color = v.title.trim();
+      }
+      if (color) {
+        const colorName = color;
+        const key = colorName.toLowerCase();
+        if (!colorMap.has(key) || (!colorMap.get(key)!.variant.stockCount && v.stockCount)) {
+          colorMap.set(key, { variant: v, colorName });
+        }
       }
     });
     return Array.from(colorMap.values());
@@ -102,19 +108,50 @@ export default function ProductCard({
   // ── Image Matching Logic ──
   const getMatchedImageUrl = React.useCallback(
     (colorName: string) => {
-      if (!colorName || !product.images) return null;
-      const lowerColor = colorName.toLowerCase();
+      if (!colorName) return null;
+      const lowerColor = colorName.toLowerCase().trim();
 
-      // Find image that has the color name in its URL
-      const matched = product.images.find(img => {
-        const urlLower = img.url.toLowerCase();
-        const regex = new RegExp(`\\b${lowerColor}\\b|[-_]${lowerColor}[-_.]`, 'i');
-        return regex.test(urlLower) || urlLower.includes(lowerColor);
-      });
+      // 1. Direct check on matching variant image / attributes
+      const matchingColorItem = uniqueColors.find(
+        c => c.colorName.toLowerCase().trim() === lowerColor
+      );
+      const variant = matchingColorItem?.variant;
+      if (variant) {
+        let vImg = (variant as any).image || (variant as any).imageUrl;
+        if (!vImg && variant.attributes) {
+          try {
+            const attrs =
+              typeof variant.attributes === 'string'
+                ? JSON.parse(variant.attributes)
+                : variant.attributes;
+            vImg = attrs.image || attrs.imageUrl || attrs.img || attrs.image_url;
+          } catch (_e) {}
+        }
+        if (vImg) return vImg;
+      }
 
-      return matched?.url || null;
+      // 2. Search product images array by regex/substring on URL
+      const allImages = product.images || [];
+      if (allImages.length > 0) {
+        const matched = allImages.find((img: ProductImage) => {
+          const urlLower = (img.url || '').toLowerCase();
+          const regex = new RegExp(`\\b${lowerColor}\\b|[-_]${lowerColor}[-_.]`, 'i');
+          return regex.test(urlLower) || urlLower.includes(lowerColor);
+        });
+        if (matched?.url) return matched.url;
+
+        // 3. Positional index match: if color #1 is selected and images array aligns, use image #1
+        const colorIndex = uniqueColors.findIndex(
+          c => c.colorName.toLowerCase().trim() === lowerColor
+        );
+        if (colorIndex >= 0 && colorIndex < allImages.length) {
+          if (allImages[colorIndex]?.url) return allImages[colorIndex].url;
+        }
+      }
+
+      return null;
     },
-    [product.images]
+    [product.images, uniqueColors]
   );
 
   const hasRealColors =

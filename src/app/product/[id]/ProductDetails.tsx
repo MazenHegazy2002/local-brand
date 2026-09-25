@@ -94,17 +94,20 @@ export default function ProductDetails({
   });
 
   // Extract unique color entities
-  const colorMap = new Map<string, { variant: any; colorName: string }>();
-  parsedVariants.forEach((v: any) => {
-    if (v.color) {
-      const key = v.color.toLowerCase();
-      // Prioritize in-stock variant if there are duplicate color entries
-      if (!colorMap.has(key) || (!colorMap.get(key)!.variant.stockCount && v.stockCount)) {
-        colorMap.set(key, { variant: v, colorName: v.color });
+  const uniqueColors = React.useMemo(() => {
+    const colorMap = new Map<string, { variant: any; colorName: string }>();
+    parsedVariants.forEach((v: any) => {
+      if (v.color) {
+        const key = v.color.toLowerCase();
+        // Prioritize in-stock variant if there are duplicate color entries
+        if (!colorMap.has(key) || (!colorMap.get(key)!.variant.stockCount && v.stockCount)) {
+          colorMap.set(key, { variant: v, colorName: v.color });
+        }
       }
-    }
-  });
-  const uniqueColors = Array.from(colorMap.values());
+    });
+    return Array.from(colorMap.values());
+  }, [parsedVariants]);
+
   const hasColors =
     uniqueColors.length > 0 &&
     !uniqueColors.every((c: any) => {
@@ -114,19 +117,52 @@ export default function ProductDetails({
 
   const initialColor = hasColors && uniqueColors.length === 1 ? uniqueColors[0].colorName : '';
 
-  // Image search mapping matching search criteria
+  // Image search mapping matching search criteria (variant explicit image -> regex url match -> index alignment)
   const getMatchedImageUrl = React.useCallback(
     (colorName: string) => {
-      if (!colorName || !images.length) return null;
-      const lowerColor = colorName.toLowerCase();
-      const matched = images.find((img: ProductImage) => {
-        const urlLower = img.url.toLowerCase();
-        const regex = new RegExp(`\\b${lowerColor}\\b|[-_]${lowerColor}[-_.]`, 'i');
-        return regex.test(urlLower) || urlLower.includes(lowerColor);
-      });
-      return matched?.url || null;
+      if (!colorName) return null;
+      const lowerColor = colorName.toLowerCase().trim();
+
+      // 1. Direct check on matching variant image / variant attributes
+      const matchingColorItem = uniqueColors.find(
+        c => c.colorName.toLowerCase().trim() === lowerColor
+      );
+      const variant = matchingColorItem?.variant;
+      if (variant) {
+        let vImg = (variant as any).image || (variant as any).imageUrl;
+        if (!vImg && variant.attributes) {
+          try {
+            const attrs =
+              typeof variant.attributes === 'string'
+                ? JSON.parse(variant.attributes)
+                : variant.attributes;
+            vImg = attrs.image || attrs.imageUrl || attrs.img || attrs.image_url;
+          } catch (_e) {}
+        }
+        if (vImg) return vImg;
+      }
+
+      // 2. Search product images array by regex/substring on URL
+      if (images.length > 0) {
+        const matched = images.find((img: ProductImage) => {
+          const urlLower = img.url.toLowerCase();
+          const regex = new RegExp(`\\b${lowerColor}\\b|[-_]${lowerColor}[-_.]`, 'i');
+          return regex.test(urlLower) || urlLower.includes(lowerColor);
+        });
+        if (matched?.url) return matched.url;
+
+        // 3. Positional index match: if color #1 is selected and images length aligns, use image #1
+        const colorIndex = uniqueColors.findIndex(
+          c => c.colorName.toLowerCase().trim() === lowerColor
+        );
+        if (colorIndex >= 0 && colorIndex < images.length) {
+          if (images[colorIndex]?.url) return images[colorIndex].url;
+        }
+      }
+
+      return null;
     },
-    [images]
+    [images, uniqueColors]
   );
 
   // ── Interactive Client States ──
@@ -285,7 +321,12 @@ export default function ProductDetails({
               return (
                 <button
                   key={img.id || i}
-                  onClick={() => setActiveImage(img.url)}
+                  onClick={() => {
+                    setActiveImage(img.url);
+                    if (uniqueColors[i]) {
+                      setSelectedColor(uniqueColors[i].colorName);
+                    }
+                  }}
                   className={`w-20 h-20 rounded-lg bg-slate-50 dark:bg-slate-800/50 border p-1 overflow-hidden transition-all duration-300 transform hover:scale-105 ${
                     isActive
                       ? 'border-[#1e3b8a] dark:border-[#6b8ff5] ring-2 ring-[#1e3b8a]/20'
