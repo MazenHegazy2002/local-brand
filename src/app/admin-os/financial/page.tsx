@@ -130,14 +130,14 @@ export default function AdminFinancialDashboard() {
             </div>
 
             {/* Top sellers */}
-            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden overflow-x-auto">
               <div className="px-6 py-4 border-b border-slate-50">
                 <h3 className="font-black text-lg">Top Sellers</h3>
               </div>
               {stats.topSellers.length === 0 ? (
                 <div className="p-10 text-center text-sm text-slate-400">No seller sales yet.</div>
               ) : (
-                <table className="w-full text-left">
+                <table className="w-full text-left min-w-[400px]">
                   <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
                     <tr>
                       <th className="px-6 py-3">#</th>

@@ -111,10 +111,10 @@ export default function AdminAnalyticsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Top Products */}
-            <div className="bg-white rounded-xl p-6">
+            <div className="bg-white rounded-xl p-6 overflow-x-auto">
               <h2 className="text-lg font-bold mb-4">Top Products</h2>
               {data.topProducts && data.topProducts.length > 0 ? (
-                <table className="w-full text-sm">
+                <table className="w-full text-sm min-w-[350px]">
                   <thead>
                     <tr className="text-left text-gray-500 border-b">
                       <th className="pb-2">#</th>

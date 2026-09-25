@@ -1716,8 +1716,8 @@ function OrdersTab({
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <table className="w-full text-left">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden overflow-x-auto">
+        <table className="w-full text-left min-w-[500px]">
           <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
             <tr>
               <th className="px-6 py-4">Item</th>
@@ -2803,7 +2803,8 @@ function WalletTab({ data }: { data: DashboardData }) {
         ) : payouts.length === 0 ? (
           <div className="p-10 text-center text-xs text-slate-400">No payouts yet.</div>
         ) : (
-          <table className="w-full text-left">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[450px]">
             <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
               <tr>
                 <th className="px-6 py-3">Date</th>
@@ -2843,7 +2844,8 @@ function WalletTab({ data }: { data: DashboardData }) {
               ))}
             </tbody>
           </table>
-        )}
+        </div>
+      )}
       </div>
     </div>
   );

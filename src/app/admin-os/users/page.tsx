@@ -71,8 +71,8 @@ export default function AdminUsersPage() {
         </select>
       </div>
 
-      <div className="bg-white rounded-xl overflow-hidden">
-        <table className="w-full">
+      <div className="bg-white rounded-xl overflow-hidden overflow-x-auto">
+        <table className="w-full min-w-[600px]">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-3 text-left">User</th>

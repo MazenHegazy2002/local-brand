@@ -88,13 +88,13 @@ export default function AuditLogPage() {
           </select>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden overflow-x-auto">
           {loading ? (
             <div className="p-16 text-center text-slate-400">Loading audit log…</div>
           ) : filteredLogs.length === 0 ? (
             <div className="p-16 text-center text-slate-400">No audit entries match your filters.</div>
           ) : (
-            <table className="w-full text-left">
+            <table className="w-full text-left min-w-[600px]">
               <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
                 <tr>
                   <th className="px-6 py-3">When</th>
