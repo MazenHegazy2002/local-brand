@@ -66,6 +66,10 @@ export default function BottomNavigation() {
     }
   }, [pathname]);
 
+  if (pathname?.startsWith('/seller-hub') || pathname?.startsWith('/admin-os')) {
+    return null;
+  }
+
   type NavItem = {
     href: string;
     icon: React.ReactNode;

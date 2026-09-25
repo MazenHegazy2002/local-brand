@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { PLATFORM_NAME, SUPPORT_EMAIL, CONTACT_PHONE, CONTACT_WHATSAPP } from '@/lib/constants';
 
 const FOOTER_LINKS = {
@@ -67,11 +68,16 @@ const SOCIAL_LINKS = [
 ];
 
 export default function Footer() {
+  const pathname = usePathname();
   const year = new Date().getFullYear();
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+
+  if (pathname?.startsWith('/seller-hub') || pathname?.startsWith('/admin-os')) {
+    return null;
+  }
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
