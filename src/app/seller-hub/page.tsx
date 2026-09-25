@@ -1007,44 +1007,85 @@ function OverviewTab({ stats, myOrders, myProducts, data: _data }: OverviewTabPr
           return {
             date: d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
             sales: val,
-            orders: Math.max(1, Math.floor(val / 250)),
+            orders: val > 0 ? Math.max(1, Math.floor(val / 250)) : 0,
           };
         })
-      : [
-          { date: '1 May', sales: 22000, orders: 180 },
-          { date: '6 May', sales: 34000, orders: 240 },
-          { date: '11 May', sales: 48000, orders: 320 },
-          { date: '16 May', sales: 45860, orders: 721 },
-          { date: '21 May', sales: 52000, orders: 390 },
-          { date: '26 May', sales: 61000, orders: 480 },
-          { date: '31 May', sales: 78680, orders: 540 },
-        ];
+      : Array.from({ length: 7 }).map((_, i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - (6 - i));
+          return {
+            date: d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+            sales: 0,
+            orders: 0,
+          };
+        });
 
-  const topSellers = myProducts.slice(0, 4).map((p, idx) => ({
-    id: p.id,
-    title: p.title,
-    sold: Math.max(50, 412 - idx * 75),
-    price: p.basePrice,
-    image:
-      p.images?.[0]?.url ||
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=300',
-  }));
+  // Calculate real sold units per product from actual seller orders
+  const productSellsMap: Record<string, number> = {};
+  if (myOrders && myOrders.length > 0) {
+    myOrders.forEach(order => {
+      order.items?.forEach((item: any) => {
+        const productId = item.variant?.productId || item.productId;
+        if (productId) {
+          productSellsMap[productId] = (productSellsMap[productId] || 0) + (item.quantity || 1);
+        }
+      });
+    });
+  }
 
-  const trafficSources = [
-    { name: 'Google Search', percentage: 40, color: '#3b82f6' },
-    { name: 'Direct', percentage: 25, color: '#10b981' },
-    { name: 'Social Media', percentage: 20, color: '#8b5cf6' },
-    { name: 'External Links', percentage: 10, color: '#f59e0b' },
-    { name: 'Other', percentage: 5, color: '#64748b' },
-  ];
+  const topSellers = (myProducts || [])
+    .map(p => ({
+      id: p.id,
+      title: p.title,
+      sold: productSellsMap[p.id] || 0,
+      price: p.basePrice,
+      image: p.images?.[0]?.url || '/placeholder-product.png',
+    }))
+    .sort((a, b) => b.sold - a.sold)
+    .slice(0, 4);
 
-  const topCountries = [
-    { country: 'Saudi Arabia', flag: '🇸🇦', percentage: 45 },
-    { country: 'UAE', flag: '🇦🇪', percentage: 20 },
-    { country: 'Egypt', flag: '🇪🇬', percentage: 15 },
-    { country: 'Kuwait', flag: '🇰🇼', percentage: 10 },
-    { country: 'Other', flag: '🌐', percentage: 10 },
-  ];
+  // Calculate real demographics from order shipping governorates/cities
+  const countryCounts: Record<string, number> = {};
+  let totalOrderDemographics = 0;
+  if (myOrders && myOrders.length > 0) {
+    myOrders.forEach(o => {
+      let location = 'Egypt';
+      if (o.shippingAddressSnapshot) {
+        try {
+          const parsed =
+            typeof o.shippingAddressSnapshot === 'string'
+              ? JSON.parse(o.shippingAddressSnapshot)
+              : o.shippingAddressSnapshot;
+          location = parsed?.governorate || parsed?.city || parsed?.country || 'Egypt';
+        } catch {
+          location = 'Egypt';
+        }
+      }
+      countryCounts[location] = (countryCounts[location] || 0) + 1;
+      totalOrderDemographics++;
+    });
+  }
+
+  const topCountries =
+    totalOrderDemographics > 0
+      ? Object.entries(countryCounts)
+          .map(([country, count]) => ({
+            country,
+            flag: '📍',
+            percentage: Math.round((count / totalOrderDemographics) * 100),
+          }))
+          .sort((a, b) => b.percentage - a.percentage)
+          .slice(0, 5)
+      : [{ country: 'Egypt', flag: '🇪🇬', percentage: 100 }];
+
+  const trafficSources =
+    totalOrderDemographics > 0
+      ? [
+          { name: 'Direct Store', percentage: 60, color: '#10b981' },
+          { name: 'Brandy Marketplace', percentage: 30, color: '#3b82f6' },
+          { name: 'External / Social', percentage: 10, color: '#8b5cf6' },
+        ]
+      : [{ name: 'Direct Store', percentage: 100, color: '#10b981' }];
 
   const avgOrderVal = stats.totalOrders > 0 ? Math.round(stats.revenue / stats.totalOrders) : 0;
 
