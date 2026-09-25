@@ -564,9 +564,7 @@ export async function getDashboardStats() {
           const current = topSellingProductsMap.get(p.id) || {
             id: p.id,
             title: p.title,
-            image:
-              p.images[0]?.url ||
-              'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=300',
+            image: p.images[0]?.url || '/placeholder-product.png',
             sold: 0,
             price: p.basePrice,
           };
@@ -585,9 +583,7 @@ export async function getDashboardStats() {
           topSellingProducts.push({
             id: p.id,
             title: p.title,
-            image:
-              p.images[0]?.url ||
-              'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=300',
+            image: p.images[0]?.url || '/placeholder-product.png',
             sold: 0,
             price: p.basePrice,
           });

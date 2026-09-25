@@ -2068,14 +2068,8 @@ function OverviewTab({
   const dailyData = stats.dailyAnalytics || [];
 
   const topSellers = stats.topSellingProducts || [];
-
-  const trafficSources = stats.trafficSources || [
-    { name: 'Direct', percentage: 65, color: '#10b981' },
-    { name: 'Google Search', percentage: 25, color: '#3b82f6' },
-    { name: 'Social Media', percentage: 10, color: '#8b5cf6' },
-  ];
-
-  const topCountries = stats.topCountries || [{ country: 'Egypt', flag: '🇪🇬', percentage: 100 }];
+  const trafficSources = stats.trafficSources || [];
+  const topCountries = stats.topCountries || [];
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
