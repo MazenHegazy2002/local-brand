@@ -285,6 +285,24 @@ export default function AffiliateDashboardPage() {
               {lang === 'ar' ? 'المتجر' : 'Shop'}
             </Link>
             <button
+              onClick={() => (window.location.href = '/api/auth/signout')}
+              className="px-3 py-1.5 border border-red-500/30 hover:border-red-500 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-200 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              {lang === 'ar' ? 'تسجيل الخروج' : 'Sign Out'}
+            </button>
+            <button
               onClick={() => {
                 useCartStore.getState().clearCart();
                 signOut({ callbackUrl: '/' });

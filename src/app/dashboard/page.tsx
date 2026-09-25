@@ -328,7 +328,7 @@ function CustomerDashboard() {
           icon={<SettingsIcon />}
         />
 
-        <div className="mt-auto px-4 pb-4">
+        <div className="mt-auto px-4 pb-4 flex flex-col gap-2">
           <div className="user-label flex items-center gap-1.5">
             {data?.user?.name}
             {data?.user?.emailVerified && (
@@ -339,9 +339,21 @@ function CustomerDashboard() {
           </div>
           <button
             onClick={() => (window.location.href = '/api/auth/signout')}
-            className="signout-btn"
+            className="flex items-center gap-2 text-xs font-semibold text-red-300 hover:text-white bg-red-500/10 hover:bg-red-500/30 px-3 py-2 rounded-xl transition-all w-full cursor-pointer border border-red-500/20"
           >
-            Sign out
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span>Sign Out</span>
           </button>
         </div>
       </div>
