@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import bcrypt from 'bcryptjs';
 import { PrismaClient } from '../src/generated/client';
 
 const prisma = new PrismaClient();
@@ -39,7 +40,6 @@ async function main() {
 
   if (!sellerUser || !sellerUser.sellerProfile) {
     // Let's create a seller
-    const bcrypt = require('bcryptjs');
     const passwordHash = await bcrypt.hash('seller1234', 12);
     const user = await prisma.user.create({
       data: {

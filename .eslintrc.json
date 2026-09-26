@@ -15,5 +15,28 @@
     ],
     "no-console": ["warn", { "allow": ["warn", "error"] }]
   },
-  "ignorePatterns": ["public/**/*.js", "node_modules/", ".next/"]
+  "overrides": [
+    {
+      "files": ["scripts/**/*.js", "scripts/**/*.cjs", "load-tests/**/*.js"],
+      "rules": {
+        "@typescript-eslint/no-require-imports": "off",
+        "no-undef": "off"
+      }
+    }
+  ],
+  "ignorePatterns": [
+    "public/**/*.js",
+    "node_modules/",
+    ".next/",
+    ".kilo/",
+    ".kilo/**",
+    "jarvis/",
+    "jarvis/**",
+    "hidden-model-ai/",
+    "Affiliate/",
+    "coverage/",
+    "scratch/",
+    "scratch/**",
+    "backups/"
+  ]
 }

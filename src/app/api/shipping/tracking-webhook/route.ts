@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { OrderStatus } from '@/generated/client';
@@ -16,11 +17,18 @@ const VALID_TRANSITIONS: Record<string, OrderStatus[]> = {
 export async function POST(req: Request) {
   try {
     const expectedSecret = process.env.TRACKING_WEBHOOK_SECRET;
-    if (expectedSecret) {
-      const provided = req.headers.get('x-webhook-secret');
-      if (provided !== expectedSecret) {
-        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-      }
+    if (!expectedSecret) {
+      console.error('[tracking-webhook] TRACKING_WEBHOOK_SECRET is not configured');
+      return NextResponse.json({ message: 'Webhook endpoint not configured' }, { status: 500 });
+    }
+
+    const provided = req.headers.get('x-webhook-secret') || '';
+    const isAuthorized =
+      provided.length === expectedSecret.length &&
+      crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(expectedSecret));
+
+    if (!isAuthorized) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await req.json();

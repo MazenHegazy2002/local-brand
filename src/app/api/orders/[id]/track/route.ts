@@ -23,14 +23,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const cleanId = orderId.replace(/^[#ORD\-]+/i, '').trim();
 
-    // Get order - allow by full order ID or short ID prefix/suffix (case-insensitive)
+    // Get order - exact ID match only (case-insensitive)
     const order = await prisma.order.findFirst({
       where: {
         OR: [
-          { id: { equals: orderId, mode: 'insensitive' } },
-          { id: { equals: cleanId, mode: 'insensitive' } },
-          { id: { startsWith: cleanId, mode: 'insensitive' } },
-          { id: { endsWith: cleanId, mode: 'insensitive' } },
+          { id: { equals: orderId, mode: 'insensitive' as const } },
+          ...(cleanId && cleanId !== orderId
+            ? [{ id: { equals: cleanId, mode: 'insensitive' as const } }]
+            : []),
         ],
       },
       include: {
@@ -62,15 +62,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     // Authorization check
     const normalizedGuestEmail = guestEmail?.trim().toLowerCase();
-    const ownsAsUser = !!userId && order.userId === userId;
+    const ownsAsUser = Boolean(userId && order.userId && order.userId === userId);
     const orderGuestEmail = order.guestEmail?.trim().toLowerCase();
     const orderUserEmail = order.user?.email?.trim().toLowerCase();
 
-    const ownsAsGuest =
-      !!normalizedGuestEmail &&
-      (orderGuestEmail === normalizedGuestEmail ||
-        orderUserEmail === normalizedGuestEmail ||
-        (!orderGuestEmail && !orderUserEmail)); // If guest email was not recorded, allow tracking with ID
+    // Guest access requires a valid, matching email provided in query params
+    const ownsAsGuest = Boolean(
+      normalizedGuestEmail &&
+      ((orderGuestEmail && orderGuestEmail === normalizedGuestEmail) ||
+        (orderUserEmail && orderUserEmail === normalizedGuestEmail))
+    );
 
     const isOwner = ownsAsUser || ownsAsGuest;
     let isAuthorized = isOwner || role === 'ADMIN';

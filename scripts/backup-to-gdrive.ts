@@ -6,19 +6,9 @@
  *   or: npx tsx scripts/backup-to-gdrive.ts /path/to/custom-file.sql.gz
  */
 
+import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
-
-// Load .env if present
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const dotenv = require('dotenv');
-  dotenv.config();
-  dotenv.config({ path: path.resolve(process.cwd(), '.env') });
-  dotenv.config({ path: path.resolve(__dirname, '../.env') });
-} catch {
-  // dotenv optional
-}
 
 import { getGoogleDriveCredentials, uploadFileToGoogleDrive } from '../src/lib/gdrive';
 

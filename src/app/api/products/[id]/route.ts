@@ -149,12 +149,18 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         });
 
         if (v.id) {
-          // Update existing variant
-          await prisma.productVariant.update({
-            where: { id: v.id },
+          // Verify that variant belongs to this product before updating to prevent Cross-Seller Variant IDOR
+          const existingVariant = dbVariants.find(dbv => dbv.id === v.id);
+          if (!existingVariant) {
+            continue;
+          }
+
+          // Update existing variant scoped to productId
+          await prisma.productVariant.updateMany({
+            where: { id: v.id, productId: id },
             data: {
               title: colorVal,
-              sku: v.sku?.trim() || dbVariants.find(dbv => dbv.id === v.id)?.sku || `SKU-${v.id}`,
+              sku: v.sku?.trim() || existingVariant.sku || `SKU-${v.id}`,
               upc: v.upc?.trim() || null,
               stockCount: Number(v.stockCount ?? v.stock ?? 0),
               price: Number(v.price || basePrice),

@@ -10,9 +10,15 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const { orderItemId, amount, reason: _reason } = await req.json();
-    const userId = (session.user as SessionUser).id;
     const role = (session.user as SessionUser).role;
+    if (role !== 'ADMIN') {
+      return NextResponse.json(
+        { message: 'Forbidden: Direct refunds can only be initiated by administrators' },
+        { status: 403 }
+      );
+    }
+
+    const { orderItemId, amount, reason: _reason } = await req.json();
 
     if (!orderItemId) {
       return NextResponse.json({ message: 'Order item ID is required' }, { status: 400 });
@@ -34,10 +40,6 @@ export async function POST(req: Request) {
 
     if (!orderItem) {
       return NextResponse.json({ message: 'Order item not found' }, { status: 404 });
-    }
-
-    if (orderItem.order.userId !== userId && role !== 'ADMIN') {
-      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
     if (orderItem.status === 'REFUNDED' || orderItem.status === 'CANCELLED') {
@@ -113,7 +115,7 @@ export async function POST(req: Request) {
 export async function GET() {
   return NextResponse.json(
     {
-      message: 'Use POST to process a refund',
+      message: 'Use POST to process a refund (Admin only)',
       requiredFields: ['orderItemId'],
       optionalFields: ['amount', 'reason'],
     },

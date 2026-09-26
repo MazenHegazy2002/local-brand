@@ -15,7 +15,7 @@ import { createOrderForUser } from '@/lib/order-creator';
 type MockFn = jest.Mock<any>;
 
 const mocked = prisma as unknown as {
-  productVariant: { findUnique: MockFn };
+  productVariant: { findUnique: MockFn; findMany: MockFn };
   address: { findUnique: MockFn };
   coupon: { findUnique: MockFn; update: MockFn };
   $transaction: MockFn;
@@ -61,20 +61,22 @@ describe('createOrderForUser — input validation', () => {
   });
 
   it('accepts guest checkout with a valid email + inline address', async () => {
-    mocked.productVariant.findUnique.mockResolvedValue({
-      id: VALID_VARIANT_ID,
-      stockCount: 5,
-      price: 100,
-      product: {
-        title: 'T-Shirt',
-        basePrice: 100,
-        published: true,
-        deletedAt: null,
-        flashSalePrice: null,
-        flashSaleEndsAt: null,
-        seller: { storeName: 'Demo Store' },
+    mocked.productVariant.findMany.mockResolvedValue([
+      {
+        id: VALID_VARIANT_ID,
+        stockCount: 5,
+        price: 100,
+        product: {
+          title: 'T-Shirt',
+          basePrice: 100,
+          published: true,
+          deletedAt: null,
+          flashSalePrice: null,
+          flashSaleEndsAt: null,
+          seller: { storeName: 'Demo Store' },
+        },
       },
-    });
+    ]);
     // $transaction is mocked in tests/setup.ts to invoke the callback with
     // a stub tx object — provide minimal stubs for what the helper uses.
     const txOrderCreate = jest.fn<any>().mockResolvedValue({ id: 'order-1' });
@@ -119,7 +121,7 @@ describe('createOrderForUser — input validation', () => {
 
 describe('createOrderForUser — stock + variant resolution', () => {
   it('rejects with a friendly message when a variant has been deleted', async () => {
-    mocked.productVariant.findUnique.mockResolvedValue(null);
+    mocked.productVariant.findMany.mockResolvedValue([]);
 
     const result = await createOrderForUser('user-1', {
       items: [{ variantId: VALID_VARIANT_ID, quantity: 1 }],
@@ -131,20 +133,22 @@ describe('createOrderForUser — stock + variant resolution', () => {
   });
 
   it('rejects when stockCount < requested quantity', async () => {
-    mocked.productVariant.findUnique.mockResolvedValue({
-      id: VALID_VARIANT_ID,
-      stockCount: 1,
-      price: 100,
-      product: {
-        title: 'Out-of-stock Item',
-        basePrice: 100,
-        published: true,
-        deletedAt: null,
-        flashSalePrice: null,
-        flashSaleEndsAt: null,
-        seller: { storeName: 'Demo Store' },
+    mocked.productVariant.findMany.mockResolvedValue([
+      {
+        id: VALID_VARIANT_ID,
+        stockCount: 1,
+        price: 100,
+        product: {
+          title: 'Out-of-stock Item',
+          basePrice: 100,
+          published: true,
+          deletedAt: null,
+          flashSalePrice: null,
+          flashSaleEndsAt: null,
+          seller: { storeName: 'Demo Store' },
+        },
       },
-    });
+    ]);
 
     const result = await createOrderForUser('user-1', {
       items: [{ variantId: VALID_VARIANT_ID, quantity: 5 }],
@@ -157,8 +161,8 @@ describe('createOrderForUser — stock + variant resolution', () => {
   });
 
   it('aggregates pricing across multiple line items in the address fee path', async () => {
-    mocked.productVariant.findUnique
-      .mockResolvedValueOnce({
+    mocked.productVariant.findMany.mockResolvedValue([
+      {
         id: VALID_VARIANT_ID,
         stockCount: 10,
         price: 100,
@@ -171,8 +175,8 @@ describe('createOrderForUser — stock + variant resolution', () => {
           flashSaleEndsAt: null,
           seller: { storeName: 'S' },
         },
-      })
-      .mockResolvedValueOnce({
+      },
+      {
         id: VALID_VARIANT_ID_2,
         stockCount: 10,
         price: 200,
@@ -185,7 +189,8 @@ describe('createOrderForUser — stock + variant resolution', () => {
           flashSaleEndsAt: null,
           seller: { storeName: 'S' },
         },
-      });
+      },
+    ]);
 
     const txOrderCreate = jest.fn<any>().mockResolvedValue({ id: 'order-2' });
     mocked.$transaction.mockImplementation((fn: any) =>
@@ -219,20 +224,22 @@ describe('createOrderForUser — stock + variant resolution', () => {
 
 describe('createOrderForUser — coupon application', () => {
   it('applies a percentage coupon respecting maxDiscount', async () => {
-    mocked.productVariant.findUnique.mockResolvedValue({
-      id: VALID_VARIANT_ID,
-      stockCount: 5,
-      price: 1000,
-      product: {
-        title: 'X',
-        basePrice: 1000,
-        published: true,
-        deletedAt: null,
-        flashSalePrice: null,
-        flashSaleEndsAt: null,
-        seller: { storeName: 'S' },
+    mocked.productVariant.findMany.mockResolvedValue([
+      {
+        id: VALID_VARIANT_ID,
+        stockCount: 5,
+        price: 1000,
+        product: {
+          title: 'X',
+          basePrice: 1000,
+          published: true,
+          deletedAt: null,
+          flashSalePrice: null,
+          flashSaleEndsAt: null,
+          seller: { storeName: 'S' },
+        },
       },
-    });
+    ]);
     mocked.coupon.findUnique.mockResolvedValue({
       id: 'coupon-1',
       isActive: true,
@@ -279,20 +286,22 @@ describe('createOrderForUser — coupon application', () => {
   });
 
   it('ignores expired coupons silently', async () => {
-    mocked.productVariant.findUnique.mockResolvedValue({
-      id: VALID_VARIANT_ID,
-      stockCount: 5,
-      price: 100,
-      product: {
-        title: 'X',
-        basePrice: 100,
-        published: true,
-        deletedAt: null,
-        flashSalePrice: null,
-        flashSaleEndsAt: null,
-        seller: { storeName: 'S' },
+    mocked.productVariant.findMany.mockResolvedValue([
+      {
+        id: VALID_VARIANT_ID,
+        stockCount: 5,
+        price: 100,
+        product: {
+          title: 'X',
+          basePrice: 100,
+          published: true,
+          deletedAt: null,
+          flashSalePrice: null,
+          flashSaleEndsAt: null,
+          seller: { storeName: 'S' },
+        },
       },
-    });
+    ]);
     mocked.coupon.findUnique.mockResolvedValue({
       id: 'expired',
       isActive: true,
@@ -326,20 +335,22 @@ describe('createOrderForUser — coupon application', () => {
 
 describe('createOrderForUser — concurrency / stock race', () => {
   it('aborts cleanly when the atomic stock decrement returns 0 rows', async () => {
-    mocked.productVariant.findUnique.mockResolvedValue({
-      id: VALID_VARIANT_ID,
-      stockCount: 5,
-      price: 100,
-      product: {
-        title: 'Y',
-        basePrice: 100,
-        published: true,
-        deletedAt: null,
-        flashSalePrice: null,
-        flashSaleEndsAt: null,
-        seller: { storeName: 'S' },
+    mocked.productVariant.findMany.mockResolvedValue([
+      {
+        id: VALID_VARIANT_ID,
+        stockCount: 5,
+        price: 100,
+        product: {
+          title: 'Y',
+          basePrice: 100,
+          published: true,
+          deletedAt: null,
+          flashSalePrice: null,
+          flashSaleEndsAt: null,
+          seller: { storeName: 'S' },
+        },
       },
-    });
+    ]);
     mocked.$transaction.mockImplementation((fn: any) =>
       typeof fn === 'function'
         ? fn({
@@ -367,20 +378,22 @@ describe('createOrderForUser — concurrency / stock race', () => {
 
 describe('createOrderForUser — selected size and color snapshots', () => {
   it('saves selectedSize and selectedColor to OrderItem data', async () => {
-    mocked.productVariant.findUnique.mockResolvedValue({
-      id: VALID_VARIANT_ID,
-      stockCount: 5,
-      price: 100,
-      product: {
-        title: 'T-Shirt',
-        basePrice: 100,
-        published: true,
-        deletedAt: null,
-        flashSalePrice: null,
-        flashSaleEndsAt: null,
-        seller: { storeName: 'Demo Store' },
+    mocked.productVariant.findMany.mockResolvedValue([
+      {
+        id: VALID_VARIANT_ID,
+        stockCount: 5,
+        price: 100,
+        product: {
+          title: 'T-Shirt',
+          basePrice: 100,
+          published: true,
+          deletedAt: null,
+          flashSalePrice: null,
+          flashSaleEndsAt: null,
+          seller: { storeName: 'Demo Store' },
+        },
       },
-    });
+    ]);
 
     const txOrderCreate = jest.fn<any>().mockResolvedValue({ id: 'order-1' });
     mocked.$transaction.mockImplementation((fn: any) =>

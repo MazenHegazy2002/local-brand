@@ -14,9 +14,14 @@ const eslintConfig = defineConfig([
     'next-env.d.ts',
     'src/generated/**',
     'Affiliate/**',
-    'scripts/**',
     'hidden-model-ai/**',
     'public/**',
+    '.kilo/**',
+    'jarvis/**',
+    'node_modules/**',
+    'coverage/**',
+    'scratch/**',
+    'backups/**',
   ]),
   {
     rules: {
@@ -35,6 +40,13 @@ const eslintConfig = defineConfig([
         },
       ],
       'react-hooks/immutability': 'off',
+    },
+  },
+  {
+    files: ['scripts/**/*.js', 'scripts/**/*.cjs', 'load-tests/**/*.js'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-undef': 'off',
     },
   },
 ]);

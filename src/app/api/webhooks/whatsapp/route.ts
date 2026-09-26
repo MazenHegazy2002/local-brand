@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSetting } from '@/lib/admin-settings-registry';
@@ -18,6 +19,23 @@ function normalizePhone(p: string): string {
   return clean;
 }
 
+function verifyWhatsAppSignature(
+  rawBody: string,
+  signatureHeader: string | null,
+  secret: string
+): boolean {
+  if (!signatureHeader) return false;
+  const parts = signatureHeader.split('=');
+  const signature = parts.length === 2 && parts[0] === 'sha256' ? parts[1] : signatureHeader;
+  const computed = crypto.createHmac('sha256', secret).update(rawBody, 'utf8').digest('hex');
+  if (computed.length !== signature.length) return false;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(computed, 'hex'), Buffer.from(signature, 'hex'));
+  } catch {
+    return false;
+  }
+}
+
 /**
  * GET /api/webhooks/whatsapp
  *
@@ -31,7 +49,8 @@ export async function GET(req: Request) {
     const challenge = searchParams.get('hub.challenge');
 
     if (mode === 'subscribe' && token) {
-      const configuredToken = await getSetting<string>('WHATSAPP_VERIFY_TOKEN');
+      const configuredToken =
+        process.env.WHATSAPP_VERIFY_TOKEN || (await getSetting<string>('WHATSAPP_VERIFY_TOKEN'));
       if (token === configuredToken) {
         console.log('[WhatsApp Webhook] Handshake verified successfully');
         return new Response(challenge, { status: 200 });
@@ -52,7 +71,28 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const rawBody = await req.text();
+
+    const appSecret =
+      process.env.WHATSAPP_APP_SECRET ||
+      process.env.WHATSAPP_WEBHOOK_SECRET ||
+      (await getSetting<string>('WHATSAPP_APP_SECRET')) ||
+      (await getSetting<string>('WHATSAPP_WEBHOOK_SECRET'));
+
+    if (appSecret) {
+      const signatureHeader = req.headers.get('x-hub-signature-256');
+      if (!signatureHeader || !verifyWhatsAppSignature(rawBody, signatureHeader, appSecret)) {
+        console.error('[WhatsApp Webhook] Invalid HMAC signature');
+        return NextResponse.json({ message: 'Invalid signature' }, { status: 401 });
+      }
+    }
+
+    let body: any;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ message: 'Invalid JSON payload' }, { status: 400 });
+    }
 
     // Verify incoming JSON structure from Meta Cloud API
     const entry = body.entry?.[0];
@@ -173,8 +213,10 @@ export async function POST(req: Request) {
  */
 async function sendReply(toPhone: string, text: string) {
   try {
-    const apiKey = await getSetting<string>('WHATSAPP_API_KEY');
-    const phoneNumberId = await getSetting<string>('WHATSAPP_PHONE_NUMBER_ID');
+    const apiKey = process.env.WHATSAPP_API_KEY || (await getSetting<string>('WHATSAPP_API_KEY'));
+    const phoneNumberId =
+      process.env.WHATSAPP_PHONE_NUMBER_ID ||
+      (await getSetting<string>('WHATSAPP_PHONE_NUMBER_ID'));
 
     if (!apiKey || !phoneNumberId) {
       console.log(`[WhatsApp Reply MOCK] Sending to +${toPhone}: "${text}"`);
