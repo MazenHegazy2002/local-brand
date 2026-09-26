@@ -817,6 +817,10 @@ export default function AdminOS() {
           onClose={() => setSelectedSeller(null)}
           handleStatusUpdate={handleStatusUpdate}
           handleBrandStatusUpdate={handleBrandStatusUpdate}
+          onSelectBrand={b => {
+            setSelectedSeller(null);
+            setSelectedBrand(b);
+          }}
           onDeleteSeller={handleDeleteSeller}
           actionLoading={actionLoading}
         />
@@ -826,8 +830,13 @@ export default function AdminOS() {
       {selectedBrand && (
         <BrandDetailsModal
           brand={selectedBrand}
+          allOrders={data?.orders || []}
           onClose={() => setSelectedBrand(null)}
           handleBrandStatusUpdate={handleBrandStatusUpdate}
+          onSelectSeller={s => {
+            setSelectedBrand(null);
+            setSelectedSeller(s);
+          }}
           actionLoading={actionLoading}
         />
       )}
@@ -2756,6 +2765,11 @@ function SellersTab({
   onSelectBrand,
 }: SellersTabProps) {
   const [search, setSearch] = useState('');
+  const [expandedSellers, setExpandedSellers] = useState<Record<string, boolean>>({});
+  const toggleExpanded = (sellerId: string) => {
+    setExpandedSellers(prev => ({ ...prev, [sellerId]: !prev[sellerId] }));
+  };
+
   const q = search.trim().toLowerCase();
   const sellers = (data?.sellers || []).filter((s: SellerProfile) => {
     if (!q) return true;
@@ -2791,7 +2805,34 @@ function SellersTab({
       </div>
       {sellers.map((s: any) => {
         const isMulti = !!s.isMultiBrand;
-        const pendingBrands = (s.brands || []).filter((b: any) => b.status === 'PENDING_APPROVAL');
+        const displayBrands =
+          s.brands && s.brands.length > 0
+            ? s.brands
+            : isMulti
+              ? [
+                  {
+                    id: `primary-${s.id}`,
+                    sellerId: s.id,
+                    name: s.storeName,
+                    nameAr: null,
+                    slug:
+                      s.storeName
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/(^-|-$)/g, '') || 'brand',
+                    description: s.description || `${s.storeName} official brand`,
+                    logoUrl: s.logoUrl,
+                    accentColor: '#0f6b50',
+                    status: s.status,
+                    createdAt: s.createdAt,
+                    _count: { products: s.products?.length || 0 },
+                    products: s.products || [],
+                  },
+                ]
+              : [];
+        const pendingBrands = displayBrands.filter((b: any) => b.status === 'PENDING_APPROVAL');
+        const isExpanded = !!expandedSellers[s.id];
+
         return (
           <div key={s.id} className="row-item flex-col items-stretch gap-2 py-3">
             <div className="flex items-center w-full">
@@ -2806,6 +2847,40 @@ function SellersTab({
                 <div style={{ fontSize: '11px', color: '#64748b' }}>
                   {s.user?.name} {s.user?.email ? `(${s.user.email})` : ''}
                 </div>
+                {isMulti && (
+                  <button
+                    type="button"
+                    onClick={e => {
+                      e.stopPropagation();
+                      toggleExpanded(s.id);
+                    }}
+                    className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold transition border cursor-pointer group shadow-xs"
+                    style={{
+                      background: isExpanded ? '#f5f3ff' : '#faf5ff',
+                      borderColor: isExpanded ? '#c4b5fd' : '#e9d5ff',
+                      color: '#6b21a8',
+                    }}
+                    title={isExpanded ? 'Hide multi-brand details' : 'Show multi-brand details'}
+                  >
+                    <svg
+                      className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-90 text-purple-700' : 'text-purple-500'}`}
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>Brands ({displayBrands.length})</span>
+                    {pendingBrands.length > 0 && (
+                      <span className="ml-1 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-200 text-amber-900 border border-amber-300">
+                        ⏳ {pendingBrands.length} pending
+                      </span>
+                    )}
+                  </button>
+                )}
               </div>
               <div className="w-28 flex justify-center">
                 <span
@@ -2826,7 +2901,7 @@ function SellersTab({
                     border: isMulti ? '1px solid #fcd34d' : '1px solid #e2e8f0',
                   }}
                 >
-                  {isMulti ? `MULTI-BRAND (${s.brands?.length || 1})` : 'SINGLE BRAND'}
+                  {isMulti ? `MULTI-BRAND (${displayBrands.length})` : 'SINGLE BRAND'}
                 </span>
                 {pendingBrands.length > 0 && (
                   <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full border border-amber-300">
@@ -2907,45 +2982,124 @@ function SellersTab({
               </div>
             </div>
 
-            {/* If seller has multiple brands, show brand pills with quick approval */}
-            {isMulti && s.brands && s.brands.length > 0 && (
-              <div className="flex items-center gap-2 pl-2 pt-1 border-t border-slate-100 flex-wrap text-xs">
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Brands:</span>
-                {s.brands.map((b: any) => (
-                  <div
-                    key={b.id}
-                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] ${
-                      b.status === 'ACTIVE'
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                        : b.status === 'PENDING_APPROVAL'
-                          ? 'bg-amber-50 text-amber-900 border-amber-300 font-bold'
-                          : 'bg-rose-50 text-rose-700 border-rose-200'
-                    }`}
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{ background: b.accentColor || '#7c3aed' }}
-                    />
-                    <span
-                      onClick={() => onSelectBrand?.({ ...b, seller: s })}
-                      className="cursor-pointer hover:underline"
-                    >
-                      {b.name}
+            {/* If seller is multi-brand and expanded, show all brands with full details */}
+            {isMulti && isExpanded && (
+              <div className="w-full mt-2 p-4 bg-gradient-to-br from-purple-50/80 via-slate-50 to-indigo-50/60 rounded-xl border border-purple-200 shadow-xs space-y-3">
+                <div className="flex items-center justify-between pb-2.5 border-b border-purple-100 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-purple-950 flex items-center gap-1.5">
+                      🏷️ Brands Portfolio for {s.storeName} ({displayBrands.length})
                     </span>
-                    <span className="text-[9px] opacity-75">({b.status})</span>
-                    {b.status === 'PENDING_APPROVAL' && (
-                      <button
-                        type="button"
-                        disabled={actionLoading === b.id}
-                        onClick={() => handleBrandStatusUpdate?.(b.id, 'ACTIVE')}
-                        className="ml-1 px-1.5 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold cursor-pointer"
-                        title="Approve this brand"
-                      >
-                        ✓ Approve
-                      </button>
-                    )}
+                    <span className="text-[10px] text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full font-bold border border-purple-200">
+                      Multi-Brand Owner
+                    </span>
                   </div>
-                ))}
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    Click any brand to inspect complete details, products &amp; sales
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {displayBrands.map((b: any) => {
+                    const prodCount = b._count?.products ?? b.products?.length ?? 0;
+                    return (
+                      <div
+                        key={b.id}
+                        onClick={() => onSelectBrand?.({ ...b, seller: s })}
+                        className="p-3.5 bg-white rounded-xl border border-slate-200 hover:border-purple-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group relative"
+                      >
+                        <div>
+                          <div className="flex items-start justify-between gap-2 mb-2.5">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              {b.logoUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={b.logoUrl}
+                                  alt={b.name}
+                                  className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0 shadow-xs"
+                                />
+                              ) : (
+                                <div
+                                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-xs"
+                                  style={{ background: b.accentColor || '#7c3aed' }}
+                                >
+                                  {b.name?.charAt(0) || 'B'}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <div className="text-xs font-bold text-slate-900 truncate group-hover:text-purple-700 flex items-center gap-1.5">
+                                  {b.name}
+                                  {b.nameAr && (
+                                    <span className="text-[10px] font-normal text-slate-400">
+                                      ({b.nameAr})
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] font-mono text-slate-500 truncate">
+                                  /brand/{b.slug}
+                                </div>
+                              </div>
+                            </div>
+
+                            <span
+                              className={`text-[9px] font-bold px-2 py-0.5 rounded-md uppercase shrink-0 ${
+                                b.status === 'ACTIVE'
+                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                  : b.status === 'PENDING_APPROVAL'
+                                    ? 'bg-amber-50 text-amber-900 border border-amber-300 font-bold'
+                                    : 'bg-rose-50 text-rose-800 border border-rose-200'
+                              }`}
+                            >
+                              {b.status}
+                            </span>
+                          </div>
+
+                          {b.description && (
+                            <p className="text-[11px] text-slate-600 line-clamp-2 mb-2.5 leading-relaxed">
+                              {b.description}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600">
+                          <span className="flex items-center gap-1">
+                            <span>📦</span>
+                            <strong className="text-slate-800 font-semibold">
+                              {prodCount}
+                            </strong>{' '}
+                            products
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {b.status === 'PENDING_APPROVAL' && (
+                              <button
+                                type="button"
+                                disabled={actionLoading === b.id}
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  handleBrandStatusUpdate?.(b.id, 'ACTIVE');
+                                }}
+                                className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold cursor-pointer transition shadow-xs"
+                                title="Approve this brand"
+                              >
+                                ✓ Approve
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation();
+                                onSelectBrand?.({ ...b, seller: s });
+                              }}
+                              className="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-[10px] font-bold border border-purple-200 transition cursor-pointer"
+                            >
+                              Details &rarr;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -2969,6 +3123,7 @@ interface SellerDetailsModalProps {
     id: string,
     status: 'ACTIVE' | 'REJECTED' | 'SUSPENDED'
   ) => Promise<void>;
+  onSelectBrand?: (brand: any) => void;
   onDeleteSeller?: (seller: any) => Promise<void>;
   actionLoading: string | null;
 }
@@ -2979,6 +3134,7 @@ function SellerDetailsModal({
   onClose,
   handleStatusUpdate,
   handleBrandStatusUpdate,
+  onSelectBrand,
   onDeleteSeller,
   actionLoading,
 }: SellerDetailsModalProps) {
@@ -3549,6 +3705,27 @@ function SellerDetailsModal({
                           Suspend Brand
                         </button>
                       )}
+                      {onSelectBrand && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            onSelectBrand({ ...b, seller });
+                          }}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            border: '1px solid #c4b5fd',
+                            background: '#f5f3ff',
+                            color: '#6b21a8',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Details &rarr;
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -3945,21 +4122,42 @@ function SellerDetailsModal({
 
 interface BrandDetailsModalProps {
   brand: any;
+  allOrders?: any[];
   onClose: () => void;
   handleBrandStatusUpdate: (
     id: string,
     status: 'ACTIVE' | 'REJECTED' | 'SUSPENDED'
   ) => Promise<void>;
+  onSelectSeller?: (seller: any) => void;
   actionLoading: string | null;
 }
 
 function BrandDetailsModal({
   brand,
+  allOrders = [],
   onClose,
   handleBrandStatusUpdate,
+  onSelectSeller,
   actionLoading,
 }: BrandDetailsModalProps) {
   if (!brand) return null;
+
+  // Resolve brand products from brand.products or fallback to seller.products matching brand
+  const brandProducts =
+    brand.products && brand.products.length > 0
+      ? brand.products
+      : (brand.seller?.products || []).filter(
+          (p: any) => p.brandId === brand.id || p.brand === brand.name
+        );
+
+  const brandProductIds = new Set(brandProducts.map((p: any) => p.id));
+  const brandOrders = (allOrders || []).filter((o: any) =>
+    o.items?.some((item: any) => brandProductIds.has(item.variant?.productId))
+  );
+
+  const brandRevenue = brandOrders.reduce((acc: number, o: any) => acc + (o.totalAmount ?? 0), 0);
+  const deliveredCount = brandOrders.filter((o: any) => o.status === 'DELIVERED').length;
+  const returnedCount = brandOrders.filter((o: any) => o.status === 'RETURNED').length;
 
   return (
     <div
@@ -3980,17 +4178,17 @@ function BrandDetailsModal({
         style={{
           background: '#ffffff',
           borderRadius: '20px',
-          width: '580px',
+          width: '820px',
           maxWidth: '100%',
           maxHeight: '90vh',
+          overflow: 'auto',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          overflow: 'hidden',
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Modal Header */}
+        {/* Header */}
         <div
           style={{
             padding: '24px',
@@ -3998,135 +4196,613 @@ function BrandDetailsModal({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: '16px',
+            flexWrap: 'wrap',
             background: '#faf5ff',
           }}
         >
-          <div className="flex items-center gap-3">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             {brand.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={brand.logoUrl}
                 alt={brand.name}
-                className="w-12 h-12 rounded-xl object-cover border shadow-sm"
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '16px',
+                  objectFit: 'cover',
+                  border: '1px solid #e9d5ff',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                }}
               />
             ) : (
               <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-sm"
-                style={{ background: brand.accentColor || '#7c3aed' }}
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '16px',
+                  background: brand.accentColor || '#7c3aed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '26px',
+                  fontWeight: '800',
+                  color: '#ffffff',
+                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                }}
               >
-                {brand.name.charAt(0)}
+                {brand.name?.[0]?.toUpperCase() || 'B'}
               </div>
             )}
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-slate-800">{brand.name}</h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#1e293b', margin: 0 }}>
+                  {brand.name}
+                </h3>
+                {brand.nameAr && (
+                  <span className="text-sm font-semibold text-slate-500">({brand.nameAr})</span>
+                )}
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200">
-                  🏷️ Multi-Brand Request
+                  🏷️ Multi-Brand
                 </span>
               </div>
-              <p className="text-xs text-slate-500">
-                Created: {new Date(brand.createdAt).toLocaleString()}
+              <p style={{ fontSize: '13px', color: '#64748b', margin: '3px 0 6px 0' }}>
+                Store: <strong>{brand.seller?.storeName || 'Primary Store'}</strong>
+                {brand.seller?.user?.name ? ` · Owned by ${brand.seller.user.name}` : ''}
               </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center text-sm font-bold cursor-pointer"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Modal Body */}
-        <div style={{ padding: '24px', overflowY: 'auto' }} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-              <span className="text-slate-400 block font-medium mb-1">Status</span>
               <span
-                className={`font-bold px-2 py-0.5 rounded-md text-[11px] ${
+                className={`font-bold px-2 py-0.5 rounded-md text-[11px] uppercase ${
                   brand.status === 'ACTIVE'
-                    ? 'bg-emerald-100 text-emerald-800'
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                     : brand.status === 'PENDING_APPROVAL'
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-rose-100 text-rose-800'
+                      ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                      : 'bg-rose-100 text-rose-800 border border-rose-300'
                 }`}
               >
                 {brand.status}
               </span>
             </div>
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-              <span className="text-slate-400 block font-medium mb-1">Storefront URL</span>
-              <span className="font-mono text-slate-700 font-semibold truncate block">
-                /brand/{brand.slug}
-              </span>
-            </div>
           </div>
 
-          {/* Seller / Store Info */}
-          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs">
-            <span className="text-slate-400 block font-bold uppercase text-[10px] mb-2 tracking-wider">
-              Requesting Seller &amp; Store
-            </span>
-            <div className="space-y-1">
-              <div>
-                <span className="text-slate-500">Store Name:</span>{' '}
-                <strong className="text-slate-800">{brand.seller?.storeName}</strong>
-              </div>
-              <div>
-                <span className="text-slate-500">Owner Name:</span>{' '}
-                <span className="text-slate-700 font-medium">
-                  {brand.seller?.user?.name || 'N/A'}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500">Email:</span>{' '}
-                <span className="text-slate-700 font-medium">
-                  {brand.seller?.user?.email || 'N/A'}
-                </span>
-              </div>
-              {brand.seller?.user?.phone && (
-                <div>
-                  <span className="text-slate-500">Phone:</span>{' '}
-                  <span className="text-slate-700 font-medium">{brand.seller.user.phone}</span>
-                </div>
-              )}
-            </div>
-          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {brand.status === 'PENDING_APPROVAL' && (
+              <>
+                <button
+                  disabled={actionLoading === brand.id}
+                  onClick={async () => {
+                    await handleBrandStatusUpdate(brand.id, 'ACTIVE');
+                    onClose();
+                  }}
+                  style={{
+                    padding: '7px 16px',
+                    borderRadius: '8px',
+                    background: '#e6f4ea',
+                    border: '1px solid #0F6E56',
+                    color: '#085041',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ✓ Approve Brand
+                </button>
+                <button
+                  disabled={actionLoading === brand.id}
+                  onClick={async () => {
+                    await handleBrandStatusUpdate(brand.id, 'REJECTED');
+                    onClose();
+                  }}
+                  style={{
+                    padding: '7px 16px',
+                    borderRadius: '8px',
+                    background: '#fce8e6',
+                    border: '1px solid #A32D2D',
+                    color: '#791F1F',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Reject
+                </button>
+              </>
+            )}
 
-          {/* Description & Arabic Name */}
-          {(brand.description || brand.nameAr) && (
-            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs space-y-2">
-              {brand.nameAr && (
-                <div>
-                  <span className="text-slate-400 block font-medium mb-0.5">Arabic Name</span>
-                  <span className="text-slate-800 font-medium">{brand.nameAr}</span>
-                </div>
-              )}
-              {brand.description && (
-                <div>
-                  <span className="text-slate-400 block font-medium mb-0.5">Brand Description</span>
-                  <p className="text-slate-700 leading-relaxed">{brand.description}</p>
-                </div>
-              )}
-            </div>
-          )}
+            {brand.status === 'ACTIVE' && (
+              <button
+                disabled={actionLoading === brand.id}
+                onClick={async () => {
+                  await handleBrandStatusUpdate(brand.id, 'SUSPENDED');
+                  onClose();
+                }}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: '8px',
+                  background: '#fce8e6',
+                  border: '1px solid #A32D2D',
+                  color: '#791F1F',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                }}
+              >
+                Suspend Brand
+              </button>
+            )}
 
-          {/* Accent Color Swatch */}
-          <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs">
-            <span className="text-slate-500 font-medium">Brand Accent Color:</span>
-            <div className="flex items-center gap-2">
-              <span
-                className="w-5 h-5 rounded-md border shadow-sm"
-                style={{ background: brand.accentColor || '#0f6b50' }}
-              />
-              <code className="text-slate-700 font-mono text-[11px]">
-                {brand.accentColor || '#0f6b50'}
-              </code>
-            </div>
+            {(brand.status === 'SUSPENDED' || brand.status === 'REJECTED') && (
+              <button
+                disabled={actionLoading === brand.id}
+                onClick={async () => {
+                  await handleBrandStatusUpdate(brand.id, 'ACTIVE');
+                  onClose();
+                }}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: '8px',
+                  background: '#e6f4ea',
+                  border: '1px solid #0F6E56',
+                  color: '#085041',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                }}
+              >
+                ✓ Re-activate Brand
+              </button>
+            )}
+
+            <button
+              onClick={onClose}
+              style={{
+                border: 'none',
+                background: 'none',
+                fontSize: '22px',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                lineHeight: 1,
+              }}
+            >
+              ✕
+            </button>
           </div>
         </div>
 
-        {/* Modal Footer Actions */}
+        {/* Body */}
+        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* 4 KPI Metrics */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+              gap: '12px',
+            }}
+          >
+            <div
+              style={{
+                background: '#f8fafc',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid #e2e8f0',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '10px',
+                  color: '#64748b',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Total Products
+              </span>
+              <div
+                style={{
+                  fontSize: '22px',
+                  fontWeight: '800',
+                  color: '#1e293b',
+                  marginTop: '4px',
+                }}
+              >
+                {brandProducts.length}
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: '#f8fafc',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid #e2e8f0',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '10px',
+                  color: '#64748b',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Brand Orders
+              </span>
+              <div
+                style={{
+                  fontSize: '22px',
+                  fontWeight: '800',
+                  color: '#1e293b',
+                  marginTop: '4px',
+                }}
+              >
+                {brandOrders.length}
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: '#f8fafc',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid #e2e8f0',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '10px',
+                  color: '#64748b',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Brand Revenue
+              </span>
+              <div
+                style={{
+                  fontSize: '22px',
+                  fontWeight: '800',
+                  color: '#0f6b50',
+                  marginTop: '4px',
+                }}
+              >
+                {brandRevenue.toLocaleString()} EGP
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: '#f8fafc',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid #e2e8f0',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '10px',
+                  color: '#64748b',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Delivered / Returned
+              </span>
+              <div
+                style={{
+                  fontSize: '16px',
+                  fontWeight: '800',
+                  color: '#1e293b',
+                  marginTop: '6px',
+                }}
+              >
+                <span className="text-emerald-700 font-bold">{deliveredCount}</span> /{' '}
+                <span className="text-rose-600">{returnedCount}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 📋 Brand & Storefront Identity Card */}
+          <div
+            style={{
+              background: '#f8fafc',
+              borderRadius: '16px',
+              padding: '20px',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <h4
+              style={{
+                fontSize: '12px',
+                fontWeight: '800',
+                textTransform: 'uppercase',
+                color: '#475569',
+                letterSpacing: '0.05em',
+                marginBottom: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              🏷️ Brand Identity &amp; Storefront Details
+            </h4>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '16px',
+                fontSize: '12px',
+              }}
+            >
+              <div>
+                <span
+                  style={{
+                    color: '#94a3b8',
+                    display: 'block',
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Storefront URL
+                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="font-mono text-slate-800 font-semibold text-xs">
+                    /brand/{brand.slug}
+                  </span>
+                  <a
+                    href={`/brand/${brand.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-0.5"
+                  >
+                    Open ↗
+                  </a>
+                </div>
+              </div>
+
+              <div>
+                <span
+                  style={{
+                    color: '#94a3b8',
+                    display: 'block',
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Brand Accent Color
+                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span
+                    className="w-4 h-4 rounded-full border shadow-xs"
+                    style={{ background: brand.accentColor || '#7c3aed' }}
+                  />
+                  <code className="text-slate-800 font-mono text-xs font-semibold">
+                    {brand.accentColor || '#7c3aed'}
+                  </code>
+                </div>
+              </div>
+
+              <div>
+                <span
+                  style={{
+                    color: '#94a3b8',
+                    display: 'block',
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Created At
+                </span>
+                <strong style={{ color: '#1e293b' }}>
+                  {brand.createdAt ? new Date(brand.createdAt).toLocaleString() : 'N/A'}
+                </strong>
+              </div>
+
+              {brand.description && (
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <span
+                    style={{
+                      color: '#94a3b8',
+                      display: 'block',
+                      fontSize: '10px',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Brand Description / Bio
+                  </span>
+                  <p className="text-slate-700 text-xs mt-1 leading-relaxed bg-white p-3 rounded-lg border border-slate-200">
+                    {brand.description}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 👤 Owner & Store Account Association Card */}
+          {brand.seller && (
+            <div
+              style={{
+                background: '#faf5ff',
+                borderRadius: '16px',
+                padding: '20px',
+                border: '1px solid #e9d5ff',
+              }}
+            >
+              <div className="flex items-center justify-between mb-3.5 flex-wrap gap-2">
+                <h4
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: '800',
+                    textTransform: 'uppercase',
+                    color: '#6b21a8',
+                    letterSpacing: '0.05em',
+                    margin: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  🏢 Parent Store Account
+                </h4>
+                {onSelectSeller && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectSeller(brand.seller);
+                    }}
+                    className="text-xs font-bold text-purple-700 hover:text-purple-900 bg-white hover:bg-purple-50 px-3 py-1 rounded-lg border border-purple-200 transition cursor-pointer"
+                  >
+                    Inspect Full Store Account &rarr;
+                  </button>
+                )}
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '12px',
+                  fontSize: '12px',
+                }}
+              >
+                <div>
+                  <span
+                    style={{
+                      color: '#9333ea',
+                      display: 'block',
+                      fontSize: '10px',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Store Name
+                  </span>
+                  <strong style={{ color: '#1e293b' }}>{brand.seller.storeName}</strong>
+                </div>
+                <div>
+                  <span
+                    style={{
+                      color: '#9333ea',
+                      display: 'block',
+                      fontSize: '10px',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Owner Name
+                  </span>
+                  <span style={{ color: '#1e293b' }}>{brand.seller.user?.name || 'N/A'}</span>
+                </div>
+                <div>
+                  <span
+                    style={{
+                      color: '#9333ea',
+                      display: 'block',
+                      fontSize: '10px',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Owner Email
+                  </span>
+                  <span style={{ color: '#1e293b' }}>{brand.seller.user?.email || 'N/A'}</span>
+                </div>
+                <div>
+                  <span
+                    style={{
+                      color: '#9333ea',
+                      display: 'block',
+                      fontSize: '10px',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Phone
+                  </span>
+                  <span style={{ color: '#1e293b' }}>{brand.seller.user?.phone || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 📦 Brand Catalog Products */}
+          <div
+            style={{
+              background: '#f8fafc',
+              borderRadius: '16px',
+              padding: '20px',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <h4
+              style={{
+                fontSize: '12px',
+                fontWeight: '800',
+                textTransform: 'uppercase',
+                color: '#475569',
+                letterSpacing: '0.05em',
+                marginBottom: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              📦 Brand Products Catalog ({brandProducts.length})
+            </h4>
+
+            {brandProducts.length === 0 ? (
+              <div className="text-center py-6 text-xs text-slate-400 bg-white rounded-xl border border-slate-200">
+                No products have been added under this brand yet.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto pr-1">
+                {brandProducts.map((p: any) => {
+                  const imgUrl =
+                    Array.isArray(p.images) && p.images[0]?.url
+                      ? p.images[0].url
+                      : typeof p.images === 'string'
+                        ? p.images
+                        : '/placeholder-product.png';
+                  return (
+                    <div
+                      key={p.id}
+                      className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-slate-200 text-xs"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imgUrl}
+                        alt={p.title}
+                        className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-slate-800 truncate">{p.title}</div>
+                        <div className="text-[11px] text-slate-500 font-semibold">
+                          {p.basePrice?.toLocaleString() ?? 0} EGP
+                        </div>
+                      </div>
+                      <span
+                        className={`text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                          p.published
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            : 'bg-slate-100 text-slate-600 border border-slate-200'
+                        }`}
+                      >
+                        {p.published ? 'Live' : 'Draft'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Modal Footer */}
         <div
           style={{
             padding: '16px 24px',
@@ -4142,21 +4818,7 @@ function BrandDetailsModal({
             onClick={onClose}
             className="px-4 py-2 text-xs font-semibold rounded-xl text-slate-600 hover:bg-slate-200 transition-colors"
           >
-            Cancel
-          </button>
-          <button
-            disabled={actionLoading === brand.id}
-            onClick={() => handleBrandStatusUpdate(brand.id, 'REJECTED')}
-            className="px-4 py-2 text-xs font-bold rounded-xl border border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100 transition-colors"
-          >
-            Reject Request
-          </button>
-          <button
-            disabled={actionLoading === brand.id}
-            onClick={() => handleBrandStatusUpdate(brand.id, 'ACTIVE')}
-            className="px-5 py-2 text-xs font-bold rounded-xl text-white bg-emerald-700 hover:bg-emerald-800 transition-colors shadow-sm flex items-center gap-1.5"
-          >
-            ✓ Approve &amp; Activate Brand
+            Close
           </button>
         </div>
       </div>

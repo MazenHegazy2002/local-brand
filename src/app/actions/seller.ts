@@ -337,7 +337,24 @@ export async function getDashboardStats() {
       const sellers = await prisma.sellerProfile.findMany({
         where: { deletedAt: null },
         include: {
-          brands: true,
+          brands: {
+            include: {
+              _count: {
+                select: { products: true },
+              },
+              products: {
+                select: {
+                  id: true,
+                  title: true,
+                  slug: true,
+                  basePrice: true,
+                  published: true,
+                  images: true,
+                },
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+          },
           user: {
             select: {
               id: true,
@@ -349,7 +366,17 @@ export async function getDashboardStats() {
               createdAt: true,
             },
           },
-          products: { select: { id: true, title: true, published: true } },
+          products: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              basePrice: true,
+              published: true,
+              brandId: true,
+              images: true,
+            },
+          },
           payouts: { orderBy: { createdAt: 'desc' } },
         },
         orderBy: { createdAt: 'desc' },
@@ -416,6 +443,32 @@ export async function getDashboardStats() {
         // Expose escrow fields for the admin deep-view modal
         (s as any).heldBalance = Math.round(held * 100) / 100;
         (s as any).nextReleaseAt = nextReleaseAt ? nextReleaseAt.toISOString() : null;
+
+        // Auto-ensure multi-brand seller has at least their primary store brand in the brands array
+        if (s.isMultiBrand && (!s.brands || s.brands.length === 0)) {
+          (s as any).brands = [
+            {
+              id: `primary-${s.id}`,
+              sellerId: s.id,
+              name: s.storeName,
+              nameAr: null,
+              slug:
+                s.storeName
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, '-')
+                  .replace(/(^-|-$)/g, '') || 'brand',
+              description: s.description || `${s.storeName} official brand`,
+              logoUrl: s.logoUrl,
+              coverUrl: null,
+              accentColor: '#0f6b50',
+              status: s.status,
+              createdAt: s.createdAt,
+              updatedAt: s.updatedAt,
+              _count: { products: s.products?.length || 0 },
+              products: s.products || [],
+            },
+          ];
+        }
       }
       const orders = await prisma.order.findMany({
         include: {
@@ -963,7 +1016,12 @@ export async function updateBrandStatus(
       await prisma.auditLog.create({
         data: {
           adminId,
-          action: status === 'ACTIVE' ? 'APPROVED_BRAND' : 'REJECTED_BRAND',
+          action:
+            status === 'ACTIVE'
+              ? 'APPROVED_BRAND'
+              : status === 'SUSPENDED'
+                ? 'SUSPENDED_BRAND'
+                : 'REJECTED_BRAND',
           targetId: brandId,
           details: `Brand "${brand.name}" status changed to ${status} for store ${brand.seller?.storeName || brand.sellerId}`,
         },
