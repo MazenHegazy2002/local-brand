@@ -130,6 +130,14 @@ export async function createOrderForUser(
       }
     }
 
+    // Batch fetch all needed variants to avoid N+1 queries
+    const variantIds = Array.from(new Set(mergedCartItems.map(item => item.variantId)));
+    const variants = await prisma.productVariant.findMany({
+      where: { id: { in: variantIds } },
+      include: { product: { include: { seller: true } } },
+    });
+    const variantMap = new Map(variants.map(v => [v.id, v]));
+
     let subtotal = 0;
     let totalWeightGrams = 0;
     let loyaltyPointsToAward = 0; // accumulated per-item loyalty points (Task 8)
@@ -145,10 +153,7 @@ export async function createOrderForUser(
     }> = [];
 
     for (const itemInput of mergedCartItems) {
-      const variant = await prisma.productVariant.findUnique({
-        where: { id: itemInput.variantId },
-        include: { product: { include: { seller: true } } },
-      });
+      const variant = variantMap.get(itemInput.variantId);
 
       if (!variant) {
         return {

@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { prisma } from '@/lib/prisma';
 import Navbar from '@/components/Navbar';
 import { getServerSession } from 'next-auth';
@@ -29,6 +30,30 @@ import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
 
+const getProduct = cache(async (id: string) => {
+  try {
+    return await prisma.product.findFirst({
+      where: {
+        OR: [{ id }, { slug: id }],
+      },
+      include: {
+        images: true,
+        variants: true,
+        seller: true,
+        category: true,
+        tags: true,
+        reviews: {
+          orderBy: { createdAt: 'desc' },
+          include: { user: { select: { name: true } } },
+        },
+      },
+    });
+  } catch (err) {
+    console.error('[getProduct] product query error:', err);
+    return null;
+  }
+});
+
 export async function generateMetadata({
   params,
 }: {
@@ -38,25 +63,11 @@ export async function generateMetadata({
     const { id } = await params;
     if (!id) return { title: 'Product Details | Brandy' };
 
-    const product = await prisma.product.findFirst({
-      where: {
-        OR: [{ id }, { slug: id }],
-        published: true,
-        deletedAt: null,
-      },
-      select: {
-        title: true,
-        slug: true,
-        description: true,
-        basePrice: true,
-        flashSalePrice: true,
-        images: { where: { isPrimary: true }, take: 1 },
-        seller: { select: { storeName: true } },
-        category: { select: { name: true } },
-      },
-    });
+    const product = await getProduct(id);
 
-    if (!product) return { title: 'Product Not Found | Brandy' };
+    if (!product || !product.published || product.deletedAt !== null) {
+      return { title: 'Product Not Found | Brandy' };
+    }
 
     const price = product.flashSalePrice ?? product.basePrice ?? 0;
     const description =
@@ -125,27 +136,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     }
 
     const [rawProduct, virtualTryOnEnabled] = await Promise.all([
-      prisma.product
-        .findFirst({
-          where: {
-            OR: [{ id }, { slug: id }],
-          },
-          include: {
-            images: true,
-            variants: true,
-            seller: true,
-            category: true,
-            tags: true,
-            reviews: {
-              orderBy: { createdAt: 'desc' },
-              include: { user: { select: { name: true } } },
-            },
-          },
-        })
-        .catch(err => {
-          console.error('[ProductPage] product query error:', err);
-          return null;
-        }),
+      getProduct(id),
       isVirtualTryOnEnabled().catch(() => false),
     ]);
 

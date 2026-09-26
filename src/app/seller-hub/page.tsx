@@ -967,30 +967,35 @@ export default function SellerHub() {
           Back to Shop
         </Link>
 
-        <NavItem
-          active={activeTab === 'overview'}
-          onClick={() => setActiveTab('overview')}
-          label="Overview"
-          icon={<LayoutDashboard size={18} />}
-        />
-        <NavItem
-          active={activeTab === 'orders'}
-          onClick={() => setActiveTab('orders')}
-          label={`Orders${filteredOrders.flatMap((o: any) => o.items || []).filter((i: any) => i.status === 'PENDING').length > 0 ? ` (${filteredOrders.flatMap((o: any) => o.items || []).filter((i: any) => i.status === 'PENDING').length})` : ''}`}
-          icon={<Package size={18} />}
-        />
-        <NavItem
-          active={activeTab === 'products'}
-          onClick={() => setActiveTab('products')}
-          label="Inventory"
-          icon={<ShoppingBag size={18} />}
-        />
-        <NavItem
-          active={activeTab === 'analytics'}
-          onClick={() => setActiveTab('analytics')}
-          label="Analytics"
-          icon={<BarChart3 size={18} />}
-        />
+        {/* Main Nav Items - only show Overview, Orders, Inventory, Analytics here when All Brands is selected */}
+        {activeBrand === 'all' && (
+          <>
+            <NavItem
+              active={activeTab === 'overview'}
+              onClick={() => setActiveTab('overview')}
+              label="Overview"
+              icon={<LayoutDashboard size={18} />}
+            />
+            <NavItem
+              active={activeTab === 'orders'}
+              onClick={() => setActiveTab('orders')}
+              label={`Orders${filteredOrders.flatMap((o: any) => o.items || []).filter((i: any) => i.status === 'PENDING').length > 0 ? ` (${filteredOrders.flatMap((o: any) => o.items || []).filter((i: any) => i.status === 'PENDING').length})` : ''}`}
+              icon={<Package size={18} />}
+            />
+            <NavItem
+              active={activeTab === 'products'}
+              onClick={() => setActiveTab('products')}
+              label="Inventory"
+              icon={<ShoppingBag size={18} />}
+            />
+            <NavItem
+              active={activeTab === 'analytics'}
+              onClick={() => setActiveTab('analytics')}
+              label="Analytics"
+              icon={<BarChart3 size={18} />}
+            />
+          </>
+        )}
         <NavItem
           active={activeTab === 'wallet'}
           onClick={() => setActiveTab('wallet')}

@@ -532,6 +532,7 @@ model Review {
 
   @@index([status, createdAt])
   @@index([productId, status])
+  @@index([userId])
 }
 
 enum ReviewStatus {
@@ -662,6 +663,7 @@ model Wishlist {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@id([userId, productId])
+  @@index([productId])
 }
 
 // ============================================
@@ -686,6 +688,7 @@ model Dispute {
   @@index([orderId])
   @@index([buyerId])
   @@index([status])
+  @@index([sellerId])
 }
 
 enum DisputeStatus {
@@ -756,6 +759,7 @@ model SupportTicket {
   @@index([email])
   @@index([status])
   @@index([createdAt])
+  @@index([userId])
 }
 
 enum TicketStatus {
