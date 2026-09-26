@@ -101,6 +101,12 @@ export async function getDashboardStats() {
         where: { userId },
         include: {
           user: true,
+          brands: {
+            include: {
+              _count: { select: { products: true } },
+            },
+            orderBy: { createdAt: 'asc' },
+          },
           products: {
             include: {
               images: true,
@@ -108,6 +114,7 @@ export async function getDashboardStats() {
               category: true,
               tags: true,
               collections: true,
+              brandRef: true,
             },
           },
         },
@@ -131,6 +138,12 @@ export async function getDashboardStats() {
             },
             include: {
               user: true,
+              brands: {
+                include: {
+                  _count: { select: { products: true } },
+                },
+                orderBy: { createdAt: 'asc' },
+              },
               products: {
                 include: {
                   images: true,
@@ -138,6 +151,7 @@ export async function getDashboardStats() {
                   category: true,
                   tags: true,
                   collections: true,
+                  brandRef: true,
                 },
               },
             },
@@ -323,6 +337,7 @@ export async function getDashboardStats() {
       const sellers = await prisma.sellerProfile.findMany({
         where: { deletedAt: null },
         include: {
+          brands: true,
           user: {
             select: {
               id: true,
@@ -1043,6 +1058,8 @@ interface ProductData {
   basePrice: number;
   weightKg: number;
   categoryId: string;
+  brandId?: string;
+  brand?: string;
   flashSalePrice?: number;
   flashSaleEndsAt?: string;
   published?: boolean;
@@ -1185,9 +1202,17 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
       variantList.map((v, idx) => resolveSku(v.sku, slug, v.color || 'std', idx))
     );
 
+    let brandName = data.brand || null;
+    if (data.brandId) {
+      const b = await prisma.brand.findUnique({ where: { id: data.brandId } });
+      if (b) brandName = b.name;
+    }
+
     const product = await prisma.product.create({
       data: {
         ...rest,
+        brandId: data.brandId || null,
+        brand: brandName,
         weightGrams,
         published,
         sellerId: seller.id,

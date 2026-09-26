@@ -26,25 +26,69 @@ export default async function BrandsPage() {
   let brands: Array<{
     id: string;
     storeName: string;
+    slug: string;
     logoUrl: string | null;
+    accentColor?: string | null;
     createdAt: Date;
   }> = [];
   try {
-    brands = await prisma.sellerProfile.findMany({
-      where: { status: 'ACTIVE', deletedAt: null },
-      select: { id: true, storeName: true, logoUrl: true, createdAt: true },
-      orderBy: { storeName: 'asc' },
-      take: 60,
+    const [sellerProfiles, brandRecords] = await Promise.all([
+      prisma.sellerProfile.findMany({
+        where: { status: 'ACTIVE', deletedAt: null },
+        select: { id: true, storeName: true, logoUrl: true, createdAt: true },
+        orderBy: { storeName: 'asc' },
+        take: 60,
+      }),
+      prisma.brand.findMany({
+        where: { status: 'ACTIVE' },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          logoUrl: true,
+          accentColor: true,
+          createdAt: true,
+        },
+        orderBy: { name: 'asc' },
+        take: 60,
+      }),
+    ]);
+
+    const seenSlugs = new Set<string>();
+
+    brandRecords.forEach(b => {
+      seenSlugs.add(b.slug.toLowerCase());
+      brands.push({
+        id: b.id,
+        storeName: b.name,
+        slug: b.slug,
+        logoUrl: b.logoUrl,
+        accentColor: b.accentColor,
+        createdAt: b.createdAt,
+      });
+    });
+
+    sellerProfiles.forEach(s => {
+      const slug = s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      if (!seenSlugs.has(slug)) {
+        seenSlugs.add(slug);
+        brands.push({
+          id: s.id,
+          storeName: s.storeName,
+          slug,
+          logoUrl: s.logoUrl,
+          createdAt: s.createdAt,
+        });
+      }
     });
   } catch (err) {
-    // DB unavailable during build / dev — render the page empty rather than 500.
     console.error('[brands] failed to load sellers:', err);
   }
 
   const brandsLd = brandsListJsonLd({
     brands: brands.map(b => ({
       name: b.storeName,
-      slug: b.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      slug: b.slug,
     })),
   });
 
@@ -72,7 +116,7 @@ export default async function BrandsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {brands.map((brand, idx) => {
-              const slug = brand.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+              const slug = brand.slug;
               const initial = brand.storeName.slice(0, 1).toUpperCase();
               const joinedYear = new Date(brand.createdAt).getFullYear();
               return (

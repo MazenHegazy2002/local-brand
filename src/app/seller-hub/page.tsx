@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -84,6 +84,7 @@ interface NewProductState {
   weightKg: string | number;
   flashSalePrice: string | number;
   categoryId: string;
+  brandId?: string;
   mainImage?: string;
   mainImageUploading?: boolean;
 }
@@ -228,12 +229,74 @@ export default function SellerHub() {
     };
   }, []);
 
+  const [activeBrand, setActiveBrand] = useState<string>('all');
+  const [showAddBrandModal, setShowAddBrandModal] = useState(false);
+  const [brandDraft, setBrandDraft] = useState({
+    name: '',
+    description: '',
+    accentColor: '#0f6b50',
+  });
+  const [creatingBrand, setCreatingBrand] = useState(false);
+
+  const isMultiBrand = !!data?.currentSeller?.isMultiBrand;
+  const brands = ((data?.currentSeller as any)?.brands || []) as any[];
+  const activeBrandObj = brands.find((b: any) => b.slug === activeBrand);
+
+  const filteredProducts = useMemo(() => {
+    const allProds = data?.myProducts || [];
+    if (activeBrand === 'all' || !activeBrandObj) return allProds;
+    return allProds.filter(
+      (p: any) => p.brandId === activeBrandObj.id || p.brand === activeBrandObj.name
+    );
+  }, [data?.myProducts, activeBrand, activeBrandObj]);
+
+  const filteredOrders = useMemo(() => {
+    const allOrders = data?.myOrders || [];
+    if (activeBrand === 'all' || !activeBrandObj) return allOrders;
+    return allOrders.filter((o: any) =>
+      o.items?.some(
+        (item: any) =>
+          item.variant?.product?.brandId === activeBrandObj.id ||
+          item.variant?.product?.brand === activeBrandObj.name
+      )
+    );
+  }, [data?.myOrders, activeBrand, activeBrandObj]);
+
+  const handleCreateBrand = async () => {
+    if (!brandDraft.name.trim()) return;
+    setCreatingBrand(true);
+    try {
+      const res = await fetch('/api/seller/brands', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(brandDraft),
+      });
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.message || 'Failed to create brand');
+      toast({
+        variant: 'success',
+        title: 'Brand Created',
+        description: `Brand "${resData.brand.name}" has been created!`,
+      });
+      setShowAddBrandModal(false);
+      setBrandDraft({ name: '', description: '', accentColor: '#0f6b50' });
+      await refreshData();
+      setActiveBrand(resData.brand.slug);
+    } catch (err) {
+      toast({ variant: 'error', title: 'Error', description: (err as Error).message });
+    } finally {
+      setCreatingBrand(false);
+    }
+  };
+
   useEffect(() => {
-    if (data?.currentSeller?.storeName) {
+    if (activeBrandObj) {
+      setStoreLink(`${window.location.origin}/brand/${activeBrandObj.slug}`);
+    } else if (data?.currentSeller?.storeName) {
       const slug = data.currentSeller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
       setStoreLink(`${window.location.origin}/brand/${slug}`);
     }
-  }, [data]);
+  }, [data, activeBrandObj]);
 
   const handleCopyLink = () => {
     if (storeLink) {
@@ -267,13 +330,14 @@ export default function SellerHub() {
     }
   }, [session, sessionStatus, router]);
 
-  const [newProduct, setNewProduct] = useState<NewProductState>({
+  const [newProduct, setNewProduct] = useState<NewProductState & { brandId?: string }>({
     title: '',
     description: '',
     basePrice: '',
     weightKg: '',
     flashSalePrice: '',
     categoryId: '',
+    brandId: '',
     mainImage: '',
     mainImageUploading: false,
   });
@@ -587,10 +651,105 @@ export default function SellerHub() {
   return (
     <div className="db">
       {/* Sidebar */}
-      <div className="sidebar">
+      <div className="sidebar" style={{ width: 250, minWidth: 250 }}>
         <div className="logo flex items-center gap-2 px-4 py-4 text-white font-black text-base">
           <ShoppingBag size={20} />
           <span>SellerHub</span>
+        </div>
+
+        {/* Multi-Brand Header Indicator */}
+        <div className="px-4 pb-2 flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-black bg-amber-400 text-amber-950 px-2 py-0.5 rounded-full tracking-wider uppercase">
+            {isMultiBrand ? 'MULTI-BRAND' : 'SINGLE BRAND'}
+          </span>
+          {isMultiBrand && (
+            <span className="text-xs text-white/80 font-medium">{brands.length} brands</span>
+          )}
+        </div>
+
+        {/* Active Brand Switcher Section */}
+        <div className="px-3 py-2 border-t border-b border-white/10 my-2">
+          <div className="text-[10px] font-bold tracking-widest text-emerald-200 uppercase px-2 mb-1.5">
+            ACTIVE BRAND
+          </div>
+          <div className="flex flex-col gap-1">
+            <button
+              type="button"
+              onClick={() => setActiveBrand('all')}
+              className={`flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-semibold w-full text-left transition-all cursor-pointer ${
+                activeBrand === 'all'
+                  ? 'bg-white text-[#0f6e56] font-black shadow-md'
+                  : 'text-white/90 hover:bg-white/10'
+              }`}
+            >
+              <span className="w-2.5 h-2.5 rounded-sm bg-white border border-emerald-400 shrink-0" />
+              <span className="flex-1 truncate">All brands</span>
+              <span className="text-[10px] opacity-75 bg-white/10 px-1.5 py-0.5 rounded">
+                {(data?.myOrders || []).length}
+              </span>
+            </button>
+            {brands.map((b: any) => {
+              const isSelected = activeBrand === b.slug;
+              const bOrdersCount = (data?.myOrders || []).filter((o: any) =>
+                o.items?.some(
+                  (i: any) =>
+                    i.variant?.product?.brandId === b.id || i.variant?.product?.brand === b.name
+                )
+              ).length;
+
+              return (
+                <div key={b.id} className="flex flex-col">
+                  <button
+                    type="button"
+                    onClick={() => setActiveBrand(b.slug)}
+                    className={`flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-semibold w-full text-left transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-white text-[#0f6e56] font-black shadow-md'
+                        : 'text-white/90 hover:bg-white/10'
+                    }`}
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-sm shrink-0"
+                      style={{ background: b.accentColor || '#0f6b50' }}
+                    />
+                    <span className="flex-1 truncate">{b.name}</span>
+                    <span className="text-[10px] opacity-75 bg-white/10 px-1.5 py-0.5 rounded">
+                      {bOrdersCount}
+                    </span>
+                  </button>
+
+                  {/* Sub-navigation for active individual brand */}
+                  {isSelected && (
+                    <div className="ml-4 my-1 pl-2.5 border-l border-white/30 flex flex-col gap-1">
+                      {['overview', 'orders', 'products', 'analytics'].map(t => (
+                        <div
+                          key={t}
+                          onClick={() => setActiveTab(t)}
+                          className={`px-2 py-1 rounded-md text-[11px] cursor-pointer transition-colors ${
+                            activeTab === t
+                              ? 'bg-white/20 text-white font-bold'
+                              : 'text-white/70 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          {t.charAt(0).toUpperCase() + t.slice(1)}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {isMultiBrand && (
+              <button
+                type="button"
+                onClick={() => setShowAddBrandModal(true)}
+                className="mt-1 flex items-center justify-center gap-1 py-1.5 px-2 border border-dashed border-white/40 hover:border-white text-white rounded-xl text-xs font-bold hover:bg-white/10 transition-all cursor-pointer"
+              >
+                + Add brand
+              </button>
+            )}
+          </div>
         </div>
 
         <Link href="/" className="home-link">
@@ -617,7 +776,7 @@ export default function SellerHub() {
         <NavItem
           active={activeTab === 'orders'}
           onClick={() => setActiveTab('orders')}
-          label={`Orders${myOrders.flatMap(o => o.items || []).filter(i => i.status === 'PENDING').length > 0 ? ` (${myOrders.flatMap(o => o.items || []).filter(i => i.status === 'PENDING').length})` : ''}`}
+          label={`Orders${filteredOrders.flatMap((o: any) => o.items || []).filter((i: any) => i.status === 'PENDING').length > 0 ? ` (${filteredOrders.flatMap((o: any) => o.items || []).filter((i: any) => i.status === 'PENDING').length})` : ''}`}
           icon={<Package size={18} />}
         />
         <NavItem
@@ -650,9 +809,11 @@ export default function SellerHub() {
             <div className="store-label truncate max-w-full font-bold text-white text-xs">
               {data?.currentSeller?.storeName || 'Store'}
             </div>
-            <div className="active-dot-row flex items-center gap-2 text-[10px] text-white/60">
-              <div className="active-dot w-2 h-2 rounded-full bg-green-400"></div>
-              Active seller
+            <div className="active-dot-row flex items-center gap-2 text-[10px] text-white/80 mt-0.5">
+              <div
+                className={`active-dot w-2 h-2 rounded-full ${isMultiBrand ? 'bg-amber-400' : 'bg-green-400'}`}
+              ></div>
+              {isMultiBrand ? 'Upgraded by admin' : 'Active seller'}
             </div>
           </div>
           <button
@@ -669,7 +830,19 @@ export default function SellerHub() {
       <div className="main">
         <div className="topbar">
           <div className="flex flex-col md:flex-row md:items-center gap-3">
-            <div className="page-title">{TITLES[activeTab] || 'Dashboard'}</div>
+            <div>
+              <div className="page-title flex items-center gap-2">
+                <span>{activeBrandObj ? activeBrandObj.name : 'All Brands'}</span>
+                <span className="text-slate-300">·</span>
+                <span className="capitalize">{TITLES[activeTab] || activeTab}</span>
+              </div>
+              <div className="text-xs text-slate-400 font-medium">
+                {activeBrandObj
+                  ? `Managing brand store: ${activeBrandObj.name}`
+                  : 'Combined overview across all seller brands'}
+              </div>
+            </div>
+
             {storeLink && (
               <div className="flex items-center gap-2 bg-[#0F6E56]/10 text-[#0F6E56] border border-[#0F6E56]/20 rounded-full px-3 py-1 text-xs font-semibold select-none">
                 <span>Store URL:</span>
@@ -704,27 +877,37 @@ export default function SellerHub() {
 
         <div className="tab-content animate-fadeIn">
           {activeTab === 'overview' && (
-            <OverviewTab stats={stats} myOrders={myOrders} myProducts={myProducts} data={data!} />
+            <OverviewTab
+              stats={stats}
+              myOrders={filteredOrders}
+              myProducts={filteredProducts}
+              data={data!}
+              isMultiBrand={isMultiBrand}
+              brands={brands}
+              activeBrand={activeBrand}
+              onSelectBrand={(slug: string) => setActiveBrand(slug)}
+              setShowAddBrandModal={(show: boolean) => setShowAddBrandModal(show)}
+            />
           )}
           {activeTab === 'orders' && (
-            <OrdersTab orders={myOrders} onFulfill={handleFulfill} onRefresh={refreshData} />
+            <OrdersTab orders={filteredOrders} onFulfill={handleFulfill} onRefresh={refreshData} />
           )}
           {activeTab === 'products' && (
             <ProductsTab
-              products={myProducts}
+              products={filteredProducts}
               onDelete={handleDeleteProduct}
               onAdd={() => setShowAddModal(true)}
               onAfterRefresh={refreshData}
               categories={data?.categories}
             />
           )}
-          {activeTab === 'analytics' && <AnalyticsTab stats={stats} orders={myOrders} />}
+          {activeTab === 'analytics' && <AnalyticsTab stats={stats} orders={filteredOrders} />}
           {activeTab === 'wallet' && <WalletTab data={data!} />}
           {activeTab === 'settings' && <SettingsTab data={data!} />}
         </div>
       </div>
 
-      {/* Modals remain same but use Lucide for close/etc */}
+      {/* Product Creation Modal */}
       {showAddModal && (
         <AddProductModal
           onClose={() => setShowAddModal(false)}
@@ -738,7 +921,106 @@ export default function SellerHub() {
           handleImageUpload={handleImageUpload}
           addVariant={addVariant}
           updateVariant={updateVariant}
+          isMultiBrand={isMultiBrand}
+          brands={brands}
         />
+      )}
+
+      {/* Add Brand Modal */}
+      {showAddBrandModal && (
+        <div
+          className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+          onClick={() => setShowAddBrandModal(false)}
+        >
+          <div
+            className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-100"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-900">New Brand</h3>
+                <p className="text-xs text-slate-400 font-medium">
+                  Create a new brand under your seller account.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddBrandModal(false)}
+                className="text-slate-400 hover:text-slate-700 p-1"
+              >
+                <XCircle size={20} />
+              </button>
+            </div>
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="text-xs font-bold text-slate-600 mb-1 block">Brand Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={brandDraft.name}
+                  onChange={e => setBrandDraft({ ...brandDraft, name: e.target.value })}
+                  placeholder="e.g. Nile Threads, Oasis Home"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0f6b50] outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 mb-1 block">Description</label>
+                <textarea
+                  rows={2}
+                  value={brandDraft.description}
+                  onChange={e => setBrandDraft({ ...brandDraft, description: e.target.value })}
+                  placeholder="Short tagline or description..."
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-[#0f6b50] outline-none resize-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 mb-2 block">
+                  Brand Accent Color
+                </label>
+                <div className="flex items-center gap-2">
+                  {[
+                    '#0f6b50',
+                    '#7c3aed',
+                    '#0ea5e9',
+                    '#f59e0b',
+                    '#ef4444',
+                    '#ec4899',
+                    '#6366f1',
+                  ].map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setBrandDraft({ ...brandDraft, accentColor: c })}
+                      className={`w-7 h-7 rounded-full transition-transform cursor-pointer ${
+                        brandDraft.accentColor === c
+                          ? 'scale-125 ring-2 ring-slate-900'
+                          : 'hover:scale-110'
+                      }`}
+                      style={{ background: c }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                type="button"
+                onClick={() => setShowAddBrandModal(false)}
+                className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={creatingBrand || !brandDraft.name.trim()}
+                onClick={handleCreateBrand}
+                className="px-4 py-2 bg-[#0f6b50] text-white rounded-xl font-bold text-xs hover:bg-[#0b5442] disabled:opacity-50 cursor-pointer"
+              >
+                {creatingBrand ? 'Creating...' : 'Create Brand'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <style jsx global>{`
@@ -1008,7 +1290,23 @@ function NavItem({
   );
 }
 
-function OverviewTab({ stats, myOrders, myProducts, data: _data }: OverviewTabProps) {
+function OverviewTab({
+  stats,
+  myOrders,
+  myProducts,
+  data: _data,
+  isMultiBrand,
+  brands = [],
+  activeBrand = 'all',
+  onSelectBrand,
+  setShowAddBrandModal,
+}: OverviewTabProps & {
+  isMultiBrand?: boolean;
+  brands?: any[];
+  activeBrand?: string;
+  onSelectBrand?: (slug: string) => void;
+  setShowAddBrandModal?: (show: boolean) => void;
+}) {
   const dailyData =
     stats.dailyRevenue && stats.dailyRevenue.length > 0
       ? stats.dailyRevenue.map((val, i) => {
@@ -1042,6 +1340,36 @@ function OverviewTab({ stats, myOrders, myProducts, data: _data }: OverviewTabPr
       });
     });
   }
+
+  const brandPerformanceRows = useMemo(() => {
+    if (!brands || brands.length === 0) return [];
+    const totalSalesAll =
+      (myOrders || []).reduce((acc: number, o: any) => acc + (o.totalAmount || 0), 0) || 1;
+    return brands.map((b: any) => {
+      const brandOrders = (myOrders || []).filter((o: any) =>
+        o.items?.some(
+          (i: any) => i.variant?.product?.brandId === b.id || i.variant?.product?.brand === b.name
+        )
+      );
+      const brandSales = brandOrders.reduce((acc: number, o: any) => acc + (o.totalAmount || 0), 0);
+      const brandProducts = (myProducts || []).filter(
+        (p: any) => p.brandId === b.id || p.brand === b.name
+      );
+      const share = Math.round((brandSales / totalSalesAll) * 100);
+      return {
+        id: b.id,
+        name: b.name,
+        slug: b.slug,
+        accentColor: b.accentColor || '#0f6b50',
+        sales: brandSales,
+        orders: brandOrders.length,
+        products: brandProducts.length,
+        rating: 4.8,
+        share,
+        status: b.status || 'ACTIVE',
+      };
+    });
+  }, [brands, myOrders, myProducts]);
 
   const topSellers = (myProducts || [])
     .map(p => ({
@@ -1214,6 +1542,71 @@ function OverviewTab({ stats, myOrders, myProducts, data: _data }: OverviewTabPr
           </div>
         </div>
       </div>
+
+      {/* ── Brand Performance Table (All Brands View) ────────────────── */}
+      {isMultiBrand && brands.length > 0 && activeBrand === 'all' && (
+        <section className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm overflow-x-auto w-full">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h3 className="font-extrabold text-slate-900 text-base">Brand Performance</h3>
+              <p className="text-xs text-slate-400 font-medium">
+                Click any brand row to switch context and manage it directly
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAddBrandModal?.(true)}
+              className="px-3.5 py-2 bg-[#0f6b50] text-white text-xs font-bold rounded-xl hover:bg-[#0b5442] transition-colors cursor-pointer"
+            >
+              + Add brand
+            </button>
+          </div>
+          <div className="min-w-[680px] text-xs">
+            <div className="grid grid-cols-7 gap-3 py-2 px-3 text-slate-400 font-bold uppercase tracking-wider text-[11px] border-b border-slate-100">
+              <div className="col-span-2">BRAND</div>
+              <div>SALES (EGP)</div>
+              <div>ORDERS</div>
+              <div>PRODUCTS</div>
+              <div>SHARE</div>
+              <div>STATUS</div>
+            </div>
+            {brandPerformanceRows.map((r: any) => (
+              <div
+                key={r.id}
+                onClick={() => onSelectBrand?.(r.slug)}
+                className="grid grid-cols-7 gap-3 py-3.5 px-3 items-center border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer rounded-xl"
+              >
+                <div className="col-span-2 font-bold text-slate-900 flex items-center gap-2.5">
+                  <span
+                    className="w-3 h-3 rounded-md shrink-0"
+                    style={{ background: r.accentColor }}
+                  />
+                  <span>{r.name}</span>
+                </div>
+                <div className="font-black text-slate-900">{r.sales.toLocaleString()} EGP</div>
+                <div className="font-semibold text-slate-600">{r.orders}</div>
+                <div className="font-semibold text-slate-600">{r.products}</div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${r.share}%`, background: r.accentColor }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-bold">{r.share}%</span>
+                </div>
+                <div>
+                  <span
+                    className={`px-2.5 py-1 rounded-md font-bold text-[11px] ${r.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}
+                  >
+                    {r.status === 'ACTIVE' ? 'Live' : 'Draft'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── Main Dual Section: Sales Chart + Recent Orders ─────────────── */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', width: '100%' }}>
@@ -2805,47 +3198,47 @@ function WalletTab({ data }: { data: DashboardData }) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left min-w-[450px]">
-            <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
-              <tr>
-                <th className="px-6 py-3">Date</th>
-                <th className="px-6 py-3">Amount</th>
-                <th className="px-6 py-3">Bank</th>
-                <th className="px-6 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50 text-sm">
-              {payouts.map(p => (
-                <tr key={p.id} className="hover:bg-slate-50/50">
-                  <td className="px-6 py-3 text-xs text-slate-500">
-                    {new Date(p.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-3 font-black text-slate-900">
-                    {p.amount.toLocaleString()} EGP
-                  </td>
-                  <td className="px-6 py-3 text-xs text-slate-400 truncate max-w-[160px]">
-                    {p.bankDetails || '—'}
-                  </td>
-                  <td className="px-6 py-3">
-                    <span
-                      className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase ${
-                        p.status === 'PAID'
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : p.status === 'PENDING'
-                            ? 'bg-amber-50 text-amber-600'
-                            : p.status === 'PROCESSING'
-                              ? 'bg-blue-50 text-blue-600'
-                              : 'bg-slate-50 text-slate-500'
-                      }`}
-                    >
-                      {p.status}
-                    </span>
-                  </td>
+              <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
+                <tr>
+                  <th className="px-6 py-3">Date</th>
+                  <th className="px-6 py-3">Amount</th>
+                  <th className="px-6 py-3">Bank</th>
+                  <th className="px-6 py-3">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody className="divide-y divide-slate-50 text-sm">
+                {payouts.map(p => (
+                  <tr key={p.id} className="hover:bg-slate-50/50">
+                    <td className="px-6 py-3 text-xs text-slate-500">
+                      {new Date(p.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-3 font-black text-slate-900">
+                      {p.amount.toLocaleString()} EGP
+                    </td>
+                    <td className="px-6 py-3 text-xs text-slate-400 truncate max-w-[160px]">
+                      {p.bankDetails || '—'}
+                    </td>
+                    <td className="px-6 py-3">
+                      <span
+                        className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase ${
+                          p.status === 'PAID'
+                            ? 'bg-emerald-50 text-emerald-600'
+                            : p.status === 'PENDING'
+                              ? 'bg-amber-50 text-amber-600'
+                              : p.status === 'PROCESSING'
+                                ? 'bg-blue-50 text-blue-600'
+                                : 'bg-slate-50 text-slate-500'
+                        }`}
+                      >
+                        {p.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -3065,6 +3458,8 @@ interface AddProductModalProps {
     field: K,
     value: VariantState[K]
   ) => void;
+  isMultiBrand?: boolean;
+  brands?: any[];
 }
 
 function AddProductModal({
@@ -3079,6 +3474,8 @@ function AddProductModal({
   handleImageUpload,
   addVariant,
   updateVariant,
+  isMultiBrand,
+  brands,
 }: AddProductModalProps) {
   return (
     <div
@@ -3120,6 +3517,25 @@ function AddProductModal({
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {isMultiBrand && brands && brands.length > 0 && (
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+                  Brand
+                </label>
+                <select
+                  value={newProduct.brandId || ''}
+                  onChange={e => setNewProduct({ ...newProduct, brandId: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                >
+                  <option value="">Default Brand</option>
+                  {brands.map((b: any) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
                 Category *

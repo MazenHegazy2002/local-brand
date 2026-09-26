@@ -44,6 +44,26 @@ export interface PasswordResetToken {
 
 export type SellerStatus = 'PENDING_APPROVAL' | 'ACTIVE' | 'SUSPENDED' | 'BANNED';
 
+export interface Brand {
+  id: string;
+  sellerId: string;
+  name: string;
+  nameAr?: string | null;
+  slug: string;
+  description?: string | null;
+  logoUrl?: string | null;
+  coverUrl?: string | null;
+  accentColor?: string | null;
+  status: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  seller?: SellerProfile;
+  products?: Product[];
+  _count?: {
+    products: number;
+  };
+}
+
 export interface SellerProfile {
   id: string;
   userId: string;
@@ -56,10 +76,12 @@ export interface SellerProfile {
   status: SellerStatus;
   bankAccount: string | null;
   balance: number;
+  isMultiBrand?: boolean;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
   user?: User;
+  brands?: Brand[];
   products?: Product[];
   payouts?: Payout[];
 }
@@ -109,6 +131,9 @@ export interface Product {
   descriptionAr?: string | null;
   basePrice: number;
   condition: string;
+  brand?: string | null;
+  brandId?: string | null;
+  brandRef?: Brand | null;
   isFeatured: boolean;
   weightGrams: number | null;
   published: boolean;

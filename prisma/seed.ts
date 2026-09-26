@@ -921,9 +921,67 @@ async function main() {
       status: 'ACTIVE',
       balance: 0,
       commissionRate: 0.15,
+      isMultiBrand: true,
       logoUrl: LOGO_URLS[0],
     },
   });
+
+  // Create starter multi-brand entities for Demo Seller
+  const seedBrandData = [
+    {
+      name: 'Brandy Store',
+      slug: 'brandy-store',
+      accentColor: '#7c3aed',
+      description: 'Flagship store for authentic Egyptian crafts.',
+    },
+    {
+      name: 'Nile Threads',
+      slug: 'nile-threads',
+      accentColor: '#0ea5e9',
+      description: 'Modern linen and Egyptian cotton apparel.',
+    },
+    {
+      name: 'Oasis Home',
+      slug: 'oasis-home',
+      accentColor: '#f59e0b',
+      description: 'Handcrafted Egyptian home decor and ceramics.',
+    },
+    {
+      name: 'Sahara Kids',
+      slug: 'sahara-kids',
+      accentColor: '#ef4444',
+      description: 'Sustainable cotton apparel for children.',
+    },
+  ];
+
+  const createdBrands = [];
+  for (const b of seedBrandData) {
+    const brandRecord = await prisma.brand.create({
+      data: {
+        sellerId: defaultSellerProfile.id,
+        name: b.name,
+        slug: b.slug,
+        accentColor: b.accentColor,
+        description: b.description,
+        status: 'ACTIVE',
+      },
+    });
+    createdBrands.push(brandRecord);
+  }
+
+  // Link catalog products to seeded brands
+  const allProducts = await prisma.product.findMany({
+    where: { sellerId: defaultSellerProfile.id },
+  });
+  for (let i = 0; i < allProducts.length; i++) {
+    const targetBrand = createdBrands[i % createdBrands.length];
+    await prisma.product.update({
+      where: { id: allProducts[i].id },
+      data: { brandId: targetBrand.id, brand: targetBrand.name },
+    });
+  }
+
+  console.log('✅ Multi-brand seller profile and starter brands seeded');
   const buyerPwHash = await bcrypt.hash('user1234', 12);
   await prisma.user.create({
     data: {

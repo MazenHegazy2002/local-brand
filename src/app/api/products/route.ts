@@ -157,13 +157,18 @@ export async function GET(req: Request) {
     }
 
     if (brand) {
-      const sellers = await prisma.sellerProfile.findMany({
-        where: { status: 'ACTIVE', deletedAt: null },
-        select: { id: true, storeName: true },
+      const brandSlug = brand.toLowerCase();
+      const matchedSeller = await prisma.sellerProfile.findFirst({
+        where: {
+          status: 'ACTIVE',
+          deletedAt: null,
+          OR: [
+            { storeName: { equals: brand, mode: 'insensitive' } },
+            { storeName: { equals: brand.replace(/-/g, ' '), mode: 'insensitive' } },
+          ],
+        },
+        select: { id: true },
       });
-      const matchedSeller = sellers.find(
-        s => s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-') === brand.toLowerCase()
-      );
       if (matchedSeller) {
         where.sellerId = matchedSeller.id;
       } else {

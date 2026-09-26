@@ -198,6 +198,10 @@ function LoginForm() {
         const role = session?.user?.role;
 
         let target = callbackUrl;
+        // Prevent open-redirect: only allow internal relative paths
+        if (!target.startsWith('/') || target.startsWith('//') || target.includes('://')) {
+          target = '/dashboard';
+        }
         if (!target || target === '/dashboard') {
           if (role === 'ADMIN') target = '/admin-os';
           else if (role === 'SELLER') target = '/seller-hub';

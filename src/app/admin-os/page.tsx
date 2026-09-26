@@ -2615,70 +2615,123 @@ function SellersTab({
       />
       <div className="row-item font-bold text-[11px] text-slate-400 uppercase">
         <span className="flex-1">Store Name / Owner</span>
-        <span className="w-32 text-center">Status</span>
-        <span className="w-32 text-right">Balance</span>
-        <span className="w-56 text-right">Actions</span>
+        <span className="w-28 text-center">Status</span>
+        <span className="w-32 text-center">Plan</span>
+        <span className="w-28 text-right">Balance</span>
+        <span className="w-72 text-right">Actions</span>
       </div>
-      {sellers.map((s: any) => (
-        <div key={s.id} className="row-item">
-          <div style={{ flex: 1 }}>
-            <div
-              onClick={() => onSelectSeller?.(s)}
-              style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b', cursor: 'pointer' }}
-              className="hover:underline hover:text-indigo-600"
-            >
-              {s.storeName}
+      {sellers.map((s: any) => {
+        const isMulti = !!s.isMultiBrand;
+        return (
+          <div key={s.id} className="row-item">
+            <div style={{ flex: 1 }}>
+              <div
+                onClick={() => onSelectSeller?.(s)}
+                style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b', cursor: 'pointer' }}
+                className="hover:underline hover:text-indigo-600"
+              >
+                {s.storeName}
+              </div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>
+                {s.user?.name} {s.user?.email ? `(${s.user.email})` : ''}
+              </div>
             </div>
-            <div style={{ fontSize: '11px', color: '#64748b' }}>{s.user?.name}</div>
-          </div>
-          <div className="w-32 flex justify-center">
-            <span
-              className={`badge ${s.status === 'ACTIVE' ? 'b-active' : s.status === 'PENDING_APPROVAL' ? 'b-pending' : 'b-banned'}`}
-            >
-              {s.status}
-            </span>
-          </div>
-          <div className="w-32 text-right text-sm font-medium">
-            {s.balance?.toLocaleString()} EGP
-          </div>
-          <div className="w-56 text-right flex justify-end gap-2 items-center">
-            <button
-              onClick={() => onSelectSeller?.(s)}
-              className="action-btn"
-              style={{ background: '#f1f5f9', color: '#475569' }}
-            >
-              Details
-            </button>
-            <button
-              disabled={actionLoading === s.id}
-              onClick={() =>
-                handleStatusUpdate(s.id, s.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE')
-              }
-              className="action-btn"
-            >
-              {s.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
-            </button>
-            {(s.status === 'SUSPENDED' ||
-              s.status === 'BANNED' ||
-              s.status === 'PENDING_APPROVAL') && (
+            <div className="w-28 flex justify-center">
+              <span
+                className={`badge ${s.status === 'ACTIVE' ? 'b-active' : s.status === 'PENDING_APPROVAL' ? 'b-pending' : 'b-banned'}`}
+              >
+                {s.status}
+              </span>
+            </div>
+            <div className="w-32 flex justify-center items-center">
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '3px 8px',
+                  borderRadius: '99px',
+                  background: isMulti ? '#fef3c7' : '#f1f5f9',
+                  color: isMulti ? '#92400e' : '#64748b',
+                  border: isMulti ? '1px solid #fcd34d' : '1px solid #e2e8f0',
+                }}
+              >
+                {isMulti ? `MULTI-BRAND (${s.brands?.length || 1})` : 'SINGLE BRAND'}
+              </span>
+            </div>
+            <div className="w-28 text-right text-sm font-medium">
+              {s.balance?.toLocaleString()} EGP
+            </div>
+            <div className="w-72 text-right flex justify-end gap-1.5 items-center">
               <button
                 disabled={actionLoading === s.id}
-                onClick={() => onDeleteSeller?.(s)}
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/admin/sellers/multi-brand', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ sellerId: s.id, isMultiBrand: !isMulti }),
+                    });
+                    const resData = await res.json();
+                    if (!res.ok) throw new Error(resData.message || 'Failed to update plan');
+                    s.isMultiBrand = !isMulti;
+                    alert(resData.message);
+                    window.location.reload();
+                  } catch (err) {
+                    alert((err as Error).message);
+                  }
+                }}
                 className="action-btn"
                 style={{
-                  background: '#fef2f2',
-                  color: '#dc2626',
-                  borderColor: '#fecaca',
-                  fontWeight: 600,
+                  background: isMulti ? '#ffffff' : '#0f6b50',
+                  color: isMulti ? '#0f1f1a' : '#ffffff',
+                  borderColor: isMulti ? '#d6e2dd' : '#0f6b50',
+                  fontWeight: 700,
+                  fontSize: '11px',
                 }}
-                title="Delete seller account"
+                title={
+                  isMulti ? 'Downgrade seller to single brand' : 'Upgrade seller to multi-brand'
+                }
               >
-                Delete
+                {isMulti ? 'Downgrade' : 'Upgrade Multi-Brand'}
               </button>
-            )}
+              <button
+                onClick={() => onSelectSeller?.(s)}
+                className="action-btn"
+                style={{ background: '#f1f5f9', color: '#475569' }}
+              >
+                Details
+              </button>
+              <button
+                disabled={actionLoading === s.id}
+                onClick={() =>
+                  handleStatusUpdate(s.id, s.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE')
+                }
+                className="action-btn"
+              >
+                {s.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+              </button>
+              {(s.status === 'SUSPENDED' ||
+                s.status === 'BANNED' ||
+                s.status === 'PENDING_APPROVAL') && (
+                <button
+                  disabled={actionLoading === s.id}
+                  onClick={() => onDeleteSeller?.(s)}
+                  className="action-btn"
+                  style={{
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    borderColor: '#fecaca',
+                    fontWeight: 600,
+                  }}
+                  title="Delete seller account"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
       {sellers.length === 0 && (
         <div className="py-10 text-center text-xs text-slate-400">
           {q ? `No sellers match "${search}".` : 'No sellers yet.'}

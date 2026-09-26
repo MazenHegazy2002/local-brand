@@ -60,6 +60,7 @@ prisma/*.db-journal
 last
 mazen.txt
 stitch-preview.png
+*.zip
 
 
 # Reserved Windows filename that occasionally gets created by stray

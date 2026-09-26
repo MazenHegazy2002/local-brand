@@ -16,25 +16,40 @@ export async function generateMetadata({
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug).toLowerCase();
 
-  const sellers = await prisma.sellerProfile.findMany({
-    where: { status: 'ACTIVE', deletedAt: null },
-    select: { storeName: true, description: true, logoUrl: true },
+  // 1. Check Brand table first for multi-brand storefronts
+  const brandRecord = await prisma.brand.findUnique({
+    where: { slug: decodedSlug },
+    select: { name: true, description: true, logoUrl: true, coverUrl: true },
   });
 
-  const seller = sellers.find(
-    s => s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-') === decodedSlug
-  );
+  let brandName = brandRecord?.name;
+  let brandDesc = brandRecord?.description;
 
-  if (!seller) return { title: 'Brand Not Found' };
+  // 2. Fallback to SellerProfile storeName
+  if (!brandRecord) {
+    const sellers = await prisma.sellerProfile.findMany({
+      where: { status: 'ACTIVE', deletedAt: null },
+      select: { storeName: true, description: true },
+    });
+    const seller = sellers.find(
+      s => s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-') === decodedSlug
+    );
+    if (seller) {
+      brandName = seller.storeName;
+      brandDesc = seller.description;
+    }
+  }
+
+  if (!brandName) return { title: 'Brand Not Found' };
 
   const description =
-    seller.description ||
-    `Shop authentic ${seller.storeName} products on Brandy — Egypt's marketplace for local sellers. Verified Egyptian brand.`;
+    brandDesc ||
+    `Shop authentic ${brandName} products on Brandy — Egypt's marketplace for local sellers. Verified Egyptian brand.`;
   const brandUrl = `${PLATFORM_URL}/brand/${slug}`;
-  const ogImageUrl = `${PLATFORM_URL}/api/og?brand=${encodeURIComponent(seller.storeName)}&title=${encodeURIComponent(seller.storeName)}&badge=Verified+Egyptian+Brand`;
+  const ogImageUrl = `${PLATFORM_URL}/api/og?brand=${encodeURIComponent(brandName)}&title=${encodeURIComponent(brandName)}&badge=Verified+Egyptian+Brand`;
 
   return {
-    title: `${seller.storeName} — Egyptian Local Brand`,
+    title: `${brandName} — Egyptian Local Brand`,
     description,
     alternates: {
       canonical: brandUrl,
@@ -45,7 +60,7 @@ export async function generateMetadata({
       },
     },
     openGraph: {
-      title: `${seller.storeName} — Egyptian Local Brand`,
+      title: `${brandName} — Egyptian Local Brand`,
       description,
       url: brandUrl,
       images: [{ url: ogImageUrl, width: 1200, height: 630 }],
@@ -53,7 +68,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: seller.storeName,
+      title: brandName,
       description,
       images: [ogImageUrl],
     },
@@ -64,37 +79,65 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug).toLowerCase();
 
-  const sellers = await prisma.sellerProfile.findMany({
-    where: { status: 'ACTIVE', deletedAt: null },
+  let brandName = '';
+  let brandDescription = '';
+  let accentColor = '#0f6b50';
+  let products: any[] = [];
+
+  // Check Brand table first
+  const brandRecord = await prisma.brand.findUnique({
+    where: { slug: decodedSlug },
     include: {
       products: {
         where: { published: true, deletedAt: null },
         include: { images: true, variants: true },
       },
+      seller: true,
     },
   });
 
-  const seller = sellers.find(
-    s => s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-') === decodedSlug
-  );
+  if (brandRecord && brandRecord.status === 'ACTIVE') {
+    brandName = brandRecord.name;
+    brandDescription = brandRecord.description || brandRecord.seller.description || '';
+    accentColor = brandRecord.accentColor || '#0f6b50';
+    products = brandRecord.products;
+  } else {
+    // Fallback to SellerProfile storeName
+    const sellers = await prisma.sellerProfile.findMany({
+      where: { status: 'ACTIVE', deletedAt: null },
+      include: {
+        products: {
+          where: { published: true, deletedAt: null },
+          include: { images: true, variants: true },
+        },
+      },
+    });
 
-  if (!seller) return notFound();
+    const seller = sellers.find(
+      s => s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-') === decodedSlug
+    );
+
+    if (!seller) return notFound();
+
+    brandName = seller.storeName;
+    brandDescription = seller.description || '';
+    products = seller.products;
+  }
 
   const brandUrl = `${PLATFORM_URL}/brand/${slug}`;
   const breadcrumbLd = breadcrumbJsonLd({
     items: [
       { name: 'Home', url: PLATFORM_URL },
       { name: 'Brands', url: `${PLATFORM_URL}/brands` },
-      { name: seller.storeName, url: brandUrl },
+      { name: brandName, url: brandUrl },
     ],
   });
 
   const brandLd = brandStoreJsonLd({
-    name: seller.storeName,
+    name: brandName,
     slug,
-    description: seller.description,
-    logoUrl: seller.logoUrl,
-    productCount: seller.products.length,
+    description: brandDescription,
+    productCount: products.length,
   });
 
   return (
@@ -110,14 +153,17 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
       <Navbar />
 
       {/* Brand Hero Cover */}
-      <div className="w-full h-80 bg-[hsl(var(--primary))] relative overflow-hidden flex items-center justify-center border-b border-white/10">
+      <div
+        className="w-full h-80 relative overflow-hidden flex items-center justify-center border-b border-white/10"
+        style={{ background: accentColor }}
+      >
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
         <div className="relative z-20 text-center container px-4">
           <h1 className="text-5xl md:text-7xl font-serif font-bold text-white mb-4 drop-shadow-lg uppercase tracking-tighter">
-            {seller.storeName}
+            {brandName}
           </h1>
-          <span className="bg-[hsl(var(--accent))] text-[hsl(var(--primary))] text-xs uppercase font-bold tracking-widest px-4 py-1 rounded-full">
-            Official Partner
+          <span className="bg-amber-400 text-amber-950 text-xs uppercase font-extrabold tracking-widest px-4 py-1 rounded-full shadow-sm">
+            Official Egyptian Brand
           </span>
         </div>
       </div>
@@ -129,34 +175,44 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           items={[
             { label: 'Home', href: '/' },
             { label: 'Brands', href: '/brands' },
-            { label: seller.storeName },
+            { label: brandName },
           ]}
         />
 
         <div className="flex items-center justify-between mb-12 border-b border-gray-200 pb-6">
-          <h2 className="text-3xl font-serif font-bold text-gray-900">
-            Curated <span className="text-[#1e3b8a]">Collection</span>
-          </h2>
+          <div>
+            <h2 className="text-3xl font-serif font-bold text-gray-900">
+              Curated <span className="text-[#0f6b50]">Collection</span>
+            </h2>
+            {brandDescription && <p className="text-sm text-slate-500 mt-1">{brandDescription}</p>}
+          </div>
           <span className="text-gray-500 font-bold uppercase tracking-widest text-xs">
-            {seller.products.length} Items
+            {products.length} Items
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 px-4">
-          {seller.products.map((product: Product & { images: ProductImage[] }, idx: number) => (
-            <ProductCard
-              key={product.id}
-              product={
-                {
-                  ...product,
-                  name: product.title,
-                  image: product.images[0]?.url || '',
-                } as ProductCardProduct
-              }
-              index={idx}
-            />
-          ))}
-        </div>
+        {products.length === 0 ? (
+          <div className="text-center py-16 text-slate-400">
+            <div className="text-4xl mb-3">🛍️</div>
+            <p className="text-sm font-medium">No products listed for {brandName} yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 px-4">
+            {products.map((product: Product & { images: ProductImage[] }, idx: number) => (
+              <ProductCard
+                key={product.id}
+                product={
+                  {
+                    ...product,
+                    name: product.title,
+                    image: product.images[0]?.url || '',
+                  } as ProductCardProduct
+                }
+                index={idx}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );

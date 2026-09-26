@@ -13,6 +13,10 @@ const rawRedis = new Redis(redisUrl || 'redis://localhost:6379', {
   maxRetriesPerRequest: 0, // Fail fast so fallback kicks in immediately!
   connectTimeout: 2_000,
   enableOfflineQueue: false,
+  // Stop reconnecting entirely — the FallbackRedis wrapper already falls back
+  // to the DB CacheEntry table when Redis is unreachable. Endless reconnect
+  // loops just flood the process with AggregateError spam from ioredis.
+  retryStrategy: () => null,
 });
 
 // Prevent noisy unhandled error events from crashing or polluting logs.

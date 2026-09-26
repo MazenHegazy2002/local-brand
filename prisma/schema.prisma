@@ -125,7 +125,11 @@ model SellerProfile {
   level          Int          @default(1)
   taxNumber      String?
 
+  // Multi-brand seller upgrade (admin controlled)
+  isMultiBrand   Boolean      @default(false)
+
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brands   Brand[]
   products Product[]
   payouts  Payout[]
 }
@@ -135,6 +139,26 @@ enum SellerStatus {
   ACTIVE
   SUSPENDED
   BANNED
+}
+
+model Brand {
+  id          String   @id @default(uuid())
+  sellerId    String
+  name        String
+  nameAr      String?
+  slug        String   @unique
+  description String?
+  logoUrl     String?
+  coverUrl    String?
+  accentColor String?  @default("#0f6b50")
+  status      String   @default("ACTIVE") // ACTIVE, DRAFT, SUSPENDED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  seller   SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@index([sellerId])
 }
 
 // ============================================
@@ -164,6 +188,8 @@ model Product {
 
   // Extended product attributes
   brand          String?  // e.g. "Nike", "Egyptian Cotton Co." — null = generic/unbranded
+  brandId        String?
+  brandRef       Brand?   @relation(fields: [brandId], references: [id], onDelete: SetNull)
   material       String?  // e.g. "100% Cotton", "Genuine Leather"
   gender         String?  // "men" | "women" | "unisex" | "kids" — null = unspecified
   ageGroup       String?  // "adult" | "teen" | "child" | "infant" | "all"
@@ -206,7 +232,10 @@ model Product {
   @@index([flashSaleStartsAt])
   // Attribute filters
   @@index([brand])
+  @@index([brandId])
   @@index([gender])
+  @@index([condition, published, deletedAt])
+  @@index([countryOfOrigin])
 }
 
 model Category {
@@ -495,6 +524,7 @@ model Review {
   orderItem   OrderItem? @relation(fields: [orderItemId], references: [id])
 
   @@index([status, createdAt])
+  @@index([productId, status])
 }
 
 enum ReviewStatus {

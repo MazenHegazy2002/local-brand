@@ -7,10 +7,13 @@ interface RateLimitConfig {
 }
 
 const configs: Record<string, RateLimitConfig> = {
-  '/api/auth': { windowMs: 15 * 60 * 1000, maxRequests: 5 }, // 5 attempts per 15 min
+  '/api/auth': { windowMs: 15 * 60 * 1000, maxRequests: 10 }, // 10 attempts per 15 min
+  '/api/admin': { windowMs: 60 * 1000, maxRequests: 60 }, // 60 per minute
   '/api/payment': { windowMs: 60 * 1000, maxRequests: 10 }, // 10 per minute
+  '/api/coupons': { windowMs: 60 * 1000, maxRequests: 15 }, // 15 coupon attempts per minute
+  '/api/disputes': { windowMs: 60 * 1000, maxRequests: 10 }, // 10 per minute
   '/api/data': { windowMs: 60 * 1000, maxRequests: 20 }, // 20 per minute
-  default: { windowMs: 60 * 1000, maxRequests: 60 }, // 60 per minute
+  default: { windowMs: 60 * 1000, maxRequests: 60 }, // 60 per minute fallback
 };
 
 function normalizePath(pathname: string): string {
