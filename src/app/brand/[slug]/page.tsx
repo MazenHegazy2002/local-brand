@@ -8,6 +8,8 @@ import { PLATFORM_URL } from '@/lib/constants';
 import { breadcrumbJsonLd, brandStoreJsonLd, jsonLdScript } from '@/lib/jsonld';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata({
   params,
 }: {
@@ -16,28 +18,35 @@ export async function generateMetadata({
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug).toLowerCase();
 
-  // 1. Check Brand table first for multi-brand storefronts
-  const brandRecord = await prisma.brand.findUnique({
-    where: { slug: decodedSlug },
-    select: { name: true, description: true, logoUrl: true, coverUrl: true },
-  });
+  let brandName = '';
+  let brandDesc: string | null | undefined = '';
 
-  let brandName = brandRecord?.name;
-  let brandDesc = brandRecord?.description;
-
-  // 2. Fallback to SellerProfile storeName
-  if (!brandRecord) {
-    const sellers = await prisma.sellerProfile.findMany({
-      where: { status: 'ACTIVE', deletedAt: null },
-      select: { storeName: true, description: true },
+  try {
+    // 1. Check Brand table first for multi-brand storefronts
+    const brandRecord = await prisma.brand.findUnique({
+      where: { slug: decodedSlug },
+      select: { name: true, description: true, logoUrl: true, coverUrl: true },
     });
-    const seller = sellers.find(
-      s => s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-') === decodedSlug
-    );
-    if (seller) {
-      brandName = seller.storeName;
-      brandDesc = seller.description;
+
+    brandName = brandRecord?.name || '';
+    brandDesc = brandRecord?.description;
+
+    // 2. Fallback to SellerProfile storeName
+    if (!brandRecord) {
+      const sellers = await prisma.sellerProfile.findMany({
+        where: { status: 'ACTIVE', deletedAt: null },
+        select: { storeName: true, description: true },
+      });
+      const seller = sellers.find(
+        s => s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-') === decodedSlug
+      );
+      if (seller) {
+        brandName = seller.storeName;
+        brandDesc = seller.description;
+      }
     }
+  } catch (err) {
+    console.error('Failed to query brand metadata:', err);
   }
 
   if (!brandName) return { title: 'Brand Not Found' };
@@ -84,44 +93,49 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
   let accentColor = '#0f6b50';
   let products: any[] = [];
 
-  // Check Brand table first
-  const brandRecord = await prisma.brand.findUnique({
-    where: { slug: decodedSlug },
-    include: {
-      products: {
-        where: { published: true, deletedAt: null },
-        include: { images: true, variants: true },
-      },
-      seller: true,
-    },
-  });
-
-  if (brandRecord && brandRecord.status === 'ACTIVE') {
-    brandName = brandRecord.name;
-    brandDescription = brandRecord.description || brandRecord.seller.description || '';
-    accentColor = brandRecord.accentColor || '#0f6b50';
-    products = brandRecord.products;
-  } else {
-    // Fallback to SellerProfile storeName
-    const sellers = await prisma.sellerProfile.findMany({
-      where: { status: 'ACTIVE', deletedAt: null },
+  try {
+    // Check Brand table first
+    const brandRecord = await prisma.brand.findUnique({
+      where: { slug: decodedSlug },
       include: {
         products: {
           where: { published: true, deletedAt: null },
           include: { images: true, variants: true },
         },
+        seller: true,
       },
     });
 
-    const seller = sellers.find(
-      s => s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-') === decodedSlug
-    );
+    if (brandRecord && brandRecord.status === 'ACTIVE') {
+      brandName = brandRecord.name;
+      brandDescription = brandRecord.description || brandRecord.seller.description || '';
+      accentColor = brandRecord.accentColor || '#0f6b50';
+      products = brandRecord.products;
+    } else {
+      // Fallback to SellerProfile storeName
+      const sellers = await prisma.sellerProfile.findMany({
+        where: { status: 'ACTIVE', deletedAt: null },
+        include: {
+          products: {
+            where: { published: true, deletedAt: null },
+            include: { images: true, variants: true },
+          },
+        },
+      });
 
-    if (!seller) return notFound();
+      const seller = sellers.find(
+        s => s.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-') === decodedSlug
+      );
 
-    brandName = seller.storeName;
-    brandDescription = seller.description || '';
-    products = seller.products;
+      if (!seller) return notFound();
+
+      brandName = seller.storeName;
+      brandDescription = seller.description || '';
+      products = seller.products;
+    }
+  } catch (err) {
+    console.error('Failed to load brand data:', err);
+    return notFound();
   }
 
   const brandUrl = `${PLATFORM_URL}/brand/${slug}`;

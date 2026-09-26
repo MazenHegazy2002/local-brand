@@ -5,6 +5,8 @@ import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 const updateBrandSchema = z.object({
   name: z.string().min(2, 'Brand name must be at least 2 characters').max(80).optional(),
   nameAr: z.string().max(80).optional().nullable(),

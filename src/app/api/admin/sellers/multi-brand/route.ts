@@ -5,6 +5,8 @@ import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 const multiBrandToggleSchema = z.object({
   sellerId: z.string().optional(),
   userId: z.string().optional(),

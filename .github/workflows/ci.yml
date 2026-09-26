@@ -68,6 +68,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
+      - run: npx prisma generate
       - run: npm run build
         env:
           # Placeholder env vars so Next.js build can succeed in CI without
