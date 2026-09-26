@@ -87,6 +87,7 @@ model Address {
   createdAt   DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
 }
 
 // ============================================
@@ -132,6 +133,7 @@ model SellerProfile {
   brands   Brand[]
   products Product[]
   payouts  Payout[]
+  @@index([status])
 }
 
 enum SellerStatus {
@@ -290,6 +292,7 @@ model ProductVariant {
   cartItems  CartItem[]
   orderItems OrderItem[]
 
+  @@index([productId])
   @@index([upc])
 }
 
@@ -300,6 +303,7 @@ model ProductImage {
   isPrimary Boolean @default(false)
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@index([productId])
 }
 
 // ============================================
@@ -436,6 +440,8 @@ model OrderItem {
   variant       ProductVariant @relation(fields: [variantId], references: [id])
   returnRequest ReturnRequest?
   review        Review?
+  @@index([orderId])
+  @@index([variantId])
 }
 
 enum OrderStatus {
@@ -490,6 +496,7 @@ model Shipment {
   deliveredAt    DateTime?
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  @@index([orderId])
 }
 
 // ============================================
@@ -584,6 +591,7 @@ model Notification {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, isRead, createdAt])
 }
 
 model Payout {
@@ -597,6 +605,7 @@ model Payout {
   createdAt     DateTime     @default(now())
 
   seller SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  @@index([sellerId, status])
 }
 
 enum PayoutStatus {
@@ -634,6 +643,7 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   admin User @relation(fields: [adminId], references: [id])
+  @@index([adminId, createdAt])
 }
 
 model SystemSettings {
@@ -1426,4 +1436,5 @@ model CacheEntry {
   value     String
   expiresAt DateTime?
   updatedAt DateTime  @updatedAt
+  @@index([expiresAt])
 }
