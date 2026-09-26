@@ -273,10 +273,14 @@ export default function SellerHub() {
       });
       const resData = await res.json();
       if (!res.ok) throw new Error(resData.message || 'Failed to create brand');
+      const requiresApproval =
+        resData.brand.status === 'PENDING_APPROVAL' || resData.requiresApproval;
       toast({
         variant: 'success',
-        title: 'Brand Created',
-        description: `Brand "${resData.brand.name}" has been created!`,
+        title: requiresApproval ? 'Brand Submitted for Approval' : 'Brand Created',
+        description: requiresApproval
+          ? `Brand "${resData.brand.name}" submitted! Admin review required before it goes live.`
+          : `Brand "${resData.brand.name}" has been created!`,
       });
       setShowAddBrandModal(false);
       setBrandDraft({ name: '', description: '', accentColor: '#0f6b50' });
@@ -713,9 +717,15 @@ export default function SellerHub() {
                       style={{ background: b.accentColor || '#0f6b50' }}
                     />
                     <span className="flex-1 truncate">{b.name}</span>
-                    <span className="text-[10px] opacity-75 bg-white/10 px-1.5 py-0.5 rounded">
-                      {bOrdersCount}
-                    </span>
+                    {b.status === 'PENDING_APPROVAL' ? (
+                      <span className="text-[9px] font-bold bg-amber-400/25 text-amber-200 border border-amber-400/40 px-1.5 py-0.5 rounded">
+                        ⏳ Review
+                      </span>
+                    ) : (
+                      <span className="text-[10px] opacity-75 bg-white/10 px-1.5 py-0.5 rounded">
+                        {bOrdersCount}
+                      </span>
+                    )}
                   </button>
 
                   {/* Sub-navigation for active individual brand */}
@@ -1307,6 +1317,7 @@ function OverviewTab({
   onSelectBrand?: (slug: string) => void;
   setShowAddBrandModal?: (show: boolean) => void;
 }) {
+  const activeBrandObj = brands.find((b: any) => b.slug === activeBrand);
   const dailyData =
     stats.dailyRevenue && stats.dailyRevenue.length > 0
       ? stats.dailyRevenue.map((val, i) => {
@@ -1543,6 +1554,29 @@ function OverviewTab({
         </div>
       </div>
 
+      {/* ⚠️ Pending Approval Banner for Active Selected Brand */}
+      {activeBrandObj?.status === 'PENDING_APPROVAL' && (
+        <div className="bg-amber-50 border border-amber-300 text-amber-900 px-5 py-4 rounded-2xl mb-6 flex items-start gap-3 text-xs shadow-sm">
+          <span className="text-2xl shrink-0 mt-0.5">⏳</span>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <strong className="font-extrabold text-amber-950 text-sm">
+                Brand Pending Admin Approval
+              </strong>
+              <span className="text-[10px] font-bold bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-full border border-amber-300">
+                Under Review
+              </span>
+            </div>
+            <p className="text-amber-800 leading-relaxed">
+              Your request for brand <strong>&quot;{activeBrandObj.name}&quot;</strong> is currently
+              waiting for admin approval. You can prepare brand assets and preview the dashboard,
+              but products cannot go live or accept orders until an administrator reviews and
+              approves this brand.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Brand Performance Table (All Brands View) ────────────────── */}
       {isMultiBrand && brands.length > 0 && activeBrand === 'all' && (
         <section className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm overflow-x-auto w-full">
@@ -1597,9 +1631,19 @@ function OverviewTab({
                 </div>
                 <div>
                   <span
-                    className={`px-2.5 py-1 rounded-md font-bold text-[11px] ${r.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}
+                    className={`px-2.5 py-1 rounded-md font-bold text-[11px] ${
+                      r.status === 'ACTIVE'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : r.status === 'PENDING_APPROVAL'
+                          ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                          : 'bg-slate-100 text-slate-500'
+                    }`}
                   >
-                    {r.status === 'ACTIVE' ? 'Live' : 'Draft'}
+                    {r.status === 'ACTIVE'
+                      ? 'Live'
+                      : r.status === 'PENDING_APPROVAL'
+                        ? '⏳ Under Review'
+                        : 'Draft'}
                   </span>
                 </div>
               </div>
@@ -3529,8 +3573,8 @@ function AddProductModal({
                 >
                   <option value="">Default Brand</option>
                   {brands.map((b: any) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name}
+                    <option key={b.id} value={b.id} disabled={b.status === 'PENDING_APPROVAL'}>
+                      {b.name} {b.status === 'PENDING_APPROVAL' ? '(⏳ Pending Approval)' : ''}
                     </option>
                   ))}
                 </select>

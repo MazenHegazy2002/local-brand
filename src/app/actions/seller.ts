@@ -479,6 +479,20 @@ export async function getDashboardStats() {
       const categories = await prisma.category.findMany({ include: { children: true } });
       const tags = await prisma.tag.findMany();
       const collections = await prisma.collection.findMany();
+      const pendingBrands = await prisma.brand.findMany({
+        where: { status: 'PENDING_APPROVAL' },
+        include: {
+          seller: {
+            include: {
+              user: {
+                select: { id: true, name: true, email: true, phone: true },
+              },
+            },
+          },
+          _count: { select: { products: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
 
       // Query database-wide totals for correct dashboard statistics
       const startOfToday = new Date();
@@ -712,6 +726,7 @@ export async function getDashboardStats() {
           tags,
           collections,
           pendingSellers: sellers.filter(s => s.status === 'PENDING_APPROVAL'),
+          pendingBrands,
           stats,
         })
       );
@@ -905,6 +920,63 @@ export async function updateSellerStatus(sellerId: string, status: SellerStatus)
     const error = err as Error;
     console.error('[updateSellerStatus] Error:', error);
     return { error: error.message || 'Failed to update status' };
+  }
+}
+
+export async function updateBrandStatus(
+  brandId: string,
+  status: 'ACTIVE' | 'REJECTED' | 'SUSPENDED' | 'DRAFT'
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as SessionUser).role !== 'ADMIN')
+      return { error: 'Unauthorized' };
+
+    const adminId = await getRealUserId(session);
+
+    const brand = await prisma.brand.update({
+      where: { id: brandId },
+      data: { status },
+      include: {
+        seller: {
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
+      },
+    });
+
+    if (status === 'ACTIVE' && brand.seller?.user?.email) {
+      try {
+        const { sendEmail } = await import('@/lib/email');
+        await sendEmail({
+          to: brand.seller.user.email,
+          subject: `Your brand "${brand.name}" has been approved!`,
+          html: `<p>Hi ${brand.seller.user.name || 'Seller'},</p><p>Great news! Your brand request for <strong>${brand.name}</strong> has been approved by the admin. You can now manage this brand in your Seller Hub, list products under it, and start selling!</p><p><a href="${PLATFORM_URL}/seller-hub">Go to Seller Hub</a></p>`,
+        });
+      } catch (emailErr) {
+        console.error('[updateBrandStatus] Failed to send approval email:', emailErr);
+      }
+    }
+
+    if (adminId) {
+      await prisma.auditLog.create({
+        data: {
+          adminId,
+          action: status === 'ACTIVE' ? 'APPROVED_BRAND' : 'REJECTED_BRAND',
+          targetId: brandId,
+          details: `Brand "${brand.name}" status changed to ${status} for store ${brand.seller?.storeName || brand.sellerId}`,
+        },
+      });
+    }
+
+    revalidatePath('/admin-os');
+    revalidatePath('/seller-hub');
+    return { success: true, brand };
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error('[updateBrandStatus] Error:', error);
+    return { error: error.message || 'Failed to update brand status' };
   }
 }
 
@@ -1205,7 +1277,14 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
     let brandName = data.brand || null;
     if (data.brandId) {
       const b = await prisma.brand.findUnique({ where: { id: data.brandId } });
-      if (b) brandName = b.name;
+      if (b) {
+        if (b.status === 'PENDING_APPROVAL') {
+          return {
+            error: `Brand "${b.name}" is pending admin approval and cannot be used for products yet.`,
+          };
+        }
+        brandName = b.name;
+      }
     }
 
     const product = await prisma.product.create({

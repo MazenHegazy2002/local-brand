@@ -52,6 +52,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const dataToUpdate: Record<string, unknown> = { ...parsed.data };
+
+  // Sellers cannot self-approve a pending or rejected brand — only admin can approve
+  if (user.role !== 'ADMIN' && dataToUpdate.status) {
+    if (brand.status === 'PENDING_APPROVAL' || brand.status === 'REJECTED') {
+      delete dataToUpdate.status;
+    }
+  }
+
   if (parsed.data.name && parsed.data.name !== brand.name) {
     const baseSlug = parsed.data.name
       .toLowerCase()
