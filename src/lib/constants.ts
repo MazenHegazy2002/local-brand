@@ -98,7 +98,11 @@ export const MAX_IMAGES_PER_PRODUCT = 10;
  * change the brand without touching any source files. Falls back to 'Brandy'.
  */
 export const PLATFORM_NAME = process.env.NEXT_PUBLIC_SITE_NAME || 'Brandy';
-export const PLATFORM_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop';
+const rawAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+export const PLATFORM_URL =
+  rawAppUrl && !rawAppUrl.includes('localhost') && !rawAppUrl.includes('127.0.0.1')
+    ? rawAppUrl.replace(/\/+$/, '')
+    : 'https://brandyy.shop';
 export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@brandyy.shop';
 const rawPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE || '';
 export const CONTACT_PHONE =

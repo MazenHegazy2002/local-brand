@@ -1,7 +1,7 @@
 // Email notification utility
 // For production, integrate with SendGrid, Resend, AWS SES, or similar
 
-import { CONTACT_PHONE, SUPPORT_EMAIL, VAT_RATE } from '@/lib/constants';
+import { CONTACT_PHONE, SUPPORT_EMAIL, VAT_RATE, PLATFORM_URL } from '@/lib/constants';
 import type { Order, User, OrderItem } from '@/types';
 
 interface EmailOptions {
@@ -269,7 +269,7 @@ export function generateShippingNotificationEmail(
       <p>Dear ${user?.name || 'Customer'},</p>
       <p>Great news! Your order is on its way.</p>
       ${trackingNumber ? `<p><strong>Tracking Number:</strong> ${trackingNumber}</p>` : ''}
-      <p>You can track your order status at: <a href="${process.env.NEXT_PUBLIC_APP_URL}/track/${order.id}">Track Order</a></p>
+      <p>You can track your order status at: <a href="${PLATFORM_URL}/track/${order.id}">Track Order</a></p>
     </div>
   </div>
 </body>
@@ -323,7 +323,7 @@ export function generateDeliveryConfirmationEmail(order: Order, user: User | nul
       <p>Your order <strong>#${order.id.slice(0, 8)}</strong> has been delivered.</p>
       <p>We hope you love it! You have 14 days to return it if you're not 100% satisfied.</p>
       <p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/orders/${order.id}" style="display:inline-block;padding:12px 24px;background:#10B981;color:white;text-decoration:none;border-radius:8px;font-weight:bold;">Leave a Review</a>
+        <a href="${PLATFORM_URL}/dashboard/orders/${order.id}" style="display:inline-block;padding:12px 24px;background:#10B981;color:white;text-decoration:none;border-radius:8px;font-weight:bold;">Leave a Review</a>
       </p>
       <hr>
       <p style="color: #666; font-size: 13px;">Need help? Contact ${SUPPORT_EMAIL}</p>

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { BCRYPT_COST } from '@/lib/constants';
 import { rateLimit } from '@/lib/rateLimit';
+import { getEmailBaseUrl } from '@/lib/email-verification';
 
 // Magic-link sign-in. The user submits an email; we either look up an
 // existing account or auto-create one (with an unguessable random
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = getEmailBaseUrl();
     const link = `${baseUrl}/auth/magic?token=${token}`;
 
     const { sendEmail } = await import('@/lib/email');

@@ -10,7 +10,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { BCRYPT_COST } from '@/lib/constants';
 import { sendEmail } from '@/lib/email';
-import { generateEmailVerificationEmail } from '@/lib/email-verification';
+import { generateEmailVerificationEmail, getEmailBaseUrl } from '@/lib/email-verification';
 import { notifyAdminNewRegistration } from '@/lib/admin-registration-alerts';
 
 const ApplySchema = z.object({
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
         data: { email, token, expires },
       });
 
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const appUrl = getEmailBaseUrl();
       const verifyUrl = `${appUrl}/api/auth/verify-email?token=${token}`;
 
       await sendEmail({

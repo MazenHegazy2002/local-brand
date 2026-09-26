@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getEmailBaseUrl } from '@/lib/email-verification';
+
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/auth/verify-email?token=<token>
@@ -9,11 +12,12 @@ import { prisma } from '@/lib/prisma';
  * seller-hub for sellers).
  */
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
+  const baseUrl = getEmailBaseUrl();
+  const { searchParams } = new URL(req.url, baseUrl);
   const token = searchParams.get('token');
 
   if (!token) {
-    return NextResponse.redirect(new URL('/login?error=missing-token', req.url));
+    return NextResponse.redirect(new URL('/login?error=missing-token', baseUrl));
   }
 
   try {
@@ -22,13 +26,13 @@ export async function GET(req: Request) {
     });
 
     if (!record) {
-      return NextResponse.redirect(new URL('/login?error=invalid-token', req.url));
+      return NextResponse.redirect(new URL('/login?error=invalid-token', baseUrl));
     }
 
     if (record.expires < new Date()) {
       // Garbage-collect expired token
       await prisma.passwordResetToken.delete({ where: { token } }).catch(() => {});
-      return NextResponse.redirect(new URL('/verify-email?error=expired', req.url));
+      return NextResponse.redirect(new URL('/verify-email?error=expired', baseUrl));
     }
 
     // Mark email as verified and consume the token atomically
@@ -47,9 +51,9 @@ export async function GET(req: Request) {
           ? '/admin-os'
           : '/dashboard?verified=1';
 
-    return NextResponse.redirect(new URL(destination, req.url));
+    return NextResponse.redirect(new URL(destination, baseUrl));
   } catch (err) {
     console.error('[verify-email]', err);
-    return NextResponse.redirect(new URL('/login?error=server-error', req.url));
+    return NextResponse.redirect(new URL('/login?error=server-error', baseUrl));
   }
 }

@@ -1,10 +1,38 @@
 import { SUPPORT_EMAIL } from '@/lib/constants';
 
 /**
+ * Canonical base URL for all verification and auth links in transactional emails.
+ * Always resolves to https://brandyy.shop unless explicitly configured to another non-localhost public domain.
+ */
+export function getEmailBaseUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
+  if (configured && !configured.includes('localhost') && !configured.includes('127.0.0.1')) {
+    return configured.replace(/\/+$/, '');
+  }
+  return 'https://brandyy.shop';
+}
+
+/**
  * HTML email sent to every new user immediately after registration.
  * The link is valid for 10 minutes and points to /api/auth/verify-email?token=…
  */
 export function generateEmailVerificationEmail(name: string, verifyUrl: string): string {
+  // Ensure verifyUrl always uses brandyy.shop if it accidentally pointed to localhost or a relative URL
+  let safeVerifyUrl = verifyUrl;
+  if (
+    !safeVerifyUrl ||
+    safeVerifyUrl.startsWith('/') ||
+    safeVerifyUrl.includes('localhost') ||
+    safeVerifyUrl.includes('127.0.0.1')
+  ) {
+    try {
+      const parsed = new URL(safeVerifyUrl, 'https://brandyy.shop');
+      safeVerifyUrl = `https://brandyy.shop${parsed.pathname}${parsed.search}`;
+    } catch {
+      safeVerifyUrl = `https://brandyy.shop/api/auth/verify-email?token=${encodeURIComponent(verifyUrl)}`;
+    }
+  }
+
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -24,14 +52,14 @@ export function generateEmailVerificationEmail(name: string, verifyUrl: string):
         This link expires in <strong>10 minutes</strong>.
       </p>
       <div style="text-align:center;margin:0 0 28px">
-        <a href="${verifyUrl}"
+        <a href="${safeVerifyUrl}"
            style="display:inline-block;background:#1e3b8a;color:#fff;text-decoration:none;padding:14px 36px;border-radius:10px;font-weight:700;font-size:15px">
           Verify Email Address
         </a>
       </div>
       <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0">
         If you didn&apos;t create this account you can safely ignore this email.<br>
-        Or copy this link: <span style="color:#1e3b8a;word-break:break-all">${verifyUrl}</span>
+        Or copy this link: <span style="color:#1e3b8a;word-break:break-all">${safeVerifyUrl}</span>
       </p>
     </div>
     <div style="background:#f8fafc;padding:20px 30px;text-align:center;font-size:12px;color:#94a3b8">

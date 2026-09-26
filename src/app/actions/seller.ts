@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import { OrderStatus, SellerStatus, OrderItemStatus, Role, PayoutStatus } from '@/generated/client';
 import bcrypt from 'bcryptjs';
-import { BCRYPT_COST } from '@/lib/constants';
+import { BCRYPT_COST, PLATFORM_URL } from '@/lib/constants';
 import { getCachedData } from '@/lib/cache';
 import { sanitizeProducts } from '@/lib/sanitize-product';
 
@@ -880,7 +880,7 @@ export async function updateSellerStatus(sellerId: string, status: SellerStatus)
         await sendEmail({
           to: profile.user.email,
           subject: 'Your Brandy seller account has been approved!',
-          html: `<p>Hi ${profile.user.name || 'Seller'},</p><p>Congratulations! Your seller application for store <strong>${profile.storeName}</strong> has been approved. You can now access your Seller Hub, list products, and start selling!</p><p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/seller-hub">Go to Seller Hub</a></p>`,
+          html: `<p>Hi ${profile.user.name || 'Seller'},</p><p>Congratulations! Your seller application for store <strong>${profile.storeName}</strong> has been approved. You can now access your Seller Hub, list products, and start selling!</p><p><a href="${PLATFORM_URL}/seller-hub">Go to Seller Hub</a></p>`,
         });
       } catch (emailErr) {
         console.error('[updateSellerStatus] Failed to send approval email:', emailErr);

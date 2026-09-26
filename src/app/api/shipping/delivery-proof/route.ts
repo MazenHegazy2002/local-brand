@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
+import { PLATFORM_URL } from '@/lib/constants';
 import { z } from 'zod';
 
 const proofSchema = z.object({
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
     }
 
     // Transaction: mark item delivered, update/create shipment record
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async tx => {
       await tx.orderItem.update({
         where: { id: orderItemId },
         data: { status: 'DELIVERED' },
@@ -121,21 +122,27 @@ export async function POST(req: Request) {
     if (orderItem.order.userId) {
       const user = await prisma.user.findUnique({ where: { id: orderItem.order.userId } });
       if (user?.email) {
-        import('@/lib/email').then((m) => {
-          m.sendEmail({
-            to: user.email,
-            subject: `Your order from ${orderItem.sellerNameSnapshot} has arrived!`,
-            html: `
+        import('@/lib/email')
+          .then(m => {
+            m.sendEmail({
+              to: user.email,
+              subject: `Your order from ${orderItem.sellerNameSnapshot} has arrived!`,
+              html: `
 <p>Hi ${user.name},</p>
 <p>Great news — your order <strong>${orderItem.productTitleSnapshot}</strong> has been delivered.</p>
 <p>You have 14 days to return it if you're not 100% satisfied. We'd also love a review!</p>
-<p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/orders/${orderItem.orderId}">View order</a></p>
+<p><a href="${PLATFORM_URL}/dashboard/orders/${orderItem.orderId}">View order</a></p>
 <hr />
 ${notes ? `<p><em>Courier note:</em> ${notes}</p>` : ''}
 <p>— Brandy</p>
             `,
-          }).catch(() => { /* dev fallback */ });
-        }).catch(() => { /* ignore */ });
+            }).catch(() => {
+              /* dev fallback */
+            });
+          })
+          .catch(() => {
+            /* ignore */
+          });
       }
     }
 

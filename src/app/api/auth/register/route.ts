@@ -9,6 +9,7 @@ import { BCRYPT_COST } from '@/lib/constants';
 import {
   generateEmailVerificationEmail,
   generateSellerPendingEmail,
+  getEmailBaseUrl,
 } from '@/lib/email-verification';
 import { rateLimit } from '@/lib/rateLimit';
 
@@ -131,7 +132,7 @@ export async function POST(req: NextRequest) {
       data: { email, token, expires },
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop';
+    const appUrl = getEmailBaseUrl();
     const verifyUrl = `${appUrl}/api/auth/verify-email?token=${token}`;
 
     // Send email verification link

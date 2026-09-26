@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { forgotPasswordSchema } from '@/lib/validation';
 import { rateLimit } from '@/lib/rateLimit';
+import { getEmailBaseUrl } from '@/lib/email-verification';
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,7 +30,10 @@ export async function POST(req: NextRequest) {
 
     if (!user) {
       // Return 200 even if user doesn't exist to prevent email enumeration
-      return NextResponse.json({ message: 'If an account with that email exists, we sent a reset link to it.' }, { status: 200 });
+      return NextResponse.json(
+        { message: 'If an account with that email exists, we sent a reset link to it.' },
+        { status: 200 }
+      );
     }
 
     // Generate unique reset token
@@ -42,11 +46,11 @@ export async function POST(req: NextRequest) {
         email: user.email,
         token: resetToken,
         expires: tokenExpiry,
-      }
+      },
     });
 
-    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
-    
+    const resetLink = `${getEmailBaseUrl()}/reset-password?token=${resetToken}`;
+
     const { sendEmail } = await import('@/lib/email');
     await sendEmail({
       to: user.email,
@@ -54,8 +58,10 @@ export async function POST(req: NextRequest) {
       html: `<p>Click <a href="${resetLink}">here</a> to reset your password. This link expires in 1 hour.</p>`,
     });
 
-    return NextResponse.json({ message: 'If an account with that email exists, we sent a reset link to it.' }, { status: 200 });
-
+    return NextResponse.json(
+      { message: 'If an account with that email exists, we sent a reset link to it.' },
+      { status: 200 }
+    );
   } catch {
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { sendEmail } from '@/lib/email';
-import { generateEmailVerificationEmail } from '@/lib/email-verification';
+import { generateEmailVerificationEmail, getEmailBaseUrl } from '@/lib/email-verification';
 
 /**
  * POST /api/auth/resend-verification
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       data: { email, token, expires },
     });
 
-    const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop'}/api/auth/verify-email?token=${token}`;
+    const verifyUrl = `${getEmailBaseUrl()}/api/auth/verify-email?token=${token}`;
 
     await sendEmail({
       to: email,
