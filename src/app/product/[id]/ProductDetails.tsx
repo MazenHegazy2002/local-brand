@@ -688,11 +688,11 @@ export default function ProductDetails({
           </div>
           <div>
             <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm mb-1">
-              {t('BrandyGuarantee') || 'Brandy Guarantee'}
+              🛡️ {t('BrandyGuarantee') || '14-Day Escrow Protection'}
             </h4>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               {t('GuaranteeText') ||
-                'Every product is authenticated. Free returns within 14 days for all domestic orders. Secure payment processing.'}
+                'Every product is authenticated. Your payment is safely held in escrow for 14 days post-delivery to guarantee product quality, authenticity, and stress-free returns.'}
             </p>
           </div>
         </div>

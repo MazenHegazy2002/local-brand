@@ -1,25 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// Master API Key for external projects / apps
+// Secret Master Key for Internal Server-to-Server communication only
 const MASTER_API_KEY = process.env.MASTER_API_KEY || 'brandyy_master_key_2026_xyz999';
+
+function verifyInternalAccess(req: NextRequest): boolean {
+  // Block any requests coming directly from public client browsers or unauthorized origin
+  const origin = req.headers.get('origin');
+  const referer = req.headers.get('referer');
+  const headerKey = req.headers.get('x-api-key');
+  const authHeader = req.headers.get('authorization');
+  const bearerKey = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+
+  const key = headerKey || bearerKey;
+
+  // Key must match MASTER_API_KEY
+  if (key !== MASTER_API_KEY) return false;
+
+  // In production, block direct public browser requests attempting to bypass standard API routes
+  if (process.env.NODE_ENV === 'production' && (origin || referer)) {
+    // If request comes from a browser client origin, reject direct DB manipulation
+    const isInternalServerCall = req.headers.get('x-internal-server') === 'true';
+    if (!isInternalServerCall) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 // Map model names (case-insensitive) to actual Prisma delegate properties
 function getPrismaModelDelegate(modelName: string) {
   if (!modelName) return null;
   const name = modelName.trim();
-
-  // Try exact match or camelCase conversion
   const p = prisma as Record<string, any>;
 
-  // Direct check
   if (p[name] && typeof p[name].findMany === 'function') return p[name];
 
-  // Lowercase first letter check (e.g. User -> user, SellerProfile -> sellerProfile)
   const camelName = name.charAt(0).toLowerCase() + name.slice(1);
   if (p[camelName] && typeof p[camelName].findMany === 'function') return p[camelName];
 
-  // Specific alias mappings
   const aliases: Record<string, string> = {
     users: 'user',
     sellers: 'sellerProfile',
@@ -51,25 +71,11 @@ function getPrismaModelDelegate(modelName: string) {
   return null;
 }
 
-function verifyApiKey(req: NextRequest): boolean {
-  const headerKey = req.headers.get('x-api-key');
-  const authHeader = req.headers.get('authorization');
-  const bearerKey = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-  const urlKey = req.nextUrl.searchParams.get('api_key');
-
-  const key = headerKey || bearerKey || urlKey;
-  return key === MASTER_API_KEY;
-}
-
 export async function GET(req: NextRequest) {
-  if (!verifyApiKey(req)) {
+  if (!verifyInternalAccess(req)) {
     return NextResponse.json(
-      {
-        success: false,
-        error:
-          'Unauthorized: Invalid or missing API key (provide x-api-key header or ?api_key= query param)',
-      },
-      { status: 401 }
+      { success: false, error: 'Access Denied: Internal server environment access only.' },
+      { status: 403 }
     );
   }
 
@@ -79,7 +85,7 @@ export async function GET(req: NextRequest) {
   if (!modelName || searchParams.get('help') === 'true') {
     return NextResponse.json({
       success: true,
-      message: 'Brandyy Master REST API v1',
+      message: 'Brandyy Restricted Internal Server API v1',
       supportedModels: [
         'user',
         'sellerProfile',
@@ -99,11 +105,6 @@ export async function GET(req: NextRequest) {
         'supportTicket',
         'productQA',
       ],
-      usage: {
-        get: 'GET /api/v1/db?model=product&take=10&skip=0',
-        post: 'POST /api/v1/db with body: { action: "findMany" | "findUnique" | "create" | "update" | "delete" | "count", model: "product", args: { ... } }',
-        headers: { 'x-api-key': MASTER_API_KEY },
-      },
     });
   }
 
@@ -141,10 +142,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!verifyApiKey(req)) {
+  if (!verifyInternalAccess(req)) {
     return NextResponse.json(
-      { success: false, error: 'Unauthorized: Invalid or missing API key' },
-      { status: 401 }
+      { success: false, error: 'Access Denied: Internal server environment access only.' },
+      { status: 403 }
     );
   }
 
