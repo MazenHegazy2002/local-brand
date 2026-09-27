@@ -12,16 +12,20 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
+import { useRouter } from 'expo-router';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react-native';
 import { useAuth } from '@/store/auth';
 import { colors, radii, spacing } from '@/lib/tokens';
 
 const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
 
 export default function SignIn() {
+  const router = useRouter();
   const [tab, setTab] = useState<'signin' | 'register'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
 
@@ -68,9 +72,19 @@ export default function SignIn() {
       style={styles.root}
     >
       <ScrollView contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
-        <Text style={styles.wordmark}>brandyy</Text>
-        <Text style={styles.tagline}>Your local brands marketplace</Text>
+        {/* Back */}
+        <Pressable style={styles.back} onPress={() => router.back()}>
+          <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
+        </Pressable>
 
+        <Text style={styles.heading}>{tab === 'signin' ? 'Welcome back' : 'Create account'}</Text>
+        <Text style={styles.sub}>
+          {tab === 'signin'
+            ? 'Sign in to track orders and use your points.'
+            : 'Join Brandyy to discover local Egyptian brands.'}
+        </Text>
+
+        {/* Tab switcher */}
         <View style={styles.seg}>
           {(['signin', 'register'] as const).map(t => (
             <Pressable
@@ -79,39 +93,61 @@ export default function SignIn() {
               onPress={() => setTab(t)}
             >
               <Text style={[styles.segText, tab === t && styles.segTextActive]}>
-                {t === 'signin' ? 'Sign in' : 'Register'}
+                {t === 'signin' ? 'Sign in' : 'Create account'}
               </Text>
             </Pressable>
           ))}
         </View>
 
         {tab === 'register' && (
-          <TextInput
-            style={styles.input}
-            placeholder="Full name"
-            placeholderTextColor={colors.placeholder}
-            value={name}
-            onChangeText={setName}
-            autoCapitalize="words"
-          />
+          <>
+            <Text style={styles.label}>Full name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Omar Hassan"
+              placeholderTextColor={colors.placeholder}
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+            />
+          </>
         )}
+
+        <Text style={styles.label}>Email or phone</Text>
         <TextInput
           style={styles.input}
-          placeholder="Email"
+          placeholder="omar@gmail.com"
           placeholderTextColor={colors.placeholder}
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor={colors.placeholder}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+
+        <Text style={styles.label}>Password</Text>
+        <View style={styles.passwordRow}>
+          <TextInput
+            style={[styles.input, styles.passwordInput]}
+            placeholder="••••••••"
+            placeholderTextColor={colors.placeholder}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPw}
+          />
+          <Pressable style={styles.eyeBtn} onPress={() => setShowPw(!showPw)}>
+            {showPw ? (
+              <EyeOff size={18} color={colors.placeholder} strokeWidth={2} />
+            ) : (
+              <Eye size={18} color={colors.placeholder} strokeWidth={2} />
+            )}
+          </Pressable>
+        </View>
+
+        {tab === 'signin' && (
+          <Pressable style={styles.forgotRow}>
+            <Text style={styles.forgotText}>Forgot password?</Text>
+          </Pressable>
+        )}
 
         <Pressable
           style={[styles.btnPrimary, loading && { opacity: 0.7 }]}
@@ -121,22 +157,26 @@ export default function SignIn() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.btnText}>{tab === 'signin' ? 'Sign in' : 'Create account'}</Text>
+            <Text style={styles.btnPrimaryText}>
+              {tab === 'signin' ? 'Sign in' : 'Create account'}
+            </Text>
           )}
         </Pressable>
 
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
+          <Text style={styles.dividerText}>or continue with</Text>
           <View style={styles.dividerLine} />
         </View>
 
-        <Pressable style={styles.btnGoogle}>
-          <Text style={styles.btnGoogleText}>Continue with Google</Text>
-        </Pressable>
-        <Pressable style={styles.btnApple}>
-          <Text style={styles.btnAppleText}>Continue with Apple</Text>
-        </Pressable>
+        <View style={styles.socialRow}>
+          <Pressable style={[styles.socialBtn, styles.socialBtnLight]}>
+            <Text style={styles.socialTextDark}>G Google</Text>
+          </Pressable>
+          <Pressable style={[styles.socialBtn, styles.socialBtnDark]}>
+            <Text style={styles.socialTextLight}> Apple</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -144,19 +184,30 @@ export default function SignIn() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  inner: { flexGrow: 1, paddingHorizontal: spacing.page, paddingTop: 80, paddingBottom: 40 },
-  wordmark: {
-    fontFamily: 'Outfit-ExtraBold',
-    fontSize: 32,
-    color: colors.primary,
-    textAlign: 'center',
+  inner: { flexGrow: 1, paddingHorizontal: spacing.page, paddingTop: 56, paddingBottom: 40 },
+  back: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 28,
   },
-  tagline: {
+  heading: {
+    fontFamily: 'InstrumentSerif-Regular',
+    fontSize: 34,
+    color: colors.ink,
+    marginBottom: 8,
+  },
+  sub: {
     fontFamily: 'Inter-Regular',
     fontSize: 14,
-    color: colors.muted,
-    textAlign: 'center',
-    marginBottom: 40,
+    color: colors.primary,
+    marginBottom: 28,
+    lineHeight: 20,
   },
   seg: {
     flexDirection: 'row',
@@ -165,7 +216,13 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: 24,
   },
-  segBtn: { flex: 1, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  segBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   segBtnActive: {
     backgroundColor: colors.surface,
     shadowColor: '#000',
@@ -175,47 +232,59 @@ const styles = StyleSheet.create({
   },
   segText: { fontFamily: 'Inter-SemiBold', fontSize: 14, color: colors.muted },
   segTextActive: { color: colors.ink },
+  label: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 13,
+    color: colors.ink,
+    marginBottom: 6,
+  },
   input: {
     height: 52,
     borderRadius: radii.input,
     borderWidth: 1.5,
     borderColor: colors.inputBorder,
     paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 16,
     fontFamily: 'Inter-Regular',
     fontSize: 15,
     color: colors.ink,
     backgroundColor: colors.surface,
   },
+  passwordRow: { position: 'relative' },
+  passwordInput: { paddingRight: 48 },
+  eyeBtn: {
+    position: 'absolute',
+    right: 14,
+    top: 14,
+    padding: 2,
+  },
+  forgotRow: { alignItems: 'flex-end', marginTop: -8, marginBottom: 20 },
+  forgotText: { fontFamily: 'Inter-SemiBold', fontSize: 13, color: colors.primary },
   btnPrimary: {
-    height: 54,
+    height: 56,
     borderRadius: radii.button,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
   },
-  btnText: { fontFamily: 'Inter-SemiBold', fontSize: 16, color: '#fff' },
+  btnPrimaryText: { fontFamily: 'Inter-SemiBold', fontSize: 16, color: '#fff' },
   divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 24, gap: 12 },
   dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
   dividerText: { fontFamily: 'Inter-Regular', fontSize: 13, color: colors.muted },
-  btnGoogle: {
+  socialRow: { flexDirection: 'row', gap: 12 },
+  socialBtn: {
+    flex: 1,
     height: 52,
     borderRadius: radii.button,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  socialBtnLight: {
     backgroundColor: colors.surface,
     borderWidth: 1.5,
     borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
   },
-  btnGoogleText: { fontFamily: 'Inter-SemiBold', fontSize: 15, color: colors.ink },
-  btnApple: {
-    height: 52,
-    borderRadius: radii.button,
-    backgroundColor: '#000',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnAppleText: { fontFamily: 'Inter-SemiBold', fontSize: 15, color: '#fff' },
+  socialBtnDark: { backgroundColor: '#111' },
+  socialTextDark: { fontFamily: 'Inter-SemiBold', fontSize: 15, color: colors.ink },
+  socialTextLight: { fontFamily: 'Inter-SemiBold', fontSize: 15, color: '#fff' },
 });

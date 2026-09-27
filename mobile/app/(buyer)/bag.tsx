@@ -1,25 +1,26 @@
-// Screen 3a — Bag + 3b Checkout entry
-import { View, Text, StyleSheet, FlatList, Pressable, ScrollView } from 'react-native';
+// Screen 3a — Bag
+import { useState } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView, TextInput } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { Minus, Plus, Trash2 } from 'lucide-react-native';
+import { Minus, Plus } from 'lucide-react-native';
 import { useCart } from '@/store/cart';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { fmtEGP } from '@/lib/api';
 
-const FREE_SHIPPING_THRESHOLD = 1000;
+const FREE_THRESHOLD = 1000;
 
 export default function Bag() {
   const router = useRouter();
   const { items, setQty, remove, total, count } = useCart();
+  const [promo, setPromo] = useState('');
   const subtotal = total();
-  const shippingProgress = Math.min(subtotal / FREE_SHIPPING_THRESHOLD, 1);
-  const remaining = FREE_SHIPPING_THRESHOLD - subtotal;
+  const remaining = FREE_THRESHOLD - subtotal;
+  const progress = Math.min(subtotal / FREE_THRESHOLD, 1);
 
   if (count() === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyIcon}>🛍️</Text>
         <Text style={styles.emptyTitle}>Your bag is empty</Text>
         <Text style={styles.emptySub}>Add items from the shop to get started</Text>
         <Pressable style={styles.shopBtn} onPress={() => router.push('/(buyer)/shop')}>
@@ -32,7 +33,7 @@ export default function Bag() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.title}>My Bag</Text>
+        <Text style={styles.title}>Bag</Text>
         <Text style={styles.count}>
           {count()} item{count() !== 1 ? 's' : ''}
         </Text>
@@ -40,51 +41,63 @@ export default function Bag() {
 
       <ScrollView contentContainerStyle={styles.inner}>
         {/* Free shipping progress */}
-        <View style={styles.progressCard}>
-          <Text style={styles.progressText}>
-            {subtotal >= FREE_SHIPPING_THRESHOLD
-              ? '🎉 You have free shipping!'
-              : `Add ${fmtEGP(remaining)} more for free shipping`}
-          </Text>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${shippingProgress * 100}%` as any }]} />
+        {remaining > 0 && (
+          <View style={styles.progressCard}>
+            <Text style={styles.progressText}>{fmtEGP(remaining)} away from free shipping</Text>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${progress * 100}%` as any }]} />
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Line items */}
         {items.map(item => (
           <View key={item.productId} style={styles.item}>
             <Image source={{ uri: item.image }} style={styles.itemImg} contentFit="cover" />
             <View style={styles.itemInfo}>
+              <Text style={styles.itemBrand} numberOfLines={1}>
+                BRANDYY STORE
+              </Text>
               <Text style={styles.itemName} numberOfLines={2}>
                 {item.title}
               </Text>
-              {item.size && <Text style={styles.itemMeta}>Size: {item.size}</Text>}
-              {item.color && <Text style={styles.itemMeta}>Color: {item.color}</Text>}
+              {item.size && <Text style={styles.itemMeta}>{item.size}</Text>}
               <Text style={styles.itemPrice}>{fmtEGP(item.priceEGP)}</Text>
             </View>
-            <View style={styles.itemActions}>
-              <Pressable style={styles.trash} onPress={() => remove(item.productId)}>
-                <Trash2 size={16} color={colors.danger} strokeWidth={2} />
+            <View style={styles.stepper}>
+              <Pressable
+                style={styles.stepBtn}
+                onPress={() =>
+                  item.qty <= 1 ? remove(item.productId) : setQty(item.productId, item.qty - 1)
+                }
+              >
+                <Minus size={14} color={colors.ink} strokeWidth={2} />
               </Pressable>
-              <View style={styles.stepper}>
-                <Pressable
-                  style={styles.stepBtn}
-                  onPress={() => setQty(item.productId, item.qty - 1)}
-                >
-                  <Minus size={14} color={colors.ink} strokeWidth={2} />
-                </Pressable>
-                <Text style={styles.stepQty}>{item.qty}</Text>
-                <Pressable
-                  style={styles.stepBtn}
-                  onPress={() => setQty(item.productId, item.qty + 1)}
-                >
-                  <Plus size={14} color={colors.ink} strokeWidth={2} />
-                </Pressable>
-              </View>
+              <Text style={styles.stepQty}>{item.qty}</Text>
+              <Pressable
+                style={styles.stepBtn}
+                onPress={() => setQty(item.productId, item.qty + 1)}
+              >
+                <Plus size={14} color={colors.ink} strokeWidth={2} />
+              </Pressable>
             </View>
           </View>
         ))}
+
+        {/* Promo code */}
+        <View style={styles.promoRow}>
+          <TextInput
+            style={styles.promoInput}
+            placeholder="Promo or referral code"
+            placeholderTextColor={colors.placeholder}
+            value={promo}
+            onChangeText={setPromo}
+            autoCapitalize="characters"
+          />
+          <Pressable style={styles.promoBtn}>
+            <Text style={styles.promoBtnText}>Apply</Text>
+          </Pressable>
+        </View>
       </ScrollView>
 
       {/* Sticky footer */}
@@ -94,7 +107,7 @@ export default function Bag() {
           <Text style={styles.footerTotal}>{fmtEGP(subtotal)}</Text>
         </View>
         <Pressable style={styles.checkoutBtn} onPress={() => router.push('/(buyer)/checkout')}>
-          <Text style={styles.checkoutText}>Proceed to checkout</Text>
+          <Text style={styles.checkoutText}>Checkout</Text>
         </Pressable>
       </View>
     </View>
@@ -111,9 +124,9 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     gap: 8,
   },
-  title: { fontFamily: 'Outfit-Bold', fontSize: 26, color: colors.ink },
+  title: { fontFamily: 'InstrumentSerif-Regular', fontSize: 34, color: colors.ink },
   count: { fontFamily: 'Inter-Regular', fontSize: 14, color: colors.muted },
-  inner: { paddingHorizontal: spacing.page, paddingBottom: 120 },
+  inner: { paddingHorizontal: spacing.page, paddingBottom: 140 },
   progressCard: {
     backgroundColor: colors.accentBg,
     borderRadius: radii.card,
@@ -133,18 +146,36 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   progressFill: { height: 6, backgroundColor: colors.accent, borderRadius: 3 },
-  item: { flexDirection: 'row', gap: 12, marginBottom: 20, alignItems: 'flex-start' },
-  itemImg: { width: 86, height: 106, borderRadius: radii.sm },
+  item: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    alignItems: 'center',
+  },
+  itemImg: { width: 72, height: 90, borderRadius: radii.sm },
   itemInfo: { flex: 1 },
-  itemName: { fontFamily: 'Inter-Medium', fontSize: 14, color: colors.ink, lineHeight: 18 },
-  itemMeta: { fontFamily: 'Inter-Regular', fontSize: 12, color: colors.muted, marginTop: 2 },
-  itemPrice: { fontFamily: 'Outfit-Bold', fontSize: 16, color: colors.primary, marginTop: 6 },
-  itemActions: { alignItems: 'flex-end', gap: 12 },
-  trash: { padding: 6 },
+  itemBrand: {
+    fontFamily: 'Inter-Bold',
+    fontSize: 10,
+    color: colors.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 3,
+  },
+  itemName: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 13,
+    color: colors.ink,
+    lineHeight: 17,
+    marginBottom: 2,
+  },
+  itemMeta: { fontFamily: 'Inter-Regular', fontSize: 12, color: colors.muted, marginBottom: 4 },
+  itemPrice: { fontFamily: 'Outfit-Bold', fontSize: 15, color: colors.ink },
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 0,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 8,
@@ -156,9 +187,29 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     fontSize: 14,
     color: colors.ink,
-    minWidth: 24,
+    minWidth: 22,
     textAlign: 'center',
   },
+  promoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.input,
+    marginTop: 20,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  promoInput: {
+    flex: 1,
+    height: 48,
+    paddingHorizontal: 14,
+    fontFamily: 'Inter-Regular',
+    fontSize: 14,
+    color: colors.ink,
+  },
+  promoBtn: { paddingHorizontal: 16 },
+  promoBtnText: { fontFamily: 'Inter-SemiBold', fontSize: 14, color: colors.primary },
   empty: {
     flex: 1,
     alignItems: 'center',
@@ -166,7 +217,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
     padding: spacing.page,
   },
-  emptyIcon: { fontSize: 48, marginBottom: 12 },
   emptyTitle: { fontFamily: 'Outfit-Bold', fontSize: 22, color: colors.ink, marginBottom: 8 },
   emptySub: {
     fontFamily: 'Inter-Regular',
@@ -193,13 +243,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
     padding: spacing.page,
-    paddingBottom: 32,
+    paddingBottom: 36,
   },
-  footerRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+  footerRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
   footerLabel: { fontFamily: 'Inter-Regular', fontSize: 15, color: colors.muted },
   footerTotal: { fontFamily: 'Outfit-Bold', fontSize: 18, color: colors.ink },
   checkoutBtn: {
-    height: 54,
+    height: 56,
     borderRadius: radii.button,
     backgroundColor: colors.primary,
     alignItems: 'center',

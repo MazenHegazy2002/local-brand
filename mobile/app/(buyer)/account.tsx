@@ -1,17 +1,16 @@
-// Screen 3e — Account
+// Screen 3e — Account + loyalty
 import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import {
   Package,
   MapPin,
   CreditCard,
-  Star,
-  Bell,
+  Percent,
+  Store,
   Globe,
   HelpCircle,
   ChevronRight,
-  LogOut,
+  Settings,
 } from 'lucide-react-native';
 import { useAuth } from '@/store/auth';
 import { colors, radii, spacing } from '@/lib/tokens';
@@ -20,7 +19,14 @@ export default function Account() {
   const { user, signOut, lang, setLang } = useAuth();
   const router = useRouter();
 
-  function handleSignOut() {
+  const initials = (user?.name ?? 'U')
+    .split(' ')
+    .map((w: string) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  function confirmSignOut() {
     Alert.alert('Sign out', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
@@ -28,111 +34,211 @@ export default function Account() {
   }
 
   const menu = [
-    { Icon: Package, label: 'Orders', onPress: () => {} },
-    { Icon: MapPin, label: 'Addresses', onPress: () => {} },
-    { Icon: CreditCard, label: 'Payment methods', onPress: () => {} },
-    { Icon: Star, label: 'Earn with Brandyy', onPress: () => {} },
-    { Icon: Bell, label: 'Notifications', onPress: () => {} },
+    { label: 'My orders', Icon: Package, badge: null, hint: null, onPress: () => {} },
+    { label: 'Addresses', Icon: MapPin, badge: null, hint: '2', onPress: () => {} },
+    { label: 'Payment methods', Icon: CreditCard, badge: null, hint: null, onPress: () => {} },
     {
+      label: 'Earn with Brandyy (affiliate)',
+      Icon: Percent,
+      badge: null,
+      hint: '5%',
+      onPress: () => {},
+    },
+    { label: 'Sell on Brandyy', Icon: Store, badge: null, hint: null, onPress: () => {} },
+    {
+      label: 'Language',
       Icon: Globe,
-      label: `Language: ${lang.toUpperCase()}`,
+      badge: null,
+      hint: lang === 'en' ? 'English' : 'عربي',
       onPress: () => setLang(lang === 'en' ? 'ar' : 'en'),
     },
-    { Icon: HelpCircle, label: 'Help', onPress: () => {} },
+    { label: 'Help & support', Icon: HelpCircle, badge: null, hint: null, onPress: () => {} },
   ];
 
   return (
-    <View style={styles.root}>
-      <ScrollView contentContainerStyle={styles.inner}>
-        <View style={styles.profile}>
-          <Image
-            source={{
-              uri:
-                user?.image ??
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name ?? 'U')}&background=1e3b8a&color=fff`,
-            }}
-            style={styles.avatar}
-            contentFit="cover"
-          />
-          <Text style={styles.name}>{user?.name}</Text>
+    <ScrollView style={styles.root} contentContainerStyle={styles.inner}>
+      {/* Profile header */}
+      <View style={styles.profileRow}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{initials}</Text>
+        </View>
+        <View style={styles.profileInfo}>
+          <Text style={styles.name}>{user?.name ?? 'Guest'}</Text>
           <Text style={styles.email}>{user?.email}</Text>
         </View>
-
-        <View style={styles.loyaltyCard}>
-          <Text style={styles.loyaltyLabel}>Loyalty Points</Text>
-          <Text style={styles.loyaltyPoints}>0</Text>
-          <Text style={styles.loyaltySub}>1 pt = 1 EGP at checkout</Text>
-        </View>
-
-        <View style={styles.menu}>
-          {menu.map(({ Icon, label, onPress }) => (
-            <Pressable key={label} style={styles.menuItem} onPress={onPress}>
-              <Icon size={20} color={colors.muted} strokeWidth={1.8} />
-              <Text style={styles.menuLabel}>{label}</Text>
-              <View style={{ flex: 1 }} />
-              <ChevronRight size={16} color={colors.placeholder} strokeWidth={2} />
-            </Pressable>
-          ))}
-        </View>
-
-        <Pressable style={styles.signOutBtn} onPress={handleSignOut}>
-          <LogOut size={18} color={colors.danger} strokeWidth={2} />
-          <Text style={styles.signOutText}>Sign out</Text>
+        <Pressable style={styles.settingsBtn}>
+          <Settings size={20} color={colors.muted} strokeWidth={1.8} />
         </Pressable>
-      </ScrollView>
-    </View>
+      </View>
+
+      {/* Loyalty card */}
+      <View style={styles.loyaltyCard}>
+        <View style={styles.loyaltyTop}>
+          <View>
+            <Text style={styles.loyaltyLabel}>Brandyy points</Text>
+            <Text style={styles.loyaltyPoints}>140 pts</Text>
+            <Text style={styles.loyaltySub}>
+              10 points per order, 5 per verified review. 1 point = 1 EGP at checkout.
+            </Text>
+          </View>
+          <View style={styles.loyaltyEgp}>
+            <Text style={styles.loyaltyEgpText}>= 140 EGP</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Stats row */}
+      <View style={styles.statsRow}>
+        {[
+          { label: 'Orders', value: '3' },
+          { label: 'Wishlist', value: '4' },
+          { label: 'Addresses', value: '2' },
+        ].map(({ label, value }) => (
+          <View key={label} style={styles.statItem}>
+            <Text style={styles.statValue}>{value}</Text>
+            <Text style={styles.statLabel}>{label}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Menu */}
+      <View style={styles.menuCard}>
+        {menu.map(({ label, Icon, hint, onPress }, i) => (
+          <Pressable
+            key={label}
+            style={[styles.menuItem, i < menu.length - 1 && styles.menuItemBorder]}
+            onPress={onPress}
+          >
+            <Text style={styles.menuLabel}>{label}</Text>
+            <View style={styles.menuRight}>
+              {hint && <Text style={styles.menuHint}>{hint}</Text>}
+              <ChevronRight size={16} color={colors.placeholder} strokeWidth={2} />
+            </View>
+          </Pressable>
+        ))}
+      </View>
+
+      <Pressable style={styles.signOutBtn} onPress={confirmSignOut}>
+        <Text style={styles.signOutText}>Sign out</Text>
+      </Pressable>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  inner: { paddingTop: 56, paddingBottom: 40 },
-  profile: { alignItems: 'center', paddingHorizontal: spacing.page, paddingBottom: 24 },
-  avatar: { width: 80, height: 80, borderRadius: 40, marginBottom: 12 },
-  name: { fontFamily: 'Outfit-Bold', fontSize: 22, color: colors.ink },
-  email: { fontFamily: 'Inter-Regular', fontSize: 14, color: colors.muted, marginTop: 2 },
+  inner: { paddingTop: 56, paddingBottom: 48 },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingHorizontal: spacing.page,
+    marginBottom: 20,
+  },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { fontFamily: 'Outfit-Bold', fontSize: 20, color: '#fff' },
+  profileInfo: { flex: 1 },
+  name: { fontFamily: 'Outfit-Bold', fontSize: 18, color: colors.ink },
+  email: { fontFamily: 'Inter-Regular', fontSize: 13, color: colors.muted, marginTop: 2 },
+  settingsBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   loyaltyCard: {
     marginHorizontal: spacing.page,
-    marginBottom: 24,
+    marginBottom: 4,
     backgroundColor: colors.primaryDark,
     borderRadius: radii.cardLg,
     padding: 20,
   },
-  loyaltyLabel: { fontFamily: 'Inter-SemiBold', fontSize: 13, color: 'rgba(255,255,255,.7)' },
+  loyaltyTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  loyaltyLabel: {
+    fontFamily: 'Inter-Medium',
+    fontSize: 13,
+    color: 'rgba(255,255,255,.65)',
+    marginBottom: 4,
+  },
   loyaltyPoints: {
     fontFamily: 'Outfit-ExtraBold',
-    fontSize: 36,
+    fontSize: 38,
     color: colors.accent,
-    marginVertical: 4,
+    marginBottom: 6,
   },
-  loyaltySub: { fontFamily: 'Inter-Regular', fontSize: 12, color: 'rgba(255,255,255,.6)' },
-  menu: {
+  loyaltySub: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 11,
+    color: 'rgba(255,255,255,.5)',
+    lineHeight: 15,
+    maxWidth: 200,
+  },
+  loyaltyEgp: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: radii.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  loyaltyEgpText: { fontFamily: 'Inter-SemiBold', fontSize: 13, color: 'rgba(255,255,255,.8)' },
+  statsRow: {
+    flexDirection: 'row',
+    marginHorizontal: spacing.page,
+    marginTop: 12,
+    marginBottom: 20,
+    backgroundColor: colors.surface,
+    borderRadius: radii.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+  },
+  statValue: { fontFamily: 'Outfit-Bold', fontSize: 20, color: colors.ink },
+  statLabel: { fontFamily: 'Inter-Regular', fontSize: 12, color: colors.muted, marginTop: 2 },
+  menuCard: {
+    marginHorizontal: spacing.page,
     backgroundColor: colors.surface,
     borderRadius: radii.cardLg,
-    marginHorizontal: spacing.page,
+    borderWidth: 1,
+    borderColor: colors.border,
     overflow: 'hidden',
+    marginBottom: 16,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    justifyContent: 'space-between',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
-  menuLabel: { fontFamily: 'Inter-Medium', fontSize: 15, color: colors.ink },
+  menuItemBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },
+  menuLabel: { fontFamily: 'Inter-Medium', fontSize: 15, color: colors.ink, flex: 1 },
+  menuRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  menuHint: { fontFamily: 'Inter-Regular', fontSize: 14, color: colors.muted },
   signOutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 24,
     marginHorizontal: spacing.page,
-    height: 52,
+    height: 48,
     borderRadius: radii.button,
     borderWidth: 1.5,
-    borderColor: colors.danger,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  signOutText: { fontFamily: 'Inter-SemiBold', fontSize: 15, color: colors.danger },
+  signOutText: { fontFamily: 'Inter-SemiBold', fontSize: 15, color: colors.muted },
 });

@@ -1,75 +1,137 @@
-// Screen 2a — Onboarding (3-step pager)
-import { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, Image, StatusBar } from 'react-native';
+// Screen 2a — Onboarding
+import { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Dimensions,
+  ImageBackground,
+  StatusBar,
+  ActivityIndicator,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, radii, spacing } from '@/lib/tokens';
 
 const { width, height } = Dimensions.get('window');
+const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
 
-const SLIDES = [
+const SLIDES_STATIC = [
   {
-    title: 'Egyptian brands,\ncurated for you',
-    titleAr: 'ماركات مصرية\nبالنسبة لك',
-    sub: 'Discover and shop authentic local brands',
-    subAr: 'اكتشف وتسوق من الماركات المحلية الأصيلة',
-    image: require('../../assets/onboarding-1.png'),
+    title: "Egypt's home\nfor local brands",
+    sub: 'Discover independent Egyptian labels. Pay by card or cash on delivery, to all 27 governorates.',
   },
   {
     title: 'Fast delivery\nacross Egypt',
-    titleAr: 'توصيل سريع\nفي جميع أنحاء مصر',
-    sub: 'Free shipping over 1,000 EGP to 27 governorates',
-    subAr: 'شحن مجاني عند الطلب فوق ١٠٠٠ جنيه لـ ٢٧ محافظة',
-    image: require('../../assets/onboarding-2.png'),
+    sub: 'Standard 2–4 days. Same-day delivery available in Cairo.',
   },
   {
     title: 'Earn points\nwith every order',
-    titleAr: 'اكسب نقاط\nمع كل طلب',
-    sub: 'Loyalty points you can spend like cash',
-    subAr: 'نقاط ولاء يمكنك إنفاقها كالنقود',
-    image: require('../../assets/onboarding-3.png'),
+    sub: '10 points per order. 1 pt = 1 EGP at checkout.',
   },
 ];
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [lang, setLang] = useState<'en' | 'ar'>('en');
+  const [bgImages, setBgImages] = useState<string[]>([]);
   const router = useRouter();
-  const slide = SLIDES[step];
+
+  useEffect(() => {
+    fetch(`${BASE}/api/export/public-products?limit=3`)
+      .then(r => r.json())
+      .then(d => {
+        const imgs: string[] = (d.products ?? [])
+          .map((p: { image?: string }) => p.image)
+          .filter(Boolean);
+        if (imgs.length) setBgImages(imgs);
+      })
+      .catch(() => {});
+  }, []);
+
+  const slide = SLIDES_STATIC[step];
+  const bgUri = bgImages[step];
 
   return (
     <View style={styles.root}>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
 
-      <Image source={slide.image} style={styles.bg} resizeMode="cover" />
-      <View style={styles.overlay} />
+      {bgUri ? (
+        <ImageBackground source={{ uri: bgUri }} style={styles.bg} resizeMode="cover">
+          <View style={styles.overlay} />
+          <Content
+            slide={slide}
+            step={step}
+            lang={lang}
+            setLang={setLang}
+            setStep={setStep}
+            router={router}
+          />
+        </ImageBackground>
+      ) : (
+        <View style={[styles.bg, { backgroundColor: colors.navy }]}>
+          <Content
+            slide={slide}
+            step={step}
+            lang={lang}
+            setLang={setLang}
+            setStep={setStep}
+            router={router}
+          />
+        </View>
+      )}
+    </View>
+  );
+}
 
-      {/* Language pill */}
-      <Pressable style={styles.langPill} onPress={() => setLang(lang === 'en' ? 'ar' : 'en')}>
-        <Text style={styles.langText}>{lang === 'en' ? 'عربي' : 'EN'}</Text>
-      </Pressable>
+function Content({
+  slide,
+  step,
+  lang,
+  setLang,
+  setStep,
+  router,
+}: {
+  slide: (typeof SLIDES_STATIC)[0];
+  step: number;
+  lang: 'en' | 'ar';
+  setLang: (l: 'en' | 'ar') => void;
+  setStep: (s: number) => void;
+  router: ReturnType<typeof useRouter>;
+}) {
+  return (
+    <View style={styles.flex}>
+      {/* Top bar */}
+      <View style={styles.topBar}>
+        <Text style={styles.wordmark}>brandyy.</Text>
+        <Pressable style={styles.langPill} onPress={() => setLang(lang === 'en' ? 'ar' : 'en')}>
+          <Text style={styles.langText}>{lang === 'en' ? 'العربية' : 'EN'}</Text>
+        </Pressable>
+      </View>
 
+      {/* Bottom content */}
       <View style={styles.content}>
-        {/* Dots */}
-        <View style={styles.dots}>
-          {SLIDES.map((_, i) => (
-            <View key={i} style={[styles.dot, i === step && styles.dotActive]} />
+        {/* Indicator */}
+        <View style={styles.indicators}>
+          {SLIDES_STATIC.map((_, i) => (
+            <View key={i} style={[styles.indicator, i === step && styles.indicatorActive]} />
           ))}
         </View>
 
-        <Text style={styles.title}>{lang === 'ar' ? slide.titleAr : slide.title}</Text>
-        <Text style={styles.sub}>{lang === 'ar' ? slide.subAr : slide.sub}</Text>
+        <Text style={styles.title}>{slide.title}</Text>
+        <Text style={styles.sub}>{slide.sub}</Text>
 
-        {step < SLIDES.length - 1 ? (
+        {step < SLIDES_STATIC.length - 1 ? (
           <Pressable style={styles.btnPrimary} onPress={() => setStep(step + 1)}>
-            <Text style={styles.btnPrimaryText}>{lang === 'ar' ? 'التالي' : 'Next'}</Text>
+            <Text style={styles.btnPrimaryText}>Next</Text>
           </Pressable>
         ) : (
           <Pressable style={styles.btnPrimary} onPress={() => router.push('/(auth)/sign-in')}>
-            <Text style={styles.btnPrimaryText}>{lang === 'ar' ? 'ابدأ' : 'Get started'}</Text>
+            <Text style={styles.btnPrimaryText}>Get started</Text>
           </Pressable>
         )}
         <Pressable style={styles.btnSecondary} onPress={() => router.push('/(auth)/sign-in')}>
-          <Text style={styles.btnSecondaryText}>{lang === 'ar' ? 'تخطي' : 'Skip'}</Text>
+          <Text style={styles.btnSecondaryText}>I already have an account</Text>
         </Pressable>
       </View>
     </View>
@@ -78,17 +140,26 @@ export default function Onboarding() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.navy },
-  bg: { position: 'absolute', width, height },
+  bg: { width, height },
+  flex: { flex: 1 },
   overlay: {
-    position: 'absolute',
-    width,
-    height,
-    backgroundColor: 'rgba(14,22,51,0.55)',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(14,22,51,0.45)',
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.page,
+    paddingTop: 56,
+    paddingBottom: 12,
+  },
+  wordmark: {
+    fontFamily: 'Outfit-ExtraBold',
+    fontSize: 24,
+    color: '#fff',
   },
   langPill: {
-    position: 'absolute',
-    top: 60,
-    right: spacing.page,
     backgroundColor: 'rgba(255,255,255,0.18)',
     paddingHorizontal: 14,
     paddingVertical: 7,
@@ -96,29 +167,32 @@ const styles = StyleSheet.create({
   },
   langText: { color: '#fff', fontFamily: 'Inter-SemiBold', fontSize: 13 },
   content: {
-    flex: 1,
-    justifyContent: 'flex-end',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     paddingHorizontal: spacing.page,
-    paddingBottom: 56,
+    paddingBottom: 52,
   },
-  dots: { flexDirection: 'row', gap: 6, marginBottom: 24 },
-  dot: { height: 4, width: 8, borderRadius: 99, backgroundColor: 'rgba(255,255,255,.35)' },
-  dotActive: { width: 22, backgroundColor: colors.accent },
+  indicators: { flexDirection: 'row', gap: 6, marginBottom: 20 },
+  indicator: { height: 3, width: 24, borderRadius: 2, backgroundColor: 'rgba(255,255,255,.35)' },
+  indicatorActive: { backgroundColor: colors.accent, width: 40 },
   title: {
     fontFamily: 'InstrumentSerif-Regular',
-    fontSize: 46,
+    fontSize: 42,
     color: '#fff',
-    lineHeight: 52,
+    lineHeight: 50,
     marginBottom: 12,
   },
   sub: {
     fontFamily: 'Inter-Regular',
-    fontSize: 15,
-    color: 'rgba(255,255,255,.75)',
+    fontSize: 14,
+    color: 'rgba(255,255,255,.8)',
+    lineHeight: 20,
     marginBottom: 32,
   },
   btnPrimary: {
-    height: 54,
+    height: 56,
     borderRadius: radii.button,
     backgroundColor: colors.accent,
     alignItems: 'center',
@@ -127,12 +201,13 @@ const styles = StyleSheet.create({
   },
   btnPrimaryText: { fontFamily: 'Inter-SemiBold', fontSize: 16, color: colors.ink },
   btnSecondary: {
-    height: 54,
+    height: 56,
     borderRadius: radii.button,
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  btnSecondaryText: { fontFamily: 'Inter-SemiBold', fontSize: 16, color: '#fff' },
+  btnSecondaryText: { fontFamily: 'Inter-SemiBold', fontSize: 15, color: '#fff' },
 });
