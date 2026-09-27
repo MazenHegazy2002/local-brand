@@ -309,7 +309,11 @@ export default function ProductCard({
     >
       <Link
         href={`/product/${displayId}`}
-        aria-label={`View ${displayName}${productBrand ? ` by ${productBrand}` : ''} (${displayId.slice(-4)})`}
+        aria-label={
+          isAr
+            ? `عرض ${displayName}${productBrand ? ` من ${productBrand}` : ''} (${displayId.slice(-4)})`
+            : `View ${displayName}${productBrand ? ` by ${productBrand}` : ''} (${displayId.slice(-4)})`
+        }
         className="block overflow-hidden relative aspect-[4/5] shrink-0 bg-gray-50"
       >
         <Image
@@ -321,14 +325,14 @@ export default function ProductCard({
           loading="lazy"
         />
         {/* Wishlist Button Overlay */}
-        <div className="absolute top-4 right-4 z-20">
+        <div className="absolute top-4 end-4 z-20">
           <WishlistButton product={product as unknown as WishlistProduct} />
         </div>
         {/* Badges Overlay */}
-        <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-10">
+        <div className="absolute top-4 start-4 flex flex-wrap gap-2 z-10">
           {isVerifiedLocal && (
             <span
-              title="Verified Local Brand"
+              title={isAr ? 'علامة تجارية محلية موثّقة' : 'Verified Local Brand'}
               className="inline-flex items-center gap-1 bg-[#1e3b8a] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow"
             >
               <svg
@@ -340,7 +344,7 @@ export default function ProductCard({
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              Local
+              {t('Local')}
             </span>
           )}
           {productTags.slice(0, 2).map((tag: string | Tag) => {
@@ -367,7 +371,11 @@ export default function ProductCard({
           {/* Title with matching unique accessible name */}
           <Link
             href={`/product/${displayId}`}
-            aria-label={`View ${displayName}${productBrand ? ` by ${productBrand}` : ''} (${displayId.slice(-4)})`}
+            aria-label={
+              isAr
+                ? `عرض ${displayName}${productBrand ? ` من ${productBrand}` : ''} (${displayId.slice(-4)})`
+                : `View ${displayName}${productBrand ? ` by ${productBrand}` : ''} (${displayId.slice(-4)})`
+            }
             className="block min-h-[36px] py-1"
           >
             <h3 className="text-[15px] font-bold text-slate-900 dark:text-slate-100 line-clamp-2 mb-2 hover:text-[#1e3b8a] dark:hover:text-[#6b8ff5] transition-colors leading-tight">
@@ -422,7 +430,7 @@ export default function ProductCard({
                         : 'border-slate-300/90 dark:border-slate-600 hover:border-slate-400'
                     }`}
                     style={getSwatchStyle(colorName)}
-                    aria-label={`Select ${colorName} color`}
+                    aria-label={isAr ? `اختيار اللون ${colorName}` : `Select ${colorName} color`}
                     aria-pressed={isSelected}
                   />
                 );
@@ -433,10 +441,10 @@ export default function ProductCard({
           {/* Available Sizes list */}
           {uniqueSizes.length > 0 && (
             <div
-              className="flex flex-wrap gap-1.5 mb-3 mt-1.5 items-center text-left"
+              className="flex flex-wrap gap-1.5 mb-3 mt-1.5 items-center text-start"
               style={{ direction: isAr ? 'rtl' : 'ltr' }}
             >
-              <span className="text-[10px] font-semibold text-slate-500 tracking-wider select-none mr-0.5">
+              <span className="text-[10px] font-semibold text-slate-500 tracking-wider select-none me-0.5">
                 {isAr ? 'المقاسات:' : 'Sizes:'}
               </span>
               <div className="flex flex-wrap gap-1">
@@ -451,7 +459,7 @@ export default function ProductCard({
                         e.stopPropagation();
                         setSelectedSize(sz);
                       }}
-                      aria-label={`Select size ${sz}`}
+                      aria-label={isAr ? `اختيار المقاس ${sz}` : `Select size ${sz}`}
                       aria-pressed={isSelected}
                       className={`px-2 py-0.5 text-[9px] font-black rounded border active:scale-95 ${
                         isSelected
@@ -477,6 +485,7 @@ export default function ProductCard({
           {/* Add to Cart Premium Trigger */}
           <button
             onClick={handleAddToCart}
+            data-track="add-to-cart"
             disabled={added || (activeVariant ? activeVariant.stockCount === 0 : false)}
             className={`w-full text-white py-3 px-4 font-bold tracking-tight flex justify-between items-center group/btn rounded-[var(--radius)] transition-all ${
               added
@@ -490,10 +499,10 @@ export default function ProductCard({
               {added
                 ? addedText
                 : (activeVariant ? activeVariant.stockCount === 0 : false)
-                  ? 'Out of Stock'
+                  ? t('OutOfStock')
                   : addToCartText}
             </span>
-            <span className="text-sm opacity-80 group-hover/btn:translate-x-0.5 transition-transform">
+            <span className="text-sm opacity-80 group-hover/btn:translate-x-0.5 rtl:group-hover/btn:-translate-x-0.5 transition-transform">
               {added ? '✓' : '🛒'}
             </span>
           </button>

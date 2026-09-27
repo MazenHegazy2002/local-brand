@@ -595,6 +595,7 @@ export default function ProductDetails({
           {/* Add to cart */}
           <button
             onClick={handleAddToCart}
+            data-track="add-to-cart"
             disabled={added || availableStock === 0}
             className={`flex-1 h-12 rounded-xl font-black text-sm tracking-wider uppercase transition-all shadow-sm flex items-center justify-center gap-2 ${
               added

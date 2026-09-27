@@ -228,9 +228,11 @@ function CheckoutPageInner() {
         }
         if (removedNames.length) {
           setCartNotice(
-            `Removed ${removedNames.length} item${removedNames.length === 1 ? '' : 's'} that ${
-              removedNames.length === 1 ? 'is' : 'are'
-            } no longer available: ${removedNames.join(', ')}`
+            lang === 'ar'
+              ? `تمت إزالة ${({ one: 'منتج لم يعد متاحاً', two: 'منتجان لم يعودا متاحين', few: `${removedNames.length} منتجات لم تعد متاحة`, many: `${removedNames.length} منتجاً لم يعد متاحاً`, other: `${removedNames.length} منتج لم يعد متاحاً`, zero: '' } as Record<string, string>)[new Intl.PluralRules('ar').select(removedNames.length)] ?? `${removedNames.length} منتج`}: ${removedNames.join('، ')}`
+              : `Removed ${removedNames.length} item${removedNames.length === 1 ? '' : 's'} that ${
+                  removedNames.length === 1 ? 'is' : 'are'
+                } no longer available: ${removedNames.join(', ')}`
           );
         }
       } catch (err) {
@@ -338,9 +340,13 @@ function CheckoutPageInner() {
         return;
       }
 
-      setCouponError(affData.reason || data.message || 'Invalid promo code');
+      setCouponError(
+        affData.reason ||
+          data.message ||
+          (lang === 'ar' ? 'كود الخصم غير صالح' : 'Invalid promo code')
+      );
     } catch (err: unknown) {
-      setCouponError('Failed to apply promo code');
+      setCouponError(t('PromoApplyFailed'));
       console.error(err);
     } finally {
       setApplyingCoupon(false);
@@ -497,7 +503,11 @@ function CheckoutPageInner() {
           }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Failed to initiate Fawry payment');
+        if (!res.ok)
+          throw new Error(
+            data.message ||
+              (lang === 'ar' ? 'تعذّر بدء الدفع عبر فوري' : 'Failed to initiate Fawry payment')
+          );
 
         const mockRes = await createOrder({
           items: items.map(item => ({
@@ -535,7 +545,10 @@ function CheckoutPageInner() {
           );
           return;
         }
-        throw new Error(mockRes.error || 'Failed to place order via Fawry');
+        throw new Error(
+          mockRes.error ||
+            (lang === 'ar' ? 'تعذّر إتمام الطلب عبر فوري' : 'Failed to place order via Fawry')
+        );
       }
 
       // ── PaySky branch — skip createOrder for now, finalize on callback ──
@@ -556,7 +569,11 @@ function CheckoutPageInner() {
           }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Failed to initiate PaySky payment');
+        if (!res.ok)
+          throw new Error(
+            data.message ||
+              (lang === 'ar' ? 'تعذّر بدء الدفع عبر PaySky' : 'Failed to initiate PaySky payment')
+          );
 
         if (data.mockMode) {
           const mockRes = await createOrder({
@@ -593,7 +610,12 @@ function CheckoutPageInner() {
             router.push(`/checkout/success?orderId=${mockRes.orderId}`);
             return;
           }
-          throw new Error(mockRes.error || 'Failed to place order via mock PaySky');
+          throw new Error(
+            mockRes.error ||
+              (lang === 'ar'
+                ? 'تعذّر إتمام الطلب عبر PaySky (وضع التجربة)'
+                : 'Failed to place order via mock PaySky')
+          );
         }
 
         setPaySkyInit({
@@ -643,12 +665,12 @@ function CheckoutPageInner() {
       }
 
       // ── 4. Order action returned a structured error — surface it & stop ──────
-      const message = res.error || (lang === 'ar' ? 'فشل تقديم الطلب' : 'Failed to place order');
+      const message = res.error || (lang === 'ar' ? 'تعذّر إتمام الطلب' : 'Failed to place order');
       setError(message);
       setIsLoading(false);
     } catch (err: unknown) {
       const error = err as Error;
-      setError(error.message || (lang === 'ar' ? 'فشل تقديم الطلب' : 'Failed to place order'));
+      setError(error.message || (lang === 'ar' ? 'تعذّر إتمام الطلب' : 'Failed to place order'));
       setIsLoading(false);
     }
   };
@@ -703,11 +725,11 @@ function CheckoutPageInner() {
               </svg>
             </div>
             <h3 className="text-xl font-black text-slate-800">
-              {lang === 'ar' ? 'غير مسموح بالطلب' : 'Checkout Restricted'}
+              {lang === 'ar' ? 'الشراء غير متاح لهذا الحساب' : 'Checkout Restricted'}
             </h3>
             <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed font-sans">
               {lang === 'ar'
-                ? 'الحسابات التجارية (البائعين) والمسؤولين لا يمكنهم تقديم طلبات شراء من المتجر. يرجى تسجيل الدخول بحساب عميل عادي لإتمام الشراء.'
+                ? 'لا يمكن لحسابات البائعين والمسؤولين تقديم طلبات شراء. يرجى تسجيل الدخول بحساب عميل لإتمام الشراء.'
                 : 'Sellers and Administrator accounts cannot place orders or purchase items. Please log in with a customer account to checkout.'}
             </p>
             <div className="pt-2">
@@ -753,7 +775,7 @@ function CheckoutPageInner() {
                   <button
                     type="button"
                     onClick={() => setCartNotice('')}
-                    aria-label="Dismiss"
+                    aria-label={lang === 'ar' ? 'إغلاق' : 'Dismiss'}
                     className="text-amber-700 hover:text-amber-900"
                   >
                     ×
@@ -854,6 +876,7 @@ function CheckoutPageInner() {
                           className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
                           placeholder="you@example.com"
                           autoComplete="email"
+                          dir="ltr"
                           style={{ textAlign: isRTL ? 'right' : 'left' }}
                         />
                         <p className="text-xs text-gray-500 mt-1">
@@ -894,6 +917,8 @@ function CheckoutPageInner() {
                         onChange={e => setAddress({ ...address, phone: e.target.value })}
                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
                         placeholder={lang === 'ar' ? 'مثال: 01234567890' : 'e.g. 01234567890'}
+                        dir="ltr"
+                        inputMode="tel"
                         style={{ textAlign: isRTL ? 'right' : 'left' }}
                       />
                     </div>
@@ -1465,7 +1490,10 @@ function CheckoutPageInner() {
                   <div className="flex justify-between text-gray-900 border-t border-gray-100 pt-3">
                     <span className="font-bold text-base">{t('Total')}</span>
                     <span className="font-black text-xl text-[#1e3b8a]">
-                      {grandTotal.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} {t('EGP')}
+                      {grandTotal.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', {
+                        maximumFractionDigits: 2,
+                      })}{' '}
+                      {t('EGP')}
                     </span>
                   </div>
                 </div>
@@ -1473,6 +1501,7 @@ function CheckoutPageInner() {
                 <button
                   type="submit"
                   form="checkout-form"
+                  data-track="place-order"
                   disabled={isLoading || isReadOnly}
                   className="w-full bg-[#1e3b8a] hover:bg-[#152c6e] text-white font-bold py-4 rounded-xl shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -1482,7 +1511,7 @@ function CheckoutPageInner() {
                       : 'Checkout Temporarily Paused (Read-Only Mode)'
                     : isLoading
                       ? t('Processing')
-                      : `${t('PlaceOrder')} — ${grandTotal.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} ${t('EGP')}`}
+                      : `${t('PlaceOrder')} — ${grandTotal.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { maximumFractionDigits: 2 })} ${t('EGP')}`}
                 </button>
 
                 <div className="mt-4 text-xs text-center text-gray-500 flex items-center justify-center gap-2">

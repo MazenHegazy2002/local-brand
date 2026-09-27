@@ -179,7 +179,7 @@ export default function SellPage() {
   const translatePlatform = (p: string) => {
     if (lang !== 'ar') return p;
     const arPlatforms: Record<string, string> = {
-      Instagram: 'إنستغرام',
+      Instagram: 'إنستجرام',
       TikTok: 'تيك توك',
       YouTube: 'يوتيوب',
       Facebook: 'فيسبوك',
@@ -249,7 +249,7 @@ export default function SellPage() {
           router.push('/affiliate/dashboard');
           return;
         }
-        throw new Error(data.error ?? 'Something went wrong.');
+        throw new Error(data.error ?? (lang === 'ar' ? 'حدث خطأ ما.' : 'Something went wrong.'));
       }
       setResult({ promoCode: data.promoCode });
       setStep('success');
@@ -299,7 +299,7 @@ export default function SellPage() {
         </h1>
         <p style={{ color: '#64748b', marginBottom: 24, lineHeight: 1.6 }}>
           {lang === 'ar'
-            ? `كود الخصم المطلوب الخاص بك هو ${result.promoCode}. سنقوم بمراجعة الطلبات في غضون 24-48 ساعة وسنرسل لك بريدًا إلكترونيًا بمجرد الموافقة.`
+            ? `كود الخصم الذي طلبته هو ${result.promoCode}. نراجع الطلبات خلال 24–48 ساعة، وسنرسل لك بريدًا إلكترونيًا فور الموافقة.`
             : `Your requested promo code is ${result.promoCode}. We review applications within 24–48 hours and will email you once approved.`}
         </p>
         <Link
@@ -373,7 +373,7 @@ export default function SellPage() {
         <div style={{ textAlign: isRTL ? 'right' : 'left', marginBottom: 28 }}>
           <div style={{ fontSize: 24, marginBottom: 8 }}>🚀</div>
           <h1 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 6px' }}>
-            {lang === 'ar' ? 'انضم لبرنامج الأفيليت' : 'Join the Affiliate Program'}
+            {lang === 'ar' ? 'انضم إلى برنامج التسويق بالعمولة' : 'Join the Affiliate Program'}
           </h1>
           <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>
             {lang === 'ar'
@@ -625,7 +625,7 @@ export default function SellPage() {
             }}
           >
             {lang === 'ar'
-              ? 'لديك طلب قيد الانتظار حالياً. يمكنك تعديل تفاصيل طلبك أدناه وحفظ التغييرات.'
+              ? 'لديك طلب انضمام قيد المراجعة حالياً. يمكنك تعديل بياناته أدناه وحفظ التغييرات.'
               : 'You currently have a PENDING application under review. You can modify your application details below and save changes.'}
           </div>
         )}
@@ -645,7 +645,7 @@ export default function SellPage() {
             }}
           >
             {lang === 'ar'
-              ? 'تم رفض طلبك السابق. يرجى مراجعة تفاصيل طلبك وإعادة تقديمها للمراجعة.'
+              ? 'تم رفض طلبك السابق. يرجى تعديل بيانات طلبك وإعادة تقديمه للمراجعة.'
               : 'Your previous application was rejected. Please revise your application details and resubmit for review.'}
           </div>
         )}
@@ -927,7 +927,7 @@ export default function SellPage() {
                   type="text"
                   value={form.payoutDetails}
                   onChange={e => set('payoutDetails', e.target.value)}
-                  placeholder={lang === 'ar' ? 'رقم الهاتف أو الآيبان' : '01xxxxxxxxx'}
+                  placeholder={lang === 'ar' ? 'رقم الهاتف / الآيبان' : '01xxxxxxxxx'}
                   style={{
                     width: '100%',
                     border: '1px solid #e2e8f0',
@@ -1064,17 +1064,17 @@ export default function SellPage() {
           { label: t('AffiliateCommissionSub'), value: '5–12%', sub: t('earnings') },
           {
             label: t('AffiliateBuyerDiscountSub'),
-            value: 'Up to 30%',
+            value: lang === 'ar' ? 'حتى 30%' : 'Up to 30%',
             sub: t('AffiliateBuyerDiscount'),
           },
           {
             label: t('AffiliateReferralBonusSub'),
-            value: lang === 'ar' ? '٥٠ ج.م' : '50 EGP',
+            value: lang === 'ar' ? '50 ج.م' : '50 EGP',
             sub: t('AffiliateReferralBonus'),
           },
           {
             label: t('AffiliateJoinerBonusSub'),
-            value: lang === 'ar' ? '٣٠ ج.م' : '30 EGP',
+            value: lang === 'ar' ? '30 ج.م' : '30 EGP',
             sub: t('AffiliateJoinerBonus'),
           },
         ].map((stat, idx) => (

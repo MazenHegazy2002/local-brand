@@ -64,7 +64,7 @@ export default function SellerApplicationPage() {
   const [pickupGeo, setPickupGeo] = useState('');
   const [pickupZone, setPickupZone] = useState('');
   const [pickupSubzone, setPickupSubzone] = useState('');
-  const [logisticsHub, setLogisticsHub] = useState('المركز اللوجيستي الرئيسي');
+  const [logisticsHub, setLogisticsHub] = useState('المركز اللوجستي الرئيسي');
   const [gettingLocation, setGettingLocation] = useState(false);
 
   const [facebookUrl, setFacebookUrl] = useState('');
@@ -292,7 +292,8 @@ export default function SellerApplicationPage() {
                     <span>📍</span> Product Pickup Warehouse Address
                   </h3>
                   <p className="text-xs text-gray-500 mb-4">
-                    Couriers will dispatch drivers to this address to collect sold orders for delivery.
+                    Couriers will dispatch drivers to this address to collect sold orders for
+                    delivery.
                   </p>
 
                   <div className="space-y-4">
@@ -391,7 +392,9 @@ export default function SellerApplicationPage() {
                             navigator.geolocation.getCurrentPosition(
                               pos => {
                                 setGettingLocation(false);
-                                setPickupGeo(`${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`);
+                                setPickupGeo(
+                                  `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`
+                                );
                               },
                               err => {
                                 setGettingLocation(false);
@@ -415,7 +418,9 @@ export default function SellerApplicationPage() {
                             className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs font-mono bg-white outline-none"
                             placeholder="e.g. 30.067807, 31.518141"
                           />
-                          <p className="text-[10px] text-slate-400 mt-1">Format: Lat, Long (e.g. 30.067807, 31.518141)</p>
+                          <p className="text-[10px] text-slate-400 mt-1">
+                            Format: Lat, Long (e.g. 30.067807, 31.518141)
+                          </p>
                         </div>
                         <div>
                           <input

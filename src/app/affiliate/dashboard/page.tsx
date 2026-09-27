@@ -119,7 +119,7 @@ export default function AffiliateDashboardPage() {
       if (!res.ok) throw new Error(d.error);
       setPayoutMsg(
         lang === 'ar'
-          ? `تم طلب سحب بقيمة ${d.amountEgp.toLocaleString('ar-EG')} ج.م بنجاح!`
+          ? `تم إرسال طلب سحب بقيمة ${d.amountEgp.toLocaleString('ar-EG')} ج.م بنجاح!`
           : `Payout of ${d.amountEgp} EGP requested successfully!`
       );
       // Reload dashboard data
@@ -201,7 +201,7 @@ export default function AffiliateDashboardPage() {
             onClick={() => window.location.reload()}
             className="text-xs text-white underline font-bold"
           >
-            Retry
+            {lang === 'ar' ? 'إعادة المحاولة' : 'Retry'}
           </button>
         </div>
       </div>
@@ -321,7 +321,7 @@ export default function AffiliateDashboardPage() {
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-              {lang === 'ar' ? 'خروج' : 'Sign Out'}
+              {lang === 'ar' ? 'تسجيل الخروج' : 'Sign Out'}
             </button>
           </div>
         </div>
@@ -352,7 +352,7 @@ export default function AffiliateDashboardPage() {
               })}
             </p>
           </div>
-          <div className="sm:text-right shrink-0">
+          <div className="sm:text-end shrink-0">
             <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-1">
               {t('AffiliateTierLabel') || 'Tier'}
             </p>
@@ -413,7 +413,7 @@ export default function AffiliateDashboardPage() {
               key={idx}
               className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 relative overflow-hidden"
             >
-              <div className="absolute right-3 top-3 text-base opacity-30">{s.icon}</div>
+              <div className="absolute end-3 top-3 text-base opacity-30">{s.icon}</div>
               <p className="text-[9px] font-black uppercase tracking-widest text-zinc-600 mb-2">
                 {s.label}
               </p>
@@ -447,7 +447,7 @@ export default function AffiliateDashboardPage() {
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(
                   (lang === 'ar'
-                    ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} في Brandy للحصول على خصم بقيمة ${affiliate.discountPct}% على طلبك! `
+                    ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} على Brandy واحصل على خصم ${affiliate.discountPct}% على طلبك! `
                     : `Use my promo code ${affiliate.promoCode} at Brandy to get ${affiliate.discountPct}% off your order! `) +
                     'https://brandyy.shop'
                 )}`}
@@ -460,7 +460,7 @@ export default function AffiliateDashboardPage() {
               <a
                 href={`https://t.me/share/url?url=${encodeURIComponent('https://brandyy.shop')}&text=${encodeURIComponent(
                   lang === 'ar'
-                    ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} في Brandy للحصول على خصم بقيمة ${affiliate.discountPct}% على طلبك!`
+                    ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} على Brandy واحصل على خصم ${affiliate.discountPct}% على طلبك!`
                     : `Use my promo code ${affiliate.promoCode} at Brandy to get ${affiliate.discountPct}% off your order!`
                 )}`}
                 target="_blank"
@@ -487,7 +487,7 @@ export default function AffiliateDashboardPage() {
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(
                   (lang === 'ar'
-                    ? 'ألقِ نظرة على متجر Brandy الرائع للمنتجات المحلية! استخدم رابط الإحالة الخاص بي: '
+                    ? 'اكتشف Brandy، أروع متجر للبراندات المحلية! استخدم رابط الإحالة الخاص بي: '
                     : 'Check out this amazing marketplace for local brands! Use my referral link: ') +
                     affiliate.referralLink
                 )}`}
@@ -500,7 +500,7 @@ export default function AffiliateDashboardPage() {
               <a
                 href={`https://t.me/share/url?url=${encodeURIComponent(affiliate.referralLink)}&text=${encodeURIComponent(
                   lang === 'ar'
-                    ? 'ألقِ نظرة على متجر Brandy الرائع للمنتجات المحلية!'
+                    ? 'اكتشف Brandy، أروع متجر للبراندات المحلية!'
                     : 'Check out this amazing marketplace for local brands!'
                 )}`}
                 target="_blank"
@@ -550,7 +550,7 @@ export default function AffiliateDashboardPage() {
                     ? 'نشط'
                     : 'Active'
                   : lang === 'ar'
-                    ? 'معلق'
+                    ? 'قيد الانتظار'
                     : 'Pending';
                 return (
                   <div
@@ -566,19 +566,19 @@ export default function AffiliateDashboardPage() {
                       {b.expiresAt && (
                         <p className="text-[10px] text-zinc-600 mt-0.5">
                           {lang === 'ar'
-                            ? `تنتهي: ${new Date(b.expiresAt).toLocaleDateString('ar-EG')}`
+                            ? `تنتهي في: ${new Date(b.expiresAt).toLocaleDateString('ar-EG')}`
                             : `Expires: ${new Date(b.expiresAt).toLocaleDateString('en-EG')}`}
                         </p>
                       )}
                       {!isActive && b.type === 'REFERRER_SIGNUP' && (
                         <p className="text-[10px] text-zinc-600 mt-0.5">
                           {lang === 'ar'
-                            ? 'يُفعَّل عند إتمام إحالتك أول طلب'
+                            ? 'تُفعَّل عندما يُتم الشخص الذي دعوته أول طلب له'
                             : 'Activates when your referral completes their first order'}
                         </p>
                       )}
                     </div>
-                    <div className="text-right">
+                    <div className="text-end">
                       <p
                         className={`text-sm font-black ${isActive ? 'text-emerald-400' : 'text-zinc-500'}`}
                       >
@@ -653,13 +653,13 @@ export default function AffiliateDashboardPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="w-full text-start border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-zinc-800 text-zinc-600 uppercase tracking-widest font-black text-[9px]">
                     <th className="pb-3">{t('AffiliateOrderHeader') || 'Order'}</th>
                     <th className="pb-3">{t('AffiliateSaleValueHeader') || 'Sale'}</th>
                     <th className="pb-3">{t('AffiliateRateHeader') || 'Rate'}</th>
-                    <th className="pb-3 text-right">{t('AffiliateEarnedHeader') || 'Earned'}</th>
+                    <th className="pb-3 text-end">{t('AffiliateEarnedHeader') || 'Earned'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -682,7 +682,7 @@ export default function AffiliateDashboardPage() {
                           : `${c.orderTotalEgp.toLocaleString()} EGP`}
                       </td>
                       <td className="py-3 font-bold text-zinc-300">{c.commissionPct}%</td>
-                      <td className="py-3 text-right font-black text-emerald-400">
+                      <td className="py-3 text-end font-black text-emerald-400">
                         {lang === 'ar'
                           ? `${c.commissionEgp.toFixed(1)} ج.م`
                           : `${c.commissionEgp.toFixed(1)} EGP`}
@@ -703,7 +703,7 @@ export default function AffiliateDashboardPage() {
             </h3>
             <p className="text-xs text-zinc-500 mb-5">
               {lang === 'ar'
-                ? `لديك مبلغ ${affiliate.pendingEarningsEgp.toLocaleString('ar-EG')} ج.م متاح للسحب.`
+                ? `لديك ${affiliate.pendingEarningsEgp.toLocaleString('ar-EG')} ج.م متاحة للسحب.`
                 : `You have ${affiliate.pendingEarningsEgp.toLocaleString()} EGP available to withdraw.`}
             </p>
             <form onSubmit={requestPayout} className="flex flex-col sm:flex-row gap-3">

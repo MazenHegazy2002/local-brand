@@ -51,7 +51,7 @@ export default function SellerSettingsPage() {
     pickupGeo: '',
     pickupZone: '',
     pickupSubzone: '',
-    logisticsHub: 'المركز اللوجيستي الرئيسي',
+    logisticsHub: 'المركز اللوجستي الرئيسي',
   });
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function SellerSettingsPage() {
             pickupGeo: seller.pickupGeo || '',
             pickupZone: seller.pickupZone || '',
             pickupSubzone: seller.pickupSubzone || '',
-            logisticsHub: seller.logisticsHub || 'المركز اللوجيستي الرئيسي',
+            logisticsHub: seller.logisticsHub || 'المركز اللوجستي الرئيسي',
           });
         } else if (res.status !== 401 && res.status !== 403) {
           const d = await res.json().catch(() => ({}));

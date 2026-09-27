@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Suspense, useEffect } from 'react';
 import { useCartStore } from '@/lib/cartStore';
+import { useLanguage } from '@/providers/LanguageContext';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -23,6 +24,7 @@ function SuccessContent() {
     ? `/track/${encodeURIComponent(orderId || '')}`
     : '/dashboard?tab=orders';
   const clearCart = useCartStore(s => s.clearCart);
+  const { lang } = useLanguage();
 
   // Clear cart on mount — safety net in case the checkout redirect didn't clear it
   useEffect(() => {
@@ -76,40 +78,63 @@ function SuccessContent() {
         </svg>
       </div>
 
-      <h1 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">Order Confirmed!</h1>
+      <h1 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">
+        {lang === 'ar' ? 'تم تأكيد طلبك!' : 'Order Confirmed!'}
+      </h1>
       <p className="text-gray-500 text-lg mb-2 leading-relaxed max-w-md mx-auto">
-        Thank you for supporting local Egyptian brands. We&apos;ve received your order and are
-        getting it ready for shipment.
+        {lang === 'ar'
+          ? 'شكراً لدعمك البراندات المصرية المحلية. استلمنا طلبك ونجهّزه الآن للشحن.'
+          : "Thank you for supporting local Egyptian brands. We've received your order and are getting it ready for shipment."}
       </p>
       <p className="text-gray-400 text-sm mb-8 leading-relaxed max-w-md mx-auto">
-        A confirmation email is on its way — please check your inbox (and spam folder, just in
-        case).
+        {lang === 'ar'
+          ? 'أرسلنا إليك رسالة تأكيد عبر البريد الإلكتروني، يرجى مراجعة صندوق الوارد (والرسائل غير المرغوب فيها احتياطاً).'
+          : 'A confirmation email is on its way — please check your inbox (and spam folder, just in case).'}
       </p>
 
       <div className="flex flex-col gap-4 items-center mb-10">
         <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 inline-block min-w-[280px]">
           <div className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">
-            Order Reference
+            {lang === 'ar' ? 'رقم الطلب' : 'Order Reference'}
           </div>
-          <div className="text-xl font-bold text-[#1e3b8a] font-mono">{displayOrderId}</div>
+          <div className="text-xl font-bold text-[#1e3b8a] font-mono" dir="ltr">
+            {displayOrderId}
+          </div>
         </div>
 
         {searchParams.get('fawryRef') && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-left max-w-md w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-start max-w-md w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">🏪</span>
-              <h3 className="font-black text-amber-900 text-base">Fawry Payment Required</h3>
+              <h3 className="font-black text-amber-900 text-base">
+                {lang === 'ar' ? 'مطلوب الدفع عبر فوري' : 'Fawry Payment Required'}
+              </h3>
             </div>
             <p className="text-amber-800 text-xs leading-relaxed mb-4">
-              To finalize your order, please complete your cash payment at any Fawry retail outlet,
-              smart kiosk, or mobile wallet within **48 hours** using the reference code below:
+              {lang === 'ar' ? (
+                <>
+                  لإتمام طلبك، يرجى الدفع نقداً لدى أي منفذ فوري أو ماكينة فوري أو عبر المحفظة
+                  الإلكترونية خلال <strong>48 ساعة</strong> باستخدام الرقم المرجعي التالي:
+                </>
+              ) : (
+                <>
+                  To finalize your order, please complete your cash payment at any Fawry retail
+                  outlet, smart kiosk, or mobile wallet within <strong>48 hours</strong> using the
+                  reference code below:
+                </>
+              )}
             </p>
-            <div className="bg-white border border-amber-300 rounded-xl p-3 text-center shadow-sm font-mono font-black text-amber-700 text-lg tracking-wider mb-4">
+            <div
+              className="bg-white border border-amber-300 rounded-xl p-3 text-center shadow-sm font-mono font-black text-amber-700 text-lg tracking-wider mb-4"
+              dir="ltr"
+            >
               {searchParams.get('fawryRef')}
             </div>
             <p className="text-[10px] text-amber-600 leading-tight">
-              ⚠️ Orders are automatically cancelled if payment is not received before the 48-hour
-              expiration window.
+              ⚠️{' '}
+              {lang === 'ar'
+                ? 'يُلغى الطلب تلقائياً إذا لم يتم الدفع خلال 48 ساعة.'
+                : 'Orders are automatically cancelled if payment is not received before the 48-hour expiration window.'}
             </p>
           </div>
         )}
@@ -120,28 +145,31 @@ function SuccessContent() {
           href={trackHref}
           className="bg-[#1e3b8a] text-white font-bold py-4 px-8 rounded-xl hover:bg-[#152c6e] shadow-lg shadow-[#1e3b8a]/20 transition-all"
         >
-          Track My Order
+          {lang === 'ar' ? 'تتبّع طلبي' : 'Track My Order'}
         </Link>
         <Link
           href="/shop"
           className="bg-white text-gray-900 border border-gray-200 font-bold py-4 px-8 rounded-xl hover:bg-gray-50 transition-colors"
         >
-          Continue Shopping
+          {lang === 'ar' ? 'متابعة التسوق' : 'Continue Shopping'}
         </Link>
       </div>
 
       {isGuest && (
-        <div className="mt-10 bg-blue-50 border border-blue-100 rounded-2xl p-6 text-left">
-          <h3 className="font-bold text-gray-900 mb-1">Save this order to your account</h3>
+        <div className="mt-10 bg-blue-50 border border-blue-100 rounded-2xl p-6 text-start">
+          <h3 className="font-bold text-gray-900 mb-1">
+            {lang === 'ar' ? 'احفظ هذا الطلب في حسابك' : 'Save this order to your account'}
+          </h3>
           <p className="text-sm text-gray-600 mb-4">
-            Create an account with the same email you used at checkout — this order will be linked
-            automatically and you&apos;ll be able to track it without re-entering the ID.
+            {lang === 'ar'
+              ? 'أنشئ حساباً بنفس البريد الإلكتروني الذي استخدمته عند الدفع، وسيُربط هذا الطلب بحسابك تلقائياً لتتمكن من تتبّعه دون إدخال رقم الطلب مرة أخرى.'
+              : "Create an account with the same email you used at checkout — this order will be linked automatically and you'll be able to track it without re-entering the ID."}
           </p>
           <Link
             href="/register"
             className="inline-block bg-white border border-[#1e3b8a] text-[#1e3b8a] font-bold py-2.5 px-5 rounded-lg hover:bg-[#1e3b8a] hover:text-white transition-colors text-sm"
           >
-            Create an account
+            {lang === 'ar' ? 'إنشاء حساب' : 'Create an account'}
           </Link>
         </div>
       )}
@@ -150,6 +178,7 @@ function SuccessContent() {
 }
 
 export default function CheckoutSuccessPage() {
+  const { lang } = useLanguage();
   return (
     <main className="min-h-screen bg-[#f9f8f6]">
       <Navbar />
@@ -161,7 +190,11 @@ export default function CheckoutSuccessPage() {
           <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-[#1e3b8a] opacity-10 rounded-full blur-3xl"></div>
 
           <Suspense
-            fallback={<div className="relative z-10 py-10">Loading your order details...</div>}
+            fallback={
+              <div className="relative z-10 py-10">
+                {lang === 'ar' ? 'جاري تحميل تفاصيل طلبك...' : 'Loading your order details...'}
+              </div>
+            }
           >
             <SuccessContent />
           </Suspense>

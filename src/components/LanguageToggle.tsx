@@ -27,7 +27,7 @@ export default function LanguageToggle() {
       >
         <path d="M5 8l6 6 6-6" />
       </svg>
-      {lang === 'ar' ? 'EN' : 'عربى'}
+      {lang === 'ar' ? 'EN' : 'عربي'}
     </button>
   );
 }

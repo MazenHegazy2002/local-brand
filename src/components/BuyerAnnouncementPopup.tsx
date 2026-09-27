@@ -164,7 +164,7 @@ export default function BuyerAnnouncementPopup({
           bannerBg: 'bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900',
           iconBg: 'bg-blue-500/30 text-blue-100',
           btnBg: 'bg-blue-900 hover:bg-blue-800 shadow-blue-900/20',
-          badgeText: isRtl ? 'تنويه' : 'Announcement',
+          badgeText: isRtl ? 'إعلان' : 'Announcement',
           Icon: Info,
         };
     }
@@ -186,8 +186,8 @@ export default function BuyerAnnouncementPopup({
           {/* Close button */}
           <button
             onClick={handleClose}
-            className={`absolute top-4 ${isRtl ? 'left-4' : 'right-4'} z-10 text-white/80 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/10`}
-            aria-label="Close message"
+            className={`absolute top-4 end-4 z-10 text-white/80 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/10`}
+            aria-label={isRtl ? 'إغلاق الرسالة' : 'Close message'}
           >
             <X size={20} />
           </button>
@@ -207,7 +207,7 @@ export default function BuyerAnnouncementPopup({
 
         {/* Message Content */}
         <div className="p-6 space-y-5">
-          <div className="text-gray-700 dark:text-gray-300 text-sm md:text-base leading-relaxed whitespace-pre-line font-normal max-h-[60vh] overflow-y-auto pr-1">
+          <div className="text-gray-700 dark:text-gray-300 text-sm md:text-base leading-relaxed whitespace-pre-line font-normal max-h-[60vh] overflow-y-auto pe-1">
             {activeMessage}
           </div>
 
@@ -222,12 +222,12 @@ export default function BuyerAnnouncementPopup({
                   className="rounded border-gray-300 text-blue-900 focus:ring-blue-900"
                 />
                 <span>
-                  {isRtl ? 'عدم إظهار هذه الرسالة مجدداً' : "Don't show this message again"}
+                  {isRtl ? 'لا تُظهر هذه الرسالة مرة أخرى' : "Don't show this message again"}
                 </span>
               </label>
             ) : (
               <span className="text-xs text-amber-600 font-semibold bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-md">
-                {isRtl ? 'معاينة مباشرة (في لوحة التحكم)' : 'Live Admin Preview'}
+                {isRtl ? 'معاينة مباشرة من لوحة التحكم' : 'Live Admin Preview'}
               </span>
             )}
 

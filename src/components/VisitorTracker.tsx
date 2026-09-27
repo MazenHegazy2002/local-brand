@@ -118,16 +118,19 @@ export default function VisitorTracker() {
     const handleGlobalClick = (e: MouseEvent) => {
       if (!sessionTokenRef.current) return;
       const target = e.target as HTMLElement;
-      const btn = target.closest('button') || target.closest('a');
+      const tagged = target.closest<HTMLElement>('[data-track]');
+      const btn = tagged || target.closest('button') || target.closest('a');
       if (!btn) return;
 
-      const text = (btn.textContent || '').toLowerCase().trim();
+      const track = tagged?.dataset.track;
+      const text = track ? '' : (btn.textContent || '').toLowerCase().trim();
       const userId = (session?.user as SessionUser | undefined)?.id || null;
 
       if (
+        track === 'add-to-cart' ||
         text.includes('add to cart') ||
-        text.includes('إضافة إلى السلة') ||
-        text.includes('إضافة للسلة')
+        text.includes('أضف إلى السلة') ||
+        text.includes('أضف للسلة')
       ) {
         fetch('/api/tracker', {
           method: 'POST',
@@ -141,8 +144,8 @@ export default function VisitorTracker() {
           }),
         }).catch(() => {});
       } else if (
+        track === 'checkout' ||
         text.includes('checkout') ||
-        text.includes('الدفع') ||
         text.includes('إتمام الشراء')
       ) {
         fetch('/api/tracker', {
@@ -157,10 +160,9 @@ export default function VisitorTracker() {
           }),
         }).catch(() => {});
       } else if (
+        track === 'place-order' ||
         text.includes('place order') ||
-        text.includes('تأكيد الطلب') ||
-        text.includes('confirm order') ||
-        text.includes('تأكيد طلبك')
+        text.includes('تأكيد الطلب')
       ) {
         fetch('/api/tracker', {
           method: 'POST',
