@@ -1,9 +1,10 @@
 // Screen 2e — Product detail
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
+  FlatList,
   ScrollView,
   Pressable,
   Dimensions,
@@ -39,6 +40,7 @@ export default function ProductDetail() {
   const [selectedSize, setSelectedSize] = useState<string>();
   const [selectedColor, setSelectedColor] = useState<string>();
   const [imgIdx, setImgIdx] = useState(0);
+  const flatRef = useRef<FlatList>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -73,17 +75,20 @@ export default function ProductDetail() {
     <View style={styles.root}>
       {/* Gallery */}
       <View style={styles.gallery}>
-        <ScrollView
+        <FlatList
+          ref={flatRef}
+          data={images}
+          keyExtractor={(_, i) => String(i)}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
+          scrollEventThrottle={16}
           onScroll={e => setImgIdx(Math.round(e.nativeEvent.contentOffset.x / width))}
-          scrollEventThrottle={100}
-        >
-          {images.map((uri, i) => (
-            <Image key={i} source={{ uri }} style={{ width, height: 470 }} contentFit="cover" />
-          ))}
-        </ScrollView>
+          getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+          renderItem={({ item: uri }) => (
+            <Image source={{ uri }} style={{ width, height: 470 }} contentFit="cover" />
+          )}
+        />
 
         {/* Overlay buttons */}
         <Pressable style={[styles.galleryBtn, { left: 16, top: 52 }]} onPress={() => router.back()}>
