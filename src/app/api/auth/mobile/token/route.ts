@@ -40,18 +40,18 @@ export async function POST(req: NextRequest) {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(`${ACCESS_TTL}s`)
+    .setAudience('mobile-access')
     .sign(JWT_SECRET);
 
   const refreshToken = await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(`${REFRESH_TTL}s`)
+    .setAudience('mobile-refresh')
     .sign(JWT_SECRET);
 
-  // Store refresh token in Redis for revocation support
-  try {
-    await redis?.set(`mobile:refresh:${user.id}`, refreshToken, 'EX', REFRESH_TTL);
-  } catch {}
+  // Store refresh token in Redis for revocation support; refuse to issue if it can't be persisted
+  await redis?.set(`mobile:refresh:${user.id}`, refreshToken, 'EX', REFRESH_TTL);
 
   return NextResponse.json({
     accessToken,

@@ -10,12 +10,12 @@ export async function POST(req: NextRequest) {
   if (!refreshToken) return NextResponse.json({ error: 'Missing token' }, { status: 400 });
 
   try {
-    const { payload } = await jwtVerify(refreshToken, JWT_SECRET);
+    const { payload } = await jwtVerify(refreshToken, JWT_SECRET, { audience: 'mobile-refresh' });
     const { id, role, email } = payload as { id: string; role: string; email: string };
 
-    // Verify the stored refresh token still matches (handles revocation)
+    // Fail closed: require stored token to exist AND match
     const stored = await redis?.get(`mobile:refresh:${id}`);
-    if (stored && stored !== refreshToken) {
+    if (!stored || stored !== refreshToken) {
       return NextResponse.json({ error: 'Token revoked' }, { status: 401 });
     }
 
@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime(`${ACCESS_TTL}s`)
+      .setAudience('mobile-access')
       .sign(JWT_SECRET);
 
     return NextResponse.json({ accessToken, expiresIn: ACCESS_TTL });
