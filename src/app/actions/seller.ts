@@ -9,6 +9,7 @@ import bcrypt from 'bcryptjs';
 import { BCRYPT_COST, PLATFORM_URL } from '@/lib/constants';
 import { getCachedData } from '@/lib/cache';
 import { sanitizeProducts } from '@/lib/sanitize-product';
+import { ensureCoreCategories } from '@/lib/ensure-categories';
 
 import type { Session } from 'next-auth';
 import type { Review, SessionUser } from '@/types';
@@ -529,6 +530,7 @@ export async function getDashboardStats() {
         orderBy: { createdAt: 'desc' },
         take: 100,
       });
+      await ensureCoreCategories();
       const categories = await prisma.category.findMany({ include: { children: true } });
       const tags = await prisma.tag.findMany();
       const collections = await prisma.collection.findMany();

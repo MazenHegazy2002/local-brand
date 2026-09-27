@@ -74,7 +74,11 @@ export async function GET(req: Request) {
       });
     }
 
-    // All categories with product counts — exclude empty ones and test placeholders
+    // Auto-ensure core categories exist in DB
+    const { ensureCoreCategories } = await import('@/lib/ensure-categories');
+    await ensureCoreCategories();
+
+    // All categories with product counts — exclude test placeholders
     const allCategories = await prisma.category.findMany({
       where: { parentId: null }, // only top-level
       include: {
@@ -84,12 +88,9 @@ export async function GET(req: Request) {
       orderBy: { name: 'asc' },
     });
 
-    // Filter out categories with zero products and any test/placeholder categories
+    // Filter out test/placeholder categories
     const categories = allCategories.filter(
-      cat =>
-        cat._count.products > 0 &&
-        cat.name.toLowerCase() !== 'testcategory' &&
-        !cat.name.toLowerCase().startsWith('test')
+      cat => cat.name.toLowerCase() !== 'testcategory' && !cat.name.toLowerCase().startsWith('test')
     );
 
     // Strip internal IDs for unauthenticated requests
