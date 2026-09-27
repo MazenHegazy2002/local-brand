@@ -17,6 +17,8 @@ interface SeedVariant {
   label: string; // e.g. "Red - M"
   color?: string;
   size?: string;
+  img?: string;
+  image?: string;
   price: number;
   stock: number;
 }
@@ -426,10 +428,34 @@ const CATALOG: SeedCategory[] = [
         img: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=600&auto=format&fit=crop',
         isFeatured: true,
         variants: [
-          { label: 'Purple', color: 'Purple', price: 699, stock: 10 },
-          { label: 'Teal Blue', color: 'Teal', price: 699, stock: 8 },
-          { label: 'Coral Pink', color: 'Coral', price: 699, stock: 7 },
-          { label: 'Charcoal', color: 'Charcoal', price: 699, stock: 9 },
+          {
+            label: 'Purple',
+            color: 'Purple',
+            img: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=600&auto=format&fit=crop',
+            price: 699,
+            stock: 10,
+          },
+          {
+            label: 'Teal Blue',
+            color: 'Teal',
+            img: 'https://images.unsplash.com/photo-1592432678016-e910b452f9a2?q=80&w=600&auto=format&fit=crop',
+            price: 699,
+            stock: 8,
+          },
+          {
+            label: 'Coral Pink',
+            color: 'Coral',
+            img: 'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?q=80&w=600&auto=format&fit=crop',
+            price: 699,
+            stock: 7,
+          },
+          {
+            label: 'Charcoal',
+            color: 'Charcoal',
+            img: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=600&auto=format&fit=crop',
+            price: 699,
+            stock: 9,
+          },
         ],
       },
       {
@@ -452,10 +478,34 @@ const CATALOG: SeedCategory[] = [
         img: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=600&auto=format&fit=crop',
         isFeatured: false,
         variants: [
-          { label: 'Cobalt Blue', color: 'Cobalt Blue', price: 299, stock: 18 },
-          { label: 'Midnight Black', color: 'Black', price: 299, stock: 20 },
-          { label: 'Olive Green', color: 'Olive', price: 299, stock: 14 },
-          { label: 'Rose Gold', color: 'Rose Gold', price: 349, stock: 10 },
+          {
+            label: 'Cobalt Blue',
+            color: 'Cobalt Blue',
+            img: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?q=80&w=600&auto=format&fit=crop',
+            price: 299,
+            stock: 18,
+          },
+          {
+            label: 'Midnight Black',
+            color: 'Black',
+            img: 'https://images.unsplash.com/photo-1550985616-10810253b84d?q=80&w=600&auto=format&fit=crop',
+            price: 299,
+            stock: 20,
+          },
+          {
+            label: 'Olive Green',
+            color: 'Olive',
+            img: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=600&auto=format&fit=crop',
+            price: 299,
+            stock: 14,
+          },
+          {
+            label: 'Rose Gold',
+            color: 'Rose Gold',
+            img: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=600&auto=format&fit=crop',
+            price: 349,
+            stock: 10,
+          },
         ],
       },
       {
@@ -501,11 +551,46 @@ const CATALOG: SeedCategory[] = [
         img: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600&auto=format&fit=crop',
         isFeatured: true,
         variants: [
-          { label: 'White - 38', color: 'White', size: '38', price: 1299, stock: 5 },
-          { label: 'White - 39', color: 'White', size: '39', price: 1299, stock: 8 },
-          { label: 'White - 40', color: 'White', size: '40', price: 1299, stock: 10 },
-          { label: 'White - 42', color: 'White', size: '42', price: 1299, stock: 7 },
-          { label: 'Tan - 41', color: 'Tan', size: '41', price: 1399, stock: 5 },
+          {
+            label: 'White - 38',
+            color: 'White',
+            size: '38',
+            img: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600&auto=format&fit=crop',
+            price: 1299,
+            stock: 5,
+          },
+          {
+            label: 'White - 39',
+            color: 'White',
+            size: '39',
+            img: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600&auto=format&fit=crop',
+            price: 1299,
+            stock: 8,
+          },
+          {
+            label: 'White - 40',
+            color: 'White',
+            size: '40',
+            img: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600&auto=format&fit=crop',
+            price: 1299,
+            stock: 10,
+          },
+          {
+            label: 'White - 42',
+            color: 'White',
+            size: '42',
+            img: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600&auto=format&fit=crop',
+            price: 1299,
+            stock: 7,
+          },
+          {
+            label: 'Tan - 41',
+            color: 'Tan',
+            size: '41',
+            img: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?q=80&w=600&auto=format&fit=crop',
+            price: 1399,
+            stock: 5,
+          },
         ],
       },
       {
@@ -1277,17 +1362,32 @@ async function main() {
       });
       productCount++;
 
-      // Product image
-      await prisma.productImage.create({
-        data: { productId: product.id, url: p.img, isPrimary: true },
+      // Product images (primary + secondary/variant images)
+      const imageUrls: string[] = [p.img];
+      if (Array.isArray((p as any).images)) {
+        (p as any).images.forEach((url: string) => {
+          if (url && !imageUrls.includes(url)) imageUrls.push(url);
+        });
+      }
+      (p.variants || []).forEach((v: any) => {
+        const vImg = v.img || v.image;
+        if (vImg && !imageUrls.includes(vImg)) imageUrls.push(vImg);
       });
+
+      for (let ii = 0; ii < imageUrls.length; ii++) {
+        await prisma.productImage.create({
+          data: { productId: product.id, url: imageUrls[ii], isPrimary: ii === 0 },
+        });
+      }
 
       // Variants
       for (let vi = 0; vi < p.variants.length; vi++) {
-        const v = p.variants[vi];
+        const v = p.variants[vi] as any;
         const attrs: Record<string, string> = {};
         if (v.color) attrs.color = v.color;
         if (v.size) attrs.size = v.size;
+        const vImg = v.img || v.image;
+        if (vImg) attrs.image = vImg;
 
         await prisma.productVariant.create({
           data: {
