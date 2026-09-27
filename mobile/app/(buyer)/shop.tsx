@@ -9,6 +9,7 @@ import {
   Pressable,
   ActivityIndicator,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -35,6 +36,8 @@ export default function Shop() {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [gender, setGender] = useState<'all' | 'women' | 'men'>('all');
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<'newest' | 'price_asc' | 'price_desc'>('newest');
 
   const { data: cats } = useQuery({
     queryKey: ['categories'],
@@ -50,7 +53,11 @@ export default function Shop() {
     staleTime: 20_000,
   });
 
-  const products = data?.products ?? [];
+  const products = [...(data?.products ?? [])].sort((a, b) => {
+    if (sortBy === 'price_asc') return a.priceEGP - b.priceEGP;
+    if (sortBy === 'price_desc') return b.priceEGP - a.priceEGP;
+    return 0;
+  });
 
   return (
     <View style={styles.root}>
@@ -69,7 +76,7 @@ export default function Shop() {
               returnKeyType="search"
             />
           </View>
-          <Pressable style={styles.filterBtn}>
+          <Pressable style={styles.filterBtn} onPress={() => setFilterOpen(true)}>
             <SlidersHorizontal size={20} color={colors.ink} strokeWidth={2} />
           </Pressable>
         </View>
@@ -119,6 +126,40 @@ export default function Shop() {
           })}
         </ScrollView>
       )}
+
+      {/* Filter sheet */}
+      <Modal
+        visible={filterOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setFilterOpen(false)}
+      >
+        <Pressable style={styles.backdrop} onPress={() => setFilterOpen(false)} />
+        <View style={styles.sheet}>
+          <Text style={styles.sheetTitle}>Sort & Filter</Text>
+          <Text style={styles.sheetLabel}>Sort by</Text>
+          {(
+            [
+              ['newest', 'Newest'],
+              ['price_asc', 'Price: Low to High'],
+              ['price_desc', 'Price: High to Low'],
+            ] as const
+          ).map(([val, label]) => (
+            <Pressable
+              key={val}
+              style={[styles.sortOption, sortBy === val && styles.sortOptionActive]}
+              onPress={() => {
+                setSortBy(val);
+                setFilterOpen(false);
+              }}
+            >
+              <Text style={[styles.sortOptionText, sortBy === val && styles.sortOptionTextActive]}>
+                {label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </Modal>
 
       {/* Product grid */}
       {isLoading ? (
@@ -218,4 +259,25 @@ const styles = StyleSheet.create({
   },
   cardPrice: { fontFamily: 'Inter-Bold', fontSize: 14, color: colors.ink },
   empty: { textAlign: 'center', color: colors.muted, marginTop: 40, fontFamily: 'Inter-Regular' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
+  sheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 48,
+  },
+  sheetTitle: { fontFamily: 'Outfit-Bold', fontSize: 18, color: colors.ink, marginBottom: 20 },
+  sheetLabel: { fontFamily: 'Inter-SemiBold', fontSize: 13, color: colors.muted, marginBottom: 10 },
+  sortOption: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: radii.card,
+    marginBottom: 6,
+    borderWidth: 1.5,
+    borderColor: colors.inputBorder,
+  },
+  sortOptionActive: { borderColor: colors.primary, backgroundColor: '#f5f0ff' },
+  sortOptionText: { fontFamily: 'Inter-Regular', fontSize: 15, color: colors.ink },
+  sortOptionTextActive: { fontFamily: 'Inter-SemiBold', color: colors.primary },
 });

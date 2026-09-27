@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { Plus } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 interface Product {
   id: string;
@@ -16,6 +17,7 @@ interface Product {
 }
 
 export default function SellerProducts() {
+  const router = useRouter();
   const { data, isLoading } = useQuery({
     queryKey: ['seller-products'],
     queryFn: () => api.get<{ products: Product[] }>('/api/seller/products'),
@@ -25,7 +27,7 @@ export default function SellerProducts() {
     <View style={styles.root}>
       <View style={styles.header}>
         <Text style={styles.title}>Products</Text>
-        <Pressable style={styles.addBtn}>
+        <Pressable style={styles.addBtn} onPress={() => router.push('/(seller)/add-product')}>
           <Plus size={20} color="#fff" strokeWidth={2} />
           <Text style={styles.addBtnText}>Add product</Text>
         </Pressable>

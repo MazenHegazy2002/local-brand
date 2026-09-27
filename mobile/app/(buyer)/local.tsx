@@ -7,23 +7,13 @@ import { api } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { MapPin } from 'lucide-react-native';
 
-interface Brand {
-  id: string;
-  storeName: string;
-  logoUrl: string | null;
-  description: string;
-}
-
 export default function Local() {
   const router = useRouter();
   const { data, isLoading } = useQuery({
-    queryKey: ['seller-profiles'],
+    queryKey: ['public-brands'],
     queryFn: () =>
-      api.get<{ sellers: Brand[] }>('/api/products?page=1&limit=1').then(() =>
-        // Use public products API and extract unique brands
-        api.get<{ products: { brand: string; image: string }[] }>(
-          '/api/export/public-products?limit=100'
-        )
+      api.get<{ products: { brand: string; image: string }[] }>(
+        '/api/export/public-products?limit=100'
       ),
   });
 
@@ -46,7 +36,10 @@ export default function Local() {
           columnWrapperStyle={{ gap: 12 }}
           contentContainerStyle={styles.grid}
           renderItem={({ item }) => (
-            <Pressable style={styles.card}>
+            <Pressable
+              style={styles.card}
+              onPress={() => router.push(`/(buyer)/brand/${item.brand}`)}
+            >
               <Image source={{ uri: item.image }} style={styles.cardImg} contentFit="cover" />
               <View style={styles.cardInfo}>
                 <MapPin size={12} color={colors.primary} strokeWidth={2} />

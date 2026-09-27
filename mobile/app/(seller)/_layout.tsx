@@ -58,6 +58,7 @@ export default function SellerLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="add-product" options={{ href: null }} />
     </Tabs>
   );
 }
