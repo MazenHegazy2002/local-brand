@@ -24,13 +24,13 @@ export async function POST(req: NextRequest) {
       email: true,
       name: true,
       role: true,
-      password: true,
-      image: true,
+      passwordHash: true,
+      avatarUrl: true,
       emailVerified: true,
     },
   });
 
-  if (!user?.password || !(await bcrypt.compare(password, user.password))) {
+  if (!user?.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
 
@@ -57,6 +57,12 @@ export async function POST(req: NextRequest) {
     accessToken,
     refreshToken,
     expiresIn: ACCESS_TTL,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role, image: user.image },
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      image: user.avatarUrl,
+    },
   });
 }
