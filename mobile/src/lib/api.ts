@@ -1,13 +1,29 @@
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
 
+const storage = {
+  get: (key: string) =>
+    Platform.OS === 'web'
+      ? Promise.resolve(localStorage.getItem(key))
+      : SecureStore.getItemAsync(key),
+  set: (key: string, value: string) =>
+    Platform.OS === 'web'
+      ? Promise.resolve(localStorage.setItem(key, value))
+      : SecureStore.setItemAsync(key, value),
+  del: (key: string) =>
+    Platform.OS === 'web'
+      ? Promise.resolve(localStorage.removeItem(key))
+      : SecureStore.deleteItemAsync(key),
+};
+
 async function getToken(): Promise<string | null> {
-  return SecureStore.getItemAsync('access_token');
+  return storage.get('access_token');
 }
 
 async function refreshAccessToken(): Promise<string | null> {
-  const refreshToken = await SecureStore.getItemAsync('refresh_token');
+  const refreshToken = await storage.get('refresh_token');
   if (!refreshToken) return null;
   const res = await fetch(`${BASE_URL}/api/auth/mobile/refresh`, {
     method: 'POST',
@@ -16,7 +32,7 @@ async function refreshAccessToken(): Promise<string | null> {
   });
   if (!res.ok) return null;
   const { accessToken } = await res.json();
-  await SecureStore.setItemAsync('access_token', accessToken);
+  await storage.set('access_token', accessToken);
   return accessToken;
 }
 
@@ -67,14 +83,14 @@ export async function signIn(email: string, password: string) {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
-  await SecureStore.setItemAsync('access_token', data.accessToken);
-  await SecureStore.setItemAsync('refresh_token', data.refreshToken);
+  await storage.set('access_token', data.accessToken);
+  await storage.set('refresh_token', data.refreshToken);
   return data.user;
 }
 
 export async function signOut() {
-  await SecureStore.deleteItemAsync('access_token');
-  await SecureStore.deleteItemAsync('refresh_token');
+  await storage.del('access_token');
+  await storage.del('refresh_token');
 }
 
 // Currency formatter
