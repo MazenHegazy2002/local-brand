@@ -1,6 +1,23 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import { signIn as apiSignIn, signOut as apiSignOut } from '@/lib/api';
+
+// SecureStore is native-only; fall back to localStorage on web
+const storage = {
+  get: (key: string) =>
+    Platform.OS === 'web'
+      ? Promise.resolve(localStorage.getItem(key))
+      : SecureStore.getItemAsync(key),
+  set: (key: string, value: string) =>
+    Platform.OS === 'web'
+      ? Promise.resolve(localStorage.setItem(key, value))
+      : SecureStore.setItemAsync(key, value),
+  del: (key: string) =>
+    Platform.OS === 'web'
+      ? Promise.resolve(localStorage.removeItem(key))
+      : SecureStore.deleteItemAsync(key),
+};
 
 type Role = 'BUYER' | 'SELLER' | 'AFFILIATE' | 'ADMIN';
 
@@ -29,8 +46,8 @@ export const useAuth = create<AuthStore>(set => ({
 
   hydrate: async () => {
     try {
-      const raw = await SecureStore.getItemAsync('user');
-      const lang = (await SecureStore.getItemAsync('lang')) as 'en' | 'ar' | null;
+      const raw = await storage.get('user');
+      const lang = (await storage.get('lang')) as 'en' | 'ar' | null;
       set({ user: raw ? JSON.parse(raw) : null, lang: lang ?? 'en', loading: false });
     } catch {
       set({ loading: false });
@@ -39,18 +56,18 @@ export const useAuth = create<AuthStore>(set => ({
 
   signIn: async (email, password) => {
     const user = await apiSignIn(email, password);
-    await SecureStore.setItemAsync('user', JSON.stringify(user));
+    await storage.set('user', JSON.stringify(user));
     set({ user: user as User });
   },
 
   signOut: async () => {
     await apiSignOut();
-    await SecureStore.deleteItemAsync('user');
+    await storage.del('user');
     set({ user: null });
   },
 
   setLang: async lang => {
-    await SecureStore.setItemAsync('lang', lang);
+    await storage.set('lang', lang);
     set({ lang });
   },
 }));
