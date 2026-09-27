@@ -27,18 +27,25 @@ export default function SignIn() {
   const [name, setName] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { signIn } = useAuth();
+
+  function showError(msg: string) {
+    setError(msg);
+    Alert.alert('Error', msg);
+  }
 
   async function handleSignIn() {
     if (!email || !password) {
-      Alert.alert('Missing fields');
+      showError('Please enter your email and password');
       return;
     }
+    setError('');
     setLoading(true);
     try {
       await signIn(email.trim(), password);
     } catch (e: unknown) {
-      Alert.alert('Sign in failed', (e as Error).message);
+      showError((e as Error).message ?? 'Sign in failed');
     } finally {
       setLoading(false);
     }
@@ -46,9 +53,10 @@ export default function SignIn() {
 
   async function handleRegister() {
     if (!name || !email || !password) {
-      Alert.alert('Missing fields');
+      showError('Please fill in all fields');
       return;
     }
+    setError('');
     setLoading(true);
     try {
       const res = await fetch(`${BASE}/api/auth/register`, {
@@ -60,7 +68,7 @@ export default function SignIn() {
       if (!res.ok) throw new Error(data.message ?? 'Registration failed');
       await signIn(email.trim(), password);
     } catch (e: unknown) {
-      Alert.alert('Registration failed', (e as Error).message);
+      showError((e as Error).message ?? 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -148,6 +156,8 @@ export default function SignIn() {
             <Text style={styles.forgotText}>Forgot password?</Text>
           </Pressable>
         )}
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <Pressable
           style={[styles.btnPrimary, loading && { opacity: 0.7 }]}
@@ -287,4 +297,11 @@ const styles = StyleSheet.create({
   socialBtnDark: { backgroundColor: '#111' },
   socialTextDark: { fontFamily: 'Inter-SemiBold', fontSize: 15, color: colors.ink },
   socialTextLight: { fontFamily: 'Inter-SemiBold', fontSize: 15, color: '#fff' },
+  errorText: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 13,
+    color: '#dc2626',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
 });
