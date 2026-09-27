@@ -94,7 +94,8 @@ export async function signOut() {
 }
 
 // Currency formatter
-export function fmtEGP(amount: number, lang: 'en' | 'ar' = 'en') {
+export function fmtEGP(amount: number | null | undefined, lang: 'en' | 'ar' = 'en') {
+  if (amount == null) return lang === 'ar' ? '— ج.م' : '— EGP';
   return lang === 'ar'
     ? `${amount.toLocaleString('ar-EG')} ج.م`
     : `${amount.toLocaleString('en-EG')} EGP`;

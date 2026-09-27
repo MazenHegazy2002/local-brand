@@ -62,7 +62,7 @@ export default function Bag() {
                 {item.title}
               </Text>
               {item.size && <Text style={styles.itemMeta}>{item.size}</Text>}
-              <Text style={styles.itemPrice}>{fmtEGP(item.priceEGP)}</Text>
+              <Text style={styles.itemPrice}>{fmtEGP(item.basePrice)}</Text>
             </View>
             <View style={styles.stepper}>
               <Pressable

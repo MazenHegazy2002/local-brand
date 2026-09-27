@@ -25,7 +25,7 @@ interface WishItem {
   product: {
     id: string;
     title: string;
-    priceEGP: number;
+    basePrice: number;
     image: string;
     brand: string;
     inStock: boolean;
@@ -74,7 +74,7 @@ export default function Wishlist() {
       productId: item.product.id,
       title: item.product.title,
       image: item.product.image,
-      priceEGP: item.product.priceEGP,
+      basePrice: item.product.basePrice,
     });
     removeFromWishlist(item.id);
     router.push('/(buyer)/bag');
@@ -114,7 +114,7 @@ export default function Wishlist() {
             <Text style={styles.name} numberOfLines={2}>
               {item.product.title}
             </Text>
-            <Text style={styles.price}>{fmtEGP(item.product.priceEGP)}</Text>
+            <Text style={styles.price}>{fmtEGP(item.product.basePrice)}</Text>
             <Pressable style={styles.moveBtn} onPress={() => moveToBag(item)}>
               <Text style={styles.moveBtnText}>Move to bag</Text>
             </Pressable>

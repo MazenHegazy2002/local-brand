@@ -24,7 +24,7 @@ const HERO_H = 500;
 interface Product {
   id: string;
   title: string;
-  priceEGP: number;
+  basePrice: number;
   brand: string;
   category: string;
   image: string;
@@ -56,7 +56,7 @@ function ProductCard({ item }: { item: Product }) {
       <Text style={styles.cardName} numberOfLines={2}>
         {item.title}
       </Text>
-      <Text style={styles.cardPrice}>{fmtEGP(item.priceEGP)}</Text>
+      <Text style={styles.cardPrice}>{fmtEGP(item.basePrice)}</Text>
     </Pressable>
   );
 }
@@ -205,7 +205,7 @@ export default function Home() {
                   <Text style={styles.flashName} numberOfLines={2}>
                     {item.title}
                   </Text>
-                  <Text style={styles.flashPrice}>{fmtEGP(item.priceEGP)}</Text>
+                  <Text style={styles.flashPrice}>{fmtEGP(item.basePrice)}</Text>
                 </Pressable>
               )}
               contentContainerStyle={{ paddingHorizontal: spacing.page, gap: 12 }}

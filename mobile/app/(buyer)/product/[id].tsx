@@ -23,13 +23,12 @@ interface Product {
   id: string;
   title: string;
   description: string;
-  priceEGP: number;
+  basePrice: number;
   brand: string;
-  category: string;
-  images: string[];
+  category: string | { name: string };
+  images: { url: string; isPrimary: boolean }[];
   inStock: boolean;
-  sizes?: string[];
-  colors?: string[];
+  variants?: { size?: string; color?: string; stockCount?: number }[];
 }
 
 export default function ProductDetail() {
@@ -43,22 +42,26 @@ export default function ProductDetail() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['product', id],
-    queryFn: () => api.get<{ product: Product }>(`/api/products/${id}`),
+    queryFn: () => api.get<Product>(`/api/products/${id}`),
   });
 
-  const product = data?.product;
+  const product = data;
 
   if (isLoading) return <ActivityIndicator style={{ flex: 1 }} color={colors.primary} />;
   if (!product) return <Text style={{ margin: 40 }}>Product not found</Text>;
 
-  const images = product.images?.length ? product.images : ['https://placehold.co/400x500'];
+  const images = product.images?.length
+    ? product.images.map(img => img.url)
+    : ['https://placehold.co/400x500'];
+  const sizes = [...new Set((product.variants ?? []).map(v => v.size).filter(Boolean))];
+  const productColors = [...new Set((product.variants ?? []).map(v => v.color).filter(Boolean))];
 
   function handleAddToBag() {
     add({
       productId: product!.id,
       title: product!.title,
       image: images[0],
-      priceEGP: product!.priceEGP,
+      basePrice: product!.basePrice,
       size: selectedSize,
       color: selectedColor,
     });
@@ -106,14 +109,14 @@ export default function ProductDetail() {
       <ScrollView style={styles.sheet} contentContainerStyle={styles.sheetInner}>
         <Text style={styles.brand}>{product.brand}</Text>
         <Text style={styles.productTitle}>{product.title}</Text>
-        <Text style={styles.price}>{fmtEGP(product.priceEGP)}</Text>
+        <Text style={styles.price}>{fmtEGP(product.basePrice)}</Text>
 
         {/* Sizes */}
-        {product.sizes && product.sizes.length > 0 && (
+        {sizes.length > 0 && (
           <View style={styles.sectionBlock}>
             <Text style={styles.sectionLabel}>Size</Text>
             <View style={styles.optionRow}>
-              {product.sizes.map(s => (
+              {sizes.map(s => (
                 <Pressable
                   key={s}
                   style={[styles.sizeBtn, selectedSize === s && styles.sizeBtnActive]}
@@ -146,10 +149,14 @@ export default function ProductDetail() {
         <Pressable
           style={[styles.addBtn, added && styles.addBtnDone]}
           onPress={handleAddToBag}
-          disabled={!product.inStock}
+          disabled={(product.variants ?? []).every(v => (v.stockCount ?? 0) <= 0)}
         >
           <Text style={styles.addBtnText}>
-            {!product.inStock ? 'Out of stock' : added ? 'Added ✓' : 'Add to bag'}
+            {(product.variants ?? []).every(v => (v.stockCount ?? 0) <= 0)
+              ? 'Out of stock'
+              : added
+                ? 'Added ✓'
+                : 'Add to bag'}
           </Text>
         </Pressable>
       </View>

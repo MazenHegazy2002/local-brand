@@ -10,7 +10,7 @@ import { useRouter } from 'expo-router';
 interface Product {
   id: string;
   title: string;
-  priceEGP: number;
+  basePrice: number;
   images: string[];
   published: boolean;
   stock: number;
@@ -51,7 +51,7 @@ export default function SellerProducts() {
                 <Text style={styles.name} numberOfLines={2}>
                   {item.title}
                 </Text>
-                <Text style={styles.price}>{fmtEGP(item.priceEGP)}</Text>
+                <Text style={styles.price}>{fmtEGP(item.basePrice)}</Text>
                 <Text style={styles.stock}>Stock: {item.stock}</Text>
               </View>
               <View

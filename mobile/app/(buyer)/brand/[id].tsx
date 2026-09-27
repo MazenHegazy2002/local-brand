@@ -30,17 +30,25 @@ export default function BrandPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['seller', id],
-    queryFn: () =>
-      api.get<{
-        storeName: string;
-        description: string;
-        logo: string;
-        cover: string;
-        totalProducts: number;
-        rating: number;
-        badges: string[];
-        products: { id: string; title: string; priceEGP: number; image: string }[];
-      }>(`/api/seller/${id}/profile`),
+    queryFn: async () => {
+      const r = await api.get<{
+        seller: { storeName: string; description: string; logoUrl: string; averageRating: string };
+        products: { id: string; title: string; basePrice: number; images: { url: string }[] }[];
+      }>(`/api/seller/${id}/profile`);
+      return {
+        storeName: r.seller?.storeName ?? '',
+        description: r.seller?.description ?? '',
+        logo: r.seller?.logoUrl ?? '',
+        cover: '',
+        totalProducts: r.products?.length ?? 0,
+        rating: parseFloat(r.seller?.averageRating ?? '0'),
+        badges: [] as string[],
+        products: (r.products ?? []).map(p => ({
+          ...p,
+          image: p.images?.[0]?.url ?? '',
+        })),
+      };
+    },
   });
 
   if (isLoading) return <ActivityIndicator style={{ flex: 1 }} color={colors.primary} />;
@@ -138,7 +146,7 @@ export default function BrandPage() {
                 onPress={() => router.push(`/(buyer)/product/${p.id}`)}
               >
                 <Image source={{ uri: p.image }} style={styles.cardImg} contentFit="cover" />
-                <Text style={styles.cardPrice}>{fmtEGP(p.priceEGP)}</Text>
+                <Text style={styles.cardPrice}>{fmtEGP(p.basePrice)}</Text>
               </Pressable>
             ))}
             {brand.products.length === 0 && <Text style={styles.empty}>No products yet</Text>}

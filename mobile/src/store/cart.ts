@@ -4,7 +4,7 @@ interface CartItem {
   productId: string;
   title: string;
   image: string;
-  priceEGP: number;
+  basePrice: number;
   qty: number;
   size?: string;
   color?: string;
@@ -44,6 +44,6 @@ export const useCart = create<CartStore>((set, get) => ({
     })),
 
   clear: () => set({ items: [] }),
-  total: () => get().items.reduce((s, i) => s + i.priceEGP * i.qty, 0),
+  total: () => get().items.reduce((s, i) => s + i.basePrice * i.qty, 0),
   count: () => get().items.reduce((s, i) => s + i.qty, 0),
 }));

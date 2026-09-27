@@ -21,10 +21,10 @@ import { colors, radii, spacing } from '@/lib/tokens';
 interface Product {
   id: string;
   title: string;
-  priceEGP: number;
+  basePrice: number;
   brand: string;
   category: string;
-  image: string;
+  images: { url: string; isPrimary: boolean }[];
   inStock: boolean;
 }
 interface Category {
@@ -54,8 +54,8 @@ export default function Shop() {
   });
 
   const products = [...(data?.products ?? [])].sort((a, b) => {
-    if (sortBy === 'price_asc') return a.priceEGP - b.priceEGP;
-    if (sortBy === 'price_desc') return b.priceEGP - a.priceEGP;
+    if (sortBy === 'price_asc') return a.basePrice - b.basePrice;
+    if (sortBy === 'price_desc') return b.basePrice - a.basePrice;
     return 0;
   });
 
@@ -176,14 +176,18 @@ export default function Shop() {
               style={styles.card}
               onPress={() => router.push(`/(buyer)/product/${item.id}`)}
             >
-              <Image source={{ uri: item.image }} style={styles.cardImg} contentFit="cover" />
+              <Image
+                source={{ uri: item.images?.[0]?.url }}
+                style={styles.cardImg}
+                contentFit="cover"
+              />
               <Text style={styles.cardBrand} numberOfLines={1}>
                 {item.brand}
               </Text>
               <Text style={styles.cardName} numberOfLines={2}>
                 {item.title}
               </Text>
-              <Text style={styles.cardPrice}>{fmtEGP(item.priceEGP)}</Text>
+              <Text style={styles.cardPrice}>{fmtEGP(item.basePrice)}</Text>
             </Pressable>
           )}
           ListEmptyComponent={<Text style={styles.empty}>No products found</Text>}

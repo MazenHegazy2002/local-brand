@@ -25,7 +25,7 @@ export default function AddProduct() {
   const [form, setForm] = useState({
     title: '',
     description: '',
-    priceEGP: '',
+    basePrice: '',
     stock: '',
     sizes: '',
     colors: '',
@@ -36,7 +36,7 @@ export default function AddProduct() {
   }
 
   async function handleSubmit() {
-    if (!form.title || !form.priceEGP) {
+    if (!form.title || !form.basePrice) {
       Alert.alert('Missing fields', 'Title and price are required.');
       return;
     }
@@ -45,7 +45,7 @@ export default function AddProduct() {
       await api.post('/api/seller/products', {
         title: form.title,
         description: form.description,
-        priceEGP: parseFloat(form.priceEGP),
+        basePrice: parseFloat(form.basePrice),
         stock: parseInt(form.stock || '0', 10),
         sizes: form.sizes
           ? form.sizes
@@ -110,8 +110,8 @@ export default function AddProduct() {
             <Field label="Price (EGP) *">
               <TextInput
                 style={styles.input}
-                value={form.priceEGP}
-                onChangeText={v => set('priceEGP', v)}
+                value={form.basePrice}
+                onChangeText={v => set('basePrice', v)}
                 placeholder="0"
                 placeholderTextColor={colors.placeholder}
                 keyboardType="numeric"
