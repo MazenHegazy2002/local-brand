@@ -14,7 +14,7 @@ interface CartDrawerProps {
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, removeItem, updateQty, total, clearCart, rewriteId } = useCartStore();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [isAnimating, setIsAnimating] = useState(false);
 
   // Promo code state
