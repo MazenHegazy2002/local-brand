@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { jwtVerify } from 'jose';
 import { createProduct } from '@/app/actions/seller';
+import { prisma } from '@/lib/prisma';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!);
 
@@ -21,6 +22,52 @@ async function getAuthUser(req: NextRequest) {
     } catch {}
   }
   return null;
+}
+
+export async function GET(req: NextRequest) {
+  const user = await getAuthUser(req);
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (user.role !== 'SELLER' && user.role !== 'ADMIN')
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const seller = await prisma.sellerProfile.findUnique({ where: { userId: user.id } });
+  if (!seller) return NextResponse.json({ error: 'Seller profile not found' }, { status: 404 });
+
+  const products = await prisma.product.findMany({
+    where: { sellerId: seller.id },
+    select: {
+      id: true,
+      title: true,
+      basePrice: true,
+      published: true,
+      images: { select: { url: true, isPrimary: true } },
+      variants: { select: { stockCount: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  });
+
+  return NextResponse.json({
+    products: products.map(p => ({
+      id: p.id,
+      title: p.title,
+      basePrice: Number(p.basePrice),
+      published: p.published,
+      images: p.images.map(i => i.url),
+      stock: p.variants.reduce((sum, v) => sum + (v.stockCount ?? 0), 0),
+    })),
+  });
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }
 
 export async function POST(req: NextRequest) {
