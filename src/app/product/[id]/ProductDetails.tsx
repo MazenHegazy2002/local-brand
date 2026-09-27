@@ -353,10 +353,10 @@ export default function ProductDetails({
         <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-2">
             <Link
-              href={`/brand/${product.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+              href={`/brand/${(product.seller?.storeName || product.brand || 'brandy-store').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
               className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest hover:text-[#534AB7] dark:hover:text-[#6b8ff5] transition-colors"
             >
-              {product.seller.storeName}
+              {product.seller?.storeName || product.brand || 'Brandy Store'}
             </Link>
             {(product.seller as { status?: string }).status === 'ACTIVE' && (
               <span
