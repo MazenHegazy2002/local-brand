@@ -55,10 +55,10 @@ export default function ProductDetail() {
 
   function handleAddToBag() {
     add({
-      productId: product.id,
-      title: product.title,
+      productId: product!.id,
+      title: product!.title,
       image: images[0],
-      priceEGP: product.priceEGP,
+      priceEGP: product!.priceEGP,
       size: selectedSize,
       color: selectedColor,
     });

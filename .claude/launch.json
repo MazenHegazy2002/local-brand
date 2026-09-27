@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "expo-mobile",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--port", "8082", "--clear"],
+      "port": 8082,
+      "url": "http://localhost:8082",
+      "cwd": "mobile"
+    }
+  ]
+}
