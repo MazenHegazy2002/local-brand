@@ -42,7 +42,7 @@ export default function Account() {
       Icon: Percent,
       badge: null,
       hint: '5%',
-      onPress: () => {},
+      onPress: () => router.push('/(buyer)/affiliate'),
     },
     { label: 'Sell on Brandyy', Icon: Store, badge: null, hint: null, onPress: () => {} },
     {

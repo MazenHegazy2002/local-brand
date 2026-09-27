@@ -145,7 +145,11 @@ export default function Home() {
               {Array.from(new Set(products.map(p => p.brand)))
                 .slice(0, 8)
                 .map(brand => (
-                  <Pressable key={brand} style={styles.brandItem}>
+                  <Pressable
+                    key={brand}
+                    style={styles.brandItem}
+                    onPress={() => router.push(`/(buyer)/brand/${encodeURIComponent(brand)}`)}
+                  >
                     <View style={styles.brandAvatar}>
                       <Text style={styles.brandAvatarText}>{brand.charAt(0).toUpperCase()}</Text>
                     </View>
