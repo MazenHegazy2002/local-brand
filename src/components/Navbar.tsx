@@ -151,6 +151,7 @@ export default function Navbar() {
                     { name: 'Kids', slug: 'kids' },
                     { name: 'Accessories', slug: 'accessories' },
                     { name: 'Electronics', slug: 'electronics' },
+                    { name: 'Entertainment', slug: 'entertainment' },
                     { name: 'Home Decor', slug: 'home-decor' },
                   ]
               ).map((cat: any) => ({

@@ -20,6 +20,7 @@ const PLATFORMS = [
 const CATEGORIES = [
   'Fashion & Clothing',
   'Electronics',
+  'Entertainment',
   'Beauty & Skincare',
   'Home & Furniture',
   'Food & Groceries',
@@ -195,6 +196,7 @@ export default function SellPage() {
     const arCategories: Record<string, string> = {
       'Fashion & Clothing': 'الأزياء والملابس',
       Electronics: 'الإلكترونيات',
+      Entertainment: 'ترفيه',
       'Beauty & Skincare': 'الجمال والعناية بالبشرة',
       'Home & Furniture': 'المنزل والأثاث',
       'Food & Groceries': 'البقالة والأغذية',

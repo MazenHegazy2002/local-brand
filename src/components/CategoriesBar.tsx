@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/providers/LanguageContext';
 import {
   ElectronicsIcon,
+  EntertainmentIcon,
   FashionIcon,
   HomeIcon,
   HealthIcon,
@@ -36,6 +37,7 @@ function getCategoryIcon(name: string) {
   if (lower === 'beauty') return <BeautyIcon />;
   if (lower === 'books') return <BooksIcon />;
   if (lower === 'electronics') return <ElectronicsIcon />;
+  if (lower === 'entertainment') return <EntertainmentIcon />;
   if (lower === 'footwear') return <FootwearIcon />;
   if (lower === 'furniture') return <FurnitureIcon />;
   if (lower === 'garden') return <GardenIcon />;
@@ -61,6 +63,13 @@ function getCategoryIcon(name: string) {
     return <BooksIcon />;
   if (lower.includes('electron') || lower.includes('phone') || lower.includes('laptop'))
     return <ElectronicsIcon />;
+  if (
+    lower.includes('entertain') ||
+    lower.includes('media') ||
+    lower.includes('movie') ||
+    lower.includes('game')
+  )
+    return <EntertainmentIcon />;
   if (
     lower.includes('footwear') ||
     lower.includes('shoe') ||
@@ -108,6 +117,7 @@ function getCategoryIcon(name: string) {
 function getCategoryColor(name: string): string {
   const lower = name.toLowerCase().trim();
   if (lower === 'electronics' || lower.includes('electron')) return '#0ea5e9';
+  if (lower === 'entertainment' || lower.includes('entertain')) return '#9333ea';
   if (lower === 'fashion' || lower.includes('fashion')) return '#ec4899';
   if (lower === 'home' || lower.includes('home')) return '#a16207';
   if (lower === 'health' || lower.includes('health')) return '#10b981';
@@ -150,6 +160,7 @@ export default function CategoriesBar() {
     { id: 'beauty', name: 'Beauty', slug: 'beauty', parentId: null },
     { id: 'books', name: 'Books', slug: 'books', parentId: null },
     { id: 'electronics', name: 'Electronics', slug: 'electronics', parentId: null },
+    { id: 'entertainment', name: 'Entertainment', slug: 'entertainment', parentId: null },
     { id: 'footwear', name: 'Footwear', slug: 'footwear', parentId: null },
     { id: 'furniture', name: 'Furniture', slug: 'furniture', parentId: null },
     { id: 'garden', name: 'Garden', slug: 'garden', parentId: null },

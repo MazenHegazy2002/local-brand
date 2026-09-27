@@ -269,6 +269,25 @@ const CATALOG: SeedCategory[] = [
     ],
   },
   {
+    name: 'Entertainment',
+    slug: 'entertainment',
+    products: [
+      {
+        title: 'Retro Arcade Handheld Game Console',
+        slug: 'retro-arcade-handheld-game-console',
+        description:
+          'Loaded with 500 classic 8-bit retro games. 3.0 inch HD screen with rechargeable battery.',
+        basePrice: 599,
+        img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600&auto=format&fit=crop',
+        isFeatured: true,
+        variants: [
+          { label: 'Retro Red', color: 'Red', price: 599, stock: 15 },
+          { label: 'Matte Black', color: 'Black', price: 599, stock: 12 },
+        ],
+      },
+    ],
+  },
+  {
     name: 'Electronics',
     slug: 'electronics',
     products: [

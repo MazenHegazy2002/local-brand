@@ -842,6 +842,7 @@ async function main() {
     { name: 'Men', nameAr: 'رجال', slug: 'men' },
     { name: 'Kids', nameAr: 'أطفال', slug: 'kids' },
     { name: 'Electronics', nameAr: 'إلكترونيات', slug: 'electronics' },
+    { name: 'Entertainment', nameAr: 'ترفيه', slug: 'entertainment' },
     { name: 'Home', nameAr: 'منزل', slug: 'home' },
     { name: 'Beauty', nameAr: 'جمال', slug: 'beauty' },
     { name: 'Sports', nameAr: 'رياضة', slug: 'sports' },
