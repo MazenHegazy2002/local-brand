@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-requested-with',
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: CORS_HEADERS,
+  });
+}
+
 export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;
@@ -46,7 +59,7 @@ export async function GET(req: NextRequest) {
             url: true,
             isPrimary: true,
           },
-          take: 3,
+          take: 5,
         },
         variants: {
           select: {
@@ -73,16 +86,36 @@ export async function GET(req: NextRequest) {
 
       return {
         id: p.id,
+        // Common title & name aliases
         title: p.title,
+        name: p.title,
         titleAr: p.titleAr || p.title,
         slug: p.slug,
+
+        // Common price aliases
+        price: p.basePrice,
         priceEGP: p.basePrice,
+        basePrice: p.basePrice,
+
+        // Common brand aliases
         brand: brandName,
+        brandName: brandName,
+
+        // Category & Seller
         category: p.category?.name || 'General',
+        categorySlug: p.category?.slug || 'general',
+        storeName: p.seller?.storeName || brandName,
+
+        // Common image aliases
         image: primaryImg,
+        imageUrl: primaryImg,
+        thumbnail: primaryImg,
         images: p.images.map(img => img.url),
+
+        // Description & Stock
         description: p.description,
         inStock: p.variants.some(v => v.stockCount > 0),
+        available: p.variants.some(v => v.stockCount > 0),
         variantsCount: p.variants.length,
       };
     });
@@ -95,7 +128,7 @@ export async function GET(req: NextRequest) {
       },
       {
         headers: {
-          'Access-Control-Allow-Origin': '*',
+          ...CORS_HEADERS,
           'Cache-Control': 'public, max-age=300, s-maxage=600',
         },
       }
@@ -103,7 +136,10 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to export public products' },
-      { status: 500 }
+      {
+        status: 500,
+        headers: CORS_HEADERS,
+      }
     );
   }
 }
