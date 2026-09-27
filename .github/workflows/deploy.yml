@@ -86,6 +86,6 @@ jobs:
             git reset --hard origin/master
             docker-compose pull app || true
             docker-compose up -d --force-recreate --remove-orphans
-            docker-compose exec -T app npx prisma@6.2.1 migrate deploy
+            docker-compose exec -T app npx prisma migrate deploy
             docker image prune -f
             echo "⚡ Deployed pre-built container successfully to Contabo VPS"
