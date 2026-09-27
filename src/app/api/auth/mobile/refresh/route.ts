@@ -5,6 +5,16 @@ import { redis } from '@/lib/redis';
 const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!);
 const ACCESS_TTL = 60 * 60;
 
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST,OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+};
+
+export function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS });
+}
+
 export async function POST(req: NextRequest) {
   const { refreshToken } = await req.json();
   if (!refreshToken) return NextResponse.json({ error: 'Missing token' }, { status: 400 });

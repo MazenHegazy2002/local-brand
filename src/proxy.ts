@@ -167,6 +167,18 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const method = (req.method ?? 'GET').toUpperCase();
 
+  // Handle CORS preflight for mobile app (Expo Web on a different port)
+  if (method === 'OPTIONS') {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+      },
+    });
+  }
+
   // Detect Arabic subpath
   const isArabic = pathname === '/ar' || pathname.startsWith('/ar/');
   const targetPathname = isArabic ? (pathname === '/ar' ? '/' : pathname.substring(3)) : pathname;
@@ -232,7 +244,13 @@ export async function proxy(req: NextRequest) {
     targetPathname.startsWith('/static') ||
     targetPathname.includes('.') // static files
   ) {
-    return NextResponse.next();
+    const res = NextResponse.next();
+    if (targetPathname.startsWith('/api/')) {
+      res.headers.set('Access-Control-Allow-Origin', '*');
+      res.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+      res.headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    }
+    return res;
   }
 
   // Get session token
