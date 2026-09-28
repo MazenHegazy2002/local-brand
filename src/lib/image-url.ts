@@ -10,7 +10,8 @@ export function publicOrigin(req: Request) {
 }
 
 export function productImageUrl(req: Request, img: { id: string; url: string }) {
-  return img.url.startsWith('data:')
-    ? `${publicOrigin(req)}/api/images/product-image/${img.id}`
-    : img.url;
+  if (img.url.startsWith('data:')) return `${publicOrigin(req)}/api/images/product-image/${img.id}`;
+  // Disk-stored files are saved as "/api/files/<name>"; the app needs a full URL.
+  if (img.url.startsWith('/')) return `${publicOrigin(req)}${img.url}`;
+  return img.url;
 }
