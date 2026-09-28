@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { productImageUrl } from '@/lib/image-url';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -79,9 +80,7 @@ export async function GET(req: NextRequest) {
 
     // Images stored inline as base64 made this response ~12 MB. Point data: URLs
     // at the streaming route instead so each image is fetched and cached separately.
-    const origin = req.nextUrl.origin;
-    const imgUrl = (img: { id: string; url: string }) =>
-      img.url.startsWith('data:') ? `${origin}/api/images/product-image/${img.id}` : img.url;
+    const imgUrl = (img: { id: string; url: string }) => productImageUrl(req, img);
 
     const formatted = products.map(p => {
       const primary = p.images.find(img => img.isPrimary) || p.images[0];

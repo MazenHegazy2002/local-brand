@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getRequestUser } from '@/lib/mobile-auth';
+import { productImageUrl } from '@/lib/image-url';
 
 export async function GET(req: Request) {
   try {
@@ -37,7 +38,6 @@ export async function GET(req: Request) {
 
     // `items` is the flat shape the mobile app reads; web keeps using `wishlist`.
     // Base64 images go through the streaming route so the response stays small.
-    const origin = new URL(req.url).origin;
     const items = wishlist.map(w => {
       const img = w.product.images.find(i => i.isPrimary) ?? w.product.images[0];
       return {
@@ -46,11 +46,7 @@ export async function GET(req: Request) {
           id: w.product.id,
           title: w.product.title,
           basePrice: w.product.basePrice,
-          image: !img
-            ? null
-            : img.url.startsWith('data:')
-              ? `${origin}/api/images/product-image/${img.id}`
-              : img.url,
+          image: img ? productImageUrl(req, img) : null,
           brand: w.product.seller?.storeName ?? '',
           inStock: w.product.variants.some(v => v.stockCount > 0),
         },
