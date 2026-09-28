@@ -39,7 +39,7 @@ export default function Wishlist() {
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['wishlist'],
-    queryFn: () => api.get<{ items: WishItem[] }>('/api/wishlist'),
+    queryFn: () => api.get<{ items: WishItem[] }>('/api/wishlist?view=items'),
   });
 
   const items = data?.items ?? [];
@@ -109,9 +109,6 @@ export default function Wishlist() {
                 <Heart size={16} color={colors.favorite} fill={colors.favorite} strokeWidth={2} />
               </Pressable>
             </View>
-            <Text style={styles.brand} numberOfLines={1}>
-              {item.product.brand}
-            </Text>
             <Text style={styles.name} numberOfLines={2}>
               {item.product.title}
             </Text>
@@ -134,7 +131,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 8,
+    justifyContent: 'space-between',
   },
   title: { fontFamily: 'InstrumentSerif-Regular', fontSize: 34, color: colors.ink },
   count: { fontFamily: 'Inter-Regular', fontSize: 14, color: colors.muted },
@@ -149,8 +146,8 @@ const styles = StyleSheet.create({
     right: 8,
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    borderRadius: 8,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -163,7 +160,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   name: {
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Inter-Medium',
     fontSize: 13,
     color: colors.ink,
     lineHeight: 17,

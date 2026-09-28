@@ -44,7 +44,7 @@ export default function Account() {
   });
   const wishlist = useQuery({
     queryKey: ['wishlist'],
-    queryFn: () => api.get<{ items: unknown[] }>('/api/wishlist'),
+    queryFn: () => api.get<{ items: unknown[] }>('/api/wishlist?view=items'),
   });
   const addresses = useQuery({
     queryKey: ['addresses'],

@@ -36,17 +36,30 @@ export async function GET(req: Request) {
     });
 
     // `items` is the flat shape the mobile app reads; web keeps using `wishlist`.
-    const items = wishlist.map(w => ({
-      id: w.product.id, // wishlist rows are keyed by (user, product)
-      product: {
-        id: w.product.id,
-        title: w.product.title,
-        basePrice: w.product.basePrice,
-        image: w.product.images.find(i => i.isPrimary)?.url ?? w.product.images[0]?.url ?? null,
-        brand: w.product.seller?.storeName ?? '',
-        inStock: w.product.variants.some(v => v.stockCount > 0),
-      },
-    }));
+    // Base64 images go through the streaming route so the response stays small.
+    const origin = new URL(req.url).origin;
+    const items = wishlist.map(w => {
+      const img = w.product.images.find(i => i.isPrimary) ?? w.product.images[0];
+      return {
+        id: w.product.id, // wishlist rows are keyed by (user, product)
+        product: {
+          id: w.product.id,
+          title: w.product.title,
+          basePrice: w.product.basePrice,
+          image: !img
+            ? null
+            : img.url.startsWith('data:')
+              ? `${origin}/api/images/product-image/${img.id}`
+              : img.url,
+          brand: w.product.seller?.storeName ?? '',
+          inStock: w.product.variants.some(v => v.stockCount > 0),
+        },
+      };
+    });
+    // Mobile asks for ?view=items to skip the raw rows (they carry every base64 image).
+    if (new URL(req.url).searchParams.get('view') === 'items') {
+      return NextResponse.json({ items }, { status: 200 });
+    }
     return NextResponse.json({ wishlist, items }, { status: 200 });
   } catch (_error) {
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });

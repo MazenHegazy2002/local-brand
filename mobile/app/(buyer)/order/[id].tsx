@@ -31,6 +31,15 @@ const STEP_RANK: Record<string, number> = {
   DELIVERED: 3,
 };
 
+function fmtTime(iso: string) {
+  const d = new Date(iso);
+  const day =
+    d.toDateString() === new Date().toDateString()
+      ? 'Today'
+      : d.toLocaleDateString([], { weekday: 'short' });
+  return `${day} ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+}
+
 export default function OrderTracking() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -64,6 +73,8 @@ export default function OrderTracking() {
 
   const subtotal: number = order.total;
   const payMethod: string = order.paymentMethod;
+  // No "packed" timestamp is stored, so that step only shows a dash.
+  const stepTimes: (string | null)[] = [order.createdAt, null, order.shippedAt, order.deliveredAt];
   const itemCount: number = order.items.reduce((s: number, i: any) => s + i.quantity, 0);
 
   return (
@@ -97,12 +108,9 @@ export default function OrderTracking() {
           </View>
           {/* Progress bar */}
           <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${((currentStep + 1) / STEPS.length) * 100}%` as any },
-              ]}
-            />
+            {STEPS.map((_, i) => (
+              <View key={i} style={[styles.segment, i <= currentStep && styles.segmentDone]} />
+            ))}
           </View>
         </View>
 
@@ -130,6 +138,9 @@ export default function OrderTracking() {
                   <Text style={[styles.timelineLabel, !done && styles.timelineLabelPending]}>
                     {step.label}
                   </Text>
+                  <Text style={styles.timelineTime}>
+                    {stepTimes[i] ? fmtTime(stepTimes[i]!) : '—'}
+                  </Text>
                 </View>
               </View>
             );
@@ -139,16 +150,23 @@ export default function OrderTracking() {
         {/* Order summary */}
         <View style={styles.summaryCard}>
           <View style={styles.thumbs}>
-            {order.items.slice(0, 4).map((i: any) => (
-              <Image key={i.id} source={i.image} style={styles.thumb} contentFit="cover" />
+            {order.items.slice(0, 2).map((i: any) => (
+              <Image
+                key={i.id}
+                source={i.image ? { uri: i.image } : undefined}
+                style={styles.thumb}
+                contentFit="cover"
+              />
             ))}
           </View>
-          <Text style={styles.summaryText}>
-            {itemCount} item{itemCount !== 1 ? 's' : ''} · {fmtEGP(subtotal)}
-          </Text>
-          <Text style={styles.summaryPayment}>
-            {payMethod === 'CASH_ON_DELIVERY' ? 'Cash on delivery' : payMethod.replace(/_/g, ' ')}
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.summaryText}>
+              {itemCount} item{itemCount !== 1 ? 's' : ''} · {fmtEGP(subtotal)}
+            </Text>
+            <Text style={styles.summaryPayment}>
+              {payMethod === 'CASH_ON_DELIVERY' ? 'Cash on delivery' : payMethod.replace(/_/g, ' ')}
+            </Text>
+          </View>
         </View>
 
         {/* Actions */}
@@ -209,8 +227,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   statusPillText: { fontFamily: 'Inter-Bold', fontSize: 12, color: colors.ink },
-  progressTrack: { height: 5, backgroundColor: 'rgba(255,255,255,.2)', borderRadius: 3 },
-  progressFill: { height: 5, backgroundColor: colors.accent, borderRadius: 3 },
+  progressTrack: { flexDirection: 'row', gap: 6 },
+  segment: { flex: 1, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,.25)' },
+  segmentDone: { backgroundColor: colors.accent },
   timeline: { marginBottom: 20 },
   timelineRow: { flexDirection: 'row', gap: 14 },
   timelineLeft: { alignItems: 'center', width: 24 },
@@ -230,6 +249,7 @@ const styles = StyleSheet.create({
   timelineLineDone: { backgroundColor: colors.primary },
   timelineContent: { flex: 1, paddingBottom: 20, paddingTop: 2 },
   timelineLabel: { fontFamily: 'Inter-SemiBold', fontSize: 14, color: colors.ink },
+  timelineTime: { fontFamily: 'Inter-Regular', fontSize: 12, color: colors.muted, marginTop: 2 },
   timelineLabelPending: { color: colors.muted, fontFamily: 'Inter-Regular' },
   summaryCard: {
     backgroundColor: colors.surface,
@@ -238,9 +258,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  thumbs: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  thumb: { width: 48, height: 48, borderRadius: radii.sm, backgroundColor: colors.border },
+  thumbs: { flexDirection: 'row' },
+  thumb: {
+    marginRight: -8,
+    width: 48,
+    height: 48,
+    borderRadius: radii.sm,
+    backgroundColor: colors.border,
+  },
   summaryText: { fontFamily: 'Inter-SemiBold', fontSize: 14, color: colors.ink, marginBottom: 4 },
   summaryPayment: { fontFamily: 'Inter-Regular', fontSize: 13, color: colors.muted },
   actions: { flexDirection: 'row', gap: 12 },
