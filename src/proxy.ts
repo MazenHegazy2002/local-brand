@@ -223,9 +223,13 @@ export async function proxy(req: NextRequest) {
   // 2. CSRF enforcement — POST/PATCH/PUT/DELETE on our own API routes.
   //    Webhook callbacks are exempt (they arrive from external servers).
   //    Skipped in development so curl / Postman still works locally.
+  //    Bearer requests (mobile app) are exempt: CSRF rides on ambient cookies,
+  //    and getRequestUserId ignores cookies whenever a Bearer header is sent.
   const isProd = process.env.NODE_ENV === 'production';
+  const hasBearer = req.headers.get('authorization')?.startsWith('Bearer ') ?? false;
   if (
     isProd &&
+    !hasBearer &&
     targetPathname.startsWith('/api') &&
     ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) &&
     !isCsrfExempt(targetPathname)
@@ -259,10 +263,12 @@ export async function proxy(req: NextRequest) {
   // ── Maintenance mode gate ──────────────────────────────────────────────
   // When MAINTENANCE_MODE is on, everyone except admins (and the admin-os
   // surface itself) gets redirected to /maintenance. Admin login still
-  // works so the operator can flip the switch back off.
+  // works so the operator can flip the switch back off. /api/app/config stays
+  // reachable so the mobile app can fetch its "stopped" status + message.
   if (
     !targetPathname.startsWith('/admin-os') &&
     !targetPathname.startsWith('/api/admin') &&
+    !targetPathname.startsWith('/api/app/config') &&
     !targetPathname.startsWith('/login') &&
     !targetPathname.startsWith('/maintenance')
   ) {

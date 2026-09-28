@@ -1,18 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getRequestUserId } from '@/lib/mobile-auth';
 import { prisma } from '@/lib/prisma';
-import { SessionUser } from '@/types';
 import type { Prisma } from '@/generated/client';
 
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    // Bearer (mobile) or session cookie (web).
+    const userId = await getRequestUserId(req);
+    if (!userId) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
-
-    const userId = (session.user as SessionUser).id;
     const { searchParams } = new URL(req.url);
     const unreadOnly = searchParams.get('unread') === 'true';
 
@@ -40,12 +37,11 @@ export async function GET(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    // Bearer (mobile) or session cookie (web).
+    const userId = await getRequestUserId(req);
+    if (!userId) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
-
-    const userId = (session.user as SessionUser).id;
     const { notificationId, markAllRead } = await req.json();
 
     if (markAllRead) {

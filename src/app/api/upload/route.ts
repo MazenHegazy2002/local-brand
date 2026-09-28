@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { SessionUser } from '@/types';
+import { getRequestUser } from '@/lib/mobile-auth';
 import { put } from '@vercel/blob';
 
 interface CloudinaryUploadResult {
@@ -14,12 +12,9 @@ interface CloudinaryUploadResult {
 // Upload handler supporting Vercel Blob and Cloudinary
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (
-      !session ||
-      !session.user ||
-      !['SELLER', 'ADMIN'].includes((session.user as SessionUser).role)
-    ) {
+    // Bearer (mobile) or session cookie (web).
+    const user = await getRequestUser(req);
+    if (!user || !['SELLER', 'ADMIN'].includes(user.role)) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 

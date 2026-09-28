@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { recordStoreVisit } from '@/lib/store-visits';
 
 // GET /api/seller/[id]/profile — public seller storefront
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -21,6 +22,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     });
 
     if (!seller) return NextResponse.json({ message: 'Seller not found' }, { status: 404 });
+    recordStoreVisit(seller.id);
 
     // Aggregate rating from reviews
     const reviews = await prisma.review.findMany({

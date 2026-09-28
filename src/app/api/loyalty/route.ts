@@ -1,17 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { getLoyaltyHistory } from '@/app/actions/loyalty';
-import { SessionUser } from '@/types';
+import { getRequestUserId } from '@/lib/mobile-auth';
 
-export async function GET(_req: Request) {
+export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const userId = await getRequestUserId(req);
+    if (!userId) {
       return NextResponse.json({ points: 0, message: 'Not authenticated' }, { status: 401 });
     }
 
-    const userId = (session.user as SessionUser).id;
     const data = await getLoyaltyHistory(userId, 50);
 
     return NextResponse.json(

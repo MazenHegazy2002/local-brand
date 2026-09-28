@@ -44,7 +44,8 @@ export type SettingCategory =
   | 'security'
   | 'seo'
   | 'maintenance'
-  | 'whatsapp';
+  | 'whatsapp'
+  | 'mobile';
 
 export interface SettingDefinition<T = unknown> {
   key: string;
@@ -172,6 +173,12 @@ export const SETTING_CATEGORIES: Array<{
     label: 'WhatsApp Bot',
     icon: '💬',
     description: 'WhatsApp confirmation bot settings, verify token, API keys',
+  },
+  {
+    slug: 'mobile',
+    label: 'Mobile app',
+    icon: '📱',
+    description: 'App versions, force update, kill switch, store links',
   },
 ];
 
@@ -1520,6 +1527,63 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     label: 'Webhook verify token',
     defaultValue: '',
     description: 'The verify token string you choose when configuring your Meta Webhook.',
+  },
+
+  // ── Mobile app (read by GET /api/app/config) ───────────────────────────
+  {
+    key: 'MOBILE_LATEST_VERSION',
+    category: 'mobile',
+    type: 'text',
+    label: 'Latest app version',
+    defaultValue: '1.0.0',
+    pattern: '^\\d+\\.\\d+\\.\\d+$',
+    description: 'Older apps see a dismissible "update available" prompt.',
+  },
+  {
+    key: 'MOBILE_MIN_VERSION',
+    category: 'mobile',
+    type: 'text',
+    label: 'Minimum app version',
+    defaultValue: '1.0.0',
+    pattern: '^\\d+\\.\\d+\\.\\d+$',
+    description: 'Apps below this version are blocked until they update (force update).',
+  },
+  {
+    key: 'MOBILE_UPDATE_MESSAGE',
+    category: 'mobile',
+    type: 'longtext',
+    label: 'Update message',
+    defaultValue:
+      'A new version of the app is available. Update now for the latest features and fixes.',
+  },
+  {
+    key: 'MOBILE_KILL_SWITCH',
+    category: 'mobile',
+    type: 'toggle',
+    label: 'Force stop the app',
+    defaultValue: false,
+    description: 'Every app version shows the stop message and cannot be used.',
+  },
+  {
+    key: 'MOBILE_KILL_MESSAGE',
+    category: 'mobile',
+    type: 'longtext',
+    label: 'Stop message',
+    defaultValue: 'The app is temporarily unavailable. Please try again later.',
+  },
+  {
+    key: 'MOBILE_IOS_STORE_URL',
+    category: 'mobile',
+    type: 'url',
+    label: 'App Store URL (iOS)',
+    defaultValue: '',
+  },
+  {
+    key: 'MOBILE_ANDROID_STORE_URL',
+    category: 'mobile',
+    type: 'url',
+    label: 'Play Store URL (Android)',
+    defaultValue: '',
   },
 ];
 

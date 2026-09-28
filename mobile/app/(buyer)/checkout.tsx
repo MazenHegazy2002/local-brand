@@ -8,31 +8,80 @@ import {
   Pressable,
   Alert,
   ActivityIndicator,
+  Switch,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ArrowLeft, MapPin, Truck, CreditCard, Banknote, Building2 } from 'lucide-react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ChevronLeft, MapPin } from 'lucide-react-native';
 import { useCart } from '@/store/cart';
+import { useAuth } from '@/store/auth';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 
 type PayMethod = 'paysky' | 'cod' | 'fawry';
+type ShipMethod = 'standard';
+
+interface Address {
+  id: string;
+  street: string;
+  city: string;
+  governorate: string;
+}
+
+const SHIP_OPTIONS: { id: ShipMethod; label: string; sub: string; price: number }[] = [
+  { id: 'standard', label: 'Standard', sub: '2–4 days', price: 65 },
+  // Same-day (Before 10 pm, 120 EGP) hidden until the backend supports it.
+];
+
+const PAY_OPTIONS: { id: PayMethod; label: string; sub: string; badge: string }[] = [
+  {
+    id: 'paysky',
+    label: 'Debit / credit card',
+    sub: 'Visa, Mastercard, Meeza via PaySky',
+    badge: 'PaySky',
+  },
+  { id: 'cod', label: 'Cash on delivery', sub: 'Pay the courier in cash', badge: 'COD' },
+  {
+    id: 'fawry',
+    label: 'Fawry',
+    sub: 'Pay at any Fawry outlet with a reference code',
+    badge: 'Fawry',
+  },
+];
 
 export default function Checkout() {
   const router = useRouter();
+  const user = useAuth(s => s.user);
   const { items, total, clear } = useCart();
+  const [shipMethod, setShipMethod] = useState<ShipMethod>('standard');
   const [payMethod, setPayMethod] = useState<PayMethod>('paysky');
   const [usePoints, setUsePoints] = useState(false);
   const [loading, setLoading] = useState(false);
-  const subtotal = total();
-  const shipping = subtotal >= 1000 ? 0 : 45;
-  const orderTotal = subtotal + shipping;
+  const [addrOpen, setAddrOpen] = useState(false);
+  const queryClient = useQueryClient();
 
-  const payOptions: { id: PayMethod; label: string; sub: string; Icon: typeof CreditCard }[] = [
-    { id: 'paysky', label: 'Card / Meeza', sub: 'Visa, MasterCard, Meeza', Icon: CreditCard },
-    { id: 'cod', label: 'Cash on delivery', sub: 'Pay when you receive', Icon: Banknote },
-    { id: 'fawry', label: 'Fawry', sub: 'Pay at any Fawry outlet', Icon: Building2 },
-  ];
+  const { data: addrData } = useQuery({
+    queryKey: ['addresses'],
+    enabled: !!user,
+    queryFn: () => api.get<{ addresses: Address[] }>('/api/addresses'),
+  });
+  const { data: loyalty } = useQuery({
+    queryKey: ['loyalty'],
+    enabled: !!user,
+    queryFn: () => api.get<{ points: number; pointsValue: number }>('/api/loyalty'),
+  });
+
+  const address = addrData?.addresses?.[0];
+  const points = loyalty?.points ?? 0;
+  const pointsValue = Math.round(loyalty?.pointsValue ?? 0);
+
+  const subtotal = total();
+  const shipping = SHIP_OPTIONS.find(o => o.id === shipMethod)!.price;
+  const discount = usePoints ? Math.min(pointsValue, subtotal) : 0;
+  const orderTotal = subtotal + shipping - discount;
 
   async function handlePlaceOrder() {
     setLoading(true);
@@ -41,6 +90,8 @@ export default function Checkout() {
         '/api/checkout',
         {
           paymentMethod: payMethod,
+          shippingMethod: shipMethod,
+          addressId: address?.id,
           usePoints,
           items: items.map(i => ({
             productId: i.productId,
@@ -50,7 +101,6 @@ export default function Checkout() {
           })),
         }
       );
-
       if (payMethod === 'paysky' && res.paySkyUrl) {
         await WebBrowser.openBrowserAsync(res.paySkyUrl);
       } else {
@@ -68,101 +118,208 @@ export default function Checkout() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
+        <Pressable onPress={() => router.back()} hitSlop={8}>
+          <ChevronLeft size={24} color={colors.ink} strokeWidth={2} />
         </Pressable>
         <Text style={styles.title}>Checkout</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.inner}>
+      <ScrollView contentContainerStyle={styles.inner} showsVerticalScrollIndicator={false}>
         {/* Ship to */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <MapPin size={18} color={colors.primary} strokeWidth={2} />
-            <Text style={styles.cardTitle}>Ship to</Text>
+        <Text style={styles.sectionLabel}>SHIP TO</Text>
+        <View style={[styles.card, styles.row]}>
+          <MapPin size={20} color={colors.primary} strokeWidth={2} />
+          <View style={{ flex: 1 }}>
+            {address ? (
+              <>
+                <Text style={styles.bold}>{user?.name ?? 'Me'} · Home</Text>
+                <Text style={styles.muted}>
+                  {address.street}, {address.city}
+                </Text>
+                <Text style={styles.muted}>{address.governorate}</Text>
+              </>
+            ) : (
+              <Text style={styles.bold}>Add a delivery address</Text>
+            )}
           </View>
-          <Text style={styles.cardSub}>Add a delivery address</Text>
+          <Pressable
+            hitSlop={8}
+            onPress={() => (user ? setAddrOpen(true) : router.push('/(auth)/sign-in'))}
+          >
+            <Text style={styles.link}>{address ? 'Change' : 'Add'}</Text>
+          </Pressable>
         </View>
 
-        {/* Shipping options */}
-        <Text style={styles.sectionLabel}>Shipping</Text>
-        <View style={styles.card}>
-          <View style={styles.shippingRow}>
-            <Truck size={18} color={colors.primary} strokeWidth={2} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.shippingName}>Standard delivery</Text>
-              <Text style={styles.shippingSub}>3–5 business days</Text>
-            </View>
-            <Text style={styles.shippingPrice}>{subtotal >= 1000 ? 'Free' : fmtEGP(45)}</Text>
-          </View>
+        {/* Shipping */}
+        <Text style={styles.sectionLabel}>SHIPPING</Text>
+        <View style={styles.shipRow}>
+          {SHIP_OPTIONS.map(o => (
+            <Pressable
+              key={o.id}
+              style={[styles.card, styles.shipCard, shipMethod === o.id && styles.shipCardActive]}
+              onPress={() => setShipMethod(o.id)}
+            >
+              <Text style={styles.bold}>{o.label}</Text>
+              <Text style={styles.muted}>{o.sub}</Text>
+              <Text style={styles.shipPrice}>{fmtEGP(o.price)}</Text>
+            </Pressable>
+          ))}
         </View>
 
         {/* Payment */}
-        <Text style={styles.sectionLabel}>Payment</Text>
-        {payOptions.map(({ id, label, sub, Icon }) => (
-          <Pressable
-            key={id}
-            style={[styles.payOption, payMethod === id && styles.payOptionActive]}
-            onPress={() => setPayMethod(id)}
-          >
-            <View style={[styles.radio, payMethod === id && styles.radioActive]}>
-              {payMethod === id && <View style={styles.radioDot} />}
-            </View>
-            <Icon size={18} color={colors.muted} strokeWidth={1.8} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.payLabel}>{label}</Text>
-              <Text style={styles.paySub}>{sub}</Text>
-            </View>
-          </Pressable>
-        ))}
-
-        {/* Summary */}
-        <View style={styles.summary}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryKey}>Subtotal</Text>
-            <Text style={styles.summaryVal}>{fmtEGP(subtotal)}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryKey}>Shipping</Text>
-            <Text style={styles.summaryVal}>{shipping === 0 ? 'Free' : fmtEGP(shipping)}</Text>
-          </View>
-          <View
-            style={[
-              styles.summaryRow,
-              { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12, marginTop: 4 },
-            ]}
-          >
-            <Text style={[styles.summaryKey, { fontFamily: 'Inter-SemiBold', color: colors.ink }]}>
-              Total
-            </Text>
-            <Text
-              style={[
-                styles.summaryVal,
-                { fontFamily: 'Outfit-Bold', fontSize: 18, color: colors.ink },
-              ]}
-            >
-              {fmtEGP(orderTotal)}
-            </Text>
-          </View>
+        <Text style={styles.sectionLabel}>PAYMENT</Text>
+        <View style={[styles.card, { padding: 0, overflow: 'hidden' }]}>
+          {PAY_OPTIONS.map((o, i) => {
+            const active = payMethod === o.id;
+            return (
+              <Pressable
+                key={o.id}
+                style={[styles.payRow, i > 0 && styles.divider, active && styles.payRowActive]}
+                onPress={() => setPayMethod(o.id)}
+              >
+                <View style={[styles.radio, active && styles.radioActive]}>
+                  {active && <View style={styles.radioDot} />}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.semi}>{o.label}</Text>
+                  <Text style={styles.muted}>{o.sub}</Text>
+                </View>
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{o.badge}</Text>
+                </View>
+              </Pressable>
+            );
+          })}
         </View>
+
+        {/* Points */}
+        {points > 0 && (
+          <View style={styles.pointsCard}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.pointsTitle}>Use {points.toLocaleString()} points</Text>
+              <Text style={styles.pointsSub}>Save {fmtEGP(pointsValue)} on this order</Text>
+            </View>
+            <Switch
+              value={usePoints}
+              onValueChange={setUsePoints}
+              trackColor={{ true: colors.accent, false: colors.border }}
+              thumbColor="#fff"
+            />
+          </View>
+        )}
       </ScrollView>
 
+      {/* Sticky summary */}
       <View style={styles.footer}>
+        <View style={styles.sumRow}>
+          <Text style={styles.muted}>Subtotal</Text>
+          <Text style={styles.sumVal}>{fmtEGP(subtotal)}</Text>
+        </View>
+        <View style={styles.sumRow}>
+          <Text style={styles.muted}>Shipping{address ? ` · ${address.city}` : ''}</Text>
+          <Text style={styles.sumVal}>{fmtEGP(shipping)}</Text>
+        </View>
+        {discount > 0 && (
+          <View style={styles.sumRow}>
+            <Text style={styles.muted}>Points</Text>
+            <Text style={[styles.sumVal, { color: colors.success }]}>−{fmtEGP(discount)}</Text>
+          </View>
+        )}
+        <View style={[styles.sumRow, { marginTop: 4 }]}>
+          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalVal}>{fmtEGP(orderTotal)}</Text>
+        </View>
         <Pressable
-          style={[styles.ctaBtn, loading && { opacity: 0.7 }]}
+          style={[styles.ctaBtn, (loading || items.length === 0) && { opacity: 0.6 }]}
           onPress={handlePlaceOrder}
-          disabled={loading}
+          disabled={loading || items.length === 0}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.ctaText}>
-              {payMethod === 'cod' ? 'Place order' : `Pay ${fmtEGP(orderTotal)}`}
-            </Text>
+            <Text style={styles.ctaText}>Place order</Text>
           )}
         </Pressable>
       </View>
+
+      <AddressSheet
+        visible={addrOpen}
+        onClose={() => setAddrOpen(false)}
+        onSaved={() => {
+          setAddrOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['addresses'] });
+        }}
+      />
     </View>
+  );
+}
+
+function AddressSheet({
+  visible,
+  onClose,
+  onSaved,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [form, setForm] = useState({ street: '', city: '', governorate: '', phone: '' });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const set = (k: keyof typeof form) => (v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  async function save() {
+    setSaving(true);
+    setError('');
+    try {
+      // New address becomes the default, so it shows first on the Ship-to card.
+      await api.post('/api/addresses', { ...form, isDefault: true });
+      setForm({ street: '', city: '', governorate: '', phone: '' });
+      onSaved();
+    } catch (e: unknown) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const fields: { key: keyof typeof form; placeholder: string }[] = [
+    { key: 'street', placeholder: 'Street, building, apartment' },
+    { key: 'city', placeholder: 'City / area (e.g. Nasr City)' },
+    { key: 'governorate', placeholder: 'Governorate (e.g. Cairo)' },
+    { key: 'phone', placeholder: 'Phone (optional)' },
+  ];
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.backdrop} onPress={onClose} />
+      <View style={styles.sheet}>
+        <Text style={styles.sheetTitle}>Delivery address</Text>
+        {fields.map(f => (
+          <TextInput
+            key={f.key}
+            style={styles.input}
+            placeholder={f.placeholder}
+            placeholderTextColor={colors.placeholder}
+            value={form[f.key]}
+            onChangeText={set(f.key)}
+            keyboardType={f.key === 'phone' ? 'phone-pad' : 'default'}
+          />
+        ))}
+        {!!error && <Text style={styles.error}>{error}</Text>}
+        <Pressable
+          style={[styles.ctaBtn, saving && { opacity: 0.6 }]}
+          onPress={save}
+          disabled={saving}
+        >
+          {saving ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.ctaText}>Save address</Text>
+          )}
+        </Pressable>
+      </View>
+    </Modal>
   );
 }
 
@@ -171,80 +328,112 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
     paddingTop: 56,
     paddingHorizontal: spacing.page,
-    paddingBottom: 16,
-    gap: 12,
+    paddingBottom: 12,
   },
-  backBtn: { padding: 4 },
   title: { fontFamily: 'Outfit-Bold', fontSize: 22, color: colors.ink },
-  inner: { paddingHorizontal: spacing.page, paddingBottom: 120 },
+  inner: { paddingHorizontal: spacing.page, paddingBottom: 260 },
+  sectionLabel: {
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 12,
+    letterSpacing: 1,
+    color: colors.muted,
+    marginTop: 18,
+    marginBottom: 8,
+  },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radii.card,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 16,
-    marginBottom: 12,
   },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  cardTitle: { fontFamily: 'Inter-SemiBold', fontSize: 15, color: colors.ink },
-  cardSub: { fontFamily: 'Inter-Regular', fontSize: 13, color: colors.muted },
-  sectionLabel: {
-    fontFamily: 'Inter-SemiBold',
-    fontSize: 13,
-    color: colors.muted,
-    marginBottom: 8,
-    marginTop: 8,
-  },
-  shippingRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  shippingName: { fontFamily: 'Inter-SemiBold', fontSize: 14, color: colors.ink },
-  shippingSub: { fontFamily: 'Inter-Regular', fontSize: 12, color: colors.muted },
-  shippingPrice: { fontFamily: 'Inter-SemiBold', fontSize: 14, color: colors.success },
-  payOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.surface,
-    borderRadius: radii.card,
-    padding: 16,
-    marginBottom: 8,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-  },
-  payOptionActive: { borderColor: colors.primary, backgroundColor: '#f0f4ff' },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  bold: { fontFamily: 'Inter-Bold', fontSize: 15, color: colors.ink, marginBottom: 2 },
+  semi: { fontFamily: 'Inter-SemiBold', fontSize: 15, color: colors.ink, marginBottom: 2 },
+  muted: { fontFamily: 'Inter-Regular', fontSize: 13, color: colors.muted, lineHeight: 19 },
+  link: { fontFamily: 'Inter-SemiBold', fontSize: 14, color: colors.primary },
+  shipRow: { flexDirection: 'row', gap: 12 },
+  shipCard: { flex: 1, borderWidth: 1.5 },
+  shipCardActive: { borderColor: colors.primary },
+  shipPrice: { fontFamily: 'Inter-Bold', fontSize: 14, color: colors.primary, marginTop: 8 },
+  payRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 },
+  payRowActive: { backgroundColor: '#f0f4ff' },
+  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
   radio: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: colors.border,
+    borderColor: colors.inputBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioActive: { borderColor: colors.primary },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
-  payLabel: { fontFamily: 'Inter-SemiBold', fontSize: 14, color: colors.ink },
-  paySub: { fontFamily: 'Inter-Regular', fontSize: 12, color: colors.muted },
-  summary: { backgroundColor: colors.surface, borderRadius: radii.card, padding: 16, marginTop: 8 },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  summaryKey: { fontFamily: 'Inter-Regular', fontSize: 14, color: colors.muted },
-  summaryVal: { fontFamily: 'Inter-Medium', fontSize: 14, color: colors.ink },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: '#f1efeb',
+  },
+  badgeText: { fontFamily: 'Inter-SemiBold', fontSize: 11, color: colors.muted },
+  pointsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 18,
+    padding: 16,
+    borderRadius: radii.card,
+    backgroundColor: '#fdf3dc',
+  },
+  pointsTitle: { fontFamily: 'Inter-Bold', fontSize: 15, color: colors.accentText },
+  pointsSub: { fontFamily: 'Inter-Regular', fontSize: 13, color: colors.accentText, marginTop: 2 },
   footer: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
-    padding: spacing.page,
-    paddingBottom: 36,
+    bottom: 0,
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.border,
+    paddingHorizontal: spacing.page,
+    paddingTop: 14,
+    paddingBottom: 28,
   },
+  sumRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  sumVal: { fontFamily: 'Inter-SemiBold', fontSize: 14, color: colors.ink },
+  totalLabel: { fontFamily: 'Outfit-Bold', fontSize: 18, color: colors.ink },
+  totalVal: { fontFamily: 'Outfit-Bold', fontSize: 20, color: colors.ink },
   ctaBtn: {
     height: 54,
+    marginTop: 10,
     borderRadius: radii.button,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.navy,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ctaText: { fontFamily: 'Inter-SemiBold', fontSize: 16, color: '#fff' },
+  ctaText: { fontFamily: 'Inter-Bold', fontSize: 16, color: '#fff' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(14,22,51,0.4)' },
+  sheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radii.sheet,
+    borderTopRightRadius: radii.sheet,
+    padding: spacing.page,
+    paddingBottom: 32,
+    gap: 10,
+  },
+  sheetTitle: { fontFamily: 'Outfit-Bold', fontSize: 20, color: colors.ink, marginBottom: 4 },
+  input: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    fontFamily: 'Inter-Regular',
+    fontSize: 15,
+    color: colors.ink,
+  },
+  error: { fontFamily: 'Inter-Medium', fontSize: 13, color: '#dc2626' },
 });
