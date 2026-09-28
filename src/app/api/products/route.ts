@@ -4,6 +4,7 @@ import type { Prisma } from '@/generated/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redis } from '@/lib/redis';
+import { productImageUrl } from '@/lib/image-url';
 
 // GET /api/products?page=1&limit=12&category=&q=&minPrice=&maxPrice=&sort=&brand=&rating=&tags=&condition=&inStock=&flashSale=&gender=&ageGroup=&material=&ids=id1,id2,...
 export async function GET(req: Request) {
@@ -11,7 +12,12 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const session = await getServerSession(authOptions);
 
-    const sanitizeProducts = (list: any[]) => {
+    const sanitizeProducts = (raw: any[]) => {
+      // Base64 images made this response many MB; point them at the streaming route.
+      const list = raw.map(p => ({
+        ...p,
+        images: p.images?.map((i: any) => ({ ...i, url: productImageUrl(req, i) })),
+      }));
       if (session) return list;
       return list.map(p => ({
         id: p.id,
