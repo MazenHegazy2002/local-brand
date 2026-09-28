@@ -53,6 +53,16 @@ tar -czf "${SYS_DUMP_FILE}" \
 
 echo "✅ System archive created: ${SYS_DUMP_FILE} ($(du -h "${SYS_DUMP_FILE}" | cut -f1))"
 
+# 2b. Uploaded images (uploads_data volume, mounted at /app/uploads in the app)
+UPLOADS_DUMP_FILE="${BACKUP_DIR}/brandy_uploads_${TIMESTAMP}.tar.gz"
+echo "🖼️ Archiving uploaded images..."
+if docker-compose exec -T app tar -czf - -C /app uploads > "${UPLOADS_DUMP_FILE}"; then
+  echo "✅ Uploads archived: ${UPLOADS_DUMP_FILE} ($(du -h "${UPLOADS_DUMP_FILE}" | cut -f1))"
+else
+  rm -f "${UPLOADS_DUMP_FILE}"
+  echo "⚠️ Could not archive uploads"
+fi
+
 # 3. Upload to Google Drive
 echo "📤 Uploading database backup to Google Drive..."
 if [ -f "${DB_DUMP_FILE}" ]; then
@@ -66,17 +76,17 @@ if [ -f "${DB_DUMP_FILE}" ]; then
   fi
 fi
 
-echo "📤 Uploading system archive to Google Drive..."
-if [ -f "${SYS_DUMP_FILE}" ]; then
+for ARCHIVE in "${SYS_DUMP_FILE}" "${UPLOADS_DUMP_FILE}"; do
+  [ -f "${ARCHIVE}" ] || continue
+  echo "📤 Uploading $(basename "${ARCHIVE}") to Google Drive..."
   if command -v rclone >/dev/null 2>&1 && rclone listremotes | grep -q "gdrive:"; then
-    echo "Using rclone for Google Drive upload..."
-    rclone copy "${SYS_DUMP_FILE}" "gdrive:" && echo "✅ rclone uploaded ${SYS_DUMP_FILE}" || true
+    rclone copy "${ARCHIVE}" "gdrive:" && echo "✅ rclone uploaded ${ARCHIVE}" || true
   else
-    npx tsx scripts/backup-to-gdrive.ts "${SYS_DUMP_FILE}" || \
-    docker-compose exec -T -e GOOGLE_DRIVE_FOLDER_ID="${GDRIVE_FOLDER_ID}" app npx tsx scripts/backup-to-gdrive.ts "backups/$(basename "${SYS_DUMP_FILE}")" || \
+    npx tsx scripts/backup-to-gdrive.ts "${ARCHIVE}" || \
+    docker-compose exec -T -e GOOGLE_DRIVE_FOLDER_ID="${GDRIVE_FOLDER_ID}" app npx tsx scripts/backup-to-gdrive.ts "backups/$(basename "${ARCHIVE}")" || \
     echo "⚠️ Google Drive upload skipped (credentials not configured yet)"
   fi
-fi
+done
 
 # 4. Prune local backups older than 14 days to prevent disk space exhaustion
 echo "🧹 Pruning local backups older than 14 days..."

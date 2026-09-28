@@ -6,6 +6,9 @@ import { api } from '@/lib/api';
 
 export const API_BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
 
+// Disk-stored images come back as "/api/files/..."; React Native needs a full URL.
+export const absUrl = (u: string) => (u.startsWith('/') ? `${API_BASE}${u}` : u);
+
 export type Range = 'today' | '7d' | '30d';
 
 export interface SellerStats {
