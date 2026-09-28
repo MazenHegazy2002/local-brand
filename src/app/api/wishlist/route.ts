@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { SessionUser } from '@/types';
+import { getRequestUser } from '@/lib/mobile-auth';
 
-export async function GET(_req: Request) {
+export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    // Bearer (mobile) or session cookie (web).
+    const user = await getRequestUser(req);
+    if (!user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const role = (session.user as SessionUser).role;
+    const role = user.role;
     if (role && role !== 'BUYER') {
       return NextResponse.json(
         { message: 'Only customers can use the wishlist.' },
@@ -17,7 +16,7 @@ export async function GET(_req: Request) {
       );
     }
 
-    const userId = (session.user as SessionUser).id;
+    const userId = user.id;
 
     const wishlist = await prisma.wishlist.findMany({
       where: { userId },
@@ -25,6 +24,7 @@ export async function GET(_req: Request) {
         product: {
           include: {
             images: true,
+            seller: { select: { storeName: true } },
             variants: {
               select: { id: true, stockCount: true, price: true },
               orderBy: { stockCount: 'desc' },
@@ -35,7 +35,32 @@ export async function GET(_req: Request) {
       orderBy: { addedAt: 'desc' },
     });
 
-    return NextResponse.json({ wishlist }, { status: 200 });
+    // `items` is the flat shape the mobile app reads; web keeps using `wishlist`.
+    // Base64 images go through the streaming route so the response stays small.
+    const origin = new URL(req.url).origin;
+    const items = wishlist.map(w => {
+      const img = w.product.images.find(i => i.isPrimary) ?? w.product.images[0];
+      return {
+        id: w.product.id, // wishlist rows are keyed by (user, product)
+        product: {
+          id: w.product.id,
+          title: w.product.title,
+          basePrice: w.product.basePrice,
+          image: !img
+            ? null
+            : img.url.startsWith('data:')
+              ? `${origin}/api/images/product-image/${img.id}`
+              : img.url,
+          brand: w.product.seller?.storeName ?? '',
+          inStock: w.product.variants.some(v => v.stockCount > 0),
+        },
+      };
+    });
+    // Mobile asks for ?view=items to skip the raw rows (they carry every base64 image).
+    if (new URL(req.url).searchParams.get('view') === 'items') {
+      return NextResponse.json({ items }, { status: 200 });
+    }
+    return NextResponse.json({ wishlist, items }, { status: 200 });
   } catch (_error) {
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
@@ -43,10 +68,11 @@ export async function GET(_req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    // Bearer (mobile) or session cookie (web).
+    const user = await getRequestUser(req);
+    if (!user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const role = (session.user as SessionUser).role;
+    const role = user.role;
     if (role && role !== 'BUYER') {
       return NextResponse.json(
         { message: 'Only customers can use the wishlist.' },
@@ -55,7 +81,7 @@ export async function POST(req: Request) {
     }
 
     const { productId } = await req.json();
-    const userId = (session.user as SessionUser).id;
+    const userId = user.id;
 
     if (!productId) {
       return NextResponse.json({ message: 'productId is required' }, { status: 400 });

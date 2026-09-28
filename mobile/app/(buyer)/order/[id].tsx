@@ -22,12 +22,23 @@ const STEPS = [
   { key: 'DELIVERED', label: 'Delivered' },
 ];
 
+// Order.status values from the server mapped onto the 4 timeline steps.
 const STEP_RANK: Record<string, number> = {
-  ORDER_PLACED: 0,
+  PENDING_PAYMENT: 0,
+  CONFIRMED: 0,
   PROCESSING: 1,
   SHIPPED: 2,
   DELIVERED: 3,
 };
+
+function fmtTime(iso: string) {
+  const d = new Date(iso);
+  const day =
+    d.toDateString() === new Date().toDateString()
+      ? 'Today'
+      : d.toLocaleDateString([], { weekday: 'short' });
+  return `${day} ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+}
 
 export default function OrderTracking() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,15 +52,30 @@ export default function OrderTracking() {
   if (isLoading) return <ActivityIndicator style={{ flex: 1 }} color={colors.primary} />;
 
   const order = data?.order;
-  const status = order?.status ?? 'SHIPPED';
-  const currentStep = STEP_RANK[status] ?? 2;
+  if (!order) {
+    return (
+      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={styles.summaryText}>Order not found.</Text>
+      </View>
+    );
+  }
+  const status: string = order.status;
+  const currentStep = STEP_RANK[status] ?? 0;
 
   const eta =
-    status === 'SHIPPED' ? 'Today, by 6 pm' : status === 'DELIVERED' ? 'Delivered' : 'In progress';
+    status === 'SHIPPED'
+      ? 'On the way'
+      : status === 'DELIVERED'
+        ? 'Delivered'
+        : status === 'CANCELLED' || status === 'RETURNED'
+          ? status.toLowerCase()
+          : 'In progress';
 
-  const subtotal = order?.total ?? 888;
-  const payMethod = order?.paymentMethod ?? 'COD';
-  const itemCount = order?.items?.length ?? 2;
+  const subtotal: number = order.total;
+  const payMethod: string = order.paymentMethod;
+  // No "packed" timestamp is stored, so that step only shows a dash.
+  const stepTimes: (string | null)[] = [order.createdAt, null, order.shippedAt, order.deliveredAt];
+  const itemCount: number = order.items.reduce((s: number, i: any) => s + i.quantity, 0);
 
   return (
     <View style={styles.root}>
@@ -57,7 +83,7 @@ export default function OrderTracking() {
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
         </Pressable>
-        <Text style={styles.title}>Order #{order?.id ?? id}</Text>
+        <Text style={styles.title}>Order #{order.id.slice(0, 8).toUpperCase()}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.inner}>
@@ -82,12 +108,9 @@ export default function OrderTracking() {
           </View>
           {/* Progress bar */}
           <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${((currentStep + 1) / STEPS.length) * 100}%` as any },
-              ]}
-            />
+            {STEPS.map((_, i) => (
+              <View key={i} style={[styles.segment, i <= currentStep && styles.segmentDone]} />
+            ))}
           </View>
         </View>
 
@@ -115,6 +138,9 @@ export default function OrderTracking() {
                   <Text style={[styles.timelineLabel, !done && styles.timelineLabelPending]}>
                     {step.label}
                   </Text>
+                  <Text style={styles.timelineTime}>
+                    {stepTimes[i] ? fmtTime(stepTimes[i]!) : '—'}
+                  </Text>
                 </View>
               </View>
             );
@@ -123,12 +149,24 @@ export default function OrderTracking() {
 
         {/* Order summary */}
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryText}>
-            {itemCount} item{itemCount !== 1 ? 's' : ''} · {fmtEGP(subtotal)}
-          </Text>
-          <Text style={styles.summaryPayment}>
-            {payMethod === 'COD' ? 'Cash on delivery' : payMethod}
-          </Text>
+          <View style={styles.thumbs}>
+            {order.items.slice(0, 2).map((i: any) => (
+              <Image
+                key={i.id}
+                source={i.image ? { uri: i.image } : undefined}
+                style={styles.thumb}
+                contentFit="cover"
+              />
+            ))}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.summaryText}>
+              {itemCount} item{itemCount !== 1 ? 's' : ''} · {fmtEGP(subtotal)}
+            </Text>
+            <Text style={styles.summaryPayment}>
+              {payMethod === 'CASH_ON_DELIVERY' ? 'Cash on delivery' : payMethod.replace(/_/g, ' ')}
+            </Text>
+          </View>
         </View>
 
         {/* Actions */}
@@ -136,7 +174,12 @@ export default function OrderTracking() {
           <Pressable style={styles.whatsappBtn} onPress={() => Linking.openURL('https://wa.me/')}>
             <Text style={styles.whatsappBtnText}>💬 Chat courier</Text>
           </Pressable>
-          <Pressable style={styles.helpBtn}>
+          <Pressable
+            style={styles.helpBtn}
+            onPress={() =>
+              Linking.openURL(`mailto:support@brandyy.shop?subject=Order%20${order.id}`)
+            }
+          >
             <Text style={styles.helpBtnText}>Get help</Text>
           </Pressable>
         </View>
@@ -184,8 +227,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   statusPillText: { fontFamily: 'Inter-Bold', fontSize: 12, color: colors.ink },
-  progressTrack: { height: 5, backgroundColor: 'rgba(255,255,255,.2)', borderRadius: 3 },
-  progressFill: { height: 5, backgroundColor: colors.accent, borderRadius: 3 },
+  progressTrack: { flexDirection: 'row', gap: 6 },
+  segment: { flex: 1, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,.25)' },
+  segmentDone: { backgroundColor: colors.accent },
   timeline: { marginBottom: 20 },
   timelineRow: { flexDirection: 'row', gap: 14 },
   timelineLeft: { alignItems: 'center', width: 24 },
@@ -205,6 +249,7 @@ const styles = StyleSheet.create({
   timelineLineDone: { backgroundColor: colors.primary },
   timelineContent: { flex: 1, paddingBottom: 20, paddingTop: 2 },
   timelineLabel: { fontFamily: 'Inter-SemiBold', fontSize: 14, color: colors.ink },
+  timelineTime: { fontFamily: 'Inter-Regular', fontSize: 12, color: colors.muted, marginTop: 2 },
   timelineLabelPending: { color: colors.muted, fontFamily: 'Inter-Regular' },
   summaryCard: {
     backgroundColor: colors.surface,
@@ -213,6 +258,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  thumbs: { flexDirection: 'row' },
+  thumb: {
+    marginRight: -8,
+    width: 48,
+    height: 48,
+    borderRadius: radii.sm,
+    backgroundColor: colors.border,
   },
   summaryText: { fontFamily: 'Inter-SemiBold', fontSize: 14, color: colors.ink, marginBottom: 4 },
   summaryPayment: { fontFamily: 'Inter-Regular', fontSize: 13, color: colors.muted },

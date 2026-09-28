@@ -88,6 +88,8 @@ export default function BuyerLayout() {
       <Tabs.Screen name="wishlist" options={{ href: null }} />
       <Tabs.Screen name="affiliate" options={{ href: null }} />
       <Tabs.Screen name="order/[id]" options={{ href: null }} />
+      <Tabs.Screen name="orders" options={{ href: null }} />
+      <Tabs.Screen name="addresses" options={{ href: null }} />
       <Tabs.Screen name="product/[id]" options={{ href: null, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="brand/[id]" options={{ href: null, tabBarStyle: { display: 'none' } }} />
     </Tabs>

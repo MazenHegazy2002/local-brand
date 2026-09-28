@@ -56,6 +56,7 @@ export async function GET(req: NextRequest) {
         },
         images: {
           select: {
+            id: true,
             url: true,
             isPrimary: true,
           },
@@ -76,11 +77,15 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    // Images stored inline as base64 made this response ~12 MB. Point data: URLs
+    // at the streaming route instead so each image is fetched and cached separately.
+    const origin = req.nextUrl.origin;
+    const imgUrl = (img: { id: string; url: string }) =>
+      img.url.startsWith('data:') ? `${origin}/api/images/product-image/${img.id}` : img.url;
+
     const formatted = products.map(p => {
-      const primaryImg =
-        p.images.find(img => img.isPrimary)?.url ||
-        p.images[0]?.url ||
-        'https://via.placeholder.com/400';
+      const primary = p.images.find(img => img.isPrimary) || p.images[0];
+      const primaryImg = primary ? imgUrl(primary) : 'https://via.placeholder.com/400';
       const brandName =
         p.brandRef?.name || p.brand || p.seller?.storeName || 'Egyptian Local Brand';
 
@@ -110,7 +115,7 @@ export async function GET(req: NextRequest) {
         image: primaryImg,
         imageUrl: primaryImg,
         thumbnail: primaryImg,
-        images: p.images.map(img => img.url),
+        images: p.images.map(imgUrl),
 
         // Description & Stock
         description: p.description,

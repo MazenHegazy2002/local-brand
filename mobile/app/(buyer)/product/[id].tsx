@@ -13,7 +13,7 @@ import {
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Heart, Share2, ArrowLeft, BadgeCheck, Star, Sparkles, Truck } from 'lucide-react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { useCart } from '@/store/cart';
 import { colors, radii, spacing } from '@/lib/tokens';
@@ -40,7 +40,16 @@ export default function ProductDetail() {
   const router = useRouter();
   const { add } = useCart();
   const [added, setAdded] = useState(false);
-  const [liked, setLiked] = useState(false);
+  const qc = useQueryClient();
+  const { data: wish } = useQuery({
+    queryKey: ['wishlist'],
+    queryFn: () => api.get<{ items: { id: string }[] }>('/api/wishlist?view=items'),
+  });
+  const liked = !!wish?.items.some(w => w.id === id);
+  const toggleLike = useMutation({
+    mutationFn: () => api.post('/api/wishlist', { productId: id }),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['wishlist'] }),
+  });
   const [selectedSize, setSelectedSize] = useState<string>();
   const [selectedColor, setSelectedColor] = useState<string>();
   const [imgIdx, setImgIdx] = useState(0);
@@ -127,7 +136,11 @@ export default function ProductDetail() {
           <Pressable style={[styles.galleryBtn, { right: 64 }]}>
             <Share2 size={18} color={colors.ink} strokeWidth={2} />
           </Pressable>
-          <Pressable style={[styles.galleryBtn, { right: 16 }]} onPress={() => setLiked(!liked)}>
+          <Pressable
+            style={[styles.galleryBtn, { right: 16 }]}
+            onPress={() => toggleLike.mutate()}
+            disabled={toggleLike.isPending}
+          >
             <Heart
               size={18}
               color={liked ? colors.favorite : colors.ink}
