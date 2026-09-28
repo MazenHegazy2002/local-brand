@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRequestUser } from '@/lib/mobile-auth';
 import { prisma } from '@/lib/prisma';
+import { productImageUrl } from '@/lib/image-url';
 
 // One of the buyer's own orders (mobile order tracking screen).
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -50,12 +51,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   });
   if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
 
-  const img = (i: { id: string; url: string } | undefined) =>
-    !i
-      ? null
-      : i.url.startsWith('data:')
-        ? `${req.nextUrl.origin}/api/images/product-image/${i.id}`
-        : i.url;
+  const img = (i: { id: string; url: string } | undefined) => (i ? productImageUrl(req, i) : null);
 
   return NextResponse.json({
     order: {
