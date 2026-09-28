@@ -16,7 +16,7 @@ const esc = (v: unknown) =>
   );
 
 // POST → { url } : a 10-minute signed link the app opens in the system browser.
-export async function POST(req: NextRequest, ctx: RouteContext<'/api/seller/orders/[id]/label'>) {
+export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const user = await getRequestUser(req);
   if (!user)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: CORS_HEADERS });
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest, ctx: RouteContext<'/api/seller/orde
 }
 
 // GET ?exp&sig → printable A6 label. No cookie/Bearer: the HMAC is the credential.
-export async function GET(req: NextRequest, ctx: RouteContext<'/api/seller/orders/[id]/label'>) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const secret = process.env.NEXTAUTH_SECRET;
   const { id } = await ctx.params;
   const exp = Number(req.nextUrl.searchParams.get('exp'));

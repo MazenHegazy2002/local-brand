@@ -9,7 +9,7 @@ const json = (body: object, status = 200) =>
   NextResponse.json(body, { status, headers: CORS_HEADERS });
 
 // POST /api/seller/orders/[id]  { action: 'accept' | 'ship' }
-export async function POST(req: NextRequest, ctx: RouteContext<'/api/seller/orders/[id]'>) {
+export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const user = await getRequestUser(req);
   if (!user) return json({ error: 'Unauthorized' }, 401);
   if (user.role !== 'SELLER' && user.role !== 'ADMIN') return json({ error: 'Forbidden' }, 403);

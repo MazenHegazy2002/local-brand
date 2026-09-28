@@ -8,7 +8,7 @@ const json = (body: object, status = 200) =>
   NextResponse.json(body, { status, headers: CORS_HEADERS });
 
 // PATCH /api/seller/products/[id]  { published?, variants?: [{ id, stockCount }] }
-export async function PATCH(req: NextRequest, ctx: RouteContext<'/api/seller/products/[id]'>) {
+export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const user = await getRequestUser(req);
   if (!user) return json({ error: 'Unauthorized' }, 401);
   if (user.role !== 'SELLER') return json({ error: 'Forbidden' }, 403);
