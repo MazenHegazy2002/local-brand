@@ -35,7 +35,7 @@ interface Category {
 export default function Shop() {
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const [gender, setGender] = useState<'all' | 'women' | 'men'>('all');
+  const [selectedCat, setSelectedCat] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortBy, setSortBy] = useState<'newest' | 'price_asc' | 'price_desc'>('newest');
 
@@ -45,10 +45,10 @@ export default function Shop() {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ['products', search, gender],
+    queryKey: ['products', search, selectedCat],
     queryFn: () =>
       api.get<{ products: Product[] }>(
-        `/api/products?search=${encodeURIComponent(search)}&limit=40`
+        `/api/products?search=${encodeURIComponent(search)}&category=${selectedCat}&limit=40`
       ),
     staleTime: 20_000,
   });
@@ -81,51 +81,23 @@ export default function Shop() {
           </Pressable>
         </View>
 
-        {/* Gender tabs */}
-        <View style={styles.tabs}>
-          {(['all', 'women', 'men'] as const).map(g => (
-            <Pressable
-              key={g}
-              style={[styles.tab, gender === g && styles.tabActive]}
-              onPress={() => setGender(g)}
-            >
-              <Text style={[styles.tabText, gender === g && styles.tabTextActive]}>
-                {g.charAt(0).toUpperCase() + g.slice(1)}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
-      {/* Categories row */}
-      {cats?.categories && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.catsRow}
-        >
-          {cats.categories.slice(0, 8).map((cat, i) => {
-            const bgs = [
-              '#efe9df',
-              '#e8edf9',
-              '#f3e7e5',
-              '#ecebe6',
-              '#fdf3dc',
-              '#e8f4ea',
-              '#f3e7f9',
-              '#e7f3f9',
-            ];
-            return (
+        {/* Category tabs from API */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsScroll}>
+          <View style={styles.tabs}>
+            {[{ id: '', name: 'All' }, ...(cats?.categories ?? [])].map(cat => (
               <Pressable
                 key={cat.id}
-                style={[styles.catCard, { backgroundColor: bgs[i % bgs.length] }]}
+                style={[styles.tab, selectedCat === cat.id && styles.tabActive]}
+                onPress={() => setSelectedCat(cat.id)}
               >
-                <Text style={styles.catName}>{cat.name}</Text>
+                <Text style={[styles.tabText, selectedCat === cat.id && styles.tabTextActive]}>
+                  {cat.name}
+                </Text>
               </Pressable>
-            );
-          })}
+            ))}
+          </View>
         </ScrollView>
-      )}
+      </View>
 
       {/* Filter sheet */}
       <Modal
@@ -235,14 +207,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabs: { flexDirection: 'row', gap: 0 },
+  tabsScroll: { marginTop: 4 },
+  tabs: { flexDirection: 'row', paddingHorizontal: spacing.page, paddingBottom: 2 },
   tab: { paddingBottom: 10, marginRight: 24 },
   tabActive: { borderBottomWidth: 2, borderBottomColor: colors.ink },
   tabText: { fontFamily: 'Inter-Medium', fontSize: 15, color: colors.muted },
   tabTextActive: { fontFamily: 'Inter-SemiBold', color: colors.ink },
-  catsRow: { paddingHorizontal: spacing.page, paddingVertical: 12, gap: 10 },
-  catCard: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: radii.cardLg },
-  catName: { fontFamily: 'Inter-SemiBold', fontSize: 13, color: colors.ink },
   grid: { paddingHorizontal: spacing.page, paddingBottom: 24, gap: 12 },
   card: { flex: 1, maxWidth: '50%' },
   cardImg: { width: '100%', aspectRatio: 0.82, borderRadius: radii.card, marginBottom: 8 },
