@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { Bell, Search, Heart } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
@@ -107,10 +107,13 @@ export default function Home() {
               <Pressable style={styles.heroBtn} onPress={() => router.push('/(buyer)/shop')}>
                 <Search size={20} color="#fff" strokeWidth={2} />
               </Pressable>
-              <Pressable style={styles.heroBtnWrap}>
-                <Pressable style={styles.heroBtn}>
+              <Pressable
+                style={styles.heroBtnWrap}
+                onPress={() => router.push('/notifications' as Href)}
+              >
+                <View style={styles.heroBtn}>
                   <Bell size={20} color="#fff" strokeWidth={2} />
-                </Pressable>
+                </View>
                 <View style={styles.notifDot} />
               </Pressable>
             </View>
