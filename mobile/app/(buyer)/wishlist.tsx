@@ -62,7 +62,8 @@ export default function Wishlist() {
   async function removeFromWishlist(itemId: string) {
     setRemoving(r => [...r, itemId]);
     try {
-      await api.delete(`/api/wishlist/${itemId}`);
+      // POST toggles; the item is already saved, so this removes it.
+      await api.post('/api/wishlist', { productId: itemId });
       refetch();
     } finally {
       setRemoving(r => r.filter(x => x !== itemId));

@@ -12,7 +12,11 @@ import {
   ChevronRight,
   Settings,
 } from 'lucide-react-native';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/store/auth';
+import { api } from '@/lib/api';
+import type { OrderRow } from './orders';
+import type { AddressRow } from './addresses';
 import { colors, radii, spacing } from '@/lib/tokens';
 
 export default function Account() {
@@ -33,9 +37,43 @@ export default function Account() {
     ]);
   }
 
+  // Same query keys as the list screens, so counts and lists share one cache.
+  const orders = useQuery({
+    queryKey: ['orders'],
+    queryFn: () => api.get<{ orders: OrderRow[] }>('/api/orders'),
+  });
+  const wishlist = useQuery({
+    queryKey: ['wishlist'],
+    queryFn: () => api.get<{ items: unknown[] }>('/api/wishlist'),
+  });
+  const addresses = useQuery({
+    queryKey: ['addresses'],
+    queryFn: () => api.get<{ addresses: AddressRow[] }>('/api/addresses'),
+  });
+  const count = (n?: number) => (n == null ? '–' : String(n));
+  const addressCount = count(addresses.data?.addresses.length);
+
+  const stats = [
+    { label: 'Orders', value: count(orders.data?.orders.length), href: './orders' },
+    { label: 'Wishlist', value: count(wishlist.data?.items.length), href: './wishlist' },
+    { label: 'Addresses', value: addressCount, href: './addresses' },
+  ] as const;
+
   const menu = [
-    { label: 'My orders', Icon: Package, badge: null, hint: null, onPress: () => {} },
-    { label: 'Addresses', Icon: MapPin, badge: null, hint: '2', onPress: () => {} },
+    {
+      label: 'My orders',
+      Icon: Package,
+      badge: null,
+      hint: null,
+      onPress: () => router.push('./orders'),
+    },
+    {
+      label: 'Addresses',
+      Icon: MapPin,
+      badge: null,
+      hint: addressCount,
+      onPress: () => router.push('./addresses'),
+    },
     { label: 'Payment methods', Icon: CreditCard, badge: null, hint: null, onPress: () => {} },
     {
       label: 'Earn with Brandyy (affiliate)',
@@ -89,15 +127,11 @@ export default function Account() {
 
       {/* Stats row */}
       <View style={styles.statsRow}>
-        {[
-          { label: 'Orders', value: '3' },
-          { label: 'Wishlist', value: '4' },
-          { label: 'Addresses', value: '2' },
-        ].map(({ label, value }) => (
-          <View key={label} style={styles.statItem}>
+        {stats.map(({ label, value, href }) => (
+          <Pressable key={label} style={styles.statItem} onPress={() => router.push(href)}>
             <Text style={styles.statValue}>{value}</Text>
             <Text style={styles.statLabel}>{label}</Text>
-          </View>
+          </Pressable>
         ))}
       </View>
 
@@ -193,21 +227,19 @@ const styles = StyleSheet.create({
   loyaltyEgpText: { fontFamily: 'Inter-SemiBold', fontSize: 13, color: 'rgba(255,255,255,.8)' },
   statsRow: {
     flexDirection: 'row',
+    gap: 10,
     marginHorizontal: spacing.page,
     marginTop: 12,
     marginBottom: 20,
-    backgroundColor: colors.surface,
-    borderRadius: radii.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 14,
-    borderRightWidth: 1,
-    borderRightColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: radii.card,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   statValue: { fontFamily: 'Outfit-Bold', fontSize: 20, color: colors.ink },
   statLabel: { fontFamily: 'Inter-Regular', fontSize: 12, color: colors.muted, marginTop: 2 },

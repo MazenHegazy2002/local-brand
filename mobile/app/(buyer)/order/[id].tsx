@@ -22,8 +22,10 @@ const STEPS = [
   { key: 'DELIVERED', label: 'Delivered' },
 ];
 
+// Order.status values from the server mapped onto the 4 timeline steps.
 const STEP_RANK: Record<string, number> = {
-  ORDER_PLACED: 0,
+  PENDING_PAYMENT: 0,
+  CONFIRMED: 0,
   PROCESSING: 1,
   SHIPPED: 2,
   DELIVERED: 3,
@@ -41,15 +43,28 @@ export default function OrderTracking() {
   if (isLoading) return <ActivityIndicator style={{ flex: 1 }} color={colors.primary} />;
 
   const order = data?.order;
-  const status = order?.status ?? 'SHIPPED';
-  const currentStep = STEP_RANK[status] ?? 2;
+  if (!order) {
+    return (
+      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={styles.summaryText}>Order not found.</Text>
+      </View>
+    );
+  }
+  const status: string = order.status;
+  const currentStep = STEP_RANK[status] ?? 0;
 
   const eta =
-    status === 'SHIPPED' ? 'Today, by 6 pm' : status === 'DELIVERED' ? 'Delivered' : 'In progress';
+    status === 'SHIPPED'
+      ? 'On the way'
+      : status === 'DELIVERED'
+        ? 'Delivered'
+        : status === 'CANCELLED' || status === 'RETURNED'
+          ? status.toLowerCase()
+          : 'In progress';
 
-  const subtotal = order?.total ?? 888;
-  const payMethod = order?.paymentMethod ?? 'COD';
-  const itemCount = order?.items?.length ?? 2;
+  const subtotal: number = order.total;
+  const payMethod: string = order.paymentMethod;
+  const itemCount: number = order.items.reduce((s: number, i: any) => s + i.quantity, 0);
 
   return (
     <View style={styles.root}>
@@ -57,7 +72,7 @@ export default function OrderTracking() {
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
         </Pressable>
-        <Text style={styles.title}>Order #{order?.id ?? id}</Text>
+        <Text style={styles.title}>Order #{order.id.slice(0, 8).toUpperCase()}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.inner}>
@@ -123,11 +138,16 @@ export default function OrderTracking() {
 
         {/* Order summary */}
         <View style={styles.summaryCard}>
+          <View style={styles.thumbs}>
+            {order.items.slice(0, 4).map((i: any) => (
+              <Image key={i.id} source={i.image} style={styles.thumb} contentFit="cover" />
+            ))}
+          </View>
           <Text style={styles.summaryText}>
             {itemCount} item{itemCount !== 1 ? 's' : ''} · {fmtEGP(subtotal)}
           </Text>
           <Text style={styles.summaryPayment}>
-            {payMethod === 'COD' ? 'Cash on delivery' : payMethod}
+            {payMethod === 'CASH_ON_DELIVERY' ? 'Cash on delivery' : payMethod.replace(/_/g, ' ')}
           </Text>
         </View>
 
@@ -136,7 +156,12 @@ export default function OrderTracking() {
           <Pressable style={styles.whatsappBtn} onPress={() => Linking.openURL('https://wa.me/')}>
             <Text style={styles.whatsappBtnText}>💬 Chat courier</Text>
           </Pressable>
-          <Pressable style={styles.helpBtn}>
+          <Pressable
+            style={styles.helpBtn}
+            onPress={() =>
+              Linking.openURL(`mailto:support@brandyy.shop?subject=Order%20${order.id}`)
+            }
+          >
             <Text style={styles.helpBtnText}>Get help</Text>
           </Pressable>
         </View>
@@ -214,6 +239,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: 16,
   },
+  thumbs: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  thumb: { width: 48, height: 48, borderRadius: radii.sm, backgroundColor: colors.border },
   summaryText: { fontFamily: 'Inter-SemiBold', fontSize: 14, color: colors.ink, marginBottom: 4 },
   summaryPayment: { fontFamily: 'Inter-Regular', fontSize: 13, color: colors.muted },
   actions: { flexDirection: 'row', gap: 12 },
