@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getRequestUser } from '@/lib/mobile-auth';
 import { put } from '@vercel/blob';
+import { saveFile } from '@/lib/file-store';
 
 interface CloudinaryUploadResult {
   secure_url: string;
@@ -38,21 +39,6 @@ export async function POST(req: Request) {
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
         { message: 'File too large. Maximum 10MB allowed.' },
-        { status: 400 }
-      );
-    }
-
-    // When no cloud storage provider is configured, images fall back to base64
-    // data URLs — enforce a 5 MB cap to prevent network timeouts and DB bloat.
-    const isFallbackMode = !process.env.BLOB_READ_WRITE_TOKEN && !process.env.CLOUDINARY_CLOUD_NAME;
-
-    if (isFallbackMode && file.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        {
-          message:
-            'Image must be ≤ 5 MB when no cloud storage (Vercel Blob / Cloudinary) is configured. ' +
-            'Please choose a smaller image or configure cloud storage credentials.',
-        },
         { status: 400 }
       );
     }
@@ -121,24 +107,9 @@ export async function POST(req: Request) {
       }
     }
 
-    // Dev / unconfigured mode: return the file itself as a base64 data URL
-    // so the user actually sees what they uploaded (instead of a random
-    // picsum image they can't relate to). This is fine for local dev and
-    // small previews; production should always have BLOB_READ_WRITE_TOKEN
-    // or Cloudinary credentials configured.
-    const bytes = await file.arrayBuffer();
-    const base64 = Buffer.from(bytes).toString('base64');
-    const dataUrl = `data:${file.type};base64,${base64}`;
-    return NextResponse.json(
-      {
-        url: dataUrl,
-        publicId: `mock-${Date.now()}`,
-        mockMode: true,
-        message:
-          'Stored as a data URL — configure BLOB_READ_WRITE_TOKEN or Cloudinary env vars in production for proper hosted images.',
-      },
-      { status: 200 }
-    );
+    // Default: store on the server's own disk (Docker volume in production).
+    const url = await saveFile(Buffer.from(await file.arrayBuffer()), file.type);
+    return NextResponse.json({ url, publicId: url, mockMode: false }, { status: 200 });
   } catch (error: unknown) {
     const err = error as Error;
     console.error('Upload Error:', err);

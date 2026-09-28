@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { dataUrlToFile } from '@/lib/file-store';
+import { publicOrigin } from '@/lib/image-url';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +28,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         return new Response('Bad image data', { status: 500 });
       }
 
+      // One-time move of legacy base64 images onto disk; later requests redirect.
+      const saved = await dataUrlToFile(img.url).catch(() => null);
+      if (saved) await prisma.productImage.update({ where: { id }, data: { url: saved } });
+
       const header = img.url.substring(5, commaIdx);
       const mime = header.split(';')[0] || 'image/jpeg';
       const base64Data = img.url.substring(commaIdx + 1);
@@ -42,7 +48,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     // If it's an external URL, redirect directly
-    return NextResponse.redirect(img.url, 307);
+    const target = img.url.startsWith('/') ? `${publicOrigin(_req)}${img.url}` : img.url;
+    return NextResponse.redirect(target, 307);
   } catch (error) {
     console.error('[product-image stream error]:', error);
     return new Response('Internal Server Error', { status: 500 });

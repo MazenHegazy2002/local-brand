@@ -84,3 +84,5 @@ google-service-account.json
 backups/
 *.sql.gz
 public/tryon/
+
+/uploads
