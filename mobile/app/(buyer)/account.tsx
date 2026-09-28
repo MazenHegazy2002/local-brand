@@ -18,6 +18,10 @@ import { api } from '@/lib/api';
 import type { OrderRow } from './orders';
 import type { AddressRow } from './addresses';
 import { colors, radii, spacing } from '@/lib/tokens';
+import * as WebBrowser from 'expo-web-browser';
+
+const WEB = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
+const openWeb = (path: string) => WebBrowser.openBrowserAsync(WEB + path);
 
 export default function Account() {
   const { user, signOut, lang, setLang } = useAuth();
@@ -35,6 +39,26 @@ export default function Account() {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
     ]);
+  }
+
+  // Required by App Store + Google Play: in-app account deletion.
+  function confirmDelete() {
+    Alert.alert(
+      'Delete account',
+      'This permanently deletes your account and personal data. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () =>
+            api
+              .post('/api/account/delete', {})
+              .then(() => signOut())
+              .catch(() => Alert.alert('Could not delete account', 'Please try again.')),
+        },
+      ]
+    );
   }
 
   // Same query keys as the list screens, so counts and lists share one cache.
@@ -74,7 +98,17 @@ export default function Account() {
       hint: addressCount,
       onPress: () => router.push('/addresses' as Href),
     },
-    { label: 'Payment methods', Icon: CreditCard, badge: null, hint: null, onPress: () => {} },
+    {
+      label: 'Payment methods',
+      Icon: CreditCard,
+      badge: null,
+      hint: null,
+      onPress: () =>
+        Alert.alert(
+          'Payment methods',
+          'You pick how to pay at checkout: card or cash on delivery. Cards are processed securely by the payment provider and never stored on Brandyy.'
+        ),
+    },
     {
       label: 'Earn with Brandyy (affiliate)',
       Icon: Percent,
@@ -82,7 +116,13 @@ export default function Account() {
       hint: '5%',
       onPress: () => router.push('/(buyer)/affiliate'),
     },
-    { label: 'Sell on Brandyy', Icon: Store, badge: null, hint: null, onPress: () => {} },
+    {
+      label: 'Sell on Brandyy',
+      Icon: Store,
+      badge: null,
+      hint: null,
+      onPress: () => openWeb('/become-seller'),
+    },
     {
       label: 'Language',
       Icon: Globe,
@@ -90,7 +130,20 @@ export default function Account() {
       hint: lang === 'en' ? 'English' : 'عربي',
       onPress: () => setLang(lang === 'en' ? 'ar' : 'en'),
     },
-    { label: 'Help & support', Icon: HelpCircle, badge: null, hint: null, onPress: () => {} },
+    {
+      label: 'Help & support',
+      Icon: HelpCircle,
+      badge: null,
+      hint: null,
+      onPress: () => openWeb('/help'),
+    },
+    {
+      label: 'Privacy policy',
+      Icon: HelpCircle,
+      badge: null,
+      hint: null,
+      onPress: () => openWeb('/privacy'),
+    },
   ];
 
   return (
@@ -104,7 +157,7 @@ export default function Account() {
           <Text style={styles.name}>{user?.name ?? 'Guest'}</Text>
           <Text style={styles.email}>{user?.email}</Text>
         </View>
-        <Pressable style={styles.settingsBtn}>
+        <Pressable style={styles.settingsBtn} onPress={() => openWeb('/dashboard?tab=settings')}>
           <Settings size={20} color={colors.muted} strokeWidth={1.8} />
         </Pressable>
       </View>
@@ -154,6 +207,9 @@ export default function Account() {
 
       <Pressable style={styles.signOutBtn} onPress={confirmSignOut}>
         <Text style={styles.signOutText}>Sign out</Text>
+      </Pressable>
+      <Pressable style={[styles.signOutBtn, { marginTop: 12 }]} onPress={confirmDelete}>
+        <Text style={[styles.signOutText, { color: '#dc2626' }]}>Delete account</Text>
       </Pressable>
     </ScrollView>
   );
