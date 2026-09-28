@@ -1,6 +1,6 @@
 // Screen 3e — Account + loyalty
 import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import {
   Package,
   MapPin,
@@ -54,10 +54,10 @@ export default function Account() {
   const addressCount = count(addresses.data?.addresses.length);
 
   const stats = [
-    { label: 'Orders', value: count(orders.data?.orders.length), href: './orders' },
-    { label: 'Wishlist', value: count(wishlist.data?.items.length), href: './wishlist' },
-    { label: 'Addresses', value: addressCount, href: './addresses' },
-  ] as const;
+    { label: 'Orders', value: count(orders.data?.orders.length), href: '/orders' as Href },
+    { label: 'Wishlist', value: count(wishlist.data?.items.length), href: '/wishlist' as Href },
+    { label: 'Addresses', value: addressCount, href: '/addresses' as Href },
+  ];
 
   const menu = [
     {
@@ -65,14 +65,14 @@ export default function Account() {
       Icon: Package,
       badge: null,
       hint: null,
-      onPress: () => router.push('./orders'),
+      onPress: () => router.push('/orders' as Href),
     },
     {
       label: 'Addresses',
       Icon: MapPin,
       badge: null,
       hint: addressCount,
-      onPress: () => router.push('./addresses'),
+      onPress: () => router.push('/addresses' as Href),
     },
     { label: 'Payment methods', Icon: CreditCard, badge: null, hint: null, onPress: () => {} },
     {
