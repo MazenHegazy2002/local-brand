@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.page,
-    paddingTop: 56,
+    paddingTop: spacing.top,
     paddingBottom: 12,
   },
   wordmark: {

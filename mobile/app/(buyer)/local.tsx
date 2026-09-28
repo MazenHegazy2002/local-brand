@@ -57,7 +57,7 @@ export default function Local() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  header: { paddingTop: 56, paddingHorizontal: spacing.page, paddingBottom: 16 },
+  header: { paddingTop: spacing.top, paddingHorizontal: spacing.page, paddingBottom: 16 },
   title: { fontFamily: 'InstrumentSerif-Regular', fontSize: 38, color: colors.ink },
   sub: { fontFamily: 'Inter-Regular', fontSize: 14, color: colors.muted, marginTop: 4 },
   grid: { paddingHorizontal: spacing.page, paddingBottom: 24, gap: 12 },

@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.page,
-    paddingTop: 56,
+    paddingTop: spacing.top,
   },
   wordmark: { fontFamily: 'Outfit-ExtraBold', fontSize: 22, color: '#fff' },
   heroActions: { flexDirection: 'row', gap: 8 },

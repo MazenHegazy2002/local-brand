@@ -117,7 +117,7 @@ export default function Bag() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   header: {
-    paddingTop: 56,
+    paddingTop: spacing.top,
     paddingHorizontal: spacing.page,
     paddingBottom: 12,
     flexDirection: 'row',

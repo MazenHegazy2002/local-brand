@@ -135,7 +135,7 @@ export default function AdminOverview() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bgAdmin },
-  header: { paddingTop: 56, paddingHorizontal: spacing.page, paddingBottom: 16 },
+  header: { paddingTop: spacing.top, paddingHorizontal: spacing.page, paddingBottom: 16 },
   adminLabel: {
     fontFamily: 'Inter-Bold',
     fontSize: 11,

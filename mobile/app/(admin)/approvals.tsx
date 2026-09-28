@@ -64,7 +64,7 @@ export default function Approvals() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bgAdmin },
-  header: { paddingTop: 56, paddingHorizontal: spacing.page, paddingBottom: 16 },
+  header: { paddingTop: spacing.top, paddingHorizontal: spacing.page, paddingBottom: 16 },
   title: { fontFamily: 'Outfit-Bold', fontSize: 26, color: '#fff' },
   list: { paddingHorizontal: spacing.page, paddingBottom: 40 },
   card: {

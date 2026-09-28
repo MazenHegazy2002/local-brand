@@ -33,6 +33,7 @@ interface Category {
   name: string;
   slug?: string;
   _count?: { products: number };
+  image?: string | null;
 }
 
 const P_MIN = 0;
@@ -159,15 +160,6 @@ export default function Shop() {
   });
 
   const products = data?.products ?? [];
-
-  // Build category → first image map from loaded products
-  const catImageMap: Record<string, string> = {};
-  products.forEach(p => {
-    const cat = typeof p.category === 'string' ? p.category : (p.category?.slug ?? '');
-    if (cat && !catImageMap[cat] && p.images?.[0]?.url) {
-      catImageMap[cat] = p.images[0].url;
-    }
-  });
 
   const allCategories = cats?.categories ?? [];
   const resultCount = products.length;
@@ -319,7 +311,7 @@ export default function Shop() {
             keyExtractor={c => c.id}
             contentContainerStyle={styles.catList}
             renderItem={({ item: cat, index }) => {
-              const img = catImageMap[cat.slug ?? cat.id] ?? catImageMap[cat.id];
+              const img = cat.image;
               return (
                 <Pressable
                   style={[styles.catCard, { backgroundColor: CAT_BG[index % CAT_BG.length] }]}
@@ -378,16 +370,16 @@ export default function Shop() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   header: {
-    paddingTop: 56,
+    paddingTop: spacing.top,
     paddingHorizontal: spacing.page,
     paddingBottom: 12,
     backgroundColor: colors.bg,
   },
   title: {
     fontFamily: 'InstrumentSerif-Regular',
-    fontSize: 38,
+    fontSize: 34,
     color: colors.ink,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   searchRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   searchBox: {
@@ -421,19 +413,19 @@ const styles = StyleSheet.create({
   tabTextActive: { fontFamily: 'Inter-SemiBold', color: colors.ink },
 
   // category cards
-  catList: { paddingHorizontal: spacing.page, paddingTop: 16, paddingBottom: 32, gap: 12 },
+  catList: { paddingHorizontal: spacing.page, paddingTop: 8, paddingBottom: 32, gap: 12 },
   catCard: {
-    height: 110,
-    borderRadius: 16,
+    height: 84,
+    borderRadius: 18,
     flexDirection: 'row',
     alignItems: 'center',
     overflow: 'hidden',
   },
   catCardLeft: { flex: 1, paddingHorizontal: 20 },
-  catCardName: { fontFamily: 'Outfit-Bold', fontSize: 20, color: colors.ink, marginBottom: 4 },
+  catCardName: { fontFamily: 'Outfit-Bold', fontSize: 18, color: colors.ink, marginBottom: 4 },
   catCardCount: { fontFamily: 'Inter-Regular', fontSize: 13, color: colors.muted },
-  catCardImg: { width: 110, height: 110 },
-  catCardImgPlaceholder: { width: 110, height: 110, backgroundColor: 'rgba(0,0,0,0.06)' },
+  catCardImg: { width: '38%', height: '100%' },
+  catCardImgPlaceholder: { width: '38%', height: '100%', backgroundColor: 'rgba(0,0,0,0.06)' },
 
   // filter sheet
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
