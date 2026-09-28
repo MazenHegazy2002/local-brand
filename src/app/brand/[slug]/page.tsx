@@ -7,6 +7,7 @@ import type { Metadata } from 'next';
 import { PLATFORM_URL } from '@/lib/constants';
 import { breadcrumbJsonLd, brandStoreJsonLd, jsonLdScript } from '@/lib/jsonld';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
+import { recordStoreVisit } from '@/lib/store-visits';
 
 export const dynamic = 'force-dynamic';
 
@@ -144,6 +145,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
   }
 
   const { brandName, brandDescription, accentColor, sellerId, brandId, logoUrl } = brandData;
+  recordStoreVisit(sellerId);
 
   const orConditions: Prisma.ProductWhereInput[] = [];
   if (brandId) orConditions.push({ brandId });

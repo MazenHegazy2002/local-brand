@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
-import { getMobileUser } from '@/lib/mobile-auth';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getMobileUser, getRequestUserId } from '@/lib/mobile-auth';
 
 export async function POST(req: NextRequest) {
-  // Accept both session (web) and Bearer JWT (mobile)
-  const session = await getServerSession(authOptions);
-  const mobileUser = await getMobileUser(req);
-  const userId = session?.user?.id ?? mobileUser?.id;
-
+  const userId = await getRequestUserId(req);
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { token } = await req.json();

@@ -1,25 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
-import { jwtVerify } from 'jose';
+import { getRequestUser } from '@/lib/mobile-auth';
 import { prisma } from '@/lib/prisma';
 
-const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!);
-
-async function getAdminUser(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (token?.role === 'ADMIN') return true;
-  const auth = req.headers.get('Authorization');
-  if (auth?.startsWith('Bearer ')) {
-    try {
-      const { payload } = await jwtVerify(auth.slice(7), JWT_SECRET, { audience: 'mobile-access' });
-      return payload.role === 'ADMIN';
-    } catch {}
-  }
-  return false;
-}
-
 export async function GET(req: NextRequest) {
-  if (!(await getAdminUser(req)))
+  if ((await getRequestUser(req))?.role !== 'ADMIN')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const today = new Date();

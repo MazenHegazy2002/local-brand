@@ -35,6 +35,7 @@ import WebhooksTab from './_components/WebhooksTab';
 import JobsTab from './_components/JobsTab';
 import FeatureFlagsTab from './_components/FeatureFlagsTab';
 import HealthTab from './_components/HealthTab';
+import MobileAppTab from './_components/MobileAppTab';
 import {
   AreaChart,
   Area,
@@ -648,6 +649,12 @@ export default function AdminOS() {
           icon={<WhatsAppIcon />}
         />
         <NavItem
+          active={activeTab === 'mobile'}
+          onClick={() => setActiveTab('mobile')}
+          label="Mobile app"
+          icon={<PhoneIcon />}
+        />
+        <NavItem
           active={activeTab === 'settings'}
           onClick={() => setActiveTab('settings')}
           label="Settings"
@@ -776,6 +783,9 @@ export default function AdminOS() {
           {activeTab === 'tracker' && <TrackerTab />}
           {activeTab === 'affiliate' && <AffiliateTab />}
           {activeTab === 'whatsapp' && <WhatsAppTab />}
+          {activeTab === 'mobile' && (
+            <MobileAppTab onOpenSettings={() => setActiveTab('settings')} />
+          )}
         </div>
       </div>
 
@@ -960,6 +970,7 @@ const TITLES: Record<string, string> = {
   tracker: 'Developer metrics & tracker',
   settings: 'System configuration',
   whatsapp: 'WhatsApp confirmation bot',
+  mobile: 'Mobile app control',
 };
 
 // ─── AffiliateIcon ────────────────────────────────────────────────────────────
@@ -6948,6 +6959,23 @@ function WhatsAppIcon() {
   return (
     <svg className="nav-icon" viewBox="0 0 16 16" fill="currentColor">
       <path d="M8 0c-4.4 0-8 3.6-8 8 0 1.5.4 2.9 1.2 4.1l-1.2 3.9 4-1.2C5.2 15.6 6.6 16 8 16c4.4 0 8-3.6 8-8s-3.6-8-8-8zm4.3 11.2c-.2.5-.9.9-1.4 1-.4.1-.9.2-2.5-.5-2.1-.8-3.5-3-3.6-3.1s-.8-1.1-.8-2.1c0-1 .5-1.5.7-1.7.2-.2.4-.3.6-.3h.4c.1 0 .3 0 .4.3.2.4.6 1.4.6 1.5 0 .1.1.3 0 .4-.1.2-.2.3-.3.4-.1.1-.3.3-.4.4-.1.1-.2.3-.1.4.2.4.8 1.4 1.7 2.2.9.8 1.7 1.1 1.9 1.2.2.1.3.1.5-.1.2-.2.7-.8.9-1.1.1-.2.3-.2.5-.1s1.3.6 1.5.7c.2.1.3.2.4.3.1.2 0 .8-.3 1.3z" />
+    </svg>
+  );
+}
+function PhoneIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <rect
+        x="4"
+        y="1.5"
+        width="8"
+        height="13"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        opacity=".7"
+      />
+      <path d="M7 12h2" stroke="currentColor" strokeWidth="1.2" opacity=".7" />
     </svg>
   );
 }

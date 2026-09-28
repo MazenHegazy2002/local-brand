@@ -1,20 +1,9 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { OrderStatus } from '@/generated/client';
 import { SessionUser } from '@/types';
 import { orderStatusUpdateSchema } from '@/lib/validation';
-
-const VALID_TRANSITIONS: Record<string, OrderStatus[]> = {
-  [OrderStatus.PENDING_PAYMENT]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
-  [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
-  [OrderStatus.PROCESSING]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
-  [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED, OrderStatus.RETURNED],
-  [OrderStatus.DELIVERED]: [OrderStatus.RETURNED],
-  [OrderStatus.CANCELLED]: [],
-  [OrderStatus.RETURNED]: [],
-};
+import { changeOrderStatus } from '@/lib/order-status';
 
 export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -28,144 +17,19 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       return NextResponse.json({ message: validated.error.errors[0].message }, { status: 400 });
     }
 
-    const { status } = validated.data;
-    const params = await context.params;
-    const orderId = params.id;
-    const role = (session.user as SessionUser).role;
-    const userId = (session.user as SessionUser).id;
-
-    // Fetch current order status
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-    });
-
-    if (!order) return NextResponse.json({ message: 'Order not found' }, { status: 404 });
-
-    // Enforce State Machine Transitions
-    const allowedNextStates = VALID_TRANSITIONS[order.status] || [];
-    if (!allowedNextStates.includes(status)) {
-      return NextResponse.json(
-        { message: `Invalid state transition from ${order.status} to ${status}` },
-        { status: 400 }
-      );
+    const { id } = await context.params;
+    const user = session.user as SessionUser;
+    const result = await changeOrderStatus(
+      { id: user.id, role: user.role },
+      id,
+      validated.data.status
+    );
+    if (!result.ok) {
+      return NextResponse.json({ message: result.message }, { status: result.httpStatus });
     }
-
-    // Role-based constraints
-    if (role === 'BUYER') {
-      if (status !== OrderStatus.CANCELLED && status !== OrderStatus.RETURNED) {
-        return NextResponse.json(
-          { message: 'Buyers can only CANCEL or RETURN orders' },
-          { status: 403 }
-        );
-      }
-      if (order.userId !== userId) {
-        return NextResponse.json({ message: 'Unauthorized modification' }, { status: 403 });
-      }
-    }
-
-    if (role === 'SELLER') {
-      const sellerProfile = await prisma.sellerProfile.findUnique({
-        where: { userId: session.user.id },
-      });
-      if (!sellerProfile) {
-        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-      }
-      const ownsItem = await prisma.orderItem.findFirst({
-        where: {
-          orderId,
-          variant: {
-            product: {
-              sellerId: sellerProfile.id,
-            },
-          },
-        },
-      });
-      if (!ownsItem) {
-        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-      }
-    }
-
-    // Build update payload. We stamp deliveredAt the first time an order
-    // transitions into DELIVERED so the seller-earnings escrow window has a
-    // reliable start time (instead of being fooled by later updatedAt
-    // bumps from edits/notes/etc.).
-    const data: { status: OrderStatus; deliveredAt?: Date } = { status };
-    if (status === OrderStatus.DELIVERED && order.status !== OrderStatus.DELIVERED) {
-      data.deliveredAt = new Date();
-
-      // Mirror DELIVERED onto each item so per-item earnings/escrow
-      // calculations agree with the order-level status. We only flip live
-      // items — anything already cancelled/returned stays as-is.
-      await prisma.orderItem.updateMany({
-        where: {
-          orderId,
-          status: { notIn: ['CANCELLED', 'RETURNED', 'REFUNDED', 'RETURN_REQUESTED'] },
-        },
-        data: { status: 'DELIVERED' },
-      });
-
-      if (order.userId) {
-        try {
-          const loyaltyMod = await import('@/app/actions/loyalty');
-          await loyaltyMod.addLoyaltyPoints(
-            order.userId,
-            order.totalAmount - order.shippingFee,
-            undefined,
-            `Earned for delivered order #${order.id.slice(0, 8).toUpperCase()}`
-          );
-        } catch (err) {
-          console.error('[status/route] Failed to award loyalty points on delivery:', err);
-        }
-      }
-      // NOTE: previously this incremented sellerProfile.balance per item.
-      // That column is now vestigial — earnings are always computed from
-      // the orders table via computeSellerEarnings, which gives us escrow,
-      // refund-aware reconciliation, and a single source of truth.
-    } else if (status === OrderStatus.SHIPPED && order.status !== OrderStatus.SHIPPED) {
-      // Mirror SHIPPED onto every live item so seller-hub order views
-      // reflect the correct courier-stage status.
-      await prisma.orderItem.updateMany({
-        where: {
-          orderId,
-          status: { notIn: ['CANCELLED', 'RETURNED', 'REFUNDED', 'RETURN_REQUESTED', 'DELIVERED'] },
-        },
-        data: { status: 'SHIPPED' },
-      });
-    }
-
-    // Update order
-    const updatedOrder = await prisma.order.update({
-      where: { id: orderId },
-      data,
-    });
-
-    // Hook in affiliate commissions
-    try {
-      const { confirmCommission, cancelCommission } = await import('@/lib/checkout-affiliate');
-      if (status === OrderStatus.DELIVERED && order.status !== OrderStatus.DELIVERED) {
-        await confirmCommission(orderId);
-      } else if (
-        (status === OrderStatus.CANCELLED || status === OrderStatus.RETURNED) &&
-        order.status !== status
-      ) {
-        await cancelCommission(orderId);
-      }
-    } catch (err) {
-      console.error('Failed to trigger affiliate commission updates:', err);
-    }
-
-    // Best-effort status transition notification email.
-    void (async () => {
-      try {
-        const { triggerOrderStatusEmail } = await import('@/lib/email');
-        await triggerOrderStatusEmail(orderId, status);
-      } catch (err) {
-        console.error('Failed to trigger order status email:', err);
-      }
-    })();
 
     return NextResponse.json(
-      { message: 'Order status updated', order: updatedOrder },
+      { message: 'Order status updated', order: result.order },
       { status: 200 }
     );
   } catch (error) {
