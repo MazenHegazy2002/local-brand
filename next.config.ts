@@ -45,6 +45,12 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'picsum.photos' },
       { protocol: 'https', hostname: '*.amazonaws.com' },
+      { protocol: 'https', hostname: 'm.media-amazon.com' },
+      { protocol: 'https', hostname: '*.media-amazon.com' },
+      { protocol: 'https', hostname: 'images-na.ssl-images-amazon.com' },
+      { protocol: 'https', hostname: 'images-eu.ssl-images-amazon.com' },
+      { protocol: 'https', hostname: '*.ssl-images-amazon.com' },
+      { protocol: 'https', hostname: 'via.placeholder.com' },
       // Vercel Blob storage (direct + CDN edge)
       { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },
       { protocol: 'https', hostname: 'blob.vercel-storage.com' },
