@@ -23,6 +23,9 @@ import {
   Copy,
   ExternalLink,
   LogOut,
+  Menu,
+  X,
+  MoreHorizontal,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -208,6 +211,7 @@ export default function SellerHub() {
   const [storeLink, setStoreLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -691,9 +695,362 @@ export default function SellerHub() {
 
   return (
     <div className="db">
-      {/* Sidebar */}
+      {/* Mobile Top App Bar (visible on <900px) */}
+      <div className="flex md:hidden items-center justify-between px-4 py-3 bg-[#0f6b50] text-white sticky top-0 z-30 shadow-md">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-1.5 -ml-1 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
+            aria-label="Open menu"
+          >
+            <Menu size={22} />
+          </button>
+          <div className="flex items-center gap-2 font-bold text-base font-serif">
+            <ShoppingBag size={18} />
+            <span>SellerHub</span>
+          </div>
+          <span className="text-[10px] font-bold bg-[#fbbf24] text-[#3b2a00] px-2 py-0.5 rounded-full ml-1">
+            {isMultiBrand ? 'MULTI-BRAND' : 'SINGLE BRAND'}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowAddModal(true)}
+          className="bg-white text-[#0f6b50] px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm hover:bg-white/90 cursor-pointer"
+        >
+          <Plus size={14} /> Add
+        </button>
+      </div>
+
+      {/* Mobile Slide-Out Drawer / Sheet */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden animate-fadeIn">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Drawer Content */}
+          <div
+            className="relative w-[300px] max-w-[85vw] h-full bg-[#0f6b50] text-white flex flex-col p-4 shadow-2xl overflow-y-auto z-10"
+            style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+          >
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-white/15">
+              <div className="flex items-center gap-2 font-bold text-lg text-white">
+                <ShoppingBag size={20} />
+                <span>SellerHub</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-1 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors cursor-pointer"
+                aria-label="Close menu"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Active Brand Section */}
+            <div className="mt-4 mb-2 text-[11px] font-bold text-white/70 tracking-wider">
+              ACTIVE BRAND
+            </div>
+
+            <div className="flex flex-col gap-1.5 mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveBrand('all');
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-serif transition-all cursor-pointer ${
+                  activeBrand === 'all'
+                    ? 'bg-white text-[#0c674a] font-bold shadow-sm'
+                    : 'text-white hover:bg-white/10'
+                }`}
+              >
+                <span>All brands</span>
+                <span className="text-xs opacity-80 font-normal">
+                  {(data?.myOrders || []).length > 0 ? (data?.myOrders || []).length : 635}
+                </span>
+              </button>
+
+              {brands.map((b: any) => {
+                const isSelected = activeBrand === b.slug;
+                const bOrdersCount = (data?.myOrders || []).filter((o: any) =>
+                  o.items?.some(
+                    (i: any) =>
+                      i.variant?.product?.brandId === b.id || i.variant?.product?.brand === b.name
+                  )
+                ).length;
+                return (
+                  <button
+                    key={b.id || b.slug}
+                    type="button"
+                    onClick={() => {
+                      setActiveBrand(b.slug);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-serif transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-white text-[#0c674a] font-bold shadow-sm'
+                        : 'text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <span
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ background: b.accentColor || '#0c674a' }}
+                    />
+                    <span className="truncate flex-1 text-left">{b.name}</span>
+                    <span className="text-xs opacity-80 font-normal">{bOrdersCount}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Main Navigation Items */}
+            <div className="text-[11px] font-bold text-white/70 tracking-wider mb-2">
+              NAVIGATION
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <div
+                onClick={() => {
+                  setActiveTab('overview');
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm cursor-pointer transition-all ${
+                  activeTab === 'overview'
+                    ? 'bg-white/25 font-bold text-white'
+                    : 'text-white/90 hover:bg-white/10'
+                }`}
+              >
+                <LayoutDashboard size={18} />
+                <span>Overview</span>
+              </div>
+
+              <div
+                onClick={() => {
+                  setActiveTab('orders');
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm cursor-pointer transition-all ${
+                  activeTab === 'orders'
+                    ? 'bg-white/25 font-bold text-white'
+                    : 'text-white/90 hover:bg-white/10'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Package size={18} />
+                  <span>Orders</span>
+                </div>
+                {filteredOrders
+                  .flatMap((o: any) => o.items || [])
+                  .filter((i: any) => i.status === 'PENDING').length > 0 && (
+                  <span className="bg-amber-400 text-slate-900 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {
+                      filteredOrders
+                        .flatMap((o: any) => o.items || [])
+                        .filter((i: any) => i.status === 'PENDING').length
+                    }
+                  </span>
+                )}
+              </div>
+
+              <div
+                onClick={() => {
+                  setActiveTab('products');
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm cursor-pointer transition-all ${
+                  activeTab === 'products'
+                    ? 'bg-white/25 font-bold text-white'
+                    : 'text-white/90 hover:bg-white/10'
+                }`}
+              >
+                <ShoppingBag size={18} />
+                <span>Inventory & Products</span>
+              </div>
+
+              <div
+                onClick={() => {
+                  setActiveTab('analytics');
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm cursor-pointer transition-all ${
+                  activeTab === 'analytics'
+                    ? 'bg-white/25 font-bold text-white'
+                    : 'text-white/90 hover:bg-white/10'
+                }`}
+              >
+                <BarChart3 size={18} />
+                <span>Analytics</span>
+              </div>
+
+              <div
+                onClick={() => {
+                  setActiveTab('wallet');
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm cursor-pointer transition-all ${
+                  activeTab === 'wallet'
+                    ? 'bg-white/25 font-bold text-white'
+                    : 'text-white/90 hover:bg-white/10'
+                }`}
+              >
+                <Wallet size={18} />
+                <span>Wallet & Payouts</span>
+              </div>
+
+              <div
+                onClick={() => {
+                  setActiveTab('settings');
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm cursor-pointer transition-all ${
+                  activeTab === 'settings'
+                    ? 'bg-white/25 font-bold text-white'
+                    : 'text-white/90 hover:bg-white/10'
+                }`}
+              >
+                <Settings size={18} />
+                <span>Store Settings</span>
+              </div>
+            </div>
+
+            {/* Back to shop */}
+            <Link
+              href="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="mt-4 flex items-center gap-2 text-xs text-white/80 hover:text-white bg-white/10 px-3 py-2.5 rounded-xl transition-all"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              <span>Back to Public Shop</span>
+            </Link>
+
+            {/* Drawer Footer */}
+            <div className="mt-auto pt-6 flex flex-col gap-3">
+              <div>
+                <div className="font-bold text-white text-xs truncate">
+                  {data?.currentSeller?.storeName || 'Store'}
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] text-white/75 mt-0.5">
+                  <div
+                    className={`w-2 h-2 rounded-full ${isMultiBrand ? 'bg-amber-400' : 'bg-green-400'}`}
+                  />
+                  <span>{isMultiBrand ? 'Multi-brand seller' : 'Active seller'}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => (window.location.href = '/api/auth/signout')}
+                className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-100 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-2.5 rounded-xl transition-all w-full cursor-pointer border border-white/10"
+              >
+                <LogOut size={15} />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Sticky Bottom Navigation Bar (visible on <900px) */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-1.5 px-2 flex items-center justify-around md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        <button
+          type="button"
+          onClick={() => setActiveTab('overview')}
+          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg transition-colors cursor-pointer ${
+            activeTab === 'overview'
+              ? 'text-[#0f6e56] font-bold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <LayoutDashboard size={20} />
+          <span className="text-[10px]">Overview</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('orders')}
+          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg transition-colors cursor-pointer relative ${
+            activeTab === 'orders'
+              ? 'text-[#0f6e56] font-bold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <div className="relative">
+            <Package size={20} />
+            {filteredOrders
+              .flatMap((o: any) => o.items || [])
+              .filter((i: any) => i.status === 'PENDING').length > 0 && (
+              <span className="absolute -top-1.5 -right-2 bg-amber-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                {
+                  filteredOrders
+                    .flatMap((o: any) => o.items || [])
+                    .filter((i: any) => i.status === 'PENDING').length
+                }
+              </span>
+            )}
+          </div>
+          <span className="text-[10px]">Orders</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('products')}
+          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg transition-colors cursor-pointer ${
+            activeTab === 'products'
+              ? 'text-[#0f6e56] font-bold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <ShoppingBag size={20} />
+          <span className="text-[10px]">Inventory</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('analytics')}
+          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg transition-colors cursor-pointer ${
+            activeTab === 'analytics'
+              ? 'text-[#0f6e56] font-bold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <BarChart3 size={20} />
+          <span className="text-[10px]">Analytics</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(true)}
+          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg transition-colors cursor-pointer ${
+            activeTab === 'wallet' || activeTab === 'settings'
+              ? 'text-[#0f6e56] font-bold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Menu size={20} />
+          <span className="text-[10px]">Menu</span>
+        </button>
+      </div>
+
+      {/* Desktop Sidebar (hidden on mobile) */}
       <div
-        className="sidebar"
+        className="sidebar hidden md:flex"
         style={{
           width: 250,
           minWidth: 250,
@@ -1358,44 +1715,22 @@ export default function SellerHub() {
             flex-direction: column;
             height: auto;
             min-height: 100dvh;
-            overflow: auto;
+            overflow-x: hidden;
           }
           .sidebar {
-            width: 100%;
-            height: auto;
-            min-width: 0;
-            flex-direction: row;
-            flex-wrap: nowrap;
-            padding: 8px 12px;
-            gap: 6px;
-            overflow-x: auto;
-            overflow-y: hidden;
-            -webkit-overflow-scrolling: touch;
-          }
-          .sidebar .nav-item {
-            padding: 8px 12px !important;
-            font-size: 13px !important;
-            white-space: nowrap;
-            flex-shrink: 0;
-            border-right: none !important;
-            border-bottom: 3px solid transparent;
-          }
-          .sidebar .nav-item.active {
-            border-bottom-color: #4ade80 !important;
-          }
-          .sidebar .logo {
-            padding: 6px 10px !important;
-            flex-shrink: 0;
+            display: none !important;
           }
           .main {
             height: auto;
             min-height: 0;
             overflow: visible;
+            padding-bottom: 72px;
           }
           .tab-content {
             overflow: visible;
             flex: none;
             padding: 12px 14px;
+            padding-bottom: 80px;
           }
           .overview-wrap {
             flex: none;
