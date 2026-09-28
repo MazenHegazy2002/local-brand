@@ -87,5 +87,7 @@ jobs:
             docker-compose pull app || true
             docker-compose up -d --force-recreate --remove-orphans
             docker-compose exec -T app npx prisma migrate deploy
+            # Move legacy base64 logos/avatars/banners to disk (idempotent)
+            for i in $(seq 1 20); do curl -sf http://127.0.0.1:3000/api/cron/images-to-disk && break; sleep 3; done || true
             docker image prune -f
             echo "⚡ Deployed pre-built container successfully to Contabo VPS"

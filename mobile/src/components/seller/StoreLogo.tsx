@@ -1,3 +1,4 @@
+import { absUrl } from '@/lib/seller';
 import { View, Text } from 'react-native';
 import { Image } from 'expo-image';
 import { colors } from '@/lib/tokens';
@@ -12,7 +13,7 @@ export function StoreLogo({
   size?: number;
 }) {
   const box = { width: size, height: size, borderRadius: size * 0.28 };
-  if (uri) return <Image source={{ uri }} style={box} contentFit="cover" />;
+  if (uri) return <Image source={{ uri: absUrl(uri) }} style={box} contentFit="cover" />;
   return (
     <View
       style={[

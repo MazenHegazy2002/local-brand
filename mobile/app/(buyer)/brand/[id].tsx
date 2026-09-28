@@ -1,3 +1,4 @@
+import { absUrl } from '@/lib/seller';
 // Screen 2f — Brand page
 import { useState } from 'react';
 import {
@@ -97,7 +98,7 @@ export default function BrandPage() {
             <View style={styles.logoTile}>
               {seller?.seller.logoUrl ? (
                 <Image
-                  source={{ uri: seller.seller.logoUrl }}
+                  source={{ uri: absUrl(seller.seller.logoUrl) }}
                   style={styles.logoImg}
                   contentFit="cover"
                 />
