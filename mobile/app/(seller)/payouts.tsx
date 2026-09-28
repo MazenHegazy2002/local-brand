@@ -53,7 +53,7 @@ export default function Payouts() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bgSeller },
-  inner: { paddingTop: 56, paddingHorizontal: spacing.page, paddingBottom: 40 },
+  inner: { paddingTop: spacing.top, paddingHorizontal: spacing.page, paddingBottom: 40 },
   title: {
     fontFamily: 'InstrumentSerif-Regular',
     fontSize: 36,

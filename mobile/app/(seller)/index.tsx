@@ -222,7 +222,7 @@ function ActionRow({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bgSeller },
-  inner: { paddingTop: 56, paddingHorizontal: spacing.page, paddingBottom: 40 },
+  inner: { paddingTop: spacing.top, paddingHorizontal: spacing.page, paddingBottom: 40 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 18 },
   hubLabel: { fontFamily: 'Inter-Medium', fontSize: 12, color: colors.muted },
   storeName: { fontFamily: 'Outfit-Bold', fontSize: 20, color: colors.ink },

@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 export const colors = {
   primary: '#1e3b8a',
   primaryDark: '#152c6e',
@@ -39,6 +41,8 @@ export const spacing = {
   base: 16,
   page: 20,
   lg: 24,
+  // Header top gap: clears the phone status bar; web has none, so stay tight.
+  top: Platform.OS === 'web' ? 16 : 56,
 } as const;
 
 // Bottom tab bar

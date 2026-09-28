@@ -194,7 +194,12 @@ export default function SignIn() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  inner: { flexGrow: 1, paddingHorizontal: spacing.page, paddingTop: 56, paddingBottom: 40 },
+  inner: {
+    flexGrow: 1,
+    paddingHorizontal: spacing.page,
+    paddingTop: spacing.top,
+    paddingBottom: 40,
+  },
   back: {
     width: 40,
     height: 40,

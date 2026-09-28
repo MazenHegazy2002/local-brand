@@ -161,7 +161,7 @@ export default function Account() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  inner: { paddingTop: 56, paddingBottom: 48 },
+  inner: { paddingTop: spacing.top, paddingBottom: 48 },
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
