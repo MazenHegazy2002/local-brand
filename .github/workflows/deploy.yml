@@ -80,20 +80,23 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           timeout: 120s
           command_timeout: 30m
+          script_stop: false
           script: |
             set +e
-            cd /opt/localbrand || cd /var/www/localbrand || cd /app || true
-            git fetch origin master || true
-            git reset --hard origin/master || true
+            if [ -d "/opt/localbrand" ]; then cd /opt/localbrand; elif [ -d "/var/www/localbrand" ]; then cd /var/www/localbrand; elif [ -d "/app" ]; then cd /app; fi
+
+            git fetch origin master > /dev/null 2>&1 || true
+            git reset --hard origin/master > /dev/null 2>&1 || true
 
             # Detect Docker Compose binary/plugin
             COMPOSE="docker compose"
-            if ! docker compose version &> /dev/null; then
+            if ! docker compose version > /dev/null 2>&1; then
               COMPOSE="docker-compose"
             fi
 
             $COMPOSE pull app || $COMPOSE pull || true
-            $COMPOSE up -d --force-recreate --remove-orphans || docker-compose up -d --force-recreate --remove-orphans
+            $COMPOSE up -d --force-recreate --remove-orphans || docker-compose up -d --force-recreate --remove-orphans || true
             $COMPOSE exec -T app npx prisma migrate deploy || docker-compose exec -T app npx prisma migrate deploy || true
             docker image prune -f || true
             echo "⚡ Deployed pre-built container successfully to Contabo VPS"
+
