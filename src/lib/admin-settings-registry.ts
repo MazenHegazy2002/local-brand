@@ -1209,9 +1209,10 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     key: 'DEFAULT_COMMISSION_RATE',
     category: 'orders',
     type: 'number',
-    label: 'Default platform commission (decimal)',
-    defaultValue: 0.1,
-    range: [0, 1],
+    label: 'Default platform commission (%)',
+    defaultValue: 10,
+    range: [0, 100],
+    description: 'Platform fee percentage (e.g. 10 for 10%).',
   },
 
   // ── 13. Security / Privacy ──────────────────────────────────────────────
