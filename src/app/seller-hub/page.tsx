@@ -45,6 +45,7 @@ import {
   cancelOrderBySeller,
 } from '../actions/seller';
 import { Product, Order, Category, SellerProfile, SessionUser, Tag, Collection } from '@/types';
+import { PriceCommissionCalculator } from '@/components/seller/PriceCommissionCalculator';
 
 interface DashboardStats {
   totalProducts: number;
@@ -1485,6 +1486,7 @@ export default function SellerHub() {
           updateVariant={updateVariant}
           isMultiBrand={isMultiBrand}
           brands={brands}
+          commissionRate={data?.currentSeller?.commissionRate ?? 0.1}
         />
       )}
 
@@ -4034,6 +4036,7 @@ interface AddProductModalProps {
   ) => void;
   isMultiBrand?: boolean;
   brands?: any[];
+  commissionRate?: number;
 }
 
 function AddProductModal({
@@ -4050,6 +4053,7 @@ function AddProductModal({
   updateVariant,
   isMultiBrand,
   brands,
+  commissionRate = 0.1,
 }: AddProductModalProps) {
   return (
     <div
@@ -4138,7 +4142,7 @@ function AddProductModal({
                 min="1"
                 value={newProduct.basePrice}
                 onChange={e => setNewProduct({ ...newProduct, basePrice: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-bold text-slate-900"
               />
             </div>
             <div>
@@ -4157,6 +4161,13 @@ function AddProductModal({
               />
             </div>
           </div>
+
+          {/* Platform fee breakdown calculator */}
+          <PriceCommissionCalculator
+            basePrice={newProduct.basePrice}
+            commissionRate={commissionRate}
+            onApplyPrice={newPrice => setNewProduct({ ...newProduct, basePrice: String(newPrice) })}
+          />
 
           {/* Primary product image */}
           <div>

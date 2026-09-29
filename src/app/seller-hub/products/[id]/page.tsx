@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { getDashboardStats } from '@/app/actions/seller';
+import { PriceCommissionCalculator } from '@/components/seller/PriceCommissionCalculator';
 
 interface Product {
   id: string;
@@ -991,8 +992,13 @@ export default function EditProductPage() {
                     type="number"
                     value={form.basePrice}
                     onChange={e => setForm({ ...form, basePrice: Number(e.target.value) })}
-                    className="input-field"
+                    className="input-field font-bold text-slate-900"
                     required
+                  />
+                  <PriceCommissionCalculator
+                    basePrice={form.basePrice}
+                    commissionRate={sellerData?.currentSeller?.commissionRate ?? 0.1}
+                    onApplyPrice={newPrice => setForm({ ...form, basePrice: newPrice })}
                   />
                 </div>
                 <div>
