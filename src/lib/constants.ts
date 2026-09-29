@@ -3,7 +3,7 @@
 // ============================================================
 
 export const VAT_RATE = 0.14; // Egypt VAT 14%
-export const DEFAULT_COMMISSION_RATE = 0.15; // Platform takes 15%
+export const DEFAULT_COMMISSION_RATE = 0.1; // Platform takes 10%
 // Hard cap: no coupon/promo can discount more than 60% of the pre-discount subtotal.
 // Prevents promotional codes from being used to buy products for near-zero cost.
 export const MAX_DISCOUNT_PCT = 0.6;

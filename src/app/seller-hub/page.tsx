@@ -3750,7 +3750,7 @@ function WalletTab({ data }: { data: DashboardData }) {
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
           <h3 className="font-black text-sm mb-4">Your Commission Rate</h3>
           <div className="text-3xl font-black text-slate-900">
-            {((data?.currentSeller?.commissionRate || 0.15) * 100).toFixed(0)}%
+            {((data?.currentSeller?.commissionRate || 0.1) * 100).toFixed(0)}%
           </div>
           <div className="text-xs text-slate-400 mt-1">Platform fee per order</div>
           <div className="mt-6 pt-6 border-t border-slate-50 text-[11px] text-slate-500 leading-relaxed">
