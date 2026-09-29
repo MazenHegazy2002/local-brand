@@ -101,8 +101,17 @@ export function PriceCommissionCalculator({
 
             {/* Box 2: New Customer Price */}
             <div className="p-2.5 rounded-lg bg-blue-50/80 border border-blue-200/80 shadow-xs flex flex-col justify-between">
-              <div className="text-[10px] uppercase font-bold tracking-wider text-blue-800">
-                New Customer Price
+              <div className="text-[10px] uppercase font-bold tracking-wider text-blue-800 flex items-center justify-between">
+                <span>New Customer Price</span>
+                {onApplyPrice && (
+                  <button
+                    type="button"
+                    onClick={() => onApplyPrice(customerPriceWithAdd)}
+                    className="px-2 py-0.5 rounded bg-[#0F6E56] hover:bg-[#0c5945] text-white text-[10px] font-bold transition-all cursor-pointer shadow-xs"
+                  >
+                    Apply Price
+                  </button>
+                )}
               </div>
               <div className="text-sm font-black text-blue-700 mt-1">
                 <span>{customerPriceWithAdd.toFixed(2)} EGP</span>
