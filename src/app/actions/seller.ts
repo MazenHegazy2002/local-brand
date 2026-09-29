@@ -172,6 +172,17 @@ export async function getDashboardStats() {
         };
       }
 
+      // Auto-normalize legacy 15% commission rate to 10%
+      if (seller && (seller.commissionRate === 0.15 || seller.commissionRate > 0.1)) {
+        seller.commissionRate = 0.1;
+        prisma.sellerProfile
+          .update({
+            where: { id: seller.id },
+            data: { commissionRate: 0.1 },
+          })
+          .catch(() => {});
+      }
+
       // Only proceed with stats if seller exists
       if (!seller) {
         return {

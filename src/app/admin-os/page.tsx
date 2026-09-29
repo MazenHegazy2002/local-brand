@@ -3915,7 +3915,7 @@ function SellerDetailsModal({
                 ⚙️ Platform Commission
               </h4>
               <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '10px' }}>
-                Override the per-seller commission rate. Default is 15%.
+                Override the per-seller commission rate. Default is 10%.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input
