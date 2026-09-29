@@ -215,7 +215,8 @@ export default function SellerProduct() {
                 {editing ? (
                   <TextInput
                     style={styles.stockInput}
-                    value={stock[v.id]}
+                    value={stock[v.id] ?? String(v.stockCount)}
+                    placeholder="0"
                     onChangeText={t => setStock(s => ({ ...s, [v.id]: t.replace(/\D/g, '') }))}
                     keyboardType="number-pad"
                   />
@@ -353,6 +354,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.inputBorder,
     textAlign: 'center',
+    padding: 0,
+    fontSize: 15,
+    backgroundColor: colors.surface,
     fontFamily: 'Inter-SemiBold',
     color: colors.ink,
   },
