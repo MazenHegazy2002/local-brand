@@ -3149,9 +3149,9 @@ function SellerDetailsModal({
   onDeleteSeller,
   actionLoading,
 }: SellerDetailsModalProps) {
-  const [commissionInput, setCommissionInput] = useState(
-    String(Math.round((seller.commissionRate ?? 0.1) * 100))
-  );
+  const effectiveRate =
+    seller.commissionRate === 0.15 || !seller.commissionRate ? 0.1 : seller.commissionRate;
+  const [commissionInput, setCommissionInput] = useState(String(Math.round(effectiveRate * 100)));
   const [commissionSaving, setCommissionSaving] = useState(false);
   const [commissionMsg, setCommissionMsg] = useState<string | null>(null);
 

@@ -433,6 +433,19 @@ export async function getDashboardStats() {
       const ESCROW_MS = ESCROW_DAYS * 24 * 60 * 60 * 1000;
       const cutoff = new Date(Date.now() - ESCROW_MS);
 
+      // Auto-normalize any legacy 15% rate to 10% for all sellers
+      for (const s of sellers) {
+        if (s.commissionRate === 0.15 || s.commissionRate > 0.1) {
+          s.commissionRate = 0.1;
+        }
+      }
+      prisma.sellerProfile
+        .updateMany({
+          where: { commissionRate: 0.15 },
+          data: { commissionRate: 0.1 },
+        })
+        .catch(() => {});
+
       for (const s of sellers) {
         const sellerItems = eligibleItems.filter(item => item.variant?.product?.sellerId === s.id);
         const sellerPayoutsSum = eligiblePayouts
