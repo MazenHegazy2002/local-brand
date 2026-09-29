@@ -1308,33 +1308,6 @@ export default function EditProductPage() {
             </div>
 
             <div className="card">
-              <h3 className="card-title mb-4">Loyalty Points Reward</h3>
-              <p className="text-xs text-slate-400 mb-3">
-                Override the global loyalty flat bonus for this product. Enter a percentage of the
-                item&apos;s sale price that will be awarded as points (e.g. <strong>5</strong> = 5
-                pts per 100 EGP spent). Leave blank to use the default flat bonus.
-              </p>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={form.loyaltyPointPct ?? ''}
-                  onChange={e =>
-                    setForm({
-                      ...form,
-                      loyaltyPointPct: e.target.value ? Number(e.target.value) : null,
-                    })
-                  }
-                  className="input-field w-32"
-                  placeholder="e.g. 5"
-                  min="0"
-                  max="100"
-                  step="0.5"
-                />
-                <span className="text-sm text-slate-500">% of sale price → points</span>
-              </div>
-            </div>
-
-            <div className="card">
               <h3 className="card-title mb-4">Tags</h3>
               <div className="flex flex-wrap gap-2 mb-3">
                 {tags.map(tag => (
