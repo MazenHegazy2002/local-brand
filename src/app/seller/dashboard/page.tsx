@@ -30,7 +30,7 @@ export default async function SellerDashboard() {
         held: 0,
         totalEarned: 0,
         totalPaidOut: 0,
-        commissionRate: 0.15,
+        commissionRate: 0.1,
         nextReleaseAt: null,
       };
 

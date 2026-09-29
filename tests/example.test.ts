@@ -9,8 +9,8 @@ describe('Business Constants', () => {
   });
 
   it('calculates commission correctly', () => {
-    expect(calculateCommission(100)).toBe(15);
-    expect(calculateCommission(1000)).toBe(150);
+    expect(calculateCommission(100)).toBe(10);
+    expect(calculateCommission(1000)).toBe(100);
   });
 
   it('gets shipping rate for known governorates', () => {

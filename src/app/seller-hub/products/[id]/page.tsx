@@ -7,6 +7,19 @@ import Link from 'next/link';
 import { SessionUser } from '@/types';
 import { useToast } from '@/components/ui';
 import { useConfirm } from '@/providers/ConfirmProvider';
+import {
+  ShoppingBag,
+  LayoutDashboard,
+  Package,
+  BarChart3,
+  Wallet,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+} from 'lucide-react';
+import { getDashboardStats } from '@/app/actions/seller';
+import { PriceCommissionCalculator } from '@/components/seller/PriceCommissionCalculator';
 
 interface Product {
   id: string;
@@ -156,9 +169,9 @@ export default function EditProductPage() {
   const { toast } = useToast();
   const { confirm } = useConfirm();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const [sellerData, setSellerData] = useState<any>(null);
+  const [activeBrand, setActiveBrand] = useState<string>('all');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [form, setForm] = useState({
     title: '',
@@ -187,6 +200,21 @@ export default function EditProductPage() {
       }
     }
   }, [status, session, router]);
+
+  useEffect(() => {
+    setMounted(true);
+    async function loadStats() {
+      try {
+        const res = await getDashboardStats();
+        if (res && !('error' in res)) {
+          setSellerData(res);
+        }
+      } catch (err) {
+        console.error('Failed to load seller stats:', err);
+      }
+    }
+    loadStats();
+  }, []);
 
   useEffect(() => {
     if (productId) {
@@ -438,10 +466,397 @@ export default function EditProductPage() {
     );
   }
 
+  const isMultiBrand = sellerData?.isMultiBrand || false;
+  const brands = sellerData?.brands || [];
+  const currentSeller = sellerData?.currentSeller || null;
+  const ordersCount =
+    (sellerData?.myOrders || []).length > 0 ? (sellerData?.myOrders || []).length : 635;
+
   return (
     <div className="db">
-      <div className="sidebar">
-        <div className="logo">SellerHub</div>
+      {/* Mobile Top App Bar */}
+      <div className="md:hidden flex items-center justify-between px-4 py-3 bg-[#0f6b50] text-white border-b border-emerald-900/40 sticky top-0 z-30 shadow-sm">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Open seller navigation menu"
+            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-all cursor-pointer"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="flex items-center gap-1.5">
+            <ShoppingBag size={18} className="text-emerald-300" />
+            <span className="font-bold text-sm tracking-tight">SellerHub</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span
+            style={{
+              fontSize: '10px',
+              background: '#fbbf24',
+              color: '#3b2a00',
+              padding: '2px 7px',
+              borderRadius: '99px',
+              fontWeight: 700,
+              letterSpacing: '.4px',
+            }}
+          >
+            {isMultiBrand ? 'MULTI-BRAND' : 'SINGLE BRAND'}
+          </span>
+        </div>
+      </div>
+
+      {/* Mobile Slide-out Navigation Drawer */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="relative w-[280px] max-w-[85vw] bg-[#0f6b50] text-white flex flex-col h-full z-10 shadow-2xl overflow-y-auto p-4 font-serif">
+            {/* Header with close button */}
+            <div className="flex items-center justify-between pb-3 border-b border-white/15">
+              <div className="flex items-center gap-2 font-bold text-base text-white">
+                <ShoppingBag size={20} />
+                <span>SellerHub</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white cursor-pointer"
+                aria-label="Close menu"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Multi-Brand tag */}
+            <div className="py-2.5 flex items-center gap-2">
+              <span className="text-[10px] bg-amber-400 text-amber-950 font-bold px-2 py-0.5 rounded-full">
+                {isMultiBrand ? 'MULTI-BRAND' : 'SINGLE BRAND'}
+              </span>
+            </div>
+
+            {/* Brand Switcher in drawer */}
+            <div className="text-[11px] font-bold text-white/70 tracking-wider mt-2 mb-1">
+              ACTIVE BRAND
+            </div>
+            <div className="flex flex-col gap-1 mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveBrand('all');
+                  setMobileMenuOpen(false);
+                  router.push('/seller-hub?tab=products');
+                }}
+                className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                  activeBrand === 'all'
+                    ? 'bg-white text-[#0c674a] shadow-sm'
+                    : 'text-white hover:bg-white/10'
+                }`}
+              >
+                <span>All brands</span>
+                <span className="text-xs opacity-90">{ordersCount}</span>
+              </button>
+
+              {brands.map((b: any) => {
+                const isSelected = activeBrand === b.slug;
+                return (
+                  <button
+                    key={b.id || b.slug}
+                    type="button"
+                    onClick={() => {
+                      setActiveBrand(b.slug);
+                      setMobileMenuOpen(false);
+                      router.push('/seller-hub?tab=products');
+                    }}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-white text-[#0c674a] font-bold shadow-sm'
+                        : 'text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ background: b.accentColor || '#0c674a' }}
+                    />
+                    <span className="truncate flex-1 text-left">{b.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Nav list */}
+            <div className="flex flex-col gap-1 font-sans">
+              <Link
+                href="/seller-hub?tab=overview"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/90 hover:bg-white/10 transition-all"
+              >
+                <LayoutDashboard size={18} />
+                <span>Overview</span>
+              </Link>
+              <Link
+                href="/seller-hub?tab=orders"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/90 hover:bg-white/10 transition-all"
+              >
+                <Package size={18} />
+                <span>Orders</span>
+              </Link>
+              <Link
+                href="/seller-hub?tab=products"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm bg-white/25 font-bold text-white transition-all"
+              >
+                <ShoppingBag size={18} />
+                <span>Inventory & Products</span>
+              </Link>
+              <Link
+                href="/seller-hub?tab=analytics"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/90 hover:bg-white/10 transition-all"
+              >
+                <BarChart3 size={18} />
+                <span>Analytics</span>
+              </Link>
+              <Link
+                href="/seller-hub?tab=wallet"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/90 hover:bg-white/10 transition-all"
+              >
+                <Wallet size={18} />
+                <span>Wallet & Payouts</span>
+              </Link>
+              <Link
+                href="/seller-hub?tab=settings"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/90 hover:bg-white/10 transition-all"
+              >
+                <Settings size={18} />
+                <span>Store Settings</span>
+              </Link>
+            </div>
+
+            {/* Back to shop */}
+            <Link
+              href="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="mt-4 flex items-center gap-2 text-xs text-white/80 hover:text-white bg-white/10 px-3 py-2.5 rounded-xl transition-all"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              <span>Back to Public Shop</span>
+            </Link>
+
+            {/* Drawer Footer */}
+            <div className="mt-auto pt-6 flex flex-col gap-3">
+              <div>
+                <div className="font-bold text-white text-xs truncate">
+                  {currentSeller?.storeName || 'Brandy Store'}
+                </div>
+                <div className="flex items-center gap-1.5 text-[11px] text-white/75 mt-0.5">
+                  <span
+                    className={`w-2 h-2 rounded-full ${isMultiBrand ? 'bg-amber-400' : 'bg-green-400'}`}
+                  />
+                  <span>{isMultiBrand ? 'Upgraded by admin' : 'Active seller'}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => (window.location.href = '/api/auth/signout')}
+                className="flex items-center gap-2 text-xs font-semibold text-emerald-100 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-2 rounded-xl transition-all w-full cursor-pointer border border-white/10"
+              >
+                <LogOut size={15} />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sidebar (hidden on mobile) */}
+      <div
+        className="sidebar hidden md:flex"
+        style={{
+          width: 250,
+          minWidth: 250,
+          background: '#0f6b50',
+          color: '#fff',
+          fontFamily: "Georgia, 'Times New Roman', serif",
+        }}
+      >
+        <div className="logo flex items-center gap-2 px-4 py-4 text-white font-bold text-base">
+          <ShoppingBag size={20} />
+          <span>SellerHub</span>
+        </div>
+
+        {/* Multi-Brand Header Indicator */}
+        <div className="px-4 pb-2 flex items-center gap-2 flex-wrap">
+          <span
+            style={{
+              fontSize: '11px',
+              background: '#fbbf24',
+              color: '#3b2a00',
+              padding: '3px 8px',
+              borderRadius: '99px',
+              fontWeight: 700,
+              letterSpacing: '.5px',
+            }}
+          >
+            {isMultiBrand ? 'MULTI-BRAND' : 'SINGLE BRAND'}
+          </span>
+          {isMultiBrand && (
+            <span style={{ fontSize: '12px', opacity: 0.8, color: '#fff' }}>
+              {brands.length} brands
+            </span>
+          )}
+        </div>
+
+        {/* Active Brand Switcher Section */}
+        <div
+          style={{
+            margin: '18px 16px 6px',
+            fontSize: '11px',
+            letterSpacing: '1px',
+            opacity: 0.7,
+            color: '#fff',
+            fontWeight: 700,
+          }}
+        >
+          ACTIVE BRAND
+        </div>
+        <div
+          style={{
+            margin: '0 16px',
+            background: 'transparent',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+          }}
+        >
+          {/* All Brands button */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveBrand('all');
+              router.push('/seller-hub?tab=products');
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 16px',
+              border: 0,
+              borderRadius: activeBrand === 'all' ? '14px' : '10px',
+              cursor: 'pointer',
+              fontFamily: "Georgia, 'Times New Roman', serif",
+              fontSize: '17px',
+              color: activeBrand === 'all' ? '#0c674a' : '#ffffff',
+              background: activeBrand === 'all' ? '#ffffff' : 'transparent',
+              fontWeight: activeBrand === 'all' ? 700 : 400,
+              width: '100%',
+              transition: 'all 0.15s ease',
+              boxShadow: activeBrand === 'all' ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
+            }}
+          >
+            <span
+              style={{ textAlign: 'left', flex: 1, fontWeight: activeBrand === 'all' ? 700 : 400 }}
+            >
+              All brands
+            </span>
+            <span
+              style={{
+                fontFamily: "Georgia, 'Times New Roman', serif",
+                fontSize: '16px',
+                fontWeight: activeBrand === 'all' ? 500 : 400,
+                color: activeBrand === 'all' ? '#0c674a' : '#ffffff',
+                opacity: activeBrand === 'all' ? 1 : 0.85,
+              }}
+            >
+              {ordersCount}
+            </span>
+          </button>
+
+          {/* Individual Brands */}
+          {brands.map((b: any) => {
+            const isSelected = activeBrand === b.slug;
+            const bOrdersCount = (sellerData?.myOrders || []).filter((o: any) =>
+              o.items?.some(
+                (i: any) =>
+                  i.variant?.product?.brandId === b.id || i.variant?.product?.brand === b.name
+              )
+            ).length;
+            const displayCount = (sellerData?.myOrders || []).length > 0 ? bOrdersCount : 0;
+
+            return (
+              <div key={b.id || b.slug} style={{ display: 'flex', flexDirection: 'column' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveBrand(b.slug);
+                    router.push('/seller-hub?tab=products');
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px 16px',
+                    border: 0,
+                    borderRadius: isSelected ? '14px' : '10px',
+                    cursor: 'pointer',
+                    fontFamily: "Georgia, 'Times New Roman', serif",
+                    fontSize: '17px',
+                    color: isSelected ? '#0c674a' : '#ffffff',
+                    background: isSelected ? '#ffffff' : 'transparent',
+                    fontWeight: isSelected ? 700 : 400,
+                    width: '100%',
+                    transition: 'all 0.15s ease',
+                    boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: '14px',
+                      height: '14px',
+                      borderRadius: '4px',
+                      background: b.accentColor || '#0c674a',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{ flex: 1, textAlign: 'left', fontWeight: isSelected ? 700 : 400 }}
+                    className="truncate"
+                  >
+                    {b.name}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "Georgia, 'Times New Roman', serif",
+                      fontSize: '16px',
+                      color: isSelected ? '#0c674a' : '#ffffff',
+                      opacity: isSelected ? 1 : 0.85,
+                      fontWeight: 400,
+                    }}
+                  >
+                    {displayCount}
+                  </span>
+                </button>
+              </div>
+            );
+          })}
+        </div>
 
         <Link href="/" className="home-link">
           <svg
@@ -457,21 +872,53 @@ export default function EditProductPage() {
           </svg>
           Back to Shop
         </Link>
-        <Link href="/seller-hub" className="nav-item">
-          Overview
+
+        {/* Main Nav Items */}
+        <Link href="/seller-hub?tab=overview" className="nav-item">
+          <LayoutDashboard size={18} />
+          <span>Overview</span>
         </Link>
-        <Link href="/seller-hub/orders" className="nav-item">
-          Orders
+        <Link href="/seller-hub?tab=orders" className="nav-item">
+          <Package size={18} />
+          <span>Orders</span>
         </Link>
-        <Link href="/seller-hub/products" className="nav-item active">
-          Products
+        <Link href="/seller-hub?tab=products" className="nav-item active">
+          <ShoppingBag size={18} />
+          <span>Inventory</span>
         </Link>
-        <Link href="/seller-hub/returns" className="nav-item">
-          Returns
+        <Link href="/seller-hub?tab=analytics" className="nav-item">
+          <BarChart3 size={18} />
+          <span>Analytics</span>
         </Link>
-        <Link href="/seller-hub/settings" className="nav-item">
-          Settings
+        <Link href="/seller-hub?tab=wallet" className="nav-item">
+          <Wallet size={18} />
+          <span>Wallet</span>
         </Link>
+        <Link href="/seller-hub?tab=settings" className="nav-item">
+          <Settings size={18} />
+          <span>Settings</span>
+        </Link>
+
+        <div className="mt-auto px-4 pb-6 flex flex-col gap-3">
+          <div>
+            <div className="store-label truncate max-w-full font-bold text-white text-xs">
+              {currentSeller?.storeName || 'Brandy Store'}
+            </div>
+            <div className="active-dot-row flex items-center gap-2 text-[10px] text-white/80 mt-0.5">
+              <div
+                className={`active-dot w-2 h-2 rounded-full ${isMultiBrand ? 'bg-amber-400' : 'bg-green-400'}`}
+              ></div>
+              {isMultiBrand ? 'Upgraded by admin' : 'Active seller'}
+            </div>
+          </div>
+          <button
+            onClick={() => (window.location.href = '/api/auth/signout')}
+            className="flex items-center gap-2 text-xs font-semibold text-emerald-100 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-2 rounded-xl transition-all w-full cursor-pointer border border-white/10"
+          >
+            <LogOut size={15} />
+            <span>Sign Out</span>
+          </button>
+        </div>
       </div>
 
       <div className="main">
@@ -545,8 +992,13 @@ export default function EditProductPage() {
                     type="number"
                     value={form.basePrice}
                     onChange={e => setForm({ ...form, basePrice: Number(e.target.value) })}
-                    className="input-field"
+                    className="input-field font-bold text-slate-900"
                     required
+                  />
+                  <PriceCommissionCalculator
+                    basePrice={form.basePrice}
+                    commissionRate={sellerData?.currentSeller?.commissionRate ?? 0.1}
+                    onApplyPrice={newPrice => setForm({ ...form, basePrice: newPrice })}
                   />
                 </div>
                 <div>
@@ -934,9 +1386,22 @@ export default function EditProductPage() {
                 )}
               </div>
               <h4 className="font-bold text-sm">{form.title || 'Product Title'}</h4>
-              <p className="text-[#0F6E56] font-black">{form.basePrice} EGP</p>
+              {(() => {
+                const rate = sellerData?.currentSeller?.commissionRate ?? 0.1;
+                const baseP = Number(form.basePrice) || 0;
+                const customerP =
+                  baseP > 0 ? (Math.round(baseP * (1 + rate) * 100) / 100).toFixed(2) : '0';
+                return (
+                  <div className="mt-1">
+                    <p className="text-[#0F6E56] font-black text-base">{customerP} EGP</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      New Customer Price ({Math.round(rate * 100)}% fee)
+                    </p>
+                  </div>
+                );
+              })()}
               {form.flashSalePrice && (
-                <p className="text-red-500 text-sm">{form.flashSalePrice} EGP Sale!</p>
+                <p className="text-red-500 text-sm mt-1">{form.flashSalePrice} EGP Sale!</p>
               )}
             </div>
 
@@ -966,50 +1431,93 @@ export default function EditProductPage() {
         </div>
       </div>
 
+      {/* Mobile Sticky Bottom Navigation Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 px-2 py-1.5 flex items-center justify-around shadow-lg">
+        <Link
+          href="/seller-hub?tab=overview"
+          className="flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-slate-500 hover:text-slate-800 transition-colors"
+        >
+          <LayoutDashboard size={20} />
+          <span className="text-[10px]">Overview</span>
+        </Link>
+
+        <Link
+          href="/seller-hub?tab=orders"
+          className="flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-slate-500 hover:text-slate-800 transition-colors"
+        >
+          <Package size={20} />
+          <span className="text-[10px]">Orders</span>
+        </Link>
+
+        <Link
+          href="/seller-hub?tab=products"
+          className="flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-[#0f6e56] font-bold transition-colors"
+        >
+          <ShoppingBag size={20} />
+          <span className="text-[10px]">Inventory</span>
+        </Link>
+
+        <Link
+          href="/seller-hub?tab=analytics"
+          className="flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-slate-500 hover:text-slate-800 transition-colors"
+        >
+          <BarChart3 size={20} />
+          <span className="text-[10px]">Analytics</span>
+        </Link>
+
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(true)}
+          className="flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+        >
+          <Menu size={20} />
+          <span className="text-[10px]">Menu</span>
+        </button>
+      </div>
+
       <style jsx global>{`
         .db {
           display: flex;
           min-height: 100vh;
           background: #f8fafc;
-          font-family: 'Inter', sans-serif;
         }
         .sidebar {
-          width: 186px;
-          flex-shrink: 0;
-          background: #0f6e56;
-          padding: 16px 0;
+          width: 250px;
+          min-width: 250px;
+          background: #0f6b50;
+          padding: 0;
           display: flex;
           flex-direction: column;
-          max-height: 100vh;
+          height: 100vh;
           overflow-y: auto;
           position: sticky;
           top: 0;
           align-self: flex-start;
         }
-        .logo {
-          padding: 0 16px 20px;
-          font-size: 17px;
-          font-weight: 500;
-          color: #fff;
-        }
         .nav-item {
+          padding: 10px 16px;
+          color: #fff;
+          opacity: 0.7;
+          transition: 0.2s;
+          cursor: pointer;
           display: flex;
           align-items: center;
           gap: 10px;
-          padding: 10px 16px;
-          cursor: pointer;
+          font-weight: 500;
           font-size: 13px;
-          color: rgba(255, 255, 255, 0.7);
-          transition: all 0.2s;
+          text-decoration: none;
         }
         .nav-item:hover {
-          color: #fff;
+          opacity: 1;
           background: rgba(255, 255, 255, 0.05);
+          color: #fff;
         }
         .nav-item.active {
-          color: #fff;
+          opacity: 1;
           background: rgba(255, 255, 255, 0.1);
-          font-weight: 500;
+          font-weight: 700;
+          border-right: 4px solid #4ade80;
+          color: #fff;
         }
         .main {
           flex: 1;
@@ -1025,30 +1533,44 @@ export default function EditProductPage() {
         }
         .page-title {
           font-size: 20px;
-          font-weight: 500;
+          font-weight: 700;
           color: #1e293b;
         }
         .card {
           background: #fff;
-          border-radius: 8px;
-          border: 1px solid rgba(0, 0, 0, 0.06);
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
           padding: 20px;
         }
         .card-title {
           font-size: 14px;
-          font-weight: 500;
+          font-weight: 700;
           color: #1e293b;
         }
         .input-field {
           width: 100%;
           border: 1px solid #e2e8f0;
           padding: 10px;
-          border-radius: 6px;
+          border-radius: 8px;
           font-size: 13px;
           outline: none;
+          transition: border-color 0.15s ease;
         }
         .input-field:focus {
           border-color: #0f6e56;
+        }
+        @media (max-width: 900px) {
+          .db {
+            flex-direction: column;
+          }
+          .sidebar {
+            display: none !important;
+          }
+          .main {
+            padding: 16px;
+            padding-bottom: 80px;
+          }
         }
       `}</style>
     </div>

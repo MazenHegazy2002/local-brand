@@ -39,9 +39,9 @@ describe('calculateVAT', () => {
 });
 
 describe('calculateCommission', () => {
-  it('applies 15% default commission', () => {
-    // 200 * 0.15 = 30
-    expect(calculateCommission(200)).toBe(30);
+  it('applies 10% default commission', () => {
+    // 200 * 0.10 = 20
+    expect(calculateCommission(200)).toBe(20);
   });
 
   it('accepts a custom rate', () => {
@@ -50,8 +50,8 @@ describe('calculateCommission', () => {
   });
 
   it('rounds correctly for fractional amounts', () => {
-    // 99.99 * 0.15 = 14.9985 → 15
-    expect(calculateCommission(99.99)).toBe(15);
+    // 99.99 * 0.10 = 9.999 → 10
+    expect(calculateCommission(99.99)).toBe(10);
   });
 
   it('returns 0 commission on a zero-value order', () => {

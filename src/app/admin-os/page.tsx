@@ -3150,7 +3150,7 @@ function SellerDetailsModal({
   actionLoading,
 }: SellerDetailsModalProps) {
   const [commissionInput, setCommissionInput] = useState(
-    String(Math.round((seller.commissionRate ?? 0.15) * 100))
+    String(Math.round((seller.commissionRate ?? 0.1) * 100))
   );
   const [commissionSaving, setCommissionSaving] = useState(false);
   const [commissionMsg, setCommissionMsg] = useState<string | null>(null);

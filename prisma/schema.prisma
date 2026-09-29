@@ -110,7 +110,7 @@ model SellerProfile {
   pickupZone        String? // District / Zone e.g. "قسم اول القاهرة الجديدة"
   pickupSubzone     String? // Subzone
   logisticsHub      String? // Hub name e.g. "المركز اللوجيستي الرئيسي"
-  commissionRate    Float        @default(0.15) // Platform takes 15%
+  commissionRate    Float        @default(0.10) // Platform takes 10%
   status            SellerStatus @default(PENDING_APPROVAL)
   bankAccount       String?
   balance           Float        @default(0)

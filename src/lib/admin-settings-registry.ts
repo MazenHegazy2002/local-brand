@@ -1210,7 +1210,7 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     category: 'orders',
     type: 'number',
     label: 'Default platform commission (decimal)',
-    defaultValue: 0.15,
+    defaultValue: 0.1,
     range: [0, 1],
   },
 
