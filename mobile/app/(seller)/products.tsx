@@ -12,7 +12,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Plus } from 'lucide-react-native';
@@ -107,6 +107,7 @@ export default function SellerProducts() {
 }
 
 function ProductCard({ p }: { p: Product }) {
+  const router = useRouter();
   const qc = useQueryClient();
   const toggle = useMutation({
     mutationFn: (published: boolean) =>
@@ -124,7 +125,12 @@ function ProductCard({ p }: { p: Product }) {
   const out = p.totalStock <= 0;
 
   return (
-    <View style={styles.card}>
+    <Pressable
+      style={styles.card}
+      onPress={() =>
+        router.push({ pathname: '/(seller)/product', params: { id: p.id } } as unknown as Href)
+      }
+    >
       <Image source={p.image ? { uri: p.image } : null} style={styles.thumb} contentFit="cover" />
       <View style={{ flex: 1 }}>
         <Text style={styles.pTitle} numberOfLines={1}>
@@ -159,7 +165,7 @@ function ProductCard({ p }: { p: Product }) {
           />
         )}
       </View>
-    </View>
+    </Pressable>
   );
 }
 

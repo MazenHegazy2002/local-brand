@@ -55,6 +55,7 @@ export default function SellerLayout() {
       <Tabs.Screen name="payouts" options={{ title: 'Payouts', tabBarIcon: icon(CreditCard) }} />
       <Tabs.Screen name="more" options={{ title: 'More', tabBarIcon: icon(MoreHorizontal) }} />
       <Tabs.Screen name="add-product" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="product" options={{ href: null, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
     </Tabs>
   );
