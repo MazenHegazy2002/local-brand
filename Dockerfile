@@ -14,8 +14,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 ENV NEXTAUTH_SECRET="ci-placeholder-secret-at-least-32-chars-long"
-ENV NEXTAUTH_URL="http://localhost:3000"
-ENV NEXT_PUBLIC_APP_URL="http://localhost:3000"
+ENV NEXTAUTH_URL="https://brandyy.shop"
+ENV NEXT_PUBLIC_APP_URL="https://brandyy.shop"
 ENV TAX_REGISTRATION_NUMBER="CI-PLACEHOLDER"
 ENV BANK_ACCOUNT_SECRET="0000000000000000000000000000000000000000000000000000000000000000"
 RUN npx prisma generate

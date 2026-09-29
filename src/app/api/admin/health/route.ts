@@ -6,6 +6,7 @@ import type { SessionUser } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { redis } from '@/lib/redis';
 import { listRegisteredHooks } from '@/lib/plugin-hooks';
+import { PLATFORM_URL } from '@/lib/constants';
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -89,7 +90,7 @@ export async function GET() {
     },
     pluginHooks: hooks,
     env: {
-      appUrl: process.env.NEXT_PUBLIC_APP_URL || '(not set — canonical URLs broken)',
+      appUrl: PLATFORM_URL,
       nodeEnv: process.env.NODE_ENV,
     },
 
