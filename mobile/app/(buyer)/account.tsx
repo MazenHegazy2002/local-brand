@@ -1,5 +1,5 @@
 // Screen 3e — Account + loyalty
-import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Alert, Platform } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import {
   Package,
@@ -35,6 +35,11 @@ export default function Account() {
     .slice(0, 2);
 
   function confirmSignOut() {
+    // react-native-web's Alert ignores buttons, so confirm natively there.
+    if (Platform.OS === 'web') {
+      if (window.confirm('Sign out?')) signOut();
+      return;
+    }
     Alert.alert('Sign out', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
@@ -43,6 +48,16 @@ export default function Account() {
 
   // Required by App Store + Google Play: in-app account deletion.
   function confirmDelete() {
+    if (Platform.OS === 'web') {
+      if (
+        window.confirm('Permanently delete your account and personal data? This cannot be undone.')
+      )
+        api
+          .post('/api/account/delete', {})
+          .then(() => signOut())
+          .catch(() => window.alert('Could not delete account. Please try again.'));
+      return;
+    }
     Alert.alert(
       'Delete account',
       'This permanently deletes your account and personal data. This cannot be undone.',
