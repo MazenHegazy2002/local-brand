@@ -3150,10 +3150,16 @@ function SellerDetailsModal({
   actionLoading,
 }: SellerDetailsModalProps) {
   const effectiveRate =
-    seller.commissionRate === 0.15 || !seller.commissionRate ? 0.1 : seller.commissionRate;
+    seller?.commissionRate === 0.15 || !seller?.commissionRate ? 0.1 : seller.commissionRate;
   const [commissionInput, setCommissionInput] = useState(String(Math.round(effectiveRate * 100)));
   const [commissionSaving, setCommissionSaving] = useState(false);
   const [commissionMsg, setCommissionMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const rate =
+      seller?.commissionRate === 0.15 || !seller?.commissionRate ? 0.1 : seller.commissionRate;
+    setCommissionInput(String(Math.round(rate * 100)));
+  }, [seller?.id, seller?.commissionRate]);
 
   const productIds = new Set((seller.products || []).map((p: any) => p.id));
   const sellerOrders = (allOrders || []).filter((o: any) =>
