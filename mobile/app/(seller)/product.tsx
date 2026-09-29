@@ -14,6 +14,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { ChevronLeft } from 'lucide-react-native';
+import {
+  FeeBreakdown,
+  useCommissionRate,
+  customerPrice,
+  type FeeMode,
+} from '@/components/seller/FeeBreakdown';
 import { api } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 
@@ -58,6 +64,8 @@ export default function SellerProduct() {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
+  const rate = useCommissionRate();
+  const [feeMode, setFeeMode] = useState<FeeMode>('deduct');
   const [description, setDescription] = useState('');
   const [stock, setStock] = useState<Record<string, string>>({});
 
@@ -89,7 +97,7 @@ export default function SellerProduct() {
       return api.put(`/api/products/${id}`, {
         title: title.trim(),
         description,
-        basePrice: Number(price),
+        basePrice: customerPrice(Number(price), rate, feeMode),
         categoryId: q.categoryId,
         condition: q.condition,
         weightGrams: q.weightGrams,
@@ -173,6 +181,14 @@ export default function SellerProduct() {
                 onChangeText={setPrice}
                 keyboardType="numeric"
               />
+              {Number(price) > 0 && (
+                <FeeBreakdown
+                  price={Number(price)}
+                  rate={rate}
+                  mode={feeMode}
+                  onMode={setFeeMode}
+                />
+              )}
               <Text style={styles.lbl}>Description</Text>
               <TextInput
                 style={[styles.input, { height: 100, textAlignVertical: 'top' }]}

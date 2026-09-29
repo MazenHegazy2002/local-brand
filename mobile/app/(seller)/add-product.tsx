@@ -19,6 +19,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { X, Plus, Minus, ChevronDown } from 'lucide-react-native';
+import {
+  FeeBreakdown,
+  useCommissionRate,
+  customerPrice,
+  type FeeMode,
+} from '@/components/seller/FeeBreakdown';
 import { api } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { colorHex, uploadImage } from '@/lib/seller';
@@ -50,6 +56,8 @@ export default function AddProduct() {
   const [title, setTitle] = useState('');
   const [titleAr, setTitleAr] = useState('');
   const [price, setPrice] = useState('');
+  const rate = useCommissionRate();
+  const [feeMode, setFeeMode] = useState<FeeMode>('add');
   const [weight, setWeight] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<Category | null>(null);
@@ -126,7 +134,7 @@ export default function AddProduct() {
           title: title.trim(),
           titleAr: titleAr.trim() || undefined,
           description: description.trim() || undefined,
-          basePrice: parseFloat(price),
+          basePrice: customerPrice(parseFloat(price), rate, feeMode),
           categoryId: category!.id,
           weightKg: parseFloat(weight),
           images: photos.filter(p => p.url).map(p => p.url!),
@@ -261,6 +269,10 @@ export default function AddProduct() {
             </Field>
           </View>
         </View>
+
+        {Number(price) > 0 && (
+          <FeeBreakdown price={Number(price)} rate={rate} mode={feeMode} onMode={setFeeMode} />
+        )}
 
         <View style={styles.row}>
           <View style={{ flex: 1 }}>
