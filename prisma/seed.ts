@@ -1761,7 +1761,7 @@ async function main() {
       description: 'Official Brandy Egypt store featuring authentic local Egyptian crafts.',
       status: 'ACTIVE',
       balance: 0,
-      commissionRate: 0.15,
+      commissionRate: 0.1,
       isMultiBrand: true,
       logoUrl: LOGO_URLS[0],
     },

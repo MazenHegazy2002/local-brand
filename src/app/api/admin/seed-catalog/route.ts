@@ -3368,7 +3368,7 @@ export async function POST(req: Request) {
           description: 'Official seed products collection for local brand showcase.',
           status: 'ACTIVE',
           balance: 0,
-          commissionRate: 0.15,
+          commissionRate: 0.1,
         },
       });
       console.log(`  ➕ Created default active seller profile: Brandy Store`);

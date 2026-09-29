@@ -1386,9 +1386,22 @@ export default function EditProductPage() {
                 )}
               </div>
               <h4 className="font-bold text-sm">{form.title || 'Product Title'}</h4>
-              <p className="text-[#0F6E56] font-black">{form.basePrice} EGP</p>
+              {(() => {
+                const rate = sellerData?.currentSeller?.commissionRate ?? 0.1;
+                const baseP = Number(form.basePrice) || 0;
+                const customerP =
+                  baseP > 0 ? (Math.round(baseP * (1 + rate) * 100) / 100).toFixed(2) : '0';
+                return (
+                  <div className="mt-1">
+                    <p className="text-[#0F6E56] font-black text-base">{customerP} EGP</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      New Customer Price ({Math.round(rate * 100)}% fee)
+                    </p>
+                  </div>
+                );
+              })()}
               {form.flashSalePrice && (
-                <p className="text-red-500 text-sm">{form.flashSalePrice} EGP Sale!</p>
+                <p className="text-red-500 text-sm mt-1">{form.flashSalePrice} EGP Sale!</p>
               )}
             </div>
 
