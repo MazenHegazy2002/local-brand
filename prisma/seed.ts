@@ -1842,7 +1842,7 @@ async function main() {
       name: 'Demo Affiliate',
       email: 'affiliate@demo.com',
       passwordHash: affiliatePwHash,
-      role: 'BUYER',
+      role: 'AFFILIATE',
       loyaltyPoints: 0,
       emailVerified: new Date(),
     },
