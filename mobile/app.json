@@ -15,7 +15,14 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "shop.brandyy.app",
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "Brandyy uses the camera so you can take photos for your profile, reviews and product listings.",
+        "NSPhotoLibraryUsageDescription": "Brandyy needs access to your photos so you can upload images for your profile, reviews and product listings."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +30,9 @@
         "backgroundColor": "#faf8f5"
       },
       "package": "shop.brandyy.app",
-      "versionCode": 1
+      "versionCode": 1,
+      "permissions": ["CAMERA", "READ_MEDIA_IMAGES", "NOTIFICATIONS"],
+      "blockedPermissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "bundler": "metro",

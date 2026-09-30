@@ -39,9 +39,15 @@ function AuthGate() {
     }
     if (!user) return;
     const dest =
-      user.role === 'SELLER' ? '/(seller)' : user.role === 'ADMIN' ? '/(admin)' : '/(buyer)';
+      user.role === 'SELLER'
+        ? '/(seller)'
+        : user.role === 'ADMIN'
+          ? '/(admin)'
+          : user.role === 'AFFILIATE'
+            ? '/(affiliate)'
+            : '/(buyer)';
     const destGroup = dest.slice(1); // strip leading /
-    if (segments[0] !== destGroup) router.replace(dest);
+    if (segments[0] !== destGroup) router.replace(dest as Href);
   }, [user, loading, segments]);
 
   return null;
