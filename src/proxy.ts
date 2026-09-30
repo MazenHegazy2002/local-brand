@@ -326,6 +326,28 @@ export async function proxy(req: NextRequest) {
   // Get user role from token
   const role = token.role || 'BUYER';
 
+  // Affiliate Routes & Redirect Protection
+  if (role === 'AFFILIATE') {
+    // Block Affiliates from buyer dashboard, seller hub, admin OS, cart, checkout
+    if (
+      dashboardRoutes ||
+      sellerRoutes ||
+      adminRoutes ||
+      targetPathname.startsWith('/checkout') ||
+      targetPathname.startsWith('/cart')
+    ) {
+      if (targetPathname.startsWith('/api/')) {
+        return NextResponse.json(
+          { message: 'Affiliate accounts cannot perform buyer actions.' },
+          { status: 403 }
+        );
+      }
+      return NextResponse.redirect(
+        new URL(isArabic ? '/ar/affiliate/dashboard' : '/affiliate/dashboard', req.url)
+      );
+    }
+  }
+
   // Admin Routes Protection
   if (adminRoutes && role !== 'ADMIN') {
     if (targetPathname.startsWith('/api/')) {
@@ -335,16 +357,25 @@ export async function proxy(req: NextRequest) {
     if (role === 'SELLER') {
       return NextResponse.redirect(new URL(isArabic ? '/ar/seller-hub' : '/seller-hub', req.url));
     }
+    if (role === 'AFFILIATE') {
+      return NextResponse.redirect(
+        new URL(isArabic ? '/ar/affiliate/dashboard' : '/affiliate/dashboard', req.url)
+      );
+    }
     return NextResponse.redirect(new URL(isArabic ? '/ar/dashboard' : '/dashboard', req.url));
   }
 
   // Seller Routes Protection (SellerHub, /sell, /seller/*)
   if (sellerRoutes && role !== 'SELLER' && role !== 'ADMIN') {
-    // If trying to access seller area as buyer, go to customer dashboard
+    if (role === 'AFFILIATE') {
+      return NextResponse.redirect(
+        new URL(isArabic ? '/ar/affiliate/dashboard' : '/affiliate/dashboard', req.url)
+      );
+    }
     return NextResponse.redirect(new URL(isArabic ? '/ar/dashboard' : '/dashboard', req.url));
   }
 
-  // Customer Dashboard Protection (Block Buyers from Seller areas)
+  // Customer Dashboard Protection (Block non-buyers from Seller/Admin areas)
   if ((sellerRoutes || adminRoutes) && role === 'BUYER') {
     return NextResponse.redirect(new URL(isArabic ? '/ar/dashboard' : '/dashboard', req.url));
   }

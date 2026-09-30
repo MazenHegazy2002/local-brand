@@ -4852,7 +4852,7 @@ interface UsersTabProps {
 
 function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
   const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'BUYER' | 'SELLER' | 'ADMIN'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'BUYER' | 'SELLER' | 'ADMIN' | 'AFFILIATE'>('all');
   const [resettingEmails, setResettingEmails] = useState<Record<string, boolean>>({});
 
   const handleSendResetLink = async (email: string) => {
@@ -4943,6 +4943,7 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
           <option value="BUYER">Buyers</option>
           <option value="SELLER">Sellers</option>
           <option value="ADMIN">Admins</option>
+          <option value="AFFILIATE">Affiliates</option>
         </select>
         <span className="text-[11px] text-slate-400 whitespace-nowrap">
           {users.length} / {data?.users?.length || 0}
@@ -7139,6 +7140,7 @@ function EditUserModal({ form, onChange, onSubmit, onClose, loading, error }: Ed
               <option value="BUYER">🛍️ Buyer (Customer)</option>
               <option value="SELLER">🏪 Seller (Merchant)</option>
               <option value="ADMIN">🛡️ Admin (Staff)</option>
+              <option value="AFFILIATE">📢 Affiliate (Partner)</option>
             </select>
           </div>
 
@@ -7235,6 +7237,7 @@ function CreateUserModal({
               <option value="BUYER">🛍️ Buyer (Customer)</option>
               <option value="SELLER">🏪 Seller (Merchant)</option>
               <option value="ADMIN">🛡️ Admin (Staff)</option>
+              <option value="AFFILIATE">📢 Affiliate (Partner)</option>
             </select>
           </div>
 

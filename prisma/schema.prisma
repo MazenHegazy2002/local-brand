@@ -73,6 +73,7 @@ enum Role {
   BUYER
   SELLER
   ADMIN
+  AFFILIATE
 }
 
 model Address {

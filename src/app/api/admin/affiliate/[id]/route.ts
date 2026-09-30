@@ -77,10 +77,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (isBeingApproved) {
     await linkReferralOnApproval(id);
 
-    // Auto-verify email
+    // Auto-verify email and set role to AFFILIATE
     await prisma.user.update({
       where: { id: updated.userId },
-      data: { emailVerified: new Date() },
+      data: { role: 'AFFILIATE', emailVerified: new Date() },
     });
 
     // Send confirmation email

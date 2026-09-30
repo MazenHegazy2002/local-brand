@@ -58,7 +58,13 @@ export default function Navbar() {
 
   const role = (session?.user as SessionUser)?.role;
   const dashboardHref =
-    role === 'SELLER' ? '/seller-hub' : role === 'ADMIN' ? '/admin-os' : '/dashboard';
+    role === 'SELLER'
+      ? '/seller-hub'
+      : role === 'ADMIN'
+      ? '/admin-os'
+      : role === 'AFFILIATE'
+      ? '/affiliate/dashboard'
+      : '/dashboard';
 
   // Close the user menu on outside click and on Escape so it works
   // identically on desktop and on mobile / touch devices.

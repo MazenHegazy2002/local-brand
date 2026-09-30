@@ -205,6 +205,7 @@ function LoginForm() {
         if (!target || target === '/dashboard') {
           if (role === 'ADMIN') target = '/admin-os';
           else if (role === 'SELLER') target = '/seller-hub';
+          else if (role === 'AFFILIATE') target = '/affiliate/dashboard';
           else if (role === 'BUYER') {
             // Check if this buyer is also an active affiliate
             try {

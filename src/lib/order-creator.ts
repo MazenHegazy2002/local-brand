@@ -74,7 +74,8 @@ export async function createOrderForUser(
       });
       if (user && user.role !== 'BUYER') {
         return {
-          error: 'Only customers (buyers) can place orders. Sellers and Admins are restricted.',
+          error:
+            'Only customer accounts can place orders. Seller, Admin, and Affiliate accounts cannot purchase products.',
         };
       }
     }

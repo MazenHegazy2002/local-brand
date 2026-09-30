@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
         name,
         email,
         passwordHash: hashedPassword,
-        role: 'BUYER',
+        role: 'AFFILIATE',
         phone,
       },
     });

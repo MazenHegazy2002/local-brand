@@ -1635,7 +1635,7 @@ export async function adminCreateUser(formData: {
   name: string;
   email: string;
   password: string;
-  role: 'ADMIN' | 'SELLER' | 'BUYER';
+  role: Role;
   storeName?: string;
 }) {
   try {
@@ -1662,7 +1662,7 @@ export async function adminCreateUser(formData: {
         name: formData.name.trim(),
         email: formData.email.toLowerCase().trim(),
         passwordHash: hashedPassword,
-        role: formData.role as Role,
+        role: formData.role,
       },
     });
 
@@ -1711,7 +1711,7 @@ export async function adminCreateUser(formData: {
 
 export async function adminUpdateUser(
   userId: string,
-  data: { name?: string; email?: string; role?: 'ADMIN' | 'SELLER' | 'BUYER' }
+  data: { name?: string; email?: string; role?: Role }
 ) {
   try {
     const session = await getServerSession(authOptions);
