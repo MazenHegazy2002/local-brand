@@ -214,6 +214,18 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role;
         token.id = user.id;
+      } else if (token?.id) {
+        try {
+          const freshUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { role: true },
+          });
+          if (freshUser?.role) {
+            token.role = freshUser.role;
+          }
+        } catch {
+          // Keep existing token role if DB query fails
+        }
       }
       return token;
     },
