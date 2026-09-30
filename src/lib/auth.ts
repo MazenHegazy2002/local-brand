@@ -114,7 +114,10 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const user = await prisma.user.findUnique({ where: { email } });
+          const user = await prisma.user.findUnique({
+            where: { email },
+            include: { affiliate: { select: { status: true } } },
+          });
           if (!user || !user.passwordHash) {
             if (redisAvailable) {
               Promise.all([
@@ -153,7 +156,20 @@ export const authOptions: NextAuthOptions = {
             Promise.all([redis.del(emailKey), redis.del(ipKey)]).catch(() => {});
           }
 
-          return { id: user.id, name: user.name, email: user.email, role: user.role };
+          let resolvedRole = user.role;
+          if (user.affiliate?.status === 'ACTIVE' && resolvedRole !== 'AFFILIATE') {
+            try {
+              await prisma.user.update({
+                where: { id: user.id },
+                data: { role: 'AFFILIATE' },
+              });
+            } catch (err) {
+              console.warn('[AUTH] Could not update user role to AFFILIATE:', err);
+            }
+            resolvedRole = 'AFFILIATE';
+          }
+
+          return { id: user.id, name: user.name, email: user.email, role: resolvedRole };
         } catch (error) {
           console.error('[AUTH] Error:', error);
           if (
@@ -188,7 +204,10 @@ export const authOptions: NextAuthOptions = {
             await prisma.passwordResetToken.delete({ where: { token } }).catch(() => {});
             return null;
           }
-          const user = await prisma.user.findUnique({ where: { email: tokenRecord.email } });
+          const user = await prisma.user.findUnique({
+            where: { email: tokenRecord.email },
+            include: { affiliate: { select: { status: true } } },
+          });
           if (!user || user.deletedAt) return null;
 
           // Auto-verify email on magic-link entry since they accessed their email
@@ -201,7 +220,19 @@ export const authOptions: NextAuthOptions = {
 
           // Single-use: consume the token now so it can't be replayed.
           await prisma.passwordResetToken.delete({ where: { token } }).catch(() => {});
-          return { id: user.id, name: user.name, email: user.email, role: user.role };
+
+          let resolvedRole = user.role;
+          if (user.affiliate?.status === 'ACTIVE' && resolvedRole !== 'AFFILIATE') {
+            try {
+              await prisma.user.update({
+                where: { id: user.id },
+                data: { role: 'AFFILIATE' },
+              });
+            } catch {}
+            resolvedRole = 'AFFILIATE';
+          }
+
+          return { id: user.id, name: user.name, email: user.email, role: resolvedRole };
         } catch (error) {
           console.error('[AUTH] Magic link error:', error);
           return null;
@@ -214,6 +245,28 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role;
         token.id = user.id;
+      } else if (token?.id) {
+        try {
+          const freshUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { role: true, affiliate: { select: { status: true } } },
+          });
+          if (freshUser) {
+            let role = freshUser.role;
+            if (freshUser.affiliate?.status === 'ACTIVE' && role !== 'AFFILIATE') {
+              try {
+                await prisma.user.update({
+                  where: { id: token.id as string },
+                  data: { role: 'AFFILIATE' },
+                });
+              } catch {}
+              role = 'AFFILIATE';
+            }
+            token.role = role;
+          }
+        } catch {
+          // Keep existing token role if DB query fails
+        }
       }
       return token;
     },

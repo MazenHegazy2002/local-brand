@@ -3149,11 +3149,17 @@ function SellerDetailsModal({
   onDeleteSeller,
   actionLoading,
 }: SellerDetailsModalProps) {
-  const [commissionInput, setCommissionInput] = useState(
-    String(Math.round((seller.commissionRate ?? 0.1) * 100))
-  );
+  const effectiveRate =
+    seller?.commissionRate === 0.15 || !seller?.commissionRate ? 0.1 : seller.commissionRate;
+  const [commissionInput, setCommissionInput] = useState(String(Math.round(effectiveRate * 100)));
   const [commissionSaving, setCommissionSaving] = useState(false);
   const [commissionMsg, setCommissionMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const rate =
+      seller?.commissionRate === 0.15 || !seller?.commissionRate ? 0.1 : seller.commissionRate;
+    setCommissionInput(String(Math.round(rate * 100)));
+  }, [seller?.id, seller?.commissionRate]);
 
   const productIds = new Set((seller.products || []).map((p: any) => p.id));
   const sellerOrders = (allOrders || []).filter((o: any) =>
@@ -3915,7 +3921,7 @@ function SellerDetailsModal({
                 ⚙️ Platform Commission
               </h4>
               <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '10px' }}>
-                Override the per-seller commission rate. Default is 15%.
+                Override the per-seller commission rate. Default is 10%.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input
@@ -4846,7 +4852,7 @@ interface UsersTabProps {
 
 function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
   const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'BUYER' | 'SELLER' | 'ADMIN'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'BUYER' | 'SELLER' | 'ADMIN' | 'AFFILIATE'>('all');
   const [resettingEmails, setResettingEmails] = useState<Record<string, boolean>>({});
 
   const handleSendResetLink = async (email: string) => {
@@ -4937,6 +4943,7 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
           <option value="BUYER">Buyers</option>
           <option value="SELLER">Sellers</option>
           <option value="ADMIN">Admins</option>
+          <option value="AFFILIATE">Affiliates</option>
         </select>
         <span className="text-[11px] text-slate-400 whitespace-nowrap">
           {users.length} / {data?.users?.length || 0}
@@ -7133,6 +7140,7 @@ function EditUserModal({ form, onChange, onSubmit, onClose, loading, error }: Ed
               <option value="BUYER">🛍️ Buyer (Customer)</option>
               <option value="SELLER">🏪 Seller (Merchant)</option>
               <option value="ADMIN">🛡️ Admin (Staff)</option>
+              <option value="AFFILIATE">📢 Affiliate (Partner)</option>
             </select>
           </div>
 
@@ -7229,6 +7237,7 @@ function CreateUserModal({
               <option value="BUYER">🛍️ Buyer (Customer)</option>
               <option value="SELLER">🏪 Seller (Merchant)</option>
               <option value="ADMIN">🛡️ Admin (Staff)</option>
+              <option value="AFFILIATE">📢 Affiliate (Partner)</option>
             </select>
           </div>
 

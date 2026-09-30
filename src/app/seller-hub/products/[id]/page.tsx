@@ -21,6 +21,28 @@ import {
 import { getDashboardStats } from '@/app/actions/seller';
 import { PriceCommissionCalculator } from '@/components/seller/PriceCommissionCalculator';
 
+const AVAILABLE_SYSTEM_TAGS = [
+  'Men',
+  'Women',
+  'New Arrival',
+  'Best Seller',
+  'On Sale',
+  'Summer Collection',
+  'Winter Collection',
+  'Casual',
+  'Formal',
+  'Streetwear',
+  'Trending',
+  'Modest',
+  'Abaya',
+  'Cotton',
+  'Oversized',
+  'Handmade',
+  'Footwear',
+  'Accessories',
+  'Limited Edition',
+];
+
 interface Product {
   id: string;
   title: string;
@@ -447,15 +469,16 @@ export default function EditProductPage() {
     setVariants(variants.filter((_, i) => i !== index));
   };
 
-  const addTag = () => {
-    if (newTag.trim() && !tags.includes(newTag.trim())) {
-      setTags([...tags, newTag.trim()]);
-      setNewTag('');
+  const addTag = (tagName?: string) => {
+    const nameToAdd = (tagName || newTag).trim();
+    if (nameToAdd && !tags.some(t => t.toLowerCase() === nameToAdd.toLowerCase())) {
+      setTags(prev => [...prev, nameToAdd]);
     }
+    if (!tagName) setNewTag('');
   };
 
-  const removeTag = (tag: string) => {
-    setTags(tags.filter(t => t !== tag));
+  const removeTag = (tagToRemove: string) => {
+    setTags(prev => prev.filter(t => t.toLowerCase() !== tagToRemove.toLowerCase()));
   };
 
   if (!mounted || loading) {
@@ -1308,60 +1331,95 @@ export default function EditProductPage() {
             </div>
 
             <div className="card">
-              <h3 className="card-title mb-4">Loyalty Points Reward</h3>
+              <h3 className="card-title mb-1">Tags</h3>
               <p className="text-xs text-slate-400 mb-3">
-                Override the global loyalty flat bonus for this product. Enter a percentage of the
-                item&apos;s sale price that will be awarded as points (e.g. <strong>5</strong> = 5
-                pts per 100 EGP spent). Leave blank to use the default flat bonus.
+                Click any tag below to select or deselect it for your product.
               </p>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={form.loyaltyPointPct ?? ''}
-                  onChange={e =>
-                    setForm({
-                      ...form,
-                      loyaltyPointPct: e.target.value ? Number(e.target.value) : null,
-                    })
-                  }
-                  className="input-field w-32"
-                  placeholder="e.g. 5"
-                  min="0"
-                  max="100"
-                  step="0.5"
-                />
-                <span className="text-sm text-slate-500">% of sale price → points</span>
-              </div>
-            </div>
 
-            <div className="card">
-              <h3 className="card-title mb-4">Tags</h3>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {tags.map(tag => (
-                  <span
-                    key={tag}
-                    className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm flex items-center gap-2"
-                  >
-                    #{tag}
-                    <button
-                      onClick={() => removeTag(tag)}
-                      className="text-red-400 hover:text-red-600"
-                    >
-                      ×
-                    </button>
+              {/* Active Selected Tags */}
+              {tags.length > 0 && (
+                <div className="mb-3">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                    Selected Tags ({tags.length}):
                   </span>
-                ))}
+                  <div className="flex flex-wrap gap-1.5">
+                    {tags.map(tag => (
+                      <span
+                        key={tag}
+                        className="bg-[#0F6E56] text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                      >
+                        #{tag}
+                        <button
+                          type="button"
+                          onClick={() => removeTag(tag)}
+                          className="text-white/80 hover:text-white font-bold ml-0.5 cursor-pointer"
+                          title="Remove tag"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Interactive Tag Picker */}
+              <div className="mb-4">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                  Available System Tags:
+                </span>
+                <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 max-h-52 overflow-y-auto">
+                  {(() => {
+                    const dbTagNames = (sellerData?.tags || [])
+                      .map((t: any) => (typeof t === 'string' ? t : t?.name))
+                      .filter(Boolean);
+                    const allSystemTags = Array.from(
+                      new Set([...AVAILABLE_SYSTEM_TAGS, ...dbTagNames, ...tags])
+                    );
+
+                    return allSystemTags.map(tName => {
+                      const isSelected = tags.some(t => t.toLowerCase() === tName.toLowerCase());
+                      return (
+                        <button
+                          key={tName}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              removeTag(tName);
+                            } else {
+                              addTag(tName);
+                            }
+                          }}
+                          className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1 select-none ${
+                            isSelected
+                              ? 'bg-[#0F6E56] text-white shadow-xs scale-105 border border-transparent'
+                              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          <span>{isSelected ? '✓' : '+'}</span>
+                          <span>#{tName}</span>
+                        </button>
+                      );
+                    });
+                  })()}
+                </div>
               </div>
+
+              {/* Custom Tag Input */}
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={newTag}
                   onChange={e => setNewTag(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                  className="input-field"
-                  placeholder="Add tag..."
+                  className="input-field text-xs"
+                  placeholder="Or type a custom tag and click Add..."
                 />
-                <button onClick={addTag} className="px-4 bg-slate-100 rounded">
+                <button
+                  type="button"
+                  onClick={() => addTag()}
+                  className="px-4 py-2 bg-slate-800 text-white font-bold rounded-lg text-xs hover:bg-slate-900 transition-colors cursor-pointer shrink-0"
+                >
                   Add
                 </button>
               </div>

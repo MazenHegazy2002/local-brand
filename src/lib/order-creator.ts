@@ -74,7 +74,8 @@ export async function createOrderForUser(
       });
       if (user && user.role !== 'BUYER') {
         return {
-          error: 'Only customers (buyers) can place orders. Sellers and Admins are restricted.',
+          error:
+            'Only customer accounts can place orders. Seller, Admin, and Affiliate accounts cannot purchase products.',
         };
       }
     }
@@ -183,10 +184,8 @@ export async function createOrderForUser(
       const lineTotal = price * itemInput.quantity;
       subtotal += lineTotal;
 
-      // Per-product loyalty points override (Task 8):
-      // If the product has a loyaltyPointPct, award (pct / 100 * lineTotal) points,
-      // otherwise fall back to the flat POINTS_PER_ORDER awarded once at the end.
-      const pct = (variant.product as { loyaltyPointPct?: number | null }).loyaltyPointPct;
+      // Loyalty points reward (Default 1% = 1 pt per 100 EGP spent):
+      const pct = (variant.product as { loyaltyPointPct?: number | null }).loyaltyPointPct ?? 1;
       if (typeof pct === 'number' && pct > 0) {
         loyaltyPointsToAward += Math.round((pct / 100) * lineTotal);
       }

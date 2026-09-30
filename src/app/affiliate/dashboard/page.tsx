@@ -249,25 +249,6 @@ export default function AffiliateDashboardPage() {
           </span>
           <div className="flex items-center gap-2">
             <Link
-              href="/dashboard"
-              className="px-3 py-1.5 border border-zinc-700 hover:border-zinc-500 text-zinc-400 hover:text-white rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
-            >
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-                <rect x="14" y="14" width="7" height="7" rx="1" />
-              </svg>
-              {lang === 'ar' ? 'حسابي' : 'My Account'}
-            </Link>
-            <Link
               href="/"
               className="px-3 py-1.5 border border-zinc-700 hover:border-zinc-500 text-zinc-400 hover:text-white rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
             >
@@ -285,8 +266,11 @@ export default function AffiliateDashboardPage() {
               {lang === 'ar' ? 'المتجر' : 'Shop'}
             </Link>
             <button
-              onClick={() => (window.location.href = '/api/auth/signout')}
-              className="px-3 py-1.5 border border-red-500/30 hover:border-red-500 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-200 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+              onClick={() => {
+                useCartStore.getState().clearCart();
+                signOut({ callbackUrl: '/' });
+              }}
+              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 hover:text-red-200 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <svg
                 width="11"
@@ -301,27 +285,6 @@ export default function AffiliateDashboardPage() {
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
               {lang === 'ar' ? 'تسجيل الخروج' : 'Sign Out'}
-            </button>
-            <button
-              onClick={() => {
-                useCartStore.getState().clearCart();
-                signOut({ callbackUrl: '/' });
-              }}
-              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
-            >
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              {lang === 'ar' ? 'خروج' : 'Sign Out'}
             </button>
           </div>
         </div>

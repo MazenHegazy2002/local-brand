@@ -172,6 +172,17 @@ export async function getDashboardStats() {
         };
       }
 
+      // Auto-normalize legacy 15% commission rate to 10%
+      if (seller && (seller.commissionRate === 0.15 || seller.commissionRate > 0.1)) {
+        seller.commissionRate = 0.1;
+        prisma.sellerProfile
+          .update({
+            where: { id: seller.id },
+            data: { commissionRate: 0.1 },
+          })
+          .catch(() => {});
+      }
+
       // Only proceed with stats if seller exists
       if (!seller) {
         return {
@@ -421,6 +432,19 @@ export async function getDashboardStats() {
       const ESCROW_DAYS = 14;
       const ESCROW_MS = ESCROW_DAYS * 24 * 60 * 60 * 1000;
       const cutoff = new Date(Date.now() - ESCROW_MS);
+
+      // Auto-normalize any legacy 15% rate to 10% for all sellers
+      for (const s of sellers) {
+        if (s.commissionRate === 0.15 || s.commissionRate > 0.1) {
+          s.commissionRate = 0.1;
+        }
+      }
+      prisma.sellerProfile
+        .updateMany({
+          where: { commissionRate: 0.15 },
+          data: { commissionRate: 0.1 },
+        })
+        .catch(() => {});
 
       for (const s of sellers) {
         const sellerItems = eligibleItems.filter(item => item.variant?.product?.sellerId === s.id);
@@ -1611,7 +1635,7 @@ export async function adminCreateUser(formData: {
   name: string;
   email: string;
   password: string;
-  role: 'ADMIN' | 'SELLER' | 'BUYER';
+  role: Role;
   storeName?: string;
 }) {
   try {
@@ -1638,7 +1662,7 @@ export async function adminCreateUser(formData: {
         name: formData.name.trim(),
         email: formData.email.toLowerCase().trim(),
         passwordHash: hashedPassword,
-        role: formData.role as Role,
+        role: formData.role,
       },
     });
 
@@ -1687,7 +1711,7 @@ export async function adminCreateUser(formData: {
 
 export async function adminUpdateUser(
   userId: string,
-  data: { name?: string; email?: string; role?: 'ADMIN' | 'SELLER' | 'BUYER' }
+  data: { name?: string; email?: string; role?: Role }
 ) {
   try {
     const session = await getServerSession(authOptions);

@@ -382,14 +382,14 @@ export const adminCreateUserSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email(),
   password: z.string().min(6).max(100),
-  role: z.enum(['ADMIN', 'SELLER', 'BUYER']),
+  role: z.enum(['ADMIN', 'SELLER', 'BUYER', 'AFFILIATE']),
   storeName: z.string().max(100).optional(),
 });
 
 export const adminUpdateUserSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   email: z.string().email().optional(),
-  role: z.enum(['ADMIN', 'SELLER', 'BUYER']).optional(),
+  role: z.enum(['ADMIN', 'SELLER', 'BUYER', 'AFFILIATE']).optional(),
 });
 
 // ============================================

@@ -56,6 +56,12 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'blob.vercel-storage.com' },
       // Google OAuth profile pictures
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      // Self-hosted uploads — seller product images stored on the VPS disk
+      // and served by /api/files/<uuid>.jpg
+      { protocol: 'https', hostname: 'brandyy.shop' },
+      { protocol: 'https', hostname: '*.brandyy.shop' },
+      // Local development (any port)
+      { protocol: 'http', hostname: 'localhost' },
     ],
   },
 

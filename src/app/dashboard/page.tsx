@@ -69,15 +69,17 @@ function CustomerDashboard() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAffiliate, setIsAffiliate] = useState(false);
 
-  // Access control - redirect admins/sellers to their dashboards
+  // Access control - redirect admins/sellers/affiliates to their respective dashboards
   useEffect(() => {
     const role = (session?.user as SessionUser | undefined)?.role;
     if (session && role === 'ADMIN') {
-      router.push('/admin');
+      router.push('/admin-os');
     } else if (session && role === 'SELLER') {
       router.push('/seller-hub');
+    } else if (session && (role === 'AFFILIATE' || isAffiliate)) {
+      router.push('/affiliate/dashboard');
     }
-  }, [session, router]);
+  }, [session, isAffiliate, router]);
 
   const refreshData = async () => {
     setLoading(true);
@@ -85,7 +87,12 @@ function CustomerDashboard() {
       const res = (await getDashboardStats()) as unknown as DashboardData & {
         isAffiliate?: boolean;
       };
-      if (res?.isAffiliate) setIsAffiliate(true);
+      const currentRole = (session?.user as SessionUser | undefined)?.role;
+      if (res?.isAffiliate || currentRole === 'AFFILIATE') {
+        setIsAffiliate(true);
+        router.push('/affiliate/dashboard');
+        return;
+      }
       setData(res);
     } catch (err: unknown) {
       const error = err as Error;
