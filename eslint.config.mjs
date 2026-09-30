@@ -23,6 +23,7 @@ const eslintConfig = defineConfig([
     'scratch/**',
     'backups/**',
     'mobile/**',
+    'mobile-app-extracted/**',
   ]),
   {
     rules: {

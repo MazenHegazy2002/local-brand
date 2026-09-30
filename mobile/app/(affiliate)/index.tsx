@@ -187,7 +187,16 @@ export default function Affiliate() {
           </View>
         </View>
 
-        {/* Who used the code */}
+        {/* Payout */}
+        <Pressable
+          style={[styles.payoutBtn, (confirmed <= 0 || payout.isPending) && { opacity: 0.5 }]}
+          disabled={confirmed <= 0 || payout.isPending}
+          onPress={() => payout.mutate()}
+        >
+          <Text style={styles.payoutBtnText}>Request payout · {egp(confirmed)}</Text>
+        </Pressable>
+
+        {/* Who used the code — sits under the original design */}
         <View style={styles.secHead}>
           <Text style={styles.secTitle}>Who used your code</Text>
           <Text style={styles.statLabel}>Last 10 orders</Text>
@@ -224,15 +233,6 @@ export default function Affiliate() {
             );
           })}
         </View>
-
-        {/* Payout */}
-        <Pressable
-          style={[styles.payoutBtn, (confirmed <= 0 || payout.isPending) && { opacity: 0.5 }]}
-          disabled={confirmed <= 0 || payout.isPending}
-          onPress={() => payout.mutate()}
-        >
-          <Text style={styles.payoutBtnText}>Request payout · {egp(confirmed)}</Text>
-        </Pressable>
       </ScrollView>
     </View>
   );
