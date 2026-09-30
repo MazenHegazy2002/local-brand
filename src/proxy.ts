@@ -288,9 +288,9 @@ export async function proxy(req: NextRequest) {
       !targetPathname.startsWith('/seller/apply')) ||
     targetPathname === '/seller-hub';
   const dashboardRoutes = targetPathname.startsWith('/dashboard');
-  const affiliateRoutes =
-    targetPathname.startsWith('/affiliate/dashboard') ||
-    targetPathname.startsWith('/api/affiliate/dashboard');
+  // /api/affiliate/dashboard is not listed: the route authenticates itself
+  // (cookie or the app's Bearer token), and this cookie-only gate 401'd the app.
+  const affiliateRoutes = targetPathname.startsWith('/affiliate/dashboard');
 
   // If no user is logged in, redirect to login (except for public shop pages)
   if (!token) {
