@@ -1,23 +1,33 @@
 // src/app/api/affiliate/dashboard/route.ts
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getRequestUser } from '@/lib/mobile-auth';
 import { prisma } from '@/lib/prisma';
 import { getTierConfig, getGlobalSettings, getAffiliateReferralBaseUrl } from '@/lib/affiliate';
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+// First name + last initial only — affiliates don't get customers' full names.
+function shortName(name?: string | null) {
+  const [first, last] = (name ?? '').trim().split(/\s+/);
+  return first ? (last ? `${first} ${last[0]}.` : first) : 'Guest';
+}
+
+// Accepts the web session cookie or the app's Bearer token.
+export async function GET(req: Request) {
+  const user = await getRequestUser(req);
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const affiliate = await prisma.affiliate.findUnique({
-    where: { userId: session.user.id },
+    where: { userId: user.id },
     include: {
       commissions: {
         orderBy: { createdAt: 'desc' },
         take: 10,
-        include: { order: { select: { id: true, createdAt: true } } },
+        include: {
+          order: {
+            select: { id: true, createdAt: true, user: { select: { name: true, role: true } } },
+          },
+        },
       },
       affiliatePayouts: {
         orderBy: { createdAt: 'desc' },
@@ -33,7 +43,15 @@ export async function GET() {
     return NextResponse.json({ error: 'No affiliate account found.' }, { status: 404 });
   }
 
-  const [tiers, settings] = await Promise.all([getTierConfig(), getGlobalSettings()]);
+  const [tiers, settings, confirmed] = await Promise.all([
+    getTierConfig(),
+    getGlobalSettings(),
+    // Same filter the payout route uses: confirmed and not yet in a payout.
+    prisma.commission.aggregate({
+      where: { affiliateId: affiliate.id, status: 'CONFIRMED', payoutId: null },
+      _sum: { commissionEgp: true },
+    }),
+  ]);
 
   // Calculate progress to next tier
   const currentTierIdx = tiers.findIndex(t => t.tier === affiliate.tier);
@@ -69,6 +87,7 @@ export async function GET() {
         : Number(settings.defaultDiscountPct),
       totalEarnedEgp: Number(affiliate.totalEarnedEgp),
       pendingEarningsEgp: Number(affiliate.pendingEarningsEgp),
+      confirmedEgp: Number(confirmed._sum.commissionEgp ?? 0),
       totalConversions: affiliate.totalConversions,
       createdAt: affiliate.createdAt,
     },
@@ -84,6 +103,8 @@ export async function GET() {
       id: c.id,
       orderId: c.orderId,
       orderCreatedAt: c.order?.createdAt,
+      usedByName: shortName(c.order?.user?.name),
+      usedByRole: c.order?.user?.role ?? 'BUYER',
       orderTotalEgp: Number(c.orderTotalEgp),
       commissionPct: Number(c.commissionPct),
       commissionEgp: Number(c.commissionEgp),

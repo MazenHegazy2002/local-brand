@@ -1,7 +1,6 @@
 // src/app/api/affiliate/payout/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getRequestUser } from '@/lib/mobile-auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { AffiliatePayoutMethod } from '@/generated/client';
@@ -12,21 +11,25 @@ const PayoutSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  const user = await getRequestUser(req);
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const affiliate = await prisma.affiliate.findUnique({
-    where: { userId: session.user.id },
+    where: { userId: user.id },
   });
 
   if (!affiliate || affiliate.status !== 'ACTIVE') {
     return NextResponse.json({ error: 'No active affiliate account.' }, { status: 403 });
   }
 
-  const body = await req.json();
-  const parsed = PayoutSchema.safeParse(body);
+  // The app sends an empty body: fall back to the payout method saved on the profile.
+  const body = await req.json().catch(() => ({}));
+  const parsed = PayoutSchema.safeParse({
+    method: body.method ?? affiliate.payoutMethod,
+    payoutDetails: body.payoutDetails ?? affiliate.payoutDetails,
+  });
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
