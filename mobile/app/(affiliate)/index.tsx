@@ -10,6 +10,8 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { useState } from 'react';
+import * as Clipboard from 'expo-clipboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/store/auth';
 import { api } from '@/lib/api';
@@ -55,6 +57,7 @@ const notify = (msg: string) =>
 export default function Affiliate() {
   const signOut = useAuth(s => s.signOut);
   const qc = useQueryClient();
+  const [copied, setCopied] = useState(false);
   const { data, isLoading, error } = useQuery({
     queryKey: ['affiliate-dashboard'],
     queryFn: () => api.get<Dashboard>('/api/affiliate/dashboard'),
@@ -118,6 +121,11 @@ export default function Affiliate() {
   ];
 
   const share = (message: string) => Share.share({ message });
+  const copy = (text: string) =>
+    Clipboard.setStringAsync(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
 
   return (
     <View style={styles.root}>
@@ -161,8 +169,8 @@ export default function Affiliate() {
               {link.slice(0, slash)}
               <Text style={styles.linkCode}>{link.slice(slash)}</Text>
             </Text>
-            <Pressable style={styles.copyBtn} onPress={() => share(a.referralLink)}>
-              <Text style={styles.copyBtnText}>Copy</Text>
+            <Pressable style={styles.copyBtn} onPress={() => copy(a.referralLink)}>
+              <Text style={styles.copyBtnText}>{copied ? 'Copied' : 'Copy'}</Text>
             </Pressable>
           </View>
           <Text style={styles.linkHint}>
