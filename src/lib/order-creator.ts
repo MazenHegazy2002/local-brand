@@ -58,6 +58,9 @@ export async function createOrderForUser(
       couponCode,
       promoCode,
       paymentMethod,
+      paymentSenderDetail,
+      paymentReference,
+      paymentReceiptUrl,
       orderNotes,
       giftWrapping,
       pointsRedeemed = 0,
@@ -346,6 +349,7 @@ export async function createOrderForUser(
         });
       }
 
+      const isManualTransfer = paymentMethod === 'INSTAPAY' || paymentMethod === 'VODAFONE_CASH';
       const newOrder = await tx.order.create({
         data: {
           userId,
@@ -355,14 +359,14 @@ export async function createOrderForUser(
           discountAmount,
           shippingFee,
           paymentMethod: paymentMethod as PaymentMethod,
-          paymentStatus:
-            paymentMethod === 'CASH_ON_DELIVERY'
-              ? PaymentStatus.UNPAID
-              : process.env.NODE_ENV === 'development'
-                ? PaymentStatus.PAID
-                : PaymentStatus.UNPAID,
+          paymentStatus: PaymentStatus.UNPAID,
+          paymentSenderDetail: paymentSenderDetail || null,
+          paymentReference: paymentReference || null,
+          paymentReceiptUrl: paymentReceiptUrl || null,
           status:
-            paymentMethod === 'CASH_ON_DELIVERY' || process.env.NODE_ENV === 'development'
+            paymentMethod === 'CASH_ON_DELIVERY' ||
+            isManualTransfer ||
+            process.env.NODE_ENV === 'development'
               ? OrderStatus.CONFIRMED
               : OrderStatus.PENDING_PAYMENT,
           shippingAddressSnapshot: JSON.stringify(addressSnapshot),

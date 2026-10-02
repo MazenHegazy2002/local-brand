@@ -15,8 +15,8 @@ export async function POST(req: Request) {
   try {
     // Bearer (mobile) or session cookie (web).
     const user = await getRequestUser(req);
-    if (!user || !['SELLER', 'ADMIN'].includes(user.role)) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ message: 'Unauthorized. Please log in.' }, { status: 401 });
     }
 
     const formData = await req.formData();

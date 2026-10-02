@@ -4852,7 +4852,9 @@ interface UsersTabProps {
 
 function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
   const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'BUYER' | 'SELLER' | 'ADMIN' | 'AFFILIATE'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'BUYER' | 'SELLER' | 'ADMIN' | 'AFFILIATE'>(
+    'all'
+  );
   const [resettingEmails, setResettingEmails] = useState<Record<string, boolean>>({});
 
   const handleSendResetLink = async (email: string) => {
@@ -5462,6 +5464,7 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
             setViewingOrder(null);
             setEditingOrder(target);
           }}
+          onRefresh={onRefresh}
         />
       )}
 
@@ -5483,11 +5486,41 @@ interface OrderDetailsModalProps {
   order: Order;
   onClose: () => void;
   onEdit: () => void;
+  onRefresh?: () => Promise<void>;
 }
 
-function OrderDetailsModal({ order, onClose, onEdit }: OrderDetailsModalProps) {
+function OrderDetailsModal({ order, onClose, onEdit, onRefresh }: OrderDetailsModalProps) {
+  const { toast } = useToast();
   const address: any = safeParseSnapshot(order.shippingAddressSnapshot);
   const items = order.items || [];
+  const [currentPaymentStatus, setCurrentPaymentStatus] = useState<string>(
+    order.paymentStatus || 'UNPAID'
+  );
+  const [verifying, setVerifying] = useState(false);
+
+  const handleVerifyPayment = async () => {
+    setVerifying(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentStatus: 'PAID' }),
+      });
+      if (!res.ok) throw new Error('Failed to update payment status');
+      setCurrentPaymentStatus('PAID');
+      toast({
+        variant: 'success',
+        title: 'Payment Verified',
+        description: 'Order payment marked as PAID & Verified ✓',
+      });
+      if (onRefresh) await onRefresh();
+    } catch (err) {
+      console.error('Failed to verify payment:', err);
+      toast({ variant: 'error', title: 'Error', description: 'Failed to verify payment' });
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -5526,10 +5559,87 @@ function OrderDetailsModal({ order, onClose, onEdit }: OrderDetailsModalProps) {
             {order.status}
           </span>
           <span className="font-semibold text-slate-500 ml-2">Payment:</span>
-          <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 font-bold rounded-md border border-emerald-200">
-            {order.paymentMethod} ({order.paymentStatus || 'UNPAID'})
+          <span
+            className={`px-2.5 py-1 font-bold rounded-md border ${currentPaymentStatus === 'PAID' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}
+          >
+            {order.paymentMethod} ({currentPaymentStatus})
           </span>
         </div>
+
+        {/* Manual Transfer Verification (InstaPay / Vodafone Cash) */}
+        {(order.paymentMethod === 'INSTAPAY' || order.paymentMethod === 'VODAFONE_CASH') && (
+          <div className="bg-purple-50/70 border border-purple-200 rounded-xl p-4 space-y-3">
+            <div className="text-xs font-bold text-purple-900 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <span>{order.paymentMethod === 'INSTAPAY' ? '⚡' : '📲'}</span>
+                {order.paymentMethod === 'INSTAPAY'
+                  ? 'InstaPay Transfer Details'
+                  : 'Vodafone Cash Transfer Details'}
+              </span>
+              <span
+                className={`px-2.5 py-0.5 rounded text-[10px] font-extrabold uppercase ${currentPaymentStatus === 'PAID' ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}`}
+              >
+                {currentPaymentStatus === 'PAID' ? 'Verified ✓' : 'Pending Verification'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div className="bg-white p-2.5 rounded-lg border border-purple-100">
+                <span className="text-slate-400 block text-[10px] font-bold">
+                  Sender Phone / Username:
+                </span>
+                <span className="font-bold text-slate-900 font-mono text-sm">
+                  {order.paymentSenderDetail || 'Not provided'}
+                </span>
+              </div>
+              <div className="bg-white p-2.5 rounded-lg border border-purple-100">
+                <span className="text-slate-400 block text-[10px] font-bold">
+                  Transaction Reference Code:
+                </span>
+                <span className="font-bold text-slate-900 font-mono text-sm">
+                  {order.paymentReference || 'Not provided'}
+                </span>
+              </div>
+            </div>
+
+            {order.paymentReceiptUrl && (
+              <div className="bg-white p-3 rounded-lg border border-purple-100 space-y-1.5">
+                <span className="text-xs font-bold text-slate-700 block">
+                  Uploaded Transfer Receipt Screenshot:
+                </span>
+                <a
+                  href={order.paymentReceiptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block group relative"
+                >
+                  <img
+                    src={order.paymentReceiptUrl}
+                    alt="Receipt Screenshot"
+                    className="max-h-60 w-auto object-contain rounded-lg border border-slate-200 shadow-sm group-hover:opacity-95 transition-opacity"
+                  />
+                  <span className="block text-[10px] text-purple-700 font-bold mt-1.5 group-hover:underline">
+                    🔍 Click to view full-size image in new tab
+                  </span>
+                </a>
+              </div>
+            )}
+
+            {/* Direct 1-Click Verification Button */}
+            {currentPaymentStatus !== 'PAID' && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  disabled={verifying}
+                  onClick={handleVerifyPayment}
+                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-lg transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <span>✓</span> {verifying ? 'Verifying...' : 'Verify Payment (Mark as PAID)'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Customer & Delivery Address */}
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">

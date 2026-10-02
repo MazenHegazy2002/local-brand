@@ -123,8 +123,20 @@ export const createOrderSchema = z.object({
   couponCode: z.string().optional(),
   promoCode: z.string().optional(),
   paymentMethod: z
-    .enum(['CASH_ON_DELIVERY', 'CREDIT_CARD', 'MOBILE_WALLET', 'PAYMOB', 'FAWRY', 'PAYSKY'])
+    .enum([
+      'CASH_ON_DELIVERY',
+      'CREDIT_CARD',
+      'MOBILE_WALLET',
+      'PAYMOB',
+      'FAWRY',
+      'PAYSKY',
+      'INSTAPAY',
+      'VODAFONE_CASH',
+    ])
     .default('CASH_ON_DELIVERY'),
+  paymentSenderDetail: z.string().max(100).optional(),
+  paymentReference: z.string().max(100).optional(),
+  paymentReceiptUrl: z.string().optional(),
   items: z
     .array(
       z.object({

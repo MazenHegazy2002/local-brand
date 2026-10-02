@@ -384,6 +384,9 @@ model Order {
   paymentChannel    String? // Network used (e.g. Card / Tahweel / mVisa / Meeza)
   paymentNetworkRef String? // Network-side reference (e.g. PaySky NetworkReference)
   paymentMaskedPan  String? // Masked card / wallet account for receipts
+  paymentSenderDetail String? // Buyer's sender phone number or InstaPay IPA
+  paymentReference    String? // Transaction ID / reference code
+  paymentReceiptUrl   String? // Uploaded receipt image URL
   idempotencyKey    String?       @unique
   payoutProcessedAt DateTime? // Guard against double-payout
 
@@ -473,6 +476,8 @@ enum PaymentMethod {
   PAYMOB
   FAWRY
   PAYSKY
+  INSTAPAY
+  VODAFONE_CASH
 }
 
 enum PaymentStatus {
