@@ -11,10 +11,7 @@ import {
   Switch,
   Modal,
   TextInput,
-  Image,
-  Linking,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -22,7 +19,6 @@ import { ChevronLeft, MapPin } from 'lucide-react-native';
 import { useCart } from '@/store/cart';
 import { useAuth } from '@/store/auth';
 import { api, fmtEGP } from '@/lib/api';
-import { absUrl, uploadImage } from '@/lib/seller';
 import { colors, radii, spacing } from '@/lib/tokens';
 
 type PayMethod = 'paysky' | 'cod' | 'fawry' | 'instapay' | 'vodafone_cash';
@@ -100,9 +96,6 @@ export default function Checkout() {
   const [usePoints, setUsePoints] = useState(false);
   const [loading, setLoading] = useState(false);
   const [addrOpen, setAddrOpen] = useState(false);
-  const [sender, setSender] = useState('');
-  const [reference, setReference] = useState('');
-  const [receipt, setReceipt] = useState<{ uri: string; url?: string } | null>(null);
   const queryClient = useQueryClient();
 
   const { data: payConfig } = useQuery({
@@ -112,20 +105,6 @@ export default function Checkout() {
   // Until the toggles load (or if they fail) show everything; the server re-checks.
   const payOptions = PAY_OPTIONS.filter(o => payConfig?.[TOGGLE_KEY[o.id]] !== false);
   const manual = MANUAL.includes(payMethod);
-
-  async function pickReceipt() {
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
-    if (res.canceled) return;
-    const asset = res.assets[0];
-    setReceipt({ uri: asset.uri });
-    try {
-      const url = await uploadImage(asset.uri, asset.mimeType ?? 'image/jpeg');
-      setReceipt({ uri: asset.uri, url });
-    } catch (e) {
-      setReceipt(null);
-      Alert.alert('Upload failed', (e as Error).message);
-    }
-  }
 
   const { data: addrData } = useQuery({
     queryKey: ['addresses'],
@@ -147,11 +126,21 @@ export default function Checkout() {
   const discount = usePoints ? Math.min(pointsValue, subtotal) : 0;
   const orderTotal = subtotal + shipping - discount;
 
+  function openPay(method: PayMethod) {
+    router.push({
+      pathname: '/pay/[method]',
+      params: {
+        method,
+        total: String(orderTotal),
+        shippingMethod: shipMethod,
+        addressId: address?.id ?? '',
+        usePoints: usePoints ? '1' : '',
+      },
+    });
+  }
+
   async function handlePlaceOrder() {
-    if (manual && (!sender.trim() || !receipt?.url)) {
-      Alert.alert('Payment details', 'Enter the number you paid from and upload the receipt.');
-      return;
-    }
+    if (manual) return openPay(payMethod);
     setLoading(true);
     try {
       const res = await api.post<{ orderId: string; paySkyUrl?: string; fawryRef?: string }>(
@@ -161,11 +150,6 @@ export default function Checkout() {
           shippingMethod: shipMethod,
           addressId: address?.id,
           usePoints,
-          ...(manual && {
-            paymentSenderDetail: sender.trim(),
-            paymentReference: reference.trim() || undefined,
-            paymentReceiptUrl: receipt?.url,
-          }),
           items: items.map(i => ({
             productId: i.productId,
             qty: i.qty,
@@ -248,7 +232,10 @@ export default function Checkout() {
               <Pressable
                 key={o.id}
                 style={[styles.payRow, i > 0 && styles.divider, active && styles.payRowActive]}
-                onPress={() => setPayMethod(o.id)}
+                onPress={() => {
+                  setPayMethod(o.id);
+                  if (MANUAL.includes(o.id)) openPay(o.id);
+                }}
               >
                 <View style={[styles.radio, active && styles.radioActive]}>
                   {active && <View style={styles.radioDot} />}
@@ -264,70 +251,6 @@ export default function Checkout() {
             );
           })}
         </View>
-
-        {manual && (
-          <View style={[styles.card, { marginTop: 12, gap: 8 }]}>
-            {payMethod === 'instapay' ? (
-              <>
-                <Text style={styles.bold}>Send {fmtEGP(orderTotal)} with InstaPay</Text>
-                <Text style={styles.muted} selectable>
-                  IPA: {payConfig?.details?.INSTAPAY.ipa ?? '…'}
-                  {'\n'}Name: {payConfig?.details?.INSTAPAY.accountName ?? '…'}
-                </Text>
-                {!!payConfig?.details?.INSTAPAY.qrImageUrl && (
-                  <Image
-                    source={{ uri: absUrl(payConfig.details.INSTAPAY.qrImageUrl) }}
-                    style={styles.qr}
-                  />
-                )}
-                {!!payConfig?.details?.INSTAPAY.payLink && (
-                  <Pressable onPress={() => Linking.openURL(payConfig.details!.INSTAPAY.payLink)}>
-                    <Text style={styles.link}>Open in InstaPay</Text>
-                  </Pressable>
-                )}
-              </>
-            ) : (
-              <>
-                <Text style={styles.bold}>Send {fmtEGP(orderTotal)} with Vodafone Cash</Text>
-                <Text style={styles.muted} selectable>
-                  Wallet: {payConfig?.details?.VODAFONE_CASH.number ?? '…'}
-                  {'\n'}Name: {payConfig?.details?.VODAFONE_CASH.accountName ?? '…'}
-                  {'\n'}Dial {payConfig?.details?.VODAFONE_CASH.dialShortcut ?? '*9*7#'} to transfer
-                </Text>
-              </>
-            )}
-            <TextInput
-              style={styles.input}
-              placeholder={
-                payMethod === 'instapay'
-                  ? 'Your phone or InstaPay IPA *'
-                  : 'Wallet number you paid from *'
-              }
-              placeholderTextColor={colors.placeholder}
-              value={sender}
-              onChangeText={setSender}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Transaction reference (optional)"
-              placeholderTextColor={colors.placeholder}
-              value={reference}
-              onChangeText={setReference}
-            />
-            <Pressable style={styles.uploadBtn} onPress={pickReceipt}>
-              {receipt ? (
-                <>
-                  <Image source={{ uri: receipt.uri }} style={styles.receiptThumb} />
-                  <Text style={styles.semi}>
-                    {receipt.url ? 'Receipt uploaded · Change' : 'Uploading…'}
-                  </Text>
-                </>
-              ) : (
-                <Text style={styles.link}>Upload transfer receipt *</Text>
-              )}
-            </Pressable>
-          </View>
-        )}
 
         {/* Points */}
         {points > 0 && (
@@ -369,12 +292,12 @@ export default function Checkout() {
         <Pressable
           style={[styles.ctaBtn, (loading || items.length === 0) && { opacity: 0.6 }]}
           onPress={handlePlaceOrder}
-          disabled={loading || items.length === 0 || (!!receipt && !receipt.url)}
+          disabled={loading || items.length === 0}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.ctaText}>Place order</Text>
+            <Text style={styles.ctaText}>{manual ? 'Continue to payment' : 'Place order'}</Text>
           )}
         </Pressable>
       </View>
@@ -572,17 +495,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.ink,
   },
-  qr: { width: 180, height: 180, alignSelf: 'center', borderRadius: 8 },
-  uploadBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.inputBorder,
-  },
-  receiptThumb: { width: 44, height: 44, borderRadius: 6 },
   error: { fontFamily: 'Inter-Medium', fontSize: 13, color: '#dc2626' },
 });
