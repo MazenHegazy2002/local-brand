@@ -517,6 +517,36 @@ export async function createOrderForUser(
       }
     })();
 
+    // Best-effort Server-Side Purchase Event (Meta CAPI & TikTok Events API for COD & Online)
+    void (async () => {
+      try {
+        const { dispatchServerPurchaseEvents } = await import('@/lib/server-events');
+        const orderWithItems = await prisma.order.findUnique({
+          where: { id: order.id },
+          include: { items: true },
+        });
+        const userObj = userId
+          ? await prisma.user.findUnique({ where: { id: userId }, select: { email: true } })
+          : null;
+        const email = userObj?.email || guestEmail || undefined;
+
+        await dispatchServerPurchaseEvents({
+          orderId: order.id,
+          totalAmount: order.totalAmount,
+          currency: 'EGP',
+          customerEmail: email,
+          customerPhone: resolvedAddress.phone,
+          items: (orderWithItems?.items || []).map(i => ({
+            id: i.variantId,
+            price: i.priceAtPurchase,
+            quantity: i.quantity,
+          })),
+        });
+      } catch (capiErr) {
+        console.error('Server purchase event dispatch failed:', capiErr);
+      }
+    })();
+
     return { success: true, orderId: order.id };
   } catch (error: unknown) {
     const err = error as Error;

@@ -105,6 +105,22 @@ function CheckoutPageInner() {
       .catch(err => console.error('Error loading payment methods:', err));
   }, []);
 
+  useEffect(() => {
+    if (items.length > 0) {
+      import('@/lib/pixel-events').then(({ trackInitiateCheckout }) => {
+        trackInitiateCheckout(
+          items.map(i => ({
+            id: i.variantId || i.id,
+            title: i.name || '',
+            price: i.price,
+            quantity: i.qty,
+          })),
+          total()
+        );
+      });
+    }
+  }, [items, total]);
+
   const [paymentSenderDetail, setPaymentSenderDetail] = useState('');
   const [paymentReference, setPaymentReference] = useState('');
   const [paymentReceiptUrl, setPaymentReceiptUrl] = useState('');

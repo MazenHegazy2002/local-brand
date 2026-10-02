@@ -27,7 +27,12 @@ function SuccessContent() {
   // Clear cart on mount — safety net in case the checkout redirect didn't clear it
   useEffect(() => {
     clearCart();
-  }, [clearCart]);
+    if (orderId) {
+      import('@/lib/pixel-events').then(({ trackPurchase }) => {
+        trackPurchase({ id: orderId, totalAmount: 0, currency: 'EGP' }, orderId);
+      });
+    }
+  }, [clearCart, orderId]);
 
   useEffect(() => {
     // Fire simple confetti effect if available, or just ignore
