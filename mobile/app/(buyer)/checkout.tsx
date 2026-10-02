@@ -21,7 +21,30 @@ import { useAuth } from '@/store/auth';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 
-type PayMethod = 'paysky' | 'cod' | 'fawry';
+type PayMethod = 'paysky' | 'cod' | 'fawry' | 'instapay' | 'vodafone_cash';
+const MANUAL: PayMethod[] = ['instapay', 'vodafone_cash'];
+// Keys of /api/payment-methods (the admin on/off toggles).
+const TOGGLE_KEY: Record<PayMethod, string> = {
+  paysky: 'PAYSKY',
+  cod: 'CASH_ON_DELIVERY',
+  fawry: 'FAWRY',
+  instapay: 'INSTAPAY',
+  vodafone_cash: 'VODAFONE_CASH',
+};
+
+interface PayConfig {
+  [key: string]: unknown;
+  details?: {
+    INSTAPAY: {
+      ipa: string;
+      number: string;
+      accountName: string;
+      payLink: string;
+      qrImageUrl: string;
+    };
+    VODAFONE_CASH: { number: string; accountName: string; dialShortcut: string };
+  };
+}
 type ShipMethod = 'standard';
 
 interface Address {
@@ -45,6 +68,18 @@ const PAY_OPTIONS: { id: PayMethod; label: string; sub: string; badge: string }[
   },
   { id: 'cod', label: 'Cash on delivery', sub: 'Pay the courier in cash', badge: 'COD' },
   {
+    id: 'instapay',
+    label: 'InstaPay',
+    sub: 'Bank transfer, then upload the receipt',
+    badge: 'InstaPay',
+  },
+  {
+    id: 'vodafone_cash',
+    label: 'Vodafone Cash',
+    sub: 'Wallet transfer, then upload the receipt',
+    badge: 'VF Cash',
+  },
+  {
     id: 'fawry',
     label: 'Fawry',
     sub: 'Pay at any Fawry outlet with a reference code',
@@ -57,11 +92,19 @@ export default function Checkout() {
   const user = useAuth(s => s.user);
   const { items, total, clear } = useCart();
   const [shipMethod, setShipMethod] = useState<ShipMethod>('standard');
-  const [payMethod, setPayMethod] = useState<PayMethod>('paysky');
+  const [payMethod, setPayMethod] = useState<PayMethod>('cod');
   const [usePoints, setUsePoints] = useState(false);
   const [loading, setLoading] = useState(false);
   const [addrOpen, setAddrOpen] = useState(false);
   const queryClient = useQueryClient();
+
+  const { data: payConfig } = useQuery({
+    queryKey: ['payment-methods'],
+    queryFn: () => api.get<PayConfig>('/api/payment-methods'),
+  });
+  // Until the toggles load (or if they fail) show everything; the server re-checks.
+  const payOptions = PAY_OPTIONS.filter(o => payConfig?.[TOGGLE_KEY[o.id]] !== false);
+  const manual = MANUAL.includes(payMethod);
 
   const { data: addrData } = useQuery({
     queryKey: ['addresses'],
@@ -83,7 +126,21 @@ export default function Checkout() {
   const discount = usePoints ? Math.min(pointsValue, subtotal) : 0;
   const orderTotal = subtotal + shipping - discount;
 
+  function openPay(method: PayMethod) {
+    router.push({
+      pathname: '/pay/[method]',
+      params: {
+        method,
+        total: String(orderTotal),
+        shippingMethod: shipMethod,
+        addressId: address?.id ?? '',
+        usePoints: usePoints ? '1' : '',
+      },
+    });
+  }
+
   async function handlePlaceOrder() {
+    if (manual) return openPay(payMethod);
     setLoading(true);
     try {
       const res = await api.post<{ orderId: string; paySkyUrl?: string; fawryRef?: string }>(
@@ -169,13 +226,16 @@ export default function Checkout() {
         {/* Payment */}
         <Text style={styles.sectionLabel}>PAYMENT</Text>
         <View style={[styles.card, { padding: 0, overflow: 'hidden' }]}>
-          {PAY_OPTIONS.map((o, i) => {
+          {payOptions.map((o, i) => {
             const active = payMethod === o.id;
             return (
               <Pressable
                 key={o.id}
                 style={[styles.payRow, i > 0 && styles.divider, active && styles.payRowActive]}
-                onPress={() => setPayMethod(o.id)}
+                onPress={() => {
+                  setPayMethod(o.id);
+                  if (MANUAL.includes(o.id)) openPay(o.id);
+                }}
               >
                 <View style={[styles.radio, active && styles.radioActive]}>
                   {active && <View style={styles.radioDot} />}
@@ -237,7 +297,7 @@ export default function Checkout() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.ctaText}>Place order</Text>
+            <Text style={styles.ctaText}>{manual ? 'Continue to payment' : 'Place order'}</Text>
           )}
         </Pressable>
       </View>

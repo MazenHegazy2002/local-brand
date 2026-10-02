@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getSettings } from '@/lib/admin-settings-registry';
+import { INSTAPAY_DETAILS, VODAFONE_CASH_DETAILS } from '@/lib/constants';
+
+// The app shows these account details on its checkout.
+const details = { INSTAPAY: INSTAPAY_DETAILS, VODAFONE_CASH: VODAFONE_CASH_DETAILS };
 
 export const revalidate = 0; // Disable static caching so admin toggles apply immediately
 
@@ -33,6 +37,7 @@ export async function GET() {
       FAWRY: s.PAY_FAWRY_ENABLED ?? true,
       INSTAPAY: s.PAY_INSTAPAY_ENABLED ?? true,
       VODAFONE_CASH: s.PAY_VODAFONE_CASH_ENABLED ?? true,
+      details,
     });
   } catch (error) {
     console.error('Failed to load payment methods config:', error);
@@ -45,6 +50,7 @@ export async function GET() {
       FAWRY: true,
       INSTAPAY: true,
       VODAFONE_CASH: true,
+      details,
     });
   }
 }

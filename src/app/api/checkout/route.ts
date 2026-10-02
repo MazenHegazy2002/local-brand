@@ -5,8 +5,13 @@ import { createOrderForUser } from '@/lib/order-creator';
 
 // Mobile checkout. The app's bag stores productId + color/size, so resolve the
 // variant here, then hand off to the same order creator the web uses.
-// ponytail: COD only — PaySky/Fawry need the cached-pending + callback flow
-// wired for mobile before they can be offered here.
+// ponytail: COD + manual transfers only — PaySky/Fawry need the cached-pending +
+// callback flow wired for mobile before they can be offered here.
+const METHODS = {
+  cod: 'CASH_ON_DELIVERY',
+  instapay: 'INSTAPAY',
+  vodafone_cash: 'VODAFONE_CASH',
+} as const;
 export async function POST(req: NextRequest) {
   const user = await getRequestUser(req);
   if (!user) return NextResponse.json({ error: 'Please sign in' }, { status: 401 });
@@ -15,12 +20,26 @@ export async function POST(req: NextRequest) {
   const items: { productId: string; qty: number; size?: string; color?: string }[] =
     body?.items ?? [];
   if (!items.length) return NextResponse.json({ error: 'Your bag is empty' }, { status: 400 });
-  if (body.paymentMethod !== 'cod') {
+  const paymentMethod = METHODS[body.paymentMethod as keyof typeof METHODS];
+  if (!paymentMethod) {
     return NextResponse.json(
       {
-        error:
-          'Card and Fawry payments are coming soon in the app. Please choose cash on delivery.',
+        error: 'Card and Fawry payments are coming soon in the app. Please choose another method.',
       },
+      { status: 400 }
+    );
+  }
+  const manual = paymentMethod !== 'CASH_ON_DELIVERY';
+  const sender = String(body.paymentSenderDetail ?? '')
+    .trim()
+    .slice(0, 100);
+  const reference = String(body.paymentReference ?? '')
+    .trim()
+    .slice(0, 100);
+  const receipt = typeof body.paymentReceiptUrl === 'string' ? body.paymentReceiptUrl : '';
+  if (manual && (!sender || !receipt)) {
+    return NextResponse.json(
+      { error: 'Enter the number you paid from and upload the transfer receipt.' },
       { status: 400 }
     );
   }
@@ -66,7 +85,10 @@ export async function POST(req: NextRequest) {
 
   const result = await createOrderForUser(user.id, {
     addressId: body.addressId,
-    paymentMethod: 'CASH_ON_DELIVERY',
+    paymentMethod,
+    paymentSenderDetail: manual ? sender : undefined,
+    paymentReference: manual ? reference || undefined : undefined,
+    paymentReceiptUrl: manual ? receipt : undefined,
     items: orderItems,
   });
   if (result.error || !result.orderId) {

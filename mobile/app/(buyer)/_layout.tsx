@@ -84,6 +84,7 @@ export default function BuyerLayout() {
         }}
       />
       <Tabs.Screen name="checkout" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="pay/[method]" options={{ href: null, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="wishlist" options={{ href: null }} />
       <Tabs.Screen name="order/[id]" options={{ href: null }} />
