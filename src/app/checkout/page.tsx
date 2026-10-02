@@ -70,6 +70,41 @@ function CheckoutPageInner() {
     | 'VODAFONE_CASH'
   >('CASH_ON_DELIVERY');
 
+  const [enabledPaymentMethods, setEnabledPaymentMethods] = useState<Record<string, boolean>>({
+    CASH_ON_DELIVERY: true,
+    CREDIT_CARD: true,
+    MOBILE_WALLET: true,
+    PAYSKY: true,
+    FAWRY: true,
+    INSTAPAY: true,
+    VODAFONE_CASH: true,
+  });
+
+  useEffect(() => {
+    fetch('/api/payment-methods')
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data === 'object') {
+          setEnabledPaymentMethods(data);
+          setPaymentMethod(prev => {
+            if (data[prev]) return prev;
+            const validKeys: Array<keyof typeof data> = [
+              'CASH_ON_DELIVERY',
+              'CREDIT_CARD',
+              'MOBILE_WALLET',
+              'PAYSKY',
+              'FAWRY',
+              'INSTAPAY',
+              'VODAFONE_CASH',
+            ];
+            const firstAvailable = validKeys.find(k => data[k]);
+            return (firstAvailable as typeof paymentMethod) || 'CASH_ON_DELIVERY';
+          });
+        }
+      })
+      .catch(err => console.error('Error loading payment methods:', err));
+  }, []);
+
   const [paymentSenderDetail, setPaymentSenderDetail] = useState('');
   const [paymentReference, setPaymentReference] = useState('');
   const [paymentReceiptUrl, setPaymentReceiptUrl] = useState('');
@@ -1169,191 +1204,207 @@ function CheckoutPageInner() {
                   </h2>
 
                   <div className="space-y-4">
-                    <label
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'CASH_ON_DELIVERY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
-                      style={{ textAlign: isRTL ? 'right' : 'left' }}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="CASH_ON_DELIVERY"
-                        checked={paymentMethod === 'CASH_ON_DELIVERY'}
-                        onChange={() => {
-                          setPaymentMethod('CASH_ON_DELIVERY');
-                          setShowInstallments(false);
-                        }}
-                        className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-bold text-gray-900">{t('CheckoutCashOnDelivery')}</div>
-                        <div className="text-sm text-gray-500">{t('CheckoutCodDesc')}</div>
-                      </div>
-                      <div className="text-3xl shrink-0">💵</div>
-                    </label>
+                    {enabledPaymentMethods.CASH_ON_DELIVERY && (
+                      <label
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'CASH_ON_DELIVERY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="CASH_ON_DELIVERY"
+                          checked={paymentMethod === 'CASH_ON_DELIVERY'}
+                          onChange={() => {
+                            setPaymentMethod('CASH_ON_DELIVERY');
+                            setShowInstallments(false);
+                          }}
+                          className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
+                        />
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900">
+                            {t('CheckoutCashOnDelivery')}
+                          </div>
+                          <div className="text-sm text-gray-500">{t('CheckoutCodDesc')}</div>
+                        </div>
+                        <div className="text-3xl shrink-0">💵</div>
+                      </label>
+                    )}
 
-                    <label
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'CREDIT_CARD' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
-                      style={{ textAlign: isRTL ? 'right' : 'left' }}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="CREDIT_CARD"
-                        checked={paymentMethod === 'CREDIT_CARD'}
-                        onChange={() => {
-                          setPaymentMethod('CREDIT_CARD');
-                          setShowInstallments(false);
-                        }}
-                        className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-bold text-gray-900">{t('CheckoutCreditCard')}</div>
-                        <div className="text-sm text-gray-500">{t('CheckoutStripeDesc')}</div>
-                      </div>
-                      <div className="text-3xl shrink-0">💳</div>
-                    </label>
+                    {enabledPaymentMethods.CREDIT_CARD && (
+                      <label
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'CREDIT_CARD' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="CREDIT_CARD"
+                          checked={paymentMethod === 'CREDIT_CARD'}
+                          onChange={() => {
+                            setPaymentMethod('CREDIT_CARD');
+                            setShowInstallments(false);
+                          }}
+                          className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
+                        />
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900">{t('CheckoutCreditCard')}</div>
+                          <div className="text-sm text-gray-500">{t('CheckoutStripeDesc')}</div>
+                        </div>
+                        <div className="text-3xl shrink-0">💳</div>
+                      </label>
+                    )}
 
-                    <label
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'MOBILE_WALLET' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
-                      style={{ textAlign: isRTL ? 'right' : 'left' }}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="MOBILE_WALLET"
-                        checked={paymentMethod === 'MOBILE_WALLET'}
-                        onChange={() => {
-                          setPaymentMethod('MOBILE_WALLET');
-                          setShowInstallments(false);
-                        }}
-                        className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-bold text-gray-900">{t('CheckoutMobileWallet')}</div>
-                        <div className="text-sm text-gray-500">{t('CheckoutWalletDesc')}</div>
-                      </div>
-                      <div className="text-3xl shrink-0">📱</div>
-                    </label>
+                    {enabledPaymentMethods.MOBILE_WALLET && (
+                      <label
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'MOBILE_WALLET' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="MOBILE_WALLET"
+                          checked={paymentMethod === 'MOBILE_WALLET'}
+                          onChange={() => {
+                            setPaymentMethod('MOBILE_WALLET');
+                            setShowInstallments(false);
+                          }}
+                          className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
+                        />
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900">{t('CheckoutMobileWallet')}</div>
+                          <div className="text-sm text-gray-500">{t('CheckoutWalletDesc')}</div>
+                        </div>
+                        <div className="text-3xl shrink-0">📱</div>
+                      </label>
+                    )}
 
-                    <label
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'PAYSKY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
-                      style={{ textAlign: isRTL ? 'right' : 'left' }}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="PAYSKY"
-                        checked={paymentMethod === 'PAYSKY'}
-                        onChange={() => {
-                          setPaymentMethod('PAYSKY');
-                          setShowInstallments(false);
-                        }}
-                        className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-bold text-gray-900">{t('CheckoutPaySky')}</div>
-                        <div className="text-sm text-gray-500">{t('CheckoutPaySkyDesc')}</div>
-                      </div>
-                      <div className="text-3xl shrink-0">🇪🇬</div>
-                    </label>
+                    {enabledPaymentMethods.PAYSKY && (
+                      <label
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'PAYSKY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="PAYSKY"
+                          checked={paymentMethod === 'PAYSKY'}
+                          onChange={() => {
+                            setPaymentMethod('PAYSKY');
+                            setShowInstallments(false);
+                          }}
+                          className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
+                        />
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900">{t('CheckoutPaySky')}</div>
+                          <div className="text-sm text-gray-500">{t('CheckoutPaySkyDesc')}</div>
+                        </div>
+                        <div className="text-3xl shrink-0">🇪🇬</div>
+                      </label>
+                    )}
 
-                    <label
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'FAWRY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
-                      style={{ textAlign: isRTL ? 'right' : 'left' }}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="FAWRY"
-                        checked={paymentMethod === 'FAWRY'}
-                        onChange={() => {
-                          setPaymentMethod('FAWRY');
-                          setShowInstallments(false);
-                        }}
-                        className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-bold text-gray-900">{t('CheckoutFawry')}</div>
-                        <div className="text-sm text-gray-500">{t('CheckoutFawryDesc')}</div>
-                      </div>
-                      <div className="text-3xl shrink-0">🏪</div>
-                    </label>
+                    {enabledPaymentMethods.FAWRY && (
+                      <label
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'FAWRY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="FAWRY"
+                          checked={paymentMethod === 'FAWRY'}
+                          onChange={() => {
+                            setPaymentMethod('FAWRY');
+                            setShowInstallments(false);
+                          }}
+                          className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
+                        />
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900">{t('CheckoutFawry')}</div>
+                          <div className="text-sm text-gray-500">{t('CheckoutFawryDesc')}</div>
+                        </div>
+                        <div className="text-3xl shrink-0">🏪</div>
+                      </label>
+                    )}
 
                     {/* INSTAPAY */}
-                    <label
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                        paymentMethod === 'INSTAPAY'
-                          ? 'border-purple-600 bg-purple-50/50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      style={{ textAlign: isRTL ? 'right' : 'left' }}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="INSTAPAY"
-                        checked={paymentMethod === 'INSTAPAY'}
-                        onChange={() => {
-                          setPaymentMethod('INSTAPAY');
-                          setShowInstallments(false);
-                        }}
-                        className="w-5 h-5 text-purple-600 focus:ring-purple-600"
-                      />
-                      <div className="flex-1">
-                        <div className="font-bold text-gray-900 flex items-center gap-2">
-                          <span>InstaPay · انستا باي</span>
-                          <span className="text-[10px] bg-purple-600 text-white font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                            Instant / تحويل لحظي
-                          </span>
+                    {enabledPaymentMethods.INSTAPAY && (
+                      <label
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                          paymentMethod === 'INSTAPAY'
+                            ? 'border-purple-600 bg-purple-50/50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="INSTAPAY"
+                          checked={paymentMethod === 'INSTAPAY'}
+                          onChange={() => {
+                            setPaymentMethod('INSTAPAY');
+                            setShowInstallments(false);
+                          }}
+                          className="w-5 h-5 text-purple-600 focus:ring-purple-600"
+                        />
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900 flex items-center gap-2">
+                            <span>InstaPay · انستا باي</span>
+                            <span className="text-[10px] bg-purple-600 text-white font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              Instant / تحويل لحظي
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {lang === 'ar'
+                              ? 'تحويل بنكي مباشر عبر تطبيق انستا باي (IPA: mazenhegazyy@instapay)'
+                              : 'Direct bank transfer via InstaPay App (IPA: mazenhegazyy@instapay)'}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {lang === 'ar'
-                            ? 'تحويل بنكي مباشر عبر تطبيق انستا باي (IPA: mazenhegazyy@instapay)'
-                            : 'Direct bank transfer via InstaPay App (IPA: mazenhegazyy@instapay)'}
+                        <div className="w-10 h-10 rounded-xl bg-purple-600 text-white font-black flex items-center justify-center text-xs shrink-0 shadow-sm">
+                          IPN
                         </div>
-                      </div>
-                      <div className="w-10 h-10 rounded-xl bg-purple-600 text-white font-black flex items-center justify-center text-xs shrink-0 shadow-sm">
-                        IPN
-                      </div>
-                    </label>
+                      </label>
+                    )}
 
                     {/* VODAFONE CASH */}
-                    <label
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                        paymentMethod === 'VODAFONE_CASH'
-                          ? 'border-red-600 bg-red-50/50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      style={{ textAlign: isRTL ? 'right' : 'left' }}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="VODAFONE_CASH"
-                        checked={paymentMethod === 'VODAFONE_CASH'}
-                        onChange={() => {
-                          setPaymentMethod('VODAFONE_CASH');
-                          setShowInstallments(false);
-                        }}
-                        className="w-5 h-5 text-red-600 focus:ring-red-600"
-                      />
-                      <div className="flex-1">
-                        <div className="font-bold text-gray-900 flex items-center gap-2">
-                          <span>Vodafone Cash · فودافون كاش</span>
-                          <span className="text-[10px] bg-red-600 text-white font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                            Mobile Wallet
-                          </span>
+                    {enabledPaymentMethods.VODAFONE_CASH && (
+                      <label
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                          paymentMethod === 'VODAFONE_CASH'
+                            ? 'border-red-600 bg-red-50/50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="VODAFONE_CASH"
+                          checked={paymentMethod === 'VODAFONE_CASH'}
+                          onChange={() => {
+                            setPaymentMethod('VODAFONE_CASH');
+                            setShowInstallments(false);
+                          }}
+                          className="w-5 h-5 text-red-600 focus:ring-red-600"
+                        />
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900 flex items-center gap-2">
+                            <span>Vodafone Cash · فودافون كاش</span>
+                            <span className="text-[10px] bg-red-600 text-white font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              Mobile Wallet
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {lang === 'ar'
+                              ? 'تحويل مباشر لمحفظة فودافون كاش (01094379477)'
+                              : 'Direct transfer to Vodafone Cash wallet (01094379477)'}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {lang === 'ar'
-                            ? 'تحويل مباشر لمحفظة فودافون كاش (01094379477)'
-                            : 'Direct transfer to Vodafone Cash wallet (01094379477)'}
+                        <div className="w-10 h-10 rounded-xl bg-red-600 text-white font-black flex items-center justify-center text-xs shrink-0 shadow-sm">
+                          V-Cash
                         </div>
-                      </div>
-                      <div className="w-10 h-10 rounded-xl bg-red-600 text-white font-black flex items-center justify-center text-xs shrink-0 shadow-sm">
-                        V-Cash
-                      </div>
-                    </label>
+                      </label>
+                    )}
 
                     {/* INSTAPAY DETAILS FORM */}
                     {paymentMethod === 'INSTAPAY' && (
