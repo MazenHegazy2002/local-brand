@@ -66,7 +66,7 @@ export default function Plugins() {
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
   const crispId = process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID;
   const hotjarId = process.env.NEXT_PUBLIC_HOTJAR_ID;
-  const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+  const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID || '1150111797667939';
 
   // New expansion marketing pixels & telemetry
   const tiktokPixelId = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;
@@ -94,7 +94,9 @@ export default function Plugins() {
   const wppUrl = `https://wa.me/${whatsappPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(activeWppMessage)}`;
   const tgUrl = `https://t.me/${telegramUsername}`;
   const igUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/brandyy.eg/';
-  const fbUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL || 'https://www.facebook.com/profile.php?id=61592841315018';
+  const fbUrl =
+    process.env.NEXT_PUBLIC_FACEBOOK_URL ||
+    'https://www.facebook.com/profile.php?id=61592841315018';
   const ttUrl = process.env.NEXT_PUBLIC_TIKTOK_URL || 'https://www.tiktok.com/@brandyyeg/';
 
   const isRtl = lang === 'ar';

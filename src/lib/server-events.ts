@@ -28,7 +28,8 @@ function hashString(val: string): string {
  * Send Purchase event to Meta Conversions API (CAPI)
  */
 export async function sendMetaCapiPurchaseEvent(payload: ServerPurchasePayload): Promise<boolean> {
-  const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID || process.env.META_PIXEL_ID;
+  const pixelId =
+    process.env.NEXT_PUBLIC_META_PIXEL_ID || process.env.META_PIXEL_ID || '1150111797667939';
   const accessToken = process.env.META_CONVERSIONS_API_TOKEN || process.env.FB_ACCESS_TOKEN;
   const testEventCode = process.env.META_TEST_EVENT_CODE;
 
