@@ -11,7 +11,10 @@ import {
   Switch,
   Modal,
   TextInput,
+  Image,
+  Linking,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -19,9 +22,33 @@ import { ChevronLeft, MapPin } from 'lucide-react-native';
 import { useCart } from '@/store/cart';
 import { useAuth } from '@/store/auth';
 import { api, fmtEGP } from '@/lib/api';
+import { absUrl, uploadImage } from '@/lib/seller';
 import { colors, radii, spacing } from '@/lib/tokens';
 
-type PayMethod = 'paysky' | 'cod' | 'fawry';
+type PayMethod = 'paysky' | 'cod' | 'fawry' | 'instapay' | 'vodafone_cash';
+const MANUAL: PayMethod[] = ['instapay', 'vodafone_cash'];
+// Keys of /api/payment-methods (the admin on/off toggles).
+const TOGGLE_KEY: Record<PayMethod, string> = {
+  paysky: 'PAYSKY',
+  cod: 'CASH_ON_DELIVERY',
+  fawry: 'FAWRY',
+  instapay: 'INSTAPAY',
+  vodafone_cash: 'VODAFONE_CASH',
+};
+
+interface PayConfig {
+  [key: string]: unknown;
+  details?: {
+    INSTAPAY: {
+      ipa: string;
+      number: string;
+      accountName: string;
+      payLink: string;
+      qrImageUrl: string;
+    };
+    VODAFONE_CASH: { number: string; accountName: string; dialShortcut: string };
+  };
+}
 type ShipMethod = 'standard';
 
 interface Address {
@@ -45,6 +72,18 @@ const PAY_OPTIONS: { id: PayMethod; label: string; sub: string; badge: string }[
   },
   { id: 'cod', label: 'Cash on delivery', sub: 'Pay the courier in cash', badge: 'COD' },
   {
+    id: 'instapay',
+    label: 'InstaPay',
+    sub: 'Bank transfer, then upload the receipt',
+    badge: 'InstaPay',
+  },
+  {
+    id: 'vodafone_cash',
+    label: 'Vodafone Cash',
+    sub: 'Wallet transfer, then upload the receipt',
+    badge: 'VF Cash',
+  },
+  {
     id: 'fawry',
     label: 'Fawry',
     sub: 'Pay at any Fawry outlet with a reference code',
@@ -57,11 +96,36 @@ export default function Checkout() {
   const user = useAuth(s => s.user);
   const { items, total, clear } = useCart();
   const [shipMethod, setShipMethod] = useState<ShipMethod>('standard');
-  const [payMethod, setPayMethod] = useState<PayMethod>('paysky');
+  const [payMethod, setPayMethod] = useState<PayMethod>('cod');
   const [usePoints, setUsePoints] = useState(false);
   const [loading, setLoading] = useState(false);
   const [addrOpen, setAddrOpen] = useState(false);
+  const [sender, setSender] = useState('');
+  const [reference, setReference] = useState('');
+  const [receipt, setReceipt] = useState<{ uri: string; url?: string } | null>(null);
   const queryClient = useQueryClient();
+
+  const { data: payConfig } = useQuery({
+    queryKey: ['payment-methods'],
+    queryFn: () => api.get<PayConfig>('/api/payment-methods'),
+  });
+  // Until the toggles load (or if they fail) show everything; the server re-checks.
+  const payOptions = PAY_OPTIONS.filter(o => payConfig?.[TOGGLE_KEY[o.id]] !== false);
+  const manual = MANUAL.includes(payMethod);
+
+  async function pickReceipt() {
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (res.canceled) return;
+    const asset = res.assets[0];
+    setReceipt({ uri: asset.uri });
+    try {
+      const url = await uploadImage(asset.uri, asset.mimeType ?? 'image/jpeg');
+      setReceipt({ uri: asset.uri, url });
+    } catch (e) {
+      setReceipt(null);
+      Alert.alert('Upload failed', (e as Error).message);
+    }
+  }
 
   const { data: addrData } = useQuery({
     queryKey: ['addresses'],
@@ -84,6 +148,10 @@ export default function Checkout() {
   const orderTotal = subtotal + shipping - discount;
 
   async function handlePlaceOrder() {
+    if (manual && (!sender.trim() || !receipt?.url)) {
+      Alert.alert('Payment details', 'Enter the number you paid from and upload the receipt.');
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.post<{ orderId: string; paySkyUrl?: string; fawryRef?: string }>(
@@ -93,6 +161,11 @@ export default function Checkout() {
           shippingMethod: shipMethod,
           addressId: address?.id,
           usePoints,
+          ...(manual && {
+            paymentSenderDetail: sender.trim(),
+            paymentReference: reference.trim() || undefined,
+            paymentReceiptUrl: receipt?.url,
+          }),
           items: items.map(i => ({
             productId: i.productId,
             qty: i.qty,
@@ -169,7 +242,7 @@ export default function Checkout() {
         {/* Payment */}
         <Text style={styles.sectionLabel}>PAYMENT</Text>
         <View style={[styles.card, { padding: 0, overflow: 'hidden' }]}>
-          {PAY_OPTIONS.map((o, i) => {
+          {payOptions.map((o, i) => {
             const active = payMethod === o.id;
             return (
               <Pressable
@@ -191,6 +264,70 @@ export default function Checkout() {
             );
           })}
         </View>
+
+        {manual && (
+          <View style={[styles.card, { marginTop: 12, gap: 8 }]}>
+            {payMethod === 'instapay' ? (
+              <>
+                <Text style={styles.bold}>Send {fmtEGP(orderTotal)} with InstaPay</Text>
+                <Text style={styles.muted} selectable>
+                  IPA: {payConfig?.details?.INSTAPAY.ipa ?? '…'}
+                  {'\n'}Name: {payConfig?.details?.INSTAPAY.accountName ?? '…'}
+                </Text>
+                {!!payConfig?.details?.INSTAPAY.qrImageUrl && (
+                  <Image
+                    source={{ uri: absUrl(payConfig.details.INSTAPAY.qrImageUrl) }}
+                    style={styles.qr}
+                  />
+                )}
+                {!!payConfig?.details?.INSTAPAY.payLink && (
+                  <Pressable onPress={() => Linking.openURL(payConfig.details!.INSTAPAY.payLink)}>
+                    <Text style={styles.link}>Open in InstaPay</Text>
+                  </Pressable>
+                )}
+              </>
+            ) : (
+              <>
+                <Text style={styles.bold}>Send {fmtEGP(orderTotal)} with Vodafone Cash</Text>
+                <Text style={styles.muted} selectable>
+                  Wallet: {payConfig?.details?.VODAFONE_CASH.number ?? '…'}
+                  {'\n'}Name: {payConfig?.details?.VODAFONE_CASH.accountName ?? '…'}
+                  {'\n'}Dial {payConfig?.details?.VODAFONE_CASH.dialShortcut ?? '*9*7#'} to transfer
+                </Text>
+              </>
+            )}
+            <TextInput
+              style={styles.input}
+              placeholder={
+                payMethod === 'instapay'
+                  ? 'Your phone or InstaPay IPA *'
+                  : 'Wallet number you paid from *'
+              }
+              placeholderTextColor={colors.placeholder}
+              value={sender}
+              onChangeText={setSender}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Transaction reference (optional)"
+              placeholderTextColor={colors.placeholder}
+              value={reference}
+              onChangeText={setReference}
+            />
+            <Pressable style={styles.uploadBtn} onPress={pickReceipt}>
+              {receipt ? (
+                <>
+                  <Image source={{ uri: receipt.uri }} style={styles.receiptThumb} />
+                  <Text style={styles.semi}>
+                    {receipt.url ? 'Receipt uploaded · Change' : 'Uploading…'}
+                  </Text>
+                </>
+              ) : (
+                <Text style={styles.link}>Upload transfer receipt *</Text>
+              )}
+            </Pressable>
+          </View>
+        )}
 
         {/* Points */}
         {points > 0 && (
@@ -232,7 +369,7 @@ export default function Checkout() {
         <Pressable
           style={[styles.ctaBtn, (loading || items.length === 0) && { opacity: 0.6 }]}
           onPress={handlePlaceOrder}
-          disabled={loading || items.length === 0}
+          disabled={loading || items.length === 0 || (!!receipt && !receipt.url)}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
@@ -435,5 +572,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.ink,
   },
+  qr: { width: 180, height: 180, alignSelf: 'center', borderRadius: 8 },
+  uploadBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.inputBorder,
+  },
+  receiptThumb: { width: 44, height: 44, borderRadius: 6 },
   error: { fontFamily: 'Inter-Medium', fontSize: 13, color: '#dc2626' },
 });
