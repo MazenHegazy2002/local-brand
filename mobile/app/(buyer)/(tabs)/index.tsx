@@ -26,7 +26,7 @@ interface Product {
   title: string;
   basePrice: number;
   brand: string;
-  sellerId: string;
+  sellerId?: string;
   category: string;
   image: string;
   inStock: boolean;
@@ -185,7 +185,9 @@ export default function Home() {
                   <Pressable
                     key={brand}
                     style={styles.brandItem}
-                    onPress={() => router.push(`/(buyer)/brand/${sellerId}`)}
+                    onPress={() =>
+                      router.push(`/(buyer)/brand/${encodeURIComponent(sellerId ?? brand)}`)
+                    }
                   >
                     <View style={styles.brandAvatar}>
                       <Text style={styles.brandAvatarText}>{brand.charAt(0).toUpperCase()}</Text>
