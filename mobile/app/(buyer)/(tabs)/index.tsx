@@ -104,7 +104,7 @@ export default function Home() {
           <View style={styles.heroHeader}>
             <Text style={styles.wordmark}>brandyy</Text>
             <View style={styles.heroActions}>
-              <Pressable style={styles.heroBtn} onPress={() => router.push('/(buyer)/shop')}>
+              <Pressable style={styles.heroBtn} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
                 <Search size={20} color="#fff" strokeWidth={2} />
               </Pressable>
               <Pressable
@@ -124,7 +124,10 @@ export default function Home() {
             <Text style={styles.heroSeason}>AUTUMN / WINTER 26</Text>
             <Text style={styles.heroTitle}>Made in Egypt.{'\n'}Worn everywhere.</Text>
             <View style={styles.heroCtaRow}>
-              <Pressable style={styles.heroCtaBtn} onPress={() => router.push('/(buyer)/shop')}>
+              <Pressable
+                style={styles.heroCtaBtn}
+                onPress={() => router.push('/(buyer)/(tabs)/shop')}
+              >
                 <Text style={styles.heroCtaText}>Shop the edit</Text>
               </Pressable>
               {heroProduct && (

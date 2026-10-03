@@ -163,7 +163,7 @@ export default function Checkout() {
       } else {
         clear();
         Alert.alert('Order placed!', `Order #${res.orderId}`);
-        router.push('/(buyer)');
+        router.dismissTo('/(buyer)/(tabs)');
       }
     } catch (e: unknown) {
       Alert.alert('Error', (e as Error).message);

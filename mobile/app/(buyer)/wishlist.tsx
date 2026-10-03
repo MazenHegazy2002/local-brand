@@ -52,7 +52,7 @@ export default function Wishlist() {
         <Heart size={48} color={colors.border} strokeWidth={1.5} />
         <Text style={styles.emptyTitle}>Nothing saved yet</Text>
         <Text style={styles.emptySub}>Heart items while browsing to save them here</Text>
-        <Pressable style={styles.shopBtn} onPress={() => router.push('/(buyer)/shop')}>
+        <Pressable style={styles.shopBtn} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
           <Text style={styles.shopBtnText}>Browse shop</Text>
         </Pressable>
       </View>
@@ -78,7 +78,7 @@ export default function Wishlist() {
       basePrice: item.product.basePrice,
     });
     removeFromWishlist(item.id);
-    router.push('/(buyer)/bag');
+    router.push('/(buyer)/(tabs)/bag');
   }
 
   return (

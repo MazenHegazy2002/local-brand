@@ -122,7 +122,7 @@ export default function ManualPay() {
         'Order placed!',
         `Order #${res.orderId} — we'll confirm once we verify your transfer.`
       );
-      router.replace('/(buyer)');
+      router.dismissTo('/(buyer)/(tabs)');
     } catch (e) {
       Alert.alert('Error', (e as Error).message);
     } finally {
