@@ -35,6 +35,7 @@ import WebhooksTab from './_components/WebhooksTab';
 import JobsTab from './_components/JobsTab';
 import FeatureFlagsTab from './_components/FeatureFlagsTab';
 import HealthTab from './_components/HealthTab';
+import MobileAppTab from './_components/MobileAppTab';
 import {
   AreaChart,
   Area,
@@ -648,6 +649,12 @@ export default function AdminOS() {
           icon={<WhatsAppIcon />}
         />
         <NavItem
+          active={activeTab === 'mobile'}
+          onClick={() => setActiveTab('mobile')}
+          label="Mobile app"
+          icon={<PhoneIcon />}
+        />
+        <NavItem
           active={activeTab === 'settings'}
           onClick={() => setActiveTab('settings')}
           label="Settings"
@@ -776,6 +783,9 @@ export default function AdminOS() {
           {activeTab === 'tracker' && <TrackerTab />}
           {activeTab === 'affiliate' && <AffiliateTab />}
           {activeTab === 'whatsapp' && <WhatsAppTab />}
+          {activeTab === 'mobile' && (
+            <MobileAppTab onOpenSettings={() => setActiveTab('settings')} />
+          )}
         </div>
       </div>
 
@@ -960,6 +970,7 @@ const TITLES: Record<string, string> = {
   tracker: 'Developer metrics & tracker',
   settings: 'System configuration',
   whatsapp: 'WhatsApp confirmation bot',
+  mobile: 'Mobile app control',
 };
 
 // ─── AffiliateIcon ────────────────────────────────────────────────────────────
@@ -3138,11 +3149,17 @@ function SellerDetailsModal({
   onDeleteSeller,
   actionLoading,
 }: SellerDetailsModalProps) {
-  const [commissionInput, setCommissionInput] = useState(
-    String(Math.round((seller.commissionRate ?? 0.15) * 100))
-  );
+  const effectiveRate =
+    seller?.commissionRate === 0.15 || !seller?.commissionRate ? 0.1 : seller.commissionRate;
+  const [commissionInput, setCommissionInput] = useState(String(Math.round(effectiveRate * 100)));
   const [commissionSaving, setCommissionSaving] = useState(false);
   const [commissionMsg, setCommissionMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const rate =
+      seller?.commissionRate === 0.15 || !seller?.commissionRate ? 0.1 : seller.commissionRate;
+    setCommissionInput(String(Math.round(rate * 100)));
+  }, [seller?.id, seller?.commissionRate]);
 
   const productIds = new Set((seller.products || []).map((p: any) => p.id));
   const sellerOrders = (allOrders || []).filter((o: any) =>
@@ -3904,7 +3921,7 @@ function SellerDetailsModal({
                 ⚙️ Platform Commission
               </h4>
               <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '10px' }}>
-                Override the per-seller commission rate. Default is 15%.
+                Override the per-seller commission rate. Default is 10%.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input
@@ -4835,7 +4852,9 @@ interface UsersTabProps {
 
 function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
   const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'BUYER' | 'SELLER' | 'ADMIN'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'BUYER' | 'SELLER' | 'ADMIN' | 'AFFILIATE'>(
+    'all'
+  );
   const [resettingEmails, setResettingEmails] = useState<Record<string, boolean>>({});
 
   const handleSendResetLink = async (email: string) => {
@@ -4926,6 +4945,7 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
           <option value="BUYER">Buyers</option>
           <option value="SELLER">Sellers</option>
           <option value="ADMIN">Admins</option>
+          <option value="AFFILIATE">Affiliates</option>
         </select>
         <span className="text-[11px] text-slate-400 whitespace-nowrap">
           {users.length} / {data?.users?.length || 0}
@@ -5444,6 +5464,7 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
             setViewingOrder(null);
             setEditingOrder(target);
           }}
+          onRefresh={onRefresh}
         />
       )}
 
@@ -5465,11 +5486,41 @@ interface OrderDetailsModalProps {
   order: Order;
   onClose: () => void;
   onEdit: () => void;
+  onRefresh?: () => Promise<void>;
 }
 
-function OrderDetailsModal({ order, onClose, onEdit }: OrderDetailsModalProps) {
+function OrderDetailsModal({ order, onClose, onEdit, onRefresh }: OrderDetailsModalProps) {
+  const { toast } = useToast();
   const address: any = safeParseSnapshot(order.shippingAddressSnapshot);
   const items = order.items || [];
+  const [currentPaymentStatus, setCurrentPaymentStatus] = useState<string>(
+    order.paymentStatus || 'UNPAID'
+  );
+  const [verifying, setVerifying] = useState(false);
+
+  const handleVerifyPayment = async () => {
+    setVerifying(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentStatus: 'PAID' }),
+      });
+      if (!res.ok) throw new Error('Failed to update payment status');
+      setCurrentPaymentStatus('PAID');
+      toast({
+        variant: 'success',
+        title: 'Payment Verified',
+        description: 'Order payment marked as PAID & Verified ✓',
+      });
+      if (onRefresh) await onRefresh();
+    } catch (err) {
+      console.error('Failed to verify payment:', err);
+      toast({ variant: 'error', title: 'Error', description: 'Failed to verify payment' });
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -5508,10 +5559,87 @@ function OrderDetailsModal({ order, onClose, onEdit }: OrderDetailsModalProps) {
             {order.status}
           </span>
           <span className="font-semibold text-slate-500 ml-2">Payment:</span>
-          <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 font-bold rounded-md border border-emerald-200">
-            {order.paymentMethod} ({order.paymentStatus || 'UNPAID'})
+          <span
+            className={`px-2.5 py-1 font-bold rounded-md border ${currentPaymentStatus === 'PAID' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}
+          >
+            {order.paymentMethod} ({currentPaymentStatus})
           </span>
         </div>
+
+        {/* Manual Transfer Verification (InstaPay / Vodafone Cash) */}
+        {(order.paymentMethod === 'INSTAPAY' || order.paymentMethod === 'VODAFONE_CASH') && (
+          <div className="bg-purple-50/70 border border-purple-200 rounded-xl p-4 space-y-3">
+            <div className="text-xs font-bold text-purple-900 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <span>{order.paymentMethod === 'INSTAPAY' ? '⚡' : '📲'}</span>
+                {order.paymentMethod === 'INSTAPAY'
+                  ? 'InstaPay Transfer Details'
+                  : 'Vodafone Cash Transfer Details'}
+              </span>
+              <span
+                className={`px-2.5 py-0.5 rounded text-[10px] font-extrabold uppercase ${currentPaymentStatus === 'PAID' ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}`}
+              >
+                {currentPaymentStatus === 'PAID' ? 'Verified ✓' : 'Pending Verification'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div className="bg-white p-2.5 rounded-lg border border-purple-100">
+                <span className="text-slate-400 block text-[10px] font-bold">
+                  Sender Phone / Username:
+                </span>
+                <span className="font-bold text-slate-900 font-mono text-sm">
+                  {order.paymentSenderDetail || 'Not provided'}
+                </span>
+              </div>
+              <div className="bg-white p-2.5 rounded-lg border border-purple-100">
+                <span className="text-slate-400 block text-[10px] font-bold">
+                  Transaction Reference Code:
+                </span>
+                <span className="font-bold text-slate-900 font-mono text-sm">
+                  {order.paymentReference || 'Not provided'}
+                </span>
+              </div>
+            </div>
+
+            {order.paymentReceiptUrl && (
+              <div className="bg-white p-3 rounded-lg border border-purple-100 space-y-1.5">
+                <span className="text-xs font-bold text-slate-700 block">
+                  Uploaded Transfer Receipt Screenshot:
+                </span>
+                <a
+                  href={order.paymentReceiptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block group relative"
+                >
+                  <img
+                    src={order.paymentReceiptUrl}
+                    alt="Receipt Screenshot"
+                    className="max-h-60 w-auto object-contain rounded-lg border border-slate-200 shadow-sm group-hover:opacity-95 transition-opacity"
+                  />
+                  <span className="block text-[10px] text-purple-700 font-bold mt-1.5 group-hover:underline">
+                    🔍 Click to view full-size image in new tab
+                  </span>
+                </a>
+              </div>
+            )}
+
+            {/* Direct 1-Click Verification Button */}
+            {currentPaymentStatus !== 'PAID' && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  disabled={verifying}
+                  onClick={handleVerifyPayment}
+                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-lg transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <span>✓</span> {verifying ? 'Verifying...' : 'Verify Payment (Mark as PAID)'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Customer & Delivery Address */}
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
@@ -6951,6 +7079,23 @@ function WhatsAppIcon() {
     </svg>
   );
 }
+function PhoneIcon() {
+  return (
+    <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
+      <rect
+        x="4"
+        y="1.5"
+        width="8"
+        height="13"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        opacity=".7"
+      />
+      <path d="M7 12h2" stroke="currentColor" strokeWidth="1.2" opacity=".7" />
+    </svg>
+  );
+}
 function WrenchIcon() {
   return (
     <svg className="nav-icon" viewBox="0 0 16 16" fill="none">
@@ -7105,6 +7250,7 @@ function EditUserModal({ form, onChange, onSubmit, onClose, loading, error }: Ed
               <option value="BUYER">🛍️ Buyer (Customer)</option>
               <option value="SELLER">🏪 Seller (Merchant)</option>
               <option value="ADMIN">🛡️ Admin (Staff)</option>
+              <option value="AFFILIATE">📢 Affiliate (Partner)</option>
             </select>
           </div>
 
@@ -7201,6 +7347,7 @@ function CreateUserModal({
               <option value="BUYER">🛍️ Buyer (Customer)</option>
               <option value="SELLER">🏪 Seller (Merchant)</option>
               <option value="ADMIN">🛡️ Admin (Staff)</option>
+              <option value="AFFILIATE">📢 Affiliate (Partner)</option>
             </select>
           </div>
 

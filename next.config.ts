@@ -45,11 +45,23 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'picsum.photos' },
       { protocol: 'https', hostname: '*.amazonaws.com' },
+      { protocol: 'https', hostname: 'm.media-amazon.com' },
+      { protocol: 'https', hostname: '*.media-amazon.com' },
+      { protocol: 'https', hostname: 'images-na.ssl-images-amazon.com' },
+      { protocol: 'https', hostname: 'images-eu.ssl-images-amazon.com' },
+      { protocol: 'https', hostname: '*.ssl-images-amazon.com' },
+      { protocol: 'https', hostname: 'via.placeholder.com' },
       // Vercel Blob storage (direct + CDN edge)
       { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },
       { protocol: 'https', hostname: 'blob.vercel-storage.com' },
       // Google OAuth profile pictures
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      // Self-hosted uploads — seller product images stored on the VPS disk
+      // and served by /api/files/<uuid>.jpg
+      { protocol: 'https', hostname: 'brandyy.shop' },
+      { protocol: 'https', hostname: '*.brandyy.shop' },
+      // Local development (any port)
+      { protocol: 'http', hostname: 'localhost' },
     ],
   },
 
@@ -76,6 +88,15 @@ const nextConfig: NextConfig = {
         source: '/static/(.*)',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
+      // ── CORS for mobile API routes (Expo Web on a different port) ─────────
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,PATCH,DELETE,OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type,Authorization' },
+        ],
+      },
       // ── Security headers on all routes ────────────────────────────────────
       {
         source: '/(.*)',
@@ -84,7 +105,7 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
           { key: 'Cross-Origin-Embedder-Policy', value: 'unsafe-none' },
-          { key: 'Cross-Origin-Resource-Policy', value: 'same-site' },
+          { key: 'Cross-Origin-Resource-Policy', value: 'cross-origin' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
           // HSTS: enforce HTTPS for 1 year, include subdomains, allow preloading

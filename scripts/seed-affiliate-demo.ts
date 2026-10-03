@@ -67,7 +67,7 @@ async function main() {
       name: AFFILIATE_NAME,
       email: AFFILIATE_EMAIL,
       passwordHash: await bcrypt.hash(AFFILIATE_PASSWORD, BCRYPT_COST),
-      role: 'BUYER',
+      role: 'AFFILIATE',
       emailVerified: new Date(),
       phone: '01012345678',
     },

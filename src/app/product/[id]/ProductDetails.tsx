@@ -353,10 +353,10 @@ export default function ProductDetails({
         <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-2">
             <Link
-              href={`/brand/${product.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+              href={`/brand/${(product.seller?.storeName || product.brand || 'brandy-store').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
               className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest hover:text-[#534AB7] dark:hover:text-[#6b8ff5] transition-colors"
             >
-              {product.seller.storeName}
+              {product.seller?.storeName || product.brand || 'Brandy Store'}
             </Link>
             {(product.seller as { status?: string }).status === 'ACTIVE' && (
               <span
@@ -689,11 +689,11 @@ export default function ProductDetails({
           </div>
           <div>
             <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm mb-1">
-              {t('BrandyGuarantee') || 'Brandy Guarantee'}
+              🛡️ {t('BrandyGuarantee') || '14-Day Escrow Protection'}
             </h4>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               {t('GuaranteeText') ||
-                'Every product is authenticated. Free returns within 14 days for all domestic orders. Secure payment processing.'}
+                'Every product is authenticated. Your payment is safely held in escrow for 14 days post-delivery to guarantee product quality, authenticity, and stress-free returns.'}
             </p>
           </div>
         </div>

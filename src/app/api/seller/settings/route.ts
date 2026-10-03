@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
+import { getRequestUser } from '@/lib/mobile-auth';
 import { encryptSecret, readSecret, redactBankAccount } from '@/lib/secrets';
 
 const settingsSchema = z.object({
@@ -24,15 +25,16 @@ const settingsSchema = z.object({
 });
 
 // GET /api/seller/settings — fetch current seller's store settings
-export async function GET() {
+// Accepts the web session cookie or the app's Bearer token.
+export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    const user = await getRequestUser(req);
+    if (!user) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    const role = (session.user as SessionUser).role;
-    const userId = (session.user as SessionUser).id;
+    const role = user.role;
+    const userId = user.id;
     if (role !== 'SELLER') {
       return NextResponse.json({ message: 'Seller account required' }, { status: 403 });
     }

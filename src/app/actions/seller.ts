@@ -9,6 +9,13 @@ import bcrypt from 'bcryptjs';
 import { BCRYPT_COST, PLATFORM_URL } from '@/lib/constants';
 import { getCachedData } from '@/lib/cache';
 import { sanitizeProducts } from '@/lib/sanitize-product';
+import { ensureCoreCategories } from '@/lib/ensure-categories';
+import {
+  createProductForSeller,
+  toggleProductPublishedForSeller,
+  updateOrderItemStatusCore,
+  type ProductData,
+} from '@/lib/seller-core';
 
 import type { Session } from 'next-auth';
 import type { Review, SessionUser } from '@/types';
@@ -163,6 +170,17 @@ export async function getDashboardStats() {
         return {
           error: 'Seller profile not found. Please contact support or complete your registration.',
         };
+      }
+
+      // Auto-normalize legacy 15% commission rate to 10%
+      if (seller && (seller.commissionRate === 0.15 || seller.commissionRate > 0.1)) {
+        seller.commissionRate = 0.1;
+        prisma.sellerProfile
+          .update({
+            where: { id: seller.id },
+            data: { commissionRate: 0.1 },
+          })
+          .catch(() => {});
       }
 
       // Only proceed with stats if seller exists
@@ -415,6 +433,19 @@ export async function getDashboardStats() {
       const ESCROW_MS = ESCROW_DAYS * 24 * 60 * 60 * 1000;
       const cutoff = new Date(Date.now() - ESCROW_MS);
 
+      // Auto-normalize any legacy 15% rate to 10% for all sellers
+      for (const s of sellers) {
+        if (s.commissionRate === 0.15 || s.commissionRate > 0.1) {
+          s.commissionRate = 0.1;
+        }
+      }
+      prisma.sellerProfile
+        .updateMany({
+          where: { commissionRate: 0.15 },
+          data: { commissionRate: 0.1 },
+        })
+        .catch(() => {});
+
       for (const s of sellers) {
         const sellerItems = eligibleItems.filter(item => item.variant?.product?.sellerId === s.id);
         const sellerPayoutsSum = eligiblePayouts
@@ -529,6 +560,7 @@ export async function getDashboardStats() {
         orderBy: { createdAt: 'desc' },
         take: 100,
       });
+      await ensureCoreCategories();
       const categories = await prisma.category.findMany({ include: { children: true } });
       const tags = await prisma.tag.findMany();
       const collections = await prisma.collection.findMany();
@@ -1124,132 +1156,12 @@ export async function updateOrderItemStatus(itemId: string, status: OrderItemSta
   try {
     const session = await getServerSession(authOptions);
     if (!session) return { error: 'Unauthorized' };
-    const role = (session.user as SessionUser).role;
-    if (role !== 'SELLER' && role !== 'ADMIN') return { error: 'Forbidden' };
-
-    if (role === 'SELLER') {
-      const sellerProfile = await prisma.sellerProfile.findUnique({
-        where: { userId: session.user.id },
-      });
-      if (!sellerProfile) return { error: 'Seller profile not found' };
-
-      const item = await prisma.orderItem.findUnique({
-        where: { id: itemId },
-        include: { variant: { include: { product: true } } },
-      });
-      if (!item || item.variant.product.sellerId !== sellerProfile.id) {
-        return { error: 'Forbidden: You do not own this order item' };
-      }
-    }
-
-    const updatedItem = await prisma.orderItem.update({
-      where: { id: itemId },
-      data: { status },
-      include: { order: { include: { items: true } } },
-    });
-
-    const parentOrder = updatedItem.order;
-    // Only check transitions if the order is still "live"
-    if (parentOrder.status !== 'CANCELLED' && parentOrder.status !== 'RETURNED') {
-      const allItems = parentOrder.items;
-
-      // When seller marks all items as CONFIRMED (packed/ready), move order to PROCESSING.
-      // We ignore items that are already cancelled; they no longer block the transition.
-      const liveItems = allItems.filter(i => i.status !== 'CANCELLED');
-      const allPrepared = liveItems.every(i =>
-        ['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(i.status)
-      );
-
-      if (
-        allPrepared &&
-        liveItems.length > 0 &&
-        (parentOrder.status === 'PENDING_PAYMENT' || parentOrder.status === 'CONFIRMED')
-      ) {
-        await prisma.order.update({
-          where: { id: parentOrder.id },
-          data: { status: 'PROCESSING' },
-        });
-      }
-    }
-
-    revalidatePath('/seller-hub');
-    revalidatePath('/dashboard');
-    revalidatePath('/admin-os');
-    return { success: true };
+    const user = session.user as SessionUser;
+    return await updateOrderItemStatusCore({ id: user.id, role: user.role }, itemId, status);
   } catch (err: unknown) {
     const error = err as Error;
     return { error: error.message };
   }
-}
-
-interface ProductData {
-  title: string;
-  description?: string;
-  basePrice: number;
-  weightKg: number;
-  categoryId: string;
-  brandId?: string;
-  brand?: string;
-  flashSalePrice?: number;
-  flashSaleEndsAt?: string;
-  published?: boolean;
-  mainImage?: string;
-  mainImageUploading?: boolean;
-  variants?: {
-    color?: string;
-    price?: number;
-    stock?: number;
-    image?: string;
-    sku?: string;
-    upc?: string;
-    sizes?: string;
-  }[];
-}
-
-// Allocate a SKU for a brand-new variant. Sellers can pass one in; if they
-// don't, we build a slug-based candidate and add a -2/-3/... suffix until
-// we find one that's actually free in the DB. This avoids the previous
-// `Date.now().slice(-4)` collisions and gives a more readable code.
-async function resolveSku(
-  preferred: string | undefined,
-  productSlug: string,
-  variantHint: string,
-  index: number
-): Promise<string> {
-  const sanitize = (s: string) =>
-    s
-      .toUpperCase()
-      .replace(/[^A-Z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
-
-  if (preferred && preferred.trim()) {
-    const trimmed = preferred.trim().toUpperCase();
-    const existing = await prisma.productVariant.findUnique({ where: { sku: trimmed } });
-    if (!existing) return trimmed;
-    // Seller picked something already taken — append a numeric suffix
-    // rather than failing the entire create. Most sellers prefer a
-    // working product over a duplicate-SKU error.
-    let counter = 2;
-    while (counter < 1000) {
-      const candidate = `${trimmed}-${counter}`;
-      const taken = await prisma.productVariant.findUnique({ where: { sku: candidate } });
-      if (!taken) return candidate;
-      counter++;
-    }
-  }
-
-  const base = `${sanitize(productSlug)}-${sanitize(variantHint || 'STD')}`;
-  let candidate = `${base}-${index + 1}`;
-  let counter = 1;
-  while (counter < 1000) {
-    const taken = await prisma.productVariant.findUnique({ where: { sku: candidate } });
-    if (!taken) return candidate;
-    counter++;
-    candidate = `${base}-${index + 1}-${counter}`;
-  }
-  // Fallback — extremely unlikely. Tag with a timestamp so it's still
-  // readable but guaranteed unique.
-  return `${base}-${index + 1}-${Date.now().toString().slice(-6)}`;
 }
 
 export async function createProduct(data: ProductData): Promise<{ id?: string; error?: string }> {
@@ -1261,144 +1173,8 @@ export async function createProduct(data: ProductData): Promise<{ id?: string; e
     const userId = await getRealUserId(session);
     if (!userId) return { error: 'User not found' };
 
-    const [user, seller] = await Promise.all([
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: { emailVerified: true },
-      }),
-      prisma.sellerProfile.findUnique({ where: { userId } }),
-    ]);
-
-    if (!seller) return { error: 'Seller profile not found' };
-
-    // ── Input validation ──────────────────────────────────────────────────────
-    // B-023: enforce minimum content quality for product listings.
-    if (!data.title || data.title.trim().length < 3)
-      return { error: 'Product title must be at least 3 characters.' };
-    if (data.title.trim().length > 200)
-      return { error: 'Product title cannot exceed 200 characters.' };
-    if (data.description !== undefined && data.description !== null) {
-      const descLen = data.description.trim().length;
-      if (descLen > 0 && descLen < 20)
-        return {
-          error:
-            'Product description must be at least 20 characters (aim for 100–300 words for better sales).',
-        };
-    }
-    if (!data.basePrice || data.basePrice <= 0)
-      return { error: 'Product price must be greater than zero.' };
-    if (!data.weightKg || Number(data.weightKg) <= 0)
-      return { error: 'Product weight (in KG) is required and must be greater than zero.' };
-
-    const weightGrams = Math.round(Number(data.weightKg) * 1000);
-    const { variants, weightKg, mainImage, mainImageUploading, ...rest } = data;
-
-    // Enforce business rules for publishing:
-    // 1. Must have at least one product image.
-    // 2. The seller's email must be verified.
-    // 3. The SellerProfile.status must be ACTIVE.
-    const hasImages = data.mainImage || (variants || []).some(v => v.image);
-    const isEmailVerified = !!user?.emailVerified;
-    const isSellerActive = seller.status === 'ACTIVE';
-
-    let published = rest.published ?? true;
-    if (published) {
-      if (!hasImages || !isEmailVerified || !isSellerActive) {
-        published = false;
-      }
-    }
-
-    // Generate unique slug
-    const rawSlug = data.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
-    const baseSlug = rawSlug || `product-${Date.now().toString(36)}`;
-    let slug = baseSlug;
-    let counter = 0;
-
-    while (true) {
-      const existing = await prisma.product.findUnique({ where: { slug } });
-      if (!existing) break;
-      counter++;
-      slug = `${baseSlug}-${counter}`;
-    }
-
-    // Pre-allocate SKUs in order so we can include them in the nested
-    // `create` payload below. This keeps the whole product+variants
-    // creation in a single Prisma call.
-    const variantList = variants || [];
-    const resolvedSkus = await Promise.all(
-      variantList.map((v, idx) => resolveSku(v.sku, slug, v.color || 'std', idx))
-    );
-
-    let brandName = data.brand || null;
-    if (data.brandId) {
-      const b = await prisma.brand.findUnique({ where: { id: data.brandId } });
-      if (b) {
-        if (b.status === 'PENDING_APPROVAL') {
-          return {
-            error: `Brand "${b.name}" is pending admin approval and cannot be used for products yet.`,
-          };
-        }
-        brandName = b.name;
-      }
-    }
-
-    const product = await prisma.product.create({
-      data: {
-        ...rest,
-        brandId: data.brandId || null,
-        brand: brandName,
-        weightGrams,
-        published,
-        sellerId: seller.id,
-        slug,
-        description: rest.description || '',
-        variants: {
-          create: variantList.map((v, idx) => {
-            const sizesArray =
-              typeof v.sizes === 'string'
-                ? v.sizes
-                    .split(',')
-                    .map((s: string) => s.trim())
-                    .filter(Boolean)
-                : Array.isArray(v.sizes)
-                  ? v.sizes
-                  : [];
-            return {
-              sku: resolvedSkus[idx],
-              upc: v.upc?.trim() || null,
-              title: v.color || 'Standard',
-              attributes: JSON.stringify({
-                color: v.color || 'Standard',
-                sizes: sizesArray,
-              }),
-              price: v.price || rest.basePrice,
-              stockCount: v.stock || 0,
-            };
-          }),
-        },
-        images: {
-          create: [
-            // Main product image (if provided) is always primary
-            ...(data.mainImage ? [{ url: data.mainImage, isPrimary: true }] : []),
-            // Variant images follow — isPrimary only if no main image was set
-            ...variantList
-              .filter(v => v.image)
-              .map((v, idx) => ({
-                url: v.image!,
-                isPrimary: !data.mainImage && idx === 0,
-              })),
-          ],
-        },
-      },
-    });
-
-    revalidatePath('/seller-hub');
-    revalidatePath('/');
-    revalidatePath('/shop');
-    return { id: product.id };
+    const result = await createProductForSeller(userId, data);
+    return result.error ? { error: result.error } : { id: result.id };
   } catch (err: unknown) {
     const error = err as Error;
     console.error('[createProduct] Error:', err);
@@ -1529,66 +1305,7 @@ export async function toggleProductPublished(productId: string, publish: boolean
     const userId = await getRealUserId(session);
     if (!userId) return { error: 'User not found' };
 
-    const [user, seller] = await Promise.all([
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: { emailVerified: true, phone: true },
-      }),
-      prisma.sellerProfile.findUnique({ where: { userId } }),
-    ]);
-    if (!seller) return { error: 'Seller profile not found' };
-
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-      include: { images: { take: 1 } },
-    });
-    if (!product || product.sellerId !== seller.id) {
-      return { error: 'Unauthorized to update this product' };
-    }
-
-    if (publish) {
-      if (product.images.length === 0) {
-        return { error: 'Add at least one image before publishing this product.' };
-      }
-      if (!user?.emailVerified) {
-        return {
-          error:
-            'Verify your email address before publishing products. Check your inbox for the verification link.',
-        };
-      }
-      if (seller.status !== 'ACTIVE') {
-        return {
-          error:
-            'Your seller account is not active yet. Products can only go live after admin approval.',
-        };
-      }
-      const hasPickupAddress =
-        Boolean(seller.governorate?.trim()) &&
-        Boolean(seller.city?.trim()) &&
-        Boolean(seller.pickupStreet?.trim()) &&
-        Boolean((seller.pickupPhone || user?.phone)?.trim());
-      if (!hasPickupAddress) {
-        return {
-          error:
-            'Please complete your product pickup warehouse address (governorate, city, street address, and phone) in Seller Hub Settings before publishing products.',
-        };
-      }
-    }
-
-    await prisma.product.update({
-      where: { id: productId },
-      data: { published: publish },
-    });
-
-    const { invalidateCache } = await import('@/lib/cache');
-    await invalidateCache('products:*');
-    await invalidateCache('product:detail:*');
-
-    revalidatePath('/seller-hub');
-    revalidatePath('/');
-    revalidatePath('/shop');
-    revalidatePath(`/product/${productId}`);
-    return { success: true, published: publish };
+    return await toggleProductPublishedForSeller(userId, productId, publish);
   } catch (err: unknown) {
     const error = err as Error;
     return { error: error.message };
@@ -1918,7 +1635,7 @@ export async function adminCreateUser(formData: {
   name: string;
   email: string;
   password: string;
-  role: 'ADMIN' | 'SELLER' | 'BUYER';
+  role: Role;
   storeName?: string;
 }) {
   try {
@@ -1945,7 +1662,7 @@ export async function adminCreateUser(formData: {
         name: formData.name.trim(),
         email: formData.email.toLowerCase().trim(),
         passwordHash: hashedPassword,
-        role: formData.role as Role,
+        role: formData.role,
       },
     });
 
@@ -1994,7 +1711,7 @@ export async function adminCreateUser(formData: {
 
 export async function adminUpdateUser(
   userId: string,
-  data: { name?: string; email?: string; role?: 'ADMIN' | 'SELLER' | 'BUYER' }
+  data: { name?: string; email?: string; role?: Role }
 ) {
   try {
     const session = await getServerSession(authOptions);

@@ -8,7 +8,7 @@ import { createOrder } from '@/app/actions/orders';
 import Navbar from '@/components/Navbar';
 import PaySkyCheckout from '@/components/PaySkyCheckout';
 import { SessionUser } from '@/types';
-import { VAT_RATE } from '@/lib/constants';
+import { VAT_RATE, INSTAPAY_DETAILS, VODAFONE_CASH_DETAILS } from '@/lib/constants';
 import { GOVERNORATES } from '@/lib/governorates';
 import { useLanguage } from '@/providers/LanguageContext';
 
@@ -61,8 +61,98 @@ function CheckoutPageInner() {
   const [guestEmail, setGuestEmail] = useState('');
 
   const [paymentMethod, setPaymentMethod] = useState<
-    'CASH_ON_DELIVERY' | 'CREDIT_CARD' | 'MOBILE_WALLET' | 'PAYSKY' | 'FAWRY'
+    | 'CASH_ON_DELIVERY'
+    | 'CREDIT_CARD'
+    | 'MOBILE_WALLET'
+    | 'PAYSKY'
+    | 'FAWRY'
+    | 'INSTAPAY'
+    | 'VODAFONE_CASH'
   >('CASH_ON_DELIVERY');
+
+  const [enabledPaymentMethods, setEnabledPaymentMethods] = useState<Record<string, boolean>>({
+    CASH_ON_DELIVERY: true,
+    CREDIT_CARD: true,
+    MOBILE_WALLET: true,
+    PAYSKY: true,
+    FAWRY: true,
+    INSTAPAY: true,
+    VODAFONE_CASH: true,
+  });
+
+  useEffect(() => {
+    fetch('/api/payment-methods')
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data === 'object') {
+          setEnabledPaymentMethods(data);
+          setPaymentMethod(prev => {
+            if (data[prev]) return prev;
+            const validKeys: Array<keyof typeof data> = [
+              'CASH_ON_DELIVERY',
+              'CREDIT_CARD',
+              'MOBILE_WALLET',
+              'PAYSKY',
+              'FAWRY',
+              'INSTAPAY',
+              'VODAFONE_CASH',
+            ];
+            const firstAvailable = validKeys.find(k => data[k]);
+            return (firstAvailable as typeof paymentMethod) || 'CASH_ON_DELIVERY';
+          });
+        }
+      })
+      .catch(err => console.error('Error loading payment methods:', err));
+  }, []);
+
+  useEffect(() => {
+    if (items.length > 0) {
+      import('@/lib/pixel-events').then(({ trackInitiateCheckout }) => {
+        trackInitiateCheckout(
+          items.map(i => ({
+            id: i.variantId || i.id,
+            title: i.name || '',
+            price: i.price,
+            quantity: i.qty,
+          })),
+          total()
+        );
+      });
+    }
+  }, [items, total]);
+
+  const [paymentSenderDetail, setPaymentSenderDetail] = useState('');
+  const [paymentReference, setPaymentReference] = useState('');
+  const [paymentReceiptUrl, setPaymentReceiptUrl] = useState('');
+  const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, fieldName: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldName);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleReceiptUpload = async (file: File) => {
+    setIsUploadingReceipt(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to upload receipt');
+      setPaymentReceiptUrl(data.url);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || 'Failed to upload receipt image');
+    } finally {
+      setIsUploadingReceipt(false);
+    }
+  };
 
   // PaySky session state — populated after we hit /api/payment/paysky
   const [paySkyInit, setPaySkyInit] = useState<PaySkyInitData | null>(null);
@@ -455,6 +545,44 @@ function CheckoutPageInner() {
       }
     }
 
+    if (paymentMethod === 'INSTAPAY') {
+      if (!paymentSenderDetail.trim()) {
+        setError(
+          lang === 'ar'
+            ? 'يرجى إدخال اسم المستخدم أو رقم الهاتف الذي قمت بالتحويل منه عبر انستا باي.'
+            : 'Please enter your sender username or phone number used for the InstaPay transfer.'
+        );
+        return;
+      }
+      if (!paymentReceiptUrl) {
+        setError(
+          lang === 'ar'
+            ? 'إرفاق صورة إيصال التحويل إجباري لإتمام الطلب عبر انستا باي. يرجى رفع صورة الإيصال.'
+            : 'Uploading a transfer receipt screenshot is required for InstaPay orders. Please upload your receipt image.'
+        );
+        return;
+      }
+    }
+
+    if (paymentMethod === 'VODAFONE_CASH') {
+      if (!paymentSenderDetail.trim()) {
+        setError(
+          lang === 'ar'
+            ? 'يرجى إدخال رقم محفظة فودافون كاش التي قمت بالتحويل منها.'
+            : 'Please enter your Vodafone Cash wallet phone number used for the transfer.'
+        );
+        return;
+      }
+      if (!paymentReceiptUrl) {
+        setError(
+          lang === 'ar'
+            ? 'إرفاق صورة إيصال التحويل إجباري لإتمام الطلب عبر فودافون كاش. يرجى رفع صورة الإيصال.'
+            : 'Uploading a transfer receipt screenshot is required for Vodafone Cash orders. Please upload your receipt image.'
+        );
+        return;
+      }
+    }
+
     setIsLoading(true);
     setError('');
     setPaySkyMockMessage('');
@@ -647,6 +775,18 @@ function CheckoutPageInner() {
         // Order.guestEmail and uses it to send the confirmation receipt.
         guestEmail: session?.user ? undefined : trimmedGuestEmail,
         paymentMethod,
+        paymentSenderDetail:
+          paymentMethod === 'INSTAPAY' || paymentMethod === 'VODAFONE_CASH'
+            ? paymentSenderDetail.trim() || undefined
+            : undefined,
+        paymentReference:
+          paymentMethod === 'INSTAPAY' || paymentMethod === 'VODAFONE_CASH'
+            ? paymentReference.trim() || undefined
+            : undefined,
+        paymentReceiptUrl:
+          paymentMethod === 'INSTAPAY' || paymentMethod === 'VODAFONE_CASH'
+            ? paymentReceiptUrl || undefined
+            : undefined,
         // Pass coupon code only for store coupons; affiliate promo codes go in promoCode
         couponCode:
           couponApplied && !couponApplied.isAffiliate ? couponApplied.code || undefined : undefined,
@@ -1105,115 +1245,521 @@ function CheckoutPageInner() {
                   </h2>
 
                   <div className="space-y-4">
-                    <label
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'CASH_ON_DELIVERY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
-                      style={{ textAlign: isRTL ? 'right' : 'left' }}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="CASH_ON_DELIVERY"
-                        checked={paymentMethod === 'CASH_ON_DELIVERY'}
-                        onChange={() => {
-                          setPaymentMethod('CASH_ON_DELIVERY');
-                          setShowInstallments(false);
-                        }}
-                        className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-bold text-gray-900">{t('CheckoutCashOnDelivery')}</div>
-                        <div className="text-sm text-gray-500">{t('CheckoutCodDesc')}</div>
-                      </div>
-                      <div className="text-3xl shrink-0">💵</div>
-                    </label>
+                    {enabledPaymentMethods.CASH_ON_DELIVERY && (
+                      <label
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'CASH_ON_DELIVERY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="CASH_ON_DELIVERY"
+                          checked={paymentMethod === 'CASH_ON_DELIVERY'}
+                          onChange={() => {
+                            setPaymentMethod('CASH_ON_DELIVERY');
+                            setShowInstallments(false);
+                          }}
+                          className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
+                        />
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900">
+                            {t('CheckoutCashOnDelivery')}
+                          </div>
+                          <div className="text-sm text-gray-500">{t('CheckoutCodDesc')}</div>
+                        </div>
+                        <div className="text-3xl shrink-0">💵</div>
+                      </label>
+                    )}
 
-                    <label
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'CREDIT_CARD' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
-                      style={{ textAlign: isRTL ? 'right' : 'left' }}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="CREDIT_CARD"
-                        checked={paymentMethod === 'CREDIT_CARD'}
-                        onChange={() => {
-                          setPaymentMethod('CREDIT_CARD');
-                          setShowInstallments(false);
-                        }}
-                        className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-bold text-gray-900">{t('CheckoutCreditCard')}</div>
-                        <div className="text-sm text-gray-500">{t('CheckoutStripeDesc')}</div>
-                      </div>
-                      <div className="text-3xl shrink-0">💳</div>
-                    </label>
+                    {enabledPaymentMethods.CREDIT_CARD && (
+                      <label
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'CREDIT_CARD' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="CREDIT_CARD"
+                          checked={paymentMethod === 'CREDIT_CARD'}
+                          onChange={() => {
+                            setPaymentMethod('CREDIT_CARD');
+                            setShowInstallments(false);
+                          }}
+                          className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
+                        />
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900">{t('CheckoutCreditCard')}</div>
+                          <div className="text-sm text-gray-500">{t('CheckoutStripeDesc')}</div>
+                        </div>
+                        <div className="text-3xl shrink-0">💳</div>
+                      </label>
+                    )}
 
-                    <label
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'MOBILE_WALLET' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
-                      style={{ textAlign: isRTL ? 'right' : 'left' }}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="MOBILE_WALLET"
-                        checked={paymentMethod === 'MOBILE_WALLET'}
-                        onChange={() => {
-                          setPaymentMethod('MOBILE_WALLET');
-                          setShowInstallments(false);
-                        }}
-                        className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-bold text-gray-900">{t('CheckoutMobileWallet')}</div>
-                        <div className="text-sm text-gray-500">{t('CheckoutWalletDesc')}</div>
-                      </div>
-                      <div className="text-3xl shrink-0">📱</div>
-                    </label>
+                    {enabledPaymentMethods.MOBILE_WALLET && (
+                      <label
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'MOBILE_WALLET' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="MOBILE_WALLET"
+                          checked={paymentMethod === 'MOBILE_WALLET'}
+                          onChange={() => {
+                            setPaymentMethod('MOBILE_WALLET');
+                            setShowInstallments(false);
+                          }}
+                          className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
+                        />
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900">{t('CheckoutMobileWallet')}</div>
+                          <div className="text-sm text-gray-500">{t('CheckoutWalletDesc')}</div>
+                        </div>
+                        <div className="text-3xl shrink-0">📱</div>
+                      </label>
+                    )}
 
-                    <label
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'PAYSKY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
-                      style={{ textAlign: isRTL ? 'right' : 'left' }}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="PAYSKY"
-                        checked={paymentMethod === 'PAYSKY'}
-                        onChange={() => {
-                          setPaymentMethod('PAYSKY');
-                          setShowInstallments(false);
-                        }}
-                        className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-bold text-gray-900">{t('CheckoutPaySky')}</div>
-                        <div className="text-sm text-gray-500">{t('CheckoutPaySkyDesc')}</div>
-                      </div>
-                      <div className="text-3xl shrink-0">🇪🇬</div>
-                    </label>
+                    {enabledPaymentMethods.PAYSKY && (
+                      <label
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'PAYSKY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="PAYSKY"
+                          checked={paymentMethod === 'PAYSKY'}
+                          onChange={() => {
+                            setPaymentMethod('PAYSKY');
+                            setShowInstallments(false);
+                          }}
+                          className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
+                        />
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900">{t('CheckoutPaySky')}</div>
+                          <div className="text-sm text-gray-500">{t('CheckoutPaySkyDesc')}</div>
+                        </div>
+                        <div className="text-3xl shrink-0">🇪🇬</div>
+                      </label>
+                    )}
 
-                    <label
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'FAWRY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
-                      style={{ textAlign: isRTL ? 'right' : 'left' }}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="FAWRY"
-                        checked={paymentMethod === 'FAWRY'}
-                        onChange={() => {
-                          setPaymentMethod('FAWRY');
-                          setShowInstallments(false);
-                        }}
-                        className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-bold text-gray-900">{t('CheckoutFawry')}</div>
-                        <div className="text-sm text-gray-500">{t('CheckoutFawryDesc')}</div>
+                    {enabledPaymentMethods.FAWRY && (
+                      <label
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'FAWRY' ? 'border-[#1e3b8a] bg-[#1e3b8a]/5' : 'border-gray-200 hover:border-gray-300'}`}
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="FAWRY"
+                          checked={paymentMethod === 'FAWRY'}
+                          onChange={() => {
+                            setPaymentMethod('FAWRY');
+                            setShowInstallments(false);
+                          }}
+                          className="w-5 h-5 text-[#1e3b8a] focus:ring-[#1e3b8a]"
+                        />
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900">{t('CheckoutFawry')}</div>
+                          <div className="text-sm text-gray-500">{t('CheckoutFawryDesc')}</div>
+                        </div>
+                        <div className="text-3xl shrink-0">🏪</div>
+                      </label>
+                    )}
+
+                    {/* INSTAPAY */}
+                    {enabledPaymentMethods.INSTAPAY && (
+                      <label
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                          paymentMethod === 'INSTAPAY'
+                            ? 'border-purple-600 bg-purple-50/50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="INSTAPAY"
+                          checked={paymentMethod === 'INSTAPAY'}
+                          onChange={() => {
+                            setPaymentMethod('INSTAPAY');
+                            setShowInstallments(false);
+                          }}
+                          className="w-5 h-5 text-purple-600 focus:ring-purple-600"
+                        />
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900 flex items-center gap-2">
+                            <span>InstaPay · انستا باي</span>
+                            <span className="text-[10px] bg-purple-600 text-white font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              Instant / تحويل لحظي
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {lang === 'ar'
+                              ? 'تحويل بنكي مباشر عبر تطبيق انستا باي (IPA: mazenhegazyy@instapay)'
+                              : 'Direct bank transfer via InstaPay App (IPA: mazenhegazyy@instapay)'}
+                          </div>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-purple-600 text-white font-black flex items-center justify-center text-xs shrink-0 shadow-sm">
+                          IPN
+                        </div>
+                      </label>
+                    )}
+
+                    {/* VODAFONE CASH */}
+                    {enabledPaymentMethods.VODAFONE_CASH && (
+                      <label
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                          paymentMethod === 'VODAFONE_CASH'
+                            ? 'border-red-600 bg-red-50/50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        style={{ textAlign: isRTL ? 'right' : 'left' }}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value="VODAFONE_CASH"
+                          checked={paymentMethod === 'VODAFONE_CASH'}
+                          onChange={() => {
+                            setPaymentMethod('VODAFONE_CASH');
+                            setShowInstallments(false);
+                          }}
+                          className="w-5 h-5 text-red-600 focus:ring-red-600"
+                        />
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900 flex items-center gap-2">
+                            <span>Vodafone Cash · فودافون كاش</span>
+                            <span className="text-[10px] bg-red-600 text-white font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              Mobile Wallet
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {lang === 'ar'
+                              ? 'تحويل مباشر لمحفظة فودافون كاش (01094379477)'
+                              : 'Direct transfer to Vodafone Cash wallet (01094379477)'}
+                          </div>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-red-600 text-white font-black flex items-center justify-center text-xs shrink-0 shadow-sm">
+                          V-Cash
+                        </div>
+                      </label>
+                    )}
+
+                    {/* INSTAPAY DETAILS FORM */}
+                    {paymentMethod === 'INSTAPAY' && (
+                      <div className="mt-4 p-5 rounded-2xl border-2 border-purple-200 bg-gradient-to-br from-purple-50/70 to-indigo-50/40 space-y-4">
+                        <div className="flex items-center justify-between border-b border-purple-100 pb-3">
+                          <h3 className="font-bold text-purple-900 flex items-center gap-2">
+                            <span>⚡</span>{' '}
+                            {lang === 'ar'
+                              ? 'بيانات التحويل عبر انستا باي'
+                              : 'InstaPay Payment Details'}
+                          </h3>
+                          <a
+                            href={INSTAPAY_DETAILS.payLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1 shadow-sm"
+                          >
+                            <span>📲</span>{' '}
+                            {lang === 'ar' ? 'افتح في تطبيق انستا باي' : 'Open in InstaPay'}
+                          </a>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-white p-3.5 rounded-xl border border-purple-100 shadow-sm space-y-1">
+                            <span className="text-xs text-gray-500 font-semibold block">
+                              {lang === 'ar' ? 'عنوان انستا باي (IPA):' : 'InstaPay Address (IPA):'}
+                            </span>
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono font-bold text-purple-950 text-sm select-all">
+                                {INSTAPAY_DETAILS.ipa}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard(INSTAPAY_DETAILS.ipa, 'ipa')}
+                                className="text-xs px-2.5 py-1 bg-purple-100 text-purple-700 font-bold rounded-md hover:bg-purple-200 transition-colors"
+                              >
+                                {copiedField === 'ipa'
+                                  ? lang === 'ar'
+                                    ? 'تم النسخ ✓'
+                                    : 'Copied ✓'
+                                  : lang === 'ar'
+                                    ? 'نسخ'
+                                    : 'Copy'}
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="bg-white p-3.5 rounded-xl border border-purple-100 shadow-sm space-y-1">
+                            <span className="text-xs text-gray-500 font-semibold block">
+                              {lang === 'ar' ? 'اسم صاحب الحساب:' : 'Account Holder Name:'}
+                            </span>
+                            <span className="font-bold text-gray-900 text-sm">
+                              {INSTAPAY_DETAILS.accountName}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* QR Code preview */}
+                        {INSTAPAY_DETAILS.qrImageUrl && (
+                          <div className="bg-white p-4 rounded-xl border border-purple-100 text-center space-y-2">
+                            <span className="text-xs font-bold text-gray-700 block">
+                              {lang === 'ar'
+                                ? 'امسح رمز QR بواسطة تطبيق انستا باي:'
+                                : 'Scan QR code with InstaPay App:'}
+                            </span>
+                            <img
+                              src={INSTAPAY_DETAILS.qrImageUrl}
+                              alt="InstaPay QR Code"
+                              className="w-48 h-auto mx-auto rounded-lg border border-purple-200 shadow-sm"
+                            />
+                          </div>
+                        )}
+
+                        {/* Customer Transfer Verification Fields */}
+                        <div className="pt-2 border-t border-purple-100 space-y-3">
+                          <h4 className="text-xs font-bold text-purple-900 uppercase tracking-wider">
+                            {lang === 'ar' ? 'تأكيد عملية التحويل:' : 'Transfer Verification Info:'}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                {lang === 'ar'
+                                  ? 'رقم الهاتف أو حساب انستا باي المحوّل منه'
+                                  : 'Sender Phone / InstaPay IPA'}{' '}
+                                <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                value={paymentSenderDetail}
+                                onChange={e => setPaymentSenderDetail(e.target.value)}
+                                placeholder={
+                                  lang === 'ar'
+                                    ? 'مثال: 01012345678 أو username@instapay'
+                                    : 'e.g. 01012345678 or user@instapay'
+                                }
+                                className="w-full text-sm border border-purple-200 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-purple-500 outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                {lang === 'ar'
+                                  ? 'رقم المعاملة / مرجع العملية'
+                                  : 'Transaction Reference / Ref No.'}
+                              </label>
+                              <input
+                                type="text"
+                                value={paymentReference}
+                                onChange={e => setPaymentReference(e.target.value)}
+                                placeholder={
+                                  lang === 'ar' ? 'مثال: TRX987654321' : 'e.g. TRX987654321'
+                                }
+                                className="w-full text-sm border border-purple-200 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-purple-500 outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Upload Receipt */}
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-700 mb-1">
+                              {lang === 'ar' ? 'صورة إيصال التحويل' : 'Transfer Receipt Screenshot'}{' '}
+                              <span className="text-red-500">
+                                * ({lang === 'ar' ? 'مطلوب' : 'Required'})
+                              </span>
+                            </label>
+                            {paymentReceiptUrl ? (
+                              <div className="flex items-center gap-3 bg-white p-2.5 rounded-lg border border-purple-200">
+                                <img
+                                  src={paymentReceiptUrl}
+                                  alt="Receipt"
+                                  className="w-12 h-12 object-cover rounded-md border"
+                                />
+                                <span className="text-xs text-green-700 font-bold flex-1">
+                                  {lang === 'ar'
+                                    ? 'تم إرفاق صورة الإيصال بنجاح ✓'
+                                    : 'Receipt uploaded successfully ✓'}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setPaymentReceiptUrl('')}
+                                  className="text-xs text-red-600 font-bold hover:underline"
+                                >
+                                  {lang === 'ar' ? 'حذف' : 'Remove'}
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="relative">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  disabled={isUploadingReceipt}
+                                  onChange={e => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleReceiptUpload(file);
+                                  }}
+                                  className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer"
+                                />
+                                {isUploadingReceipt && (
+                                  <span className="text-xs text-purple-600 font-bold ml-2 animate-pulse">
+                                    {lang === 'ar' ? 'جاري رفع الإيصال...' : 'Uploading receipt...'}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-3xl shrink-0">🏪</div>
-                    </label>
+                    )}
+
+                    {/* VODAFONE CASH DETAILS FORM */}
+                    {paymentMethod === 'VODAFONE_CASH' && (
+                      <div className="mt-4 p-5 rounded-2xl border-2 border-red-200 bg-gradient-to-br from-red-50/70 to-orange-50/40 space-y-4">
+                        <div className="flex items-center justify-between border-b border-red-100 pb-3">
+                          <h3 className="font-bold text-red-900 flex items-center gap-2">
+                            <span>📲</span>{' '}
+                            {lang === 'ar'
+                              ? 'بيانات التحويل لـ فودافون كاش'
+                              : 'Vodafone Cash Payment Details'}
+                          </h3>
+                          <span className="text-xs bg-red-600 text-white px-2.5 py-1 rounded-lg font-mono font-bold">
+                            {VODAFONE_CASH_DETAILS.dialShortcut}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-white p-3.5 rounded-xl border border-red-100 shadow-sm space-y-1">
+                            <span className="text-xs text-gray-500 font-semibold block">
+                              {lang === 'ar'
+                                ? 'رقم محفظة فودافون كاش:'
+                                : 'Vodafone Cash Wallet Number:'}
+                            </span>
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono font-bold text-red-950 text-base select-all">
+                                {VODAFONE_CASH_DETAILS.number}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  copyToClipboard(VODAFONE_CASH_DETAILS.number, 'vcash')
+                                }
+                                className="text-xs px-2.5 py-1 bg-red-100 text-red-700 font-bold rounded-md hover:bg-red-200 transition-colors"
+                              >
+                                {copiedField === 'vcash'
+                                  ? lang === 'ar'
+                                    ? 'تم النسخ ✓'
+                                    : 'Copied ✓'
+                                  : lang === 'ar'
+                                    ? 'نسخ'
+                                    : 'Copy'}
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="bg-white p-3.5 rounded-xl border border-red-100 shadow-sm space-y-1">
+                            <span className="text-xs text-gray-500 font-semibold block">
+                              {lang === 'ar' ? 'اسم صاحب المحفظة:' : 'Account Holder Name:'}
+                            </span>
+                            <span className="font-bold text-gray-900 text-sm">
+                              {VODAFONE_CASH_DETAILS.accountName}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Customer Transfer Verification Fields */}
+                        <div className="pt-2 border-t border-red-100 space-y-3">
+                          <h4 className="text-xs font-bold text-red-900 uppercase tracking-wider">
+                            {lang === 'ar' ? 'تأكيد عملية التحويل:' : 'Transfer Verification Info:'}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                {lang === 'ar'
+                                  ? 'رقم المحفظة التي قمت بالتحويل منها'
+                                  : 'Sender Wallet Phone Number'}{' '}
+                                <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="tel"
+                                value={paymentSenderDetail}
+                                onChange={e => setPaymentSenderDetail(e.target.value)}
+                                placeholder={
+                                  lang === 'ar' ? 'مثال: 01012345678' : 'e.g. 01012345678'
+                                }
+                                className="w-full text-sm border border-red-200 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-red-500 outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                {lang === 'ar'
+                                  ? 'رقم العملية / مرجع التحويل'
+                                  : 'Transaction Reference / Ref No.'}
+                              </label>
+                              <input
+                                type="text"
+                                value={paymentReference}
+                                onChange={e => setPaymentReference(e.target.value)}
+                                placeholder={lang === 'ar' ? 'مثال: 12345678' : 'e.g. 12345678'}
+                                className="w-full text-sm border border-red-200 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-red-500 outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Upload Receipt */}
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-700 mb-1">
+                              {lang === 'ar'
+                                ? 'صورة إيصال / لقطة الشاشة للتحويل'
+                                : 'Transfer Receipt Screenshot'}{' '}
+                              <span className="text-red-500">
+                                * ({lang === 'ar' ? 'مطلوب' : 'Required'})
+                              </span>
+                            </label>
+                            {paymentReceiptUrl ? (
+                              <div className="flex items-center gap-3 bg-white p-2.5 rounded-lg border border-red-200">
+                                <img
+                                  src={paymentReceiptUrl}
+                                  alt="Receipt"
+                                  className="w-12 h-12 object-cover rounded-md border"
+                                />
+                                <span className="text-xs text-green-700 font-bold flex-1">
+                                  {lang === 'ar'
+                                    ? 'تم إرفاق صورة الإيصال بنجاح ✓'
+                                    : 'Receipt uploaded successfully ✓'}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setPaymentReceiptUrl('')}
+                                  className="text-xs text-red-600 font-bold hover:underline"
+                                >
+                                  {lang === 'ar' ? 'حذف' : 'Remove'}
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="relative">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  disabled={isUploadingReceipt}
+                                  onChange={e => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleReceiptUpload(file);
+                                  }}
+                                  className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700 cursor-pointer"
+                                />
+                                {isUploadingReceipt && (
+                                  <span className="text-xs text-red-600 font-bold ml-2 animate-pulse">
+                                    {lang === 'ar' ? 'جاري رفع الإيصال...' : 'Uploading receipt...'}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* PaySky Lightbox renders here when active */}
                     {paySkyInit && (

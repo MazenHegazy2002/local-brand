@@ -6,14 +6,18 @@ import { SessionUser } from '@/types';
 import { BCRYPT_COST } from '@/lib/constants';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { getRequestUser } from '@/lib/mobile-auth';
+import { redis } from '@/lib/redis';
 
 // POST /api/account/delete — GDPR/PDPL-compliant account deletion
-export async function POST() {
+// Accepts the web session cookie or the app's Bearer token.
+export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    const user = await getRequestUser(req);
+    if (!user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const userId = (session.user as SessionUser).id;
+    const userId = user.id;
+    await redis.del(`push:token:${userId}`).catch(() => 0);
 
     // Soft delete: set deletedAt timestamp, anonymize PII. The password is
     // replaced with a real bcrypt hash of an unknowable random value rather

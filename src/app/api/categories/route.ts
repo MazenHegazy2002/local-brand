@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@/generated/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { productImageUrl } from '@/lib/image-url';
 
 /**
  * Category landing pages API
@@ -74,23 +75,39 @@ export async function GET(req: Request) {
       });
     }
 
-    // All categories with product counts — exclude empty ones and test placeholders
+    // Auto-ensure core categories exist in DB
+    const { ensureCoreCategories } = await import('@/lib/ensure-categories');
+    await ensureCoreCategories();
+
+    // All categories with product counts — exclude test placeholders
     const allCategories = await prisma.category.findMany({
       where: { parentId: null }, // only top-level
       include: {
         children: true,
         _count: { select: { products: { where: { published: true, deletedAt: null } } } },
+        // Newest product's image doubles as the category card cover
+        products: {
+          where: { published: true, deletedAt: null, images: { some: {} } },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: {
+            images: { orderBy: { isPrimary: 'desc' }, take: 1, select: { id: true, url: true } },
+          },
+        },
       },
       orderBy: { name: 'asc' },
     });
 
-    // Filter out categories with zero products and any test/placeholder categories
-    const categories = allCategories.filter(
-      cat =>
-        cat._count.products > 0 &&
-        cat.name.toLowerCase() !== 'testcategory' &&
-        !cat.name.toLowerCase().startsWith('test')
-    );
+    // Filter out test/placeholder categories
+    const categories = allCategories
+      .filter(
+        cat =>
+          cat.name.toLowerCase() !== 'testcategory' && !cat.name.toLowerCase().startsWith('test')
+      )
+      .map(({ products, ...cat }) => {
+        const img = products[0]?.images[0];
+        return { ...cat, image: img ? productImageUrl(req, img) : null };
+      });
 
     // Strip internal IDs for unauthenticated requests
     const safeCategories = isAuthenticated
@@ -101,6 +118,7 @@ export async function GET(req: Request) {
           slug: cat.slug,
           nameAr: (cat as any).nameAr,
           _count: { products: cat._count.products },
+          image: cat.image,
           children: cat.children.map(c => ({ id: c.slug, name: c.name, slug: c.slug })),
         }));
 

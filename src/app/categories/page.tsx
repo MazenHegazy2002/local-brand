@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { PLATFORM_URL } from '@/lib/constants';
 import {
   ElectronicsIcon,
+  EntertainmentIcon,
   FashionIcon,
   HomeIcon,
   HealthIcon,
@@ -96,6 +97,14 @@ function iconFor(name: string) {
     lower.includes('laptop')
   )
     return <ElectronicsIcon />;
+  if (
+    lower === 'entertainment' ||
+    lower.includes('entertain') ||
+    lower.includes('media') ||
+    lower.includes('movie') ||
+    lower.includes('game')
+  )
+    return <EntertainmentIcon />;
   if (
     lower === 'footwear' ||
     lower.includes('footwear') ||

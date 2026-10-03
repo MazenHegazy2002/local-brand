@@ -12,6 +12,12 @@ RUN npm ci
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+ENV NEXTAUTH_SECRET="ci-placeholder-secret-at-least-32-chars-long"
+ENV NEXTAUTH_URL="https://brandyy.shop"
+ENV NEXT_PUBLIC_APP_URL="https://brandyy.shop"
+ENV TAX_REGISTRATION_NUMBER="CI-PLACEHOLDER"
+ENV BANK_ACCOUNT_SECRET="0000000000000000000000000000000000000000000000000000000000000000"
 RUN npx prisma generate
 RUN npm run build
 
@@ -29,6 +35,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/src/generated ./src/generated
 COPY --from=builder /app/node_modules ./node_modules
+
+# Product images are stored here (mounted as the uploads_data volume).
+RUN mkdir -p /app/uploads && chown nextjs:nodejs /app/uploads
 
 USER nextjs
 

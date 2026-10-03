@@ -175,7 +175,12 @@ export default function ProductCard({
   const [activeImage, setActiveImage] = useState<string | undefined>(
     hasRealColors ? getMatchedImageUrl(uniqueColors[0].colorName) || displayImage : displayImage
   );
+  const [imgSrc, setImgSrc] = useState<string>(activeImage || displayImage || '/placeholder.png');
   const [added, setAdded] = useState(false);
+
+  useEffect(() => {
+    setImgSrc(activeImage || displayImage || '/placeholder.png');
+  }, [activeImage, displayImage]);
 
   // Initialize selected values based on parsed variants
   useEffect(() => {
@@ -317,12 +322,17 @@ export default function ProductCard({
         className="block overflow-hidden relative aspect-[4/5] shrink-0 bg-gray-50"
       >
         <Image
-          src={activeImage || displayImage || '/placeholder.png'}
+          src={imgSrc}
           alt={displayName}
           fill
           sizes="(max-width: 480px) 45vw, (max-width: 768px) 48vw, (max-width: 1024px) 33vw, 220px"
           className="object-cover transition-transform duration-700 group-hover:scale-115"
           loading="lazy"
+          onError={() => {
+            if (imgSrc !== '/placeholder.png') {
+              setImgSrc('/placeholder.png');
+            }
+          }}
         />
         {/* Wishlist Button Overlay */}
         <div className="absolute top-4 end-4 z-20">

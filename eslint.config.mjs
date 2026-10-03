@@ -22,6 +22,8 @@ const eslintConfig = defineConfig([
     'coverage/**',
     'scratch/**',
     'backups/**',
+    'mobile/**',
+    'mobile-app-extracted/**',
   ]),
   {
     rules: {

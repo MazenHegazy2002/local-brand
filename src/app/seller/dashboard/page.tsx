@@ -30,7 +30,7 @@ export default async function SellerDashboard() {
         held: 0,
         totalEarned: 0,
         totalPaidOut: 0,
-        commissionRate: 0.15,
+        commissionRate: 0.1,
         nextReleaseAt: null,
       };
 
@@ -68,12 +68,14 @@ export default async function SellerDashboard() {
           </div>
           <div className="flex gap-4">
             <Link
-              href="/seller/products/new"
+              href="/seller-hub?tab=products"
               className="btn bg-white/5 text-white border border-white/10 px-6 py-2 text-sm"
             >
               + Add Product
             </Link>
-            <button className="btn btn-accent px-6 py-2 text-sm">View Store</button>
+            <Link href="/seller-hub" className="btn btn-accent px-6 py-2 text-sm">
+              Seller Hub
+            </Link>
           </div>
         </div>
 

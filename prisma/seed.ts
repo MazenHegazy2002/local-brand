@@ -17,6 +17,8 @@ interface SeedVariant {
   label: string; // e.g. "Red - M"
   color?: string;
   size?: string;
+  img?: string;
+  image?: string;
   price: number;
   stock: number;
 }
@@ -27,6 +29,7 @@ interface SeedProduct {
   description: string;
   basePrice: number;
   img: string;
+  extraImgs?: string[];
   isFeatured: boolean;
   variants: SeedVariant[];
 }
@@ -41,31 +44,171 @@ const CATALOG: SeedCategory[] = [
     slug: 'women',
     products: [
       {
+        title: 'Women Casual Printed Abaya Dress – Lightweight Maxi',
+        slug: 'women-casual-printed-abaya-dress',
+        description:
+          'Soft flowy printed abaya maxi dress ideal for everyday modest wear. Breathable fabric keeps you cool in Egyptian heat. Available in multiple prints and sizes.',
+        basePrice: 360,
+        img: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop',
+        isFeatured: true,
+        variants: [
+          {
+            label: 'Black - S',
+            color: 'Black',
+            size: 'S',
+            img: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop',
+            price: 360,
+            stock: 12,
+          },
+          {
+            label: 'Black - M',
+            color: 'Black',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop',
+            price: 360,
+            stock: 15,
+          },
+          {
+            label: 'Black - L',
+            color: 'Black',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop',
+            price: 360,
+            stock: 10,
+          },
+          {
+            label: 'Navy - M',
+            color: 'Navy',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?q=80&w=800&auto=format&fit=crop',
+            price: 360,
+            stock: 8,
+          },
+          {
+            label: 'Navy - L',
+            color: 'Navy',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?q=80&w=800&auto=format&fit=crop',
+            price: 360,
+            stock: 7,
+          },
+          {
+            label: 'Olive - M',
+            color: 'Olive',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1618244972963-dbee1a7edc95?q=80&w=800&auto=format&fit=crop',
+            price: 360,
+            stock: 9,
+          },
+          {
+            label: 'Burgundy - L',
+            color: 'Burgundy',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=800&auto=format&fit=crop',
+            price: 360,
+            stock: 6,
+          },
+        ],
+      },
+      {
         title: 'Floral Linen Midi Dress',
         slug: 'floral-linen-midi-dress',
         description:
           'Lightweight 100% linen midi dress with a bold floral print. Perfect for warm Egyptian summers.',
-        basePrice: 799,
-        img: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=600&auto=format&fit=crop',
+        basePrice: 829,
+        img: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1550614000-4895a10e1bfd?q=80&w=800&auto=format&fit=crop',
+        ],
         isFeatured: true,
         variants: [
-          { label: 'Blue - S', color: 'Blue', size: 'S', price: 799, stock: 8 },
-          { label: 'Pink - M', color: 'Pink', size: 'M', price: 799, stock: 12 },
-          { label: 'White - L', color: 'White', size: 'L', price: 799, stock: 5 },
+          {
+            label: 'Blue - S',
+            color: 'Blue',
+            size: 'S',
+            img: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800&auto=format&fit=crop',
+            price: 829,
+            stock: 8,
+          },
+          {
+            label: 'Pink - M',
+            color: 'Pink',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?q=80&w=800&auto=format&fit=crop',
+            price: 829,
+            stock: 12,
+          },
+          {
+            label: 'White - L',
+            color: 'White',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=800&auto=format&fit=crop',
+            price: 829,
+            stock: 5,
+          },
+          {
+            label: 'Yellow - M',
+            color: 'Yellow',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=800&auto=format&fit=crop',
+            price: 829,
+            stock: 6,
+          },
         ],
       },
       {
         title: 'Classic Linen Blouse',
         slug: 'classic-linen-blouse',
         description: 'Relaxed-fit linen blouse with a subtle collar. Pairs with anything.',
-        basePrice: 449,
-        img: 'https://images.unsplash.com/photo-1564257631407-4deb1f99d992?q=80&w=600&auto=format&fit=crop',
+        basePrice: 479,
+        img: 'https://images.unsplash.com/photo-1564257631407-4deb1f99d992?q=80&w=800&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1598554747436-c9293d6a588f?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
-          { label: 'White - XS', color: 'White', size: 'XS', price: 449, stock: 10 },
-          { label: 'Beige - S', color: 'Beige', size: 'S', price: 449, stock: 9 },
-          { label: 'Sage Green - M', color: 'Sage Green', size: 'M', price: 449, stock: 6 },
-          { label: 'Black - L', color: 'Black', size: 'L', price: 449, stock: 4 },
+          {
+            label: 'White - XS',
+            color: 'White',
+            size: 'XS',
+            img: 'https://images.unsplash.com/photo-1564257631407-4deb1f99d992?q=80&w=800&auto=format&fit=crop',
+            price: 479,
+            stock: 10,
+          },
+          {
+            label: 'White - S',
+            color: 'White',
+            size: 'S',
+            img: 'https://images.unsplash.com/photo-1564257631407-4deb1f99d992?q=80&w=800&auto=format&fit=crop',
+            price: 479,
+            stock: 9,
+          },
+          {
+            label: 'Beige - M',
+            color: 'Beige',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1598554747436-c9293d6a588f?q=80&w=800&auto=format&fit=crop',
+            price: 479,
+            stock: 8,
+          },
+          {
+            label: 'Sage Green - L',
+            color: 'Sage Green',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?q=80&w=800&auto=format&fit=crop',
+            price: 479,
+            stock: 6,
+          },
+          {
+            label: 'Black - L',
+            color: 'Black',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800&auto=format&fit=crop',
+            price: 479,
+            stock: 4,
+          },
         ],
       },
       {
@@ -73,40 +216,303 @@ const CATALOG: SeedCategory[] = [
         slug: 'wide-leg-trousers',
         description:
           'Flowing wide-leg trousers in premium cotton blend. Elegant silhouette for every occasion.',
-        basePrice: 599,
-        img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=600&auto=format&fit=crop',
+        basePrice: 629,
+        img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1583846552345-a8e00a897041?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1594938298603-c8148c4b4357?q=80&w=800&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
-          { label: 'Camel - XS', color: 'Camel', size: 'XS', price: 599, stock: 7 },
-          { label: 'Black - S', color: 'Black', size: 'S', price: 599, stock: 11 },
-          { label: 'Navy - M', color: 'Navy', size: 'M', price: 599, stock: 8 },
+          {
+            label: 'Camel - XS',
+            color: 'Camel',
+            size: 'XS',
+            img: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop',
+            price: 629,
+            stock: 7,
+          },
+          {
+            label: 'Black - S',
+            color: 'Black',
+            size: 'S',
+            img: 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?q=80&w=800&auto=format&fit=crop',
+            price: 629,
+            stock: 11,
+          },
+          {
+            label: 'Navy - M',
+            color: 'Navy',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=800&auto=format&fit=crop',
+            price: 629,
+            stock: 8,
+          },
+          {
+            label: 'Cream - L',
+            color: 'Cream',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop',
+            price: 629,
+            stock: 6,
+          },
         ],
       },
       {
         title: 'Wrap Maxi Dress',
         slug: 'wrap-maxi-dress',
         description: 'Elegant wrap maxi dress in soft crepe fabric. Flattering for all body types.',
-        basePrice: 1099,
-        img: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?q=80&w=600&auto=format&fit=crop',
+        basePrice: 1129,
+        img: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?q=80&w=800&auto=format&fit=crop',
         isFeatured: true,
         variants: [
-          { label: 'Emerald - S', color: 'Emerald', size: 'S', price: 1099, stock: 5 },
-          { label: 'Burgundy - M', color: 'Burgundy', size: 'M', price: 1099, stock: 7 },
-          { label: 'Dusty Rose - L', color: 'Dusty Rose', size: 'L', price: 1099, stock: 3 },
+          {
+            label: 'Emerald - S',
+            color: 'Emerald',
+            size: 'S',
+            img: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=800&auto=format&fit=crop',
+            price: 1129,
+            stock: 5,
+          },
+          {
+            label: 'Burgundy - M',
+            color: 'Burgundy',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?q=80&w=800&auto=format&fit=crop',
+            price: 1129,
+            stock: 7,
+          },
+          {
+            label: 'Dusty Rose - L',
+            color: 'Dusty Rose',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=800&auto=format&fit=crop',
+            price: 1129,
+            stock: 3,
+          },
+          {
+            label: 'Midnight Blue - XL',
+            color: 'Midnight Blue',
+            size: 'XL',
+            img: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=800&auto=format&fit=crop',
+            price: 1129,
+            stock: 4,
+          },
         ],
       },
       {
-        title: 'Cropped Ribbed Top',
-        slug: 'cropped-ribbed-top',
-        description: 'Soft ribbed-knit cropped top. A wardrobe essential for casual everyday wear.',
-        basePrice: 299,
-        img: 'https://images.unsplash.com/photo-1598554747436-c9293d6a588f?q=80&w=600&auto=format&fit=crop',
+        title: "Women's Cotton Oversized Hoodie",
+        slug: 'womens-cotton-oversized-hoodie',
+        description:
+          'Cozy oversized hoodie in soft brushed cotton fleece with adjustable drawstring hood.',
+        basePrice: 629,
+        img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop',
         isFeatured: false,
         variants: [
-          { label: 'White - XS', color: 'White', size: 'XS', price: 299, stock: 15 },
-          { label: 'Black - S', color: 'Black', size: 'S', price: 299, stock: 14 },
-          { label: 'Blush - M', color: 'Blush', size: 'M', price: 299, stock: 10 },
-          { label: 'Gray - L', color: 'Gray', size: 'L', price: 299, stock: 8 },
+          {
+            label: 'Beige - S',
+            color: 'Beige',
+            size: 'S',
+            img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop',
+            price: 629,
+            stock: 10,
+          },
+          {
+            label: 'Gray - M',
+            color: 'Gray',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=800&auto=format&fit=crop',
+            price: 629,
+            stock: 13,
+          },
+          {
+            label: 'Black - L',
+            color: 'Black',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?q=80&w=800&auto=format&fit=crop',
+            price: 629,
+            stock: 9,
+          },
+          {
+            label: 'Pink - XL',
+            color: 'Pink',
+            size: 'XL',
+            img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop',
+            price: 629,
+            stock: 6,
+          },
+        ],
+      },
+      {
+        title: 'Sunset Ramadan Chiffon Abaya Kaftan Kimono – Golden Trim',
+        slug: 'sunset-ramadan-chiffon-abaya-kaftan-kimono',
+        description:
+          'Flowing lightweight chiffon abaya kaftan with golden embroidery trim. Features an open front kimono silhouette ideal for modest everyday wear and Ramadan celebrations.',
+        basePrice: 529,
+        img: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop',
+        isFeatured: true,
+        variants: [
+          {
+            label: 'Black - S',
+            color: 'Black',
+            size: 'S',
+            img: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop',
+            price: 529,
+            stock: 12,
+          },
+          {
+            label: 'Black - M',
+            color: 'Black',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop',
+            price: 529,
+            stock: 15,
+          },
+          {
+            label: 'Navy - M',
+            color: 'Navy',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?q=80&w=800&auto=format&fit=crop',
+            price: 529,
+            stock: 8,
+          },
+          {
+            label: 'Teal - L',
+            color: 'Teal',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1618244972963-dbee1a7edc95?q=80&w=800&auto=format&fit=crop',
+            price: 529,
+            stock: 7,
+          },
+          {
+            label: 'Burgundy - L',
+            color: 'Burgundy',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=800&auto=format&fit=crop',
+            price: 529,
+            stock: 6,
+          },
+        ],
+      },
+      {
+        title: 'Chemise Cut Chiffon Popcorn Sleeveless Blouse',
+        slug: 'chemise-cut-chiffon-popcorn-sleeveless-blouse',
+        description:
+          'Textured popcorn chiffon sleeveless blouse with structured classic collar and button front. Breathable and chic for warm weather and layering.',
+        basePrice: 529,
+        img: 'https://images.unsplash.com/photo-1564257631407-4deb1f99d992?q=80&w=800&auto=format&fit=crop',
+        isFeatured: false,
+        variants: [
+          {
+            label: 'Mint - S',
+            color: 'Mint',
+            size: 'S',
+            img: 'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?q=80&w=800&auto=format&fit=crop',
+            price: 529,
+            stock: 10,
+          },
+          {
+            label: 'Beige - M',
+            color: 'Beige',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1598554747436-c9293d6a588f?q=80&w=800&auto=format&fit=crop',
+            price: 529,
+            stock: 9,
+          },
+          {
+            label: 'White - L',
+            color: 'White',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1564257631407-4deb1f99d992?q=80&w=800&auto=format&fit=crop',
+            price: 529,
+            stock: 8,
+          },
+          {
+            label: 'Pink - M',
+            color: 'Pink',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?q=80&w=800&auto=format&fit=crop',
+            price: 529,
+            stock: 7,
+          },
+        ],
+      },
+      {
+        title: 'Nileton Oversized 100% Cotton Drop-Shoulder T-Shirt',
+        slug: 'nileton-oversized-cotton-drop-shoulder-tshirt',
+        description:
+          '100% premium Egyptian combed cotton oversized t-shirt with drop shoulders and half sleeves. Ultra-soft feel for university, lounging, and everyday casual outfits.',
+        basePrice: 325,
+        img: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop',
+        isFeatured: true,
+        variants: [
+          {
+            label: 'Off-White - S',
+            color: 'Off-White',
+            size: 'S',
+            img: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop',
+            price: 325,
+            stock: 14,
+          },
+          {
+            label: 'Lavender - M',
+            color: 'Lavender',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800&auto=format&fit=crop',
+            price: 325,
+            stock: 12,
+          },
+          {
+            label: 'Sage Green - L',
+            color: 'Sage Green',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?q=80&w=800&auto=format&fit=crop',
+            price: 325,
+            stock: 10,
+          },
+          {
+            label: 'Black - XL',
+            color: 'Black',
+            size: 'XL',
+            img: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?q=80&w=800&auto=format&fit=crop',
+            price: 325,
+            stock: 8,
+          },
+        ],
+      },
+      {
+        title: 'Ribbed Knit Slim-Fit Button-Down Long Sleeve Top',
+        slug: 'ribbed-knit-slim-fit-button-down-long-sleeve',
+        description:
+          'Flattering slim-fit ribbed knit top with front buttons and comfortable stretch. Soft breathable fabric that pairs effortlessly with trousers and skirts.',
+        basePrice: 280,
+        img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop',
+        isFeatured: false,
+        variants: [
+          {
+            label: 'Beige - S',
+            color: 'Beige',
+            size: 'S',
+            img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop',
+            price: 280,
+            stock: 11,
+          },
+          {
+            label: 'Olive - M',
+            color: 'Olive',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1618244972963-dbee1a7edc95?q=80&w=800&auto=format&fit=crop',
+            price: 280,
+            stock: 9,
+          },
+          {
+            label: 'Black - L',
+            color: 'Black',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?q=80&w=800&auto=format&fit=crop',
+            price: 280,
+            stock: 10,
+          },
         ],
       },
     ],
@@ -118,41 +524,138 @@ const CATALOG: SeedCategory[] = [
         title: 'Oxford Button-Down Shirt',
         slug: 'oxford-button-down-shirt',
         description: 'Classic Egyptian cotton Oxford shirt. Versatile enough for work or weekend.',
-        basePrice: 549,
-        img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=600&auto=format&fit=crop',
+        basePrice: 579,
+        img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=800&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1607345366928-199ea26cfe3e?q=80&w=800&auto=format&fit=crop',
+        ],
         isFeatured: true,
         variants: [
-          { label: 'White - S', color: 'White', size: 'S', price: 549, stock: 12 },
-          { label: 'Light Blue - M', color: 'Light Blue', size: 'M', price: 549, stock: 14 },
-          { label: 'Charcoal - L', color: 'Charcoal', size: 'L', price: 549, stock: 9 },
-          { label: 'White - XL', color: 'White', size: 'XL', price: 549, stock: 6 },
+          {
+            label: 'White - S',
+            color: 'White',
+            size: 'S',
+            img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=800&auto=format&fit=crop',
+            price: 579,
+            stock: 12,
+          },
+          {
+            label: 'Light Blue - M',
+            color: 'Light Blue',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?q=80&w=800&auto=format&fit=crop',
+            price: 579,
+            stock: 14,
+          },
+          {
+            label: 'Charcoal - L',
+            color: 'Charcoal',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=800&auto=format&fit=crop',
+            price: 579,
+            stock: 9,
+          },
+          {
+            label: 'Pink - XL',
+            color: 'Pink',
+            size: 'XL',
+            img: 'https://images.unsplash.com/photo-1607345366928-199ea26cfe3e?q=80&w=800&auto=format&fit=crop',
+            price: 579,
+            stock: 6,
+          },
         ],
       },
       {
         title: 'Slim Chinos',
         slug: 'slim-chinos',
         description: 'Modern slim-fit chinos in stretch cotton. Comfortable all day, every day.',
-        basePrice: 699,
-        img: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?q=80&w=600&auto=format&fit=crop',
+        basePrice: 729,
+        img: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?q=80&w=800&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?q=80&w=800&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
-          { label: 'Beige - 30', color: 'Beige', size: '30', price: 699, stock: 8 },
-          { label: 'Navy - 32', color: 'Navy', size: '32', price: 699, stock: 11 },
-          { label: 'Olive - 34', color: 'Olive', size: '34', price: 699, stock: 7 },
-          { label: 'Black - 36', color: 'Black', size: '36', price: 699, stock: 5 },
+          {
+            label: 'Beige - 30',
+            color: 'Beige',
+            size: '30',
+            img: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?q=80&w=800&auto=format&fit=crop',
+            price: 729,
+            stock: 8,
+          },
+          {
+            label: 'Navy - 32',
+            color: 'Navy',
+            size: '32',
+            img: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800&auto=format&fit=crop',
+            price: 729,
+            stock: 11,
+          },
+          {
+            label: 'Olive - 34',
+            color: 'Olive',
+            size: '34',
+            img: 'https://images.unsplash.com/photo-1517445312882-bc9910d016b7?q=80&w=800&auto=format&fit=crop',
+            price: 729,
+            stock: 7,
+          },
+          {
+            label: 'Black - 36',
+            color: 'Black',
+            size: '36',
+            img: 'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?q=80&w=800&auto=format&fit=crop',
+            price: 729,
+            stock: 5,
+          },
         ],
       },
       {
         title: 'Linen Summer Shirt',
         slug: 'linen-summer-shirt',
         description: '100% linen short-sleeve shirt. The essential Egyptian summer staple.',
-        basePrice: 499,
-        img: 'https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?q=80&w=600&auto=format&fit=crop',
+        basePrice: 529,
+        img: 'https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?q=80&w=800&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=800&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
-          { label: 'Off-White - S', color: 'Off-White', size: 'S', price: 499, stock: 10 },
-          { label: 'Sky Blue - M', color: 'Sky Blue', size: 'M', price: 499, stock: 12 },
-          { label: 'Mint - L', color: 'Mint', size: 'L', price: 499, stock: 8 },
+          {
+            label: 'Off-White - S',
+            color: 'Off-White',
+            size: 'S',
+            img: 'https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?q=80&w=800&auto=format&fit=crop',
+            price: 529,
+            stock: 10,
+          },
+          {
+            label: 'Sky Blue - M',
+            color: 'Sky Blue',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop',
+            price: 529,
+            stock: 12,
+          },
+          {
+            label: 'Mint - L',
+            color: 'Mint',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=800&auto=format&fit=crop',
+            price: 529,
+            stock: 8,
+          },
+          {
+            label: 'Navy - XL',
+            color: 'Navy',
+            size: 'XL',
+            img: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=800&auto=format&fit=crop',
+            price: 529,
+            stock: 6,
+          },
         ],
       },
       {
@@ -160,40 +663,135 @@ const CATALOG: SeedCategory[] = [
         slug: 'classic-polo-shirt',
         description:
           'Piqué polo shirt with a clean, structured collar. Egyptian cotton for superior softness.',
-        basePrice: 449,
-        img: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=600&auto=format&fit=crop',
+        basePrice: 479,
+        img: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=800&auto=format&fit=crop',
         isFeatured: false,
         variants: [
-          { label: 'Navy - S', color: 'Navy', size: 'S', price: 449, stock: 8 },
-          { label: 'Navy - M', color: 'Navy', size: 'M', price: 449, stock: 10 },
-          { label: 'Navy - L', color: 'Navy', size: 'L', price: 449, stock: 6 },
-          { label: 'Navy - XL', color: 'Navy', size: 'XL', price: 449, stock: 8 },
-          { label: 'White - S', color: 'White', size: 'S', price: 449, stock: 7 },
-          { label: 'White - M', color: 'White', size: 'M', price: 449, stock: 13 },
-          { label: 'White - L', color: 'White', size: 'L', price: 449, stock: 9 },
-          { label: 'White - XL', color: 'White', size: 'XL', price: 449, stock: 5 },
-          { label: 'Red - S', color: 'Red', size: 'S', price: 449, stock: 6 },
-          { label: 'Red - M', color: 'Red', size: 'M', price: 449, stock: 8 },
-          { label: 'Red - L', color: 'Red', size: 'L', price: 449, stock: 6 },
-          { label: 'Red - XL', color: 'Red', size: 'XL', price: 449, stock: 7 },
-          { label: 'Forest Green - S', color: 'Forest Green', size: 'S', price: 449, stock: 5 },
-          { label: 'Forest Green - M', color: 'Forest Green', size: 'M', price: 449, stock: 9 },
-          { label: 'Forest Green - L', color: 'Forest Green', size: 'L', price: 449, stock: 6 },
-          { label: 'Forest Green - XL', color: 'Forest Green', size: 'XL', price: 449, stock: 4 },
+          {
+            label: 'Navy - S',
+            color: 'Navy',
+            size: 'S',
+            img: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=800&auto=format&fit=crop',
+            price: 479,
+            stock: 8,
+          },
+          {
+            label: 'Navy - M',
+            color: 'Navy',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=800&auto=format&fit=crop',
+            price: 479,
+            stock: 10,
+          },
+          {
+            label: 'White - M',
+            color: 'White',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?q=80&w=800&auto=format&fit=crop',
+            price: 479,
+            stock: 13,
+          },
+          {
+            label: 'Red - L',
+            color: 'Red',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=800&auto=format&fit=crop',
+            price: 479,
+            stock: 7,
+          },
+          {
+            label: 'Forest Green - XL',
+            color: 'Forest Green',
+            size: 'XL',
+            img: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=800&auto=format&fit=crop',
+            price: 479,
+            stock: 5,
+          },
+          {
+            label: 'Black - L',
+            color: 'Black',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop',
+            price: 479,
+            stock: 6,
+          },
         ],
       },
       {
-        title: 'Cargo Jogger Pants',
-        slug: 'cargo-jogger-pants',
+        title: "Men's Heavyweight Fleece Hoodie",
+        slug: 'mens-heavyweight-fleece-hoodie',
         description:
-          'Urban cargo joggers with multiple pockets. Comfortable streetwear for everyday use.',
-        basePrice: 599,
-        img: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=600&auto=format&fit=crop',
+          'Premium heavyweight fleece hoodie with brushed inner lining. Modern relaxed fit.',
+        basePrice: 679,
+        img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop',
         isFeatured: true,
         variants: [
-          { label: 'Khaki - S', color: 'Khaki', size: 'S', price: 599, stock: 8 },
-          { label: 'Black - M', color: 'Black', size: 'M', price: 599, stock: 14 },
-          { label: 'Olive - L', color: 'Olive', size: 'L', price: 599, stock: 7 },
+          {
+            label: 'Charcoal - S',
+            color: 'Charcoal',
+            size: 'S',
+            img: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop',
+            price: 679,
+            stock: 10,
+          },
+          {
+            label: 'Beige - M',
+            color: 'Beige',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=800&auto=format&fit=crop',
+            price: 679,
+            stock: 12,
+          },
+          {
+            label: 'Black - L',
+            color: 'Black',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?q=80&w=800&auto=format&fit=crop',
+            price: 679,
+            stock: 8,
+          },
+          {
+            label: 'Burgundy - XL',
+            color: 'Burgundy',
+            size: 'XL',
+            img: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=800&auto=format&fit=crop',
+            price: 679,
+            stock: 5,
+          },
+        ],
+      },
+      {
+        title: "Men's Denim Jacket – Vintage Wash",
+        slug: 'mens-denim-jacket-vintage',
+        description: 'Classic rugged denim jacket with button flap chest pockets and vintage wash.',
+        basePrice: 879,
+        img: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?q=80&w=800&auto=format&fit=crop',
+        isFeatured: true,
+        variants: [
+          {
+            label: 'Vintage Blue - M',
+            color: 'Vintage Blue',
+            size: 'M',
+            img: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?q=80&w=800&auto=format&fit=crop',
+            price: 879,
+            stock: 9,
+          },
+          {
+            label: 'Washed Black - L',
+            color: 'Washed Black',
+            size: 'L',
+            img: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=800&auto=format&fit=crop',
+            price: 879,
+            stock: 7,
+          },
+          {
+            label: 'Light Indigo - XL',
+            color: 'Light Indigo',
+            size: 'XL',
+            img: 'https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=800&auto=format&fit=crop',
+            price: 879,
+            stock: 6,
+          },
         ],
       },
     ],
@@ -207,12 +805,34 @@ const CATALOG: SeedCategory[] = [
         description:
           '40-hour battery, active noise cancellation, foldable design. Crystal-clear audio for music and calls.',
         basePrice: 1799,
-        img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=800&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1484704849700-f032a568e944?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1546435770-a3e426bf472b?q=80&w=800&auto=format&fit=crop',
+        ],
         isFeatured: true,
         variants: [
-          { label: 'Midnight Black', color: 'Midnight Black', price: 1799, stock: 15 },
-          { label: 'Pearl White', color: 'Pearl White', price: 1799, stock: 10 },
-          { label: 'Deep Blue', color: 'Deep Blue', price: 1849, stock: 7 },
+          {
+            label: 'Midnight Black',
+            color: 'Midnight Black',
+            img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=800&auto=format&fit=crop',
+            price: 1799,
+            stock: 15,
+          },
+          {
+            label: 'Pearl White',
+            color: 'Pearl White',
+            img: 'https://images.unsplash.com/photo-1484704849700-f032a568e944?q=80&w=800&auto=format&fit=crop',
+            price: 1799,
+            stock: 10,
+          },
+          {
+            label: 'Deep Blue',
+            color: 'Deep Blue',
+            img: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?q=80&w=800&auto=format&fit=crop',
+            price: 1849,
+            stock: 7,
+          },
         ],
       },
       {
@@ -221,11 +841,27 @@ const CATALOG: SeedCategory[] = [
         description:
           'Ultra-compact 65W GaN charger with dual USB-C ports. Charges laptops, phones, and tablets.',
         basePrice: 399,
-        img: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?q=80&w=800&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1609592806408-7b69a18a6a4f?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?q=80&w=800&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
-          { label: 'White', color: 'White', price: 399, stock: 20 },
-          { label: 'Black', color: 'Black', price: 399, stock: 18 },
+          {
+            label: 'White',
+            color: 'White',
+            img: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?q=80&w=800&auto=format&fit=crop',
+            price: 399,
+            stock: 20,
+          },
+          {
+            label: 'Black',
+            color: 'Black',
+            img: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?q=80&w=800&auto=format&fit=crop',
+            price: 399,
+            stock: 18,
+          },
         ],
       },
       {
@@ -234,39 +870,34 @@ const CATALOG: SeedCategory[] = [
         description:
           'IPX7 waterproof, 360° sound, 24-hour playtime. The perfect companion for outdoor adventures.',
         basePrice: 1099,
-        img: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?q=80&w=800&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1545454675-3531b543be5d?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1589003511492-6b67a7f22a57?q=80&w=800&auto=format&fit=crop',
+        ],
         isFeatured: true,
         variants: [
-          { label: 'Jet Black', color: 'Jet Black', price: 1099, stock: 12 },
-          { label: 'Coral Red', color: 'Coral Red', price: 1099, stock: 9 },
-          { label: 'Forest Green', color: 'Forest Green', price: 1149, stock: 6 },
-        ],
-      },
-      {
-        title: 'Smart Watch Pro',
-        slug: 'smart-watch-pro',
-        description:
-          'Health tracking, GPS, 7-day battery, AMOLED display. Stay connected and healthy.',
-        basePrice: 2499,
-        img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=600&auto=format&fit=crop',
-        isFeatured: true,
-        variants: [
-          { label: 'Obsidian Black', color: 'Obsidian Black', price: 2499, stock: 10 },
-          { label: 'Silver', color: 'Silver', price: 2599, stock: 8 },
-          { label: 'Rose Gold', color: 'Rose Gold', price: 2699, stock: 5 },
-        ],
-      },
-      {
-        title: 'True Wireless Earbuds',
-        slug: 'true-wireless-earbuds',
-        description: 'Active noise cancellation, 6+24h battery with case, IPX5 water resistance.',
-        basePrice: 1299,
-        img: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=600&auto=format&fit=crop',
-        isFeatured: false,
-        variants: [
-          { label: 'White', color: 'White', price: 1299, stock: 14 },
-          { label: 'Black', color: 'Black', price: 1299, stock: 16 },
-          { label: 'Navy Blue', color: 'Navy Blue', price: 1349, stock: 8 },
+          {
+            label: 'Jet Black',
+            color: 'Jet Black',
+            img: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?q=80&w=800&auto=format&fit=crop',
+            price: 1099,
+            stock: 12,
+          },
+          {
+            label: 'Coral Red',
+            color: 'Coral Red',
+            img: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?q=80&w=800&auto=format&fit=crop',
+            price: 1099,
+            stock: 9,
+          },
+          {
+            label: 'Forest Green',
+            color: 'Forest Green',
+            img: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=800&auto=format&fit=crop',
+            price: 1149,
+            stock: 6,
+          },
         ],
       },
     ],
@@ -280,13 +911,41 @@ const CATALOG: SeedCategory[] = [
         description:
           'Handcrafted decorative throw pillows in premium velvet. Elevate any living space.',
         basePrice: 449,
-        img: 'https://images.unsplash.com/photo-1616046386594-c152babc9e15?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1616046386594-c152babc9e15?q=80&w=800&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=800&auto=format&fit=crop',
+        ],
         isFeatured: true,
         variants: [
-          { label: 'Dusty Blue', color: 'Dusty Blue', price: 449, stock: 10 },
-          { label: 'Terracotta', color: 'Terracotta', price: 449, stock: 8 },
-          { label: 'Forest Green', color: 'Forest Green', price: 449, stock: 7 },
-          { label: 'Warm Gray', color: 'Warm Gray', price: 449, stock: 9 },
+          {
+            label: 'Dusty Blue',
+            color: 'Dusty Blue',
+            img: 'https://images.unsplash.com/photo-1616046386594-c152babc9e15?q=80&w=800&auto=format&fit=crop',
+            price: 449,
+            stock: 10,
+          },
+          {
+            label: 'Terracotta',
+            color: 'Terracotta',
+            img: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?q=80&w=800&auto=format&fit=crop',
+            price: 449,
+            stock: 8,
+          },
+          {
+            label: 'Forest Green',
+            color: 'Forest Green',
+            img: 'https://images.unsplash.com/photo-1579656381226-5fc0f0100c3b?q=80&w=800&auto=format&fit=crop',
+            price: 449,
+            stock: 7,
+          },
+          {
+            label: 'Warm Gray',
+            color: 'Warm Gray',
+            img: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=800&auto=format&fit=crop',
+            price: 449,
+            stock: 9,
+          },
         ],
       },
       {
@@ -295,12 +954,34 @@ const CATALOG: SeedCategory[] = [
         description:
           'Set of 3 hand-poured soy wax candles with cotton wicks. 40-hour burn time each.',
         basePrice: 399,
-        img: 'https://images.unsplash.com/photo-1603006905003-be475563bc59?q=80&w=600&auto=format&fit=crop',
+        img: 'https://images.unsplash.com/photo-1603006905003-be475563bc59?q=80&w=800&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?q=80&w=800&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1602607155159-3b13c1ea8a47?q=80&w=800&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
-          { label: 'Lavender & Vanilla', color: 'Lavender', price: 399, stock: 12 },
-          { label: 'Oud & Rose', color: 'Rose', price: 399, stock: 10 },
-          { label: 'Jasmine & Musk', color: 'Jasmine', price: 399, stock: 9 },
+          {
+            label: 'Lavender & Vanilla',
+            color: 'Lavender',
+            img: 'https://images.unsplash.com/photo-1603006905003-be475563bc59?q=80&w=800&auto=format&fit=crop',
+            price: 399,
+            stock: 12,
+          },
+          {
+            label: 'Oud & Rose',
+            color: 'Rose',
+            img: 'https://images.unsplash.com/photo-1602874801007-bd458bb1b8b6?q=80&w=800&auto=format&fit=crop',
+            price: 399,
+            stock: 10,
+          },
+          {
+            label: 'Jasmine & Musk',
+            color: 'Jasmine',
+            img: 'https://images.unsplash.com/photo-1572726729207-a78d6feb18d7?q=80&w=800&auto=format&fit=crop',
+            price: 399,
+            stock: 9,
+          },
         ],
       },
       {
@@ -310,6 +991,10 @@ const CATALOG: SeedCategory[] = [
           'Set of 3 handwoven bamboo baskets in nesting sizes. Eco-friendly home organization.',
         basePrice: 499,
         img: 'https://images.unsplash.com/photo-1531835551805-16d864c8d311?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
           { label: 'Natural', color: 'Natural', price: 499, stock: 8 },
@@ -354,6 +1039,10 @@ const CATALOG: SeedCategory[] = [
         description: '20% Vitamin C with hyaluronic acid. Visibly reduces dark spots in 4 weeks.',
         basePrice: 599,
         img: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: true,
         variants: [
           { label: '30ml', size: '30ml', price: 599, stock: 15 },
@@ -367,6 +1056,10 @@ const CATALOG: SeedCategory[] = [
           'Pure distilled rose water from Egyptian valleys. Hydrates, tones, and refreshes skin.',
         basePrice: 299,
         img: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
           { label: '200ml', size: '200ml', price: 299, stock: 18 },
@@ -380,6 +1073,10 @@ const CATALOG: SeedCategory[] = [
           'Deep-conditioning hair mask with Moroccan argan oil. Repairs damage, adds shine.',
         basePrice: 449,
         img: 'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1526045612212-70caf35c14df?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1582095133179-bfd08e2d6b08?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
           { label: '250ml', size: '250ml', price: 449, stock: 12 },
@@ -424,12 +1121,40 @@ const CATALOG: SeedCategory[] = [
           '6mm thick TPE yoga mat, non-slip surface, alignment lines. Includes carry strap.',
         basePrice: 699,
         img: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1518310383802-640c2de311b2?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: true,
         variants: [
-          { label: 'Purple', color: 'Purple', price: 699, stock: 10 },
-          { label: 'Teal Blue', color: 'Teal', price: 699, stock: 8 },
-          { label: 'Coral Pink', color: 'Coral', price: 699, stock: 7 },
-          { label: 'Charcoal', color: 'Charcoal', price: 699, stock: 9 },
+          {
+            label: 'Purple',
+            color: 'Purple',
+            img: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=600&auto=format&fit=crop',
+            price: 699,
+            stock: 10,
+          },
+          {
+            label: 'Teal Blue',
+            color: 'Teal',
+            img: 'https://images.unsplash.com/photo-1592432678016-e910b452f9a2?q=80&w=600&auto=format&fit=crop',
+            price: 699,
+            stock: 8,
+          },
+          {
+            label: 'Coral Pink',
+            color: 'Coral',
+            img: 'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?q=80&w=600&auto=format&fit=crop',
+            price: 699,
+            stock: 7,
+          },
+          {
+            label: 'Charcoal',
+            color: 'Charcoal',
+            img: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=600&auto=format&fit=crop',
+            price: 699,
+            stock: 9,
+          },
         ],
       },
       {
@@ -438,6 +1163,10 @@ const CATALOG: SeedCategory[] = [
         description: 'Set of 5 latex resistance bands from 5 to 40 lbs. Home workout essentials.',
         basePrice: 399,
         img: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
           { label: 'Standard Set', color: 'Multi', price: 399, stock: 15 },
@@ -450,12 +1179,40 @@ const CATALOG: SeedCategory[] = [
         description: '750ml double-wall stainless steel bottle. Keeps cold 24h, hot 12h. BPA-free.',
         basePrice: 299,
         img: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1571950006939-61c7e8c1f3e5?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
-          { label: 'Cobalt Blue', color: 'Cobalt Blue', price: 299, stock: 18 },
-          { label: 'Midnight Black', color: 'Black', price: 299, stock: 20 },
-          { label: 'Olive Green', color: 'Olive', price: 299, stock: 14 },
-          { label: 'Rose Gold', color: 'Rose Gold', price: 349, stock: 10 },
+          {
+            label: 'Cobalt Blue',
+            color: 'Cobalt Blue',
+            img: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?q=80&w=600&auto=format&fit=crop',
+            price: 299,
+            stock: 18,
+          },
+          {
+            label: 'Midnight Black',
+            color: 'Black',
+            img: 'https://images.unsplash.com/photo-1550985616-10810253b84d?q=80&w=600&auto=format&fit=crop',
+            price: 299,
+            stock: 20,
+          },
+          {
+            label: 'Olive Green',
+            color: 'Olive',
+            img: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=600&auto=format&fit=crop',
+            price: 299,
+            stock: 14,
+          },
+          {
+            label: 'Rose Gold',
+            color: 'Rose Gold',
+            img: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=600&auto=format&fit=crop',
+            price: 349,
+            stock: 10,
+          },
         ],
       },
       {
@@ -499,13 +1256,52 @@ const CATALOG: SeedCategory[] = [
           'Minimalist full-grain leather sneakers with rubber sole. The timeless everyday shoe.',
         basePrice: 1299,
         img: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: true,
         variants: [
-          { label: 'White - 38', color: 'White', size: '38', price: 1299, stock: 5 },
-          { label: 'White - 39', color: 'White', size: '39', price: 1299, stock: 8 },
-          { label: 'White - 40', color: 'White', size: '40', price: 1299, stock: 10 },
-          { label: 'White - 42', color: 'White', size: '42', price: 1299, stock: 7 },
-          { label: 'Tan - 41', color: 'Tan', size: '41', price: 1399, stock: 5 },
+          {
+            label: 'White - 38',
+            color: 'White',
+            size: '38',
+            img: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600&auto=format&fit=crop',
+            price: 1299,
+            stock: 5,
+          },
+          {
+            label: 'White - 39',
+            color: 'White',
+            size: '39',
+            img: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600&auto=format&fit=crop',
+            price: 1299,
+            stock: 8,
+          },
+          {
+            label: 'White - 40',
+            color: 'White',
+            size: '40',
+            img: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600&auto=format&fit=crop',
+            price: 1299,
+            stock: 10,
+          },
+          {
+            label: 'White - 42',
+            color: 'White',
+            size: '42',
+            img: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=600&auto=format&fit=crop',
+            price: 1299,
+            stock: 7,
+          },
+          {
+            label: 'Tan - 41',
+            color: 'Tan',
+            size: '41',
+            img: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?q=80&w=600&auto=format&fit=crop',
+            price: 1399,
+            stock: 5,
+          },
         ],
       },
       {
@@ -515,6 +1311,10 @@ const CATALOG: SeedCategory[] = [
           'Genuine leather flat sandals with adjustable ankle strap. Perfect for summer.',
         basePrice: 699,
         img: 'https://images.unsplash.com/photo-1603487742131-4160ec999306?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1562183241-b937e9102303?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
           { label: 'Tan - 37', color: 'Tan', size: '37', price: 699, stock: 7 },
@@ -529,6 +1329,10 @@ const CATALOG: SeedCategory[] = [
         description: 'Premium suede penny loafers with a leather sole. Smart-casual elegance.',
         basePrice: 1099,
         img: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1560343090-f0409e92791a?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1533867617858-e7b97e060509?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
           { label: 'Brown - 40', color: 'Brown', size: '40', price: 1099, stock: 6 },
@@ -579,6 +1383,10 @@ const CATALOG: SeedCategory[] = [
           'Spacious full-grain leather tote with interior organizer pockets. A true investment piece.',
         basePrice: 1799,
         img: 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: true,
         variants: [
           { label: 'Cognac Brown', color: 'Cognac', price: 1799, stock: 6 },
@@ -593,6 +1401,10 @@ const CATALOG: SeedCategory[] = [
           'UV400 polarized lenses with metal frame. Timeless aviator style for sun protection.',
         basePrice: 549,
         img: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1508296695146-257a814070b4?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
           { label: 'Gold/Brown Lens', color: 'Gold', price: 549, stock: 10 },
@@ -607,6 +1419,10 @@ const CATALOG: SeedCategory[] = [
           '100% mulberry silk scarf with geometric print. Versatile accessory for any look.',
         basePrice: 699,
         img: 'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1575029814437-f8e2e4abe59e?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
           { label: 'Sapphire Blue', color: 'Blue', price: 699, stock: 8 },
@@ -652,6 +1468,10 @@ const CATALOG: SeedCategory[] = [
         description: "100% GOTS-certified organic cotton romper. Gentle on baby's sensitive skin.",
         basePrice: 399,
         img: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1522771930-78848d9293e8?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
           { label: 'Sky Blue - 3-6M', color: 'Sky Blue', size: '3-6M', price: 399, stock: 10 },
@@ -666,6 +1486,10 @@ const CATALOG: SeedCategory[] = [
         description: 'Pack of 3 soft 100% cotton graphic tees with fun Egyptian-themed prints.',
         basePrice: 449,
         img: 'https://images.unsplash.com/photo-1519278409-1f56fdda7fe5?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: true,
         variants: [
           { label: 'Multi - 2Y', color: 'Multi', size: '2Y', price: 449, stock: 8 },
@@ -680,6 +1504,10 @@ const CATALOG: SeedCategory[] = [
         description: 'Durable canvas sneakers with Velcro closure. Easy on/off for active kids.',
         basePrice: 499,
         img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1514989940723-e8e51635b782?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
           { label: 'White - 24', color: 'White', size: '24', price: 499, stock: 8 },
@@ -727,6 +1555,10 @@ const CATALOG: SeedCategory[] = [
           '925 sterling silver 45cm cable chain necklace. Timeless elegance for everyday wear.',
         basePrice: 999,
         img: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1611652022419-a9419f74343d?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: true,
         variants: [
           { label: 'Silver - 40cm', color: 'Silver', size: '40cm', price: 999, stock: 10 },
@@ -741,6 +1573,10 @@ const CATALOG: SeedCategory[] = [
           '14k gold-filled hoop earrings in three sizes. Lightweight and tarnish-resistant.',
         basePrice: 799,
         img: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1573408301185-9519f94815d4?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: true,
         variants: [
           { label: 'Gold - Small (20mm)', color: 'Gold', size: '20mm', price: 799, stock: 12 },
@@ -756,6 +1592,10 @@ const CATALOG: SeedCategory[] = [
           'Handmade glass bead bracelet with adjustable cord. Bohemian style meets Egyptian craft.',
         basePrice: 349,
         img: 'https://images.unsplash.com/photo-1576402187878-974f70c890a5?q=80&w=600&auto=format&fit=crop',
+        extraImgs: [
+          'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=600&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?q=80&w=600&auto=format&fit=crop',
+        ],
         isFeatured: false,
         variants: [
           { label: 'Turquoise Blue', color: 'Turquoise', price: 349, stock: 15 },
@@ -842,6 +1682,7 @@ async function main() {
     { name: 'Men', nameAr: 'رجال', slug: 'men' },
     { name: 'Kids', nameAr: 'أطفال', slug: 'kids' },
     { name: 'Electronics', nameAr: 'إلكترونيات', slug: 'electronics' },
+    { name: 'Entertainment', nameAr: 'ترفيه', slug: 'entertainment' },
     { name: 'Home', nameAr: 'منزل', slug: 'home' },
     { name: 'Beauty', nameAr: 'جمال', slug: 'beauty' },
     { name: 'Sports', nameAr: 'رياضة', slug: 'sports' },
@@ -920,7 +1761,7 @@ async function main() {
       description: 'Official Brandy Egypt store featuring authentic local Egyptian crafts.',
       status: 'ACTIVE',
       balance: 0,
-      commissionRate: 0.15,
+      commissionRate: 0.1,
       isMultiBrand: true,
       logoUrl: LOGO_URLS[0],
     },
@@ -1001,7 +1842,7 @@ async function main() {
       name: 'Demo Affiliate',
       email: 'affiliate@demo.com',
       passwordHash: affiliatePwHash,
-      role: 'BUYER',
+      role: 'AFFILIATE',
       loyaltyPoints: 0,
       emailVerified: new Date(),
     },
@@ -1276,17 +2117,35 @@ async function main() {
       });
       productCount++;
 
-      // Product image
-      await prisma.productImage.create({
-        data: { productId: product.id, url: p.img, isPrimary: true },
+      // Product images (primary + variant + extra images)
+      const imageUrls: string[] = [p.img];
+      if (Array.isArray((p as any).images)) {
+        (p as any).images.forEach((url: string) => {
+          if (url && !imageUrls.includes(url)) imageUrls.push(url);
+        });
+      }
+      (p.variants || []).forEach((v: any) => {
+        const vImg = v.img || v.image;
+        if (vImg && !imageUrls.includes(vImg)) imageUrls.push(vImg);
       });
+      for (const extraUrl of p.extraImgs ?? []) {
+        if (extraUrl && !imageUrls.includes(extraUrl)) imageUrls.push(extraUrl);
+      }
+
+      for (let ii = 0; ii < imageUrls.length; ii++) {
+        await prisma.productImage.create({
+          data: { productId: product.id, url: imageUrls[ii], isPrimary: ii === 0 },
+        });
+      }
 
       // Variants
       for (let vi = 0; vi < p.variants.length; vi++) {
-        const v = p.variants[vi];
+        const v = p.variants[vi] as any;
         const attrs: Record<string, string> = {};
         if (v.color) attrs.color = v.color;
         if (v.size) attrs.size = v.size;
+        const vImg = v.img || v.image;
+        if (vImg) attrs.image = vImg;
 
         await prisma.productVariant.create({
           data: {

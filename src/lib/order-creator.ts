@@ -58,6 +58,9 @@ export async function createOrderForUser(
       couponCode,
       promoCode,
       paymentMethod,
+      paymentSenderDetail,
+      paymentReference,
+      paymentReceiptUrl,
       orderNotes,
       giftWrapping,
       pointsRedeemed = 0,
@@ -74,7 +77,8 @@ export async function createOrderForUser(
       });
       if (user && user.role !== 'BUYER') {
         return {
-          error: 'Only customers (buyers) can place orders. Sellers and Admins are restricted.',
+          error:
+            'Only customer accounts can place orders. Seller, Admin, and Affiliate accounts cannot purchase products.',
         };
       }
     }
@@ -183,10 +187,8 @@ export async function createOrderForUser(
       const lineTotal = price * itemInput.quantity;
       subtotal += lineTotal;
 
-      // Per-product loyalty points override (Task 8):
-      // If the product has a loyaltyPointPct, award (pct / 100 * lineTotal) points,
-      // otherwise fall back to the flat POINTS_PER_ORDER awarded once at the end.
-      const pct = (variant.product as { loyaltyPointPct?: number | null }).loyaltyPointPct;
+      // Loyalty points reward (Default 1% = 1 pt per 100 EGP spent):
+      const pct = (variant.product as { loyaltyPointPct?: number | null }).loyaltyPointPct ?? 1;
       if (typeof pct === 'number' && pct > 0) {
         loyaltyPointsToAward += Math.round((pct / 100) * lineTotal);
       }
@@ -347,6 +349,7 @@ export async function createOrderForUser(
         });
       }
 
+      const isManualTransfer = paymentMethod === 'INSTAPAY' || paymentMethod === 'VODAFONE_CASH';
       const newOrder = await tx.order.create({
         data: {
           userId,
@@ -356,14 +359,14 @@ export async function createOrderForUser(
           discountAmount,
           shippingFee,
           paymentMethod: paymentMethod as PaymentMethod,
-          paymentStatus:
-            paymentMethod === 'CASH_ON_DELIVERY'
-              ? PaymentStatus.UNPAID
-              : process.env.NODE_ENV === 'development'
-                ? PaymentStatus.PAID
-                : PaymentStatus.UNPAID,
+          paymentStatus: PaymentStatus.UNPAID,
+          paymentSenderDetail: paymentSenderDetail || null,
+          paymentReference: paymentReference || null,
+          paymentReceiptUrl: paymentReceiptUrl || null,
           status:
-            paymentMethod === 'CASH_ON_DELIVERY' || process.env.NODE_ENV === 'development'
+            paymentMethod === 'CASH_ON_DELIVERY' ||
+            isManualTransfer ||
+            process.env.NODE_ENV === 'development'
               ? OrderStatus.CONFIRMED
               : OrderStatus.PENDING_PAYMENT,
           shippingAddressSnapshot: JSON.stringify(addressSnapshot),
@@ -511,6 +514,36 @@ export async function createOrderForUser(
         }
       } catch (err) {
         console.error('WhatsApp order confirmation dispatch failed:', err);
+      }
+    })();
+
+    // Best-effort Server-Side Purchase Event (Meta CAPI & TikTok Events API for COD & Online)
+    void (async () => {
+      try {
+        const { dispatchServerPurchaseEvents } = await import('@/lib/server-events');
+        const orderWithItems = await prisma.order.findUnique({
+          where: { id: order.id },
+          include: { items: true },
+        });
+        const userObj = userId
+          ? await prisma.user.findUnique({ where: { id: userId }, select: { email: true } })
+          : null;
+        const email = userObj?.email || guestEmail || undefined;
+
+        await dispatchServerPurchaseEvents({
+          orderId: order.id,
+          totalAmount: order.totalAmount,
+          currency: 'EGP',
+          customerEmail: email,
+          customerPhone: resolvedAddress.phone,
+          items: (orderWithItems?.items || []).map(i => ({
+            id: i.variantId,
+            price: i.priceAtPurchase,
+            quantity: i.quantity,
+          })),
+        });
+      } catch (capiErr) {
+        console.error('Server purchase event dispatch failed:', capiErr);
       }
     })();
 

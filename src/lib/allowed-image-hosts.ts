@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Canonical list of image hostnames allowed across the platform.
  * Mirrors next.config.ts `images.remotePatterns` — keep them in sync.
  *
@@ -12,6 +12,12 @@ export const ALLOWED_IMAGE_HOSTNAMES: string[] = [
   'res.cloudinary.com',
   'picsum.photos',
   '*.amazonaws.com',
+  'm.media-amazon.com',
+  '*.media-amazon.com',
+  'images-na.ssl-images-amazon.com',
+  'images-eu.ssl-images-amazon.com',
+  '*.ssl-images-amazon.com',
+  'via.placeholder.com',
   '*.public.blob.vercel-storage.com',
   'blob.vercel-storage.com',
   'lh3.googleusercontent.com',

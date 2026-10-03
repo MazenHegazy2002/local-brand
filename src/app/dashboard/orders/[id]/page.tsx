@@ -165,6 +165,68 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
               </span>
             </div>
           </div>
+
+          {/* InstaPay / Vodafone Cash Transfer Info Box */}
+          {(order.paymentMethod === 'INSTAPAY' || order.paymentMethod === 'VODAFONE_CASH') && (
+            <div className="mt-6 pt-6 border-t border-slate-100 bg-slate-50/70 p-4 rounded-xl space-y-3">
+              <h3 className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                <span>{order.paymentMethod === 'INSTAPAY' ? '⚡' : '📲'}</span>
+                {order.paymentMethod === 'INSTAPAY'
+                  ? t('InstaPay Transfer Details', 'تفاصيل تحويل انستا باي')
+                  : t('Vodafone Cash Transfer Details', 'تفاصيل تحويل فودافون كاش')}
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                {order.paymentSenderDetail && (
+                  <div className="bg-white p-3 rounded-lg border border-slate-200">
+                    <span className="text-slate-400 font-semibold block">
+                      {t('Sender Account / Phone:', 'حساب / رقم المرسل:')}
+                    </span>
+                    <span className="font-bold text-slate-900 font-mono">
+                      {order.paymentSenderDetail}
+                    </span>
+                  </div>
+                )}
+                {order.paymentReference && (
+                  <div className="bg-white p-3 rounded-lg border border-slate-200">
+                    <span className="text-slate-400 font-semibold block">
+                      {t('Transaction Ref No:', 'رقم مرجع العملية:')}
+                    </span>
+                    <span className="font-bold text-slate-900 font-mono">
+                      {order.paymentReference}
+                    </span>
+                  </div>
+                )}
+                <div className="bg-white p-3 rounded-lg border border-slate-200">
+                  <span className="text-slate-400 font-semibold block">
+                    {t('Verification Status:', 'حالة التحقق:')}
+                  </span>
+                  <span
+                    className={`font-bold ${order.paymentStatus === 'PAID' ? 'text-emerald-600' : 'text-amber-600'}`}
+                  >
+                    {order.paymentStatus === 'PAID'
+                      ? t('Verified & Confirmed ✓', 'تم التحقق والتأكيد ✓')
+                      : t('Pending Admin Verification', 'قيد مراجعة وتأكيد الأدمن')}
+                  </span>
+                </div>
+              </div>
+
+              {order.paymentReceiptUrl && (
+                <div className="pt-2">
+                  <span className="text-xs font-semibold text-slate-500 block mb-1">
+                    {t('Attached Receipt Screenshot:', 'صورة إيصال التحويل المرفقة:')}
+                  </span>
+                  <a href={order.paymentReceiptUrl} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={order.paymentReceiptUrl}
+                      alt="Payment Receipt"
+                      className="w-24 h-24 object-cover rounded-lg border border-slate-200 hover:opacity-90 transition-opacity"
+                    />
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── Tracking Timeline ─────────────────────────────────────── */}

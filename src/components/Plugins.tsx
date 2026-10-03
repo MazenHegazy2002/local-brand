@@ -66,7 +66,7 @@ export default function Plugins() {
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
   const crispId = process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID;
   const hotjarId = process.env.NEXT_PUBLIC_HOTJAR_ID;
-  const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+  const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID || '1150111797667939';
 
   // New expansion marketing pixels & telemetry
   const tiktokPixelId = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;

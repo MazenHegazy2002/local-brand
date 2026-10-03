@@ -18,6 +18,16 @@ export function ImageGallery({ images, showLightbox = true, className = '' }: Im
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isZoomed, _setIsZoomed] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [failedIndices, setFailedIndices] = useState<Record<number, boolean>>({});
+
+  const getImageSrc = (index: number) => {
+    if (failedIndices[index]) return '/placeholder.png';
+    return images[index]?.src || '/placeholder.png';
+  };
+
+  const handleImageError = (index: number) => {
+    setFailedIndices(prev => ({ ...prev, [index]: true }));
+  };
 
   const goToPrevious = useCallback(() => {
     setCurrentIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
@@ -47,11 +57,12 @@ export function ImageGallery({ images, showLightbox = true, className = '' }: Im
         onClick={() => showLightbox && setIsLightboxOpen(true)}
       >
         <Image
-          src={images[currentIndex].src}
+          src={getImageSrc(currentIndex)}
           alt={images[currentIndex].alt || 'Product image'}
           fill
           className={`object-cover transition-transform duration-300 ${isZoomed ? 'scale-150' : 'group-hover:scale-105'}`}
           priority
+          onError={() => handleImageError(currentIndex)}
         />
         {images.length > 1 && (
           <>
@@ -104,10 +115,11 @@ export function ImageGallery({ images, showLightbox = true, className = '' }: Im
               className={`relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors ${currentIndex === i ? 'border-[hsl(var(--primary))]' : 'border-transparent hover:border-gray-300'}`}
             >
               <Image
-                src={img.src}
+                src={getImageSrc(i)}
                 alt={img.alt || `Thumbnail ${i + 1}`}
                 fill
                 className="object-cover"
+                onError={() => handleImageError(i)}
               />
             </button>
           ))}
@@ -155,10 +167,11 @@ export function ImageGallery({ images, showLightbox = true, className = '' }: Im
           </button>
           <div className="relative w-[90vw] h-[90vh] max-w-4xl" onClick={e => e.stopPropagation()}>
             <Image
-              src={images[currentIndex].src}
+              src={getImageSrc(currentIndex)}
               alt={images[currentIndex].alt || 'Product image'}
               fill
               className="object-contain"
+              onError={() => handleImageError(currentIndex)}
             />
           </div>
           <button

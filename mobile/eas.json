@@ -1,0 +1,39 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://brandyy.shop"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://brandyy.shop"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://brandyy.shop"
+      },
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "YOUR_APPLE_ID",
+        "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-key.json",
+        "track": "production"
+      }
+    }
+  }
+}

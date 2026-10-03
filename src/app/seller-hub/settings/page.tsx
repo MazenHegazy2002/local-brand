@@ -206,17 +206,20 @@ export default function SellerSettingsPage() {
           </svg>
           Back to Shop
         </Link>
-        <Link href="/seller-hub" className="nav-item">
+        <Link href="/seller-hub?tab=overview" className="nav-item">
           Overview
         </Link>
-        <Link href="/seller-hub" className="nav-item">
+        <Link href="/seller-hub?tab=orders" className="nav-item">
           Orders
         </Link>
-        <Link href="/seller-hub" className="nav-item">
-          Products
+        <Link href="/seller-hub?tab=products" className="nav-item">
+          Inventory
         </Link>
-        <Link href="/seller-hub/returns" className="nav-item">
-          Returns
+        <Link href="/seller-hub?tab=analytics" className="nav-item">
+          Analytics
+        </Link>
+        <Link href="/seller-hub?tab=wallet" className="nav-item">
+          Wallet
         </Link>
         <Link href="/seller-hub/settings" className="nav-item active">
           Settings

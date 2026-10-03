@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { OrderItemStatus, OrderStatus } from '@/generated/client';
+import { OrderItemStatus, OrderStatus, PaymentStatus } from '@/generated/client';
 import type { SessionUser } from '@/types';
 
 // Admin-only order management. The buyer-facing /api/orders/[id]/status route
@@ -25,6 +25,9 @@ const updateSchema = z.object({
   // Force any status transition. Bypasses the buyer-facing state machine on
   // purpose — admins routinely need to fix orders that got stuck.
   status: z.enum(ALL_STATUSES).optional(),
+  paymentStatus: z
+    .enum(['UNPAID', 'AUTHORIZED', 'PAID', 'FAILED', 'REFUNDED', 'PARTIALLY_REFUNDED'])
+    .optional(),
   // Edits to the inline shipping snapshot. We rewrite the JSON blob so all
   // downstream readers (invoice, track page, seller hub) see the new info.
   shipping: z
@@ -74,11 +77,16 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
     const data: {
       status?: OrderStatus;
+      paymentStatus?: PaymentStatus;
       shippingAddressSnapshot?: string;
       orderNotes?: string | null;
       giftWrapping?: boolean;
       deliveredAt?: Date | null;
     } = {};
+
+    if (parsed.data.paymentStatus) {
+      data.paymentStatus = parsed.data.paymentStatus as PaymentStatus;
+    }
 
     if (parsed.data.status) {
       data.status = parsed.data.status as OrderStatus;

@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import type { SessionUser } from '@/types';
+import { productImageUrl } from '@/lib/image-url';
+import { getRequestUser } from '@/lib/mobile-auth';
 
 // Helper to resolve unique SKU for new variants during edit
 async function resolveSku(
@@ -43,7 +45,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ message: 'Product not found' }, { status: 404 });
     }
 
-    return NextResponse.json(product, { status: 200 });
+    // Disk-stored paths become absolute for the app. data: URLs stay as-is: the web
+    // edit form PUTs these back, and a stream URL would point at a deleted row.
+    const images = product.images.map(i =>
+      i.url.startsWith('/') ? { ...i, url: productImageUrl(req, i) } : i
+    );
+    return NextResponse.json({ ...product, images }, { status: 200 });
   } catch (error) {
     console.error('[products/[id]] GET error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
@@ -54,12 +61,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    // Cookie session (web) or Bearer token (app).
+    const user = await getRequestUser(req);
+    if (!user) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = session.user as SessionUser;
     const product = await prisma.product.findUnique({
       where: { id },
       include: { seller: true },

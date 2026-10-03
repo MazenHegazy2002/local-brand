@@ -2,7 +2,7 @@
 // USER TYPES
 // ============================================
 
-export type Role = 'BUYER' | 'SELLER' | 'ADMIN';
+export type Role = 'BUYER' | 'SELLER' | 'ADMIN' | 'AFFILIATE';
 
 export interface User {
   id: string;
@@ -223,7 +223,9 @@ export type PaymentMethod =
   | 'CASH_ON_DELIVERY'
   | 'PAYMOB'
   | 'FAWRY'
-  | 'PAYSKY';
+  | 'PAYSKY'
+  | 'INSTAPAY'
+  | 'VODAFONE_CASH';
 export type PaymentStatus =
   | 'UNPAID'
   | 'AUTHORIZED'
@@ -249,6 +251,9 @@ export interface Order {
   paymentChannel?: string | null;
   paymentNetworkRef?: string | null;
   paymentMaskedPan?: string | null;
+  paymentSenderDetail?: string | null;
+  paymentReference?: string | null;
+  paymentReceiptUrl?: string | null;
   idempotencyKey: string | null;
   payoutProcessedAt?: Date | null;
   orderNotes?: string | null;

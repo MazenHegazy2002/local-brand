@@ -1,0 +1,8 @@
+-- AlterEnum
+ALTER TYPE "PaymentMethod" ADD VALUE IF NOT EXISTS 'INSTAPAY';
+ALTER TYPE "PaymentMethod" ADD VALUE IF NOT EXISTS 'VODAFONE_CASH';
+
+-- AlterTable
+ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "paymentSenderDetail" TEXT;
+ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "paymentReference" TEXT;
+ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "paymentReceiptUrl" TEXT;

@@ -3,7 +3,7 @@
 // ============================================================
 
 export const VAT_RATE = 0.14; // Egypt VAT 14%
-export const DEFAULT_COMMISSION_RATE = 0.15; // Platform takes 15%
+export const DEFAULT_COMMISSION_RATE = 0.1; // Platform takes 10%
 // Hard cap: no coupon/promo can discount more than 60% of the pre-discount subtotal.
 // Prevents promotional codes from being used to buy products for near-zero cost.
 export const MAX_DISCOUNT_PCT = 0.6;
@@ -112,8 +112,22 @@ const rawWa = process.env.NEXT_PUBLIC_CONTACT_WHATSAPP || '';
 export const CONTACT_WHATSAPP = !rawWa || rawWa.includes('94379477') ? '+20 10 20960757' : rawWa;
 
 // ============================================================
-// PAYMENT GATEWAYS
+// PAYMENT GATEWAYS & DIRECT TRANSFERS
 // ============================================================
+export const VODAFONE_CASH_DETAILS = {
+  number: process.env.NEXT_PUBLIC_VODAFONE_CASH_NUMBER || '01094379477',
+  accountName: process.env.NEXT_PUBLIC_VODAFONE_CASH_NAME || 'Mazen H M (مازن حجازي مجاهد)',
+  dialShortcut: '*9*7#',
+};
+
+export const INSTAPAY_DETAILS = {
+  ipa: process.env.NEXT_PUBLIC_INSTAPAY_IPA || 'mazenhegazyy@instapay',
+  number: process.env.NEXT_PUBLIC_INSTAPAY_NUMBER || '01094379477',
+  accountName: process.env.NEXT_PUBLIC_INSTAPAY_NAME || 'Mazen H M',
+  payLink: process.env.NEXT_PUBLIC_INSTAPAY_LINK || 'https://ipn.eg/S/mazenhegazyy/instapay/6T8DOJ',
+  qrImageUrl: process.env.NEXT_PUBLIC_INSTAPAY_QR_URL || '/images/instapay-qr.jpg',
+};
+
 /**
  * Stripe API version used by every Stripe client constructor in the app.
  * Centralised so version bumps are a single-line change.

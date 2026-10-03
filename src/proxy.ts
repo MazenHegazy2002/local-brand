@@ -167,6 +167,18 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const method = (req.method ?? 'GET').toUpperCase();
 
+  // Handle CORS preflight for mobile app (Expo Web on a different port)
+  if (method === 'OPTIONS') {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+      },
+    });
+  }
+
   // Detect Arabic / Franko subpath
   const isArabic = pathname === '/ar' || pathname.startsWith('/ar/');
   const isFranko = !isArabic && (pathname === '/fk' || pathname.startsWith('/fk/'));
@@ -213,9 +225,13 @@ export async function proxy(req: NextRequest) {
   // 2. CSRF enforcement — POST/PATCH/PUT/DELETE on our own API routes.
   //    Webhook callbacks are exempt (they arrive from external servers).
   //    Skipped in development so curl / Postman still works locally.
+  //    Bearer requests (mobile app) are exempt: CSRF rides on ambient cookies,
+  //    and getRequestUserId ignores cookies whenever a Bearer header is sent.
   const isProd = process.env.NODE_ENV === 'production';
+  const hasBearer = req.headers.get('authorization')?.startsWith('Bearer ') ?? false;
   if (
     isProd &&
+    !hasBearer &&
     targetPathname.startsWith('/api') &&
     ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) &&
     !isCsrfExempt(targetPathname)
@@ -234,7 +250,13 @@ export async function proxy(req: NextRequest) {
     targetPathname.startsWith('/static') ||
     targetPathname.includes('.') // static files
   ) {
-    return NextResponse.next();
+    const res = NextResponse.next();
+    if (targetPathname.startsWith('/api/')) {
+      res.headers.set('Access-Control-Allow-Origin', '*');
+      res.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+      res.headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    }
+    return res;
   }
 
   // Get session token
@@ -243,10 +265,12 @@ export async function proxy(req: NextRequest) {
   // ── Maintenance mode gate ──────────────────────────────────────────────
   // When MAINTENANCE_MODE is on, everyone except admins (and the admin-os
   // surface itself) gets redirected to /maintenance. Admin login still
-  // works so the operator can flip the switch back off.
+  // works so the operator can flip the switch back off. /api/app/config stays
+  // reachable so the mobile app can fetch its "stopped" status + message.
   if (
     !targetPathname.startsWith('/admin-os') &&
     !targetPathname.startsWith('/api/admin') &&
+    !targetPathname.startsWith('/api/app/config') &&
     !targetPathname.startsWith('/login') &&
     !targetPathname.startsWith('/maintenance')
   ) {
@@ -266,9 +290,9 @@ export async function proxy(req: NextRequest) {
       !targetPathname.startsWith('/seller/apply')) ||
     targetPathname === '/seller-hub';
   const dashboardRoutes = targetPathname.startsWith('/dashboard');
-  const affiliateRoutes =
-    targetPathname.startsWith('/affiliate/dashboard') ||
-    targetPathname.startsWith('/api/affiliate/dashboard');
+  // /api/affiliate/dashboard is not listed: the route authenticates itself
+  // (cookie or the app's Bearer token), and this cookie-only gate 401'd the app.
+  const affiliateRoutes = targetPathname.startsWith('/affiliate/dashboard');
 
   // If no user is logged in, redirect to login (except for public shop pages)
   if (!token) {
@@ -304,6 +328,28 @@ export async function proxy(req: NextRequest) {
   // Get user role from token
   const role = token.role || 'BUYER';
 
+  // Affiliate Routes & Redirect Protection
+  if (role === 'AFFILIATE') {
+    // Block Affiliates from buyer dashboard, seller hub, admin OS, cart, checkout
+    if (
+      dashboardRoutes ||
+      sellerRoutes ||
+      adminRoutes ||
+      targetPathname.startsWith('/checkout') ||
+      targetPathname.startsWith('/cart')
+    ) {
+      if (targetPathname.startsWith('/api/')) {
+        return NextResponse.json(
+          { message: 'Affiliate accounts cannot perform buyer actions.' },
+          { status: 403 }
+        );
+      }
+      return NextResponse.redirect(
+        new URL(isArabic ? '/ar/affiliate/dashboard' : '/affiliate/dashboard', req.url)
+      );
+    }
+  }
+
   // Admin Routes Protection
   if (adminRoutes && role !== 'ADMIN') {
     if (targetPathname.startsWith('/api/')) {
@@ -313,16 +359,25 @@ export async function proxy(req: NextRequest) {
     if (role === 'SELLER') {
       return NextResponse.redirect(new URL(isArabic ? '/ar/seller-hub' : '/seller-hub', req.url));
     }
+    if (role === 'AFFILIATE') {
+      return NextResponse.redirect(
+        new URL(isArabic ? '/ar/affiliate/dashboard' : '/affiliate/dashboard', req.url)
+      );
+    }
     return NextResponse.redirect(new URL(isArabic ? '/ar/dashboard' : '/dashboard', req.url));
   }
 
   // Seller Routes Protection (SellerHub, /sell, /seller/*)
   if (sellerRoutes && role !== 'SELLER' && role !== 'ADMIN') {
-    // If trying to access seller area as buyer, go to customer dashboard
+    if (role === 'AFFILIATE') {
+      return NextResponse.redirect(
+        new URL(isArabic ? '/ar/affiliate/dashboard' : '/affiliate/dashboard', req.url)
+      );
+    }
     return NextResponse.redirect(new URL(isArabic ? '/ar/dashboard' : '/dashboard', req.url));
   }
 
-  // Customer Dashboard Protection (Block Buyers from Seller areas)
+  // Customer Dashboard Protection (Block non-buyers from Seller/Admin areas)
   if ((sellerRoutes || adminRoutes) && role === 'BUYER') {
     return NextResponse.redirect(new URL(isArabic ? '/ar/dashboard' : '/dashboard', req.url));
   }
