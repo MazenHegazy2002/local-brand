@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
+import { useLanguage } from '@/providers/LanguageContext';
 
 interface Notification {
   id: string;
@@ -24,12 +25,18 @@ function timeAgo(dateStr: string) {
 }
 
 const typeIcon = { order: '📦', promo: '🔥', system: '🔔' };
-const typeBg  = { order: 'bg-blue-50',  promo: 'bg-orange-50',  system: 'bg-gray-50'  };
+const typeBg = { order: 'bg-blue-50', promo: 'bg-orange-50', system: 'bg-gray-50' };
 const typeDot = { order: 'bg-blue-500', promo: 'bg-orange-400', system: 'bg-gray-400' };
 
 export default function NotificationBell() {
   const { data: session } = useSession();
-  const { notifications: realtimeNotifications, isConnected, unreadCount, markAllAsRead, markAsRead } = useRealtimeNotifications();
+  const {
+    notifications: realtimeNotifications,
+    isConnected,
+    unreadCount,
+    markAllAsRead,
+    markAsRead,
+  } = useRealtimeNotifications();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -55,13 +62,13 @@ export default function NotificationBell() {
   };
   const handleMarkRead = (id: string) => {
     markAsRead(id);
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
   };
 
-  if (!session) return null;
+  const { lang } = useLanguage();
+  const isRtl = lang === 'ar';
 
-  // Detect RTL so we can anchor the panel correctly
-  const isRtl = typeof document !== 'undefined' && document.documentElement.dir === 'rtl';
+  if (!session) return null;
 
   return (
     <div className="relative" ref={ref}>
@@ -72,9 +79,18 @@ export default function NotificationBell() {
         className="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-white/15 transition-colors"
         aria-label="Notifications"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {currentUnreadCount > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none shadow">
@@ -146,7 +162,9 @@ export default function NotificationBell() {
                           )}
                           <p className="text-xs font-bold text-gray-900 truncate">{n.title}</p>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{n.message}</p>
+                        <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">
+                          {n.message}
+                        </p>
                         <p className="text-[10px] text-gray-400 mt-1.5">{timeAgo(n.createdAt)}</p>
                       </div>
 
@@ -157,8 +175,17 @@ export default function NotificationBell() {
                           title={isRtl ? 'تحديد كمقروء' : 'Mark as read'}
                           className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-white border border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-400 hover:text-blue-500 flex items-center justify-center transition-all"
                         >
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12"/>
+                          <svg
+                            width="11"
+                            height="11"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
                           </svg>
                         </button>
                       )}

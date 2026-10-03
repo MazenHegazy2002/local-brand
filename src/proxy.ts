@@ -179,9 +179,11 @@ export async function proxy(req: NextRequest) {
     });
   }
 
-  // Detect Arabic subpath
+  // Detect Arabic / Franko subpath
   const isArabic = pathname === '/ar' || pathname.startsWith('/ar/');
-  const targetPathname = isArabic ? (pathname === '/ar' ? '/' : pathname.substring(3)) : pathname;
+  const isFranko = !isArabic && (pathname === '/fk' || pathname.startsWith('/fk/'));
+  const targetPathname =
+    isArabic || isFranko ? (pathname.length <= 3 ? '/' : pathname.substring(3)) : pathname;
 
   // Issue the CSRF token cookie if the browser doesn't have one yet.
   // Set it on request headers as well so server components can read it via cookies().
@@ -304,7 +306,7 @@ export async function proxy(req: NextRequest) {
     }
 
     // Set language header
-    req.headers.set('x-lang', isArabic ? 'ar' : 'en');
+    req.headers.set('x-lang', isArabic ? 'ar' : isFranko ? 'fk' : 'en');
 
     const response = isArabic
       ? NextResponse.rewrite(new URL(targetPathname + req.nextUrl.search, req.url), {
@@ -381,7 +383,7 @@ export async function proxy(req: NextRequest) {
   }
 
   // Set language header
-  req.headers.set('x-lang', isArabic ? 'ar' : 'en');
+  req.headers.set('x-lang', isArabic ? 'ar' : isFranko ? 'fk' : 'en');
 
   const response = isArabic
     ? NextResponse.rewrite(new URL(targetPathname + req.nextUrl.search, req.url), {

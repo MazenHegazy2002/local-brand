@@ -191,6 +191,7 @@ export default function WishlistPage() {
                   </button>
                   <button
                     onClick={() => addToCart(item)}
+                    data-track="add-to-cart"
                     className={`flex-1 py-2 text-xs font-medium rounded ${
                       addedToCart[item.productId]
                         ? 'bg-green-500 text-white'

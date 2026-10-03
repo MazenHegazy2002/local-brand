@@ -5,6 +5,7 @@ import { useCartStore } from '@/lib/cartStore';
 import Link from 'next/link';
 import { ShoppingCart, Trash2, Tag, X } from 'lucide-react';
 import { Drawer, Button, QuantitySelector } from '@/components/ui';
+import { useLanguage } from '@/providers/LanguageContext';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface CartDrawerProps {
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, removeItem, updateQty, total, clearCart, rewriteId } = useCartStore();
+  const { t, lang } = useLanguage();
   const [isAnimating, setIsAnimating] = useState(false);
 
   // Promo code state
@@ -65,9 +67,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         setPromoCode('');
         return;
       }
-      setPromoError(affData.reason || couponData.message || 'Invalid promo code');
+      setPromoError(affData.reason || couponData.message || t('InvalidPromoCode'));
     } catch {
-      setPromoError('Failed to apply promo code');
+      setPromoError(t('PromoApplyFailed'));
     } finally {
       setApplyingPromo(false);
     }
@@ -133,13 +135,13 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   if (!isOpen && !isAnimating) return null;
 
   return (
-    <Drawer open={isOpen} onClose={onClose} title="Your Cart" position="right" width="420px">
+    <Drawer open={isOpen} onClose={onClose} title={t('Cart')} position="right" width="420px">
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full gap-4 py-12">
           <ShoppingCart size={64} className="opacity-20" />
-          <p className="text-gray-500 text-center">Your cart is empty</p>
+          <p className="text-gray-500 text-center">{t('EmptyCart')}</p>
           <Button onClick={onClose} variant="outline">
-            Continue Shopping
+            {t('ContinueShopping')}
           </Button>
         </div>
       ) : (
@@ -181,18 +183,18 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     <div className="flex flex-wrap gap-1.5 mb-1.5 text-xs text-gray-500 font-medium">
                       {item.selectedColor && (
                         <span className="bg-gray-100 px-2 py-0.5 rounded-full">
-                          Color: {item.selectedColor}
+                          {t('Color')}: {item.selectedColor}
                         </span>
                       )}
                       {item.selectedSize && (
                         <span className="bg-gray-100 px-2 py-0.5 rounded-full">
-                          Size: {item.selectedSize}
+                          {t('Size')}: {item.selectedSize}
                         </span>
                       )}
                     </div>
                   )}
                   <p className="text-[hsl(var(--primary))] font-bold mb-2">
-                    {(item.price * item.qty).toLocaleString()} EGP
+                    {(item.price * item.qty).toLocaleString()} {t('EGP')}
                   </p>
 
                   <div className="flex items-center gap-3">
@@ -205,7 +207,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       onClick={() => removeItem(item.id)}
                       className="text-red-500 text-sm font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors flex items-center gap-1"
                     >
-                      <Trash2 size={14} /> Remove
+                      <Trash2 size={14} /> {t('CheckoutRemove')}
                     </button>
                   </div>
                 </div>
@@ -221,7 +223,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   <Tag size={14} />
                   <span className="text-sm font-bold">{promoApplied.code}</span>
                   <span className="text-sm text-green-600">
-                    −{promoApplied.discount.toLocaleString()} EGP
+                    −{promoApplied.discount.toLocaleString()} {t('EGP')}
                   </span>
                 </div>
                 <button
@@ -230,7 +232,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     setPromoError('');
                   }}
                   className="text-green-700 hover:text-green-900"
-                  aria-label="Remove promo code"
+                  aria-label={lang === 'ar' ? 'إزالة كود الخصم' : 'Remove promo code'}
                 >
                   <X size={14} />
                 </button>
@@ -246,7 +248,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       setPromoError('');
                     }}
                     onKeyDown={e => e.key === 'Enter' && applyPromo()}
-                    placeholder="Promo / affiliate code"
+                    placeholder={t('PromoCodePlaceholder')}
                     className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
                   />
                   <button
@@ -254,7 +256,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     disabled={applyingPromo || !promoCode.trim()}
                     className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-bold disabled:opacity-50 shrink-0"
                   >
-                    {applyingPromo ? '...' : 'Apply'}
+                    {applyingPromo ? '...' : t('CheckoutApply')}
                   </button>
                 </div>
                 {promoError && <p className="text-red-500 text-xs mt-1">{promoError}</p>}
@@ -263,40 +265,39 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
             {/* Subtotal */}
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">Subtotal</span>
+              <span className="text-gray-500">{t('Subtotal')}</span>
               <span
                 className={`text-xl font-bold ${promoApplied ? 'text-gray-400 line-through text-base' : 'text-gray-900'}`}
               >
-                {total().toLocaleString()} EGP
+                {total().toLocaleString()} {t('EGP')}
               </span>
             </div>
             {promoApplied && (
               <div className="flex justify-between items-center -mt-3">
-                <span className="text-green-600 text-sm font-medium">After discount</span>
+                <span className="text-green-600 text-sm font-medium">{t('AfterDiscount')}</span>
                 <span className="text-xl font-bold text-gray-900">
-                  {Math.max(0, total() - promoApplied.discount).toLocaleString()} EGP
+                  {Math.max(0, total() - promoApplied.discount).toLocaleString()} {t('EGP')}
                 </span>
               </div>
             )}
-            <p className="text-xs text-gray-400">Shipping & taxes calculated at checkout</p>
+            <p className="text-xs text-gray-400">{t('ShippingNote')}</p>
 
             {isReadOnly ? (
               <div className="w-full bg-amber-50 text-amber-900 border border-amber-300 py-3 px-4 rounded-xl font-bold text-center text-xs space-y-1">
                 <p className="font-bold flex items-center justify-center gap-1">
-                  <span>👀</span> Read-Only Mode Active
+                  <span>👀</span> {t('ReadOnlyMode')}
                 </p>
-                <p className="text-[11px] text-amber-800 font-normal">
-                  Checkout is temporarily paused. Cart items are saved!
-                </p>
+                <p className="text-[11px] text-amber-800 font-normal">{t('ReadOnlyModeDesc')}</p>
               </div>
             ) : (
               <Link
                 href={promoApplied ? `/checkout?promo=${promoApplied.code}` : '/checkout'}
                 onClick={onClose}
+                data-track="checkout"
                 className="block text-center w-full bg-[hsl(var(--primary))] text-white py-3.5 rounded-xl font-bold hover:opacity-90 transition-all"
               >
-                Checkout — {Math.max(0, total() - (promoApplied?.discount ?? 0)).toLocaleString()}{' '}
-                EGP
+                {t('Checkout')} —{' '}
+                {Math.max(0, total() - (promoApplied?.discount ?? 0)).toLocaleString()} {t('EGP')}
               </Link>
             )}
 
@@ -304,7 +305,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               onClick={clearCart}
               className="w-full py-2.5 text-gray-500 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition-colors"
             >
-              Clear cart
+              {t('ClearCart')}
             </button>
           </div>
         </>

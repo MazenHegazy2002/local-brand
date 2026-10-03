@@ -61,10 +61,10 @@ export default function Navbar() {
     role === 'SELLER'
       ? '/seller-hub'
       : role === 'ADMIN'
-      ? '/admin-os'
-      : role === 'AFFILIATE'
-      ? '/affiliate/dashboard'
-      : '/dashboard';
+        ? '/admin-os'
+        : role === 'AFFILIATE'
+          ? '/affiliate/dashboard'
+          : '/dashboard';
 
   // Close the user menu on outside click and on Escape so it works
   // identically on desktop and on mobile / touch devices.
@@ -91,12 +91,12 @@ export default function Navbar() {
       {/* Upper fixed banner for Affiliate Program */}
       {mounted && (
         <div className="w-full bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-white py-2 px-4 text-center text-xs font-black tracking-wide shadow-sm flex items-center justify-center gap-1.5 uppercase transition-all duration-300 hover:brightness-105">
-          <span>📢 Earn up to 10% cash on every purchase!</span>
+          <span>📢 {t('NavAffiliateBanner')}</span>
           <Link
             href="/affiliate"
             className="underline hover:text-amber-100 transition-colors inline-flex items-center gap-0.5"
           >
-            Join Affiliate Program
+            {t('AffiliateJoinProgram')}
             <svg
               className="w-3.5 h-3.5"
               fill="none"
@@ -216,7 +216,7 @@ export default function Navbar() {
                 className="hidden lg:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-[hsl(var(--accent))] text-[hsl(var(--primary))] hover:opacity-90 transition-opacity shrink-0"
               >
                 <Store size={13} />
-                Start Selling
+                {t('FooterStartSelling')}
               </Link>
             )}
 

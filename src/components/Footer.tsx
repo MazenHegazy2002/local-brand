@@ -4,34 +4,35 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { PLATFORM_NAME, SUPPORT_EMAIL, CONTACT_PHONE, CONTACT_WHATSAPP } from '@/lib/constants';
+import { useLanguage } from '@/providers/LanguageContext';
 
 const FOOTER_LINKS = {
   shop: [
-    { label: 'All Products', href: '/shop' },
+    { label: 'AllProducts', href: '/shop' },
     { label: 'Categories', href: '/categories' },
-    { label: 'Flash Sales', href: '/flash-sales' },
-    { label: 'Lookbook', href: '/lookbook' },
-    { label: 'Brands', href: '/brands' },
+    { label: 'FlashSales', href: '/flash-sales' },
+    { label: 'FooterLookbook', href: '/lookbook' },
+    { label: 'FooterBrands', href: '/brands' },
   ],
   sell: [
-    { label: 'Start Selling', href: '/become-seller' },
-    { label: 'Seller Hub', href: '/seller-hub' },
-    { label: 'Seller Terms', href: '/legal/seller-terms' },
-    { label: 'Affiliate Program', href: '/affiliate' },
+    { label: 'FooterStartSelling', href: '/become-seller' },
+    { label: 'FooterSellerHub', href: '/seller-hub' },
+    { label: 'FooterSellerTerms', href: '/legal/seller-terms' },
+    { label: 'FooterAffiliateProgram', href: '/affiliate' },
   ],
   help: [
-    { label: 'Help Center', href: '/help' },
-    { label: 'Track My Order', href: '/track' },
-    { label: 'Returns & Refunds', href: '/legal/returns-refunds' },
-    { label: 'Shipping Policy', href: '/legal/shipping-policy' },
-    { label: 'Contact Us', href: '/contact' },
+    { label: 'FooterHelpCenter', href: '/help' },
+    { label: 'TrackOrder', href: '/track' },
+    { label: 'FooterReturnsRefunds', href: '/legal/returns-refunds' },
+    { label: 'FooterShippingPolicy', href: '/legal/shipping-policy' },
+    { label: 'FooterContactUs', href: '/contact' },
   ],
   legal: [
-    { label: 'Privacy Policy', href: '/legal/privacy-policy' },
-    { label: 'Terms of Service', href: '/legal' },
-    { label: 'Returns Policy', href: '/legal/returns-refunds' },
+    { label: 'FooterPrivacyPolicy', href: '/legal/privacy-policy' },
+    { label: 'FooterTermsOfService', href: '/legal' },
+    { label: 'FooterReturnsPolicy', href: '/legal/returns-refunds' },
   ],
-};
+} as const;
 
 const SOCIAL_LINKS = [
   {
@@ -45,7 +46,9 @@ const SOCIAL_LINKS = [
   },
   {
     name: 'Facebook',
-    href: process.env.NEXT_PUBLIC_FACEBOOK_URL || 'https://www.facebook.com/profile.php?id=61592841315018',
+    href:
+      process.env.NEXT_PUBLIC_FACEBOOK_URL ||
+      'https://www.facebook.com/profile.php?id=61592841315018',
     icon: (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path
@@ -69,6 +72,7 @@ const SOCIAL_LINKS = [
 
 export default function Footer() {
   const pathname = usePathname();
+  const { t } = useLanguage();
   const year = new Date().getFullYear();
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -97,11 +101,11 @@ export default function Footer() {
         setEmail('');
       } else {
         setStatus('error');
-        setErrorMsg(data.message || 'Failed to subscribe.');
+        setErrorMsg(data.message || t('FooterSubscribeFailed'));
       }
     } catch {
       setStatus('error');
-      setErrorMsg('An error occurred. Please try again.');
+      setErrorMsg(t('FooterGenericError'));
     } finally {
       setSubmitting(false);
     }
@@ -118,8 +122,7 @@ export default function Footer() {
               {PLATFORM_NAME}
             </Link>
             <p className="mt-3 text-sm text-white/80 leading-relaxed max-w-xs">
-              Egypt&apos;s marketplace for local sellers. Discover authentic Egyptian brands and
-              shop with confidence.
+              {t('FooterTagline')}
             </p>
             <div className="mt-4 space-y-1 text-sm text-white/80">
               <a
@@ -173,7 +176,7 @@ export default function Footer() {
                     <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347m-5.421 7.461c-1.926 0-3.725-.517-5.285-1.416l-.379-.221-3.928 1.03 1.048-3.829-.247-.394A9.85 9.85 0 0 1 2.038 12c0-5.452 4.436-9.889 9.889-9.889 2.64 0 5.12 1.03 6.988 2.898a9.825 9.825 0 0 1 2.895 6.99c0 5.452-4.437 9.89-9.889 9.89m0-21.78C5.455.063.063 5.455.063 12c0 2.1.547 4.148 1.587 5.952L0 24l6.191-1.624C7.904 23.36 9.917 24 12.051 24c6.545 0 11.937-5.393 11.937-11.937 0-3.189-1.242-6.188-3.497-8.444C18.238 1.363 15.24.063 12.051.063" />
                     </svg>
-                    WhatsApp Support
+                    {t('FooterWhatsAppSupport')}
                   </a>
                 </div>
               )}
@@ -197,7 +200,9 @@ export default function Footer() {
 
           {/* Shop column */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-white/80 mb-4">Shop</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-white/80 mb-4">
+              {t('Shop')}
+            </h3>
             <ul className="space-y-2.5">
               {FOOTER_LINKS.shop.map(link => (
                 <li key={link.href}>
@@ -205,7 +210,7 @@ export default function Footer() {
                     href={link.href}
                     className="text-sm text-white/85 hover:text-white transition-colors"
                   >
-                    {link.label}
+                    {t(link.label)}
                   </Link>
                 </li>
               ))}
@@ -214,7 +219,9 @@ export default function Footer() {
 
           {/* Sell column */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-white/80 mb-4">Sell</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-white/80 mb-4">
+              {t('FooterSell')}
+            </h3>
             <ul className="space-y-2.5">
               {FOOTER_LINKS.sell.map(link => (
                 <li key={link.href}>
@@ -222,7 +229,7 @@ export default function Footer() {
                     href={link.href}
                     className="text-sm text-white/85 hover:text-white transition-colors"
                   >
-                    {link.label}
+                    {t(link.label)}
                   </Link>
                 </li>
               ))}
@@ -231,7 +238,9 @@ export default function Footer() {
 
           {/* Help column */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-white/80 mb-4">Help</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-white/80 mb-4">
+              {t('Help')}
+            </h3>
             <ul className="space-y-2.5">
               {FOOTER_LINKS.help.map(link => (
                 <li key={link.href}>
@@ -239,7 +248,7 @@ export default function Footer() {
                     href={link.href}
                     className="text-sm text-white/85 hover:text-white transition-colors"
                   >
-                    {link.label}
+                    {t(link.label)}
                   </Link>
                 </li>
               ))}
@@ -249,7 +258,7 @@ export default function Footer() {
           {/* Legal column */}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-widest text-white/80 mb-4">
-              Legal
+              {t('FooterLegal')}
             </h3>
             <ul className="space-y-2.5">
               {FOOTER_LINKS.legal.map(link => (
@@ -258,7 +267,7 @@ export default function Footer() {
                     href={link.href}
                     className="text-sm text-white/85 hover:text-white transition-colors"
                   >
-                    {link.label}
+                    {t(link.label)}
                   </Link>
                 </li>
               ))}
@@ -268,10 +277,10 @@ export default function Footer() {
           {/* Newsletter column */}
           <div className="col-span-2 md:col-span-1">
             <h3 className="text-xs font-bold uppercase tracking-widest text-white/80 mb-4">
-              Newsletter
+              {t('FooterNewsletter')}
             </h3>
             <p className="text-xs text-white/80 mb-3 leading-relaxed">
-              Subscribe to get updates on new arrivals, discount offers, and local brands.
+              {t('FooterNewsletterDesc')}
             </p>
             <form onSubmit={handleSubscribe} className="space-y-2">
               <input
@@ -279,7 +288,7 @@ export default function Footer() {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="Your email address"
+                placeholder={t('FooterEmailPlaceholder')}
                 className="w-full text-xs bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-1 focus:ring-white/45"
               />
               <button
@@ -288,11 +297,11 @@ export default function Footer() {
                 style={{ color: '#0d1f52' }}
                 className="w-full py-2.5 text-xs font-black uppercase tracking-wider bg-white rounded-xl hover:bg-slate-100 transition-colors disabled:opacity-50 shadow-sm"
               >
-                {submitting ? 'Subscribing...' : 'Subscribe'}
+                {submitting ? t('FooterSubscribing') : t('FooterSubscribe')}
               </button>
             </form>
             {status === 'success' && (
-              <p className="text-[10px] text-green-400 mt-2">✓ Subscribed successfully!</p>
+              <p className="text-[10px] text-green-400 mt-2">✓ {t('FooterSubscribed')}</p>
             )}
             {status === 'error' && <p className="text-[10px] text-red-400 mt-2">✕ {errorMsg}</p>}
           </div>
@@ -303,7 +312,7 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="container mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/75">
           <p>
-            © {year} {PLATFORM_NAME} (brandyy.shop). All rights reserved.
+            © {year} {PLATFORM_NAME} (brandyy.shop). {t('FooterRightsReserved')}
           </p>
 
           {/* Payment Badges & SSL Seal */}
@@ -333,19 +342,19 @@ export default function Footer() {
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
-              SSL SECURE
+              {t('FooterSslSecure')}
             </span>
           </div>
 
           <div className="flex items-center gap-4">
             <Link href="/legal/privacy-policy" className="hover:text-white transition-colors">
-              Privacy
+              {t('FooterPrivacy')}
             </Link>
             <Link href="/legal" className="hover:text-white transition-colors">
-              Terms
+              {t('FooterTerms')}
             </Link>
             <Link href="/help" className="hover:text-white transition-colors">
-              Support
+              {t('FooterSupport')}
             </Link>
           </div>
         </div>

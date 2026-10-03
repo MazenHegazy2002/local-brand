@@ -3,12 +3,15 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useLanguage } from '@/providers/LanguageContext';
+import type { DictKey } from '@/lib/i18n/dicts';
 
 export interface RightBannerSlide {
   imageUrl: string;
   title: string;
   subtitle: string | null;
   linkUrl: string;
+  isI18nKey?: boolean;
 }
 
 const coverStyle = { objectFit: 'cover' as const };
@@ -17,6 +20,8 @@ const SLIDE_INTERVAL_MS = 5000;
 
 export default function RightBannerSlider({ slides }: { slides: RightBannerSlide[] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const { t } = useLanguage();
+  const renderText = (value: string, isKey?: boolean) => (isKey ? t(value as DictKey) : value);
 
   useEffect(() => {
     if (currentSlide >= slides.length) setCurrentSlide(0);
@@ -52,7 +57,7 @@ export default function RightBannerSlider({ slides }: { slides: RightBannerSlide
             fill
             sizes="(max-width: 1024px) 50vw, 17vw"
             style={coverStyle}
-            alt={slide.title}
+            alt={renderText(slide.title, slide.isI18nKey)}
             className="z-0"
             priority={false}
             loading="lazy"
@@ -60,10 +65,12 @@ export default function RightBannerSlider({ slides }: { slides: RightBannerSlide
           <div className="absolute inset-0 z-10 bg-gradient-to-t from-gray-900/90 to-transparent" />
           <div className="absolute bottom-0 left-0 p-6 z-20 w-full text-left">
             <h2 className="text-white text-xl md:text-2xl font-bold mb-1 tracking-tight">
-              {slide.title}
+              {renderText(slide.title, slide.isI18nKey)}
             </h2>
             {slide.subtitle && (
-              <span className="text-white/70 text-sm font-medium">{slide.subtitle}</span>
+              <span className="text-white/70 text-sm font-medium">
+                {renderText(slide.subtitle, slide.isI18nKey)}
+              </span>
             )}
           </div>
         </Link>

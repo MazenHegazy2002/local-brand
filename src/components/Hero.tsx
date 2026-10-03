@@ -39,9 +39,10 @@ const FALLBACK_RIGHT_TOP: RightBannerSlide[] = [
   {
     imageUrl:
       'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=75&w=600&auto=format&fit=crop',
-    title: 'Next-Gen Footwear',
-    subtitle: 'Up to 40% Off Brands',
+    title: 'NextGenFootwear',
+    subtitle: 'PremiumQuality',
     linkUrl: '/shoes',
+    isI18nKey: true,
   },
 ];
 
@@ -49,9 +50,10 @@ const FALLBACK_RIGHT_BOTTOM: RightBannerSlide[] = [
   {
     imageUrl:
       'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=75&w=600&auto=format&fit=crop',
-    title: 'Timeless Design',
-    subtitle: 'Curated Accessories',
+    title: 'TimelessDesign',
+    subtitle: 'Accessories',
     linkUrl: '/watches',
+    isI18nKey: true,
   },
 ];
 
