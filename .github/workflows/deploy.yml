@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, master ]
 
+concurrency:
+  group: deploy-vps-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint-and-test:
     name: Lint & Unit Tests
@@ -95,6 +99,7 @@ jobs:
             fi
 
             $COMPOSE pull app || $COMPOSE pull || true
+            $COMPOSE down --remove-orphans || docker-compose down --remove-orphans || true
             $COMPOSE up -d --force-recreate --remove-orphans || docker-compose up -d --force-recreate --remove-orphans || true
             $COMPOSE exec -T app npx prisma migrate deploy || docker-compose exec -T app npx prisma migrate deploy || true
             docker image prune -f || true
