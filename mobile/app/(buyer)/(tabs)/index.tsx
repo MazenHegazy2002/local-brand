@@ -13,7 +13,7 @@ import {
 import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
 import { Bell, Search, Heart } from 'lucide-react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, spacing, radii } from '@/lib/tokens';
 import { useAuth } from '@/store/auth';
@@ -35,14 +35,44 @@ function pad(n: number) {
   return String(n).padStart(2, '0');
 }
 
+type Wish = { items: { id: string }[] };
+
 function ProductCard({ item }: { item: Product }) {
   const router = useRouter();
+  const qc = useQueryClient();
+  // Same ['wishlist'] key as the product page + wishlist screen, so one fetch is shared.
+  const { data: wish } = useQuery({
+    queryKey: ['wishlist'],
+    queryFn: () => api.get<Wish>('/api/wishlist?view=items'),
+  });
+  const liked = !!wish?.items.some(w => w.id === item.id);
+  const toggleLike = useMutation({
+    mutationFn: () => api.post('/api/wishlist', { productId: item.id }),
+    // Flip the heart instantly; the refetch below corrects it if the request failed.
+    onMutate: () =>
+      qc.setQueryData<Wish>(['wishlist'], old => ({
+        items: liked
+          ? (old?.items ?? []).filter(w => w.id !== item.id)
+          : [...(old?.items ?? []), { id: item.id }],
+      })),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['wishlist'] }),
+  });
   return (
     <Pressable style={styles.card} onPress={() => router.push(`/(buyer)/product/${item.id}`)}>
       <View style={styles.cardImgWrap}>
         <Image source={{ uri: item.image }} style={styles.cardImg} contentFit="cover" />
-        <Pressable style={styles.cardHeart}>
-          <Heart size={16} color={colors.favorite} fill={colors.favorite} strokeWidth={2} />
+        <Pressable
+          style={styles.cardHeart}
+          onPress={() => toggleLike.mutate()}
+          disabled={toggleLike.isPending}
+          hitSlop={8}
+        >
+          <Heart
+            size={16}
+            color={liked ? colors.favorite : colors.ink}
+            fill={liked ? colors.favorite : 'transparent'}
+            strokeWidth={2}
+          />
         </Pressable>
         {item.category && (
           <View style={styles.categoryBadge}>
