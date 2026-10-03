@@ -77,6 +77,12 @@ export default function Account() {
   }
 
   // Same query keys as the list screens, so counts and lists share one cache.
+  const loyalty = useQuery({
+    queryKey: ['loyalty'],
+    enabled: !!user,
+    queryFn: () => api.get<{ points: number; pointsValue: number }>('/api/loyalty'),
+  });
+  const pts = loyalty.data?.points;
   const orders = useQuery({
     queryKey: ['orders'],
     queryFn: () => api.get<{ orders: OrderRow[] }>('/api/orders'),
@@ -189,13 +195,15 @@ export default function Account() {
         <View style={styles.loyaltyTop}>
           <View>
             <Text style={styles.loyaltyLabel}>Brandyy points</Text>
-            <Text style={styles.loyaltyPoints}>140 pts</Text>
+            <Text style={styles.loyaltyPoints}>{pts == null ? '–' : pts.toLocaleString()} pts</Text>
             <Text style={styles.loyaltySub}>
               10 points per order, 5 per verified review. 1 point = 1 EGP at checkout.
             </Text>
           </View>
           <View style={styles.loyaltyEgp}>
-            <Text style={styles.loyaltyEgpText}>= 140 EGP</Text>
+            <Text style={styles.loyaltyEgpText}>
+              = {Math.round(loyalty.data?.pointsValue ?? 0).toLocaleString()} EGP
+            </Text>
           </View>
         </View>
       </View>

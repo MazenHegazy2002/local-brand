@@ -12,23 +12,28 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 
-interface Approval {
+interface PendingSeller {
   id: string;
-  type: string;
-  name: string;
+  storeName: string;
   createdAt: string;
+  user?: { email: string };
 }
 
 export default function Approvals() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-approvals'],
-    queryFn: () => api.get<{ items: Approval[] }>('/api/admin/pending'),
+    queryKey: ['admin-pending-sellers'],
+    queryFn: () =>
+      api.get<{ sellers: PendingSeller[] }>('/api/admin/sellers?status=PENDING_APPROVAL&limit=50'),
   });
 
   const approve = useMutation({
-    mutationFn: (id: string) => api.post(`/api/admin/approve/${id}`, {}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-approvals'] }),
+    mutationFn: (id: string) => api.post(`/api/admin/sellers/${id}/approve`, {}),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-pending-sellers'] });
+      qc.invalidateQueries({ queryKey: ['admin-stats'] });
+    },
+    onError: e => Alert.alert('Couldn’t approve', (e as Error).message),
   });
 
   return (
@@ -40,17 +45,22 @@ export default function Approvals() {
         <ActivityIndicator color={colors.accent} style={{ marginTop: 40 }} />
       ) : (
         <FlatList
-          data={data?.items ?? []}
+          data={data?.sellers ?? []}
           keyExtractor={i => i.id}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
             <View style={styles.card}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.type}>{item.type}</Text>
-                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.type}>Seller</Text>
+                <Text style={styles.name}>{item.storeName}</Text>
+                {item.user?.email ? <Text style={styles.date}>{item.user.email}</Text> : null}
                 <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
               </View>
-              <Pressable style={styles.approveBtn} onPress={() => approve.mutate(item.id)}>
+              <Pressable
+                style={styles.approveBtn}
+                onPress={() => approve.mutate(item.id)}
+                disabled={approve.isPending}
+              >
                 <Text style={styles.approveBtnText}>Approve</Text>
               </Pressable>
             </View>

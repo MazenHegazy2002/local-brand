@@ -36,6 +36,12 @@ async function refreshAccessToken(): Promise<string | null> {
   return accessToken;
 }
 
+// Set by the auth store; called when the refresh token is rejected (e.g. signed in elsewhere).
+let onSessionExpired: (() => void) | null = null;
+export function setOnSessionExpired(fn: () => void) {
+  onSessionExpired = fn;
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   let token = await getToken();
   const makeReq = (t: string | null) =>
@@ -53,6 +59,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (res.status === 401 && token) {
     token = await refreshAccessToken();
     if (token) res = await makeReq(token);
+    else onSessionExpired?.();
   }
 
   if (!res.ok) {

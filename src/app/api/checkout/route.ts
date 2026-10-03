@@ -29,6 +29,8 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+  // quote: true returns the server-computed totals (VAT, shipping, caps) without ordering.
+  const quoteOnly = body.quote === true;
   const manual = paymentMethod !== 'CASH_ON_DELIVERY';
   const sender = String(body.paymentSenderDetail ?? '')
     .trim()
@@ -37,7 +39,7 @@ export async function POST(req: NextRequest) {
     .trim()
     .slice(0, 100);
   const receipt = typeof body.paymentReceiptUrl === 'string' ? body.paymentReceiptUrl : '';
-  if (manual && (!sender || !receipt)) {
+  if (manual && !quoteOnly && (!sender || !receipt)) {
     return NextResponse.json(
       { error: 'Enter the number you paid from and upload the transfer receipt.' },
       { status: 400 }
@@ -83,16 +85,28 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const result = await createOrderForUser(user.id, {
-    addressId: body.addressId,
-    paymentMethod,
-    paymentSenderDetail: manual ? sender : undefined,
-    paymentReference: manual ? reference || undefined : undefined,
-    paymentReceiptUrl: manual ? receipt : undefined,
-    items: orderItems,
-    couponCode: typeof body.couponCode === 'string' ? body.couponCode : undefined,
-    promoCode: typeof body.promoCode === 'string' ? body.promoCode : undefined,
-  });
+  const pointsRedeemed = body.usePoints
+    ? ((await prisma.user.findUnique({ where: { id: user.id }, select: { loyaltyPoints: true } }))
+        ?.loyaltyPoints ?? 0)
+    : 0;
+
+  const result = await createOrderForUser(
+    user.id,
+    {
+      addressId: body.addressId,
+      paymentMethod,
+      paymentSenderDetail: manual ? sender : undefined,
+      paymentReference: manual ? reference || undefined : undefined,
+      paymentReceiptUrl: manual ? receipt : undefined,
+      items: orderItems,
+      couponCode: typeof body.couponCode === 'string' ? body.couponCode : undefined,
+      promoCode: typeof body.promoCode === 'string' ? body.promoCode : undefined,
+      pointsRedeemed,
+    },
+    null,
+    { quoteOnly }
+  );
+  if (result.quote) return NextResponse.json({ quote: result.quote });
   if (result.error || !result.orderId) {
     return NextResponse.json({ error: result.error ?? 'Could not place order' }, { status: 400 });
   }

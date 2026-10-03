@@ -33,7 +33,6 @@ const SLIDES_STATIC = [
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
-  const [lang, setLang] = useState<'en' | 'ar'>('en');
   const [bgImages, setBgImages] = useState<string[]>([]);
   const router = useRouter();
 
@@ -59,25 +58,11 @@ export default function Onboarding() {
       {bgUri ? (
         <ImageBackground source={{ uri: bgUri }} style={styles.bg} resizeMode="cover">
           <View style={styles.overlay} />
-          <Content
-            slide={slide}
-            step={step}
-            lang={lang}
-            setLang={setLang}
-            setStep={setStep}
-            router={router}
-          />
+          <Content slide={slide} step={step} setStep={setStep} router={router} />
         </ImageBackground>
       ) : (
         <View style={[styles.bg, { backgroundColor: colors.navy }]}>
-          <Content
-            slide={slide}
-            step={step}
-            lang={lang}
-            setLang={setLang}
-            setStep={setStep}
-            router={router}
-          />
+          <Content slide={slide} step={step} setStep={setStep} router={router} />
         </View>
       )}
     </View>
@@ -87,15 +72,11 @@ export default function Onboarding() {
 function Content({
   slide,
   step,
-  lang,
-  setLang,
   setStep,
   router,
 }: {
   slide: (typeof SLIDES_STATIC)[0];
   step: number;
-  lang: 'en' | 'ar';
-  setLang: (l: 'en' | 'ar') => void;
   setStep: (s: number) => void;
   router: ReturnType<typeof useRouter>;
 }) {
@@ -104,9 +85,6 @@ function Content({
       {/* Top bar */}
       <View style={styles.topBar}>
         <Text style={styles.wordmark}>brandyy.</Text>
-        <Pressable style={styles.langPill} onPress={() => setLang(lang === 'en' ? 'ar' : 'en')}>
-          <Text style={styles.langText}>{lang === 'en' ? 'العربية' : 'EN'}</Text>
-        </Pressable>
       </View>
 
       {/* Bottom content */}
@@ -159,13 +137,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#fff',
   },
-  langPill: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: radii.pill,
-  },
-  langText: { color: '#fff', fontFamily: 'Inter-SemiBold', fontSize: 13 },
   content: {
     position: 'absolute',
     bottom: 0,

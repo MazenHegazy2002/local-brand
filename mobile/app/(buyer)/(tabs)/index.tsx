@@ -26,6 +26,7 @@ interface Product {
   title: string;
   basePrice: number;
   brand: string;
+  sellerId: string;
   category: string;
   image: string;
   inStock: boolean;
@@ -178,13 +179,13 @@ export default function Home() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.brandsRow}
             >
-              {Array.from(new Set(products.map(p => p.brand)))
+              {Array.from(new Map(products.map(p => [p.brand, p.sellerId])))
                 .slice(0, 8)
-                .map(brand => (
+                .map(([brand, sellerId]) => (
                   <Pressable
                     key={brand}
                     style={styles.brandItem}
-                    onPress={() => router.push(`/(buyer)/brand/${encodeURIComponent(brand)}`)}
+                    onPress={() => router.push(`/(buyer)/brand/${sellerId}`)}
                   >
                     <View style={styles.brandAvatar}>
                       <Text style={styles.brandAvatarText}>{brand.charAt(0).toUpperCase()}</Text>
