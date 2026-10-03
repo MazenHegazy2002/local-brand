@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { Heart } from 'lucide-react-native';
+import { ArrowLeft, Heart } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { useCart } from '@/store/cart';
@@ -49,6 +49,9 @@ export default function Wishlist() {
   if (items.length === 0) {
     return (
       <View style={styles.empty}>
+        <Pressable onPress={() => router.back()} style={styles.emptyBack} hitSlop={8}>
+          <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
+        </Pressable>
         <Heart size={48} color={colors.border} strokeWidth={1.5} />
         <Text style={styles.emptyTitle}>Nothing saved yet</Text>
         <Text style={styles.emptySub}>Heart items while browsing to save them here</Text>
@@ -84,6 +87,9 @@ export default function Wishlist() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
+          <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
+        </Pressable>
         <Text style={styles.title}>Wishlist</Text>
         <Text style={styles.count}>{items.length} items</Text>
       </View>
@@ -130,11 +136,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.page,
     paddingBottom: 16,
     flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
   },
+  backBtn: { padding: 4 },
+  emptyBack: { position: 'absolute', top: spacing.top, left: spacing.page, padding: 4 },
   title: { fontFamily: 'InstrumentSerif-Regular', fontSize: 34, color: colors.ink },
-  count: { fontFamily: 'Inter-Regular', fontSize: 14, color: colors.muted },
+  count: { marginLeft: 'auto', fontFamily: 'Inter-Regular', fontSize: 14, color: colors.muted },
   grid: { paddingHorizontal: spacing.page, paddingBottom: 32 },
   row: { gap: 12, marginBottom: 20 },
   card: { width: CARD_W },
