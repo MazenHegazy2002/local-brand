@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/providers/LanguageContext';
 
 const DISMISS_KEY = 'local-brand-promo-dismissed';
 
@@ -13,11 +14,14 @@ interface PromoBannerProps {
 }
 
 export default function PromoBanner({
-  message = 'Free shipping across Egypt on orders over 1000 EGP',
-  ctaLabel = 'Shop now',
+  message,
+  ctaLabel,
   ctaHref = '/shop',
   id = 'default',
 }: PromoBannerProps) {
+  const { t } = useLanguage();
+  const displayMessage = message ?? t('PromoBannerMessage');
+  const displayCta = ctaLabel ?? t('ShopNow');
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
@@ -43,9 +47,9 @@ export default function PromoBanner({
   return (
     <div className="bg-gradient-to-r from-[#0F6E56] via-emerald-600 to-[#1e3b8a] text-white">
       <div className="container mx-auto px-4 py-2 flex items-center justify-center gap-3 text-center text-sm">
-        <span className="font-bold">🎉 {message}</span>
+        <span className="font-bold">🎉 {displayMessage}</span>
         <Link href={ctaHref} className="underline font-bold hover:text-white/80">
-          {ctaLabel}
+          {displayCta}
         </Link>
         <button
           onClick={handleDismiss}
