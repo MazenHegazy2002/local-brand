@@ -2,17 +2,19 @@
 
 import { useLanguage } from '@/providers/LanguageContext';
 
+const CYCLE = { en: 'ar', ar: 'fk', fk: 'en' } as const;
+const LABEL = { en: 'EN', ar: 'عربي', fk: 'Franko' };
+const TITLE = { en: 'Switch to Arabic', ar: 'Switch to Franko', fk: 'Switch to English' };
+
 export default function LanguageToggle() {
   const { lang, setLang } = useLanguage();
-  const next: 'en' | 'ar' = lang === 'ar' ? 'en' : 'ar';
 
   return (
     <button
       type="button"
-      onClick={() => setLang(next)}
-      title={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
-      aria-label={lang === 'ar' ? 'Switch to English' : 'Switch to Arabic'}
-      lang={lang === 'ar' ? 'en' : 'ar'}
+      onClick={() => setLang(CYCLE[lang])}
+      title={TITLE[lang]}
+      aria-label={TITLE[lang]}
       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border border-white/30 bg-white/10 hover:bg-white/20 text-white transition-colors notranslate"
     >
       <svg
@@ -27,7 +29,7 @@ export default function LanguageToggle() {
       >
         <path d="M5 8l6 6 6-6" />
       </svg>
-      {lang === 'ar' ? 'EN' : 'عربي'}
+      {LABEL[lang]}
     </button>
   );
 }

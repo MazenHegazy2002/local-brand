@@ -158,8 +158,9 @@ export default async function RootLayout({
   const headersList = await headers();
   const xLang = headersList.get('x-lang');
   const isArabic = (googTrans ? googTrans.includes('/ar') : false) || xLang === 'ar';
+  const isFranko = !isArabic && xLang === 'fk';
   const dir = isArabic ? 'rtl' : 'ltr';
-  const _lang = isArabic ? 'ar' : 'en';
+  const _lang = isArabic ? 'ar' : isFranko ? 'fk' : 'en';
 
   // Build preconnect list dynamically for client-loaded third-party services.
   // We do NOT hint image CDNs (Unsplash, Cloudinary) because Next.js optimizes
