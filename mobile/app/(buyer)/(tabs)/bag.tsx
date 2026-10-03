@@ -12,7 +12,7 @@ import {
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Minus, Plus } from 'lucide-react-native';
-import { useCart } from '@/store/cart';
+import { useCart, lineKey } from '@/store/cart';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { api, fmtEGP } from '@/lib/api';
 
@@ -95,7 +95,7 @@ export default function Bag() {
 
         {/* Line items */}
         {items.map(item => (
-          <View key={item.productId} style={styles.item}>
+          <View key={lineKey(item)} style={styles.item}>
             <Image source={{ uri: item.image }} style={styles.itemImg} contentFit="cover" />
             <View style={styles.itemInfo}>
               <Text style={styles.itemBrand} numberOfLines={1}>
@@ -104,23 +104,24 @@ export default function Bag() {
               <Text style={styles.itemName} numberOfLines={2}>
                 {item.title}
               </Text>
-              {item.size && <Text style={styles.itemMeta}>{item.size}</Text>}
+              {(item.color || item.size) && (
+                <Text style={styles.itemMeta}>
+                  {[item.color, item.size].filter(Boolean).join(' · ')}
+                </Text>
+              )}
               <Text style={styles.itemPrice}>{fmtEGP(item.basePrice)}</Text>
             </View>
             <View style={styles.stepper}>
               <Pressable
                 style={styles.stepBtn}
                 onPress={() =>
-                  item.qty <= 1 ? remove(item.productId) : setQty(item.productId, item.qty - 1)
+                  item.qty <= 1 ? remove(lineKey(item)) : setQty(lineKey(item), item.qty - 1)
                 }
               >
                 <Minus size={14} color={colors.ink} strokeWidth={2} />
               </Pressable>
               <Text style={styles.stepQty}>{item.qty}</Text>
-              <Pressable
-                style={styles.stepBtn}
-                onPress={() => setQty(item.productId, item.qty + 1)}
-              >
+              <Pressable style={styles.stepBtn} onPress={() => setQty(lineKey(item), item.qty + 1)}>
                 <Plus size={14} color={colors.ink} strokeWidth={2} />
               </Pressable>
             </View>
