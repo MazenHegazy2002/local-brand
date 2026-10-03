@@ -43,7 +43,7 @@ export default function More() {
       <Row
         icon={<Bell size={18} color={colors.ink} />}
         label="Notifications"
-        onPress={() => router.push('./notifications')}
+        onPress={() => router.push('/(seller)/notifications')}
       >
         {unread > 0 && (
           <View style={styles.badge}>

@@ -35,7 +35,7 @@ export default function SellerDashboard() {
             {data?.store.name ?? (isLoading ? ' ' : 'Your store')}
           </Text>
         </View>
-        <Pressable style={styles.bell} onPress={() => router.push('./notifications')}>
+        <Pressable style={styles.bell} onPress={() => router.push('/(seller)/notifications')}>
           <Bell size={20} color={colors.ink} strokeWidth={1.9} />
           {!!data?.unreadNotifications && (
             <View style={styles.bellBadge}>
@@ -104,7 +104,7 @@ export default function SellerDashboard() {
               title={`${waiting} order${waiting === 1 ? '' : 's'} waiting to ship`}
               onPress={() =>
                 router.push({
-                  pathname: '/(seller)/orders',
+                  pathname: '/(seller)/(tabs)/orders',
                   params: { tab: data.newOrders > 0 ? 'new' : 'to_ship' },
                 })
               }
@@ -116,7 +116,10 @@ export default function SellerDashboard() {
               tone="red"
               title={`${lowStock} variant${lowStock === 1 ? '' : 's'} low on stock`}
               onPress={() =>
-                router.push({ pathname: '/(seller)/products', params: { filter: 'low_stock' } })
+                router.push({
+                  pathname: '/(seller)/(tabs)/products',
+                  params: { filter: 'low_stock' },
+                })
               }
             />
           )}

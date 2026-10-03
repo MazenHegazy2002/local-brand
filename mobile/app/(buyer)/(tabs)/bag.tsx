@@ -23,7 +23,7 @@ export default function Bag() {
       <View style={styles.empty}>
         <Text style={styles.emptyTitle}>Your bag is empty</Text>
         <Text style={styles.emptySub}>Add items from the shop to get started</Text>
-        <Pressable style={styles.shopBtn} onPress={() => router.push('/(buyer)/shop')}>
+        <Pressable style={styles.shopBtn} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
           <Text style={styles.shopBtnText}>Browse shop</Text>
         </Pressable>
       </View>

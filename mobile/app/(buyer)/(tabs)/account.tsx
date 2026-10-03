@@ -15,8 +15,8 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/store/auth';
 import { api } from '@/lib/api';
-import type { OrderRow } from './orders';
-import type { AddressRow } from './addresses';
+import type { OrderRow } from '../orders';
+import type { AddressRow } from '../addresses';
 import { colors, radii, spacing } from '@/lib/tokens';
 import * as WebBrowser from 'expo-web-browser';
 
