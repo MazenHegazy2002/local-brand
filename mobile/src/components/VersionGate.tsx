@@ -31,8 +31,12 @@ export default function VersionGate({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [checking, setChecking] = useState(false);
   const prompted = useRef(false);
+  const lastCheck = useRef(0);
 
   const check = () => {
+    // Coming back to the foreground re-checks at most once a minute.
+    if (Date.now() - lastCheck.current < 60_000) return;
+    lastCheck.current = Date.now();
     setChecking(true);
     api
       .get<AppConfig>(CONFIG_PATH)
