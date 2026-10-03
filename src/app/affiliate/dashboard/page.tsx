@@ -201,7 +201,7 @@ export default function AffiliateDashboardPage() {
             onClick={() => window.location.reload()}
             className="text-xs text-white underline font-bold"
           >
-            {lang === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+            {t('Retry')}
           </button>
         </div>
       </div>
@@ -263,7 +263,7 @@ export default function AffiliateDashboardPage() {
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
-              {lang === 'ar' ? 'المتجر' : 'Shop'}
+              {t('Shop')}
             </Link>
             <button
               onClick={() => {
@@ -284,7 +284,7 @@ export default function AffiliateDashboardPage() {
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-              {lang === 'ar' ? 'تسجيل الخروج' : 'Sign Out'}
+              {t('SignOut')}
             </button>
           </div>
         </div>
@@ -495,7 +495,7 @@ export default function AffiliateDashboardPage() {
         {settings.bonusesEnabled && bonuses.length > 0 && (
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4">
-              {lang === 'ar' ? 'مكافآتي' : 'My Bonuses'}
+              {t('MyBonuses')}
             </h3>
             <div className="flex flex-col gap-3">
               {bonuses.map(b => {

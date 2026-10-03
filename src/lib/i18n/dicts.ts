@@ -265,6 +265,41 @@ export const en = {
   CheckoutSecureSSL: 'Secure 256-bit SSL encrypted payment',
   earnings: 'Earnings',
 
+  // Checkout success page
+  OrderConfirmed: 'Order Confirmed!',
+  OrderConfirmedThankYou:
+    "Thank you for supporting local Egyptian brands. We've received your order and are getting it ready for shipment.",
+  OrderConfirmedEmailSent:
+    'A confirmation email is on its way — please check your inbox (and spam folder, just in case).',
+  OrderReference: 'Order Reference',
+  FawryPaymentRequired: 'Fawry Payment Required',
+  FawryAutoCancel:
+    'Orders are automatically cancelled if payment is not received before the 48-hour expiration window.',
+  TrackMyOrder: 'Track My Order',
+  SaveOrderToAccount: 'Save this order to your account',
+  SaveOrderToAccountDesc:
+    "Create an account with the same email you used at checkout — this order will be linked automatically and you'll be able to track it without re-entering the ID.",
+  CreateAccount: 'Create an account',
+  LoadingOrderDetails: 'Loading your order details...',
+
+  // Checkout page
+  ReturnToShop: 'Return to Shop',
+  CheckoutRestricted: 'Checkout Restricted',
+  BackToHome: 'Back to Home',
+  Dismiss: 'Dismiss',
+  UseSavedAddress: 'Use a saved address',
+  FullNamePlaceholder: 'e.g. Ahmed Mohamed',
+  PhonePlaceholder: 'e.g. 01234567890',
+  NeighborhoodPlaceholder: 'e.g. Maadi, New Cairo',
+
+  // Product detail
+  SelectColorFirst: 'Please select a color first',
+  SelectSizeFirst: 'Please select a size first',
+
+  // Affiliate
+  Retry: 'Retry',
+  MyBonuses: 'My Bonuses',
+
   // CartDrawer
   ContinueShopping: 'Continue Shopping',
   Color: 'Color',
@@ -577,6 +612,39 @@ export const ar: Partial<typeof en> = {
   CheckoutSecureSSL: 'دفع مشفر وآمن 256-bit SSL',
   earnings: 'الأرباح',
 
+  // Checkout success page
+  OrderConfirmed: 'تم تأكيد طلبك!',
+  OrderConfirmedThankYou: 'شكراً لدعمك البراندات المصرية المحلية. استلمنا طلبك ونجهّزه الآن للشحن.',
+  OrderConfirmedEmailSent:
+    'أرسلنا إليك رسالة تأكيد عبر البريد الإلكتروني، يرجى مراجعة صندوق الوارد (والرسائل غير المرغوب فيها احتياطاً).',
+  OrderReference: 'رقم الطلب',
+  FawryPaymentRequired: 'مطلوب الدفع عبر فوري',
+  FawryAutoCancel: 'يُلغى الطلب تلقائياً إذا لم يتم الدفع خلال 48 ساعة.',
+  TrackMyOrder: 'تتبّع طلبي',
+  SaveOrderToAccount: 'احفظ هذا الطلب في حسابك',
+  SaveOrderToAccountDesc:
+    'أنشئ حساباً بنفس البريد الإلكتروني الذي استخدمته عند الدفع، وسيُربط هذا الطلب بحسابك تلقائياً لتتمكن من تتبّعه دون إدخال رقم الطلب مرة أخرى.',
+  CreateAccount: 'إنشاء حساب',
+  LoadingOrderDetails: 'جاري تحميل تفاصيل طلبك...',
+
+  // Checkout page
+  ReturnToShop: 'العودة للمتجر',
+  CheckoutRestricted: 'الشراء غير متاح لهذا الحساب',
+  BackToHome: 'العودة للرئيسية',
+  Dismiss: 'إغلاق',
+  UseSavedAddress: 'اختر عنواناً محفوظاً',
+  FullNamePlaceholder: 'مثال: أحمد محمد',
+  PhonePlaceholder: 'مثال: 01234567890',
+  NeighborhoodPlaceholder: 'مثال: المعادي، القاهرة الجديدة',
+
+  // Product detail
+  SelectColorFirst: 'يرجى اختيار اللون أولاً',
+  SelectSizeFirst: 'يرجى اختيار المقاس أولاً',
+
+  // Affiliate
+  Retry: 'إعادة المحاولة',
+  MyBonuses: 'مكافآتي',
+
   // CartDrawer
   ContinueShopping: 'متابعة التسوق',
   Color: 'اللون',
@@ -756,6 +824,39 @@ export const fk: Partial<typeof en> = {
   ReadOnlyModeDesc: 'el daf3 wa2ef dawa2 w el basket ma7fooz!',
   InvalidPromoCode: 'el kood msh sa7',
   PromoApplyFailed: 'el kood msh sheghel',
+
+  // Checkout success
+  OrderConfirmed: 'el order etakked!',
+  OrderConfirmedThankYou:
+    'shokran 3ala da3mak lel brands el masriya. we2elna el order beta3ak w bne3eddo lel sha7n.',
+  OrderConfirmedEmailSent: 'ba3atalnalak email ta2kid, shof el inbox (w spam kaman 3ashan y3ni).',
+  OrderReference: 'raqm el order',
+  FawryPaymentRequired: 'lazem tedfa3 be fawry',
+  FawryAutoCancel: 'el order byet2af lwa7do law madfash5 fe 48 se3a.',
+  TrackMyOrder: 'ta2bel el order',
+  SaveOrderToAccount: 'e7faz el order fe 7esabak',
+  SaveOrderToAccountDesc:
+    '3amel account be nafs el email elly esta5damto 3nd el daf3, w el order hayetrabat be 7esabak automatically.',
+  CreateAccount: 'e3mel account',
+  LoadingOrderDetails: 'beyt7amel el tafaseel...',
+
+  // Checkout page
+  ReturnToShop: 'roga3 lel shop',
+  CheckoutRestricted: 'el sha2 msh mta7 le7esabak',
+  BackToHome: 'roga3 lel home',
+  Dismiss: 'a2fl',
+  UseSavedAddress: 'e5tar 3onwan ma7foz',
+  FullNamePlaceholder: 'ex: Ahmed Mohamed',
+  PhonePlaceholder: 'ex: 01234567890',
+  NeighborhoodPlaceholder: 'ex: Maadi, New Cairo',
+
+  // Product detail
+  SelectColorFirst: 'e5tar el lon 2awel',
+  SelectSizeFirst: 'e5tar el 2as 2awel',
+
+  // Affiliate
+  Retry: 'gara2b tani',
+  MyBonuses: 'el bonuses beta3ty',
 
   // Footer
   FooterTagline: 'soo2 masr lel ba2ya3een el ma7alyeen. eshteri brands masriya asliya be2aman.',

@@ -482,7 +482,7 @@ function CheckoutPageInner() {
             onClick={() => router.push('/shop')}
             className="bg-[#1e3b8a] text-white font-bold py-3 px-8 rounded-lg"
           >
-            {lang === 'ar' ? 'العودة للمتجر' : 'Return to Shop'}
+            {t('ReturnToShop')}
           </button>
         </div>
       </main>
@@ -864,9 +864,7 @@ function CheckoutPageInner() {
                 />
               </svg>
             </div>
-            <h3 className="text-xl font-black text-slate-800">
-              {lang === 'ar' ? 'الشراء غير متاح لهذا الحساب' : 'Checkout Restricted'}
-            </h3>
+            <h3 className="text-xl font-black text-slate-800">{t('CheckoutRestricted')}</h3>
             <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed font-sans">
               {lang === 'ar'
                 ? 'لا يمكن لحسابات البائعين والمسؤولين تقديم طلبات شراء. يرجى تسجيل الدخول بحساب عميل لإتمام الشراء.'
@@ -878,7 +876,7 @@ function CheckoutPageInner() {
                 onClick={() => router.push('/')}
                 className="px-6 py-3 bg-[#1e3b8a] text-white rounded-xl font-bold hover:bg-[#152c6e] transition-colors shadow-md font-sans"
               >
-                {lang === 'ar' ? 'العودة للرئيسية' : 'Back to Home'}
+                {t('BackToHome')}
               </button>
             </div>
           </div>
@@ -915,7 +913,7 @@ function CheckoutPageInner() {
                   <button
                     type="button"
                     onClick={() => setCartNotice('')}
-                    aria-label={lang === 'ar' ? 'إغلاق' : 'Dismiss'}
+                    aria-label={t('Dismiss')}
                     className="text-amber-700 hover:text-amber-900"
                   >
                     ×
@@ -939,7 +937,7 @@ function CheckoutPageInner() {
                       }}
                       className="shrink-0 px-3 py-1 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700"
                     >
-                      {lang === 'ar' ? 'مسح السلة' : 'Clear cart'}
+                      {t('ClearCart')}
                     </button>
                   )}
                 </div>
@@ -965,7 +963,7 @@ function CheckoutPageInner() {
                         style={{ textAlign: isRTL ? 'right' : 'left' }}
                       >
                         <label className="block text-sm font-semibold text-gray-700 mb-1">
-                          {lang === 'ar' ? 'اختر عنواناً محفوظاً' : 'Use a saved address'}
+                          {t('UseSavedAddress')}
                         </label>
                         <select
                           value={selectedSavedAddressId}
@@ -1042,7 +1040,7 @@ function CheckoutPageInner() {
                         value={address.fullName}
                         onChange={e => setAddress({ ...address, fullName: e.target.value })}
                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
-                        placeholder={lang === 'ar' ? 'مثال: أحمد محمد' : 'e.g. Ahmed Mohamed'}
+                        placeholder={t('FullNamePlaceholder')}
                         style={{ textAlign: isRTL ? 'right' : 'left' }}
                       />
                     </div>
@@ -1056,7 +1054,7 @@ function CheckoutPageInner() {
                         value={address.phone}
                         onChange={e => setAddress({ ...address, phone: e.target.value })}
                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
-                        placeholder={lang === 'ar' ? 'مثال: 01234567890' : 'e.g. 01234567890'}
+                        placeholder={t('PhonePlaceholder')}
                         dir="ltr"
                         inputMode="tel"
                         style={{ textAlign: isRTL ? 'right' : 'left' }}
@@ -1090,9 +1088,7 @@ function CheckoutPageInner() {
                         value={address.city}
                         onChange={e => setAddress({ ...address, city: e.target.value })}
                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
-                        placeholder={
-                          lang === 'ar' ? 'مثال: المعادي، القاهرة الجديدة' : 'e.g. Maadi, New Cairo'
-                        }
+                        placeholder={t('NeighborhoodPlaceholder')}
                         style={{ textAlign: isRTL ? 'right' : 'left' }}
                       />
                     </div>

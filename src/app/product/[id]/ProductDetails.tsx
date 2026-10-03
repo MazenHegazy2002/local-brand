@@ -265,14 +265,14 @@ export default function ProductDetails({
   const handleAddToCart = () => {
     if (hasColors && !selectedColor) {
       toast({
-        title: lang === 'ar' ? 'يرجى اختيار اللون أولاً' : 'Please select a color first',
+        title: t('SelectColorFirst'),
         variant: 'error',
       });
       return;
     }
     if (hasSizes && !selectedSize) {
       toast({
-        title: lang === 'ar' ? 'يرجى اختيار المقاس أولاً' : 'Please select a size first',
+        title: t('SelectSizeFirst'),
         variant: 'error',
       });
       return;
