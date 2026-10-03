@@ -279,7 +279,8 @@ export async function proxy(req: NextRequest) {
   }
 
   // Define role-based route protection
-  const isAdminApi = targetPathname.startsWith('/api/admin');
+  // Bearer (app) calls skip this cookie gate; every /api/admin route checks ADMIN itself.
+  const isAdminApi = targetPathname.startsWith('/api/admin') && !hasBearer;
   const adminRoutes =
     targetPathname.startsWith('/admin') || targetPathname.startsWith('/admin-os') || isAdminApi;
   const sellerRoutes =
