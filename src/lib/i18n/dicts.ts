@@ -121,6 +121,7 @@ export const en = {
   ShareYourThoughts: 'Share your thoughts about this product...',
 
   // Affiliate System & Checkout Localization keys
+  NavAffiliateBanner: 'Earn up to 10% cash on every purchase!',
   AffiliateEarnBySharing: '✨ Earn money by sharing',
   AffiliateJoinProgram: 'Join the Affiliate Program',
   AffiliateProgramDesc:
@@ -469,6 +470,7 @@ export const ar: Partial<typeof en> = {
   ShareYourThoughts: 'شاركنا رأيك حول هذا المنتج...',
 
   // Affiliate System & Checkout Localization keys
+  NavAffiliateBanner: 'اربح حتى ١٠٪ كاش على كل عملية شراء!',
   AffiliateEarnBySharing: '✨ اكسب المال بمشاركة الروابط',
   AffiliateJoinProgram: 'انضم إلى برنامج التسويق بالعمولة',
   AffiliateProgramDesc:
@@ -863,6 +865,8 @@ export const fk: Partial<typeof en> = {
   FooterLookbook: 'el lookbook',
   FooterBrands: 'el brands',
   FooterSell: 'bet3',
+  NavAffiliateBanner: 'estanna cash: 10% 3ala kol 2amlya!',
+  AffiliateJoinProgram: 'endem lel affiliate program',
   FooterStartSelling: 'ebd2 el bet3',
   FooterSellerHub: 'seller hub',
   FooterSellerTerms: 'shoroot el ba2ya3een',
