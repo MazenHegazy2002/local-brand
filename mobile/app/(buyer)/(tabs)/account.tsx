@@ -100,6 +100,13 @@ export default function Account() {
 
   const menu = [
     {
+      label: 'Edit profile',
+      Icon: Settings,
+      badge: null,
+      hint: null,
+      onPress: () => openWeb('/dashboard?tab=settings'),
+    },
+    {
       label: 'My orders',
       Icon: Package,
       badge: null,
@@ -121,7 +128,7 @@ export default function Account() {
       onPress: () =>
         Alert.alert(
           'Payment methods',
-          'You pick how to pay at checkout: card or cash on delivery. Cards are processed securely by the payment provider and never stored on Brandyy.'
+          'You pick how to pay at checkout: card, cash on delivery, InstaPay or Vodafone Cash. Cards are processed securely by the payment provider and never stored on Brandyy.'
         ),
     },
     {

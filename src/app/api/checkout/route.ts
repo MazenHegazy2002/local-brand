@@ -90,6 +90,8 @@ export async function POST(req: NextRequest) {
     paymentReference: manual ? reference || undefined : undefined,
     paymentReceiptUrl: manual ? receipt : undefined,
     items: orderItems,
+    couponCode: typeof body.couponCode === 'string' ? body.couponCode : undefined,
+    promoCode: typeof body.promoCode === 'string' ? body.promoCode : undefined,
   });
   if (result.error || !result.orderId) {
     return NextResponse.json({ error: result.error ?? 'Could not place order' }, { status: 400 });

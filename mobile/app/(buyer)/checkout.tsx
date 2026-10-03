@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, MapPin } from 'lucide-react-native';
-import { useCart } from '@/store/cart';
+import { codeFields, useCart } from '@/store/cart';
 import { useAuth } from '@/store/auth';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
@@ -90,7 +90,7 @@ const PAY_OPTIONS: { id: PayMethod; label: string; sub: string; badge: string }[
 export default function Checkout() {
   const router = useRouter();
   const user = useAuth(s => s.user);
-  const { items, total, clear } = useCart();
+  const { items, total, clear, applied } = useCart();
   const [shipMethod, setShipMethod] = useState<ShipMethod>('standard');
   const [payMethod, setPayMethod] = useState<PayMethod>('cod');
   const [usePoints, setUsePoints] = useState(false);
@@ -123,7 +123,8 @@ export default function Checkout() {
 
   const subtotal = total();
   const shipping = SHIP_OPTIONS.find(o => o.id === shipMethod)!.price;
-  const discount = usePoints ? Math.min(pointsValue, subtotal) : 0;
+  const codeOff = applied?.forSubtotal === subtotal ? applied.amount : 0;
+  const discount = Math.min(codeOff + (usePoints ? pointsValue : 0), subtotal);
   const orderTotal = subtotal + shipping - discount;
 
   function openPay(method: PayMethod) {
@@ -150,6 +151,7 @@ export default function Checkout() {
           shippingMethod: shipMethod,
           addressId: address?.id,
           usePoints,
+          ...codeFields(applied, subtotal),
           items: items.map(i => ({
             productId: i.productId,
             qty: i.qty,
@@ -281,7 +283,7 @@ export default function Checkout() {
         </View>
         {discount > 0 && (
           <View style={styles.sumRow}>
-            <Text style={styles.muted}>Points</Text>
+            <Text style={styles.muted}>Discount</Text>
             <Text style={[styles.sumVal, { color: colors.success }]}>−{fmtEGP(discount)}</Text>
           </View>
         )}

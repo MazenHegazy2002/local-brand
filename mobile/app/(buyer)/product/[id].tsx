@@ -9,6 +9,7 @@ import {
   Pressable,
   Dimensions,
   ActivityIndicator,
+  Share,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -133,7 +134,14 @@ export default function ProductDetail() {
           <Pressable style={[styles.galleryBtn, { left: 16 }]} onPress={() => router.back()}>
             <ArrowLeft size={20} color={colors.ink} strokeWidth={2} />
           </Pressable>
-          <Pressable style={[styles.galleryBtn, { right: 64 }]}>
+          <Pressable
+            style={[styles.galleryBtn, { right: 64 }]}
+            onPress={() =>
+              Share.share({
+                message: `${process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop'}/product/${id}`,
+              })
+            }
+          >
             <Share2 size={18} color={colors.ink} strokeWidth={2} />
           </Pressable>
           <Pressable

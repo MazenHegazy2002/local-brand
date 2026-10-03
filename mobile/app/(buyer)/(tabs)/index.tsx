@@ -207,7 +207,7 @@ export default function Home() {
                   {i < 2 && <Text style={styles.countSep}>:</Text>}
                 </View>
               ))}
-              <Pressable style={styles.seeAll}>
+              <Pressable style={styles.seeAll} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
                 <Text style={styles.seeAllText}>See all</Text>
               </Pressable>
             </View>
@@ -251,7 +251,7 @@ export default function Home() {
           {/* New in */}
           <View style={[styles.sectionHeader, { marginTop: 28 }]}>
             <Text style={styles.sectionTitle}>New in</Text>
-            <Pressable style={styles.seeAll}>
+            <Pressable style={styles.seeAll} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
               <Text style={styles.seeAllText}>See all</Text>
             </Pressable>
           </View>
