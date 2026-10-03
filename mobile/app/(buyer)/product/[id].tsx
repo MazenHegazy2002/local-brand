@@ -30,13 +30,14 @@ interface RawVariant {
   stockCount?: number;
 }
 function flattenVariant(v: RawVariant) {
-  let attr: { color?: string; sizes?: string[] } = {};
+  let attr: { color?: string; size?: string; sizes?: string[] } = {};
   try {
     attr = JSON.parse(v.attributes ?? '{}') ?? {};
   } catch {}
-  const raw = attr.color || v.title || undefined;
+  // Size-only variants ({"size":"50g"}) must not fall back to the title as a color.
+  const raw = attr.color || (attr.size ? undefined : v.title) || undefined;
   const color = raw && raw.toLowerCase() !== 'default' ? raw : undefined;
-  const sizes = attr.sizes?.length ? attr.sizes : [undefined];
+  const sizes = attr.sizes?.length ? attr.sizes : attr.size ? [attr.size] : [undefined];
   return sizes.map(size => ({ color, size, stockCount: v.stockCount }));
 }
 
