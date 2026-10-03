@@ -23,6 +23,23 @@ const { width } = Dimensions.get('window');
 const GALLERY_H = 440;
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
+// API variants carry color/sizes in a JSON `attributes` string; flatten to one entry per size.
+interface RawVariant {
+  title?: string | null;
+  attributes?: string | null;
+  stockCount?: number;
+}
+function flattenVariant(v: RawVariant) {
+  let attr: { color?: string; sizes?: string[] } = {};
+  try {
+    attr = JSON.parse(v.attributes ?? '{}') ?? {};
+  } catch {}
+  const raw = attr.color || v.title || undefined;
+  const color = raw && raw.toLowerCase() !== 'default' ? raw : undefined;
+  const sizes = attr.sizes?.length ? attr.sizes : [undefined];
+  return sizes.map(size => ({ color, size, stockCount: v.stockCount }));
+}
+
 interface Product {
   id: string;
   sellerId: string;
@@ -57,7 +74,10 @@ export default function ProductDetail() {
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
-    queryFn: () => api.get<Product>(`/api/products/${id}`),
+    queryFn: async () => {
+      const p = await api.get<Product & { variants?: RawVariant[] }>(`/api/products/${id}`);
+      return { ...p, variants: (p.variants ?? []).flatMap(flattenVariant) };
+    },
   });
 
   const { data: seller } = useQuery({
