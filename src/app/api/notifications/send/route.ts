@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { NOTIFICATION_TYPES } from '@/lib/constants';
 import { sendNotificationSchema } from '@/lib/validation';
 import { SessionUser } from '@/types';
+import { pushToUsers } from '@/lib/push';
 
 export async function POST(req: Request) {
   try {
@@ -59,6 +60,7 @@ export async function POST(req: Request) {
         type: NOTIFICATION_TYPES.SYSTEM_ANNOUNCEMENT,
       })),
     });
+    await pushToUsers(userIds, title, message, link);
 
     return NextResponse.json({ success: true, count: userIds.length }, { status: 201 });
   } catch (error) {
