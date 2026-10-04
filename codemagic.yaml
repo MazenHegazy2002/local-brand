@@ -1,0 +1,61 @@
+workflows:
+  android-workflow:
+    name: Android Build (Brandyy Expo App)
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      node: 20.x
+      java: 17
+      vars:
+        EXPO_PUBLIC_API_URL: "https://brandyy.shop"
+    scripts:
+      - name: Install npm dependencies
+        script: |
+          cd mobile
+          npm ci
+      - name: Expo Prebuild
+        script: |
+          cd mobile
+          npx expo prebuild --platform android --clean
+      - name: Set Android SDK location
+        script: |
+          cd mobile/android
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+      - name: Build Android APK
+        script: |
+          cd mobile/android
+          ./gradlew assembleRelease --no-daemon
+    artifacts:
+      - mobile/android/app/build/outputs/apk/release/*.apk
+      - mobile/android/app/build/outputs/bundle/release/*.aab
+
+  ios-workflow:
+    name: iOS Build (Brandyy Expo App)
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      node: 20.x
+      xcode: latest
+      cocoapods: default
+      vars:
+        EXPO_PUBLIC_API_URL: "https://brandyy.shop"
+    scripts:
+      - name: Install npm dependencies
+        script: |
+          cd mobile
+          npm ci
+      - name: Expo Prebuild
+        script: |
+          cd mobile
+          npx expo prebuild --platform ios --clean
+      - name: Install CocoaPods dependencies
+        script: |
+          cd mobile/ios
+          pod install
+      - name: Build iOS app
+        script: |
+          xcode-project build-ipa \
+            --workspace "mobile/ios/Brandyy.xcworkspace" \
+            --scheme "Brandyy"
+    artifacts:
+      - build/ios/ipa/*.ipa
