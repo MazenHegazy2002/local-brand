@@ -24,7 +24,7 @@ function SuccessContent() {
     ? `/track/${encodeURIComponent(orderId || '')}`
     : '/dashboard?tab=orders';
   const clearCart = useCartStore(s => s.clearCart);
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
 
   // Clear cart on mount — safety net in case the checkout redirect didn't clear it
   useEffect(() => {
@@ -110,18 +110,7 @@ function SuccessContent() {
               <h3 className="font-black text-amber-900 text-base">{t('FawryPaymentRequired')}</h3>
             </div>
             <p className="text-amber-800 text-xs leading-relaxed mb-4">
-              {lang === 'ar' ? (
-                <>
-                  لإتمام طلبك، يرجى الدفع نقداً لدى أي منفذ فوري أو ماكينة فوري أو عبر المحفظة
-                  الإلكترونية خلال <strong>48 ساعة</strong> باستخدام الرقم المرجعي التالي:
-                </>
-              ) : (
-                <>
-                  To finalize your order, please complete your cash payment at any Fawry retail
-                  outlet, smart kiosk, or mobile wallet within <strong>48 hours</strong> using the
-                  reference code below:
-                </>
-              )}
+              {t('FawryPaymentInstructions')}
             </p>
             <div
               className="bg-white border border-amber-300 rounded-xl p-3 text-center shadow-sm font-mono font-black text-amber-700 text-lg tracking-wider mb-4"

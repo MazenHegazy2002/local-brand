@@ -274,6 +274,8 @@ export const en = {
     'A confirmation email is on its way — please check your inbox (and spam folder, just in case).',
   OrderReference: 'Order Reference',
   FawryPaymentRequired: 'Fawry Payment Required',
+  FawryPaymentInstructions:
+    'To finalize your order, please complete your cash payment at any Fawry retail outlet, smart kiosk, or mobile wallet within 48 hours using the reference code below:',
   FawryAutoCancel:
     'Orders are automatically cancelled if payment is not received before the 48-hour expiration window.',
   TrackMyOrder: 'Track My Order',
@@ -621,6 +623,8 @@ export const ar: Partial<typeof en> = {
     'أرسلنا إليك رسالة تأكيد عبر البريد الإلكتروني، يرجى مراجعة صندوق الوارد (والرسائل غير المرغوب فيها احتياطاً).',
   OrderReference: 'رقم الطلب',
   FawryPaymentRequired: 'مطلوب الدفع عبر فوري',
+  FawryPaymentInstructions:
+    'لإتمام طلبك، يرجى الدفع نقداً لدى أي منفذ فوري أو ماكينة فوري أو عبر المحفظة الإلكترونية خلال 48 ساعة باستخدام الرقم المرجعي التالي:',
   FawryAutoCancel: 'يُلغى الطلب تلقائياً إذا لم يتم الدفع خلال 48 ساعة.',
   TrackMyOrder: 'تتبّع طلبي',
   SaveOrderToAccount: 'احفظ هذا الطلب في حسابك',
@@ -834,6 +838,8 @@ export const fk: Partial<typeof en> = {
   OrderConfirmedEmailSent: 'ba3atalnalak email ta2kid, shof el inbox (w spam kaman 3ashan y3ni).',
   OrderReference: 'raqm el order',
   FawryPaymentRequired: 'lazem tedfa3 be fawry',
+  FawryPaymentInstructions:
+    '3ashan te2fel el order, 2edfa3 cash fe ay manfaz Fawry aw makena aw mohfaza elektroneya khilal 48 se3a bel raqam el marge3y el tali:',
   FawryAutoCancel: 'el order byet2af lwa7do law madfash5 fe 48 se3a.',
   TrackMyOrder: 'ta2bel el order',
   SaveOrderToAccount: 'e7faz el order fe 7esabak',
