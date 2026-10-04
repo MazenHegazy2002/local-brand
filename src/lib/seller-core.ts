@@ -227,8 +227,8 @@ export async function createProductForSeller(
     }
   }
 
-  // Auto-fill Arabic copy when the seller didn't supply it (no-op without ANTHROPIC_API_KEY).
-  const ar = rest.titleAr ? null : await translateToArabic(rest.title, rest.description);
+  // Auto-fill Arabic copy when the seller didn't supply it (offline glossary, no API).
+  const ar = rest.titleAr ? null : translateToArabic(rest.title, rest.description);
 
   const product = await prisma.product.create({
     data: {

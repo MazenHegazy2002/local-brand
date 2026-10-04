@@ -1,43 +1,163 @@
 /**
- * Machine-translate product copy to Egyptian-friendly Arabic via the Claude API.
- * Needs ANTHROPIC_API_KEY; without it (or on any failure) returns null so product
- * creation is never blocked — sellers can still fill titleAr by hand.
+ * Built-in (offline, no API) Arabic translation for product copy.
+ * Glossary-based: known product words are translated, brand names / model numbers /
+ * unknown words stay as written. Titles come out as a mixed Arabic + brand name,
+ * e.g. "Nike Cotton T-Shirt Black" -> "Nike تيشيرت قطن أسود".
+ * ponytail: word-level only, no grammar/reordering. Extend GLOSSARY as needed; sellers can
+ * always override with titleAr by hand.
  */
-export async function translateToArabic(
+const GLOSSARY: Record<string, string> = {
+  // clothing
+  't-shirt': 'تيشيرت',
+  tshirt: 'تيشيرت',
+  shirt: 'قميص',
+  polo: 'بولو',
+  hoodie: 'هودي',
+  sweatshirt: 'سويتشيرت',
+  sweater: 'سترة صوف',
+  jacket: 'جاكيت',
+  coat: 'معطف',
+  jeans: 'جينز',
+  pants: 'بنطلون',
+  trousers: 'بنطلون',
+  shorts: 'شورت',
+  dress: 'فستان',
+  skirt: 'تنورة',
+  abaya: 'عباية',
+  hijab: 'حجاب',
+  scarf: 'وشاح',
+  socks: 'شرابات',
+  underwear: 'ملابس داخلية',
+  pajama: 'بيجامة',
+  pajamas: 'بيجامة',
+  tracksuit: 'ترينج',
+  suit: 'بدلة',
+  blouse: 'بلوزة',
+  // shoes & accessories
+  shoes: 'حذاء',
+  shoe: 'حذاء',
+  sneakers: 'سنيكرز',
+  sandals: 'صندل',
+  slippers: 'شبشب',
+  boots: 'بوت',
+  bag: 'حقيبة',
+  backpack: 'حقيبة ظهر',
+  handbag: 'حقيبة يد',
+  wallet: 'محفظة',
+  belt: 'حزام',
+  watch: 'ساعة',
+  cap: 'كاب',
+  hat: 'قبعة',
+  sunglasses: 'نظارة شمس',
+  glasses: 'نظارة',
+  bracelet: 'سوار',
+  necklace: 'عقد',
+  ring: 'خاتم',
+  earrings: 'حلق',
+  // home / electronics / beauty
+  headphones: 'سماعات',
+  earbuds: 'سماعات أذن',
+  speaker: 'سماعة',
+  charger: 'شاحن',
+  cable: 'كابل',
+  case: 'جراب',
+  cover: 'غطاء',
+  phone: 'موبايل',
+  laptop: 'لابتوب',
+  perfume: 'عطر',
+  cream: 'كريم',
+  lotion: 'لوشن',
+  shampoo: 'شامبو',
+  soap: 'صابون',
+  lamp: 'مصباح',
+  pillow: 'وسادة',
+  blanket: 'بطانية',
+  towel: 'منشفة',
+  mug: 'كوب',
+  bottle: 'زجاجة',
+  toy: 'لعبة',
+  toys: 'ألعاب',
+  set: 'طقم',
+  pack: 'عبوة',
+  pcs: 'قطعة',
+  // materials
+  cotton: 'قطن',
+  leather: 'جلد',
+  wool: 'صوف',
+  silk: 'حرير',
+  linen: 'كتان',
+  denim: 'جينز',
+  polyester: 'بوليستر',
+  plastic: 'بلاستيك',
+  metal: 'معدن',
+  wooden: 'خشب',
+  glass: 'زجاج',
+  // colors
+  black: 'أسود',
+  white: 'أبيض',
+  red: 'أحمر',
+  blue: 'أزرق',
+  green: 'أخضر',
+  yellow: 'أصفر',
+  grey: 'رمادي',
+  gray: 'رمادي',
+  brown: 'بني',
+  pink: 'وردي',
+  purple: 'بنفسجي',
+  orange: 'برتقالي',
+  beige: 'بيج',
+  navy: 'كحلي',
+  gold: 'ذهبي',
+  silver: 'فضي',
+  // audience / descriptors
+  men: 'رجالي',
+  mens: 'رجالي',
+  man: 'رجالي',
+  women: 'حريمي',
+  womens: 'حريمي',
+  woman: 'حريمي',
+  kids: 'أطفال',
+  boys: 'ولادي',
+  girls: 'بناتي',
+  unisex: 'للجنسين',
+  baby: 'بيبي',
+  new: 'جديد',
+  classic: 'كلاسيك',
+  slim: 'سليم',
+  casual: 'كاجوال',
+  sport: 'رياضي',
+  sports: 'رياضي',
+  summer: 'صيفي',
+  winter: 'شتوي',
+  premium: 'مميز',
+  original: 'أصلي',
+  and: 'و',
+  with: 'مع',
+  for: 'لـ',
+  size: 'مقاس',
+  small: 'صغير',
+  medium: 'وسط',
+  large: 'كبير',
+};
+
+function translateText(text: string): string {
+  return text
+    .split(/(\s+)/)
+    .map(tok => {
+      const m = tok.match(/^([^A-Za-z0-9-]*)([A-Za-z0-9-]+)([^A-Za-z0-9-]*)$/);
+      if (!m) return tok;
+      const hit = GLOSSARY[m[2].toLowerCase()];
+      return hit ? m[1] + hit + m[3] : tok;
+    })
+    .join('');
+}
+
+export function translateToArabic(
   title: string,
   description?: string | null
-): Promise<{ titleAr: string; descriptionAr: string | null } | null> {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key || !title.trim()) return null;
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: process.env.TRANSLATE_MODEL || 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        messages: [
-          {
-            role: 'user',
-            content:
-              'Translate this e-commerce product into natural Modern Standard Arabic. Keep brand names and model numbers in Latin letters. Reply with ONLY JSON: {"title":"...","description":"..."} (description "" if input empty).\n\n' +
-              JSON.stringify({ title, description: description || '' }),
-          },
-        ],
-      }),
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const text: string = data?.content?.[0]?.text ?? '';
-    const parsed = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
-    if (!parsed.title) return null;
-    return { titleAr: parsed.title, descriptionAr: parsed.description || null };
-  } catch {
-    return null;
-  }
+): { titleAr: string; descriptionAr: string | null } | null {
+  const titleAr = translateText(title.trim());
+  // Nothing in the glossary matched -> don't store an identical "translation".
+  if (!title.trim() || titleAr === title.trim()) return null;
+  return { titleAr, descriptionAr: description ? translateText(description) : null };
 }
