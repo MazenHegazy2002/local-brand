@@ -239,6 +239,7 @@ export default function Shop() {
           <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
         ) : (
           <FlatList
+            key="brands-list"
             data={allCategories}
             keyExtractor={c => c.id}
             contentContainerStyle={styles.catList}
@@ -268,6 +269,7 @@ export default function Shop() {
         <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
       ) : (
         <FlatList
+          key="products-grid"
           data={products}
           keyExtractor={i => i.id}
           numColumns={2}
