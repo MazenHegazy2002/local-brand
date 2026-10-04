@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet } from 'react-native';
 import { Home, Search, MapPin, ShoppingBag, User } from 'lucide-react-native';
 import { colors, tabBar } from '@/lib/tokens';
@@ -14,6 +15,7 @@ function Badge({ count }: { count: number }) {
 }
 
 export default function BuyerLayout() {
+  const insets = useSafeAreaInsets();
   const count = useCart(s => s.count());
 
   return (
@@ -24,7 +26,8 @@ export default function BuyerLayout() {
           backgroundColor: tabBar.bg,
           borderTopColor: tabBar.borderColor,
           borderTopWidth: 1,
-          height: tabBar.height,
+          height: tabBar.height + insets.bottom,
+          paddingBottom: insets.bottom,
         },
         tabBarActiveTintColor: tabBar.activeColor,
         tabBarInactiveTintColor: tabBar.inactiveColor,

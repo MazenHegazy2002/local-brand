@@ -1,5 +1,6 @@
 import type { ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   LayoutGrid,
   ClipboardList,
@@ -11,6 +12,7 @@ import { colors, tabBar } from '@/lib/tokens';
 import { useSellerStats } from '@/lib/seller';
 
 export default function SellerLayout() {
+  const insets = useSafeAreaInsets();
   const { data } = useSellerStats('7d');
   const pending = (data?.newOrders ?? 0) + (data?.toShip ?? 0);
   const icon = (Icon: typeof LayoutGrid) =>
@@ -26,7 +28,8 @@ export default function SellerLayout() {
           backgroundColor: tabBar.bg,
           borderTopColor: tabBar.borderColor,
           borderTopWidth: 1,
-          height: tabBar.height,
+          height: tabBar.height + insets.bottom,
+          paddingBottom: insets.bottom,
         },
         tabBarActiveTintColor: tabBar.activeColor,
         tabBarInactiveTintColor: tabBar.inactiveColor,
