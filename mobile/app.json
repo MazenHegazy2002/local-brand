@@ -49,7 +49,9 @@
           "color": "#1e3b8a"
         }
       ],
-      "expo-image-picker"
+      "expo-image-picker",
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
