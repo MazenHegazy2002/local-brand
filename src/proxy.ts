@@ -308,13 +308,14 @@ export async function proxy(req: NextRequest) {
     // Set language header
     req.headers.set('x-lang', isArabic ? 'ar' : isFranko ? 'fk' : 'en');
 
-    const response = isArabic
-      ? NextResponse.rewrite(new URL(targetPathname + req.nextUrl.search, req.url), {
-          request: { headers: req.headers },
-        })
-      : NextResponse.next({
-          request: { headers: req.headers },
-        });
+    const response =
+      isArabic || isFranko
+        ? NextResponse.rewrite(new URL(targetPathname + req.nextUrl.search, req.url), {
+            request: { headers: req.headers },
+          })
+        : NextResponse.next({
+            request: { headers: req.headers },
+          });
 
     if (isArabic) {
       response.cookies.set('googtrans', '/en/ar', { path: '/' });
@@ -385,13 +386,14 @@ export async function proxy(req: NextRequest) {
   // Set language header
   req.headers.set('x-lang', isArabic ? 'ar' : isFranko ? 'fk' : 'en');
 
-  const response = isArabic
-    ? NextResponse.rewrite(new URL(targetPathname + req.nextUrl.search, req.url), {
-        request: { headers: req.headers },
-      })
-    : NextResponse.next({
-        request: { headers: req.headers },
-      });
+  const response =
+    isArabic || isFranko
+      ? NextResponse.rewrite(new URL(targetPathname + req.nextUrl.search, req.url), {
+          request: { headers: req.headers },
+        })
+      : NextResponse.next({
+          request: { headers: req.headers },
+        });
 
   if (isArabic) {
     response.cookies.set('googtrans', '/en/ar', { path: '/' });
