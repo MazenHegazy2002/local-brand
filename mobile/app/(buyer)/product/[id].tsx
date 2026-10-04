@@ -1,5 +1,5 @@
 // Screen 2e — Product detail
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Pressable,
   Dimensions,
   ActivityIndicator,
+  Share,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -21,6 +22,31 @@ import { colors, radii, spacing } from '@/lib/tokens';
 const { width } = Dimensions.get('window');
 const GALLERY_H = 440;
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+// API variants carry color/sizes in a JSON `attributes` string; flatten to one entry per size.
+interface RawVariant {
+  title?: string | null;
+  attributes?: string | null;
+  stockCount?: number;
+}
+function flattenVariant(v: RawVariant) {
+  let attr: {
+    color?: string;
+    size?: string;
+    sizes?: string[];
+    image?: string;
+    imageUrl?: string;
+  } = {};
+  try {
+    attr = JSON.parse(v.attributes ?? '{}') ?? {};
+  } catch {}
+  // Size-only variants ({"size":"50g"}) must not fall back to the title as a color.
+  const raw = attr.color || (attr.size ? undefined : v.title) || undefined;
+  const color = raw && raw.toLowerCase() !== 'default' ? raw : undefined;
+  const sizes = attr.sizes?.length ? attr.sizes : attr.size ? [attr.size] : [undefined];
+  const image = attr.image || attr.imageUrl || undefined;
+  return sizes.map(size => ({ color, size, image, stockCount: v.stockCount }));
+}
 
 interface Product {
   id: string;
@@ -53,10 +79,16 @@ export default function ProductDetail() {
   const [selectedSize, setSelectedSize] = useState<string>();
   const [selectedColor, setSelectedColor] = useState<string>();
   const [imgIdx, setImgIdx] = useState(0);
+  // Variant photo not in the product gallery; shown as the first slide while its color is picked.
+  const [extraImg, setExtraImg] = useState<string>();
+  const galleryRef = useRef<FlatList<string>>(null);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
-    queryFn: () => api.get<Product>(`/api/products/${id}`),
+    queryFn: async () => {
+      const p = await api.get<Product & { variants?: RawVariant[] }>(`/api/products/${id}`);
+      return { ...p, variants: (p.variants ?? []).flatMap(flattenVariant) };
+    },
   });
 
   const { data: seller } = useQuery({
@@ -77,7 +109,8 @@ export default function ProductDetail() {
   if (isLoading) return <ActivityIndicator style={{ flex: 1 }} color={colors.primary} />;
   if (!product) return <Text style={{ margin: 40 }}>Product not found</Text>;
 
-  const images = product.images?.length ? product.images.map(i => i.url) : [''];
+  const baseImages = product.images?.length ? product.images.map(i => i.url) : [''];
+  const images = extraImg ? [extraImg, ...baseImages] : baseImages;
   const variants = product.variants ?? [];
   const stockOf = (size: string) =>
     variants.filter(v => v.size === size).reduce((n, v) => n + (v.stockCount ?? 0), 0);
@@ -114,6 +147,7 @@ export default function ProductDetail() {
         {/* Gallery */}
         <View style={styles.gallery}>
           <FlatList
+            ref={galleryRef}
             data={images}
             keyExtractor={(_, i) => String(i)}
             horizontal
@@ -133,7 +167,14 @@ export default function ProductDetail() {
           <Pressable style={[styles.galleryBtn, { left: 16 }]} onPress={() => router.back()}>
             <ArrowLeft size={20} color={colors.ink} strokeWidth={2} />
           </Pressable>
-          <Pressable style={[styles.galleryBtn, { right: 64 }]}>
+          <Pressable
+            style={[styles.galleryBtn, { right: 64 }]}
+            onPress={() =>
+              Share.share({
+                message: `${process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop'}/product/${id}`,
+              })
+            }
+          >
             <Share2 size={18} color={colors.ink} strokeWidth={2} />
           </Pressable>
           <Pressable
@@ -197,11 +238,24 @@ export default function ProductDetail() {
               <View style={styles.optionRow}>
                 {productColors.map((c, i) => {
                   const active = (selectedColor ?? productColors[0]) === c;
-                  const uri = images[i % images.length];
+                  // Same order as the website: the variant's own photo, else the gallery photo at the color's position.
+                  const uri =
+                    variants.find(v => v.color === c && v.image)?.image ??
+                    baseImages[i % baseImages.length];
                   return (
                     <Pressable
                       key={c}
-                      onPress={() => setSelectedColor(c)}
+                      onPress={() => {
+                        setSelectedColor(c);
+                        const idx = baseImages.indexOf(uri);
+                        setExtraImg(idx < 0 ? uri : undefined);
+                        const target = idx < 0 ? 0 : idx;
+                        galleryRef.current?.scrollToOffset({
+                          offset: target * width,
+                          animated: true,
+                        });
+                        setImgIdx(target);
+                      }}
                       style={[styles.colorThumb, active && styles.colorThumbActive]}
                     >
                       <Image

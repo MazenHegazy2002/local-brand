@@ -1,7 +1,6 @@
 // src/app/api/checkout/apply-code/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getRequestUser } from '@/lib/mobile-auth';
 import { validatePromoCode } from '@/lib/affiliate';
 import { z } from 'zod';
 
@@ -11,8 +10,8 @@ const ApplyCodeSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  const user = await getRequestUser(req);
+  if (!user) {
     return NextResponse.json(
       { error: 'You must be logged in to apply a promo code.' },
       { status: 401 }
@@ -25,11 +24,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }
 
-  const result = await validatePromoCode(
-    parsed.data.code,
-    parsed.data.orderTotalEgp,
-    session.user.id
-  );
+  const result = await validatePromoCode(parsed.data.code, parsed.data.orderTotalEgp, user.id);
 
   if (!result.valid) {
     return NextResponse.json({ valid: false, reason: result.reason }, { status: 200 });

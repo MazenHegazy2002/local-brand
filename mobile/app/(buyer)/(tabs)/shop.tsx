@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   ScrollView,
   Modal,
-  Switch,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -38,14 +37,6 @@ interface Category {
 
 const P_MIN = 0;
 const P_MAX = 5000;
-const SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
-const COLOR_SWATCHES = [
-  { id: 'navy', hex: '#1e3b8a' },
-  { id: 'brown', hex: '#8B5E3C' },
-  { id: 'maroon', hex: '#6B1E2E' },
-  { id: 'beige', hex: '#D4C5A9' },
-  { id: 'white', hex: '#FFFFFF' },
-];
 const CAT_BG = ['#f5ede3', '#e8edf9', '#f9e8e8', '#e8f4e8', '#fdf3dc', '#f3e8f9', '#e8f4f9'];
 
 function RangeSlider({
@@ -118,29 +109,12 @@ export default function Shop() {
 
   const [priceMin, setPriceMin] = useState(P_MIN);
   const [priceMax, setPriceMax] = useState(P_MAX);
-  const [sizes, setSizes] = useState<Set<string>>(new Set());
-  const [selColors, setSelColors] = useState<Set<string>>(new Set());
-  const [localOnly, setLocalOnly] = useState(false);
-  const [sortBy, setSortBy] = useState<'newest' | 'price_asc' | 'price_desc'>('newest');
+  const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc'>('newest');
 
-  const toggleSize = (s: string) =>
-    setSizes(prev => {
-      const n = new Set(prev);
-      n.has(s) ? n.delete(s) : n.add(s);
-      return n;
-    });
-  const toggleColor = (c: string) =>
-    setSelColors(prev => {
-      const n = new Set(prev);
-      n.has(c) ? n.delete(c) : n.add(c);
-      return n;
-    });
   const resetFilters = () => {
     setPriceMin(P_MIN);
     setPriceMax(P_MAX);
-    setSizes(new Set());
-    setSelColors(new Set());
-    setLocalOnly(false);
+    setSortBy('newest');
   };
 
   const { data: cats } = useQuery({
@@ -236,58 +210,16 @@ export default function Shop() {
             <Text style={styles.priceLabel}>{priceMax.toLocaleString()} EGP</Text>
           </View>
 
-          <Text style={styles.sectionLabel}>Size</Text>
-          <View style={styles.pillRow}>
-            {SIZES.map(s => (
-              <Pressable
-                key={s}
-                style={[styles.pill, sizes.has(s) && styles.pillActive]}
-                onPress={() => toggleSize(s)}
-              >
-                <Text style={[styles.pillText, sizes.has(s) && styles.pillTextActive]}>{s}</Text>
-              </Pressable>
-            ))}
-          </View>
-
-          <Text style={styles.sectionLabel}>Color</Text>
-          <View style={styles.colorRow}>
-            {COLOR_SWATCHES.map(c => (
-              <Pressable
-                key={c.id}
-                style={[
-                  styles.colorSwatch,
-                  { backgroundColor: c.hex },
-                  c.hex === '#FFFFFF' && styles.colorSwatchBorder,
-                  selColors.has(c.id) && styles.colorSwatchSelected,
-                ]}
-                onPress={() => toggleColor(c.id)}
-              />
-            ))}
-          </View>
-
-          <View style={styles.toggleRow}>
-            <View>
-              <Text style={styles.toggleLabel}>Local brands only</Text>
-              <Text style={styles.toggleSub}>Verified Egyptian labels</Text>
-            </View>
-            <Switch
-              value={localOnly}
-              onValueChange={setLocalOnly}
-              trackColor={{ false: colors.inputBorder, true: colors.primary }}
-              thumbColor="#fff"
-            />
-          </View>
-
           <Text style={styles.sectionLabel}>Sort by</Text>
           <View style={styles.pillRow}>
-            {(['newest', 'price_asc', 'price_desc'] as const).map(v => (
+            {(['newest', 'price-asc', 'price-desc'] as const).map(v => (
               <Pressable
                 key={v}
                 style={[styles.pill, sortBy === v && styles.pillActive]}
                 onPress={() => setSortBy(v)}
               >
                 <Text style={[styles.pillText, sortBy === v && styles.pillTextActive]}>
-                  {v === 'newest' ? 'Newest' : v === 'price_asc' ? 'Price ↑' : 'Price ↓'}
+                  {v === 'newest' ? 'Newest' : v === 'price-asc' ? 'Price ↑' : 'Price ↓'}
                 </Text>
               </Pressable>
             ))}
@@ -502,19 +434,6 @@ const styles = StyleSheet.create({
   pillActive: { borderColor: colors.primary, backgroundColor: '#EEF2FF' },
   pillText: { fontFamily: 'Inter-Medium', fontSize: 14, color: colors.ink },
   pillTextActive: { fontFamily: 'Inter-SemiBold', color: colors.primary },
-  colorRow: { flexDirection: 'row', gap: 12 },
-  colorSwatch: { width: 36, height: 36, borderRadius: 18 },
-  colorSwatchBorder: { borderWidth: 1, borderColor: '#E0E0E0' },
-  colorSwatchSelected: { borderWidth: 3, borderColor: colors.primary },
-  toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 4,
-  },
-  toggleLabel: { fontFamily: 'Inter-SemiBold', fontSize: 15, color: colors.ink },
-  toggleSub: { fontFamily: 'Inter-Regular', fontSize: 13, color: colors.muted, marginTop: 2 },
   cta: {
     marginTop: 28,
     backgroundColor: colors.primary,

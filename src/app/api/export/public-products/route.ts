@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
       take: limit,
       select: {
         id: true,
+        sellerId: true,
         title: true,
         titleAr: true,
         slug: true,
@@ -109,6 +110,7 @@ export async function GET(req: NextRequest) {
         category: p.category?.name || 'General',
         categorySlug: p.category?.slug || 'general',
         storeName: p.seller?.storeName || brandName,
+        sellerId: p.sellerId,
 
         // Common image aliases
         image: primaryImg,

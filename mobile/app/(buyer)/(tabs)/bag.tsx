@@ -1,22 +1,65 @@
 // Screen 3a — Bag
 import { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  TextInput,
+  ActivityIndicator,
+} from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Minus, Plus } from 'lucide-react-native';
-import { useCart } from '@/store/cart';
+import { useCart, lineKey } from '@/store/cart';
 import { colors, radii, spacing } from '@/lib/tokens';
-import { fmtEGP } from '@/lib/api';
+import { api, fmtEGP } from '@/lib/api';
 
 const FREE_THRESHOLD = 1000;
 
 export default function Bag() {
   const router = useRouter();
-  const { items, setQty, remove, total, count } = useCart();
-  const [promo, setPromo] = useState('');
+  const { items, setQty, remove, total, count, applied, setApplied } = useCart();
+  const [promo, setPromo] = useState(applied?.code ?? '');
+  const [promoMsg, setPromoMsg] = useState('');
+  const [checking, setChecking] = useState(false);
   const subtotal = total();
   const remaining = FREE_THRESHOLD - subtotal;
   const progress = Math.min(subtotal / FREE_THRESHOLD, 1);
+
+  // Affiliate promo codes first, then store coupons. The server re-checks at checkout.
+  async function applyCode() {
+    const code = promo.trim().toUpperCase();
+    if (!code) return;
+    setChecking(true);
+    setPromoMsg('');
+    try {
+      const p = await api.post<{ valid: boolean; discountAmountEgp?: number; reason?: string }>(
+        '/api/checkout/apply-code',
+        { code, orderTotalEgp: subtotal }
+      );
+      if (p.valid) {
+        setApplied({
+          code,
+          kind: 'promo',
+          amount: p.discountAmountEgp ?? 0,
+          forSubtotal: subtotal,
+        });
+        return;
+      }
+      const c = await api.post<{ discountAmount: number }>('/api/coupons/evaluate', {
+        code,
+        orderValue: subtotal,
+      });
+      setApplied({ code, kind: 'coupon', amount: c.discountAmount, forSubtotal: subtotal });
+    } catch (e: unknown) {
+      setApplied(null);
+      setPromoMsg((e as Error).message || 'Invalid code');
+    } finally {
+      setChecking(false);
+    }
+  }
 
   if (count() === 0) {
     return (
@@ -52,7 +95,7 @@ export default function Bag() {
 
         {/* Line items */}
         {items.map(item => (
-          <View key={item.productId} style={styles.item}>
+          <View key={lineKey(item)} style={styles.item}>
             <Image source={{ uri: item.image }} style={styles.itemImg} contentFit="cover" />
             <View style={styles.itemInfo}>
               <Text style={styles.itemBrand} numberOfLines={1}>
@@ -61,23 +104,24 @@ export default function Bag() {
               <Text style={styles.itemName} numberOfLines={2}>
                 {item.title}
               </Text>
-              {item.size && <Text style={styles.itemMeta}>{item.size}</Text>}
+              {(item.color || item.size) && (
+                <Text style={styles.itemMeta}>
+                  {[item.color, item.size].filter(Boolean).join(' · ')}
+                </Text>
+              )}
               <Text style={styles.itemPrice}>{fmtEGP(item.basePrice)}</Text>
             </View>
             <View style={styles.stepper}>
               <Pressable
                 style={styles.stepBtn}
                 onPress={() =>
-                  item.qty <= 1 ? remove(item.productId) : setQty(item.productId, item.qty - 1)
+                  item.qty <= 1 ? remove(lineKey(item)) : setQty(lineKey(item), item.qty - 1)
                 }
               >
                 <Minus size={14} color={colors.ink} strokeWidth={2} />
               </Pressable>
               <Text style={styles.stepQty}>{item.qty}</Text>
-              <Pressable
-                style={styles.stepBtn}
-                onPress={() => setQty(item.productId, item.qty + 1)}
-              >
+              <Pressable style={styles.stepBtn} onPress={() => setQty(lineKey(item), item.qty + 1)}>
                 <Plus size={14} color={colors.ink} strokeWidth={2} />
               </Pressable>
             </View>
@@ -94,10 +138,21 @@ export default function Bag() {
             onChangeText={setPromo}
             autoCapitalize="characters"
           />
-          <Pressable style={styles.promoBtn}>
-            <Text style={styles.promoBtnText}>Apply</Text>
+          <Pressable style={styles.promoBtn} onPress={applyCode} disabled={checking}>
+            {checking ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : (
+              <Text style={styles.promoBtnText}>Apply</Text>
+            )}
           </Pressable>
         </View>
+        {applied?.forSubtotal === subtotal ? (
+          <Text style={styles.promoOk}>
+            {applied.code} applied: −{fmtEGP(applied.amount)}
+          </Text>
+        ) : promoMsg ? (
+          <Text style={styles.promoErr}>{promoMsg}</Text>
+        ) : null}
       </ScrollView>
 
       {/* Sticky footer */}
@@ -209,6 +264,8 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   promoBtn: { paddingHorizontal: 16 },
+  promoOk: { fontFamily: 'Inter-Medium', fontSize: 13, color: colors.primary, marginTop: 8 },
+  promoErr: { fontFamily: 'Inter-Medium', fontSize: 13, color: colors.favorite, marginTop: 8 },
   promoBtnText: { fontFamily: 'Inter-SemiBold', fontSize: 14, color: colors.primary },
   empty: {
     flex: 1,

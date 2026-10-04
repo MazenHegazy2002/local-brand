@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import { signIn as apiSignIn, signOut as apiSignOut } from '@/lib/api';
+import { api, setOnSessionExpired, signIn as apiSignIn, signOut as apiSignOut } from '@/lib/api';
+import { queryClient } from '@/lib/queryClient';
 
 // SecureStore is native-only; fall back to localStorage on web
 const storage = {
@@ -61,7 +62,10 @@ export const useAuth = create<AuthStore>(set => ({
   },
 
   signOut: async () => {
+    // Stop pushes to this device for the old account; ignore failures (may already be expired).
+    await api.delete('/api/notifications/push-token').catch(() => {});
     await apiSignOut();
+    queryClient.clear();
     await storage.del('user');
     set({ user: null });
   },
@@ -71,3 +75,10 @@ export const useAuth = create<AuthStore>(set => ({
     set({ lang });
   },
 }));
+
+setOnSessionExpired(async () => {
+  await apiSignOut();
+  await storage.del('user');
+  queryClient.clear();
+  useAuth.setState({ user: null });
+});

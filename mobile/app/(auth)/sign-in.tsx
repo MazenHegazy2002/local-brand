@@ -13,6 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react-native';
 import { useAuth } from '@/store/auth';
 import { colors, radii, spacing } from '@/lib/tokens';
@@ -152,7 +153,10 @@ export default function SignIn() {
         </View>
 
         {tab === 'signin' && (
-          <Pressable style={styles.forgotRow}>
+          <Pressable
+            style={styles.forgotRow}
+            onPress={() => WebBrowser.openBrowserAsync(`${BASE}/forgot-password`)}
+          >
             <Text style={styles.forgotText}>Forgot password?</Text>
           </Pressable>
         )}
@@ -172,21 +176,6 @@ export default function SignIn() {
             </Text>
           )}
         </Pressable>
-
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or continue with</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        <View style={styles.socialRow}>
-          <Pressable style={[styles.socialBtn, styles.socialBtnLight]}>
-            <Text style={styles.socialTextDark}>G Google</Text>
-          </Pressable>
-          <Pressable style={[styles.socialBtn, styles.socialBtnDark]}>
-            <Text style={styles.socialTextLight}> Apple</Text>
-          </Pressable>
-        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
