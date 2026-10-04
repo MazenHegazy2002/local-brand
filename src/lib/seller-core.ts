@@ -1,3 +1,4 @@
+import { translateToArabic } from '@/lib/translate-ar';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import type { OrderItemStatus } from '@/generated/client';
@@ -226,9 +227,13 @@ export async function createProductForSeller(
     }
   }
 
+  // Auto-fill Arabic copy when the seller didn't supply it (offline glossary, no API).
+  const ar = rest.titleAr ? null : translateToArabic(rest.title, rest.description);
+
   const product = await prisma.product.create({
     data: {
       ...rest,
+      ...(ar ? { titleAr: ar.titleAr, descriptionAr: ar.descriptionAr } : {}),
       brandId: data.brandId || null,
       brand: brandName,
       weightGrams,
