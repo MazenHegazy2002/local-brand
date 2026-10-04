@@ -37,10 +37,11 @@ interface AuthStore {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   setLang: (lang: 'en' | 'ar') => void;
+  updateUser: (patch: Partial<User>) => Promise<void>;
   hydrate: () => Promise<void>;
 }
 
-export const useAuth = create<AuthStore>(set => ({
+export const useAuth = create<AuthStore>((set, get) => ({
   user: null,
   lang: 'en',
   loading: true,
@@ -73,6 +74,14 @@ export const useAuth = create<AuthStore>(set => ({
   setLang: async lang => {
     await storage.set('lang', lang);
     set({ lang });
+  },
+
+  updateUser: async patch => {
+    const cur = get().user;
+    if (!cur) return;
+    const user = { ...cur, ...patch };
+    await storage.set('user', JSON.stringify(user));
+    set({ user });
   },
 }));
 

@@ -19,6 +19,7 @@ import type { OrderRow } from '../orders';
 import type { AddressRow } from '../addresses';
 import { colors, radii, spacing } from '@/lib/tokens';
 import * as WebBrowser from 'expo-web-browser';
+import { Image } from 'expo-image';
 
 const WEB = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
 const openWeb = (path: string) => WebBrowser.openBrowserAsync(WEB + path);
@@ -110,7 +111,7 @@ export default function Account() {
       Icon: Settings,
       badge: null,
       hint: null,
-      onPress: () => openWeb('/dashboard?tab=settings'),
+      onPress: () => router.push('/edit-profile' as Href),
     },
     {
       label: 'My orders',
@@ -179,13 +180,17 @@ export default function Account() {
       {/* Profile header */}
       <View style={styles.profileRow}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initials}</Text>
+          {user?.image ? (
+            <Image source={{ uri: user.image }} style={StyleSheet.absoluteFill} />
+          ) : (
+            <Text style={styles.avatarText}>{initials}</Text>
+          )}
         </View>
         <View style={styles.profileInfo}>
           <Text style={styles.name}>{user?.name ?? 'Guest'}</Text>
           <Text style={styles.email}>{user?.email}</Text>
         </View>
-        <Pressable style={styles.settingsBtn} onPress={() => openWeb('/dashboard?tab=settings')}>
+        <Pressable style={styles.settingsBtn} onPress={() => router.push('/edit-profile' as Href)}>
           <Settings size={20} color={colors.muted} strokeWidth={1.8} />
         </Pressable>
       </View>
@@ -262,6 +267,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   avatarText: { fontFamily: 'Outfit-Bold', fontSize: 20, color: '#fff' },
   profileInfo: { flex: 1 },
