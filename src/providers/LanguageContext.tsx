@@ -1,9 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { en, ar, DictKey } from '@/lib/i18n/dicts';
+import { en, ar, fk, DictKey } from '@/lib/i18n/dicts';
 
-type Language = 'en' | 'ar';
+type Language = 'en' | 'ar' | 'fk';
 
 type LanguageContextType = {
   lang: Language;
@@ -56,14 +56,15 @@ function clearCookie(name: string) {
 
 function detectInitialLang(): Language {
   if (typeof window === 'undefined') return 'en';
-  // 1) Pathname starts with /ar or is /ar
-  if (window.location.pathname === '/ar' || window.location.pathname.startsWith('/ar/')) {
+  // 1) Pathname prefix
+  if (window.location.pathname === '/ar' || window.location.pathname.startsWith('/ar/'))
     return 'ar';
-  }
+  if (window.location.pathname === '/fk' || window.location.pathname.startsWith('/fk/'))
+    return 'fk';
   // 2) Explicit user preference saved in localStorage wins.
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === 'ar' || stored === 'en') return stored;
+    if (stored === 'ar' || stored === 'en' || stored === 'fk') return stored as Language;
   } catch {
     /* ignore */
   }
@@ -107,24 +108,32 @@ export function LanguageProvider({
     }
 
     let newPathname = window.location.pathname;
+    // Strip any existing lang prefix to get the base path
+    const basePath =
+      newPathname === '/ar' || newPathname === '/fk'
+        ? '/'
+        : newPathname.startsWith('/ar/')
+          ? newPathname.substring(3)
+          : newPathname.startsWith('/fk/')
+            ? newPathname.substring(3)
+            : newPathname;
+
     if (nextLang === 'ar') {
       setCookie(COOKIE_NAME, '/en/ar');
-      // GT also reads a hash fragment of this exact form.
       window.location.hash = '#googtrans(en|ar)';
-      if (newPathname !== '/ar' && !newPathname.startsWith('/ar/')) {
-        newPathname = '/ar' + (newPathname === '/' ? '' : newPathname);
-      }
-    } else {
+      newPathname = '/ar' + (basePath === '/' ? '' : basePath);
+    } else if (nextLang === 'fk') {
       clearCookie(COOKIE_NAME);
-      // Drop the GT hash so we don't keep re-translating to Arabic.
       if (window.location.hash.startsWith('#googtrans')) {
         history.replaceState(null, '', window.location.pathname + window.location.search);
       }
-      if (newPathname === '/ar') {
-        newPathname = '/';
-      } else if (newPathname.startsWith('/ar/')) {
-        newPathname = newPathname.substring(3);
+      newPathname = '/fk' + (basePath === '/' ? '' : basePath);
+    } else {
+      clearCookie(COOKIE_NAME);
+      if (window.location.hash.startsWith('#googtrans')) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
       }
+      newPathname = basePath;
     }
 
     // Go to the new path and reload
@@ -136,6 +145,7 @@ export function LanguageProvider({
   const t = useCallback(
     (key: DictKey): string => {
       if (lang === 'ar') return ar[key] || en[key] || key;
+      if (lang === 'fk') return fk[key] || en[key] || key;
       return en[key] || key;
     },
     [lang]
@@ -143,7 +153,7 @@ export function LanguageProvider({
 
   const formatPrice = useMemo(() => {
     return (amount: number): string => {
-      const locale = lang === 'ar' ? 'ar-EG' : 'en-EG';
+      const locale = lang === 'ar' ? 'ar-EG' : 'en-EG'; // fk uses en-EG (Latin digits)
       return new Intl.NumberFormat(locale, {
         style: 'currency',
         currency: 'EGP',

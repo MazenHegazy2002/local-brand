@@ -1,7 +1,9 @@
 # Handoff: Brandyy native mobile app (iOS + Android)
 
 ## Overview
+
 Native shopping app for brandyy.shop (Egyptian marketplace for local brands). One app, four role experiences chosen by the signed-in user's role:
+
 - **Buyer** (default) → Home, Shop, Local, Bag, Account
 - **Seller** → Seller Hub (dashboard, orders, products, payouts)
 - **Affiliate** → Affiliate dashboard inside the buyer Account
@@ -10,6 +12,7 @@ Native shopping app for brandyy.shop (Egyptian marketplace for local brands). On
 No webview. The app talks to the existing Next.js backend through its REST API with per-user auth.
 
 ## About the design files
+
 `Brandyy App.dc.html` is a **design reference built in HTML** — a hi-fi prototype of look and behavior, not production code. Recreate it natively.
 
 **Recommended stack:** React Native + Expo (one codebase → iOS `.ipa` + Android `.apk/.aab` via EAS Build), TypeScript, Expo Router, TanStack Query for data, Zustand for cart/session, `expo-secure-store` for tokens, `expo-image`, `expo-notifications` (push), `I18nManager` for RTL. Rationale: the web codebase is already TypeScript/React, so types, validation and API helpers can be shared.
@@ -17,9 +20,11 @@ No webview. The app talks to the existing Next.js backend through its REST API w
 Open the HTML file in a browser; Tweaks panel switches `platform` (ios/android) and `lang` (en/ar). Screens carry ids (1a…6a) referenced below.
 
 ## Fidelity
+
 **High-fidelity.** Colors, type, spacing, radii and copy are final. Recreate pixel-accurately at a 390×844 pt base; scale layout fluidly for other devices.
 
 ## Data & API (must follow)
+
 - **Never** ship the master API key, DB credentials or `NEXTAUTH_SECRET` in the app. `/api/v1/db` is server-only.
 - Auth: sign in with email/phone + password, Google, Apple → backend issues a session/JWT → store in SecureStore → send `Authorization: Bearer <token>`. Role comes from the session and decides the root navigator.
 - Endpoints (existing):
@@ -34,6 +39,7 @@ Open the HTML file in a browser; Tweaks panel switches `platform` (ios/android) 
 - PaySky card payment: open PaySky's hosted payment page in an in-app browser (`expo-web-browser`) and handle the return deep link `brandyy://checkout/result`. This is the only allowed web surface.
 
 ## Business rules
+
 - Currency EGP, formatted `1,299 EGP` / `١٬٢٩٩ ج.م`.
 - Free shipping at subtotal ≥ **1,000 EGP**; bag shows a progress bar toward it.
 - Shipping cost by governorate (27) from backend; standard vs same-day options.
@@ -43,9 +49,11 @@ Open the HTML file in a browser; Tweaks panel switches `platform` (ios/android) 
 - New seller products go to admin review (≤24 h).
 
 ## Screens
+
 All screens: background `#faf8f5` (buyer), `#f4f5f8` (seller), `#0f1424` (admin). Horizontal page padding 20. Bottom tab bar: white, top border `#ece8e1`, 5 items, icon 22, label Inter 600 10.5, active `#1e3b8a`, inactive `#8a8f9c`, bag badge amber `#f59e0b` 16×16.
 
 **1a Home (selected direction)** — full-bleed campaign image top 540 with dark gradient (top 35% → clear → bottom 70%). Transparent header: wordmark "brandyy" Outfit 800 22 white; search + bell buttons 40 round `rgba(255,255,255,.18)` blur. Hero copy bottom-left: kicker Inter 600 11 tracking .2em uppercase; title Instrument Serif 44/1; white pill CTA 13×20 padding. Content sheet `#faf8f5` radius 26 top overlaps hero:
+
 - **Brand stories row**: 64 circles, 2.5 ring (gradient `#f59e0b→#1e3b8a` if unseen, `#d8d4cc` seen), name Inter 600 11. Tap opens full-screen story viewer (brand's latest products, 5 s per slide, tap to advance, swipe down to close).
 - **Flash Sale** header Outfit 700 19 + live countdown chip (`#fef3c7` bg, `#b45309` text, tabular nums) + "See all". Horizontal cards 128 wide, image 160 radius 14, badge top-left amber, name Inter 500 12.5 1-line, price Inter 700 13 `#1e3b8a`.
 - 1b and 1c are alternative Home directions kept for reference — do not build.
@@ -87,6 +95,7 @@ All screens: background `#faf8f5` (buyer), `#f4f5f8` (seller), `#0f1424` (admin)
 **6a Admin** — dark theme, live pill, KPI tiles with deltas, approvals queue (brand / product / payout) with Approve (amber) / Reject.
 
 ## Interactions
+
 - Countdown ticks every 1 s from the flash sale's `endsAt`.
 - Tab bar persists across buyer screens; product/brand/checkout push as stack screens.
 - Filter sheet: drag handle, snap to 90% height.
@@ -95,17 +104,20 @@ All screens: background `#faf8f5` (buyer), `#f4f5f8` (seller), `#0f1424` (admin)
 - RTL: when `ar`, `I18nManager.forceRTL(true)`, mirror back arrows, keep numbers/phone/URLs LTR.
 
 ## Design tokens
+
 Colors: primary `#1e3b8a`, primary-dark `#152c6e`, navy `#0e1633`, accent `#f59e0b`, accent-light `#fcd34d`, accent-bg `#fef3c7`, accent-text `#b45309`, ink `#1f2333`, muted `#5b6070`, subtle `#6b7080`, placeholder `#8a8f9c`, border `#ece8e1`, input-border `#e3dfd7`, surface `#fff`, bg `#faf8f5`, success `#15803d`, danger `#dc2626`, favorite `#e11d48`.
 Type: Outfit (headings/numbers 600–800), Inter (UI 400–700), Instrument Serif (editorial titles), Cairo (Arabic UI), Amiri (Arabic editorial).
 Radii: 6 badge · 10–12 small · 14 input · 16 button/card · 18–22 large card · 26–28 sheet · 999 pill.
 Spacing: 4 · 6 · 8 · 10 · 12 · 14 · 16 · 18 · 20 · 24.
 
 ## Assets
+
 - `img/logo.png` — app icon (from `/public/icon-512.png`).
 - `img/tryon-man.jpg`, `img/tryon-result.jpg` — try-on illustration only.
 - Product/brand imagery: from the API at runtime.
 - Icons: stroke 1.8–2.2 line icons (use `lucide-react-native`).
 
 ## Files
+
 - `Brandyy App.dc.html` — full prototype (all screens 1a–6a); open in a browser.
 - `screenshots/` — static captures with live data (Android frame, English): 01 Home options, 02 Discovery (2a–2g), 03 Checkout & account (3a–3f), 04 Seller / Affiliate / Admin (4a–6a).

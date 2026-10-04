@@ -206,33 +206,33 @@ export default async function Home() {
       <Hero />
 
       <div className="home-shell my-8">
-        <Suspense fallback={<ProductSectionSkeleton emoji="🔥" title="Bestsellers" />}>
+        <Suspense fallback={<ProductSectionSkeleton emoji="🔥" title={dict.Bestsellers} />}>
           <ProductSection
             emoji="🔥"
-            title="Bestsellers"
-            linkLabel="View all"
+            title={dict.Bestsellers}
+            linkLabel={dict.AllNew}
             linkHref="/shop"
             products={bestsellers}
             dict={dict}
           />
         </Suspense>
 
-        <Suspense fallback={<ProductSectionSkeleton emoji="✨" title="New Arrivals" />}>
+        <Suspense fallback={<ProductSectionSkeleton emoji="✨" title={dict.NewArrivals} />}>
           <ProductSection
             emoji="✨"
-            title="New Arrivals"
-            linkLabel="View all"
+            title={dict.NewArrivals}
+            linkLabel={dict.AllNew}
             linkHref="/shop"
             products={newArrivals}
             dict={dict}
           />
         </Suspense>
 
-        <Suspense fallback={<ProductSectionSkeleton emoji="💖" title="Recommended for You" />}>
+        <Suspense fallback={<ProductSectionSkeleton emoji="💖" title={dict.RecommendedForYou} />}>
           <ProductSection
             emoji="💖"
-            title="Recommended for You"
-            linkLabel="All products"
+            title={dict.RecommendedForYou}
+            linkLabel={dict.AllProducts}
             linkHref="/shop"
             products={recommended}
             dict={dict}

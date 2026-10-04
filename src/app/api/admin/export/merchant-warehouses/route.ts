@@ -58,9 +58,7 @@ export async function GET() {
 
     // Data rows
     sellers.forEach(seller => {
-      const fullAddress = [seller.pickupStreet, seller.pickupBuilding]
-        .filter(Boolean)
-        .join(', ');
+      const fullAddress = [seller.pickupStreet, seller.pickupBuilding].filter(Boolean).join(', ');
 
       worksheet.addRow([
         seller.governorate || seller.city || 'القاهرة',
@@ -69,7 +67,7 @@ export async function GET() {
         seller.pickupZone || seller.city || seller.governorate || 'قسم اول القاهرة الجديدة',
         seller.pickupSubzone || seller.pickupZone || seller.city || 'قسم اول القاهرة الجديدة',
         seller.pickupGeo || '30.067807, 31.518141',
-        seller.logisticsHub || 'المركز اللوجيستي الرئيسي',
+        seller.logisticsHub || 'المركز اللوجستي الرئيسي',
         seller.pickupPhone || seller.user?.phone || '01000000000',
         seller.pickupContactName || seller.storeName || seller.user?.name || 'Merchant',
       ]);

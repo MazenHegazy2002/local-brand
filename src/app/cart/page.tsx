@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect } from 'react';
+import { useLanguage } from '@/providers/LanguageContext';
 
 // Dedicated /cart page — renders the full cart with all items.
 // The slide-out CartDrawer still works via the navbar icon;
@@ -16,6 +17,25 @@ export default function CartPage() {
   const rewriteId = useCartStore(s => s.rewriteId);
   const total = useCartStore(s => s.total());
   const count = useCartStore(s => s.count());
+  const { t, lang } = useLanguage();
+  const isAr = lang === 'ar';
+  const money = (n: number) => `${n.toLocaleString(isAr ? 'ar-EG' : 'en-US')} ${t('EGP')}`;
+  const arItems = (n: number) => {
+    const cat = new Intl.PluralRules('ar').select(n);
+    return (
+      (
+        {
+          one: 'منتج واحد',
+          two: 'منتجان',
+          few: `${n} منتجات`,
+          many: `${n} منتجاً`,
+          other: `${n} منتج`,
+          zero: 'لا منتجات',
+        } as Record<string, string>
+      )[cat] ?? `${n} منتج`
+    );
+  };
+  const itemsLabel = isAr ? `(${arItems(count)})` : `(${count} item${count !== 1 ? 's' : ''})`;
 
   // Reconcile the cart against the server to rewrite legacy product IDs and drop invalid variants
   useEffect(() => {
@@ -62,23 +82,31 @@ export default function CartPage() {
       <Navbar />
 
       <div className="container mx-auto px-4 py-10 max-w-4xl">
-        <h1 className="text-3xl font-black text-gray-900 mb-2">Your Cart</h1>
+        <h1 className="text-3xl font-black text-gray-900 mb-2">
+          {isAr ? 'سلة التسوق' : 'Your Cart'}
+        </h1>
         <p className="text-gray-500 mb-8">
           {count === 0
-            ? 'Your cart is empty.'
-            : `${count} item${count !== 1 ? 's' : ''} in your cart`}
+            ? t('EmptyCart')
+            : isAr
+              ? `لديك ${arItems(count)} في السلة`
+              : `${count} item${count !== 1 ? 's' : ''} in your cart`}
         </p>
 
         {items.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
             <div className="text-5xl mb-4">🛒</div>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">Nothing here yet</h2>
-            <p className="text-gray-500 mb-6">Add some products to get started.</p>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">
+              {isAr ? 'لا يوجد شيء هنا بعد' : 'Nothing here yet'}
+            </h2>
+            <p className="text-gray-500 mb-6">
+              {isAr ? 'أضف بعض المنتجات لتبدأ.' : 'Add some products to get started.'}
+            </p>
             <Link
               href="/shop"
               className="inline-block bg-[#1e3b8a] text-white font-bold py-3 px-8 rounded-xl hover:bg-[#152c6e] transition-colors"
             >
-              Browse Products
+              {isAr ? 'تصفح المنتجات' : 'Browse Products'}
             </Link>
           </div>
         ) : (
@@ -119,7 +147,7 @@ export default function CartPage() {
                       </p>
                     )}
                     <p className="text-[#1e3b8a] font-black text-base mt-1">
-                      EGP {(item.price * item.qty).toLocaleString()}
+                      {money(item.price * item.qty)}
                     </p>
                   </div>
 
@@ -143,8 +171,8 @@ export default function CartPage() {
                   {/* Remove */}
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="shrink-0 text-gray-400 hover:text-red-500 transition-colors ml-2"
-                    aria-label={`Remove ${item.name}`}
+                    className="shrink-0 text-gray-400 hover:text-red-500 transition-colors ms-2"
+                    aria-label={`${t('CheckoutRemove')} ${item.name}`}
                   >
                     <svg
                       width="16"
@@ -169,35 +197,41 @@ export default function CartPage() {
             {/* Order summary */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm sticky top-24">
-                <h2 className="font-black text-gray-900 text-lg mb-4">Order Summary</h2>
+                <h2 className="font-black text-gray-900 text-lg mb-4">
+                  {isAr ? 'ملخص الطلب' : 'Order Summary'}
+                </h2>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between text-gray-600">
                     <span>
-                      Subtotal ({count} item{count !== 1 ? 's' : ''})
+                      {t('Subtotal')} {itemsLabel}
                     </span>
-                    <span className="font-semibold">EGP {total.toLocaleString()}</span>
+                    <span className="font-semibold">{money(total)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600">
-                    <span>Shipping</span>
-                    <span className="text-green-600 font-semibold">Calculated at checkout</span>
+                    <span>{isAr ? 'الشحن' : 'Shipping'}</span>
+                    <span className="text-green-600 font-semibold">
+                      {isAr ? 'يُحسب عند الدفع' : 'Calculated at checkout'}
+                    </span>
                   </div>
                   <div className="border-t border-gray-100 pt-3 flex justify-between text-base font-black text-gray-900">
-                    <span>Total</span>
-                    <span className="text-[#1e3b8a]">EGP {total.toLocaleString()}</span>
+                    <span>{isAr ? 'الإجمالي' : 'Total'}</span>
+                    <span className="text-[#1e3b8a]">{money(total)}</span>
                   </div>
                 </div>
 
                 <Link
                   href="/checkout"
+                  data-track="checkout"
                   className="mt-6 block w-full text-center bg-[#1e3b8a] text-white font-black py-3.5 rounded-xl hover:bg-[#152c6e] transition-colors shadow-sm"
                 >
-                  Proceed to Checkout →
+                  {isAr ? 'متابعة إلى الدفع ←' : 'Proceed to Checkout →'}
                 </Link>
                 <Link
                   href="/shop"
                   className="mt-3 block w-full text-center text-sm text-[#1e3b8a] font-semibold hover:underline"
                 >
-                  ← Continue Shopping
+                  {isAr ? '→ ' : '← '}
+                  {t('ContinueShopping')}
                 </Link>
               </div>
             </div>

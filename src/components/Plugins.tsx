@@ -327,7 +327,7 @@ export default function Plugins() {
             >
               <span>
                 {isRtl
-                  ? 'هل لديك أي استفسار؟ نحن هنا للمساعدة!'
+                  ? 'لديك استفسار؟ نحن هنا لمساعدتك!'
                   : 'Have a question? We are here to help!'}
               </span>
               <button
@@ -343,7 +343,7 @@ export default function Plugins() {
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
-                aria-label="Dismiss tooltip"
+                aria-label={isRtl ? 'إغلاق' : 'Dismiss tooltip'}
               >
                 <X size={14} />
               </button>
@@ -430,7 +430,7 @@ export default function Plugins() {
                 className="hover:scale-105 notranslate"
               >
                 <Send size={14} />
-                <span>{isRtl ? 'قناة تليجرام' : 'Telegram Support'}</span>
+                <span>{isRtl ? 'الدعم عبر تيليجرام' : 'Telegram Support'}</span>
               </a>
 
               {/* C. Instagram Channel */}
@@ -472,7 +472,7 @@ export default function Plugins() {
                   <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
                   <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
                 </svg>
-                <span>{isRtl ? 'حساب إنستغرام' : 'Instagram Profile'}</span>
+                <span>{isRtl ? 'حسابنا على إنستجرام' : 'Instagram Profile'}</span>
               </a>
 
               {/* D. Facebook Messenger Channel */}
@@ -511,7 +511,7 @@ export default function Plugins() {
                 >
                   <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
                 </svg>
-                <span>{isRtl ? 'مراسلة فيسبوك' : 'Messenger Chat'}</span>
+                <span>{isRtl ? 'صفحتنا على فيسبوك' : 'Messenger Chat'}</span>
               </a>
 
               {/* E. TikTok Channel */}
@@ -540,7 +540,7 @@ export default function Plugins() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.12 8.12 0 004.84 1.56V6.79a4.84 4.84 0 01-1.07-.1z" />
                 </svg>
-                <span>{isRtl ? 'تيك توك' : 'TikTok Profile'}</span>
+                <span>{isRtl ? 'حسابنا على تيك توك' : 'TikTok Profile'}</span>
               </a>
             </div>
           )}
@@ -550,7 +550,7 @@ export default function Plugins() {
             type="button"
             onClick={() => setIsOpen(!isOpen)}
             aria-expanded={isOpen}
-            aria-label="Toggle contact support channels"
+            aria-label={isRtl ? 'عرض قنوات التواصل مع الدعم' : 'Toggle contact support channels'}
             style={{
               width: '56px',
               height: '56px',
