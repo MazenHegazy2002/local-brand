@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
   photos: { gap: 10, paddingVertical: 6, marginBottom: 14 },
   photo: { width: 92, height: 92, borderRadius: 14, backgroundColor: '#e7e9ef' },
   photoOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: 14,
     backgroundColor: 'rgba(0,0,0,.35)',
     alignItems: 'center',

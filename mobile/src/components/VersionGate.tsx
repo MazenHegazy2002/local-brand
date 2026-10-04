@@ -105,7 +105,7 @@ export default function VersionGate({ children }: { children: ReactNode }) {
 
 const styles = StyleSheet.create({
   root: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 1000,
     elevation: 1000,
     backgroundColor: colors.navy,

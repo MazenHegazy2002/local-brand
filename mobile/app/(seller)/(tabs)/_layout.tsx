@@ -1,3 +1,4 @@
+import type { ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
 import {
   LayoutGrid,
@@ -13,7 +14,7 @@ export default function SellerLayout() {
   const { data } = useSellerStats('7d');
   const pending = (data?.newOrders ?? 0) + (data?.toShip ?? 0);
   const icon = (Icon: typeof LayoutGrid) =>
-    function TabIcon({ color }: { color: string }) {
+    function TabIcon({ color }: { color: ColorValue }) {
       return <Icon size={tabBar.iconSize} color={color} strokeWidth={1.9} />;
     };
 

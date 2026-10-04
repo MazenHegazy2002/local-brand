@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.surface },
   coverWrap: { height: COVER_H, backgroundColor: '#e8edf9' },
   cover: { width, height: COVER_H },
-  coverShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(14,22,51,0.12)' },
+  coverShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(14,22,51,0.12)' },
   backBtn: {
     position: 'absolute',
     top: 52,

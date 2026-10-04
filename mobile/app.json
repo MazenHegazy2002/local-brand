@@ -7,11 +7,6 @@
     "icon": "./assets/icon.png",
     "scheme": "brandyy",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#faf8f5"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "shop.brandyy.app",
@@ -51,7 +46,16 @@
       ],
       "expo-image-picker",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#faf8f5",
+          "imageWidth": 200
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
