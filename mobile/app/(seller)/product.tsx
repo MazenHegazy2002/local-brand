@@ -94,10 +94,11 @@ export default function SellerProduct() {
   const save = useMutation({
     mutationFn: () => {
       const q = p!;
+      const newBase = customerPrice(Number(price), rate, feeMode);
       return api.put(`/api/products/${id}`, {
         title: title.trim(),
         description,
-        basePrice: customerPrice(Number(price), rate, feeMode),
+        basePrice: newBase,
         categoryId: q.categoryId,
         condition: q.condition,
         weightGrams: q.weightGrams,
@@ -111,7 +112,8 @@ export default function SellerProduct() {
           color: v.title,
           sizes: sizesOf(v),
           sku: v.sku,
-          price: v.price,
+          // Variants still on the old base price follow the new one.
+          price: v.price === q.basePrice ? newBase : v.price,
           stockCount: Number(stock[v.id] ?? v.stockCount),
         })),
       });

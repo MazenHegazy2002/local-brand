@@ -12,7 +12,7 @@ export default function Local() {
   const { data, isLoading } = useQuery({
     queryKey: ['public-brands'],
     queryFn: () =>
-      api.get<{ products: { brand: string; image: string }[] }>(
+      api.get<{ products: { brand: string; image: string; sellerId?: string }[] }>(
         '/api/export/public-products?limit=100'
       ),
   });
@@ -38,7 +38,9 @@ export default function Local() {
           renderItem={({ item }) => (
             <Pressable
               style={styles.card}
-              onPress={() => router.push(`/(buyer)/brand/${item.brand}`)}
+              onPress={() =>
+                router.push(`/(buyer)/brand/${encodeURIComponent(item.sellerId ?? item.brand)}`)
+              }
             >
               <Image source={{ uri: item.image }} style={styles.cardImg} contentFit="cover" />
               <View style={styles.cardInfo}>

@@ -27,7 +27,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#faf8f5"
+        "backgroundColor": "#ffffff"
       },
       "package": "shop.brandyy.app",
       "versionCode": 1,
@@ -49,7 +49,9 @@
           "color": "#1e3b8a"
         }
       ],
-      "expo-image-picker"
+      "expo-image-picker",
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

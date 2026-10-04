@@ -1,10 +1,18 @@
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
-import { Stack, router, useRouter, useSegments, type Href } from 'expo-router';
+import {
+  Stack,
+  router,
+  useRouter,
+  useSegments,
+  useRootNavigationState,
+  type Href,
+} from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
 import Constants from 'expo-constants';
 import { useAuth } from '@/store/auth';
 import * as Notifications from 'expo-notifications';
@@ -15,23 +23,22 @@ SplashScreen.preventAutoHideAsync();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),
-});
-
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
 });
 
 function AuthGate() {
   const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  // VersionGate may hold back the Stack; navigating before it mounts throws.
+  const navReady = !!useRootNavigationState()?.key;
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !navReady) return;
     const inAuth = segments[0] === '(auth)';
     if (!user && !inAuth) {
       router.replace('/(auth)');
@@ -48,7 +55,7 @@ function AuthGate() {
             : '/(buyer)';
     const destGroup = dest.slice(1); // strip leading /
     if (segments[0] !== destGroup) router.replace(dest as Href);
-  }, [user, loading, segments]);
+  }, [user, loading, segments, navReady]);
 
   return null;
 }

@@ -26,6 +26,7 @@ interface Product {
   title: string;
   basePrice: number;
   brand: string;
+  sellerId?: string;
   category: string;
   image: string;
   inStock: boolean;
@@ -178,13 +179,15 @@ export default function Home() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.brandsRow}
             >
-              {Array.from(new Set(products.map(p => p.brand)))
+              {Array.from(new Map(products.map(p => [p.brand, p.sellerId])))
                 .slice(0, 8)
-                .map(brand => (
+                .map(([brand, sellerId]) => (
                   <Pressable
                     key={brand}
                     style={styles.brandItem}
-                    onPress={() => router.push(`/(buyer)/brand/${encodeURIComponent(brand)}`)}
+                    onPress={() =>
+                      router.push(`/(buyer)/brand/${encodeURIComponent(sellerId ?? brand)}`)
+                    }
                   >
                     <View style={styles.brandAvatar}>
                       <Text style={styles.brandAvatarText}>{brand.charAt(0).toUpperCase()}</Text>
@@ -207,7 +210,7 @@ export default function Home() {
                   {i < 2 && <Text style={styles.countSep}>:</Text>}
                 </View>
               ))}
-              <Pressable style={styles.seeAll}>
+              <Pressable style={styles.seeAll} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
                 <Text style={styles.seeAllText}>See all</Text>
               </Pressable>
             </View>
@@ -251,7 +254,7 @@ export default function Home() {
           {/* New in */}
           <View style={[styles.sectionHeader, { marginTop: 28 }]}>
             <Text style={styles.sectionTitle}>New in</Text>
-            <Pressable style={styles.seeAll}>
+            <Pressable style={styles.seeAll} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
               <Text style={styles.seeAllText}>See all</Text>
             </Pressable>
           </View>

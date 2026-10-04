@@ -17,7 +17,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, Copy, Check, Upload, ExternalLink, Phone } from 'lucide-react-native';
-import { useCart } from '@/store/cart';
+import { codeFields, useCart } from '@/store/cart';
 import { api, fmtEGP } from '@/lib/api';
 import { absUrl, uploadImage } from '@/lib/seller';
 import { colors, radii, spacing } from '@/lib/tokens';
@@ -49,7 +49,7 @@ export default function ManualPay() {
   }>();
   const method = p.method === 'vodafone_cash' ? 'vodafone_cash' : 'instapay';
   const brand = BRAND[method];
-  const { items, clear } = useCart();
+  const { items, clear, applied, total } = useCart();
   const [sender, setSender] = useState('');
   const [reference, setReference] = useState('');
   const [receipt, setReceipt] = useState<{ uri: string; url?: string } | null>(null);
@@ -110,6 +110,7 @@ export default function ManualPay() {
         paymentSenderDetail: sender.trim(),
         paymentReference: reference.trim() || undefined,
         paymentReceiptUrl: receipt.url,
+        ...codeFields(applied, total()),
         items: items.map(i => ({
           productId: i.productId,
           qty: i.qty,
