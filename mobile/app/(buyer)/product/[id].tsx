@@ -18,6 +18,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { useCart } from '@/store/cart';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 const { width } = Dimensions.get('window');
 const GALLERY_H = 440;
@@ -63,6 +64,7 @@ interface Product {
 
 export default function ProductDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { t } = useT();
   const router = useRouter();
   const { add } = useCart();
   const [added, setAdded] = useState(false);
@@ -107,7 +109,7 @@ export default function ProductDetail() {
   });
 
   if (isLoading) return <ActivityIndicator style={{ flex: 1 }} color={colors.primary} />;
-  if (!product) return <Text style={{ margin: 40 }}>Product not found</Text>;
+  if (!product) return <Text style={{ margin: 40 }}>{t('Product not found')}</Text>;
 
   const baseImages = product.images?.length ? product.images.map(i => i.url) : [''];
   const images = extraImg ? [extraImg, ...baseImages] : baseImages;
@@ -200,7 +202,7 @@ export default function ProductDetail() {
 
           <View style={styles.tryOn}>
             <Sparkles size={14} color="#fff" strokeWidth={2} />
-            <Text style={styles.tryOnText}>Try it on</Text>
+            <Text style={styles.tryOnText}>{t('Try it on')}</Text>
           </View>
         </View>
 
@@ -223,7 +225,7 @@ export default function ProductDetail() {
           <View style={styles.ratingRow}>
             <Star size={14} color={colors.accent} fill={colors.accent} strokeWidth={0} />
             <Text style={styles.ratingText}>
-              {rating > 0 ? rating.toFixed(1) : 'New'}
+              {rating > 0 ? rating.toFixed(1) : t('New')}
               {reviews?.stats.total ? (
                 <Text style={styles.ratingCount}> · {reviews.stats.total}</Text>
               ) : null}
@@ -233,7 +235,8 @@ export default function ProductDetail() {
           {productColors.length > 0 && (
             <View style={styles.block}>
               <Text style={styles.label}>
-                Color <Text style={styles.labelValue}>· {selectedColor ?? productColors[0]}</Text>
+                {t('Color')}{' '}
+                <Text style={styles.labelValue}>· {selectedColor ?? productColors[0]}</Text>
               </Text>
               <View style={styles.optionRow}>
                 {productColors.map((c, i) => {
@@ -273,8 +276,8 @@ export default function ProductDetail() {
           {sizes.length > 0 && (
             <View style={styles.block}>
               <View style={styles.labelRow}>
-                <Text style={styles.label}>Size</Text>
-                <Text style={styles.sizeGuide}>Size guide</Text>
+                <Text style={styles.label}>{t('Size')}</Text>
+                <Text style={styles.sizeGuide}>{t('Size guide')}</Text>
               </View>
               <View style={styles.optionRow}>
                 {sizes.map(s => {
@@ -312,8 +315,10 @@ export default function ProductDetail() {
               <Truck size={18} color={colors.primary} strokeWidth={2} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.deliveryTitle}>Delivery to Cairo in 2–4 days</Text>
-              <Text style={styles.deliverySub}>14-day escrow protection · COD available</Text>
+              <Text style={styles.deliveryTitle}>{t('Delivery to Cairo in 2–4 days')}</Text>
+              <Text style={styles.deliverySub}>
+                {t('14-day escrow protection · COD available')}
+              </Text>
             </View>
           </View>
 
@@ -323,14 +328,14 @@ export default function ProductDetail() {
 
       {/* Sticky footer */}
       <View style={styles.footer}>
-        <Text style={styles.points}>Earn +{points} pts</Text>
+        <Text style={styles.points}>{t('Earn +{n} pts', { n: points })}</Text>
         <Pressable
           style={[styles.addBtn, added && styles.addBtnDone, outOfStock && styles.addBtnOff]}
           onPress={handleAddToBag}
           disabled={outOfStock}
         >
           <Text style={styles.addBtnText}>
-            {outOfStock ? 'Out of stock' : added ? 'Added ✓' : 'Add to bag'}
+            {outOfStock ? t('Out of stock') : added ? t('Added ✓') : t('Add to bag')}
           </Text>
         </Pressable>
       </View>

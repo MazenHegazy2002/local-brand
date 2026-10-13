@@ -1,7 +1,9 @@
 import { Tabs } from 'expo-router';
 import { LayoutDashboard, ClipboardList } from 'lucide-react-native';
+import { useT } from '@/lib/i18n';
 
 export default function AdminLayout() {
+  const { t } = useT();
   return (
     <Tabs
       screenOptions={{
@@ -15,14 +17,14 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Overview',
+          title: t('Overview'),
           tabBarIcon: ({ color }) => <LayoutDashboard size={22} color={color} strokeWidth={1.9} />,
         }}
       />
       <Tabs.Screen
         name="approvals"
         options={{
-          title: 'Approvals',
+          title: t('Approvals'),
           tabBarIcon: ({ color }) => <ClipboardList size={22} color={color} strokeWidth={1.9} />,
         }}
       />

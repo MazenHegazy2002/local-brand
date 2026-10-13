@@ -18,8 +18,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as WebBrowser from 'expo-web-browser';
 import { Image } from 'expo-image';
 import { Search, X } from 'lucide-react-native';
-import { api } from '@/lib/api';
+import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 type Tab = 'all' | 'new' | 'to_ship' | 'shipped' | 'delivered';
 type Status = 'new' | 'accepted' | 'shipped' | 'delivered' | 'cancelled' | 'returned';
@@ -60,6 +61,7 @@ const BADGE: Record<Status, { label: string; bg: string; fg: string }> = {
 export default function SellerOrders() {
   const params = useLocalSearchParams<{ tab?: Tab }>();
   const [tab, setTab] = useState<Tab>(params.tab ?? 'all');
+  const { t } = useT();
   const [searchOpen, setSearchOpen] = useState(false);
   const [text, setText] = useState('');
   const [q, setQ] = useState('');
@@ -68,8 +70,8 @@ export default function SellerOrders() {
     if (params.tab) setTab(params.tab);
   }, [params.tab]);
   useEffect(() => {
-    const t = setTimeout(() => setQ(text.trim()), 350);
-    return () => clearTimeout(t);
+    const id = setTimeout(() => setQ(text.trim()), 350);
+    return () => clearTimeout(id);
   }, [text]);
 
   const { data, isLoading, isError, error, refetch, isRefetching } = useQuery({
@@ -81,7 +83,7 @@ export default function SellerOrders() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.title}>Orders</Text>
+        <Text style={styles.title}>{t('Orders')}</Text>
         <Pressable
           style={styles.iconBtn}
           onPress={() => {
@@ -101,7 +103,7 @@ export default function SellerOrders() {
           style={styles.search}
           value={text}
           onChangeText={setText}
-          placeholder="Search order number or item"
+          placeholder={t('Search order number or item')}
           placeholderTextColor={colors.placeholder}
           autoFocus
         />
@@ -112,17 +114,17 @@ export default function SellerOrders() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chips}
         >
-          {TABS.map(t => {
-            const on = tab === t.id;
+          {TABS.map(tb => {
+            const on = tab === tb.id;
             return (
               <Pressable
-                key={t.id}
+                key={tb.id}
                 style={[styles.chip, on && styles.chipOn]}
-                onPress={() => setTab(t.id)}
+                onPress={() => setTab(tb.id)}
               >
                 <Text style={[styles.chipText, on && styles.chipTextOn]}>
-                  {t.label}
-                  {data ? ` ${data.counts[t.id] ?? 0}` : ''}
+                  {t(tb.label)}
+                  {data ? ` ${data.counts[tb.id] ?? 0}` : ''}
                 </Text>
               </Pressable>
             );
@@ -136,7 +138,7 @@ export default function SellerOrders() {
         <View style={styles.empty}>
           <Text style={styles.errorText}>{(error as Error).message}</Text>
           <Pressable onPress={() => refetch()}>
-            <Text style={styles.link}>Try again</Text>
+            <Text style={styles.link}>{t('Try again')}</Text>
           </Pressable>
         </View>
       ) : (
@@ -147,7 +149,7 @@ export default function SellerOrders() {
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
           ListEmptyComponent={
             <Text style={styles.emptyText}>
-              {q ? 'No orders match your search.' : 'No orders here yet.'}
+              {q ? t('No orders match your search.') : t('No orders here yet.')}
             </Text>
           }
           renderItem={({ item }) => <OrderCard order={item} />}
@@ -159,6 +161,7 @@ export default function SellerOrders() {
 
 function OrderCard({ order }: { order: Order }) {
   const qc = useQueryClient();
+  const { t } = useT();
   const badge = BADGE[order.status] ?? BADGE.cancelled;
   const more = order.itemCount - order.firstItem.quantity;
 
@@ -169,7 +172,7 @@ function OrderCard({ order }: { order: Order }) {
       qc.invalidateQueries({ queryKey: ['seller-orders'] });
       qc.invalidateQueries({ queryKey: ['seller-stats'] });
     },
-    onError: e => Alert.alert('Couldn’t update order', (e as Error).message),
+    onError: e => Alert.alert(t('Couldn’t update order'), (e as Error).message),
   });
   const label = useMutation({
     mutationFn: () => api.post<{ url: string }>(`/api/seller/orders/${order.id}/label`, {}),
@@ -177,27 +180,27 @@ function OrderCard({ order }: { order: Order }) {
       if (Platform.OS === 'web') window.open(url);
       else WebBrowser.openBrowserAsync(url);
     },
-    onError: e => Alert.alert('Couldn’t create label', (e as Error).message),
+    onError: e => Alert.alert(t('Couldn’t create label'), (e as Error).message),
   });
 
   function ship() {
-    const msg = 'This marks the order as shipped and notifies the buyer.';
+    const msg = t('This marks the order as shipped and notifies the buyer.');
     if (Platform.OS === 'web') {
       if (window.confirm(msg)) action.mutate('ship');
       return;
     }
-    Alert.alert('Mark ready to ship?', msg, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Confirm', onPress: () => action.mutate('ship') },
+    Alert.alert(t('Mark ready to ship?'), msg, [
+      { text: t('Cancel'), style: 'cancel' },
+      { text: t('Confirm'), onPress: () => action.mutate('ship') },
     ]);
   }
 
   const busy = action.isPending || label.isPending;
   const primary =
     order.status === 'new'
-      ? { text: 'Accept order', onPress: () => action.mutate('accept') }
+      ? { text: t('Accept order'), onPress: () => action.mutate('accept') }
       : order.status === 'accepted'
-        ? { text: 'Mark ready to ship', onPress: ship }
+        ? { text: t('Mark ready to ship'), onPress: ship }
         : null;
   const canPrint = order.status !== 'cancelled' && order.status !== 'returned';
 
@@ -206,7 +209,7 @@ function OrderCard({ order }: { order: Order }) {
       <View style={styles.cardTop}>
         <Text style={styles.number}>#{order.number}</Text>
         <View style={[styles.badge, { backgroundColor: badge.bg }]}>
-          <Text style={[styles.badgeText, { color: badge.fg }]}>{badge.label}</Text>
+          <Text style={[styles.badgeText, { color: badge.fg }]}>{t(badge.label)}</Text>
         </View>
       </View>
       <View style={styles.itemRow}>
@@ -221,13 +224,13 @@ function OrderCard({ order }: { order: Order }) {
           </Text>
           <Text style={styles.meta} numberOfLines={1}>
             {[order.firstItem.category, `×${order.firstItem.quantity}`].filter(Boolean).join(' · ')}
-            {more > 0 ? `  +${more} more` : ''}
+            {more > 0 ? `  ${t('+{n} more', { n: more })}` : ''}
           </Text>
           <Text style={styles.meta} numberOfLines={1}>
             {[order.city, order.paymentMethod].filter(Boolean).join(' · ')}
           </Text>
         </View>
-        <Text style={styles.total}>{Math.round(order.total).toLocaleString('en-EG')} EGP</Text>
+        <Text style={styles.total}>{fmtEGP(Math.round(order.total))}</Text>
       </View>
       {(canPrint || primary) && (
         <View style={styles.btnRow}>
@@ -240,7 +243,7 @@ function OrderCard({ order }: { order: Order }) {
               {label.isPending ? (
                 <ActivityIndicator color={colors.primary} />
               ) : (
-                <Text style={styles.btnOutlineText}>Print label</Text>
+                <Text style={styles.btnOutlineText}>{t('Print label')}</Text>
               )}
             </Pressable>
           )}

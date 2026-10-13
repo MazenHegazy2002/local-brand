@@ -19,6 +19,7 @@ import { codeFields, useCart } from '@/store/cart';
 import { useAuth } from '@/store/auth';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 // Card (PaySky) and Fawry stay off until /api/checkout supports them for the app.
 type PayMethod = 'cod' | 'instapay' | 'vodafone_cash';
@@ -82,6 +83,7 @@ const PAY_OPTIONS: { id: PayMethod; label: string; sub: string; badge: string }[
 
 export default function Checkout() {
   const router = useRouter();
+  const { t } = useT();
   const user = useAuth(s => s.user);
   const { items, total, clear, applied } = useCart();
   const [shipMethod, setShipMethod] = useState<ShipMethod>('standard');
@@ -164,10 +166,10 @@ export default function Checkout() {
         paymentMethod: payMethod,
       });
       clear();
-      Alert.alert('Order placed!', `Order #${res.orderId}`);
+      Alert.alert(t('Order placed!'), t('Order #{id}', { id: res.orderId }));
       router.dismissTo('/(buyer)/(tabs)');
     } catch (e: unknown) {
-      Alert.alert('Error', (e as Error).message);
+      Alert.alert(t('Error'), (e as Error).message);
     } finally {
       setLoading(false);
     }
@@ -179,37 +181,39 @@ export default function Checkout() {
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <ChevronLeft size={24} color={colors.ink} strokeWidth={2} />
         </Pressable>
-        <Text style={styles.title}>Checkout</Text>
+        <Text style={styles.title}>{t('Checkout')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.inner} showsVerticalScrollIndicator={false}>
         {/* Ship to */}
-        <Text style={styles.sectionLabel}>SHIP TO</Text>
+        <Text style={styles.sectionLabel}>{t('SHIP TO')}</Text>
         <View style={[styles.card, styles.row]}>
           <MapPin size={20} color={colors.primary} strokeWidth={2} />
           <View style={{ flex: 1 }}>
             {address ? (
               <>
-                <Text style={styles.bold}>{user?.name ?? 'Me'} · Home</Text>
+                <Text style={styles.bold}>
+                  {user?.name ?? t('Me')} · {t('Home')}
+                </Text>
                 <Text style={styles.muted}>
                   {address.street}, {address.city}
                 </Text>
                 <Text style={styles.muted}>{address.governorate}</Text>
               </>
             ) : (
-              <Text style={styles.bold}>Add a delivery address</Text>
+              <Text style={styles.bold}>{t('Add a delivery address')}</Text>
             )}
           </View>
           <Pressable
             hitSlop={8}
             onPress={() => (user ? setAddrOpen(true) : router.push('/(auth)/sign-in'))}
           >
-            <Text style={styles.link}>{address ? 'Change' : 'Add'}</Text>
+            <Text style={styles.link}>{address ? t('Change') : t('Add')}</Text>
           </Pressable>
         </View>
 
         {/* Shipping */}
-        <Text style={styles.sectionLabel}>SHIPPING</Text>
+        <Text style={styles.sectionLabel}>{t('SHIPPING')}</Text>
         <View style={styles.shipRow}>
           {SHIP_OPTIONS.map(o => (
             <Pressable
@@ -217,15 +221,15 @@ export default function Checkout() {
               style={[styles.card, styles.shipCard, shipMethod === o.id && styles.shipCardActive]}
               onPress={() => setShipMethod(o.id)}
             >
-              <Text style={styles.bold}>{o.label}</Text>
-              <Text style={styles.muted}>{o.sub}</Text>
+              <Text style={styles.bold}>{t(o.label)}</Text>
+              <Text style={styles.muted}>{t(o.sub)}</Text>
               <Text style={styles.shipPrice}>{fmtEGP(o.price)}</Text>
             </Pressable>
           ))}
         </View>
 
         {/* Payment */}
-        <Text style={styles.sectionLabel}>PAYMENT</Text>
+        <Text style={styles.sectionLabel}>{t('PAYMENT')}</Text>
         <View style={[styles.card, { padding: 0, overflow: 'hidden' }]}>
           {payOptions.map((o, i) => {
             const active = payMethod === o.id;
@@ -242,8 +246,8 @@ export default function Checkout() {
                   {active && <View style={styles.radioDot} />}
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.semi}>{o.label}</Text>
-                  <Text style={styles.muted}>{o.sub}</Text>
+                  <Text style={styles.semi}>{t(o.label)}</Text>
+                  <Text style={styles.muted}>{t(o.sub)}</Text>
                 </View>
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{o.badge}</Text>
@@ -257,8 +261,12 @@ export default function Checkout() {
         {points > 0 && (
           <View style={styles.pointsCard}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.pointsTitle}>Use {points.toLocaleString()} points</Text>
-              <Text style={styles.pointsSub}>Save {fmtEGP(pointsValue)} on this order</Text>
+              <Text style={styles.pointsTitle}>
+                {t('Use {n} points', { n: points.toLocaleString() })}
+              </Text>
+              <Text style={styles.pointsSub}>
+                {t('Save {amount} on this order', { amount: fmtEGP(pointsValue) })}
+              </Text>
             </View>
             <Switch
               value={usePoints}
@@ -273,27 +281,30 @@ export default function Checkout() {
       {/* Sticky summary */}
       <View style={styles.footer}>
         <View style={styles.sumRow}>
-          <Text style={styles.muted}>Subtotal</Text>
+          <Text style={styles.muted}>{t('Subtotal')}</Text>
           <Text style={styles.sumVal}>{fmtEGP(subtotal)}</Text>
         </View>
         <View style={styles.sumRow}>
-          <Text style={styles.muted}>Shipping{address ? ` · ${address.city}` : ''}</Text>
+          <Text style={styles.muted}>
+            {t('Shipping')}
+            {address ? ` · ${address.city}` : ''}
+          </Text>
           <Text style={styles.sumVal}>{fmtEGP(shippingFee)}</Text>
         </View>
         {vat > 0 && (
           <View style={styles.sumRow}>
-            <Text style={styles.muted}>VAT (14%)</Text>
+            <Text style={styles.muted}>{t('VAT (14%)')}</Text>
             <Text style={styles.sumVal}>{fmtEGP(Math.round(vat * 100) / 100)}</Text>
           </View>
         )}
         {discount > 0 && (
           <View style={styles.sumRow}>
-            <Text style={styles.muted}>Discount</Text>
+            <Text style={styles.muted}>{t('Discount')}</Text>
             <Text style={[styles.sumVal, { color: colors.success }]}>−{fmtEGP(discount)}</Text>
           </View>
         )}
         <View style={[styles.sumRow, { marginTop: 4 }]}>
-          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalLabel}>{t('Total')}</Text>
           <Text style={styles.totalVal}>{quoting && !quote ? '…' : fmtEGP(orderTotal)}</Text>
         </View>
         <Pressable
@@ -304,7 +315,9 @@ export default function Checkout() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.ctaText}>{manual ? 'Continue to payment' : 'Place order'}</Text>
+            <Text style={styles.ctaText}>
+              {manual ? t('Continue to payment') : t('Place order')}
+            </Text>
           )}
         </Pressable>
       </View>
@@ -330,6 +343,7 @@ function AddressSheet({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t } = useT();
   const [form, setForm] = useState({ street: '', city: '', governorate: '', phone: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -361,12 +375,12 @@ function AddressSheet({
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} />
       <View style={styles.sheet}>
-        <Text style={styles.sheetTitle}>Delivery address</Text>
+        <Text style={styles.sheetTitle}>{t('Delivery address')}</Text>
         {fields.map(f => (
           <TextInput
             key={f.key}
             style={styles.input}
-            placeholder={f.placeholder}
+            placeholder={t(f.placeholder)}
             placeholderTextColor={colors.placeholder}
             value={form[f.key]}
             onChangeText={set(f.key)}
@@ -382,7 +396,7 @@ function AddressSheet({
           {saving ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.ctaText}>Save address</Text>
+            <Text style={styles.ctaText}>{t('Save address')}</Text>
           )}
         </Pressable>
       </View>

@@ -6,6 +6,7 @@ import { ArrowLeft, ChevronRight } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT, statusKey } from '@/lib/i18n';
 
 export interface OrderRow {
   id: string;
@@ -19,6 +20,7 @@ export interface OrderRow {
 
 export default function Orders() {
   const router = useRouter();
+  const { t } = useT();
   const { data, isLoading } = useQuery({
     queryKey: ['orders'],
     queryFn: () => api.get<{ orders: OrderRow[] }>('/api/orders'),
@@ -30,7 +32,7 @@ export default function Orders() {
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
         </Pressable>
-        <Text style={styles.title}>My orders</Text>
+        <Text style={styles.title}>{t('My orders')}</Text>
       </View>
       {isLoading ? (
         <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} />
@@ -39,7 +41,7 @@ export default function Orders() {
           data={data?.orders ?? []}
           keyExtractor={o => o.id}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={<Text style={styles.empty}>No orders yet.</Text>}
+          ListEmptyComponent={<Text style={styles.empty}>{t('No orders yet.')}</Text>}
           renderItem={({ item }) => (
             <Pressable style={styles.card} onPress={() => router.push(`/(buyer)/order/${item.id}`)}>
               <Image source={item.image} style={styles.thumb} contentFit="cover" />
@@ -48,11 +50,11 @@ export default function Orders() {
                   {item.title}
                 </Text>
                 <Text style={styles.meta}>
-                  {new Date(item.createdAt).toLocaleDateString()} · {item.itemCount} item
-                  {item.itemCount === 1 ? '' : 's'}
+                  {new Date(item.createdAt).toLocaleDateString()} ·{' '}
+                  {t(item.itemCount === 1 ? '{n} item' : '{n} items', { n: item.itemCount })}
                 </Text>
                 <Text style={styles.meta}>
-                  {item.status.replace(/_/g, ' ').toLowerCase()} · {fmtEGP(item.total)}
+                  {t(statusKey(item.status))} · {fmtEGP(item.total)}
                 </Text>
               </View>
               <ChevronRight size={16} color={colors.placeholder} strokeWidth={2} />

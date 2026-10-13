@@ -19,6 +19,7 @@ import { api } from '@/lib/api';
 import { uploadImage } from '@/lib/seller';
 import { useAuth } from '@/store/auth';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 interface Profile {
   name: string | null;
@@ -30,6 +31,7 @@ interface Profile {
 
 export default function EditProfile() {
   const router = useRouter();
+  const { t } = useT();
   const qc = useQueryClient();
   const updateUser = useAuth(s => s.updateUser);
   const { data, isLoading, error } = useQuery({
@@ -66,7 +68,7 @@ export default function EditProfile() {
       setAvatar(await uploadImage(asset.uri, asset.mimeType ?? 'image/jpeg'));
     } catch (e) {
       setPreview(null);
-      Alert.alert('Upload failed', (e as Error).message);
+      Alert.alert(t('Upload failed'), (e as Error).message);
     } finally {
       setUploading(false);
     }
@@ -89,7 +91,7 @@ export default function EditProfile() {
       await updateUser({ name: user.name ?? '', image: user.avatarUrl });
       router.back();
     },
-    onError: e => Alert.alert('Could not save', (e as Error).message),
+    onError: e => Alert.alert(t('Could not save'), (e as Error).message),
   });
 
   const initials = (name || profile?.email || 'U')
@@ -104,16 +106,20 @@ export default function EditProfile() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Back">
+        <Pressable
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          accessibilityLabel={t('Back')}
+        >
           <ArrowLeft size={20} color={colors.ink} strokeWidth={2} />
         </Pressable>
-        <Text style={styles.title}>Edit profile</Text>
+        <Text style={styles.title}>{t('Edit profile')}</Text>
       </View>
 
       {isLoading ? (
         <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} />
       ) : error || !profile ? (
-        <Text style={styles.empty}>Couldn't load your profile. Please try again later.</Text>
+        <Text style={styles.empty}>{t("Couldn't load your profile. Please try again later.")}</Text>
       ) : (
         <>
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
@@ -135,7 +141,7 @@ export default function EditProfile() {
                   style={styles.cameraBtn}
                   onPress={pickPhoto}
                   disabled={uploading}
-                  accessibilityLabel="Change photo"
+                  accessibilityLabel={t('Change photo')}
                 >
                   <Camera size={18} color={colors.navy} strokeWidth={2} />
                 </Pressable>
@@ -143,12 +149,12 @@ export default function EditProfile() {
               <View style={styles.photoRow}>
                 <Pressable style={styles.pill} onPress={pickPhoto} disabled={uploading}>
                   <Text style={[styles.pillText, { color: colors.primary }]}>
-                    {shown ? 'Replace photo' : 'Upload photo'}
+                    {shown ? t('Replace photo') : t('Upload photo')}
                   </Text>
                 </Pressable>
                 {shown && (
                   <Pressable style={styles.pill} onPress={removePhoto} disabled={uploading}>
-                    <Text style={[styles.pillText, { color: colors.danger }]}>Remove</Text>
+                    <Text style={[styles.pillText, { color: colors.danger }]}>{t('Remove')}</Text>
                   </Pressable>
                 )}
               </View>
@@ -156,12 +162,12 @@ export default function EditProfile() {
 
             <View style={styles.card}>
               <View style={styles.field}>
-                <Text style={styles.label}>Full name</Text>
+                <Text style={styles.label}>{t('Full name')}</Text>
                 <TextInput
                   style={styles.input}
                   value={name}
                   onChangeText={setName}
-                  placeholder="Your name"
+                  placeholder={t('Your name')}
                   placeholderTextColor={colors.placeholder}
                   autoCapitalize="words"
                   maxLength={100}
@@ -170,16 +176,18 @@ export default function EditProfile() {
 
               <View style={styles.field}>
                 <View style={styles.labelRow}>
-                  <Text style={styles.label}>Email</Text>
+                  <Text style={styles.label}>{t('Email')}</Text>
                   {profile.emailVerified ? (
                     <View style={[styles.badge, { backgroundColor: '#dcfce7' }]}>
                       <Check size={12} color={colors.success} strokeWidth={3} />
-                      <Text style={[styles.badgeText, { color: colors.success }]}>Verified</Text>
+                      <Text style={[styles.badgeText, { color: colors.success }]}>
+                        {t('Verified')}
+                      </Text>
                     </View>
                   ) : (
                     <View style={[styles.badge, { backgroundColor: colors.accentBg }]}>
                       <Text style={[styles.badgeText, { color: colors.accentText }]}>
-                        Unverified
+                        {t('Unverified')}
                       </Text>
                     </View>
                   )}
@@ -189,11 +197,11 @@ export default function EditProfile() {
                   value={profile.email}
                   editable={false}
                 />
-                <Text style={styles.hint}>Email can't be changed here.</Text>
+                <Text style={styles.hint}>{t("Email can't be changed here.")}</Text>
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.label}>Phone number</Text>
+                <Text style={styles.label}>{t('Phone number')}</Text>
                 <TextInput
                   style={styles.input}
                   value={phone}
@@ -216,7 +224,7 @@ export default function EditProfile() {
               {save.isPending ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.saveText}>Save changes</Text>
+                <Text style={styles.saveText}>{t('Save changes')}</Text>
               )}
             </Pressable>
           </View>

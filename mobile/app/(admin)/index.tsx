@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT, LANGS, LANG_NAMES } from '@/lib/i18n';
+import { useAuth } from '@/store/auth';
 
 interface Stats {
   revenue: number;
@@ -21,6 +23,8 @@ interface Approval {
 
 export default function AdminOverview() {
   const qc = useQueryClient();
+  const { t, lang } = useT();
+  const setLang = useAuth(s => s.setLang);
   const { data, isLoading } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: () => api.get<Stats>('/api/admin/stats'),
@@ -44,17 +48,17 @@ export default function AdminOverview() {
   });
 
   const kpis = [
-    { label: 'GMV today', value: fmtEGP(data?.revenue ?? 0), trend: '+14%', up: true },
-    { label: 'Orders', value: String(data?.orders ?? 0), trend: '+9%', up: true },
-    { label: 'New users', value: String(data?.users ?? 0), trend: '+22%', up: true },
-    { label: 'Cancel rate', value: '3.1%', trend: '+0.4%', up: false },
+    { label: t('GMV today'), value: fmtEGP(data?.revenue ?? 0), trend: '+14%', up: true },
+    { label: t('Orders'), value: String(data?.orders ?? 0), trend: '+9%', up: true },
+    { label: t('New users'), value: String(data?.users ?? 0), trend: '+22%', up: true },
+    { label: t('Cancel rate'), value: '3.1%', trend: '+0.4%', up: false },
   ];
 
   const pendingApprovals: Approval[] = (pendingSellers?.sellers ?? []).map(s => ({
     id: s.id,
     type: 'brand',
     name: s.storeName,
-    sub: 'Brand verification request',
+    sub: t('Brand verification request'),
     initials: s.storeName.charAt(0).toUpperCase(),
     color: colors.primary,
   }));
@@ -62,13 +66,19 @@ export default function AdminOverview() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.adminLabel}>ADMIN OS</Text>
+        <Text style={styles.adminLabel}>{t('ADMIN OS')}</Text>
         <View style={styles.headerRow}>
-          <Text style={styles.title}>Overview</Text>
+          <Text style={styles.title}>{t('Overview')}</Text>
           <View style={styles.livePill}>
             <View style={styles.liveDot} />
-            <Text style={styles.liveText}>Live</Text>
+            <Text style={styles.liveText}>{t('Live')}</Text>
           </View>
+          <Pressable
+            style={styles.livePill}
+            onPress={() => setLang(LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length])}
+          >
+            <Text style={styles.liveText}>{LANG_NAMES[lang]}</Text>
+          </Pressable>
         </View>
       </View>
 
@@ -88,9 +98,11 @@ export default function AdminOverview() {
         {pendingApprovals.length > 0 && (
           <View style={styles.approvalsSection}>
             <View style={styles.approvalsHeader}>
-              <Text style={styles.approvalsTitle}>Pending approvals</Text>
+              <Text style={styles.approvalsTitle}>{t('Pending approvals')}</Text>
               <View style={styles.approvalsBadge}>
-                <Text style={styles.approvalsBadgeText}>{pendingApprovals.length} left</Text>
+                <Text style={styles.approvalsBadgeText}>
+                  {t('{n} left', { n: pendingApprovals.length })}
+                </Text>
               </View>
             </View>
 
@@ -105,7 +117,7 @@ export default function AdminOverview() {
                 </View>
                 <View style={styles.approvalTypeBadge}>
                   <Text style={styles.approvalTypeText}>
-                    {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                    {t(item.type.charAt(0).toUpperCase() + item.type.slice(1))}
                   </Text>
                 </View>
                 <View style={styles.approvalBtns}>
@@ -113,13 +125,13 @@ export default function AdminOverview() {
                     style={styles.rejectBtn}
                     onPress={() => approveMutation.mutate({ id: item.id, action: 'reject' })}
                   >
-                    <Text style={styles.rejectBtnText}>Reject</Text>
+                    <Text style={styles.rejectBtnText}>{t('Reject')}</Text>
                   </Pressable>
                   <Pressable
                     style={styles.approveBtn}
                     onPress={() => approveMutation.mutate({ id: item.id, action: 'approve' })}
                   >
-                    <Text style={styles.approveBtnText}>Approve</Text>
+                    <Text style={styles.approveBtnText}>{t('Approve')}</Text>
                   </Pressable>
                 </View>
               </View>

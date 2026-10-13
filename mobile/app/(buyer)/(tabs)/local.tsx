@@ -6,9 +6,11 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { MapPin } from 'lucide-react-native';
+import { useT } from '@/lib/i18n';
 
 export default function Local() {
   const router = useRouter();
+  const { t } = useT();
   const { data, isLoading } = useQuery({
     queryKey: ['public-brands'],
     queryFn: () =>
@@ -22,8 +24,8 @@ export default function Local() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.title}>Local Brands</Text>
-        <Text style={styles.sub}>Discover Egyptian makers</Text>
+        <Text style={styles.title}>{t('Local Brands')}</Text>
+        <Text style={styles.sub}>{t('Discover Egyptian makers')}</Text>
       </View>
 
       {isLoading ? (

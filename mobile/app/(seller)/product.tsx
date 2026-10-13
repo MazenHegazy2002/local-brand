@@ -20,8 +20,9 @@ import {
   customerPrice,
   type FeeMode,
 } from '@/components/seller/FeeBreakdown';
-import { api } from '@/lib/api';
+import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 interface Variant {
   id: string;
@@ -61,6 +62,7 @@ export default function SellerProduct() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const qc = useQueryClient();
+  const { t } = useT();
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
@@ -84,10 +86,10 @@ export default function SellerProduct() {
     mutationFn: (published: boolean) =>
       api.patch<{ error?: string }>(`/api/seller/products/${id}`, { published }),
     onSuccess: res => {
-      if (res.error) Alert.alert('Couldn’t publish', res.error);
+      if (res.error) Alert.alert(t('Couldn’t publish'), res.error);
       refresh();
     },
-    onError: e => Alert.alert('Couldn’t update product', (e as Error).message),
+    onError: e => Alert.alert(t('Couldn’t update product'), (e as Error).message),
   });
 
   // PUT overwrites every field it gets, so send the product back whole with the edits on top.
@@ -122,7 +124,7 @@ export default function SellerProduct() {
       setEditing(false);
       refresh();
     },
-    onError: e => Alert.alert('Couldn’t save', (e as Error).message),
+    onError: e => Alert.alert(t('Couldn’t save'), (e as Error).message),
   });
 
   function startEdit() {
@@ -135,8 +137,8 @@ export default function SellerProduct() {
   }
 
   function submit() {
-    if (!title.trim()) return Alert.alert('Title is required');
-    if (!(Number(price) > 0)) return Alert.alert('Enter a valid price');
+    if (!title.trim()) return Alert.alert(t('Title is required'));
+    if (!(Number(price) > 0)) return Alert.alert(t('Enter a valid price'));
     save.mutate();
   }
 
@@ -159,14 +161,18 @@ export default function SellerProduct() {
             style={StyleSheet.absoluteFill}
             contentFit="cover"
           />
-          <Pressable style={styles.back} onPress={() => router.back()} accessibilityLabel="Back">
+          <Pressable
+            style={styles.back}
+            onPress={() => router.back()}
+            accessibilityLabel={t('Back')}
+          >
             <ChevronLeft size={20} color={colors.ink} />
           </Pressable>
           <View style={[styles.badge, { backgroundColor: p.published ? '#dcfce7' : '#eceef2' }]}>
             <Text
               style={[styles.badgeText, { color: p.published ? colors.success : colors.muted }]}
             >
-              {p.published ? 'Live' : 'Draft'}
+              {p.published ? t('Live') : t('Draft')}
             </Text>
           </View>
         </View>
@@ -174,9 +180,9 @@ export default function SellerProduct() {
         <View style={styles.body}>
           {editing ? (
             <>
-              <Text style={styles.lbl}>Title</Text>
+              <Text style={styles.lbl}>{t('Title')}</Text>
               <TextInput style={styles.input} value={title} onChangeText={setTitle} />
-              <Text style={styles.lbl}>Price (EGP)</Text>
+              <Text style={styles.lbl}>{t('Price (EGP)')}</Text>
               <TextInput
                 style={styles.input}
                 value={price}
@@ -191,7 +197,7 @@ export default function SellerProduct() {
                   onMode={setFeeMode}
                 />
               )}
-              <Text style={styles.lbl}>Description</Text>
+              <Text style={styles.lbl}>{t('Description')}</Text>
               <TextInput
                 style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
                 value={description}
@@ -203,27 +209,25 @@ export default function SellerProduct() {
             <View>
               {!!p.category && <Text style={styles.meta}>{p.category.name}</Text>}
               <Text style={styles.title}>{p.title}</Text>
-              <Text style={styles.price}>
-                {Math.round(p.basePrice).toLocaleString('en-EG')} EGP
-              </Text>
+              <Text style={styles.price}>{fmtEGP(Math.round(p.basePrice))}</Text>
             </View>
           )}
 
           {!editing && (
             <View style={styles.stats}>
               <View style={styles.stat}>
-                <Text style={styles.lbl}>Stock</Text>
+                <Text style={styles.lbl}>{t('Stock')}</Text>
                 <Text style={styles.statVal}>{totalStock}</Text>
               </View>
               <View style={styles.stat}>
-                <Text style={styles.lbl}>Variants</Text>
+                <Text style={styles.lbl}>{t('Variants')}</Text>
                 <Text style={styles.statVal}>{p.variants.length}</Text>
               </View>
             </View>
           )}
 
           <View style={styles.card}>
-            <Text style={styles.lbl}>Variants</Text>
+            <Text style={styles.lbl}>{t('Variants')}</Text>
             {p.variants.map(v => (
               <View key={v.id} style={styles.row}>
                 <Text style={styles.rowText}>
@@ -246,7 +250,7 @@ export default function SellerProduct() {
                       v.stockCount > 0 && v.stockCount < 5 && { color: colors.accentText },
                     ]}
                   >
-                    {v.stockCount <= 0 ? 'Out' : v.stockCount}
+                    {v.stockCount <= 0 ? t('Out') : v.stockCount}
                   </Text>
                 )}
               </View>
@@ -255,7 +259,7 @@ export default function SellerProduct() {
 
           {!editing && !!p.description && (
             <View style={styles.card}>
-              <Text style={styles.lbl}>Description</Text>
+              <Text style={styles.lbl}>{t('Description')}</Text>
               <Text style={styles.desc}>{p.description}</Text>
             </View>
           )}
@@ -266,7 +270,7 @@ export default function SellerProduct() {
         {editing ? (
           <>
             <Pressable style={[styles.btn, styles.btnGhost]} onPress={() => setEditing(false)}>
-              <Text style={styles.btnGhostText}>Cancel</Text>
+              <Text style={styles.btnGhostText}>{t('Cancel')}</Text>
             </Pressable>
             <Pressable
               style={[styles.btn, styles.btnMain]}
@@ -276,7 +280,7 @@ export default function SellerProduct() {
               {save.isPending ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.btnMainText}>Save changes</Text>
+                <Text style={styles.btnMainText}>{t('Save changes')}</Text>
               )}
             </Pressable>
           </>
@@ -287,10 +291,10 @@ export default function SellerProduct() {
               onPress={() => togglePublish.mutate(!p.published)}
               disabled={togglePublish.isPending}
             >
-              <Text style={styles.btnGhostText}>{p.published ? 'Unpublish' : 'Publish'}</Text>
+              <Text style={styles.btnGhostText}>{p.published ? t('Unpublish') : t('Publish')}</Text>
             </Pressable>
             <Pressable style={[styles.btn, styles.btnMain]} onPress={startEdit}>
-              <Text style={styles.btnMainText}>Edit product</Text>
+              <Text style={styles.btnMainText}>{t('Edit product')}</Text>
             </Pressable>
           </>
         )}

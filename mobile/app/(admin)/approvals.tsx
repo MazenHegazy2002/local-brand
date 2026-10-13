@@ -11,6 +11,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 interface PendingSeller {
   id: string;
@@ -21,6 +22,7 @@ interface PendingSeller {
 
 export default function Approvals() {
   const qc = useQueryClient();
+  const { t } = useT();
   const { data, isLoading } = useQuery({
     queryKey: ['admin-pending-sellers'],
     queryFn: () =>
@@ -33,13 +35,13 @@ export default function Approvals() {
       qc.invalidateQueries({ queryKey: ['admin-pending-sellers'] });
       qc.invalidateQueries({ queryKey: ['admin-stats'] });
     },
-    onError: e => Alert.alert('Couldn’t approve', (e as Error).message),
+    onError: e => Alert.alert(t('Couldn’t approve'), (e as Error).message),
   });
 
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.title}>Approvals</Text>
+        <Text style={styles.title}>{t('Approvals')}</Text>
       </View>
       {isLoading ? (
         <ActivityIndicator color={colors.accent} style={{ marginTop: 40 }} />
@@ -51,7 +53,7 @@ export default function Approvals() {
           renderItem={({ item }) => (
             <View style={styles.card}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.type}>Seller</Text>
+                <Text style={styles.type}>{t('Seller')}</Text>
                 <Text style={styles.name}>{item.storeName}</Text>
                 {item.user?.email ? <Text style={styles.date}>{item.user.email}</Text> : null}
                 <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
@@ -61,11 +63,11 @@ export default function Approvals() {
                 onPress={() => approve.mutate(item.id)}
                 disabled={approve.isPending}
               >
-                <Text style={styles.approveBtnText}>Approve</Text>
+                <Text style={styles.approveBtnText}>{t('Approve')}</Text>
               </Pressable>
             </View>
           )}
-          ListEmptyComponent={<Text style={styles.empty}>No pending approvals</Text>}
+          ListEmptyComponent={<Text style={styles.empty}>{t('No pending approvals')}</Text>}
         />
       )}
     </View>

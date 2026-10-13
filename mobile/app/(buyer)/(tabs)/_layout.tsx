@@ -4,6 +4,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Home, Search, MapPin, ShoppingBag, User } from 'lucide-react-native';
 import { colors, tabBar } from '@/lib/tokens';
 import { useCart } from '@/store/cart';
+import { useT } from '@/lib/i18n';
 
 function Badge({ count }: { count: number }) {
   if (count === 0) return null;
@@ -17,6 +18,7 @@ function Badge({ count }: { count: number }) {
 export default function BuyerLayout() {
   const insets = useSafeAreaInsets();
   const count = useCart(s => s.count());
+  const { t } = useT();
 
   return (
     <Tabs
@@ -41,7 +43,7 @@ export default function BuyerLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('Home'),
           tabBarIcon: ({ color }) => (
             <Home size={tabBar.iconSize} color={color} strokeWidth={1.9} />
           ),
@@ -50,7 +52,7 @@ export default function BuyerLayout() {
       <Tabs.Screen
         name="shop"
         options={{
-          title: 'Shop',
+          title: t('Shop'),
           tabBarIcon: ({ color }) => (
             <Search size={tabBar.iconSize} color={color} strokeWidth={1.9} />
           ),
@@ -59,7 +61,7 @@ export default function BuyerLayout() {
       <Tabs.Screen
         name="local"
         options={{
-          title: 'Local',
+          title: t('Local'),
           tabBarIcon: ({ color }) => (
             <MapPin size={tabBar.iconSize} color={color} strokeWidth={1.9} />
           ),
@@ -68,7 +70,7 @@ export default function BuyerLayout() {
       <Tabs.Screen
         name="bag"
         options={{
-          title: 'Bag',
+          title: t('Bag'),
           tabBarIcon: ({ color }) => (
             <View>
               <ShoppingBag size={tabBar.iconSize} color={color} strokeWidth={1.9} />
@@ -80,7 +82,7 @@ export default function BuyerLayout() {
       <Tabs.Screen
         name="account"
         options={{
-          title: 'Account',
+          title: t('Account'),
           tabBarIcon: ({ color }) => (
             <User size={tabBar.iconSize} color={color} strokeWidth={1.9} />
           ),

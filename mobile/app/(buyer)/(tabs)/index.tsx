@@ -17,6 +17,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, spacing, radii } from '@/lib/tokens';
 import { useAuth } from '@/store/auth';
+import { useT } from '@/lib/i18n';
 
 const { width } = Dimensions.get('window');
 const HERO_H = 500;
@@ -40,6 +41,7 @@ type Wish = { items: { id: string }[] };
 
 function ProductCard({ item }: { item: Product }) {
   const router = useRouter();
+  useT(); // re-render prices on language change
   const qc = useQueryClient();
   // Same ['wishlist'] key as the product page + wishlist screen, so one fetch is shared.
   const { data: wish } = useQuery({
@@ -94,6 +96,7 @@ function ProductCard({ item }: { item: Product }) {
 
 export default function Home() {
   const router = useRouter();
+  const { t } = useT();
   const [countdown, setCountdown] = useState(19855); // ~5:31 flash sale
 
   const { data, isLoading } = useQuery({
@@ -152,14 +155,14 @@ export default function Home() {
 
           {/* Hero copy */}
           <View style={styles.heroCopy}>
-            <Text style={styles.heroSeason}>AUTUMN / WINTER 26</Text>
-            <Text style={styles.heroTitle}>Made in Egypt.{'\n'}Worn everywhere.</Text>
+            <Text style={styles.heroSeason}>{t('AUTUMN / WINTER 26')}</Text>
+            <Text style={styles.heroTitle}>{t('Made in Egypt.\nWorn everywhere.')}</Text>
             <View style={styles.heroCtaRow}>
               <Pressable
                 style={styles.heroCtaBtn}
                 onPress={() => router.push('/(buyer)/(tabs)/shop')}
               >
-                <Text style={styles.heroCtaText}>Shop the edit</Text>
+                <Text style={styles.heroCtaText}>{t('Shop the edit')}</Text>
               </Pressable>
               {heroProduct && (
                 <Text style={styles.heroStoreName} numberOfLines={1}>
@@ -202,7 +205,7 @@ export default function Home() {
 
           {/* Flash Sale */}
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Flash Sale</Text>
+            <Text style={styles.sectionTitle}>{t('Flash Sale')}</Text>
             <View style={styles.countdownRow}>
               {[pad(h), pad(m), pad(s)].map((v, i) => (
                 <View key={i} style={styles.countUnit}>
@@ -211,7 +214,7 @@ export default function Home() {
                 </View>
               ))}
               <Pressable style={styles.seeAll} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
-                <Text style={styles.seeAllText}>See all</Text>
+                <Text style={styles.seeAllText}>{t('See all')}</Text>
               </Pressable>
             </View>
           </View>
@@ -253,9 +256,9 @@ export default function Home() {
 
           {/* New in */}
           <View style={[styles.sectionHeader, { marginTop: 28 }]}>
-            <Text style={styles.sectionTitle}>New in</Text>
+            <Text style={styles.sectionTitle}>{t('New in')}</Text>
             <Pressable style={styles.seeAll} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
-              <Text style={styles.seeAllText}>See all</Text>
+              <Text style={styles.seeAllText}>{t('See all')}</Text>
             </Pressable>
           </View>
           <View style={styles.grid}>

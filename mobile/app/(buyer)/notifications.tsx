@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { colors, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 interface Notif {
   id: string;
@@ -25,17 +26,18 @@ function iconFor(title: string): [string, string] {
   return ['B', '#e8edf9'];
 }
 
-function timeAgo(iso: string) {
+function timeAgo(iso: string, t: (k: string) => string) {
   const d = new Date(iso);
   const days = Math.floor((Date.now() - d.getTime()) / 86_400_000);
   if (days === 0) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  if (days === 1) return 'Yesterday';
+  if (days === 1) return t('Yesterday');
   if (days < 7) return d.toLocaleDateString([], { weekday: 'short' });
   return d.toLocaleDateString();
 }
 
 export default function Notifications() {
   const router = useRouter();
+  const { t } = useT();
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => api.get<{ notifications: Notif[] }>('/api/notifications'),
@@ -57,9 +59,9 @@ export default function Notifications() {
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
         </Pressable>
-        <Text style={styles.title}>Notifications</Text>
+        <Text style={styles.title}>{t('Notifications')}</Text>
         <Pressable onPress={markAllRead}>
-          <Text style={styles.markAll}>Mark all read</Text>
+          <Text style={styles.markAll}>{t('Mark all read')}</Text>
         </Pressable>
       </View>
 
@@ -70,7 +72,7 @@ export default function Notifications() {
           data={data?.notifications ?? []}
           keyExtractor={n => n.id}
           contentContainerStyle={styles.inner}
-          ListEmptyComponent={<Text style={styles.empty}>No notifications yet.</Text>}
+          ListEmptyComponent={<Text style={styles.empty}>{t('No notifications yet.')}</Text>}
           renderItem={({ item: n }) => {
             const [icon, iconBg] = iconFor(n.title);
             return (
@@ -89,7 +91,7 @@ export default function Notifications() {
                     >
                       {n.title}
                     </Text>
-                    <Text style={styles.time}>{timeAgo(n.createdAt)}</Text>
+                    <Text style={styles.time}>{timeAgo(n.createdAt, t)}</Text>
                   </View>
                   <Text style={styles.body} numberOfLines={2}>
                     {n.message}

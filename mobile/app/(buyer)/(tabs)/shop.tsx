@@ -17,6 +17,7 @@ import { Search, SlidersHorizontal } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 interface Product {
   id: string;
@@ -103,6 +104,7 @@ function RangeSlider({
 
 export default function Shop() {
   const router = useRouter();
+  const { t } = useT();
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
@@ -143,13 +145,13 @@ export default function Shop() {
     <View style={styles.root}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Shop</Text>
+        <Text style={styles.title}>{t('Shop')}</Text>
         <View style={styles.searchRow}>
           <View style={styles.searchBox}>
             <Search size={18} color={colors.placeholder} strokeWidth={2} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search brands, styles..."
+              placeholder={t('Search brands, styles...')}
               placeholderTextColor={colors.placeholder}
               value={search}
               onChangeText={setSearch}
@@ -164,7 +166,7 @@ export default function Shop() {
         {/* Category tabs from API */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsScroll}>
           <View style={styles.tabs}>
-            {[{ id: '', name: 'All' } as Category, ...allCategories].map(cat => (
+            {[{ id: '', name: t('All') } as Category, ...allCategories].map(cat => (
               <Pressable
                 key={cat.id}
                 style={[styles.tab, selectedCat === cat.id && styles.tabActive]}
@@ -190,13 +192,13 @@ export default function Shop() {
         <View style={styles.sheet}>
           <View style={styles.sheetHandle} />
           <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>Filters</Text>
+            <Text style={styles.sheetTitle}>{t('Filters')}</Text>
             <Pressable onPress={resetFilters}>
-              <Text style={styles.resetBtn}>Reset</Text>
+              <Text style={styles.resetBtn}>{t('Reset')}</Text>
             </Pressable>
           </View>
 
-          <Text style={styles.sectionLabel}>Price</Text>
+          <Text style={styles.sectionLabel}>{t('Price')}</Text>
           <RangeSlider
             minVal={priceMin}
             maxVal={priceMax}
@@ -204,13 +206,11 @@ export default function Shop() {
             onMaxChange={setPriceMax}
           />
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>
-              {priceMin === P_MIN ? `${P_MIN} EGP` : `${priceMin.toLocaleString()} EGP`}
-            </Text>
-            <Text style={styles.priceLabel}>{priceMax.toLocaleString()} EGP</Text>
+            <Text style={styles.priceLabel}>{fmtEGP(priceMin)}</Text>
+            <Text style={styles.priceLabel}>{fmtEGP(priceMax)}</Text>
           </View>
 
-          <Text style={styles.sectionLabel}>Sort by</Text>
+          <Text style={styles.sectionLabel}>{t('Sort by')}</Text>
           <View style={styles.pillRow}>
             {(['newest', 'price-asc', 'price-desc'] as const).map(v => (
               <Pressable
@@ -219,7 +219,7 @@ export default function Shop() {
                 onPress={() => setSortBy(v)}
               >
                 <Text style={[styles.pillText, sortBy === v && styles.pillTextActive]}>
-                  {v === 'newest' ? 'Newest' : v === 'price-asc' ? 'Price ↑' : 'Price ↓'}
+                  {v === 'newest' ? t('Newest') : v === 'price-asc' ? t('Price ↑') : t('Price ↓')}
                 </Text>
               </Pressable>
             ))}
@@ -227,7 +227,9 @@ export default function Shop() {
 
           <Pressable style={styles.cta} onPress={() => setFilterOpen(false)}>
             <Text style={styles.ctaText}>
-              {isLoading ? 'Loading…' : `Show ${resultCount} result${resultCount !== 1 ? 's' : ''}`}
+              {isLoading
+                ? t('Loading…')
+                : t(resultCount === 1 ? 'Show {n} result' : 'Show {n} results', { n: resultCount })}
             </Text>
           </Pressable>
         </View>
@@ -252,7 +254,9 @@ export default function Shop() {
                 >
                   <View style={styles.catCardLeft}>
                     <Text style={styles.catCardName}>{cat.name}</Text>
-                    <Text style={styles.catCardCount}>{cat._count?.products ?? 0} items</Text>
+                    <Text style={styles.catCardCount}>
+                      {t('{n} items', { n: cat._count?.products ?? 0 })}
+                    </Text>
                   </View>
                   {img ? (
                     <Image source={{ uri: img }} style={styles.catCardImg} contentFit="cover" />
@@ -294,7 +298,7 @@ export default function Shop() {
               <Text style={styles.cardPrice}>{fmtEGP(item.basePrice)}</Text>
             </Pressable>
           )}
-          ListEmptyComponent={<Text style={styles.empty}>No products found</Text>}
+          ListEmptyComponent={<Text style={styles.empty}>{t('No products found')}</Text>}
         />
       )}
     </View>

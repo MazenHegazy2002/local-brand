@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT, LANGS, LANG_NAMES } from '@/lib/i18n';
+import { useAuth } from '@/store/auth';
 
 const { width, height } = Dimensions.get('window');
 const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
@@ -80,11 +82,19 @@ function Content({
   setStep: (s: number) => void;
   router: ReturnType<typeof useRouter>;
 }) {
+  const { t, lang } = useT();
+  const setLang = useAuth(s => s.setLang);
   return (
     <View style={styles.flex}>
       {/* Top bar */}
       <View style={styles.topBar}>
         <Text style={styles.wordmark}>brandyy.</Text>
+        <Pressable
+          style={styles.langBtn}
+          onPress={() => setLang(LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length])}
+        >
+          <Text style={styles.langText}>{LANG_NAMES[lang]}</Text>
+        </Pressable>
       </View>
 
       {/* Bottom content */}
@@ -96,20 +106,20 @@ function Content({
           ))}
         </View>
 
-        <Text style={styles.title}>{slide.title}</Text>
-        <Text style={styles.sub}>{slide.sub}</Text>
+        <Text style={styles.title}>{t(slide.title)}</Text>
+        <Text style={styles.sub}>{t(slide.sub)}</Text>
 
         {step < SLIDES_STATIC.length - 1 ? (
           <Pressable style={styles.btnPrimary} onPress={() => setStep(step + 1)}>
-            <Text style={styles.btnPrimaryText}>Next</Text>
+            <Text style={styles.btnPrimaryText}>{t('Next')}</Text>
           </Pressable>
         ) : (
           <Pressable style={styles.btnPrimary} onPress={() => router.push('/(auth)/sign-in')}>
-            <Text style={styles.btnPrimaryText}>Get started</Text>
+            <Text style={styles.btnPrimaryText}>{t('Get started')}</Text>
           </Pressable>
         )}
         <Pressable style={styles.btnSecondary} onPress={() => router.push('/(auth)/sign-in')}>
-          <Text style={styles.btnSecondaryText}>I already have an account</Text>
+          <Text style={styles.btnSecondaryText}>{t('I already have an account')}</Text>
         </Pressable>
       </View>
     </View>
@@ -132,6 +142,14 @@ const styles = StyleSheet.create({
     paddingTop: spacing.top,
     paddingBottom: 12,
   },
+  langBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  langText: { fontFamily: 'Inter-SemiBold', fontSize: 13, color: '#fff' },
   wordmark: {
     fontFamily: 'Outfit-ExtraBold',
     fontSize: 24,

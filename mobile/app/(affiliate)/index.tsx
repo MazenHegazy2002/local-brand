@@ -14,8 +14,9 @@ import { useState } from 'react';
 import * as Clipboard from 'expo-clipboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/store/auth';
-import { api } from '@/lib/api';
+import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT, statusKey, LANGS, LANG_NAMES } from '@/lib/i18n';
 
 const TIER_COLORS: Record<string, string> = {
   GOLD: '#f59e0b',
@@ -48,7 +49,7 @@ type Dashboard = {
   }[];
 };
 
-const egp = (n: number) => `${n.toLocaleString('en-EG', { maximumFractionDigits: 2 })} EGP`;
+const egp = (n: number) => fmtEGP(Math.round(n * 100) / 100);
 
 // react-native-web's Alert ignores buttons, so use the browser dialogs there.
 const notify = (msg: string) =>
@@ -56,6 +57,8 @@ const notify = (msg: string) =>
 
 export default function Affiliate() {
   const signOut = useAuth(s => s.signOut);
+  const setLang = useAuth(s => s.setLang);
+  const { t, lang } = useT();
   const qc = useQueryClient();
   const [copied, setCopied] = useState(false);
   const { data, isLoading, error } = useQuery({
@@ -65,29 +68,35 @@ export default function Affiliate() {
   const payout = useMutation({
     mutationFn: () => api.post<{ amountEgp: number }>('/api/affiliate/payout', {}),
     onSuccess: r => {
-      notify(`Payout of ${egp(r.amountEgp)} requested.`);
+      notify(t('Payout of {amount} requested.', { amount: egp(r.amountEgp) }));
       qc.invalidateQueries({ queryKey: ['affiliate-dashboard'] });
     },
     onError: () =>
-      notify('Could not request a payout. Check your payout method is set on brandyy.shop.'),
+      notify(t('Could not request a payout. Check your payout method is set on brandyy.shop.')),
   });
 
   function confirmSignOut() {
     if (Platform.OS === 'web') {
-      if (window.confirm('Sign out?')) signOut();
+      if (window.confirm(t('Sign out?'))) signOut();
       return;
     }
-    Alert.alert('Sign out', 'Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
+    Alert.alert(t('Sign out'), t('Are you sure?'), [
+      { text: t('Cancel'), style: 'cancel' },
+      { text: t('Sign out'), style: 'destructive', onPress: () => signOut() },
     ]);
   }
 
   const header = (
     <View style={styles.header}>
-      <Text style={styles.title}>Earn with Brandyy</Text>
+      <Text style={styles.title}>{t('Earn with Brandyy')}</Text>
+      <Pressable
+        onPress={() => setLang(LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length])}
+        hitSlop={8}
+      >
+        <Text style={styles.signOut}>{LANG_NAMES[lang]}</Text>
+      </Pressable>
       <Pressable onPress={confirmSignOut} accessibilityRole="button" hitSlop={8}>
-        <Text style={styles.signOut}>Sign out</Text>
+        <Text style={styles.signOut}>{t('Sign out')}</Text>
       </Pressable>
     </View>
   );
@@ -100,7 +109,7 @@ export default function Affiliate() {
           <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
         ) : (
           <Text style={styles.empty}>
-            {error ? 'Could not load your affiliate account.' : 'No affiliate account found.'}
+            {error ? t('Could not load your affiliate account.') : t('No affiliate account found.')}
           </Text>
         )}
       </View>
@@ -114,10 +123,10 @@ export default function Affiliate() {
   const progress = next ? Math.min(100, (a.totalConversions / next.minConversions) * 100) : 100;
 
   const stats = [
-    { label: 'Pending', value: egp(a.pendingEarningsEgp) },
-    { label: 'Confirmed', value: egp(confirmed) },
-    { label: 'Total earned', value: egp(a.totalEarnedEgp) },
-    { label: 'Conversions', value: String(a.totalConversions) },
+    { label: t('Pending'), value: egp(a.pendingEarningsEgp) },
+    { label: t('Confirmed'), value: egp(confirmed) },
+    { label: t('Total earned'), value: egp(a.totalEarnedEgp) },
+    { label: t('Conversions'), value: String(a.totalConversions) },
   ];
 
   const share = (message: string) => Share.share({ message });
@@ -136,7 +145,7 @@ export default function Affiliate() {
         <View style={[styles.tierCard, { backgroundColor: TIER_COLORS[a.tier] ?? colors.accent }]}>
           <View style={styles.tierTop}>
             <View>
-              <Text style={styles.tierLabel}>YOUR TIER</Text>
+              <Text style={styles.tierLabel}>{t('YOUR TIER')}</Text>
               <Text style={styles.tierName}>{a.tierName}</Text>
             </View>
             <Text style={styles.tierRate}>{a.commissionPct}%</Text>
@@ -146,8 +155,13 @@ export default function Affiliate() {
           </View>
           <Text style={styles.tierHint}>
             {next
-              ? `${a.totalConversions}/${next.minConversions} conversions to ${next.name} (${Number(next.commissionPct)}%)`
-              : 'Top tier reached'}
+              ? t('{done}/{need} conversions to {tier} ({pct}%)', {
+                  done: a.totalConversions,
+                  need: next.minConversions,
+                  tier: next.name,
+                  pct: Number(next.commissionPct),
+                })
+              : t('Top tier reached')}
           </Text>
         </View>
 
@@ -163,18 +177,20 @@ export default function Affiliate() {
 
         {/* Referral link */}
         <View style={styles.linkCard}>
-          <Text style={styles.linkCardTitle}>Your referral link</Text>
+          <Text style={styles.linkCardTitle}>{t('Your referral link')}</Text>
           <View style={styles.linkRow}>
             <Text style={styles.linkText} numberOfLines={1}>
               {link.slice(0, slash)}
               <Text style={styles.linkCode}>{link.slice(slash)}</Text>
             </Text>
             <Pressable style={styles.copyBtn} onPress={() => copy(a.referralLink)}>
-              <Text style={styles.copyBtnText}>{copied ? 'Copied' : 'Copy'}</Text>
+              <Text style={styles.copyBtnText}>{copied ? t('Copied') : t('Copy')}</Text>
             </Pressable>
           </View>
           <Text style={styles.linkHint}>
-            Friends get {a.discountPct}% off. You earn once their order is delivered.
+            {t('Friends get {pct}% off. You earn once their order is delivered.', {
+              pct: a.discountPct,
+            })}
           </Text>
 
           {/* Share buttons */}
@@ -187,7 +203,9 @@ export default function Affiliate() {
               <Pressable
                 key={label}
                 style={[styles.shareBtn, { backgroundColor: bg }]}
-                onPress={() => share(`Shop on Brandyy with my link: ${a.referralLink}`)}
+                onPress={() =>
+                  share(t('Shop on Brandyy with my link: {link}', { link: a.referralLink }))
+                }
               >
                 <Text style={styles.shareBtnText}>{label}</Text>
               </Pressable>
@@ -201,18 +219,20 @@ export default function Affiliate() {
           disabled={confirmed <= 0 || payout.isPending}
           onPress={() => payout.mutate()}
         >
-          <Text style={styles.payoutBtnText}>Request payout · {egp(confirmed)}</Text>
+          <Text style={styles.payoutBtnText}>
+            {t('Request payout · {amount}', { amount: egp(confirmed) })}
+          </Text>
         </Pressable>
 
         {/* Who used the code — sits under the original design */}
         <View style={styles.secHead}>
-          <Text style={styles.secTitle}>Who used your code</Text>
-          <Text style={styles.statLabel}>Last 10 orders</Text>
+          <Text style={styles.secTitle}>{t('Who used your code')}</Text>
+          <Text style={styles.statLabel}>{t('Last 10 orders')}</Text>
         </View>
         <View style={styles.usageCard}>
           {data.recentCommissions.length === 0 && (
             <Text style={[styles.statLabel, { paddingVertical: 16 }]}>
-              No one has used your code yet.
+              {t('No one has used your code yet.')}
             </Text>
           )}
           {data.recentCommissions.map((c, i) => {
@@ -222,19 +242,22 @@ export default function Affiliate() {
               <View key={c.id} style={[styles.usageRow, i > 0 && styles.usageDivider]}>
                 <View style={{ flex: 1 }}>
                   <View style={styles.usageNameRow}>
-                    <Text style={styles.usageName}>{c.usedByName ?? 'Guest'}</Text>
+                    <Text style={styles.usageName}>{c.usedByName ?? t('Guest')}</Text>
                     <Text style={[styles.chip, seller ? styles.chipSeller : styles.chipBuyer]}>
-                      {seller ? 'SELLER' : 'BUYER'}
+                      {seller ? t('SELLER') : t('BUYER')}
                     </Text>
                   </View>
                   <Text style={styles.statLabel}>
-                    Order {egp(c.orderTotalEgp)} · {c.commissionPct}%
+                    {t('Order {amount} · {pct}%', {
+                      amount: egp(c.orderTotalEgp),
+                      pct: c.commissionPct,
+                    })}
                   </Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={styles.usageAmount}>+{egp(c.commissionEgp)}</Text>
                   <Text style={[styles.usageStatus, { color: done ? '#15803d' : '#b45309' }]}>
-                    {c.status[0] + c.status.slice(1).toLowerCase()}
+                    {t(statusKey(c.status))}
                   </Text>
                 </View>
               </View>

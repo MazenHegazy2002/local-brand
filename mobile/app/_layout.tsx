@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import {
   Stack,
   router,
@@ -18,6 +18,7 @@ import { useAuth } from '@/store/auth';
 import * as Notifications from 'expo-notifications';
 import { api } from '@/lib/api';
 import VersionGate from '@/components/VersionGate';
+import { useT } from '@/lib/i18n';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -108,6 +109,7 @@ function PushNotifications() {
 
 export default function RootLayout() {
   const hydrate = useAuth(s => s.hydrate);
+  const { rtl } = useT();
 
   const [fontsLoaded] = useFonts({
     'Outfit-Regular': require('../assets/fonts/Outfit-Regular.ttf'),
@@ -138,9 +140,12 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthGate />
         <PushNotifications />
-        <VersionGate>
-          <Stack screenOptions={{ headerShown: false }} />
-        </VersionGate>
+        {/* `direction` mirrors row layouts live for Arabic, no restart needed. */}
+        <View style={{ flex: 1, direction: rtl ? 'rtl' : 'ltr' }}>
+          <VersionGate>
+            <Stack screenOptions={{ headerShown: false }} />
+          </VersionGate>
+        </View>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

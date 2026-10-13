@@ -28,6 +28,7 @@ import {
 import { api } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { colorHex, uploadImage } from '@/lib/seller';
+import { useT } from '@/lib/i18n';
 
 interface Photo {
   key: string;
@@ -51,6 +52,7 @@ const nextKey = () => String(++seq);
 
 export default function AddProduct() {
   const router = useRouter();
+  const { t } = useT();
   const qc = useQueryClient();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [title, setTitle] = useState('');
@@ -87,7 +89,7 @@ export default function AddProduct() {
       setPhotos(ps => ps.map(p => (p.key === key ? { ...p, url } : p)));
     } catch (e) {
       setPhotos(ps => ps.map(p => (p.key === key ? { ...p, failed: true } : p)));
-      Alert.alert('Upload failed', (e as Error).message);
+      Alert.alert(t('Upload failed'), (e as Error).message);
     }
   }
 
@@ -122,7 +124,7 @@ export default function AddProduct() {
 
   async function save(published: boolean) {
     if (uploading) {
-      Alert.alert('Hold on', 'Photos are still uploading.');
+      Alert.alert(t('Hold on'), t('Photos are still uploading.'));
       return;
     }
     if (!validate()) return;
@@ -149,11 +151,11 @@ export default function AddProduct() {
       qc.invalidateQueries({ queryKey: ['seller-products'] });
       qc.invalidateQueries({ queryKey: ['seller-stats'] });
       if (published && res.publishBlockedReason) {
-        Alert.alert('Saved as draft', res.publishBlockedReason);
+        Alert.alert(t('Saved as draft'), res.publishBlockedReason);
       }
       router.back();
     } catch (e) {
-      Alert.alert('Couldn’t save', (e as Error).message);
+      Alert.alert(t('Couldn’t save'), (e as Error).message);
     } finally {
       setSaving(null);
     }
@@ -168,12 +170,12 @@ export default function AddProduct() {
         <Pressable style={styles.iconBtn} onPress={() => router.back()}>
           <X size={22} color={colors.ink} />
         </Pressable>
-        <Text style={styles.headerTitle}>New product</Text>
+        <Text style={styles.headerTitle}>{t('New product')}</Text>
         <Pressable onPress={() => save(false)} disabled={!!saving}>
           {saving === 'draft' ? (
             <ActivityIndicator color={colors.primary} />
           ) : (
-            <Text style={styles.draftBtn}>Save draft</Text>
+            <Text style={styles.draftBtn}>{t('Save draft')}</Text>
           )}
         </Pressable>
       </View>
@@ -194,7 +196,7 @@ export default function AddProduct() {
               {!p.url && (
                 <View style={styles.photoOverlay}>
                   {p.failed ? (
-                    <Text style={styles.failed}>Failed</Text>
+                    <Text style={styles.failed}>{t('Failed')}</Text>
                   ) : (
                     <ActivityIndicator color="#fff" />
                   )}
@@ -202,7 +204,7 @@ export default function AddProduct() {
               )}
               {i === 0 && (
                 <View style={styles.coverTag}>
-                  <Text style={styles.coverText}>Cover</Text>
+                  <Text style={styles.coverText}>{t('Cover')}</Text>
                 </View>
               )}
               <Pressable
@@ -216,7 +218,7 @@ export default function AddProduct() {
           ))}
           <Pressable style={[styles.photo, styles.addPhoto]} onPress={pickPhoto}>
             <Plus size={20} color={colors.muted} />
-            <Text style={styles.addPhotoText}>Add photo</Text>
+            <Text style={styles.addPhotoText}>{t('Add photo')}</Text>
           </Pressable>
         </ScrollView>
 
@@ -225,7 +227,7 @@ export default function AddProduct() {
             style={styles.input}
             value={title}
             onChangeText={setTitle}
-            placeholder="e.g. Linen summer dress"
+            placeholder={t('e.g. Linen summer dress')}
             placeholderTextColor={colors.placeholder}
           />
         </Field>
@@ -251,7 +253,7 @@ export default function AddProduct() {
                   placeholder="0"
                   placeholderTextColor={colors.placeholder}
                 />
-                <Text style={styles.suffix}>EGP</Text>
+                <Text style={styles.suffix}>{t('EGP')}</Text>
               </View>
             </Field>
           </View>
@@ -262,7 +264,7 @@ export default function AddProduct() {
                   style={[styles.pickerText, !category && { color: colors.placeholder }]}
                   numberOfLines={1}
                 >
-                  {category?.name ?? 'Select'}
+                  {category?.name ?? t('Select')}
                 </Text>
                 <ChevronDown size={16} color={colors.muted} />
               </Pressable>
@@ -286,7 +288,7 @@ export default function AddProduct() {
                   placeholder="0.5"
                   placeholderTextColor={colors.placeholder}
                 />
-                <Text style={styles.suffix}>kg</Text>
+                <Text style={styles.suffix}>{t('kg')}</Text>
               </View>
             </Field>
           </View>
@@ -299,16 +301,16 @@ export default function AddProduct() {
             value={description}
             onChangeText={setDescription}
             multiline
-            placeholder="Fabric, fit, care…"
+            placeholder={t('Fabric, fit, care…')}
             placeholderTextColor={colors.placeholder}
           />
         </Field>
 
         <View style={styles.card}>
           <View style={styles.cardHead}>
-            <Text style={styles.cardTitle}>Variants & stock</Text>
+            <Text style={styles.cardTitle}>{t('Variants & stock')}</Text>
             <Pressable onPress={() => setAdding(a => !a)} hitSlop={8}>
-              <Text style={styles.addLink}>{adding ? 'Cancel' : '+ Add'}</Text>
+              <Text style={styles.addLink}>{adding ? t('Cancel') : t('+ Add')}</Text>
             </Pressable>
           </View>
           {adding && (
@@ -317,7 +319,7 @@ export default function AddProduct() {
                 style={[styles.input, { flex: 1.3 }]}
                 value={newColor}
                 onChangeText={setNewColor}
-                placeholder="Color"
+                placeholder={t('Color')}
                 placeholderTextColor={colors.placeholder}
                 autoFocus
               />
@@ -325,7 +327,7 @@ export default function AddProduct() {
                 style={[styles.input, { flex: 1 }]}
                 value={newSize}
                 onChangeText={setNewSize}
-                placeholder="Size"
+                placeholder={t('Size')}
                 placeholderTextColor={colors.placeholder}
                 onSubmitEditing={addVariant}
               />
@@ -368,15 +370,15 @@ export default function AddProduct() {
             </View>
           ))}
           {!variants.length && !adding && (
-            <Text style={styles.meta}>Add each color / size you sell with its stock.</Text>
+            <Text style={styles.meta}>{t('Add each color / size you sell with its stock.')}</Text>
           )}
-          {!!errors.variants && <Text style={styles.error}>{errors.variants}</Text>}
+          {!!errors.variants && <Text style={styles.error}>{t(errors.variants)}</Text>}
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
         <Text style={styles.footerNote}>
-          Listings go live once your store is approved and has a photo.
+          {t('Listings go live once your store is approved and has a photo.')}
         </Text>
         <Pressable
           style={[styles.submit, (!!saving || uploading) && { opacity: 0.6 }]}
@@ -386,7 +388,7 @@ export default function AddProduct() {
           {saving === 'submit' ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitText}>Submit</Text>
+            <Text style={styles.submitText}>{t('Submit')}</Text>
           )}
         </Pressable>
       </View>
@@ -399,14 +401,14 @@ export default function AddProduct() {
       >
         <Pressable style={styles.backdrop} onPress={() => setCatOpen(false)} />
         <View style={styles.sheet}>
-          <Text style={styles.sheetTitle}>Category</Text>
+          <Text style={styles.sheetTitle}>{t('Category')}</Text>
           {catsLoading ? (
             <ActivityIndicator color={colors.primary} style={{ margin: 20 }} />
           ) : (
             <FlatList
               data={cats?.categories ?? []}
               keyExtractor={c => c.id}
-              ListEmptyComponent={<Text style={styles.meta}>No categories available.</Text>}
+              ListEmptyComponent={<Text style={styles.meta}>{t('No categories available.')}</Text>}
               renderItem={({ item }) => (
                 <Pressable
                   style={styles.catRow}
@@ -445,11 +447,12 @@ function Field({
   error?: string;
   children: React.ReactNode;
 }) {
+  const { t } = useT();
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label}>{t(label)}</Text>
       {children}
-      {!!error && <Text style={styles.error}>{error}</Text>}
+      {!!error && <Text style={styles.error}>{t(error)}</Text>}
     </View>
   );
 }

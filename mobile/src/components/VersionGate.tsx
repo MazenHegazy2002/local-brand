@@ -13,6 +13,7 @@ import {
 import Constants from 'expo-constants';
 import { api } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 type AppConfig = {
   status: 'ok' | 'update_available' | 'update_required' | 'stopped';
@@ -28,6 +29,7 @@ const CONFIG_PATH = `/api/app/config?version=${encodeURIComponent(VERSION)}&plat
 // Fails open: children always render; only a server answer of stopped/update_required blocks.
 // On a failed re-check the last server answer is kept.
 export default function VersionGate({ children }: { children: ReactNode }) {
+  const { t } = useT();
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [checking, setChecking] = useState(false);
   const prompted = useRef(false);
@@ -45,10 +47,14 @@ export default function VersionGate({ children }: { children: ReactNode }) {
         if (c?.status === 'update_available' && !prompted.current) {
           prompted.current = true; // once per session
           const url = c.storeUrl;
-          Alert.alert('Update available', c.message || 'A new version of Brandyy is available.', [
-            { text: 'Later', style: 'cancel' },
-            ...(url ? [{ text: 'Update', onPress: () => Linking.openURL(url) }] : []),
-          ]);
+          Alert.alert(
+            t('Update available'),
+            c.message || t('A new version of Brandyy is available.'),
+            [
+              { text: t('Later'), style: 'cancel' },
+              ...(url ? [{ text: t('Update'), onPress: () => Linking.openURL(url) }] : []),
+            ]
+          );
         }
       })
       .catch(() => {})
@@ -72,28 +78,31 @@ export default function VersionGate({ children }: { children: ReactNode }) {
           <StatusBar barStyle="light-content" />
           <Text style={styles.wordmark}>brandyy.</Text>
           <Text style={styles.title}>
-            {status === 'stopped' ? "We'll be right back" : 'Update required'}
+            {status === 'stopped' ? t("We'll be right back") : t('Update required')}
           </Text>
           <Text style={styles.message}>
             {config?.message ||
               (status === 'stopped'
-                ? 'Brandyy is temporarily unavailable. Please try again shortly.'
-                : 'Please update Brandyy to keep shopping.')}
+                ? t('Brandyy is temporarily unavailable. Please try again shortly.')
+                : t('Please update Brandyy to keep shopping.'))}
           </Text>
 
           {status === 'stopped' ? (
             <Pressable style={styles.btn} onPress={check} disabled={checking}>
-              <Text style={styles.btnText}>{checking ? 'Checking…' : 'Try again'}</Text>
+              <Text style={styles.btnText}>{checking ? t('Checking…') : t('Try again')}</Text>
             </Pressable>
           ) : (
             <>
               {config?.storeUrl ? (
                 <Pressable style={styles.btn} onPress={() => Linking.openURL(config.storeUrl!)}>
-                  <Text style={styles.btnText}>Update now</Text>
+                  <Text style={styles.btnText}>{t('Update now')}</Text>
                 </Pressable>
               ) : null}
               <Text style={styles.version}>
-                Your version {VERSION} · Required {config?.minVersion}
+                {t('Your version {v} · Required {min}', {
+                  v: VERSION,
+                  min: config?.minVersion ?? '',
+                })}
               </Text>
             </>
           )}

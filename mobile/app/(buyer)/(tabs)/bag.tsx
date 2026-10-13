@@ -15,11 +15,13 @@ import { Minus, Plus } from 'lucide-react-native';
 import { useCart, lineKey } from '@/store/cart';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { api, fmtEGP } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 
 const FREE_THRESHOLD = 1000;
 
 export default function Bag() {
   const router = useRouter();
+  const { t } = useT();
   const { items, setQty, remove, total, count, applied, setApplied } = useCart();
   const [promo, setPromo] = useState(applied?.code ?? '');
   const [promoMsg, setPromoMsg] = useState('');
@@ -55,7 +57,7 @@ export default function Bag() {
       setApplied({ code, kind: 'coupon', amount: c.discountAmount, forSubtotal: subtotal });
     } catch (e: unknown) {
       setApplied(null);
-      setPromoMsg((e as Error).message || 'Invalid code');
+      setPromoMsg((e as Error).message || t('Invalid code'));
     } finally {
       setChecking(false);
     }
@@ -64,10 +66,10 @@ export default function Bag() {
   if (count() === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyTitle}>Your bag is empty</Text>
-        <Text style={styles.emptySub}>Add items from the shop to get started</Text>
+        <Text style={styles.emptyTitle}>{t('Your bag is empty')}</Text>
+        <Text style={styles.emptySub}>{t('Add items from the shop to get started')}</Text>
         <Pressable style={styles.shopBtn} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
-          <Text style={styles.shopBtnText}>Browse shop</Text>
+          <Text style={styles.shopBtnText}>{t('Browse shop')}</Text>
         </Pressable>
       </View>
     );
@@ -76,9 +78,9 @@ export default function Bag() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.title}>Bag</Text>
+        <Text style={styles.title}>{t('Bag')}</Text>
         <Text style={styles.count}>
-          {count()} item{count() !== 1 ? 's' : ''}
+          {t(count() === 1 ? '{n} item' : '{n} items', { n: count() })}
         </Text>
       </View>
 
@@ -86,7 +88,9 @@ export default function Bag() {
         {/* Free shipping progress */}
         {remaining > 0 && (
           <View style={styles.progressCard}>
-            <Text style={styles.progressText}>{fmtEGP(remaining)} away from free shipping</Text>
+            <Text style={styles.progressText}>
+              {t('{amount} away from free shipping', { amount: fmtEGP(remaining) })}
+            </Text>
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { width: `${progress * 100}%` as any }]} />
             </View>
@@ -99,7 +103,7 @@ export default function Bag() {
             <Image source={{ uri: item.image }} style={styles.itemImg} contentFit="cover" />
             <View style={styles.itemInfo}>
               <Text style={styles.itemBrand} numberOfLines={1}>
-                BRANDYY STORE
+                {t('BRANDYY STORE')}
               </Text>
               <Text style={styles.itemName} numberOfLines={2}>
                 {item.title}
@@ -132,7 +136,7 @@ export default function Bag() {
         <View style={styles.promoRow}>
           <TextInput
             style={styles.promoInput}
-            placeholder="Promo or referral code"
+            placeholder={t('Promo or referral code')}
             placeholderTextColor={colors.placeholder}
             value={promo}
             onChangeText={setPromo}
@@ -142,13 +146,13 @@ export default function Bag() {
             {checking ? (
               <ActivityIndicator color={colors.primary} />
             ) : (
-              <Text style={styles.promoBtnText}>Apply</Text>
+              <Text style={styles.promoBtnText}>{t('Apply')}</Text>
             )}
           </Pressable>
         </View>
         {applied?.forSubtotal === subtotal ? (
           <Text style={styles.promoOk}>
-            {applied.code} applied: −{fmtEGP(applied.amount)}
+            {t('{code} applied: −{amount}', { code: applied.code, amount: fmtEGP(applied.amount) })}
           </Text>
         ) : promoMsg ? (
           <Text style={styles.promoErr}>{promoMsg}</Text>
@@ -158,11 +162,11 @@ export default function Bag() {
       {/* Sticky footer */}
       <View style={styles.footer}>
         <View style={styles.footerRow}>
-          <Text style={styles.footerLabel}>Subtotal</Text>
+          <Text style={styles.footerLabel}>{t('Subtotal')}</Text>
           <Text style={styles.footerTotal}>{fmtEGP(subtotal)}</Text>
         </View>
         <Pressable style={styles.checkoutBtn} onPress={() => router.push('/(buyer)/checkout')}>
-          <Text style={styles.checkoutText}>Checkout</Text>
+          <Text style={styles.checkoutText}>{t('Checkout')}</Text>
         </Pressable>
       </View>
     </View>

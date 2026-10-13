@@ -14,7 +14,8 @@ import {
 } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/store/auth';
-import { api } from '@/lib/api';
+import { useT, LANGS, LANG_NAMES } from '@/lib/i18n';
+import { api, fmtEGP } from '@/lib/api';
 import type { OrderRow } from '../orders';
 import type { AddressRow } from '../addresses';
 import { colors, radii, spacing } from '@/lib/tokens';
@@ -27,6 +28,7 @@ const openWeb = (path: string) => WebBrowser.openBrowserAsync(WEB + path);
 export default function Account() {
   const { user, signOut, lang, setLang } = useAuth();
   const router = useRouter();
+  const { t } = useT();
 
   const initials = (user?.name ?? 'U')
     .split(' ')
@@ -38,12 +40,12 @@ export default function Account() {
   function confirmSignOut() {
     // react-native-web's Alert ignores buttons, so confirm natively there.
     if (Platform.OS === 'web') {
-      if (window.confirm('Sign out?')) signOut();
+      if (window.confirm(t('Sign out?'))) signOut();
       return;
     }
-    Alert.alert('Sign out', 'Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
+    Alert.alert(t('Sign out'), t('Are you sure?'), [
+      { text: t('Cancel'), style: 'cancel' },
+      { text: t('Sign out'), style: 'destructive', onPress: () => signOut() },
     ]);
   }
 
@@ -51,27 +53,29 @@ export default function Account() {
   function confirmDelete() {
     if (Platform.OS === 'web') {
       if (
-        window.confirm('Permanently delete your account and personal data? This cannot be undone.')
+        window.confirm(
+          t('Permanently delete your account and personal data? This cannot be undone.')
+        )
       )
         api
           .post('/api/account/delete', {})
           .then(() => signOut())
-          .catch(() => window.alert('Could not delete account. Please try again.'));
+          .catch(() => window.alert(t('Could not delete account. Please try again.')));
       return;
     }
     Alert.alert(
-      'Delete account',
-      'This permanently deletes your account and personal data. This cannot be undone.',
+      t('Delete account'),
+      t('This permanently deletes your account and personal data. This cannot be undone.'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('Cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('Delete'),
           style: 'destructive',
           onPress: () =>
             api
               .post('/api/account/delete', {})
               .then(() => signOut())
-              .catch(() => Alert.alert('Could not delete account', 'Please try again.')),
+              .catch(() => Alert.alert(t('Could not delete account'), t('Please try again.'))),
         },
       ]
     );
@@ -100,74 +104,76 @@ export default function Account() {
   const addressCount = count(addresses.data?.addresses.length);
 
   const stats = [
-    { label: 'Orders', value: count(orders.data?.orders.length), href: '/orders' as Href },
-    { label: 'Wishlist', value: count(wishlist.data?.items.length), href: '/wishlist' as Href },
-    { label: 'Addresses', value: addressCount, href: '/addresses' as Href },
+    { label: t('Orders'), value: count(orders.data?.orders.length), href: '/orders' as Href },
+    { label: t('Wishlist'), value: count(wishlist.data?.items.length), href: '/wishlist' as Href },
+    { label: t('Addresses'), value: addressCount, href: '/addresses' as Href },
   ];
 
   const menu = [
     {
-      label: 'Edit profile',
+      label: t('Edit profile'),
       Icon: Settings,
       badge: null,
       hint: null,
       onPress: () => router.push('/edit-profile' as Href),
     },
     {
-      label: 'My orders',
+      label: t('My orders'),
       Icon: Package,
       badge: null,
       hint: null,
       onPress: () => router.push('/orders' as Href),
     },
     {
-      label: 'Addresses',
+      label: t('Addresses'),
       Icon: MapPin,
       badge: null,
       hint: addressCount,
       onPress: () => router.push('/addresses' as Href),
     },
     {
-      label: 'Payment methods',
+      label: t('Payment methods'),
       Icon: CreditCard,
       badge: null,
       hint: null,
       onPress: () =>
         Alert.alert(
-          'Payment methods',
-          'You pick how to pay at checkout: card, cash on delivery, InstaPay or Vodafone Cash. Cards are processed securely by the payment provider and never stored on Brandyy.'
+          t('Payment methods'),
+          t(
+            'You pick how to pay at checkout: card, cash on delivery, InstaPay or Vodafone Cash. Cards are processed securely by the payment provider and never stored on Brandyy.'
+          )
         ),
     },
     {
-      label: 'Earn with Brandyy (affiliate)',
+      label: t('Earn with Brandyy (affiliate)'),
       Icon: Percent,
       badge: null,
       hint: '5%',
       onPress: () => openWeb('/affiliate'),
     },
     {
-      label: 'Sell on Brandyy',
+      label: t('Sell on Brandyy'),
       Icon: Store,
       badge: null,
       hint: null,
       onPress: () => openWeb('/become-seller'),
     },
     {
-      label: 'Language',
+      label: t('Language'),
       Icon: Globe,
       badge: null,
-      hint: lang === 'en' ? 'English' : 'عربي',
-      onPress: () => setLang(lang === 'en' ? 'ar' : 'en'),
+      hint: LANG_NAMES[lang],
+      onPress: () => setLang(LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length]),
     },
     {
-      label: 'Help & support',
+      label: t('Help & support'),
       Icon: HelpCircle,
       badge: null,
       hint: null,
       onPress: () => openWeb('/help'),
     },
     {
-      label: 'Privacy policy',
+      label: t('Privacy policy'),
       Icon: HelpCircle,
       badge: null,
       hint: null,
@@ -187,7 +193,7 @@ export default function Account() {
           )}
         </View>
         <View style={styles.profileInfo}>
-          <Text style={styles.name}>{user?.name ?? 'Guest'}</Text>
+          <Text style={styles.name}>{user?.name ?? t('Guest')}</Text>
           <Text style={styles.email}>{user?.email}</Text>
         </View>
         <Pressable style={styles.settingsBtn} onPress={() => router.push('/edit-profile' as Href)}>
@@ -199,15 +205,17 @@ export default function Account() {
       <View style={styles.loyaltyCard}>
         <View style={styles.loyaltyTop}>
           <View>
-            <Text style={styles.loyaltyLabel}>Brandyy points</Text>
-            <Text style={styles.loyaltyPoints}>{pts == null ? '–' : pts.toLocaleString()} pts</Text>
+            <Text style={styles.loyaltyLabel}>{t('Brandyy points')}</Text>
+            <Text style={styles.loyaltyPoints}>
+              {t('{n} pts', { n: pts == null ? '–' : pts.toLocaleString() })}
+            </Text>
             <Text style={styles.loyaltySub}>
-              10 points per order, 5 per verified review. 1 point = 1 EGP at checkout.
+              {t('10 points per order, 5 per verified review. 1 point = 1 EGP at checkout.')}
             </Text>
           </View>
           <View style={styles.loyaltyEgp}>
             <Text style={styles.loyaltyEgpText}>
-              = {Math.round(loyalty.data?.pointsValue ?? 0).toLocaleString()} EGP
+              = {fmtEGP(Math.round(loyalty.data?.pointsValue ?? 0))}
             </Text>
           </View>
         </View>
@@ -241,10 +249,10 @@ export default function Account() {
       </View>
 
       <Pressable style={styles.signOutBtn} onPress={confirmSignOut}>
-        <Text style={styles.signOutText}>Sign out</Text>
+        <Text style={styles.signOutText}>{t('Sign out')}</Text>
       </Pressable>
       <Pressable style={[styles.signOutBtn, { marginTop: 12 }]} onPress={confirmDelete}>
-        <Text style={[styles.signOutText, { color: '#dc2626' }]}>Delete account</Text>
+        <Text style={[styles.signOutText, { color: '#dc2626' }]}>{t('Delete account')}</Text>
       </Pressable>
     </ScrollView>
   );

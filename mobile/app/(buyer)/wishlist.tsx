@@ -16,6 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { useCart } from '@/store/cart';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 const { width } = Dimensions.get('window');
 const CARD_W = (width - spacing.page * 2 - 12) / 2;
@@ -34,6 +35,7 @@ interface WishItem {
 
 export default function Wishlist() {
   const router = useRouter();
+  const { t } = useT();
   const { add } = useCart();
   const [removing, setRemoving] = useState<string[]>([]);
 
@@ -53,10 +55,10 @@ export default function Wishlist() {
           <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
         </Pressable>
         <Heart size={48} color={colors.border} strokeWidth={1.5} />
-        <Text style={styles.emptyTitle}>Nothing saved yet</Text>
-        <Text style={styles.emptySub}>Heart items while browsing to save them here</Text>
+        <Text style={styles.emptyTitle}>{t('Nothing saved yet')}</Text>
+        <Text style={styles.emptySub}>{t('Heart items while browsing to save them here')}</Text>
         <Pressable style={styles.shopBtn} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
-          <Text style={styles.shopBtnText}>Browse shop</Text>
+          <Text style={styles.shopBtnText}>{t('Browse shop')}</Text>
         </Pressable>
       </View>
     );
@@ -90,8 +92,10 @@ export default function Wishlist() {
         <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
           <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
         </Pressable>
-        <Text style={styles.title}>Wishlist</Text>
-        <Text style={styles.count}>{items.length} items</Text>
+        <Text style={styles.title}>{t('Wishlist')}</Text>
+        <Text style={styles.count}>
+          {t(items.length === 1 ? '{n} item' : '{n} items', { n: items.length })}
+        </Text>
       </View>
 
       <FlatList
@@ -120,7 +124,7 @@ export default function Wishlist() {
             </Text>
             <Text style={styles.price}>{fmtEGP(item.product.basePrice)}</Text>
             <Pressable style={styles.moveBtn} onPress={() => moveToBag(item)}>
-              <Text style={styles.moveBtnText}>Move to bag</Text>
+              <Text style={styles.moveBtnText}>{t('Move to bag')}</Text>
             </Pressable>
           </Pressable>
         )}

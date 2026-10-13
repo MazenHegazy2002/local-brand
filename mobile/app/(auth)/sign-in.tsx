@@ -17,6 +17,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react-native';
 import { useAuth } from '@/store/auth';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
 
@@ -30,15 +31,16 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { signIn } = useAuth();
+  const { t } = useT();
 
   function showError(msg: string) {
     setError(msg);
-    Alert.alert('Error', msg);
+    Alert.alert(t('Error'), msg);
   }
 
   async function handleSignIn() {
     if (!email || !password) {
-      showError('Please enter your email and password');
+      showError(t('Please enter your email and password'));
       return;
     }
     setError('');
@@ -46,7 +48,7 @@ export default function SignIn() {
     try {
       await signIn(email.trim(), password);
     } catch (e: unknown) {
-      showError((e as Error).message ?? 'Sign in failed');
+      showError((e as Error).message ?? t('Sign in failed'));
     } finally {
       setLoading(false);
     }
@@ -54,7 +56,7 @@ export default function SignIn() {
 
   async function handleRegister() {
     if (!name || !email || !password) {
-      showError('Please fill in all fields');
+      showError(t('Please fill in all fields'));
       return;
     }
     setError('');
@@ -66,10 +68,10 @@ export default function SignIn() {
         body: JSON.stringify({ name, email: email.trim(), password, role: 'BUYER' }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message ?? 'Registration failed');
+      if (!res.ok) throw new Error(data.message ?? t('Registration failed'));
       await signIn(email.trim(), password);
     } catch (e: unknown) {
-      showError((e as Error).message ?? 'Registration failed');
+      showError((e as Error).message ?? t('Registration failed'));
     } finally {
       setLoading(false);
     }
@@ -86,23 +88,25 @@ export default function SignIn() {
           <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
         </Pressable>
 
-        <Text style={styles.heading}>{tab === 'signin' ? 'Welcome back' : 'Create account'}</Text>
+        <Text style={styles.heading}>
+          {tab === 'signin' ? t('Welcome back') : t('Create account')}
+        </Text>
         <Text style={styles.sub}>
           {tab === 'signin'
-            ? 'Sign in to track orders and use your points.'
-            : 'Join Brandyy to discover local Egyptian brands.'}
+            ? t('Sign in to track orders and use your points.')
+            : t('Join Brandyy to discover local Egyptian brands.')}
         </Text>
 
         {/* Tab switcher */}
         <View style={styles.seg}>
-          {(['signin', 'register'] as const).map(t => (
+          {(['signin', 'register'] as const).map(k => (
             <Pressable
-              key={t}
-              style={[styles.segBtn, tab === t && styles.segBtnActive]}
-              onPress={() => setTab(t)}
+              key={k}
+              style={[styles.segBtn, tab === k && styles.segBtnActive]}
+              onPress={() => setTab(k)}
             >
-              <Text style={[styles.segText, tab === t && styles.segTextActive]}>
-                {t === 'signin' ? 'Sign in' : 'Create account'}
+              <Text style={[styles.segText, tab === k && styles.segTextActive]}>
+                {k === 'signin' ? t('Sign in') : t('Create account')}
               </Text>
             </Pressable>
           ))}
@@ -110,7 +114,7 @@ export default function SignIn() {
 
         {tab === 'register' && (
           <>
-            <Text style={styles.label}>Full name</Text>
+            <Text style={styles.label}>{t('Full name')}</Text>
             <TextInput
               style={styles.input}
               placeholder="Omar Hassan"
@@ -122,7 +126,7 @@ export default function SignIn() {
           </>
         )}
 
-        <Text style={styles.label}>Email or phone</Text>
+        <Text style={styles.label}>{t('Email or phone')}</Text>
         <TextInput
           style={styles.input}
           placeholder="omar@gmail.com"
@@ -133,7 +137,7 @@ export default function SignIn() {
           autoCapitalize="none"
         />
 
-        <Text style={styles.label}>Password</Text>
+        <Text style={styles.label}>{t('Password')}</Text>
         <View style={styles.passwordRow}>
           <TextInput
             style={[styles.input, styles.passwordInput]}
@@ -157,7 +161,7 @@ export default function SignIn() {
             style={styles.forgotRow}
             onPress={() => WebBrowser.openBrowserAsync(`${BASE}/forgot-password`)}
           >
-            <Text style={styles.forgotText}>Forgot password?</Text>
+            <Text style={styles.forgotText}>{t('Forgot password?')}</Text>
           </Pressable>
         )}
 
@@ -172,7 +176,7 @@ export default function SignIn() {
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.btnPrimaryText}>
-              {tab === 'signin' ? 'Sign in' : 'Create account'}
+              {tab === 'signin' ? t('Sign in') : t('Create account')}
             </Text>
           )}
         </Pressable>

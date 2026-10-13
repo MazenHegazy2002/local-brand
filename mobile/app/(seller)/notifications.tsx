@@ -13,6 +13,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react-native';
 import { api } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 interface Notification {
   id: string;
@@ -25,6 +26,7 @@ interface Notification {
 export default function SellerNotifications() {
   const router = useRouter();
   const qc = useQueryClient();
+  const { t } = useT();
   const { data, isLoading, isError, error, refetch, isRefetching } = useQuery({
     queryKey: ['notifications'],
     queryFn: () =>
@@ -45,10 +47,10 @@ export default function SellerNotifications() {
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <ChevronLeft size={24} color={colors.ink} />
         </Pressable>
-        <Text style={styles.title}>Notifications</Text>
+        <Text style={styles.title}>{t('Notifications')}</Text>
         {!!data?.unreadCount && (
           <Pressable onPress={() => mark.mutate({ markAllRead: true })}>
-            <Text style={styles.link}>Mark all read</Text>
+            <Text style={styles.link}>{t('Mark all read')}</Text>
           </Pressable>
         )}
       </View>
@@ -62,7 +64,7 @@ export default function SellerNotifications() {
           keyExtractor={n => n.id}
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
-          ListEmptyComponent={<Text style={styles.empty}>No notifications yet.</Text>}
+          ListEmptyComponent={<Text style={styles.empty}>{t('No notifications yet.')}</Text>}
           renderItem={({ item }) => (
             <Pressable
               style={styles.card}

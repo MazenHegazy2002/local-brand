@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { api, setOnSessionExpired, signIn as apiSignIn, signOut as apiSignOut } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
+import type { Lang } from '@/lib/i18n';
 
 // SecureStore is native-only; fall back to localStorage on web
 const storage = {
@@ -32,11 +33,11 @@ interface User {
 
 interface AuthStore {
   user: User | null;
-  lang: 'en' | 'ar';
+  lang: Lang;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  setLang: (lang: 'en' | 'ar') => void;
+  setLang: (lang: Lang) => void;
   updateUser: (patch: Partial<User>) => Promise<void>;
   hydrate: () => Promise<void>;
 }
@@ -49,7 +50,7 @@ export const useAuth = create<AuthStore>((set, get) => ({
   hydrate: async () => {
     try {
       const raw = await storage.get('user');
-      const lang = (await storage.get('lang')) as 'en' | 'ar' | null;
+      const lang = (await storage.get('lang')) as Lang | null;
       set({ user: raw ? JSON.parse(raw) : null, lang: lang ?? 'en', loading: false });
     } catch {
       set({ loading: false });
