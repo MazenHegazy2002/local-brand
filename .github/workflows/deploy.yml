@@ -102,6 +102,15 @@ jobs:
             $COMPOSE down --remove-orphans || docker-compose down --remove-orphans || true
             $COMPOSE up -d --force-recreate --remove-orphans || docker-compose up -d --force-recreate --remove-orphans || true
             $COMPOSE exec -T app npx prisma migrate deploy || docker-compose exec -T app npx prisma migrate deploy || true
+            # Configure ngrok auth token permanently on VPS
+            if [ -n "${{ secrets.NGROK_AUTHTOKEN }}" ]; then
+              mkdir -p /root/.config/ngrok
+              printf 'version: "3"\nagent:\n  authtoken: %s\n' "${{ secrets.NGROK_AUTHTOKEN }}" > /root/.config/ngrok/ngrok.yml
+              chmod 600 /root/.config/ngrok/ngrok.yml
+              if command -v ngrok >/dev/null 2>&1; then
+                ngrok config add-authtoken "${{ secrets.NGROK_AUTHTOKEN }}" >/dev/null 2>&1 || true
+              fi
+            fi
             docker image prune -f || true
             echo "⚡ Deployed pre-built container successfully to Contabo VPS"
 
