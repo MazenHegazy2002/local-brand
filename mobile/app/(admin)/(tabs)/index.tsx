@@ -248,17 +248,45 @@ export default function AdminOverview() {
                   Icon: Store,
                   n: tot.pendingSellers,
                   label: 'Sellers awaiting approval',
-                  onPress: () => router.push('/(admin)/approvals' as Href),
+                  onPress: () => router.push('/(admin)/(tabs)/sellers' as Href),
                 },
-                { Icon: Package, n: tot.toFulfil, label: 'Orders to fulfil' },
-                { Icon: Wallet, n: tot.awaitingPayment, label: 'Orders awaiting payment' },
-                { Icon: ShieldAlert, n: tot.disputes, label: 'Open disputes' },
-                { Icon: LifeBuoy, n: tot.tickets, label: 'Open support tickets' },
+                {
+                  Icon: Package,
+                  n: tot.toFulfil,
+                  label: 'Orders to fulfil',
+                  onPress: () =>
+                    router.push({
+                      pathname: '/(admin)/(tabs)/orders',
+                      params: { status: 'CONFIRMED' },
+                    } as unknown as Href),
+                },
+                {
+                  Icon: Wallet,
+                  n: tot.awaitingPayment,
+                  label: 'Orders awaiting payment',
+                  onPress: () =>
+                    router.push({
+                      pathname: '/(admin)/(tabs)/orders',
+                      params: { status: 'PENDING_PAYMENT' },
+                    } as unknown as Href),
+                },
+                {
+                  Icon: ShieldAlert,
+                  n: tot.disputes,
+                  label: 'Open disputes',
+                  onPress: () => router.push('/(admin)/disputes' as Href),
+                },
+                {
+                  Icon: LifeBuoy,
+                  n: tot.tickets,
+                  label: 'Open support tickets',
+                  onPress: () => router.push('/(admin)/tickets' as Href),
+                },
               ].map(({ Icon, n, label, onPress }, i) => (
                 <Pressable
                   key={label}
                   style={[styles.listRow, i > 0 && styles.divider]}
-                  onPress={onPress ?? (() => openWeb('/admin-os'))}
+                  onPress={onPress}
                 >
                   <View style={[styles.iconBox, n > 0 && styles.iconBoxHot]}>
                     <Icon size={16} color={n > 0 ? colors.accent : 'rgba(255,255,255,.5)'} />

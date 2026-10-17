@@ -1,12 +1,11 @@
 // src/app/api/admin/affiliate/payouts/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { AffiliatePayoutStatus } from '@/generated/client';
+import { getRequestSession } from '@/lib/mobile-auth';
 
-async function requireAdmin() {
-  const session = await getServerSession(authOptions);
+async function requireAdmin(req: Request) {
+  const session = await getRequestSession(req);
   if (!session?.user?.id) return null;
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (user?.role !== 'ADMIN') return null;
@@ -14,7 +13,7 @@ async function requireAdmin() {
 }
 
 export async function GET(req: NextRequest) {
-  const session = await requireAdmin();
+  const session = await requireAdmin(req);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
 
   const { searchParams } = new URL(req.url);

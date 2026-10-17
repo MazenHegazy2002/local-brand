@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
+import { getRequestSession } from '@/lib/mobile-auth';
 
 /**
  * PATCH /api/admin/users/[id]
@@ -25,8 +24,8 @@ const patchSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('changeRole'), role: z.enum(['BUYER', 'SELLER', 'ADMIN']) }),
 ]);
 
-async function requireAdmin() {
-  const session = await getServerSession(authOptions);
+async function requireAdmin(req: Request) {
+  const session = await getRequestSession(req);
   if (!session) return null;
   const user = session.user as SessionUser;
   if (user.role !== 'ADMIN') return null;
@@ -34,7 +33,7 @@ async function requireAdmin() {
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const admin = await requireAdmin();
+  const admin = await requireAdmin(req);
   if (!admin) return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
   const { id } = await params;
   if (id === admin.id)

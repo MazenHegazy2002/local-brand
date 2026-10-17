@@ -37,3 +37,17 @@ export async function getRequestUser(req: Request): Promise<{ id: string; role: 
 export async function getRequestUserId(req: Request): Promise<string | null> {
   return (await getRequestUser(req))?.id ?? null;
 }
+
+// Drop-in for getServerSession(authOptions) in routes the mobile app also calls:
+// a Bearer token yields a session-shaped object, otherwise the cookie session.
+export async function getRequestSession(
+  req: Request
+): Promise<{ user: { id: string; role: string; email?: string } } | null> {
+  if (req.headers.get('authorization')?.startsWith('Bearer ')) {
+    const m = await getMobileUser(req);
+    return m ? { user: { id: m.id, role: m.role, email: m.email } } : null;
+  }
+  return (await getServerSession(authOptions)) as {
+    user: { id: string; role: string; email?: string };
+  } | null;
+}

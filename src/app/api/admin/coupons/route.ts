@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { createCouponSchema } from '@/lib/validation';
 import { SessionUser } from '@/types';
+import { getRequestSession } from '@/lib/mobile-auth';
 
-export async function GET(_req: Request) {
-  const session = await getServerSession(authOptions);
+export async function GET(req: Request) {
+  const session = await getRequestSession(req);
   if (!session || (session.user as SessionUser).role !== 'ADMIN') {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
@@ -28,7 +27,7 @@ export async function GET(_req: Request) {
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getRequestSession(req);
   if (!session || (session.user as SessionUser).role !== 'ADMIN') {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }

@@ -6,21 +6,20 @@
 // The same endpoint handles both Reviews and ProductQA via `?type=qa`,
 // keeping the moderator UI stupid simple.
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import type { SessionUser } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { ReviewStatus, QAStatus } from '@/generated/client';
+import { getRequestSession } from '@/lib/mobile-auth';
 
-async function requireAdmin() {
-  const session = await getServerSession(authOptions);
+async function requireAdmin(req: Request) {
+  const session = await getRequestSession(req);
   if (!session || (session.user as SessionUser).role !== 'ADMIN') return null;
   return session.user as SessionUser;
 }
 
 // ── GET ────────────────────────────────────────────────────────────────────
 export async function GET(req: Request) {
-  const admin = await requireAdmin();
+  const admin = await requireAdmin(req);
   if (!admin) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
@@ -102,7 +101,7 @@ interface PatchBody {
   flaggedReason?: string;
 }
 export async function PATCH(req: Request) {
-  const admin = await requireAdmin();
+  const admin = await requireAdmin(req);
   if (!admin) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
   const body = (await req.json().catch(() => ({}))) as PatchBody;

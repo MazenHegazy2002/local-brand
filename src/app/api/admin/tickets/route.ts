@@ -1,13 +1,12 @@
 // Admin Support Tickets inbox API.
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import type { SessionUser } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { TicketStatus } from '@/generated/client';
+import { getRequestSession } from '@/lib/mobile-auth';
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getRequestSession(req);
   if (!session || (session.user as SessionUser).role !== 'ADMIN') {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
@@ -19,4 +18,31 @@ export async function GET(req: Request) {
     take: 200,
   });
   return NextResponse.json({ items });
+}
+
+// PATCH { id, status?, adminReply? } — update a ticket's status and/or reply note.
+export async function PATCH(req: Request) {
+  const session = await getRequestSession(req);
+  if (!session || (session.user as SessionUser).role !== 'ADMIN') {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+  const body = (await req.json().catch(() => ({}))) as {
+    id?: string;
+    status?: TicketStatus;
+    adminReply?: string;
+  };
+  if (!body.id || (!body.status && body.adminReply === undefined)) {
+    return NextResponse.json({ message: 'id and status or adminReply required' }, { status: 400 });
+  }
+  if (body.status && !Object.values(TicketStatus).includes(body.status)) {
+    return NextResponse.json({ message: 'Invalid status' }, { status: 400 });
+  }
+  const ticket = await prisma.supportTicket.update({
+    where: { id: body.id },
+    data: {
+      ...(body.status ? { status: body.status } : {}),
+      ...(body.adminReply !== undefined ? { adminReply: body.adminReply.slice(0, 5000) } : {}),
+    },
+  });
+  return NextResponse.json({ ticket });
 }

@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
 import { Prisma, Role, AffiliateStatus } from '@/generated/client';
+import { getRequestSession } from '@/lib/mobile-auth';
 
 const VALID_ROLES = new Set<Role>([Role.ADMIN, Role.SELLER, Role.BUYER]);
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getRequestSession(req);
   if (!session || (session.user as SessionUser).role !== 'ADMIN') {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
