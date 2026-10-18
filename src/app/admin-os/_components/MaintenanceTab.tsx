@@ -642,7 +642,7 @@ export default function MaintenanceTab() {
                   document.body.appendChild(a);
                   a.click();
                   a.remove();
-                } catch (e) {
+                } catch {
                   alert('Export failed');
                 }
               }}

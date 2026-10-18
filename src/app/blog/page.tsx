@@ -1,5 +1,4 @@
 import Navbar from '@/components/Navbar';
-import Link from 'next/link';
 import { blogJsonLd, jsonLdScript, type BlogArticle } from '@/lib/jsonld';
 
 export const metadata = {

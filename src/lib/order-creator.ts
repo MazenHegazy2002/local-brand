@@ -18,7 +18,7 @@ import {
   PaymentStatus,
   PaymentMethod,
 } from '@/generated/client';
-import { VAT_RATE, MAX_DISCOUNT_PCT, getShippingRate, LOYALTY_POINT_VALUE } from '@/lib/constants';
+import { VAT_RATE, MAX_DISCOUNT_PCT, LOYALTY_POINT_VALUE } from '@/lib/constants';
 import { createOrderSchema } from '@/lib/validation';
 import { getSetting } from '@/lib/admin-settings-registry';
 
@@ -154,7 +154,6 @@ export async function createOrderForUser(
 
     let subtotal = 0;
     let totalWeightGrams = 0;
-    let loyaltyPointsToAward = 0; // accumulated per-item loyalty points (Task 8)
     const orderItemsData: Array<{
       variantId: string;
       productTitleSnapshot: string;
@@ -196,12 +195,6 @@ export async function createOrderForUser(
         : variant.price || variant.product.basePrice;
       const lineTotal = price * itemInput.quantity;
       subtotal += lineTotal;
-
-      // Loyalty points reward (Default 1% = 1 pt per 100 EGP spent):
-      const pct = (variant.product as { loyaltyPointPct?: number | null }).loyaltyPointPct ?? 1;
-      if (typeof pct === 'number' && pct > 0) {
-        loyaltyPointsToAward += Math.round((pct / 100) * lineTotal);
-      }
 
       // Accumulate weight
       totalWeightGrams += (variant.product.weightGrams ?? 500) * itemInput.quantity;

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { runStatusSideEffects } from '@/lib/order-status';
 import { OrderItemStatus, OrderStatus, PaymentStatus } from '@/generated/client';
 import type { SessionUser } from '@/types';
 import { getRequestSession } from '@/lib/mobile-auth';
@@ -174,6 +175,9 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       }
       return result;
     });
+
+    // Same points / commission / email effects as a normal status change.
+    if (data.status) await runStatusSideEffects(order, data.status);
 
     return NextResponse.json({ message: 'Order updated', order: updated }, { status: 200 });
   } catch (err) {

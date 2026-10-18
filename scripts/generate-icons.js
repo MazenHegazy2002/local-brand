@@ -1,5 +1,4 @@
 const sharp = require('sharp');
-const fs = require('fs');
 const path = require('path');
 
 const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -9,12 +8,12 @@ const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 
 async function generateIcons() {
   const publicDir = path.join(__dirname, '..', 'public');
-  
+
   await sharp(Buffer.from(svgIcon))
     .resize(192, 192)
     .png()
     .toFile(path.join(publicDir, 'icon-192.png'));
-  
+
   await sharp(Buffer.from(svgIcon))
     .resize(512, 512)
     .png()

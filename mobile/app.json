@@ -16,7 +16,11 @@
       },
       "infoPlist": {
         "NSCameraUsageDescription": "Brandyy uses the camera so you can take photos for your profile, reviews and product listings.",
-        "NSPhotoLibraryUsageDescription": "Brandyy needs access to your photos so you can upload images for your profile, reviews and product listings."
+        "NSPhotoLibraryUsageDescription": "Brandyy needs access to your photos so you can upload images for your profile, reviews and product listings.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSAllowsLocalNetworking": true
+        }
       }
     },
     "android": {
@@ -36,7 +40,12 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
       [
         "expo-notifications",
         {

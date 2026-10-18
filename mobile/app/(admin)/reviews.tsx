@@ -1,7 +1,7 @@
 // Admin reviews: publish, hide or reject product reviews.
 import { useState } from 'react';
 import { View, Text, FlatList, RefreshControl } from 'react-native';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useT, statusKey } from '@/lib/i18n';
 import { Header, Chips, StatusPill, Card, Btn, ListState, s } from '@/components/admin/ui';
@@ -21,13 +21,20 @@ export default function AdminReviews() {
   const { t } = useT();
   const qc = useQueryClient();
   const [status, setStatus] = useState('PENDING');
-  const { data, isLoading, error, refetch, isRefetching } = useQuery({
-    queryKey: ['admin-reviews', status],
-    queryFn: () =>
-      api.get<{ items: Review[]; counts: Record<string, number> }>(
-        `/api/admin/reviews?status=${status}`
-      ),
-  });
+  const { data, isLoading, error, refetch, isRefetching, fetchNextPage, hasNextPage } =
+    useInfiniteQuery({
+      queryKey: ['admin-reviews', status],
+      initialPageParam: 1,
+      queryFn: ({ pageParam }) =>
+        api.get<{
+          items: Review[];
+          counts: Record<string, number>;
+          total: number;
+          pageSize: number;
+        }>(`/api/admin/reviews?status=${status}&page=${pageParam}`),
+      getNextPageParam: (last, pages) =>
+        pages.length * last.pageSize < last.total ? pages.length + 1 : undefined,
+    });
   const update = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       api.patch('/api/admin/reviews', { id, status }),
@@ -46,10 +53,11 @@ export default function AdminReviews() {
         ]}
         value={status}
         onChange={setStatus}
-        counts={data?.counts}
+        counts={data?.pages[0]?.counts}
       />
       <FlatList
-        data={data?.items ?? []}
+        data={data?.pages.flatMap(p => p.items) ?? []}
+        onEndReached={() => hasNextPage && fetchNextPage()}
         keyExtractor={r => r.id}
         contentContainerStyle={s.list}
         refreshControl={
