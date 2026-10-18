@@ -15,17 +15,12 @@ import {
   Settings,
   Plus,
   Trash2,
-  CheckCircle2,
-  Clock,
   XCircle,
-  TrendingUp,
-  Star,
   Copy,
   ExternalLink,
   LogOut,
   Menu,
   X,
-  MoreHorizontal,
 } from 'lucide-react';
 import {
   AreaChart,

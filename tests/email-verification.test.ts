@@ -4,7 +4,7 @@
  * Tests for email verification URL sanitization and domain enforcement
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, afterEach } from '@jest/globals';
 import { getEmailBaseUrl, generateEmailVerificationEmail } from '@/lib/email-verification';
 
 describe('Email verification domain enforcement', () => {

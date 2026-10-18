@@ -76,19 +76,6 @@ export async function changeOrderStatus(
       data: { status: 'DELIVERED' },
     });
 
-    if (order.userId) {
-      try {
-        const loyaltyMod = await import('@/app/actions/loyalty');
-        await loyaltyMod.addLoyaltyPoints(
-          order.userId,
-          order.totalAmount - order.shippingFee,
-          undefined,
-          `Earned for delivered order #${order.id.slice(0, 8).toUpperCase()}`
-        );
-      } catch (err) {
-        console.error('[status/route] Failed to award loyalty points on delivery:', err);
-      }
-    }
     // NOTE: earnings are computed from the orders table via
     // computeSellerEarnings; sellerProfile.balance is vestigial.
   } else if (status === OrderStatus.SHIPPED && order.status !== OrderStatus.SHIPPED) {
@@ -105,16 +92,44 @@ export async function changeOrderStatus(
 
   const updatedOrder = await prisma.order.update({ where: { id: orderId }, data });
 
+  await runStatusSideEffects(order, status);
+
+  return { ok: true, order: updatedOrder };
+}
+
+/**
+ * Side effects of an order entering `status` from `order.status` (its old status): loyalty
+ * points on delivery, affiliate commission confirm/cancel and the customer
+ * email. Shared by changeOrderStatus and the admin override route so every
+ * way of changing a status behaves the same.
+ */
+export async function runStatusSideEffects(order: Order, status: OrderStatus) {
+  if (order.status === status) return;
+
+  if (status === OrderStatus.DELIVERED && order.userId) {
+    try {
+      const loyaltyMod = await import('@/app/actions/loyalty');
+      await loyaltyMod.addLoyaltyPoints(
+        order.userId,
+        order.totalAmount - order.shippingFee,
+        undefined,
+        `Earned for delivered order #${order.id.slice(0, 8).toUpperCase()}`
+      );
+    } catch (err) {
+      console.error('[order-status] Failed to award loyalty points on delivery:', err);
+    }
+  }
+
   // Hook in affiliate commissions
   try {
     const { confirmCommission, cancelCommission } = await import('@/lib/checkout-affiliate');
     if (status === OrderStatus.DELIVERED && order.status !== OrderStatus.DELIVERED) {
-      await confirmCommission(orderId);
+      await confirmCommission(order.id);
     } else if (
       (status === OrderStatus.CANCELLED || status === OrderStatus.RETURNED) &&
       order.status !== status
     ) {
-      await cancelCommission(orderId);
+      await cancelCommission(order.id);
     }
   } catch (err) {
     console.error('Failed to trigger affiliate commission updates:', err);
@@ -124,11 +139,9 @@ export async function changeOrderStatus(
   void (async () => {
     try {
       const { triggerOrderStatusEmail } = await import('@/lib/email');
-      await triggerOrderStatusEmail(orderId, status);
+      await triggerOrderStatusEmail(order.id, status);
     } catch (err) {
       console.error('Failed to trigger order status email:', err);
     }
   })();
-
-  return { ok: true, order: updatedOrder };
 }

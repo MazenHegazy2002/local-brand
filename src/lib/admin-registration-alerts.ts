@@ -1,7 +1,6 @@
 import { sendEmail } from '@/lib/email';
 import { prisma } from '@/lib/prisma';
 import { notifyMultiple } from '@/lib/notification-helpers';
-import { getSetting } from '@/lib/admin-settings-registry';
 
 export interface NewRegistrationNotificationParams {
   type: 'CUSTOMER' | 'SELLER' | 'AFFILIATE' | 'MAGIC_LINK' | 'ADMIN_CREATED';
