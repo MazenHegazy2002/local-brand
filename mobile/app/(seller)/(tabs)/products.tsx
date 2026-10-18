@@ -16,8 +16,9 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Plus } from 'lucide-react-native';
-import { api } from '@/lib/api';
+import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 type Filter = 'all' | 'live' | 'draft' | 'low_stock';
 
@@ -42,6 +43,7 @@ const FILTERS: { id: Filter; label: string }[] = [
 
 export default function SellerProducts() {
   const router = useRouter();
+  const { t } = useT();
   const params = useLocalSearchParams<{ filter?: Filter }>();
   const [filter, setFilter] = useState<Filter>(params.filter ?? 'all');
   useEffect(() => {
@@ -59,10 +61,10 @@ export default function SellerProducts() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.title}>Products</Text>
+        <Text style={styles.title}>{t('Products')}</Text>
         <Pressable style={styles.newBtn} onPress={() => router.push('/(seller)/add-product')}>
           <Plus size={16} color="#fff" strokeWidth={2.4} />
-          <Text style={styles.newBtnText}>New</Text>
+          <Text style={styles.newBtnText}>{t('New')}</Text>
         </Pressable>
       </View>
       <View>
@@ -77,7 +79,9 @@ export default function SellerProducts() {
               style={[styles.chip, filter === f.id && styles.chipOn]}
               onPress={() => setFilter(f.id)}
             >
-              <Text style={[styles.chipText, filter === f.id && styles.chipTextOn]}>{f.label}</Text>
+              <Text style={[styles.chipText, filter === f.id && styles.chipTextOn]}>
+                {t(f.label)}
+              </Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -89,7 +93,7 @@ export default function SellerProducts() {
         <View style={{ alignItems: 'center', marginTop: 40, gap: 8 }}>
           <Text style={styles.errorText}>{(error as Error).message}</Text>
           <Pressable onPress={() => refetch()}>
-            <Text style={styles.link}>Try again</Text>
+            <Text style={styles.link}>{t('Try again')}</Text>
           </Pressable>
         </View>
       ) : (
@@ -98,7 +102,7 @@ export default function SellerProducts() {
           keyExtractor={p => p.id}
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
-          ListEmptyComponent={<Text style={styles.emptyText}>No products here yet.</Text>}
+          ListEmptyComponent={<Text style={styles.emptyText}>{t('No products here yet.')}</Text>}
           renderItem={({ item }) => <ProductCard p={item} />}
         />
       )}
@@ -109,6 +113,7 @@ export default function SellerProducts() {
 function ProductCard({ p }: { p: Product }) {
   const router = useRouter();
   const qc = useQueryClient();
+  const { t } = useT();
   const toggle = useMutation({
     mutationFn: (published: boolean) =>
       api.patch<{ ok: boolean; published: boolean; error?: string }>(
@@ -116,11 +121,11 @@ function ProductCard({ p }: { p: Product }) {
         { published }
       ),
     onSuccess: res => {
-      if (res.error) Alert.alert('Couldn’t publish', res.error);
+      if (res.error) Alert.alert(t('Couldn’t publish'), res.error);
       qc.invalidateQueries({ queryKey: ['seller-products'] });
       qc.invalidateQueries({ queryKey: ['seller-stats'] });
     },
-    onError: e => Alert.alert('Couldn’t update product', (e as Error).message),
+    onError: e => Alert.alert(t('Couldn’t update product'), (e as Error).message),
   });
   const out = p.totalStock <= 0;
 
@@ -137,7 +142,7 @@ function ProductCard({ p }: { p: Product }) {
           {p.title}
         </Text>
         {!!p.categoryName && <Text style={styles.meta}>{p.categoryName}</Text>}
-        <Text style={styles.price}>{Math.round(p.basePrice).toLocaleString('en-EG')} EGP</Text>
+        <Text style={styles.price}>{fmtEGP(Math.round(p.basePrice))}</Text>
         <Text
           style={[
             styles.meta,
@@ -145,13 +150,13 @@ function ProductCard({ p }: { p: Product }) {
             !out && p.lowStock && { color: colors.accentText },
           ]}
         >
-          {out ? 'Out of stock' : `${p.totalStock} in stock`}
+          {out ? t('Out of stock') : t('{n} in stock', { n: p.totalStock })}
         </Text>
       </View>
       <View style={{ alignItems: 'flex-end', gap: 8 }}>
         <View style={[styles.badge, { backgroundColor: p.published ? '#dcfce7' : '#eceef2' }]}>
           <Text style={[styles.badgeText, { color: p.published ? colors.success : colors.muted }]}>
-            {p.published ? 'Live' : 'Draft'}
+            {p.published ? t('Live') : t('Draft')}
           </Text>
         </View>
         {toggle.isPending ? (

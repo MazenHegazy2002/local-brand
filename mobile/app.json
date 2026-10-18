@@ -7,11 +7,6 @@
     "icon": "./assets/icon.png",
     "scheme": "brandyy",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#faf8f5"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "shop.brandyy.app",
@@ -27,7 +22,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#faf8f5"
+        "backgroundColor": "#ffffff"
       },
       "package": "shop.brandyy.app",
       "versionCode": 1,
@@ -49,15 +44,28 @@
           "color": "#1e3b8a"
         }
       ],
-      "expo-image-picker"
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Brandyy needs access to your photos so you can upload images for your profile, reviews and product listings.",
+          "cameraPermission": "Brandyy uses the camera so you can take photos for your profile, reviews and product listings.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#faf8f5",
+          "imageWidth": 200
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "extra": {
-      "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
-      }
     }
   }
 }

@@ -2,8 +2,9 @@
 // Rate comes from the server: SellerProfile.commissionRate via GET /api/seller/settings.
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, fmtEGP } from '@/lib/api';
 import { colors, radii } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 export type FeeMode = 'add' | 'deduct';
 
@@ -22,7 +23,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 export const customerPrice = (price: number, rate: number, mode: FeeMode) =>
   mode === 'add' ? round2(price * (1 + rate)) : price;
 
-const egp = (n: number) => `${n.toLocaleString('en-EG', { maximumFractionDigits: 2 })} EGP`;
+const egp = (n: number) => fmtEGP(n);
 
 export function FeeBreakdown({
   price,
@@ -38,13 +39,14 @@ export function FeeBreakdown({
   const fee = round2(price * rate);
   const pct = `${Math.round(rate * 100)}%`;
   const add = mode === 'add';
+  const { t } = useT();
 
   return (
     <View style={s.card}>
       <View style={s.head}>
-        <Text style={s.title}>Platform fee breakdown</Text>
+        <Text style={s.title}>{t('Platform fee breakdown')}</Text>
         <View style={s.badge}>
-          <Text style={s.badgeText}>{pct} Fee</Text>
+          <Text style={s.badgeText}>{t('{pct} Fee', { pct })}</Text>
         </View>
       </View>
 
@@ -58,7 +60,7 @@ export function FeeBreakdown({
             accessibilityState={{ selected: mode === m }}
           >
             <Text style={[s.optText, mode === m && s.optTextOn]}>
-              {m === 'add' ? 'Add percentage' : 'Take from me'}
+              {m === 'add' ? t('Add percentage') : t('Take from me')}
             </Text>
           </Pressable>
         ))}
@@ -66,7 +68,7 @@ export function FeeBreakdown({
 
       <View style={s.boxes}>
         <View style={s.box}>
-          <Text style={s.lbl}>{add ? 'Markup added' : 'Platform fee'}</Text>
+          <Text style={s.lbl}>{add ? t('Markup added') : t('Platform fee')}</Text>
           <Text style={s.val}>
             {add ? '+' : '−'}
             {egp(fee)}
@@ -74,7 +76,7 @@ export function FeeBreakdown({
         </View>
         <View style={[s.box, s.boxMain]}>
           <Text style={[s.lbl, { color: 'rgba(255,255,255,.7)' }]}>
-            {add ? 'New customer price' : 'You receive'}
+            {add ? t('New customer price') : t('You receive')}
           </Text>
           <Text style={[s.val, { color: '#fff' }]}>
             {egp(add ? customerPrice(price, rate, mode) : round2(price - fee))}
@@ -84,8 +86,14 @@ export function FeeBreakdown({
 
       <Text style={s.help}>
         {add
-          ? `Buyers see ${egp(customerPrice(price, rate, mode))}. You keep the full ${egp(price)}.`
-          : `Buyers see ${egp(price)}. The ${pct} fee comes out of your payout.`}
+          ? t('Buyers see {price}. You keep the full {full}.', {
+              price: egp(customerPrice(price, rate, mode)),
+              full: egp(price),
+            })
+          : t('Buyers see {price}. The {pct} fee comes out of your payout.', {
+              price: egp(price),
+              pct,
+            })}
       </Text>
     </View>
   );

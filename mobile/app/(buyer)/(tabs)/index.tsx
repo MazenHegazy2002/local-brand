@@ -9,14 +9,16 @@ import {
   FlatList,
   Dimensions,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { useRouter, type Href } from 'expo-router';
+import { useRouter, useIsFocused, type Href } from 'expo-router';
 import { Bell, Search, Heart } from 'lucide-react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, spacing, radii } from '@/lib/tokens';
 import { useAuth } from '@/store/auth';
+import { useT } from '@/lib/i18n';
 
 const { width } = Dimensions.get('window');
 const HERO_H = 500;
@@ -26,6 +28,7 @@ interface Product {
   title: string;
   basePrice: number;
   brand: string;
+  sellerId?: string;
   category: string;
   image: string;
   inStock: boolean;
@@ -39,6 +42,7 @@ type Wish = { items: { id: string }[] };
 
 function ProductCard({ item }: { item: Product }) {
   const router = useRouter();
+  useT(); // re-render prices on language change
   const qc = useQueryClient();
   // Same ['wishlist'] key as the product page + wishlist screen, so one fetch is shared.
   const { data: wish } = useQuery({
@@ -93,6 +97,8 @@ function ProductCard({ item }: { item: Product }) {
 
 export default function Home() {
   const router = useRouter();
+  const focused = useIsFocused();
+  const { t } = useT();
   const [countdown, setCountdown] = useState(19855); // ~5:31 flash sale
 
   const { data, isLoading } = useQuery({
@@ -116,6 +122,8 @@ export default function Home() {
 
   return (
     <View style={styles.root}>
+      {/* Light icons over the dark hero photo, only while Home is on screen. */}
+      {focused && <StatusBar barStyle="light-content" />}
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero */}
         <View style={styles.hero}>
@@ -151,14 +159,14 @@ export default function Home() {
 
           {/* Hero copy */}
           <View style={styles.heroCopy}>
-            <Text style={styles.heroSeason}>AUTUMN / WINTER 26</Text>
-            <Text style={styles.heroTitle}>Made in Egypt.{'\n'}Worn everywhere.</Text>
+            <Text style={styles.heroSeason}>{t('AUTUMN / WINTER 26')}</Text>
+            <Text style={styles.heroTitle}>{t('Made in Egypt.\nWorn everywhere.')}</Text>
             <View style={styles.heroCtaRow}>
               <Pressable
                 style={styles.heroCtaBtn}
                 onPress={() => router.push('/(buyer)/(tabs)/shop')}
               >
-                <Text style={styles.heroCtaText}>Shop the edit</Text>
+                <Text style={styles.heroCtaText}>{t('Shop the edit')}</Text>
               </Pressable>
               {heroProduct && (
                 <Text style={styles.heroStoreName} numberOfLines={1}>
@@ -178,13 +186,15 @@ export default function Home() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.brandsRow}
             >
-              {Array.from(new Set(products.map(p => p.brand)))
+              {Array.from(new Map(products.map(p => [p.brand, p.sellerId])))
                 .slice(0, 8)
-                .map(brand => (
+                .map(([brand, sellerId]) => (
                   <Pressable
                     key={brand}
                     style={styles.brandItem}
-                    onPress={() => router.push(`/(buyer)/brand/${encodeURIComponent(brand)}`)}
+                    onPress={() =>
+                      router.push(`/(buyer)/brand/${encodeURIComponent(sellerId ?? brand)}`)
+                    }
                   >
                     <View style={styles.brandAvatar}>
                       <Text style={styles.brandAvatarText}>{brand.charAt(0).toUpperCase()}</Text>
@@ -199,7 +209,7 @@ export default function Home() {
 
           {/* Flash Sale */}
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Flash Sale</Text>
+            <Text style={styles.sectionTitle}>{t('Flash Sale')}</Text>
             <View style={styles.countdownRow}>
               {[pad(h), pad(m), pad(s)].map((v, i) => (
                 <View key={i} style={styles.countUnit}>
@@ -207,8 +217,8 @@ export default function Home() {
                   {i < 2 && <Text style={styles.countSep}>:</Text>}
                 </View>
               ))}
-              <Pressable style={styles.seeAll}>
-                <Text style={styles.seeAllText}>See all</Text>
+              <Pressable style={styles.seeAll} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
+                <Text style={styles.seeAllText}>{t('See all')}</Text>
               </Pressable>
             </View>
           </View>
@@ -250,9 +260,9 @@ export default function Home() {
 
           {/* New in */}
           <View style={[styles.sectionHeader, { marginTop: 28 }]}>
-            <Text style={styles.sectionTitle}>New in</Text>
-            <Pressable style={styles.seeAll}>
-              <Text style={styles.seeAllText}>See all</Text>
+            <Text style={styles.sectionTitle}>{t('New in')}</Text>
+            <Pressable style={styles.seeAll} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
+              <Text style={styles.seeAllText}>{t('See all')}</Text>
             </Pressable>
           </View>
           <View style={styles.grid}>
@@ -270,7 +280,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   hero: { height: HERO_H, overflow: 'hidden' },
   heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(14,22,51,0.38)',
   },
   heroHeader: {

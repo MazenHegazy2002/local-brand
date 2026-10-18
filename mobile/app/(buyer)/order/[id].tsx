@@ -14,6 +14,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT, statusKey } from '@/lib/i18n';
 
 const STEPS = [
   { key: 'ORDER_PLACED', label: 'Order confirmed' },
@@ -31,11 +32,11 @@ const STEP_RANK: Record<string, number> = {
   DELIVERED: 3,
 };
 
-function fmtTime(iso: string) {
+function fmtTime(iso: string, t: (k: string) => string) {
   const d = new Date(iso);
   const day =
     d.toDateString() === new Date().toDateString()
-      ? 'Today'
+      ? t('Today')
       : d.toLocaleDateString([], { weekday: 'short' });
   return `${day} ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
 }
@@ -43,6 +44,7 @@ function fmtTime(iso: string) {
 export default function OrderTracking() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useT();
 
   const { data, isLoading } = useQuery({
     queryKey: ['order', id],
@@ -55,7 +57,7 @@ export default function OrderTracking() {
   if (!order) {
     return (
       <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <Text style={styles.summaryText}>Order not found.</Text>
+        <Text style={styles.summaryText}>{t('Order not found.')}</Text>
       </View>
     );
   }
@@ -64,12 +66,12 @@ export default function OrderTracking() {
 
   const eta =
     status === 'SHIPPED'
-      ? 'On the way'
+      ? t('On the way')
       : status === 'DELIVERED'
-        ? 'Delivered'
+        ? t('Delivered')
         : status === 'CANCELLED' || status === 'RETURNED'
-          ? status.toLowerCase()
-          : 'In progress';
+          ? t(statusKey(status))
+          : t('In progress');
 
   const subtotal: number = order.total;
   const payMethod: string = order.paymentMethod;
@@ -83,7 +85,9 @@ export default function OrderTracking() {
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
         </Pressable>
-        <Text style={styles.title}>Order #{order.id.slice(0, 8).toUpperCase()}</Text>
+        <Text style={styles.title}>
+          {t('Order #{id}', { id: order.id.slice(0, 8).toUpperCase() })}
+        </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.inner}>
@@ -92,17 +96,17 @@ export default function OrderTracking() {
           <View style={styles.etaTop}>
             <View>
               <Text style={styles.etaLabel}>
-                {status === 'DELIVERED' ? 'Delivered' : 'Arriving'}
+                {status === 'DELIVERED' ? t('Delivered') : t('Arriving')}
               </Text>
               <Text style={styles.etaTime}>{eta}</Text>
             </View>
             <View style={styles.statusPill}>
               <Text style={styles.statusPillText}>
                 {status === 'SHIPPED'
-                  ? 'Out for delivery'
+                  ? t('Out for delivery')
                   : status === 'DELIVERED'
-                    ? 'Delivered'
-                    : 'Processing'}
+                    ? t('Delivered')
+                    : t('Processing')}
               </Text>
             </View>
           </View>
@@ -136,10 +140,10 @@ export default function OrderTracking() {
                 </View>
                 <View style={styles.timelineContent}>
                   <Text style={[styles.timelineLabel, !done && styles.timelineLabelPending]}>
-                    {step.label}
+                    {t(step.label)}
                   </Text>
                   <Text style={styles.timelineTime}>
-                    {stepTimes[i] ? fmtTime(stepTimes[i]!) : '—'}
+                    {stepTimes[i] ? fmtTime(stepTimes[i]!, t) : '—'}
                   </Text>
                 </View>
               </View>
@@ -161,10 +165,12 @@ export default function OrderTracking() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.summaryText}>
-              {itemCount} item{itemCount !== 1 ? 's' : ''} · {fmtEGP(subtotal)}
+              {t(itemCount === 1 ? '{n} item' : '{n} items', { n: itemCount })} · {fmtEGP(subtotal)}
             </Text>
             <Text style={styles.summaryPayment}>
-              {payMethod === 'CASH_ON_DELIVERY' ? 'Cash on delivery' : payMethod.replace(/_/g, ' ')}
+              {payMethod === 'CASH_ON_DELIVERY'
+                ? t('Cash on delivery')
+                : payMethod.replace(/_/g, ' ')}
             </Text>
           </View>
         </View>
@@ -172,7 +178,7 @@ export default function OrderTracking() {
         {/* Actions */}
         <View style={styles.actions}>
           <Pressable style={styles.whatsappBtn} onPress={() => Linking.openURL('https://wa.me/')}>
-            <Text style={styles.whatsappBtnText}>💬 Chat courier</Text>
+            <Text style={styles.whatsappBtnText}>💬 {t('Chat courier')}</Text>
           </Pressable>
           <Pressable
             style={styles.helpBtn}
@@ -180,7 +186,7 @@ export default function OrderTracking() {
               Linking.openURL(`mailto:support@brandyy.shop?subject=Order%20${order.id}`)
             }
           >
-            <Text style={styles.helpBtnText}>Get help</Text>
+            <Text style={styles.helpBtnText}>{t('Get help')}</Text>
           </Pressable>
         </View>
       </ScrollView>

@@ -1,5 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import type { Lang } from '@/lib/i18n';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
 
@@ -36,6 +37,12 @@ async function refreshAccessToken(): Promise<string | null> {
   return accessToken;
 }
 
+// Set by the auth store; called when the refresh token is rejected (e.g. signed in elsewhere).
+let onSessionExpired: (() => void) | null = null;
+export function setOnSessionExpired(fn: () => void) {
+  onSessionExpired = fn;
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   let token = await getToken();
   const makeReq = (t: string | null) =>
@@ -53,6 +60,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (res.status === 401 && token) {
     token = await refreshAccessToken();
     if (token) res = await makeReq(token);
+    else onSessionExpired?.();
   }
 
   if (!res.ok) {
@@ -96,7 +104,13 @@ export async function signOut() {
 }
 
 // Currency formatter
-export function fmtEGP(amount: number | null | undefined, lang: 'en' | 'ar' = 'en') {
+// Kept in sync by the auth store, so api.ts doesn't import it (that would be a cycle).
+let fmtLang: Lang = 'en';
+export const setFmtLang = (lang: Lang) => {
+  fmtLang = lang;
+};
+
+export function fmtEGP(amount: number | null | undefined, lang: Lang = fmtLang) {
   if (amount == null) return lang === 'ar' ? '— ج.م' : '— EGP';
   return lang === 'ar'
     ? `${amount.toLocaleString('ar-EG')} ج.م`

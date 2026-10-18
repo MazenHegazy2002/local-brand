@@ -1,10 +1,9 @@
 // Admin Dispute mutation API — PATCH to update status / resolution.
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import type { SessionUser } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { DisputeStatus } from '@/generated/client';
+import { getRequestSession } from '@/lib/mobile-auth';
 
 interface PatchBody {
   status?: DisputeStatus;
@@ -12,7 +11,7 @@ interface PatchBody {
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession(authOptions);
+  const session = await getRequestSession(req);
   if (!session || (session.user as SessionUser).role !== 'ADMIN') {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }

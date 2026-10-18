@@ -1,7 +1,15 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import { signIn as apiSignIn, signOut as apiSignOut } from '@/lib/api';
+import {
+  api,
+  setFmtLang,
+  setOnSessionExpired,
+  signIn as apiSignIn,
+  signOut as apiSignOut,
+} from '@/lib/api';
+import { queryClient } from '@/lib/queryClient';
+import type { Lang } from '@/lib/i18n';
 
 // SecureStore is native-only; fall back to localStorage on web
 const storage = {
@@ -31,15 +39,16 @@ interface User {
 
 interface AuthStore {
   user: User | null;
-  lang: 'en' | 'ar';
+  lang: Lang;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  setLang: (lang: 'en' | 'ar') => void;
+  setLang: (lang: Lang) => void;
+  updateUser: (patch: Partial<User>) => Promise<void>;
   hydrate: () => Promise<void>;
 }
 
-export const useAuth = create<AuthStore>(set => ({
+export const useAuth = create<AuthStore>((set, get) => ({
   user: null,
   lang: 'en',
   loading: true,
@@ -47,7 +56,7 @@ export const useAuth = create<AuthStore>(set => ({
   hydrate: async () => {
     try {
       const raw = await storage.get('user');
-      const lang = (await storage.get('lang')) as 'en' | 'ar' | null;
+      const lang = (await storage.get('lang')) as Lang | null;
       set({ user: raw ? JSON.parse(raw) : null, lang: lang ?? 'en', loading: false });
     } catch {
       set({ loading: false });
@@ -61,7 +70,10 @@ export const useAuth = create<AuthStore>(set => ({
   },
 
   signOut: async () => {
+    // Stop pushes to this device for the old account; ignore failures (may already be expired).
+    await api.delete('/api/notifications/push-token').catch(() => {});
     await apiSignOut();
+    queryClient.clear();
     await storage.del('user');
     set({ user: null });
   },
@@ -70,4 +82,21 @@ export const useAuth = create<AuthStore>(set => ({
     await storage.set('lang', lang);
     set({ lang });
   },
+
+  updateUser: async patch => {
+    const cur = get().user;
+    if (!cur) return;
+    const user = { ...cur, ...patch };
+    await storage.set('user', JSON.stringify(user));
+    set({ user });
+  },
 }));
+
+setOnSessionExpired(async () => {
+  await apiSignOut();
+  await storage.del('user');
+  queryClient.clear();
+  useAuth.setState({ user: null });
+});
+
+useAuth.subscribe(s => setFmtLang(s.lang));

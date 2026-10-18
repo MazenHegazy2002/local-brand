@@ -1,30 +1,75 @@
 // Screen 3a — Bag
 import { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  TextInput,
+  ActivityIndicator,
+} from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Minus, Plus } from 'lucide-react-native';
-import { useCart } from '@/store/cart';
+import { useCart, lineKey } from '@/store/cart';
 import { colors, radii, spacing } from '@/lib/tokens';
-import { fmtEGP } from '@/lib/api';
+import { api, fmtEGP } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 
 const FREE_THRESHOLD = 1000;
 
 export default function Bag() {
   const router = useRouter();
-  const { items, setQty, remove, total, count } = useCart();
-  const [promo, setPromo] = useState('');
+  const { t } = useT();
+  const { items, setQty, remove, total, count, applied, setApplied } = useCart();
+  const [promo, setPromo] = useState(applied?.code ?? '');
+  const [promoMsg, setPromoMsg] = useState('');
+  const [checking, setChecking] = useState(false);
   const subtotal = total();
   const remaining = FREE_THRESHOLD - subtotal;
   const progress = Math.min(subtotal / FREE_THRESHOLD, 1);
 
+  // Affiliate promo codes first, then store coupons. The server re-checks at checkout.
+  async function applyCode() {
+    const code = promo.trim().toUpperCase();
+    if (!code) return;
+    setChecking(true);
+    setPromoMsg('');
+    try {
+      const p = await api.post<{ valid: boolean; discountAmountEgp?: number; reason?: string }>(
+        '/api/checkout/apply-code',
+        { code, orderTotalEgp: subtotal }
+      );
+      if (p.valid) {
+        setApplied({
+          code,
+          kind: 'promo',
+          amount: p.discountAmountEgp ?? 0,
+          forSubtotal: subtotal,
+        });
+        return;
+      }
+      const c = await api.post<{ discountAmount: number }>('/api/coupons/evaluate', {
+        code,
+        orderValue: subtotal,
+      });
+      setApplied({ code, kind: 'coupon', amount: c.discountAmount, forSubtotal: subtotal });
+    } catch (e: unknown) {
+      setApplied(null);
+      setPromoMsg((e as Error).message || t('Invalid code'));
+    } finally {
+      setChecking(false);
+    }
+  }
+
   if (count() === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyTitle}>Your bag is empty</Text>
-        <Text style={styles.emptySub}>Add items from the shop to get started</Text>
+        <Text style={styles.emptyTitle}>{t('Your bag is empty')}</Text>
+        <Text style={styles.emptySub}>{t('Add items from the shop to get started')}</Text>
         <Pressable style={styles.shopBtn} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
-          <Text style={styles.shopBtnText}>Browse shop</Text>
+          <Text style={styles.shopBtnText}>{t('Browse shop')}</Text>
         </Pressable>
       </View>
     );
@@ -33,9 +78,9 @@ export default function Bag() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.title}>Bag</Text>
+        <Text style={styles.title}>{t('Bag')}</Text>
         <Text style={styles.count}>
-          {count()} item{count() !== 1 ? 's' : ''}
+          {t(count() === 1 ? '{n} item' : '{n} items', { n: count() })}
         </Text>
       </View>
 
@@ -43,7 +88,9 @@ export default function Bag() {
         {/* Free shipping progress */}
         {remaining > 0 && (
           <View style={styles.progressCard}>
-            <Text style={styles.progressText}>{fmtEGP(remaining)} away from free shipping</Text>
+            <Text style={styles.progressText}>
+              {t('{amount} away from free shipping', { amount: fmtEGP(remaining) })}
+            </Text>
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { width: `${progress * 100}%` as any }]} />
             </View>
@@ -52,32 +99,33 @@ export default function Bag() {
 
         {/* Line items */}
         {items.map(item => (
-          <View key={item.productId} style={styles.item}>
+          <View key={lineKey(item)} style={styles.item}>
             <Image source={{ uri: item.image }} style={styles.itemImg} contentFit="cover" />
             <View style={styles.itemInfo}>
               <Text style={styles.itemBrand} numberOfLines={1}>
-                BRANDYY STORE
+                {t('BRANDYY STORE')}
               </Text>
               <Text style={styles.itemName} numberOfLines={2}>
                 {item.title}
               </Text>
-              {item.size && <Text style={styles.itemMeta}>{item.size}</Text>}
+              {(item.color || item.size) && (
+                <Text style={styles.itemMeta}>
+                  {[item.color, item.size].filter(Boolean).join(' · ')}
+                </Text>
+              )}
               <Text style={styles.itemPrice}>{fmtEGP(item.basePrice)}</Text>
             </View>
             <View style={styles.stepper}>
               <Pressable
                 style={styles.stepBtn}
                 onPress={() =>
-                  item.qty <= 1 ? remove(item.productId) : setQty(item.productId, item.qty - 1)
+                  item.qty <= 1 ? remove(lineKey(item)) : setQty(lineKey(item), item.qty - 1)
                 }
               >
                 <Minus size={14} color={colors.ink} strokeWidth={2} />
               </Pressable>
               <Text style={styles.stepQty}>{item.qty}</Text>
-              <Pressable
-                style={styles.stepBtn}
-                onPress={() => setQty(item.productId, item.qty + 1)}
-              >
+              <Pressable style={styles.stepBtn} onPress={() => setQty(lineKey(item), item.qty + 1)}>
                 <Plus size={14} color={colors.ink} strokeWidth={2} />
               </Pressable>
             </View>
@@ -88,26 +136,37 @@ export default function Bag() {
         <View style={styles.promoRow}>
           <TextInput
             style={styles.promoInput}
-            placeholder="Promo or referral code"
+            placeholder={t('Promo or referral code')}
             placeholderTextColor={colors.placeholder}
             value={promo}
             onChangeText={setPromo}
             autoCapitalize="characters"
           />
-          <Pressable style={styles.promoBtn}>
-            <Text style={styles.promoBtnText}>Apply</Text>
+          <Pressable style={styles.promoBtn} onPress={applyCode} disabled={checking}>
+            {checking ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : (
+              <Text style={styles.promoBtnText}>{t('Apply')}</Text>
+            )}
           </Pressable>
         </View>
+        {applied?.forSubtotal === subtotal ? (
+          <Text style={styles.promoOk}>
+            {t('{code} applied: −{amount}', { code: applied.code, amount: fmtEGP(applied.amount) })}
+          </Text>
+        ) : promoMsg ? (
+          <Text style={styles.promoErr}>{promoMsg}</Text>
+        ) : null}
       </ScrollView>
 
       {/* Sticky footer */}
       <View style={styles.footer}>
         <View style={styles.footerRow}>
-          <Text style={styles.footerLabel}>Subtotal</Text>
+          <Text style={styles.footerLabel}>{t('Subtotal')}</Text>
           <Text style={styles.footerTotal}>{fmtEGP(subtotal)}</Text>
         </View>
         <Pressable style={styles.checkoutBtn} onPress={() => router.push('/(buyer)/checkout')}>
-          <Text style={styles.checkoutText}>Checkout</Text>
+          <Text style={styles.checkoutText}>{t('Checkout')}</Text>
         </Pressable>
       </View>
     </View>
@@ -209,6 +268,8 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   promoBtn: { paddingHorizontal: 16 },
+  promoOk: { fontFamily: 'Inter-Medium', fontSize: 13, color: colors.primary, marginTop: 8 },
+  promoErr: { fontFamily: 'Inter-Medium', fontSize: 13, color: colors.favorite, marginTop: 8 },
   promoBtnText: { fontFamily: 'Inter-SemiBold', fontSize: 14, color: colors.primary },
   empty: {
     flex: 1,

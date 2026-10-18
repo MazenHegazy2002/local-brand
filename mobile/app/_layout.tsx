@@ -1,37 +1,45 @@
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
-import { Stack, router, useRouter, useSegments, type Href } from 'expo-router';
+import { Platform, View } from 'react-native';
+import {
+  Stack,
+  router,
+  useRouter,
+  useSegments,
+  useRootNavigationState,
+  type Href,
+} from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
 import Constants from 'expo-constants';
 import { useAuth } from '@/store/auth';
 import * as Notifications from 'expo-notifications';
 import { api } from '@/lib/api';
 import VersionGate from '@/components/VersionGate';
+import { useT } from '@/lib/i18n';
 
 SplashScreen.preventAutoHideAsync();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),
-});
-
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
 });
 
 function AuthGate() {
   const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  // VersionGate may hold back the Stack; navigating before it mounts throws.
+  const navReady = !!useRootNavigationState()?.key;
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !navReady) return;
     const inAuth = segments[0] === '(auth)';
     if (!user && !inAuth) {
       router.replace('/(auth)');
@@ -48,7 +56,7 @@ function AuthGate() {
             : '/(buyer)';
     const destGroup = dest.slice(1); // strip leading /
     if (segments[0] !== destGroup) router.replace(dest as Href);
-  }, [user, loading, segments]);
+  }, [user, loading, segments, navReady]);
 
   return null;
 }
@@ -101,6 +109,8 @@ function PushNotifications() {
 
 export default function RootLayout() {
   const hydrate = useAuth(s => s.hydrate);
+  const { rtl } = useT();
+  const role = useAuth(s => s.user?.role);
 
   const [fontsLoaded] = useFonts({
     'Outfit-Regular': require('../assets/fonts/Outfit-Regular.ttf'),
@@ -131,9 +141,30 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthGate />
         <PushNotifications />
-        <VersionGate>
-          <Stack screenOptions={{ headerShown: false }} />
-        </VersionGate>
+        {/* `direction` mirrors row layouts live for Arabic, no restart needed. */}
+        <View style={{ flex: 1, direction: rtl ? 'rtl' : 'ltr' }}>
+          <VersionGate>
+            {/* Each section only exists for its role, so a section never mounts
+                (and fires its API calls) for the wrong user, even at launch. */}
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Protected guard={!role}>
+                <Stack.Screen name="(auth)" />
+              </Stack.Protected>
+              <Stack.Protected guard={role === 'BUYER'}>
+                <Stack.Screen name="(buyer)" />
+              </Stack.Protected>
+              <Stack.Protected guard={role === 'SELLER'}>
+                <Stack.Screen name="(seller)" />
+              </Stack.Protected>
+              <Stack.Protected guard={role === 'ADMIN'}>
+                <Stack.Screen name="(admin)" />
+              </Stack.Protected>
+              <Stack.Protected guard={role === 'AFFILIATE'}>
+                <Stack.Screen name="(affiliate)" />
+              </Stack.Protected>
+            </Stack>
+          </VersionGate>
+        </View>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

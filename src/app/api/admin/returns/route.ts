@@ -1,13 +1,12 @@
 // Admin Returns/RMA inbox API.
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import type { SessionUser } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { ReturnStatus } from '@/generated/client';
+import { getRequestSession } from '@/lib/mobile-auth';
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getRequestSession(req);
   if (!session || (session.user as SessionUser).role !== 'ADMIN') {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }

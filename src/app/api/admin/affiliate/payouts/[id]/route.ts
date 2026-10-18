@@ -1,12 +1,11 @@
 // src/app/api/admin/affiliate/payouts/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { getRequestSession } from '@/lib/mobile-auth';
 
-async function requireAdmin() {
-  const session = await getServerSession(authOptions);
+async function requireAdmin(req: Request) {
+  const session = await getRequestSession(req);
   if (!session?.user?.id) return null;
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (user?.role !== 'ADMIN') return null;
@@ -19,8 +18,8 @@ const UpdatePayoutSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await requireAdmin();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  const session = await requireAdmin(req);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
   const body = await req.json();

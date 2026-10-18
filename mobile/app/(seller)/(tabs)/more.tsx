@@ -1,9 +1,10 @@
 // Seller More
 import { View, Text, StyleSheet, ScrollView, Pressable, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Bell, Globe, LogOut, ChevronRight } from 'lucide-react-native';
+import { Bell, Globe, Languages, LogOut, ChevronRight } from 'lucide-react-native';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useAuth } from '@/store/auth';
+import { useT, LANGS, LANG_NAMES } from '@/lib/i18n';
 import { API_BASE, useSellerStats } from '@/lib/seller';
 import { StoreLogo } from '@/components/seller/StoreLogo';
 
@@ -17,12 +18,14 @@ const STATUS: Record<string, string> = {
 export default function More() {
   const router = useRouter();
   const signOut = useAuth(s => s.signOut);
+  const setLang = useAuth(s => s.setLang);
+  const { t, lang } = useT();
   const { data } = useSellerStats('7d');
   const unread = data?.unreadNotifications ?? 0;
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.inner}>
-      <Text style={styles.title}>More</Text>
+      <Text style={styles.title}>{t('More')}</Text>
       <View style={styles.storeCard}>
         <StoreLogo name={data?.store.name} uri={data?.store.logoUrl} size={52} />
         <View style={{ flex: 1 }}>
@@ -34,7 +37,7 @@ export default function More() {
                 { color: data.store.status === 'ACTIVE' ? colors.success : colors.accentText },
               ]}
             >
-              {STATUS[data.store.status] ?? data.store.status}
+              {t(STATUS[data.store.status] ?? data.store.status)}
             </Text>
           )}
         </View>
@@ -42,7 +45,7 @@ export default function More() {
 
       <Row
         icon={<Bell size={18} color={colors.ink} />}
-        label="Notifications"
+        label={t('Notifications')}
         onPress={() => router.push('/(seller)/notifications')}
       >
         {unread > 0 && (
@@ -53,12 +56,17 @@ export default function More() {
       </Row>
       <Row
         icon={<Globe size={18} color={colors.ink} />}
-        label="Open Seller Hub on the web"
+        label={t('Open Seller Hub on the web')}
         onPress={() => Linking.openURL(`${API_BASE}/seller-hub`)}
       />
       <Row
+        icon={<Languages size={18} color={colors.ink} />}
+        label={`${t('Language')} · ${LANG_NAMES[lang]}`}
+        onPress={() => setLang(LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length])}
+      />
+      <Row
         icon={<LogOut size={18} color={colors.danger} />}
-        label="Sign out"
+        label={t('Sign out')}
         danger
         onPress={() => signOut()}
       />

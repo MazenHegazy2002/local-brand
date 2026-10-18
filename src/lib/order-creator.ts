@@ -26,13 +26,23 @@ export interface CreateOrderResult {
   success?: boolean;
   orderId?: string;
   error?: string;
+  quote?: {
+    subtotal: number;
+    discountAmount: number;
+    pointsRedeemed: number;
+    vatAmount: number;
+    shippingFee: number;
+    total: number;
+  };
 }
 
 export async function createOrderForUser(
   userId: string | null,
   formData: unknown,
   /** referralSlug read from the `brandy_ref` cookie by the server action (Task 32) */
-  referralSlug?: string | null
+  referralSlug?: string | null,
+  /** quoteOnly: compute the totals and return them without creating the order */
+  opts: { quoteOnly?: boolean } = {}
 ): Promise<CreateOrderResult> {
   try {
     // ── 0. Guard Read-Only Mode ───────────────────────────────────────────────
@@ -63,8 +73,8 @@ export async function createOrderForUser(
       paymentReceiptUrl,
       orderNotes,
       giftWrapping,
-      pointsRedeemed = 0,
     } = validated.data;
+    let pointsRedeemed = validated.data.pointsRedeemed ?? 0;
 
     if (!userId && !guestEmail) {
       return { error: 'Unauthorized. Please log in or provide guest email.' };
@@ -284,6 +294,9 @@ export async function createOrderForUser(
       if (!user || user.loyaltyPoints < pointsRedeemed) {
         return { error: 'Insufficient loyalty points balance.' };
       }
+      // Only burn the points that fit under the discount cap.
+      const room = Math.max(0, subtotal * MAX_DISCOUNT_PCT - discountAmount);
+      pointsRedeemed = Math.min(pointsRedeemed, Math.floor(room / LOYALTY_POINT_VALUE));
       pointsDiscount = pointsRedeemed * LOYALTY_POINT_VALUE;
     }
 
@@ -317,6 +330,19 @@ export async function createOrderForUser(
     }
 
     const finalTotal = subtotalAfterDiscount + vatAmount + shippingFee;
+
+    if (opts.quoteOnly) {
+      return {
+        quote: {
+          subtotal,
+          discountAmount,
+          pointsRedeemed,
+          vatAmount,
+          shippingFee,
+          total: finalTotal,
+        },
+      };
+    }
 
     // ── 4. Execute Transaction ───────────────────────────────────────────────
     const order = await prisma.$transaction(async tx => {

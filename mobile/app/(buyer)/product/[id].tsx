@@ -1,5 +1,5 @@
 // Screen 2e — Product detail
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Pressable,
   Dimensions,
   ActivityIndicator,
+  Share,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -17,10 +18,36 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { useCart } from '@/store/cart';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 const { width } = Dimensions.get('window');
 const GALLERY_H = 440;
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+// API variants carry color/sizes in a JSON `attributes` string; flatten to one entry per size.
+interface RawVariant {
+  title?: string | null;
+  attributes?: string | null;
+  stockCount?: number;
+}
+function flattenVariant(v: RawVariant) {
+  let attr: {
+    color?: string;
+    size?: string;
+    sizes?: string[];
+    image?: string;
+    imageUrl?: string;
+  } = {};
+  try {
+    attr = JSON.parse(v.attributes ?? '{}') ?? {};
+  } catch {}
+  // Size-only variants ({"size":"50g"}) must not fall back to the title as a color.
+  const raw = attr.color || (attr.size ? undefined : v.title) || undefined;
+  const color = raw && raw.toLowerCase() !== 'default' ? raw : undefined;
+  const sizes = attr.sizes?.length ? attr.sizes : attr.size ? [attr.size] : [undefined];
+  const image = attr.image || attr.imageUrl || undefined;
+  return sizes.map(size => ({ color, size, image, stockCount: v.stockCount }));
+}
 
 interface Product {
   id: string;
@@ -37,6 +64,7 @@ interface Product {
 
 export default function ProductDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { t } = useT();
   const router = useRouter();
   const { add } = useCart();
   const [added, setAdded] = useState(false);
@@ -53,10 +81,16 @@ export default function ProductDetail() {
   const [selectedSize, setSelectedSize] = useState<string>();
   const [selectedColor, setSelectedColor] = useState<string>();
   const [imgIdx, setImgIdx] = useState(0);
+  // Variant photo not in the product gallery; shown as the first slide while its color is picked.
+  const [extraImg, setExtraImg] = useState<string>();
+  const galleryRef = useRef<FlatList<string>>(null);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
-    queryFn: () => api.get<Product>(`/api/products/${id}`),
+    queryFn: async () => {
+      const p = await api.get<Product & { variants?: RawVariant[] }>(`/api/products/${id}`);
+      return { ...p, variants: (p.variants ?? []).flatMap(flattenVariant) };
+    },
   });
 
   const { data: seller } = useQuery({
@@ -75,9 +109,10 @@ export default function ProductDetail() {
   });
 
   if (isLoading) return <ActivityIndicator style={{ flex: 1 }} color={colors.primary} />;
-  if (!product) return <Text style={{ margin: 40 }}>Product not found</Text>;
+  if (!product) return <Text style={{ margin: 40 }}>{t('Product not found')}</Text>;
 
-  const images = product.images?.length ? product.images.map(i => i.url) : [''];
+  const baseImages = product.images?.length ? product.images.map(i => i.url) : [''];
+  const images = extraImg ? [extraImg, ...baseImages] : baseImages;
   const variants = product.variants ?? [];
   const stockOf = (size: string) =>
     variants.filter(v => v.size === size).reduce((n, v) => n + (v.stockCount ?? 0), 0);
@@ -114,6 +149,7 @@ export default function ProductDetail() {
         {/* Gallery */}
         <View style={styles.gallery}>
           <FlatList
+            ref={galleryRef}
             data={images}
             keyExtractor={(_, i) => String(i)}
             horizontal
@@ -133,7 +169,14 @@ export default function ProductDetail() {
           <Pressable style={[styles.galleryBtn, { left: 16 }]} onPress={() => router.back()}>
             <ArrowLeft size={20} color={colors.ink} strokeWidth={2} />
           </Pressable>
-          <Pressable style={[styles.galleryBtn, { right: 64 }]}>
+          <Pressable
+            style={[styles.galleryBtn, { right: 64 }]}
+            onPress={() =>
+              Share.share({
+                message: `${process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop'}/product/${id}`,
+              })
+            }
+          >
             <Share2 size={18} color={colors.ink} strokeWidth={2} />
           </Pressable>
           <Pressable
@@ -159,7 +202,7 @@ export default function ProductDetail() {
 
           <View style={styles.tryOn}>
             <Sparkles size={14} color="#fff" strokeWidth={2} />
-            <Text style={styles.tryOnText}>Try it on</Text>
+            <Text style={styles.tryOnText}>{t('Try it on')}</Text>
           </View>
         </View>
 
@@ -182,7 +225,7 @@ export default function ProductDetail() {
           <View style={styles.ratingRow}>
             <Star size={14} color={colors.accent} fill={colors.accent} strokeWidth={0} />
             <Text style={styles.ratingText}>
-              {rating > 0 ? rating.toFixed(1) : 'New'}
+              {rating > 0 ? rating.toFixed(1) : t('New')}
               {reviews?.stats.total ? (
                 <Text style={styles.ratingCount}> · {reviews.stats.total}</Text>
               ) : null}
@@ -192,16 +235,30 @@ export default function ProductDetail() {
           {productColors.length > 0 && (
             <View style={styles.block}>
               <Text style={styles.label}>
-                Color <Text style={styles.labelValue}>· {selectedColor ?? productColors[0]}</Text>
+                {t('Color')}{' '}
+                <Text style={styles.labelValue}>· {selectedColor ?? productColors[0]}</Text>
               </Text>
               <View style={styles.optionRow}>
                 {productColors.map((c, i) => {
                   const active = (selectedColor ?? productColors[0]) === c;
-                  const uri = images[i % images.length];
+                  // Same order as the website: the variant's own photo, else the gallery photo at the color's position.
+                  const uri =
+                    variants.find(v => v.color === c && v.image)?.image ??
+                    baseImages[i % baseImages.length];
                   return (
                     <Pressable
                       key={c}
-                      onPress={() => setSelectedColor(c)}
+                      onPress={() => {
+                        setSelectedColor(c);
+                        const idx = baseImages.indexOf(uri);
+                        setExtraImg(idx < 0 ? uri : undefined);
+                        const target = idx < 0 ? 0 : idx;
+                        galleryRef.current?.scrollToOffset({
+                          offset: target * width,
+                          animated: true,
+                        });
+                        setImgIdx(target);
+                      }}
                       style={[styles.colorThumb, active && styles.colorThumbActive]}
                     >
                       <Image
@@ -219,8 +276,8 @@ export default function ProductDetail() {
           {sizes.length > 0 && (
             <View style={styles.block}>
               <View style={styles.labelRow}>
-                <Text style={styles.label}>Size</Text>
-                <Text style={styles.sizeGuide}>Size guide</Text>
+                <Text style={styles.label}>{t('Size')}</Text>
+                <Text style={styles.sizeGuide}>{t('Size guide')}</Text>
               </View>
               <View style={styles.optionRow}>
                 {sizes.map(s => {
@@ -258,8 +315,10 @@ export default function ProductDetail() {
               <Truck size={18} color={colors.primary} strokeWidth={2} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.deliveryTitle}>Delivery to Cairo in 2–4 days</Text>
-              <Text style={styles.deliverySub}>14-day escrow protection · COD available</Text>
+              <Text style={styles.deliveryTitle}>{t('Delivery to Cairo in 2–4 days')}</Text>
+              <Text style={styles.deliverySub}>
+                {t('14-day escrow protection · COD available')}
+              </Text>
             </View>
           </View>
 
@@ -269,14 +328,14 @@ export default function ProductDetail() {
 
       {/* Sticky footer */}
       <View style={styles.footer}>
-        <Text style={styles.points}>Earn +{points} pts</Text>
+        <Text style={styles.points}>{t('Earn +{n} pts', { n: points })}</Text>
         <Pressable
           style={[styles.addBtn, added && styles.addBtnDone, outOfStock && styles.addBtnOff]}
           onPress={handleAddToBag}
           disabled={outOfStock}
         >
           <Text style={styles.addBtnText}>
-            {outOfStock ? 'Out of stock' : added ? 'Added ✓' : 'Add to bag'}
+            {outOfStock ? t('Out of stock') : added ? t('Added ✓') : t('Add to bag')}
           </Text>
         </Pressable>
       </View>

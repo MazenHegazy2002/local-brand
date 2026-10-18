@@ -1,12 +1,12 @@
 // Seller Payouts
 import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
-
-const egp = (n: number) => Math.round(n).toLocaleString('en-EG');
+import { useT } from '@/lib/i18n';
 
 export default function Payouts() {
+  const { t } = useT();
   const { data, isError, error, refetch, isRefetching } = useQuery({
     queryKey: ['seller-earnings'],
     queryFn: () =>
@@ -19,34 +19,35 @@ export default function Payouts() {
       contentContainerStyle={styles.inner}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
     >
-      <Text style={styles.title}>Payouts</Text>
+      <Text style={styles.title}>{t('Payouts')}</Text>
       {isError ? (
         <View style={styles.row}>
           <Text style={styles.error}>{(error as Error).message}</Text>
           <Pressable onPress={() => refetch()}>
-            <Text style={styles.link}>Retry</Text>
+            <Text style={styles.link}>{t('Retry')}</Text>
           </Pressable>
         </View>
       ) : (
         <>
           <View style={[styles.balance, !data && { opacity: 0.4 }]}>
-            <Text style={styles.balanceLabel}>Available to withdraw</Text>
+            <Text style={styles.balanceLabel}>{t('Available to withdraw')}</Text>
             <View style={styles.amountRow}>
-              <Text style={styles.amount}>{data ? egp(data.available) : ' '}</Text>
-              <Text style={styles.unit}>EGP</Text>
+              <Text style={styles.amount}>{data ? fmtEGP(Math.round(data.available)) : ' '}</Text>
             </View>
           </View>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>In escrow</Text>
-            <Text style={styles.rowValue}>{data ? `${egp(data.held)} EGP` : '—'}</Text>
+            <Text style={styles.rowLabel}>{t('In escrow')}</Text>
+            <Text style={styles.rowValue}>{data ? fmtEGP(Math.round(data.held)) : '—'}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Total paid out</Text>
-            <Text style={styles.rowValue}>{data ? `${egp(data.paid)} EGP` : '—'}</Text>
+            <Text style={styles.rowLabel}>{t('Total paid out')}</Text>
+            <Text style={styles.rowValue}>{data ? fmtEGP(Math.round(data.paid)) : '—'}</Text>
           </View>
         </>
       )}
-      <Text style={styles.note}>Funds are released 14 days after delivery confirmation.</Text>
+      <Text style={styles.note}>
+        {t('Funds are released 14 days after delivery confirmation.')}
+      </Text>
     </ScrollView>
   );
 }

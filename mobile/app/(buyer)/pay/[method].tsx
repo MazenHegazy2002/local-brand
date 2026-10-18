@@ -17,10 +17,11 @@ import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, Copy, Check, Upload, ExternalLink, Phone } from 'lucide-react-native';
-import { useCart } from '@/store/cart';
+import { codeFields, useCart } from '@/store/cart';
 import { api, fmtEGP } from '@/lib/api';
 import { absUrl, uploadImage } from '@/lib/seller';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 interface Details {
   INSTAPAY: {
@@ -40,6 +41,7 @@ const BRAND = {
 
 export default function ManualPay() {
   const router = useRouter();
+  const { t } = useT();
   const p = useLocalSearchParams<{
     method: 'instapay' | 'vodafone_cash';
     total: string;
@@ -49,7 +51,7 @@ export default function ManualPay() {
   }>();
   const method = p.method === 'vodafone_cash' ? 'vodafone_cash' : 'instapay';
   const brand = BRAND[method];
-  const { items, clear } = useCart();
+  const { items, clear, applied, total } = useCart();
   const [sender, setSender] = useState('');
   const [reference, setReference] = useState('');
   const [receipt, setReceipt] = useState<{ uri: string; url?: string } | null>(null);
@@ -91,13 +93,13 @@ export default function ManualPay() {
       setReceipt({ uri: asset.uri, url });
     } catch (e) {
       setReceipt(null);
-      Alert.alert('Upload failed', (e as Error).message);
+      Alert.alert(t('Upload failed'), (e as Error).message);
     }
   }
 
   async function submit() {
     if (!sender.trim() || !receipt?.url) {
-      Alert.alert('Almost there', 'Enter the number you paid from and upload the receipt.');
+      Alert.alert(t('Almost there'), t('Enter the number you paid from and upload the receipt.'));
       return;
     }
     setLoading(true);
@@ -110,6 +112,7 @@ export default function ManualPay() {
         paymentSenderDetail: sender.trim(),
         paymentReference: reference.trim() || undefined,
         paymentReceiptUrl: receipt.url,
+        ...codeFields(applied, total()),
         items: items.map(i => ({
           productId: i.productId,
           qty: i.qty,
@@ -119,12 +122,12 @@ export default function ManualPay() {
       });
       clear();
       Alert.alert(
-        'Order placed!',
-        `Order #${res.orderId} — we'll confirm once we verify your transfer.`
+        t('Order placed!'),
+        t("Order #{id} — we'll confirm once we verify your transfer.", { id: res.orderId })
       );
       router.dismissTo('/(buyer)/(tabs)');
     } catch (e) {
-      Alert.alert('Error', (e as Error).message);
+      Alert.alert(t('Error'), (e as Error).message);
     } finally {
       setLoading(false);
     }
@@ -136,29 +139,31 @@ export default function ManualPay() {
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <ChevronLeft size={24} color={colors.ink} strokeWidth={2} />
         </Pressable>
-        <Text style={styles.title}>Pay with {brand.title}</Text>
+        <Text style={styles.title}>{t('Pay with {method}', { method: t(brand.title) })}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.inner} showsVerticalScrollIndicator={false}>
         <View style={[styles.hero, { backgroundColor: brand.color }]}>
-          <Text style={styles.heroLabel}>Amount to send</Text>
+          <Text style={styles.heroLabel}>{t('Amount to send')}</Text>
           <Text style={styles.heroAmount}>{fmtEGP(Number(p.total) || 0)}</Text>
-          <Text style={styles.heroSub}>Send the exact amount, then upload the receipt below.</Text>
+          <Text style={styles.heroSub}>
+            {t('Send the exact amount, then upload the receipt below.')}
+          </Text>
         </View>
 
-        <Text style={styles.sectionLabel}>1 · SEND TO</Text>
+        <Text style={styles.sectionLabel}>{t('1 · SEND TO')}</Text>
         <View style={styles.card}>
           {isLoading ? (
             <ActivityIndicator color={brand.color} />
           ) : !data?.details ? (
             <Text style={styles.muted}>
-              Payment details are unavailable right now. Please try again shortly.
+              {t('Payment details are unavailable right now. Please try again shortly.')}
             </Text>
           ) : (
             rows.map((r, i) => (
               <View key={r.label} style={[styles.detailRow, i > 0 && styles.divider]}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.muted}>{r.label}</Text>
+                  <Text style={styles.muted}>{t(r.label)}</Text>
                   <Text style={styles.detailVal} selectable>
                     {r.value}
                   </Text>
@@ -186,14 +191,16 @@ export default function ManualPay() {
                 resizeMode="contain"
               />
             )}
-            <Text style={styles.muted}>Scan with the InstaPay app, or</Text>
+            <Text style={styles.muted}>{t('Scan with the InstaPay app, or')}</Text>
             {!!ip.payLink && (
               <Pressable
                 style={[styles.outlineBtn, { borderColor: brand.color }]}
                 onPress={() => Linking.openURL(ip.payLink)}
               >
                 <ExternalLink size={16} color={brand.color} />
-                <Text style={[styles.outlineText, { color: brand.color }]}>Open in InstaPay</Text>
+                <Text style={[styles.outlineText, { color: brand.color }]}>
+                  {t('Open in InstaPay')}
+                </Text>
               </Pressable>
             )}
           </View>
@@ -209,19 +216,19 @@ export default function ManualPay() {
           >
             <Phone size={16} color={brand.color} />
             <Text style={[styles.outlineText, { color: brand.color }]}>
-              Dial {vf.dialShortcut} to transfer
+              {t('Dial {code} to transfer', { code: vf.dialShortcut })}
             </Text>
           </Pressable>
         )}
 
-        <Text style={styles.sectionLabel}>2 · CONFIRM YOUR TRANSFER</Text>
+        <Text style={styles.sectionLabel}>{t('2 · CONFIRM YOUR TRANSFER')}</Text>
         <View style={[styles.card, { gap: 10 }]}>
           <TextInput
             style={styles.input}
             placeholder={
               method === 'instapay'
-                ? 'Your phone or InstaPay IPA *'
-                : 'Wallet number you paid from *'
+                ? t('Your phone or InstaPay IPA *')
+                : t('Wallet number you paid from *')
             }
             placeholderTextColor={colors.placeholder}
             value={sender}
@@ -229,7 +236,7 @@ export default function ManualPay() {
           />
           <TextInput
             style={styles.input}
-            placeholder="Transaction reference (optional)"
+            placeholder={t('Transaction reference (optional)')}
             placeholderTextColor={colors.placeholder}
             value={reference}
             onChangeText={setReference}
@@ -239,14 +246,14 @@ export default function ManualPay() {
               <>
                 <Image source={{ uri: receipt.uri }} style={styles.receipt} />
                 <Text style={styles.semi}>
-                  {receipt.url ? 'Receipt uploaded · tap to change' : 'Uploading…'}
+                  {receipt.url ? t('Receipt uploaded · tap to change') : t('Uploading…')}
                 </Text>
               </>
             ) : (
               <>
                 <Upload size={22} color={colors.muted} />
-                <Text style={styles.semi}>Upload transfer screenshot *</Text>
-                <Text style={styles.muted}>JPG or PNG from your gallery</Text>
+                <Text style={styles.semi}>{t('Upload transfer screenshot *')}</Text>
+                <Text style={styles.muted}>{t('JPG or PNG from your gallery')}</Text>
               </>
             )}
           </Pressable>
@@ -262,7 +269,7 @@ export default function ManualPay() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.ctaText}>I've paid · Place order</Text>
+            <Text style={styles.ctaText}>{t("I've paid · Place order")}</Text>
           )}
         </Pressable>
       </View>

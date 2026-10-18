@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT, LANGS, LANG_NAMES } from '@/lib/i18n';
+import { useAuth } from '@/store/auth';
 
 const { width, height } = Dimensions.get('window');
 const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
@@ -33,7 +35,6 @@ const SLIDES_STATIC = [
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
-  const [lang, setLang] = useState<'en' | 'ar'>('en');
   const [bgImages, setBgImages] = useState<string[]>([]);
   const router = useRouter();
 
@@ -59,25 +60,11 @@ export default function Onboarding() {
       {bgUri ? (
         <ImageBackground source={{ uri: bgUri }} style={styles.bg} resizeMode="cover">
           <View style={styles.overlay} />
-          <Content
-            slide={slide}
-            step={step}
-            lang={lang}
-            setLang={setLang}
-            setStep={setStep}
-            router={router}
-          />
+          <Content slide={slide} step={step} setStep={setStep} router={router} />
         </ImageBackground>
       ) : (
         <View style={[styles.bg, { backgroundColor: colors.navy }]}>
-          <Content
-            slide={slide}
-            step={step}
-            lang={lang}
-            setLang={setLang}
-            setStep={setStep}
-            router={router}
-          />
+          <Content slide={slide} step={step} setStep={setStep} router={router} />
         </View>
       )}
     </View>
@@ -87,25 +74,26 @@ export default function Onboarding() {
 function Content({
   slide,
   step,
-  lang,
-  setLang,
   setStep,
   router,
 }: {
   slide: (typeof SLIDES_STATIC)[0];
   step: number;
-  lang: 'en' | 'ar';
-  setLang: (l: 'en' | 'ar') => void;
   setStep: (s: number) => void;
   router: ReturnType<typeof useRouter>;
 }) {
+  const { t, lang } = useT();
+  const setLang = useAuth(s => s.setLang);
   return (
     <View style={styles.flex}>
       {/* Top bar */}
       <View style={styles.topBar}>
         <Text style={styles.wordmark}>brandyy.</Text>
-        <Pressable style={styles.langPill} onPress={() => setLang(lang === 'en' ? 'ar' : 'en')}>
-          <Text style={styles.langText}>{lang === 'en' ? 'العربية' : 'EN'}</Text>
+        <Pressable
+          style={styles.langBtn}
+          onPress={() => setLang(LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length])}
+        >
+          <Text style={styles.langText}>{LANG_NAMES[lang]}</Text>
         </Pressable>
       </View>
 
@@ -118,20 +106,20 @@ function Content({
           ))}
         </View>
 
-        <Text style={styles.title}>{slide.title}</Text>
-        <Text style={styles.sub}>{slide.sub}</Text>
+        <Text style={styles.title}>{t(slide.title)}</Text>
+        <Text style={styles.sub}>{t(slide.sub)}</Text>
 
         {step < SLIDES_STATIC.length - 1 ? (
           <Pressable style={styles.btnPrimary} onPress={() => setStep(step + 1)}>
-            <Text style={styles.btnPrimaryText}>Next</Text>
+            <Text style={styles.btnPrimaryText}>{t('Next')}</Text>
           </Pressable>
         ) : (
           <Pressable style={styles.btnPrimary} onPress={() => router.push('/(auth)/sign-in')}>
-            <Text style={styles.btnPrimaryText}>Get started</Text>
+            <Text style={styles.btnPrimaryText}>{t('Get started')}</Text>
           </Pressable>
         )}
         <Pressable style={styles.btnSecondary} onPress={() => router.push('/(auth)/sign-in')}>
-          <Text style={styles.btnSecondaryText}>I already have an account</Text>
+          <Text style={styles.btnSecondaryText}>{t('I already have an account')}</Text>
         </Pressable>
       </View>
     </View>
@@ -143,7 +131,7 @@ const styles = StyleSheet.create({
   bg: { width, height },
   flex: { flex: 1 },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(14,22,51,0.45)',
   },
   topBar: {
@@ -154,18 +142,19 @@ const styles = StyleSheet.create({
     paddingTop: spacing.top,
     paddingBottom: 12,
   },
+  langBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  langText: { fontFamily: 'Inter-SemiBold', fontSize: 13, color: '#fff' },
   wordmark: {
     fontFamily: 'Outfit-ExtraBold',
     fontSize: 24,
     color: '#fff',
   },
-  langPill: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: radii.pill,
-  },
-  langText: { color: '#fff', fontFamily: 'Inter-SemiBold', fontSize: 13 },
   content: {
     position: 'absolute',
     bottom: 0,

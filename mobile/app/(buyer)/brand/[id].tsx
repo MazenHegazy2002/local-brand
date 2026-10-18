@@ -16,6 +16,7 @@ import { ArrowLeft, BadgeCheck, Star } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 const { width } = Dimensions.get('window');
 const COVER_H = 230;
@@ -45,6 +46,7 @@ interface BrandProduct {
 export default function BrandPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useT();
   const [tab, setTab] = useState<Tab>('products');
   const [following, setFollowing] = useState(false);
   const param = decodeURIComponent(id ?? '');
@@ -71,7 +73,7 @@ export default function BrandPage() {
     return <ActivityIndicator style={{ flex: 1 }} color={colors.primary} />;
 
   const products = list?.products ?? [];
-  const name = storeName || 'Brand';
+  const name = storeName || t('Brand');
   const cover = products[0]?.images?.[0]?.url;
   const rating = parseFloat(seller?.seller.averageRating ?? '0');
   const topCategory = mostCommon(products.map(p => p.category?.name).filter(Boolean) as string[]);
@@ -111,7 +113,7 @@ export default function BrandPage() {
               onPress={() => setFollowing(!following)}
             >
               <Text style={[styles.followText, following && styles.followTextActive]}>
-                {following ? 'Following' : 'Follow'}
+                {following ? t('Following') : t('Follow')}
               </Text>
             </Pressable>
           </View>
@@ -123,13 +125,15 @@ export default function BrandPage() {
             )}
           </View>
           <Text style={styles.productCount}>
-            {list?.pagination?.total ?? products.length} products on Brandy
+            {t('{n} products on Brandyy', { n: list?.pagination?.total ?? products.length })}
           </Text>
 
           <View style={styles.chips}>
             {verified && (
               <View style={[styles.chip, styles.chipBlue]}>
-                <Text style={[styles.chipText, { color: colors.primary }]}>Verified local</Text>
+                <Text style={[styles.chipText, { color: colors.primary }]}>
+                  {t('Verified local')}
+                </Text>
               </View>
             )}
             {topCategory && (
@@ -139,21 +143,21 @@ export default function BrandPage() {
             )}
             <View style={[styles.chip, styles.chipRow]}>
               <Star size={12} color={colors.accent} fill={colors.accent} strokeWidth={0} />
-              <Text style={styles.chipText}>{rating > 0 ? rating.toFixed(1) : 'New'}</Text>
+              <Text style={styles.chipText}>{rating > 0 ? rating.toFixed(1) : t('New')}</Text>
             </View>
           </View>
         </View>
 
         {/* Tabs */}
         <View style={styles.tabs}>
-          {(['products', 'reviews', 'about'] as Tab[]).map(t => (
+          {(['products', 'reviews', 'about'] as Tab[]).map(k => (
             <Pressable
-              key={t}
-              style={[styles.tabBtn, tab === t && styles.tabBtnActive]}
-              onPress={() => setTab(t)}
+              key={k}
+              style={[styles.tabBtn, tab === k && styles.tabBtnActive]}
+              onPress={() => setTab(k)}
             >
-              <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
+              <Text style={[styles.tabText, tab === k && styles.tabTextActive]}>
+                {t(k.charAt(0).toUpperCase() + k.slice(1))}
               </Text>
             </Pressable>
           ))}
@@ -175,7 +179,7 @@ export default function BrandPage() {
                 <Text style={styles.cardPrice}>{fmtEGP(p.basePrice)}</Text>
               </Pressable>
             ))}
-            {products.length === 0 && <Text style={styles.empty}>No products yet</Text>}
+            {products.length === 0 && <Text style={styles.empty}>{t('No products yet')}</Text>}
           </View>
         )}
 
@@ -183,8 +187,11 @@ export default function BrandPage() {
           <View style={styles.section}>
             <Text style={styles.sectionText}>
               {seller?.seller.reviewCount
-                ? `${seller.seller.reviewCount} reviews · ★ ${rating.toFixed(1)}`
-                : 'No reviews yet.'}
+                ? t('{n} reviews · ★ {rating}', {
+                    n: seller.seller.reviewCount,
+                    rating: rating.toFixed(1),
+                  })
+                : t('No reviews yet.')}
             </Text>
           </View>
         )}
@@ -192,7 +199,8 @@ export default function BrandPage() {
         {tab === 'about' && (
           <View style={styles.section}>
             <Text style={styles.sectionText}>
-              {seller?.seller.description || `${name} is a verified Egyptian brand on Brandyy.`}
+              {seller?.seller.description ||
+                t('{name} is a verified Egyptian brand on Brandyy.', { name })}
             </Text>
           </View>
         )}
@@ -211,7 +219,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.surface },
   coverWrap: { height: COVER_H, backgroundColor: '#e8edf9' },
   cover: { width, height: COVER_H },
-  coverShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(14,22,51,0.12)' },
+  coverShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(14,22,51,0.12)' },
   backBtn: {
     position: 'absolute',
     top: 52,

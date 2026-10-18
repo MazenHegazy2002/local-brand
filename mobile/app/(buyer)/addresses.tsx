@@ -5,6 +5,7 @@ import { ArrowLeft, MapPin } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
+import { useT } from '@/lib/i18n';
 
 export interface AddressRow {
   id: string;
@@ -16,6 +17,7 @@ export interface AddressRow {
 
 export default function Addresses() {
   const router = useRouter();
+  const { t } = useT();
   const { data, isLoading } = useQuery({
     queryKey: ['addresses'],
     queryFn: () => api.get<{ addresses: AddressRow[] }>('/api/addresses'),
@@ -27,7 +29,7 @@ export default function Addresses() {
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
         </Pressable>
-        <Text style={styles.title}>Addresses</Text>
+        <Text style={styles.title}>{t('Addresses')}</Text>
       </View>
       {isLoading ? (
         <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} />
@@ -37,7 +39,9 @@ export default function Addresses() {
           keyExtractor={a => a.id}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <Text style={styles.empty}>No saved addresses. You can add one at checkout.</Text>
+            <Text style={styles.empty}>
+              {t('No saved addresses. You can add one at checkout.')}
+            </Text>
           }
           renderItem={({ item }) => (
             <View style={styles.card}>
@@ -48,7 +52,7 @@ export default function Addresses() {
                   {item.city}, {item.governorate}
                 </Text>
               </View>
-              {item.isDefault && <Text style={styles.badge}>Default</Text>}
+              {item.isDefault && <Text style={styles.badge}>{t('Default')}</Text>}
             </View>
           )}
         />

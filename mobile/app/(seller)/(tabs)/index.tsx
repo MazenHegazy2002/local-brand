@@ -6,6 +6,7 @@ import { Bell, ChevronRight, AlertTriangle } from 'lucide-react-native';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useSellerStats, compact, type Range, type SellerStats } from '@/lib/seller';
 import { StoreLogo } from '@/components/seller/StoreLogo';
+import { useT } from '@/lib/i18n';
 
 const RANGES: { id: Range; label: string }[] = [
   { id: 'today', label: 'Today' },
@@ -15,6 +16,7 @@ const RANGES: { id: Range; label: string }[] = [
 
 export default function SellerDashboard() {
   const router = useRouter();
+  const { t } = useT();
   const [range, setRange] = useState<Range>('7d');
   const { data, isLoading, isError, error, refetch, isRefetching } = useSellerStats(range);
 
@@ -30,9 +32,9 @@ export default function SellerDashboard() {
       <View style={styles.header}>
         <StoreLogo name={data?.store.name} uri={data?.store.logoUrl} />
         <View style={{ flex: 1 }}>
-          <Text style={styles.hubLabel}>Seller Hub</Text>
+          <Text style={styles.hubLabel}>{t('Seller Hub')}</Text>
           <Text style={styles.storeName} numberOfLines={1}>
-            {data?.store.name ?? (isLoading ? ' ' : 'Your store')}
+            {data?.store.name ?? (isLoading ? ' ' : t('Your store'))}
           </Text>
         </View>
         <Pressable style={styles.bell} onPress={() => router.push('/(seller)/notifications')}>
@@ -52,8 +54,10 @@ export default function SellerDashboard() {
           <AlertTriangle size={16} color={colors.accentText} />
           <Text style={styles.noticeText}>
             {data.store.status === 'PENDING_APPROVAL'
-              ? 'Your store is awaiting approval. Listings stay as drafts until an admin approves it.'
-              : 'Your store is suspended. Listings can’t go live — contact support.'}
+              ? t(
+                  'Your store is awaiting approval. Listings stay as drafts until an admin approves it.'
+                )
+              : t('Your store is suspended. Listings can’t go live — contact support.')}
           </Text>
         </View>
       )}
@@ -65,16 +69,18 @@ export default function SellerDashboard() {
             style={[styles.segBtn, range === r.id && styles.segBtnOn]}
             onPress={() => setRange(r.id)}
           >
-            <Text style={[styles.segText, range === r.id && styles.segTextOn]}>{r.label}</Text>
+            <Text style={[styles.segText, range === r.id && styles.segTextOn]}>{t(r.label)}</Text>
           </Pressable>
         ))}
       </View>
 
       {isError ? (
         <View style={styles.errorCard}>
-          <Text style={styles.errorText}>Couldn’t load stats: {(error as Error).message}</Text>
+          <Text style={styles.errorText}>
+            {t('Couldn’t load stats: {msg}', { msg: (error as Error).message })}
+          </Text>
           <Pressable onPress={() => refetch()}>
-            <Text style={styles.retry}>Try again</Text>
+            <Text style={styles.retry}>{t('Try again')}</Text>
           </Pressable>
         </View>
       ) : !data ? (
@@ -90,18 +96,23 @@ export default function SellerDashboard() {
         <>
           <SalesCard data={data} range={range} />
           <View style={styles.grid}>
-            <Tile label="Orders" value={String(data.orders)} />
-            <Tile label="Store visits" value={compact(data.storeVisits)} />
-            <Tile label="To ship" value={String(data.toShip)} />
-            <Tile label="Rating" value={data.rating == null ? '—' : `${data.rating.toFixed(1)}★`} />
+            <Tile label={t('Orders')} value={String(data.orders)} />
+            <Tile label={t('Store visits')} value={compact(data.storeVisits)} />
+            <Tile label={t('To ship')} value={String(data.toShip)} />
+            <Tile
+              label={t('Rating')}
+              value={data.rating == null ? '—' : `${data.rating.toFixed(1)}★`}
+            />
           </View>
 
-          <Text style={styles.sectionTitle}>Needs action</Text>
+          <Text style={styles.sectionTitle}>{t('Needs action')}</Text>
           {waiting > 0 && (
             <ActionRow
               count={waiting}
               tone="amber"
-              title={`${waiting} order${waiting === 1 ? '' : 's'} waiting to ship`}
+              title={t(waiting === 1 ? '{n} order waiting to ship' : '{n} orders waiting to ship', {
+                n: waiting,
+              })}
               onPress={() =>
                 router.push({
                   pathname: '/(seller)/(tabs)/orders',
@@ -114,7 +125,9 @@ export default function SellerDashboard() {
             <ActionRow
               count={lowStock}
               tone="red"
-              title={`${lowStock} variant${lowStock === 1 ? '' : 's'} low on stock`}
+              title={t(lowStock === 1 ? '{n} variant low on stock' : '{n} variants low on stock', {
+                n: lowStock,
+              })}
               onPress={() =>
                 router.push({
                   pathname: '/(seller)/(tabs)/products',
@@ -123,7 +136,9 @@ export default function SellerDashboard() {
               }
             />
           )}
-          {waiting === 0 && lowStock === 0 && <Text style={styles.caughtUp}>All caught up.</Text>}
+          {waiting === 0 && lowStock === 0 && (
+            <Text style={styles.caughtUp}>{t('All caught up.')}</Text>
+          )}
         </>
       )}
     </ScrollView>
@@ -134,10 +149,11 @@ function SalesCard({ data, range }: { data: SellerStats; range: Range }) {
   const max = Math.max(1, ...data.series.map(s => s.value));
   const thin = data.series.length > 12;
   const pct = data.changePct;
+  const { t, lang } = useT();
   return (
     <View style={styles.salesCard}>
       <View style={styles.salesTop}>
-        <Text style={styles.salesLabel}>Net sales</Text>
+        <Text style={styles.salesLabel}>{t('Net sales')}</Text>
         {pct != null && (
           <View
             style={[
@@ -153,8 +169,10 @@ function SalesCard({ data, range }: { data: SellerStats; range: Range }) {
         )}
       </View>
       <View style={styles.amountRow}>
-        <Text style={styles.amount}>{Math.round(data.netSales).toLocaleString('en-EG')}</Text>
-        <Text style={styles.amountUnit}>EGP</Text>
+        <Text style={styles.amount}>
+          {Math.round(data.netSales).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-EG')}
+        </Text>
+        <Text style={styles.amountUnit}>{lang === 'ar' ? 'ج.م' : 'EGP'}</Text>
       </View>
       <View style={styles.chart}>
         {data.series.map((s, i) => (

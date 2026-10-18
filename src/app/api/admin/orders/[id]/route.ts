@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { OrderItemStatus, OrderStatus, PaymentStatus } from '@/generated/client';
 import type { SessionUser } from '@/types';
+import { getRequestSession } from '@/lib/mobile-auth';
 
 // Admin-only order management. The buyer-facing /api/orders/[id]/status route
 // enforces a strict state machine; admins need a way to override that (e.g.
@@ -47,8 +46,8 @@ const updateSchema = z.object({
   giftWrapping: z.boolean().optional(),
 });
 
-async function requireAdmin() {
-  const session = await getServerSession(authOptions);
+async function requireAdmin(req: Request) {
+  const session = await getRequestSession(req);
   if (!session?.user) return { error: 'Unauthorized', status: 401 } as const;
   const role = (session.user as SessionUser).role;
   if (role !== 'ADMIN') return { error: 'Forbidden', status: 403 } as const;
@@ -56,7 +55,7 @@ async function requireAdmin() {
 }
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin();
+  const auth = await requireAdmin(req);
   if ('error' in auth) {
     return NextResponse.json({ message: auth.error }, { status: auth.status });
   }
@@ -183,8 +182,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   }
 }
 
-export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin();
+export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin(req);
   if ('error' in auth) {
     return NextResponse.json({ message: auth.error }, { status: auth.status });
   }

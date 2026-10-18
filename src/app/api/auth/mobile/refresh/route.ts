@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify, SignJWT } from 'jose';
 import { redis } from '@/lib/redis';
+import { prisma } from '@/lib/prisma';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!);
 const ACCESS_TTL = 60 * 60;
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const { payload } = await jwtVerify(refreshToken, JWT_SECRET, { audience: 'mobile-refresh' });
-    const { id, role, email } = payload as { id: string; role: string; email: string };
+    const { id } = payload as { id: string };
 
     // Fail closed: require stored token to exist AND match
     const stored = await redis?.get(`mobile:refresh:${id}`);
@@ -29,7 +30,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Token revoked' }, { status: 401 });
     }
 
-    const accessToken = await new SignJWT({ id, role, email })
+    // Re-read role/status so a refresh never extends access the user has lost.
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { role: true, email: true, deletedAt: true },
+    });
+    if (!user || user.deletedAt) {
+      return NextResponse.json({ error: 'Token revoked' }, { status: 401 });
+    }
+
+    const accessToken = await new SignJWT({ id, role: user.role, email: user.email })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime(`${ACCESS_TTL}s`)
