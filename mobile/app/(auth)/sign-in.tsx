@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -82,6 +83,8 @@ export default function SignIn() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.root}
     >
+      {/* Onboarding sets light icons; this screen is light. */}
+      <StatusBar barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
         {/* Back */}
         <Pressable style={styles.back} onPress={() => router.back()}>
