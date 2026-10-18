@@ -71,7 +71,8 @@
           "backgroundColor": "#faf8f5",
           "imageWidth": 200
         }
-      ]
+      ],
+      "./plugins/with-quoted-bundle-script"
     ],
     "experiments": {
       "typedRoutes": true
