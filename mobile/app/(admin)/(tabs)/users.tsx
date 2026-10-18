@@ -1,7 +1,7 @@
 // Admin users: search, filter by role, suspend / reactivate / change role.
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, RefreshControl } from 'react-native';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 import {
@@ -18,7 +18,7 @@ import {
 } from '@/components/admin/ui';
 import { useAuth } from '@/store/auth';
 
-type Role = '' | 'BUYER' | 'SELLER' | 'AFFILIATE' | 'ADMIN';
+type Role = '' | 'BUYER' | 'SELLER' | 'AFFILIATE' | 'ADMIN' | 'SUSPENDED';
 interface AdminUser {
   id: string;
   email: string;
@@ -50,13 +50,20 @@ export default function AdminUsers() {
     return () => clearTimeout(id);
   }, [text]);
 
-  const { data, isLoading, error, refetch, isRefetching } = useQuery({
-    queryKey: ['admin-users', role, q],
-    queryFn: () =>
-      api.get<{ users: AdminUser[]; total: number }>(
-        `/api/admin/users?role=${role}&search=${encodeURIComponent(q)}`
-      ),
-  });
+  const suspended = role === 'SUSPENDED';
+  const { data, isLoading, error, refetch, isRefetching, fetchNextPage, hasNextPage } =
+    useInfiniteQuery({
+      queryKey: ['admin-users', role, q],
+      initialPageParam: 1,
+      queryFn: ({ pageParam }) =>
+        api.get<{ users: AdminUser[]; total: number; totalPages: number }>(
+          `/api/admin/users?${suspended ? 'suspended=1' : `role=${role}`}&search=${encodeURIComponent(q)}&page=${pageParam}`
+        ),
+      getNextPageParam: (last, pages) =>
+        pages.length < last.totalPages ? pages.length + 1 : undefined,
+    });
+  const total = data?.pages[0]?.total;
+  const users = data?.pages.flatMap(p => p.users) ?? [];
   const act = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Record<string, string> }) =>
       api.patch(`/api/admin/users/${id}`, body),
@@ -67,7 +74,9 @@ export default function AdminUsers() {
     <View style={s.root}>
       <Header
         title={t('Users')}
-        right={data ? <Text style={s.muted}>{t('{n} total', { n: data.total })}</Text> : undefined}
+        right={
+          total != null ? <Text style={s.muted}>{t('{n} total', { n: total })}</Text> : undefined
+        }
       />
       <SearchBox value={text} onChange={setText} placeholder={t('Search name or email')} />
       <Chips
@@ -77,12 +86,14 @@ export default function AdminUsers() {
           { id: 'SELLER', label: 'Sellers' },
           { id: 'AFFILIATE', label: 'Affiliates' },
           { id: 'ADMIN', label: 'Admins' },
+          { id: 'SUSPENDED', label: 'Suspended' },
         ]}
         value={role}
         onChange={setRole}
       />
       <FlatList
-        data={data?.users ?? []}
+        data={users}
+        onEndReached={() => hasNextPage && fetchNextPage()}
         keyExtractor={u => u.id}
         contentContainerStyle={s.list}
         refreshControl={
@@ -110,7 +121,17 @@ export default function AdminUsers() {
               {t('{n} pts', { n: u.loyaltyPoints })} ·{' '}
               {u.emailVerified ? t('Verified') : t('Unverified')}
             </Text>
-            {u.id !== me && (
+            {u.id !== me && suspended && (
+              <View style={s.btns}>
+                <Btn
+                  kind="primary"
+                  label={t('Reactivate')}
+                  busy={act.isPending && act.variables?.id === u.id}
+                  onPress={() => act.mutate({ id: u.id, body: { action: 'reactivate' } })}
+                />
+              </View>
+            )}
+            {u.id !== me && !suspended && (
               <View style={s.btns}>
                 <Btn
                   label={t('Change role')}

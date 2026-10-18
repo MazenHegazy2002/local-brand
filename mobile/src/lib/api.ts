@@ -1,7 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import type { Lang } from '@/lib/i18n';
-import { useAuth } from '@/store/auth';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
 
@@ -105,7 +104,13 @@ export async function signOut() {
 }
 
 // Currency formatter
-export function fmtEGP(amount: number | null | undefined, lang: Lang = useAuth.getState().lang) {
+// Kept in sync by the auth store, so api.ts doesn't import it (that would be a cycle).
+let fmtLang: Lang = 'en';
+export const setFmtLang = (lang: Lang) => {
+  fmtLang = lang;
+};
+
+export function fmtEGP(amount: number | null | undefined, lang: Lang = fmtLang) {
   if (amount == null) return lang === 'ar' ? '— ج.م' : '— EGP';
   return lang === 'ar'
     ? `${amount.toLocaleString('ar-EG')} ج.م`

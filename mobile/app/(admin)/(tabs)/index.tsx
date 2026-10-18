@@ -257,7 +257,7 @@ export default function AdminOverview() {
                   onPress: () =>
                     router.push({
                       pathname: '/(admin)/(tabs)/orders',
-                      params: { status: 'CONFIRMED' },
+                      params: { status: 'CONFIRMED,PROCESSING', at: Date.now() },
                     } as unknown as Href),
                 },
                 {
@@ -267,7 +267,7 @@ export default function AdminOverview() {
                   onPress: () =>
                     router.push({
                       pathname: '/(admin)/(tabs)/orders',
-                      params: { status: 'PENDING_PAYMENT' },
+                      params: { status: 'PENDING_PAYMENT', at: Date.now() },
                     } as unknown as Href),
                 },
                 {

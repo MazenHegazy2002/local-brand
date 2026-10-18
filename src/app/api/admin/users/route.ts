@@ -21,7 +21,7 @@ export async function GET(req: Request) {
   const role = VALID_ROLES.has(roleParam as Role) ? (roleParam as Role) : null;
 
   const where: Prisma.UserWhereInput = {
-    deletedAt: null,
+    deletedAt: searchParams.get('suspended') === '1' ? { not: null } : null,
     ...(search
       ? {
           OR: [

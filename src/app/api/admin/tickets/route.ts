@@ -34,9 +34,17 @@ export async function PATCH(req: Request) {
   if (!body.id || (!body.status && body.adminReply === undefined)) {
     return NextResponse.json({ message: 'id and status or adminReply required' }, { status: 400 });
   }
+  if (body.adminReply !== undefined && typeof body.adminReply !== 'string') {
+    return NextResponse.json({ message: 'adminReply must be text' }, { status: 400 });
+  }
   if (body.status && !Object.values(TicketStatus).includes(body.status)) {
     return NextResponse.json({ message: 'Invalid status' }, { status: 400 });
   }
+  const exists = await prisma.supportTicket.findUnique({
+    where: { id: body.id },
+    select: { id: true },
+  });
+  if (!exists) return NextResponse.json({ message: 'Ticket not found' }, { status: 404 });
   const ticket = await prisma.supportTicket.update({
     where: { id: body.id },
     data: {

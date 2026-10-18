@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, RefreshControl, Linking, Pressable } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { api, fmtEGP } from '@/lib/api';
 import { absUrl } from '@/lib/seller';
@@ -65,42 +65,59 @@ interface AdminOrder {
 interface OrdersRes {
   orders: AdminOrder[];
   total: number;
+  totalPages: number;
   counts: Record<string, number>;
 }
 
 export default function AdminOrders() {
   const { t } = useT();
-  const params = useLocalSearchParams<{ status?: string }>();
+  // `at` changes on every shortcut tap, so the same shortcut re-applies its filter.
+  const params = useLocalSearchParams<{ status?: string; at?: string }>();
   const [status, setStatus] = useState(params.status ?? '');
   const [text, setText] = useState('');
   const [q, setQ] = useState('');
   useEffect(() => {
     if (params.status) setStatus(params.status);
-  }, [params.status]);
+  }, [params.status, params.at]);
   useEffect(() => {
     const id = setTimeout(() => setQ(text.trim()), 350);
     return () => clearTimeout(id);
   }, [text]);
 
-  const { data, isLoading, error, refetch, isRefetching } = useQuery({
-    queryKey: ['admin-orders', status, q],
-    queryFn: () =>
-      api.get<OrdersRes>(`/api/admin/orders?status=${status}&q=${encodeURIComponent(q)}`),
-  });
-  const all = Object.values(data?.counts ?? {}).reduce((a, b) => a + b, 0);
+  const { data, isLoading, error, refetch, isRefetching, fetchNextPage, hasNextPage } =
+    useInfiniteQuery({
+      queryKey: ['admin-orders', status, q],
+      initialPageParam: 1,
+      queryFn: ({ pageParam }) =>
+        api.get<OrdersRes>(
+          `/api/admin/orders?status=${status}&q=${encodeURIComponent(q)}&page=${pageParam}`
+        ),
+      getNextPageParam: (last, pages) =>
+        pages.length < last.totalPages ? pages.length + 1 : undefined,
+    });
+  const first = data?.pages[0];
+  const orders = data?.pages.flatMap(p => p.orders) ?? [];
+  const counts = first?.counts ?? {};
+  const all = Object.values(counts).reduce((a, b) => a + b, 0);
+  const toFulfil = (counts.CONFIRMED ?? 0) + (counts.PROCESSING ?? 0);
 
   return (
     <View style={s.root}>
       <Header title={t('Orders')} />
       <SearchBox value={text} onChange={setText} placeholder={t('Search order, name or email')} />
       <Chips
-        options={[{ id: '', label: 'All' }, ...STATUSES.map(id => ({ id, label: statusKey(id) }))]}
+        options={[
+          { id: '', label: 'All' },
+          { id: 'CONFIRMED,PROCESSING', label: 'To fulfil' },
+          ...STATUSES.map(id => ({ id, label: statusKey(id) })),
+        ]}
         value={status}
         onChange={setStatus}
-        counts={{ '': all, ...data?.counts }}
+        counts={{ '': all, 'CONFIRMED,PROCESSING': toFulfil, ...counts }}
       />
       <FlatList
-        data={data?.orders ?? []}
+        data={orders}
+        onEndReached={() => hasNextPage && fetchNextPage()}
         keyExtractor={o => o.id}
         contentContainerStyle={s.list}
         refreshControl={

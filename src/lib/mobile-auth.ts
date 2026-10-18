@@ -1,6 +1,7 @@
 import { jwtVerify } from 'jose';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!);
@@ -16,7 +17,14 @@ export async function getMobileUser(req: Request): Promise<MobileUser | null> {
   if (!auth?.startsWith('Bearer ')) return null;
   try {
     const { payload } = await jwtVerify(auth.slice(7), JWT_SECRET, { audience: 'mobile-access' });
-    return payload as unknown as MobileUser;
+    // The token's role can be stale: re-read it so a demoted or suspended user loses access now,
+    // not when the token expires (the cookie session re-reads it the same way).
+    const user = await prisma.user.findUnique({
+      where: { id: String(payload.id) },
+      select: { id: true, role: true, email: true, deletedAt: true },
+    });
+    if (!user || user.deletedAt) return null;
+    return { id: user.id, role: user.role, email: user.email };
   } catch {
     return null;
   }

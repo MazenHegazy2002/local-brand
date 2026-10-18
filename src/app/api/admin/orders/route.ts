@@ -20,17 +20,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const sp = new URL(req.url).searchParams;
-  const status = sp.get('status') ?? '';
+  // status may be a comma list, e.g. CONFIRMED,PROCESSING for "to fulfil".
+  const statuses = (sp.get('status') ?? '').split(',').filter(x => STATUSES.has(x));
   const q = (sp.get('q') ?? '').trim();
-  const page = Math.max(1, parseInt(sp.get('page') || '1'));
+  const page = Math.max(1, parseInt(sp.get('page') || '1') || 1);
   const take = 20;
 
   const where: Prisma.OrderWhereInput = {
-    ...(STATUSES.has(status) ? { status: status as OrderStatus } : {}),
+    ...(statuses.length ? { status: { in: statuses as OrderStatus[] } } : {}),
     ...(q
       ? {
           OR: [
-            { id: { startsWith: q.toLowerCase() } },
+            { id: { startsWith: q.replace(/^#/, '').toLowerCase() } },
             { guestEmail: { contains: q, mode: 'insensitive' } },
             { user: { name: { contains: q, mode: 'insensitive' } } },
             { user: { email: { contains: q, mode: 'insensitive' } } },

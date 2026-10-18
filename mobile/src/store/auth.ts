@@ -1,7 +1,13 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import { api, setOnSessionExpired, signIn as apiSignIn, signOut as apiSignOut } from '@/lib/api';
+import {
+  api,
+  setFmtLang,
+  setOnSessionExpired,
+  signIn as apiSignIn,
+  signOut as apiSignOut,
+} from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import type { Lang } from '@/lib/i18n';
 
@@ -92,3 +98,5 @@ setOnSessionExpired(async () => {
   queryClient.clear();
   useAuth.setState({ user: null });
 });
+
+useAuth.subscribe(s => setFmtLang(s.lang));

@@ -37,10 +37,15 @@ export async function POST(req: NextRequest) {
       passwordHash: true,
       avatarUrl: true,
       emailVerified: true,
+      deletedAt: true,
     },
   });
 
-  if (!user?.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
+  if (
+    !user?.passwordHash ||
+    user.deletedAt ||
+    !(await bcrypt.compare(password, user.passwordHash))
+  ) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
 

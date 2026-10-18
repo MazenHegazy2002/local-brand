@@ -34,7 +34,7 @@ async function requireAdmin(req: Request) {
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin(req);
-  if (!admin) return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
+  if (!admin) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
   if (id === admin.id)
     return NextResponse.json({ message: 'Cannot modify your own account' }, { status: 400 });
