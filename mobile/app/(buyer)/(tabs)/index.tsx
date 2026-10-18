@@ -9,9 +9,10 @@ import {
   FlatList,
   Dimensions,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { useRouter, type Href } from 'expo-router';
+import { useRouter, useIsFocused, type Href } from 'expo-router';
 import { Bell, Search, Heart } from 'lucide-react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
@@ -96,6 +97,7 @@ function ProductCard({ item }: { item: Product }) {
 
 export default function Home() {
   const router = useRouter();
+  const focused = useIsFocused();
   const { t } = useT();
   const [countdown, setCountdown] = useState(19855); // ~5:31 flash sale
 
@@ -120,6 +122,8 @@ export default function Home() {
 
   return (
     <View style={styles.root}>
+      {/* Light icons over the dark hero photo, only while Home is on screen. */}
+      {focused && <StatusBar barStyle="light-content" />}
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero */}
         <View style={styles.hero}>

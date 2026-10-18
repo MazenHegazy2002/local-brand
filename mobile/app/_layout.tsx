@@ -110,6 +110,7 @@ function PushNotifications() {
 export default function RootLayout() {
   const hydrate = useAuth(s => s.hydrate);
   const { rtl } = useT();
+  const role = useAuth(s => s.user?.role);
 
   const [fontsLoaded] = useFonts({
     'Outfit-Regular': require('../assets/fonts/Outfit-Regular.ttf'),
@@ -143,7 +144,25 @@ export default function RootLayout() {
         {/* `direction` mirrors row layouts live for Arabic, no restart needed. */}
         <View style={{ flex: 1, direction: rtl ? 'rtl' : 'ltr' }}>
           <VersionGate>
-            <Stack screenOptions={{ headerShown: false }} />
+            {/* Each section only exists for its role, so a section never mounts
+                (and fires its API calls) for the wrong user, even at launch. */}
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Protected guard={!role}>
+                <Stack.Screen name="(auth)" />
+              </Stack.Protected>
+              <Stack.Protected guard={role === 'BUYER'}>
+                <Stack.Screen name="(buyer)" />
+              </Stack.Protected>
+              <Stack.Protected guard={role === 'SELLER'}>
+                <Stack.Screen name="(seller)" />
+              </Stack.Protected>
+              <Stack.Protected guard={role === 'ADMIN'}>
+                <Stack.Screen name="(admin)" />
+              </Stack.Protected>
+              <Stack.Protected guard={role === 'AFFILIATE'}>
+                <Stack.Screen name="(affiliate)" />
+              </Stack.Protected>
+            </Stack>
           </VersionGate>
         </View>
       </QueryClientProvider>
