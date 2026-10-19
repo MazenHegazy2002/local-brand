@@ -84,7 +84,8 @@
         }
       ],
       "./plugins/with-quoted-bundle-script",
-      "./plugins/with-android-release-signing"
+      "./plugins/with-android-release-signing",
+      "./plugins/with-ios-scene-lifecycle"
     ],
     "experiments": {
       "typedRoutes": true
