@@ -21,7 +21,7 @@ const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
 const SLIDES_STATIC = [
   {
     title: "Egypt's home\nfor local brands",
-    sub: 'Discover independent Egyptian labels. Pay by card or cash on delivery, to all 27 governorates.',
+    sub: 'Discover independent Egyptian labels. Pay cash on delivery, InstaPay or Vodafone Cash, to all 27 governorates.',
   },
   {
     title: 'Fast delivery\nacross Egypt',

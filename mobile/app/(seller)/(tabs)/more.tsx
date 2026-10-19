@@ -1,12 +1,13 @@
 // Seller More
 import { View, Text, StyleSheet, ScrollView, Pressable, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Bell, Globe, Languages, LogOut, ChevronRight } from 'lucide-react-native';
+import { Bell, Globe, Languages, LogOut, ChevronRight, Trash2 } from 'lucide-react-native';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useAuth } from '@/store/auth';
 import { useT, LANGS, LANG_NAMES } from '@/lib/i18n';
 import { API_BASE, useSellerStats } from '@/lib/seller';
 import { StoreLogo } from '@/components/seller/StoreLogo';
+import { confirmDeleteAccount } from '@/lib/delete-account';
 
 const STATUS: Record<string, string> = {
   ACTIVE: 'Active',
@@ -69,6 +70,12 @@ export default function More() {
         label={t('Sign out')}
         danger
         onPress={() => signOut()}
+      />
+      <Row
+        icon={<Trash2 size={18} color={colors.danger} />}
+        label={t('Delete account')}
+        danger
+        onPress={() => confirmDeleteAccount(t, signOut)}
       />
     </ScrollView>
   );

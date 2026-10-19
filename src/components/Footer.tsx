@@ -31,6 +31,7 @@ const FOOTER_LINKS = {
     { label: 'FooterPrivacyPolicy', href: '/legal/privacy-policy' },
     { label: 'FooterTermsOfService', href: '/legal' },
     { label: 'FooterReturnsPolicy', href: '/legal/returns-refunds' },
+    { label: 'FooterDeleteAccount', href: '/delete-account' },
   ],
 } as const;
 

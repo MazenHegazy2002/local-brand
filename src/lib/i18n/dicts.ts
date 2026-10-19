@@ -333,6 +333,7 @@ export const en = {
   FooterPrivacyPolicy: 'Privacy Policy',
   FooterTermsOfService: 'Terms of Service',
   FooterReturnsPolicy: 'Returns Policy',
+  FooterDeleteAccount: 'Delete your account',
   FooterWhatsAppSupport: 'WhatsApp Support',
   FooterNewsletter: 'Newsletter',
   FooterNewsletterDesc:
@@ -680,6 +681,7 @@ export const ar: Partial<typeof en> = {
   FooterPrivacyPolicy: 'سياسة الخصوصية',
   FooterTermsOfService: 'شروط الخدمة',
   FooterReturnsPolicy: 'سياسة الإرجاع',
+  FooterDeleteAccount: 'حذف الحساب',
   FooterWhatsAppSupport: 'الدعم عبر واتساب',
   FooterNewsletter: 'النشرة البريدية',
   FooterNewsletterDesc: 'اشترك ليصلك كل جديد من المنتجات والعروض والخصومات والماركات المحلية.',
@@ -885,6 +887,7 @@ export const fk: Partial<typeof en> = {
   FooterPrivacyPolicy: 'seyaaset el 5osooseya',
   FooterTermsOfService: 'shoroot el 5edma',
   FooterReturnsPolicy: 'seyaaset el erga3',
+  FooterDeleteAccount: 'ems7 el account',
   FooterWhatsAppSupport: 'mosa3da 3la whatsapp',
   FooterNewsletter: 'el newsletter',
   FooterNewsletterDesc: '2eshtarak 3ashan twa5od a7dar kol gedid: 3orod, 5osomat, brands ma7aliya.',

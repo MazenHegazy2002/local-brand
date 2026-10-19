@@ -17,6 +17,7 @@ import { useAuth } from '@/store/auth';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useT, statusKey, LANGS, LANG_NAMES } from '@/lib/i18n';
+import { confirmDeleteAccount } from '@/lib/delete-account';
 
 const TIER_COLORS: Record<string, string> = {
   GOLD: '#f59e0b',
@@ -101,6 +102,16 @@ export default function Affiliate() {
     </View>
   );
 
+  const deleteAccount = (
+    <Pressable
+      style={styles.deleteBtn}
+      onPress={() => confirmDeleteAccount(t, signOut)}
+      accessibilityRole="button"
+    >
+      <Text style={styles.deleteText}>{t('Delete account')}</Text>
+    </Pressable>
+  );
+
   if (!data)
     return (
       <View style={styles.root}>
@@ -112,6 +123,7 @@ export default function Affiliate() {
             {error ? t('Could not load your affiliate account.') : t('No affiliate account found.')}
           </Text>
         )}
+        {!isLoading && deleteAccount}
       </View>
     );
 
@@ -264,6 +276,8 @@ export default function Affiliate() {
             );
           })}
         </View>
+
+        {deleteAccount}
       </ScrollView>
     </View>
   );
@@ -281,6 +295,8 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: 'Outfit-Bold', fontSize: 22, color: colors.ink },
   signOut: { fontFamily: 'Inter-SemiBold', fontSize: 13, color: colors.muted },
+  deleteBtn: { alignSelf: 'center', marginTop: 28, padding: 12 },
+  deleteText: { fontFamily: 'Inter-SemiBold', fontSize: 13.5, color: colors.danger },
   empty: { fontFamily: 'Inter-Regular', fontSize: 14, color: colors.muted, padding: spacing.page },
   inner: { paddingHorizontal: spacing.page, paddingBottom: 40 },
   tierCard: {
