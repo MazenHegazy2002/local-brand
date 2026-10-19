@@ -98,7 +98,18 @@ jobs:
               COMPOSE="docker-compose"
             fi
 
-            $COMPOSE pull app || $COMPOSE pull || true
+            # A failed pull used to be ignored, silently restarting the OLD image while
+            # the job reported success. Retry, then fail the deploy if it never lands.
+            PULLED=0
+            for i in 1 2 3 4 5; do
+              if $COMPOSE pull app; then PULLED=1; break; fi
+              echo "Image pull failed (attempt $i), retrying in 15s..."
+              sleep 15
+            done
+            if [ "$PULLED" != 1 ]; then
+              echo "::error::Could not pull the new app image; the running version was NOT updated."
+              exit 1
+            fi
             $COMPOSE down --remove-orphans || docker-compose down --remove-orphans || true
             $COMPOSE up -d --force-recreate --remove-orphans || docker-compose up -d --force-recreate --remove-orphans || true
             $COMPOSE exec -T app npx prisma migrate deploy || docker-compose exec -T app npx prisma migrate deploy || true
