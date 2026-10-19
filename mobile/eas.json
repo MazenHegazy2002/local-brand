@@ -21,7 +21,10 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://brandyy.shop"
       },
-      "autoIncrement": true
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      }
     }
   },
   "submit": {
@@ -32,7 +35,7 @@
       },
       "android": {
         "serviceAccountKeyPath": "./google-play-key.json",
-        "track": "production"
+        "track": "internal"
       }
     }
   }

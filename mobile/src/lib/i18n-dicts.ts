@@ -133,6 +133,8 @@ export const ar: Record<string, string> = {
   'Discover Egyptian makers': 'اكتشف الصنّاع المصريين',
   'Discover independent Egyptian labels. Pay by card or cash on delivery, to all 27 governorates.':
     'اكتشف البراندات المصرية المستقلة. ادفع بالبطاقة أو عند الاستلام، والتوصيل لكل الـ27 محافظة.',
+  'Discover independent Egyptian labels. Pay cash on delivery, InstaPay or Vodafone Cash, to all 27 governorates.':
+    'اكتشف البراندات المصرية المستقلة. ادفع كاش عند الاستلام أو InstaPay أو فودافون كاش، والتوصيل لكل الـ27 محافظة.',
   Disputes: 'النزاعات',
   Draft: 'مسودة',
   Drafts: 'المسودات',
@@ -467,6 +469,8 @@ export const ar: Record<string, string> = {
   Wishlist: 'المفضلة',
   'YOUR TIER': 'مستواك',
   Yesterday: 'امبارح',
+  'You are the only admin. Make another user an admin before deleting this account.':
+    'أنت المشرف الوحيد. اجعل مستخدمًا آخر مشرفًا قبل حذف هذا الحساب.',
   'You pick how to pay at checkout: card, cash on delivery, InstaPay or Vodafone Cash. Cards are processed securely by the payment provider and never stored on Brandyy.':
     'تختار طريقة الدفع عند إتمام الطلب: بطاقة، أو الدفع عند الاستلام، أو InstaPay أو فودافون كاش. تتم معالجة البطاقات بأمان لدى مزود الدفع ولا يتم حفظها على Brandyy.',
   'You receive': 'هتستلم',
@@ -644,6 +648,8 @@ export const franco: Record<string, string> = {
   'Discover Egyptian makers': 'Ekteshef el sona3 el masreyeen',
   'Discover independent Egyptian labels. Pay by card or cash on delivery, to all 27 governorates.':
     'Ekteshef brands masreya mostakela. Edfa3 bel card aw cash 3and el estelam, l kol el 27 mo7afza.',
+  'Discover independent Egyptian labels. Pay cash on delivery, InstaPay or Vodafone Cash, to all 27 governorates.':
+    'Ekteshef brands masreya mostakela. Edfa3 cash 3and el estelam, InstaPay aw Vodafone Cash, l kol el 27 mo7afza.',
   Disputes: 'El disputes',
   Draft: 'Draft',
   Drafts: 'El drafts',
@@ -981,6 +987,8 @@ export const franco: Record<string, string> = {
   Wishlist: 'El mofadala',
   'YOUR TIER': 'EL TIER BETA3AK',
   Yesterday: 'Embare7',
+  'You are the only admin. Make another user an admin before deleting this account.':
+    'Enta el admin el wa7eed. E3mel user tany admin abl ma tems7 el account da.',
   'You pick how to pay at checkout: card, cash on delivery, InstaPay or Vodafone Cash. Cards are processed securely by the payment provider and never stored on Brandyy.':
     'Enta bt5tar hatedfa3 ezay fel checkout: card, cash 3and el estelam, InstaPay aw Vodafone Cash. El cards bttem bamaan 3and sherket el daf3 w mesh bttsayev 3ala Brandyy.',
   'You receive': 'Hatestlem',

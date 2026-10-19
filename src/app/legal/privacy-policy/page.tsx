@@ -37,13 +37,10 @@ const staticContent = (
               <strong>Registered Entity:</strong> Brandy Egypt LLC
             </p>
             <p className="text-sm">
-              <strong>Registration No.:</strong> 12345/2024
-            </p>
-            <p className="text-sm">
               <strong>Address:</strong> Cairo, Egypt
             </p>
             <p className="text-sm">
-              <strong>Data Protection Officer:</strong> dpo@brandy.eg
+              <strong>Data Protection Officer:</strong> support@brandyy.shop
             </p>
           </div>
         </div>
@@ -217,8 +214,12 @@ const staticContent = (
           ))}
         </ul>
         <p className="text-gray-600 text-sm mt-4">
-          To exercise any of these rights, contact <strong>dpo@brandy.eg</strong> or use the Data
-          Export feature in your dashboard.
+          To exercise any of these rights, contact <strong>support@brandyy.shop</strong> or use the
+          Data Export feature in your dashboard. To delete your account, see{' '}
+          <a href="/delete-account" className="underline">
+            brandyy.shop/delete-account
+          </a>
+          .
         </p>
       </div>
 
@@ -231,10 +232,7 @@ const staticContent = (
         </p>
         <div className="space-y-2 text-sm">
           <p>
-            <strong>Email:</strong> dpo@brandy.eg
-          </p>
-          <p>
-            <strong>Phone:</strong> 16171
+            <strong>Email:</strong> support@brandyy.shop
           </p>
           <p>
             <strong>Address:</strong> Data Protection Officer, Brandy Egypt, Cairo, Egypt

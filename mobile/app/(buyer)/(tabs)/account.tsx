@@ -16,6 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/store/auth';
 import { useT, LANGS, LANG_NAMES } from '@/lib/i18n';
 import { api, fmtEGP } from '@/lib/api';
+import { confirmDeleteAccount } from '@/lib/delete-account';
 import type { OrderRow } from '../orders';
 import type { AddressRow } from '../addresses';
 import { colors, radii, spacing } from '@/lib/tokens';
@@ -47,38 +48,6 @@ export default function Account() {
       { text: t('Cancel'), style: 'cancel' },
       { text: t('Sign out'), style: 'destructive', onPress: () => signOut() },
     ]);
-  }
-
-  // Required by App Store + Google Play: in-app account deletion.
-  function confirmDelete() {
-    if (Platform.OS === 'web') {
-      if (
-        window.confirm(
-          t('Permanently delete your account and personal data? This cannot be undone.')
-        )
-      )
-        api
-          .post('/api/account/delete', {})
-          .then(() => signOut())
-          .catch(() => window.alert(t('Could not delete account. Please try again.')));
-      return;
-    }
-    Alert.alert(
-      t('Delete account'),
-      t('This permanently deletes your account and personal data. This cannot be undone.'),
-      [
-        { text: t('Cancel'), style: 'cancel' },
-        {
-          text: t('Delete'),
-          style: 'destructive',
-          onPress: () =>
-            api
-              .post('/api/account/delete', {})
-              .then(() => signOut())
-              .catch(() => Alert.alert(t('Could not delete account'), t('Please try again.'))),
-        },
-      ]
-    );
   }
 
   // Same query keys as the list screens, so counts and lists share one cache.
@@ -251,7 +220,10 @@ export default function Account() {
       <Pressable style={styles.signOutBtn} onPress={confirmSignOut}>
         <Text style={styles.signOutText}>{t('Sign out')}</Text>
       </Pressable>
-      <Pressable style={[styles.signOutBtn, { marginTop: 12 }]} onPress={confirmDelete}>
+      <Pressable
+        style={[styles.signOutBtn, { marginTop: 12 }]}
+        onPress={() => confirmDeleteAccount(t, signOut)}
+      >
         <Text style={[styles.signOutText, { color: '#dc2626' }]}>{t('Delete account')}</Text>
       </Pressable>
     </ScrollView>

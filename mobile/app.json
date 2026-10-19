@@ -30,8 +30,19 @@
       },
       "package": "shop.brandyy.app",
       "versionCode": 1,
-      "permissions": ["CAMERA", "READ_MEDIA_IMAGES", "NOTIFICATIONS"],
-      "blockedPermissions": ["android.permission.RECORD_AUDIO"]
+      "permissions": ["android.permission.POST_NOTIFICATIONS"],
+      "blockedPermissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -72,7 +83,8 @@
           "imageWidth": 200
         }
       ],
-      "./plugins/with-quoted-bundle-script"
+      "./plugins/with-quoted-bundle-script",
+      "./plugins/with-android-release-signing"
     ],
     "experiments": {
       "typedRoutes": true

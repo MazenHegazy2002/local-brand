@@ -11,6 +11,7 @@ import {
   Languages,
   Globe,
   LogOut,
+  Trash2,
   ChevronRight,
 } from 'lucide-react-native';
 import { useAuth } from '@/store/auth';
@@ -18,6 +19,7 @@ import { API_BASE } from '@/lib/seller';
 import { useT, LANGS, LANG_NAMES } from '@/lib/i18n';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { Header, confirm, glass, s } from '@/components/admin/ui';
+import { confirmDeleteAccount } from '@/lib/delete-account';
 
 export default function AdminMore() {
   const router = useRouter();
@@ -98,6 +100,13 @@ export default function AdminMore() {
         <LogOut size={18} color="#f87171" />
         <Text style={st.signOutText}>{t('Sign out')}</Text>
       </Pressable>
+      <Pressable
+        style={[st.signOut, st.deleteBtn]}
+        onPress={() => confirmDeleteAccount(t, signOut)}
+      >
+        <Trash2 size={18} color="#f87171" />
+        <Text style={st.signOutText}>{t('Delete account')}</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -148,4 +157,5 @@ const st = StyleSheet.create({
     borderColor: 'rgba(248,113,113,.4)',
   },
   signOutText: { fontFamily: 'Inter-SemiBold', fontSize: 15, color: '#f87171' },
+  deleteBtn: { marginTop: 12, borderColor: 'rgba(248,113,113,.2)' },
 });
