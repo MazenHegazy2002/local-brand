@@ -147,7 +147,7 @@ export default function Home() {
               </Pressable>
               <Pressable
                 style={styles.heroBtnWrap}
-                onPress={() => router.push('/notifications' as Href)}
+                onPress={() => router.push('/(buyer)/notifications' as Href)}
               >
                 <View style={styles.heroBtn}>
                   <Bell size={20} color="#fff" strokeWidth={2} />

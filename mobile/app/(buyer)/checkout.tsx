@@ -223,7 +223,9 @@ export default function Checkout() {
             >
               <Text style={styles.bold}>{t(o.label)}</Text>
               <Text style={styles.muted}>{t(o.sub)}</Text>
-              <Text style={styles.shipPrice}>{fmtEGP(o.price)}</Text>
+              <Text style={styles.shipPrice}>
+                {fmtEGP(o.id === shipMethod ? shippingFee : o.price)}
+              </Text>
             </Pressable>
           ))}
         </View>

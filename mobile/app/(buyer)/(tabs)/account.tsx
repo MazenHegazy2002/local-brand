@@ -73,9 +73,17 @@ export default function Account() {
   const addressCount = count(addresses.data?.addresses.length);
 
   const stats = [
-    { label: t('Orders'), value: count(orders.data?.orders.length), href: '/orders' as Href },
-    { label: t('Wishlist'), value: count(wishlist.data?.items.length), href: '/wishlist' as Href },
-    { label: t('Addresses'), value: addressCount, href: '/addresses' as Href },
+    {
+      label: t('Orders'),
+      value: count(orders.data?.orders.length),
+      href: '/(buyer)/orders' as Href,
+    },
+    {
+      label: t('Wishlist'),
+      value: count(wishlist.data?.items.length),
+      href: '/(buyer)/wishlist' as Href,
+    },
+    { label: t('Addresses'), value: addressCount, href: '/(buyer)/addresses' as Href },
   ];
 
   const menu = [
@@ -84,21 +92,21 @@ export default function Account() {
       Icon: Settings,
       badge: null,
       hint: null,
-      onPress: () => router.push('/edit-profile' as Href),
+      onPress: () => router.push('/(buyer)/edit-profile' as Href),
     },
     {
       label: t('My orders'),
       Icon: Package,
       badge: null,
       hint: null,
-      onPress: () => router.push('/orders' as Href),
+      onPress: () => router.push('/(buyer)/orders' as Href),
     },
     {
       label: t('Addresses'),
       Icon: MapPin,
       badge: null,
       hint: addressCount,
-      onPress: () => router.push('/addresses' as Href),
+      onPress: () => router.push('/(buyer)/addresses' as Href),
     },
     {
       label: t('Payment methods'),
@@ -165,7 +173,10 @@ export default function Account() {
           <Text style={styles.name}>{user?.name ?? t('Guest')}</Text>
           <Text style={styles.email}>{user?.email}</Text>
         </View>
-        <Pressable style={styles.settingsBtn} onPress={() => router.push('/edit-profile' as Href)}>
+        <Pressable
+          style={styles.settingsBtn}
+          onPress={() => router.push('/(buyer)/edit-profile' as Href)}
+        >
           <Settings size={20} color={colors.muted} strokeWidth={1.8} />
         </Pressable>
       </View>
