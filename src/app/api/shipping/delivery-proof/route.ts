@@ -1,3 +1,4 @@
+import { pushToUsers } from '@/lib/push';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -118,8 +119,14 @@ export async function POST(req: Request) {
       }
     });
 
-    // Best-effort delivery email to buyer
+    // Best-effort delivery email + phone push to buyer
     if (orderItem.order.userId) {
+      await pushToUsers(
+        [orderItem.order.userId],
+        'Delivered!',
+        `Your order item "${orderItem.productTitleSnapshot}" has been delivered.`,
+        `/dashboard/orders/${orderItem.orderId}`
+      );
       const user = await prisma.user.findUnique({ where: { id: orderItem.order.userId } });
       if (user?.email) {
         import('@/lib/email')
