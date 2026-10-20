@@ -113,6 +113,6 @@ export const setFmtLang = (lang: Lang) => {
 export function fmtEGP(amount: number | null | undefined, lang: Lang = fmtLang) {
   if (amount == null) return lang === 'ar' ? '— ج.م' : '— EGP';
   return lang === 'ar'
-    ? `${amount.toLocaleString('ar-EG')} ج.م`
-    : `${amount.toLocaleString('en-EG')} EGP`;
+    ? `${amount.toLocaleString('ar-EG', { maximumFractionDigits: 2 })} ج.م`
+    : `${amount.toLocaleString('en-EG', { maximumFractionDigits: 2 })} EGP`;
 }

@@ -322,7 +322,8 @@ export async function createOrderForUser(
       }
     }
 
-    const finalTotal = subtotalAfterDiscount + vatAmount + shippingFee;
+    // Money is stored in EGP to the piastre; float sums like 751.931 must not reach the order.
+    const finalTotal = Math.round((subtotalAfterDiscount + vatAmount + shippingFee) * 100) / 100;
 
     if (opts.quoteOnly) {
       return {

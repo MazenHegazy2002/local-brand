@@ -1,5 +1,14 @@
 // Seller More
-import { View, Text, StyleSheet, ScrollView, Pressable, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  Linking,
+  Alert,
+  Platform,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { Bell, Globe, Languages, LogOut, ChevronRight, Trash2 } from 'lucide-react-native';
 import { colors, radii, spacing } from '@/lib/tokens';
@@ -69,7 +78,17 @@ export default function More() {
         icon={<LogOut size={18} color={colors.danger} />}
         label={t('Sign out')}
         danger
-        onPress={() => signOut()}
+        onPress={() => {
+          // Same confirm as the buyer and admin sign-out.
+          if (Platform.OS === 'web') {
+            if (window.confirm(t('Sign out?'))) signOut();
+            return;
+          }
+          Alert.alert(t('Sign out'), t('Are you sure?'), [
+            { text: t('Cancel'), style: 'cancel' },
+            { text: t('Sign out'), style: 'destructive', onPress: () => signOut() },
+          ]);
+        }}
       />
       <Row
         icon={<Trash2 size={18} color={colors.danger} />}
