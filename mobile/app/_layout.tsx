@@ -1,13 +1,6 @@
 import { useEffect } from 'react';
 import { Platform, View } from 'react-native';
-import {
-  Stack,
-  router,
-  useRouter,
-  useSegments,
-  useRootNavigationState,
-  type Href,
-} from 'expo-router';
+import { Stack, router, type Href } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -30,36 +23,6 @@ Notifications.setNotificationHandler({
     shouldSetBadge: true,
   }),
 });
-
-function AuthGate() {
-  const { user, loading } = useAuth();
-  const segments = useSegments();
-  const router = useRouter();
-  // VersionGate may hold back the Stack; navigating before it mounts throws.
-  const navReady = !!useRootNavigationState()?.key;
-
-  useEffect(() => {
-    if (loading || !navReady) return;
-    const inAuth = segments[0] === '(auth)';
-    if (!user && !inAuth) {
-      router.replace('/(auth)');
-      return;
-    }
-    if (!user) return;
-    const dest =
-      user.role === 'SELLER'
-        ? '/(seller)'
-        : user.role === 'ADMIN'
-          ? '/(admin)'
-          : user.role === 'AFFILIATE'
-            ? '/(affiliate)'
-            : '/(buyer)';
-    const destGroup = dest.slice(1); // strip leading /
-    if (segments[0] !== destGroup) router.replace(dest as Href);
-  }, [user, loading, segments, navReady]);
-
-  return null;
-}
 
 // Rendered next to the Stack (after fonts load) so router.push has a mounted navigator.
 function PushNotifications() {
@@ -139,13 +102,13 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <AuthGate />
         <PushNotifications />
         {/* `direction` mirrors row layouts live for Arabic, no restart needed. */}
         <View style={{ flex: 1, direction: rtl ? 'rtl' : 'ltr' }}>
           <VersionGate>
-            {/* Each section only exists for its role, so a section never mounts
-                (and fires its API calls) for the wrong user, even at launch. */}
+            {/* Each section only exists for its role: signing in or out moves the user
+                to the first section available to them, and a section never mounts (or
+                fires its API calls) for the wrong user, even at launch. */}
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Protected guard={!role}>
                 <Stack.Screen name="(auth)" />
