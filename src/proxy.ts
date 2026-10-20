@@ -106,6 +106,9 @@ function buildCsp(nonce: string, isDev: boolean): string {
     'https://*.clarity.ms',
     'https://*.yandex.ru',
     'https://*.pinterest.com',
+    // Meta Conversions API gateway (Stape)
+    'https://capig.stape.us',
+    'https://capig-denis-77399-kdw3w5dgoa-uc.a.run.app',
   ];
 
   return [
@@ -115,10 +118,10 @@ function buildCsp(nonce: string, isDev: boolean): string {
     "font-src 'self' data: https://fonts.gstatic.com https://client.crisp.chat https://*.hotjar.com",
     "img-src 'self' data: https: blob:",
     `connect-src ${["'self'", ...connectHosts].join(' ')}`,
-    'frame-src https://js.stripe.com https://grey.paysky.io https://cube.paysky.io https://accept.paymob.com https://*.hotjar.com',
+    'frame-src https://www.facebook.com https://js.stripe.com https://grey.paysky.io https://cube.paysky.io https://accept.paymob.com https://*.hotjar.com',
     "frame-ancestors 'self'",
     "base-uri 'self'",
-    "form-action 'self'",
+    "form-action 'self' https://www.facebook.com",
   ].join('; ');
 }
 
