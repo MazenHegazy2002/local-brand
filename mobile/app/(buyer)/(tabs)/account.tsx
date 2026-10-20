@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
   },
   menuItemBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },
   menuLabel: { fontFamily: 'Inter-Medium', fontSize: 15, color: colors.ink, flex: 1 },
-  menuRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  menuRight: { flexDirection: 'row', alignItems: 'center', gap: 8, marginStart: 8 },
   menuHint: { fontFamily: 'Inter-Regular', fontSize: 14, color: colors.muted },
   signOutBtn: {
     marginHorizontal: spacing.page,
