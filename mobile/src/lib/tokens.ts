@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { initialWindowMetrics } from 'react-native-safe-area-context';
 
 export const colors = {
   primary: '#1e3b8a',
@@ -42,7 +43,8 @@ export const spacing = {
   page: 20,
   lg: 24,
   // Header top gap: clears the phone status bar; web has none, so stay tight.
-  top: Platform.OS === 'web' ? 16 : 56,
+  // Clears the real status bar / camera area (taller on newer iPhones), with a 56pt floor.
+  top: Platform.OS === 'web' ? 16 : Math.max(56, (initialWindowMetrics?.insets.top ?? 0) + 12),
 } as const;
 
 // Bottom tab bar

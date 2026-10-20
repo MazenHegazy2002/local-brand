@@ -106,6 +106,17 @@ export async function changeOrderStatus(
 export async function runStatusSideEffects(order: Order, status: OrderStatus) {
   if (order.status === status) return;
 
+  // Cash on delivery is collected by the courier at delivery.
+  if (
+    status === OrderStatus.DELIVERED &&
+    order.paymentMethod === 'CASH_ON_DELIVERY' &&
+    order.paymentStatus === 'UNPAID'
+  ) {
+    await prisma.order
+      .update({ where: { id: order.id }, data: { paymentStatus: 'PAID' } })
+      .catch(err => console.error('[order-status] Failed to mark COD order paid:', err));
+  }
+
   if (status === OrderStatus.DELIVERED && order.userId) {
     try {
       const loyaltyMod = await import('@/app/actions/loyalty');

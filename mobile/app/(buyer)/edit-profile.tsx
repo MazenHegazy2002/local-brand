@@ -9,6 +9,8 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -121,8 +123,16 @@ export default function EditProfile() {
       ) : error || !profile ? (
         <Text style={styles.empty}>{t("Couldn't load your profile. Please try again later.")}</Text>
       ) : (
-        <>
-          <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        // Lifts the Save bar above the keyboard; dragging the form dismisses the keyboard.
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView
+            contentContainerStyle={styles.body}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
             <View style={styles.avatarBlock}>
               <View>
                 <View style={styles.avatar}>
@@ -228,7 +238,7 @@ export default function EditProfile() {
               )}
             </Pressable>
           </View>
-        </>
+        </KeyboardAvoidingView>
       )}
     </View>
   );

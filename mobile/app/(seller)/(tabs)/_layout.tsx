@@ -42,7 +42,7 @@ export default function SellerLayout() {
         },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: t('Dashboard'), tabBarIcon: icon(LayoutGrid) }} />
+      <Tabs.Screen name="index" options={{ title: t('Home'), tabBarIcon: icon(LayoutGrid) }} />
       <Tabs.Screen
         name="orders"
         options={{

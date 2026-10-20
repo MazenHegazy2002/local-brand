@@ -169,9 +169,7 @@ function SalesCard({ data, range }: { data: SellerStats; range: Range }) {
         )}
       </View>
       <View style={styles.amountRow}>
-        <Text style={styles.amount}>
-          {Math.round(data.netSales).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-EG')}
-        </Text>
+        <Text style={styles.amount}>{Math.round(data.netSales).toLocaleString('en-EG')}</Text>
         <Text style={styles.amountUnit}>{lang === 'ar' ? 'ج.م' : 'EGP'}</Text>
       </View>
       <View style={styles.chart}>
