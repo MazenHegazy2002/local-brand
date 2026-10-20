@@ -1,24 +1,16 @@
 import { absUrl } from '@/lib/seller';
 // Screen 2f — Brand page
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Dimensions,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, BadgeCheck, Star } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
-import { colors, radii, spacing } from '@/lib/tokens';
+import { colors, radii, spacing, screen } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
 
-const { width } = Dimensions.get('window');
+const { width } = screen;
 const COVER_H = 230;
 const CARD_W = (width - spacing.page * 2 - 12) / 2;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

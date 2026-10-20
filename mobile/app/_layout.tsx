@@ -4,6 +4,7 @@ import { Stack, router, type Href } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import Constants from 'expo-constants';
@@ -73,6 +74,8 @@ function PushNotifications() {
 export default function RootLayout() {
   const hydrate = useAuth(s => s.hydrate);
   const { rtl } = useT();
+  // Side insets: devices with a side status bar / camera (and landscape notches).
+  const insets = useSafeAreaInsets();
   const role = useAuth(s => s.user?.role);
 
   const [fontsLoaded] = useFonts({
@@ -104,7 +107,16 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <PushNotifications />
         {/* `direction` mirrors row layouts live for Arabic, no restart needed. */}
-        <View style={{ flex: 1, direction: rtl ? 'rtl' : 'ltr' }}>
+        <View
+          style={{
+            flex: 1,
+            direction: rtl ? 'rtl' : 'ltr',
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
+            // The padded strip sits beside the side status bar; keep it dark like the bezel.
+            backgroundColor: '#000',
+          }}
+        >
           <VersionGate>
             {/* Each section only exists for its role: signing in or out moves the user
                 to the first section available to them, and a section never mounts (or

@@ -5,17 +5,16 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  Dimensions,
   ImageBackground,
   StatusBar,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, radii, spacing } from '@/lib/tokens';
+import { colors, radii, spacing, screen } from '@/lib/tokens';
 import { useT, LANGS, LANG_NAMES } from '@/lib/i18n';
 import { useAuth } from '@/store/auth';
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = screen;
 const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
 
 const SLIDES_STATIC = [

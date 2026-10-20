@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Dimensions, Platform } from 'react-native';
 import { initialWindowMetrics } from 'react-native-safe-area-context';
 
 export const colors = {
@@ -66,3 +66,9 @@ export const fonts = {
   cairo: 'Cairo',
   amiri: 'Amiri',
 } as const;
+
+// Usable screen size: the root layout pads the side safe areas (side status bar /
+// camera on newer iPhones, landscape notches), so layouts must size to what is left.
+const win = Dimensions.get('window');
+const side = initialWindowMetrics?.insets ?? { left: 0, right: 0 };
+export const screen = { width: win.width - side.left - side.right, height: win.height };
