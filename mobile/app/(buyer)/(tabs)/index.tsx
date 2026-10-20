@@ -7,7 +7,6 @@ import {
   ScrollView,
   Pressable,
   FlatList,
-  Dimensions,
   ActivityIndicator,
   StatusBar,
 } from 'react-native';
@@ -16,11 +15,11 @@ import { useRouter, useIsFocused, type Href } from 'expo-router';
 import { Bell, Search, Heart } from 'lucide-react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
-import { colors, spacing, radii } from '@/lib/tokens';
+import { colors, spacing, radii, screen } from '@/lib/tokens';
 import { useAuth } from '@/store/auth';
 import { useT } from '@/lib/i18n';
 
-const { width } = Dimensions.get('window');
+const { width } = screen;
 const HERO_H = 500;
 
 interface Product {

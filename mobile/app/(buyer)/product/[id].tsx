@@ -7,7 +7,6 @@ import {
   FlatList,
   ScrollView,
   Pressable,
-  Dimensions,
   ActivityIndicator,
   Share,
 } from 'react-native';
@@ -17,10 +16,10 @@ import { Heart, Share2, ArrowLeft, BadgeCheck, Star, Sparkles, Truck } from 'luc
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { useCart } from '@/store/cart';
-import { colors, radii, spacing } from '@/lib/tokens';
+import { colors, radii, spacing, screen } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
 
-const { width } = Dimensions.get('window');
+const { width } = screen;
 const GALLERY_H = 440;
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 

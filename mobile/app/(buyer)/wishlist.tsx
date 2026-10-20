@@ -1,24 +1,16 @@
 // Screen 3d — Wishlist
 import { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  Dimensions,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Heart } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { useCart } from '@/store/cart';
-import { colors, radii, spacing } from '@/lib/tokens';
+import { colors, radii, spacing, screen } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
 
-const { width } = Dimensions.get('window');
+const { width } = screen;
 const CARD_W = (width - spacing.page * 2 - 12) / 2;
 
 interface WishItem {
