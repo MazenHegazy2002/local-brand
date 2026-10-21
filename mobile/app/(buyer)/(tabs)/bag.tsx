@@ -103,7 +103,7 @@ export default function Bag() {
             <Image source={{ uri: item.image }} style={styles.itemImg} contentFit="cover" />
             <View style={styles.itemInfo}>
               <Text style={styles.itemBrand} numberOfLines={1}>
-                {t('BRANDYY STORE')}
+                {item.brand ? item.brand.toUpperCase() : t('BRANDYY STORE')}
               </Text>
               <Text style={styles.itemName} numberOfLines={2}>
                 {item.title}
