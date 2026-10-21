@@ -155,6 +155,9 @@ export async function GET(req: Request) {
       where.OR = [
         { title: { contains: q, mode: 'insensitive' } },
         { description: { contains: q, mode: 'insensitive' } },
+        { titleAr: { contains: q, mode: 'insensitive' } },
+        { brand: { contains: q, mode: 'insensitive' } },
+        { seller: { storeName: { contains: q, mode: 'insensitive' } } },
       ];
     }
 
