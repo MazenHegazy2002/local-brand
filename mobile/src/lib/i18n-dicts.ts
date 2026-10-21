@@ -471,8 +471,8 @@ export const ar: Record<string, string> = {
   Yesterday: 'امبارح',
   'You are the only admin. Make another user an admin before deleting this account.':
     'أنت المشرف الوحيد. اجعل مستخدمًا آخر مشرفًا قبل حذف هذا الحساب.',
-  'You pick how to pay at checkout: card, cash on delivery, InstaPay or Vodafone Cash. Cards are processed securely by the payment provider and never stored on Brandyy.':
-    'تختار طريقة الدفع عند إتمام الطلب: بطاقة، أو الدفع عند الاستلام، أو InstaPay أو فودافون كاش. تتم معالجة البطاقات بأمان لدى مزود الدفع ولا يتم حفظها على Brandyy.',
+  'You pick how to pay at checkout: cash on delivery, InstaPay or Vodafone Cash. Brandyy never stores card details.':
+    'تختار طريقة الدفع عند إتمام الطلب: الدفع عند الاستلام أو InstaPay أو فودافون كاش. Brandyy لا تحفظ أي بيانات بطاقات.',
   'You receive': 'هتستلم',
   'Your bag is empty': 'الشنطة فاضية',
   'Your name': 'اسمك',
@@ -989,8 +989,8 @@ export const franco: Record<string, string> = {
   Yesterday: 'Embare7',
   'You are the only admin. Make another user an admin before deleting this account.':
     'Enta el admin el wa7eed. E3mel user tany admin abl ma tems7 el account da.',
-  'You pick how to pay at checkout: card, cash on delivery, InstaPay or Vodafone Cash. Cards are processed securely by the payment provider and never stored on Brandyy.':
-    'Enta bt5tar hatedfa3 ezay fel checkout: card, cash 3and el estelam, InstaPay aw Vodafone Cash. El cards bttem bamaan 3and sherket el daf3 w mesh bttsayev 3ala Brandyy.',
+  'You pick how to pay at checkout: cash on delivery, InstaPay or Vodafone Cash. Brandyy never stores card details.':
+    'Enta bt5tar hatedfa3 ezay fel checkout: cash 3and el estelam, InstaPay aw Vodafone Cash. Brandyy mesh bt7faz ay bayanat cards.',
   'You receive': 'Hatestlem',
   'Your bag is empty': 'El shanta fadya',
   'Your name': 'Esmak',

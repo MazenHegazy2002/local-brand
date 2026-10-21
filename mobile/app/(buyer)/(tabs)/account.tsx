@@ -117,7 +117,7 @@ export default function Account() {
         Alert.alert(
           t('Payment methods'),
           t(
-            'You pick how to pay at checkout: card, cash on delivery, InstaPay or Vodafone Cash. Cards are processed securely by the payment provider and never stored on Brandyy.'
+            'You pick how to pay at checkout: cash on delivery, InstaPay or Vodafone Cash. Brandyy never stores card details.'
           )
         ),
     },
