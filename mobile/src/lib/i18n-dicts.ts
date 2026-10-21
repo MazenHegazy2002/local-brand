@@ -174,7 +174,7 @@ export const ar: Record<string, string> = {
   'GMV today': 'المبيعات النهارده',
   'Get help': 'اطلب مساعدة',
   'Get started': 'يلا نبدأ',
-  'Governorate (e.g. Cairo)': 'المحافظة (مثلًا القاهرة)',
+  Governorate: 'المحافظة',
   Guest: 'ضيف',
   'Heart items while browsing to save them here':
     'دوس على القلب وانت بتتصفح عشان تحفظ المنتجات هنا',
@@ -690,7 +690,7 @@ export const franco: Record<string, string> = {
   'GMV today': 'El mabe3at el naharda',
   'Get help': 'Etlob mosa3da',
   'Get started': 'Yalla nebda2',
-  'Governorate (e.g. Cairo)': 'El mo7afza (masalan el Qahera)',
+  Governorate: 'El mo7afza',
   Guest: 'Deif',
   'Heart items while browsing to save them here':
     'Dos 3al alb w enta bt-browse 3ashan t-save el 7agat hena',
