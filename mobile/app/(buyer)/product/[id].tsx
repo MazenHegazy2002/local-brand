@@ -121,6 +121,7 @@ export default function ProductDetail() {
   const productColors = [...new Set(variants.map(v => v.color).filter((c): c is string => !!c))];
   const outOfStock = variants.length > 0 && variants.every(v => (v.stockCount ?? 0) <= 0);
   const brandName = product.brand || seller?.seller.storeName || '';
+  const needSize = sizes.length > 0 && !selectedSize;
   const rating = parseFloat(reviews?.stats.averageRating ?? '0');
   const points = product.loyaltyPointPct
     ? Math.floor((product.basePrice * product.loyaltyPointPct) / 100)
@@ -133,7 +134,8 @@ export default function ProductDetail() {
       image: images[0],
       basePrice: product!.basePrice,
       size: selectedSize,
-      color: selectedColor,
+      color: selectedColor ?? productColors[0],
+      brand: brandName,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -329,12 +331,22 @@ export default function ProductDetail() {
       <View style={styles.footer}>
         <Text style={styles.points}>{t('Earn +{n} pts', { n: points })}</Text>
         <Pressable
-          style={[styles.addBtn, added && styles.addBtnDone, outOfStock && styles.addBtnOff]}
+          style={[
+            styles.addBtn,
+            added && styles.addBtnDone,
+            (outOfStock || needSize) && styles.addBtnOff,
+          ]}
           onPress={handleAddToBag}
-          disabled={outOfStock}
+          disabled={outOfStock || needSize}
         >
           <Text style={styles.addBtnText}>
-            {outOfStock ? t('Out of stock') : added ? t('Added ✓') : t('Add to bag')}
+            {outOfStock
+              ? t('Out of stock')
+              : needSize
+                ? t('Pick a size')
+                : added
+                  ? t('Added ✓')
+                  : t('Add to bag')}
           </Text>
         </Pressable>
       </View>

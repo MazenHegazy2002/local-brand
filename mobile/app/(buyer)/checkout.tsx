@@ -20,6 +20,7 @@ import { useAuth } from '@/store/auth';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
+import { GOVERNORATES } from '@/lib/governorates';
 
 // Card (PaySky) and Fawry stay off until /api/checkout supports them for the app.
 type PayMethod = 'cod' | 'instapay' | 'vodafone_cash';
@@ -345,7 +346,7 @@ function AddressSheet({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [form, setForm] = useState({ street: '', city: '', governorate: '', phone: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -369,7 +370,6 @@ function AddressSheet({
   const fields: { key: keyof typeof form; placeholder: string }[] = [
     { key: 'street', placeholder: 'Street, building, apartment' },
     { key: 'city', placeholder: 'City / area (e.g. Nasr City)' },
-    { key: 'governorate', placeholder: 'Governorate (e.g. Cairo)' },
     { key: 'phone', placeholder: 'Phone (optional)' },
   ];
 
@@ -389,11 +389,32 @@ function AddressSheet({
             keyboardType={f.key === 'phone' ? 'phone-pad' : 'default'}
           />
         ))}
+        <Text style={styles.govLabel}>{t('Governorate')}</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 8 }}
+        >
+          {GOVERNORATES.map(g => {
+            const active = form.governorate === g.value;
+            return (
+              <Pressable
+                key={g.value}
+                style={[styles.govChip, active && styles.govChipActive]}
+                onPress={() => set('governorate')(g.value)}
+              >
+                <Text style={[styles.govText, active && styles.govTextActive]}>
+                  {lang === 'ar' ? g.ar : g.value}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
         {!!error && <Text style={styles.error}>{error}</Text>}
         <Pressable
-          style={[styles.ctaBtn, saving && { opacity: 0.6 }]}
+          style={[styles.ctaBtn, (saving || !form.governorate) && { opacity: 0.6 }]}
           onPress={save}
-          disabled={saving}
+          disabled={saving || !form.governorate}
         >
           {saving ? (
             <ActivityIndicator color="#fff" />
@@ -519,4 +540,16 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   error: { fontFamily: 'Inter-Medium', fontSize: 13, color: '#dc2626' },
+  govLabel: { fontFamily: 'Inter-SemiBold', fontSize: 13, color: colors.ink },
+  govChip: {
+    paddingHorizontal: 14,
+    height: 38,
+    justifyContent: 'center',
+    borderRadius: 19,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
+  },
+  govChipActive: { backgroundColor: colors.navy, borderColor: colors.navy },
+  govText: { fontFamily: 'Inter-Medium', fontSize: 14, color: colors.ink },
+  govTextActive: { color: '#fff' },
 });

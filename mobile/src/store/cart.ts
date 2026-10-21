@@ -8,6 +8,7 @@ interface CartItem {
   qty: number;
   size?: string;
   color?: string;
+  brand?: string;
 }
 
 // One bag line per product + size + color, so two colors of the same item stay separate.
