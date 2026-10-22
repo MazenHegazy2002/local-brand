@@ -26,6 +26,7 @@ const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 // API variants carry color/sizes in a JSON `attributes` string; flatten to one entry per size.
 interface RawVariant {
   title?: string | null;
+  price?: number | string | null;
   attributes?: string | null;
   stockCount?: number;
 }
@@ -45,7 +46,8 @@ function flattenVariant(v: RawVariant) {
   const color = raw && raw.toLowerCase() !== 'default' ? raw : undefined;
   const sizes = attr.sizes?.length ? attr.sizes : attr.size ? [attr.size] : [undefined];
   const image = attr.image || attr.imageUrl || undefined;
-  return sizes.map(size => ({ color, size, image, stockCount: v.stockCount }));
+  const price = v.price != null ? Number(v.price) : undefined;
+  return sizes.map(size => ({ color, size, image, price, stockCount: v.stockCount }));
 }
 
 interface Product {
@@ -58,7 +60,7 @@ interface Product {
   isVerifiedLocal: boolean;
   loyaltyPointPct: number | null;
   images: { url: string }[];
-  variants?: { size?: string; color?: string; stockCount?: number }[];
+  variants?: { size?: string; color?: string; price?: number; stockCount?: number }[];
 }
 
 export default function ProductDetail() {
@@ -122,19 +124,26 @@ export default function ProductDetail() {
   const outOfStock = variants.length > 0 && variants.every(v => (v.stockCount ?? 0) <= 0);
   const brandName = product.brand || seller?.seller.storeName || '';
   const needSize = sizes.length > 0 && !selectedSize;
+  // Sizes and colors can carry their own price; show and charge the picked variant's.
+  const pickedColor = selectedColor ?? productColors[0];
+  const picked =
+    variants.find(v => v.size === selectedSize && v.color === pickedColor) ??
+    variants.find(v => v.size === selectedSize) ??
+    (sizes.length === 0 ? variants.find(v => v.color === pickedColor) : undefined);
+  const unitPrice = picked?.price || product.basePrice;
   const rating = parseFloat(reviews?.stats.averageRating ?? '0');
   const points = product.loyaltyPointPct
-    ? Math.floor((product.basePrice * product.loyaltyPointPct) / 100)
-    : Math.max(10, Math.floor(product.basePrice * 0.1));
+    ? Math.floor((unitPrice * product.loyaltyPointPct) / 100)
+    : Math.max(10, Math.floor(unitPrice * 0.1));
 
   function handleAddToBag() {
     add({
       productId: product!.id,
       title: product!.title,
       image: images[0],
-      basePrice: product!.basePrice,
+      basePrice: unitPrice,
       size: selectedSize,
-      color: selectedColor ?? productColors[0],
+      color: pickedColor,
       brand: brandName,
     });
     setAdded(true);
@@ -219,7 +228,7 @@ export default function ProductDetail() {
                 <BadgeCheck size={14} color="#fff" fill={colors.primary} strokeWidth={2} />
               ) : null}
             </Pressable>
-            <Text style={styles.price}>{fmtEGP(product.basePrice)}</Text>
+            <Text style={styles.price}>{fmtEGP(unitPrice)}</Text>
           </View>
 
           <Text style={styles.title}>{product.title.trim()}</Text>
@@ -251,6 +260,12 @@ export default function ProductDetail() {
                       key={c}
                       onPress={() => {
                         setSelectedColor(c);
+                        // Drop a size this color doesn't come in, so the price never mixes variants.
+                        if (
+                          selectedSize &&
+                          !variants.some(v => v.color === c && v.size === selectedSize)
+                        )
+                          setSelectedSize(undefined);
                         const idx = baseImages.indexOf(uri);
                         setExtraImg(idx < 0 ? uri : undefined);
                         const target = idx < 0 ? 0 : idx;
@@ -288,7 +303,13 @@ export default function ProductDetail() {
                     <Pressable
                       key={s}
                       disabled={soldOut}
-                      onPress={() => setSelectedSize(s)}
+                      onPress={() => {
+                        setSelectedSize(s);
+                        // Follow the size to a color that comes in it.
+                        const match = variants.find(v => v.size === s && v.color);
+                        if (match && !variants.some(v => v.size === s && v.color === pickedColor))
+                          setSelectedColor(match.color);
+                      }}
                       style={[
                         styles.sizePill,
                         active && styles.sizePillActive,
