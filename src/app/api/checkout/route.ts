@@ -62,15 +62,22 @@ export async function POST(req: NextRequest) {
   const orderItems = [];
   for (const i of items) {
     const options = variants.filter(v => v.productId === i.productId);
-    const byColor = options.find(v => {
+    // Sizes can be priced differently, so a variant matching both size and color wins,
+    // then size alone, then color alone.
+    const same = (a: unknown, b?: string) =>
+      !!b && String(a ?? '').toLowerCase() === b.toLowerCase();
+    const score = (v: (typeof options)[number]) => {
+      let attr: { color?: string; size?: string; sizes?: string[] } = {};
       try {
-        const color = JSON.parse(v.attributes ?? '{}').color;
-        return i.color && String(color).toLowerCase() === i.color.toLowerCase();
-      } catch {
-        return false;
-      }
-    });
-    const variant = byColor ?? options[0];
+        attr = JSON.parse(v.attributes ?? '{}') ?? {};
+      } catch {}
+      const sizeHit = same(attr.size, i.size) || !!attr.sizes?.some(s => same(s, i.size));
+      return (sizeHit ? 2 : 0) + (same(attr.color, i.color) ? 1 : 0);
+    };
+    const variant = options.reduce<(typeof options)[number] | undefined>(
+      (best, v) => (!best || score(v) > score(best) ? v : best),
+      undefined
+    );
     if (!variant) {
       return NextResponse.json(
         { error: 'An item in your bag is no longer available' },
