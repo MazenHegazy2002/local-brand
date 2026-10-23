@@ -67,6 +67,8 @@ jobs:
           tags: |
             ghcr.io/${{ steps.repo.outputs.REPO_NAME }}:latest
             ghcr.io/${{ steps.repo.outputs.REPO_NAME }}:${{ github.sha }}
+          build-args: |
+            NEXT_DEPLOYMENT_ID=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
