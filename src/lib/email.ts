@@ -16,6 +16,36 @@ export interface SendResult {
   error?: string;
 }
 
+/**
+ * Plain-text copy of an HTML email. Gmail and other filters score HTML-only mail
+ * as more spam-like, so every message carries both parts.
+ */
+export function htmlToText(html: string): string {
+  return html
+    .replace(/<(style|script|head)[^>]*>[\s\S]*?<\/\1>/gi, '')
+    .replace(
+      /<a\s[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi,
+      (_m, href: string, label: string) => {
+        const text = label.replace(/<[^>]+>/g, '').trim();
+        return text && text !== href ? `${text} (${href})` : href;
+      }
+    )
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|h[1-6]|tr|li|table)>/gi, '\n')
+    .replace(/<\/(td|th)>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   return (await sendEmailDetailed(options)).ok;
 }
@@ -23,6 +53,8 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
 /** Same as sendEmail, but says which provider was used and why it failed. */
 export async function sendEmailDetailed(options: EmailOptions): Promise<SendResult> {
   const { to, subject, html } = options;
+  const text = htmlToText(html);
+  const replyTo = SUPPORT_EMAIL;
 
   let provider = 'resend';
   let emailFrom = 'noreply@brandyy.shop';
@@ -96,8 +128,10 @@ export async function sendEmailDetailed(options: EmailOptions): Promise<SendResu
         await transporter.sendMail({
           from: `"${emailFromName}" <${emailFrom}>`,
           to,
+          replyTo,
           subject,
           html,
+          text,
         });
       } catch (err) {
         // The server may refuse a From the login doesn't own (Stalwart: "501 5.5.4 You
@@ -107,7 +141,14 @@ export async function sendEmailDetailed(options: EmailOptions): Promise<SendResu
         );
         if (!refusedFrom || !smtpUser.includes('@') || smtpUser === emailFrom) throw err;
         console.warn(`[email] SMTP refused From ${emailFrom}; retrying from ${smtpUser}`);
-        await transporter.sendMail({ from: `"${emailFromName}" <${smtpUser}>`, to, subject, html });
+        await transporter.sendMail({
+          from: `"${emailFromName}" <${smtpUser}>`,
+          to,
+          replyTo,
+          subject,
+          html,
+          text,
+        });
       }
       return { ok: true, provider: 'smtp' };
     } catch (err) {
@@ -125,8 +166,10 @@ export async function sendEmailDetailed(options: EmailOptions): Promise<SendResu
       const { data, error } = await resend.emails.send({
         from: fromAddress,
         to,
+        replyTo,
         subject,
         html,
+        text,
       });
       if (error) {
         console.error('[email] Resend rejected the message:', JSON.stringify(error));
