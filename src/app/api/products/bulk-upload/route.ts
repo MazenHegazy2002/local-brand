@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
 import { isAllowedImageUrl } from '@/lib/allowed-image-hosts';
+import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
 
 interface BulkProductRow {
   title?: string;
@@ -336,6 +337,21 @@ export async function POST(req: NextRequest) {
         results.failed++;
         results.errors.push(`Row ${rowNumber}: ${(err as Error).message}`);
       }
+    }
+
+    if (results.success > 0) {
+      void notifyAdminEvent({
+        icon: '📦',
+        title: `${profile.storeName} bulk-uploaded ${results.success} products`,
+        summary: `${profile.storeName} imported ${results.success} products from a spreadsheet.`,
+        details: {
+          Store: profile.storeName,
+          Published: results.published,
+          Drafts: results.drafts,
+          'Failed rows': results.failed,
+        },
+        link: '/admin-os?tab=products',
+      });
     }
 
     return NextResponse.json(results);

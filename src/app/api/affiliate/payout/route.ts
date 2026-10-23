@@ -4,6 +4,7 @@ import { getRequestUser } from '@/lib/mobile-auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { AffiliatePayoutMethod } from '@/generated/client';
+import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
 
 const PayoutSchema = z.object({
   method: z.enum(['VODAFONE_CASH', 'ORANGE_MONEY', 'ETISALAT_CASH', 'INSTAPAY', 'BANK_TRANSFER']),
@@ -78,6 +79,18 @@ export async function POST(req: NextRequest) {
       }
 
       return { payoutId: payout.id, amountEgp: totalAmount };
+    });
+
+    void notifyAdminEvent({
+      icon: '💸',
+      title: `Affiliate payout requested: ${result.amountEgp.toLocaleString()} EGP (${affiliate.promoCode})`,
+      summary: `Affiliate ${affiliate.promoCode} asked to be paid ${result.amountEgp.toLocaleString()} EGP.`,
+      details: {
+        Affiliate: affiliate.promoCode,
+        Amount: `${result.amountEgp.toLocaleString()} EGP`,
+        Method: parsed.data.method,
+      },
+      link: '/admin-os?tab=affiliates',
     });
 
     return NextResponse.json({

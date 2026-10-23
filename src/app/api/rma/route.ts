@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
 import { rmaSchema } from '@/lib/validation';
+import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
 
 // POST /api/rma — buyer requests a return
 export async function POST(req: Request) {
@@ -85,6 +86,21 @@ export async function POST(req: Request) {
     });
 
     const caseRef = `RMA-${orderItemId.slice(0, 8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+
+    void notifyAdminEvent({
+      icon: '↩️',
+      title: `Return requested: ${orderItem.productTitleSnapshot}`,
+      summary: `${session.user.email || 'A buyer'} asked to return an item from order #${orderItem.orderId.slice(0, 8)}.`,
+      details: {
+        Case: caseRef,
+        Product: orderItem.productTitleSnapshot,
+        Seller: orderItem.sellerNameSnapshot,
+        Quantity: orderItem.quantity,
+        Reason: reason,
+        Details: details,
+      },
+      link: '/admin-os?tab=orders',
+    });
 
     return NextResponse.json(
       {

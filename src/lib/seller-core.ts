@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import type { OrderItemStatus } from '@/generated/client';
+import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
 
 // Session-free cores shared by the web server actions (src/app/actions/seller.ts)
 // and the mobile Bearer API routes (src/app/api/seller/**). Callers resolve
@@ -33,6 +34,21 @@ export async function updateOrderItemStatusCore(
   });
 
   const parentOrder = updatedItem.order;
+
+  if (user.role === 'SELLER' && status === 'CANCELLED') {
+    void notifyAdminEvent({
+      icon: '❌',
+      title: `Seller cancelled an item in order #${parentOrder.id.slice(0, 8)}`,
+      summary: `${updatedItem.sellerNameSnapshot} cancelled ${updatedItem.productTitleSnapshot}.`,
+      details: {
+        Order: parentOrder.id,
+        Product: updatedItem.productTitleSnapshot,
+        Seller: updatedItem.sellerNameSnapshot,
+        Quantity: updatedItem.quantity,
+      },
+      link: '/admin-os?tab=orders',
+    });
+  }
   // Only check transitions if the order is still "live"
   if (parentOrder.status !== 'CANCELLED' && parentOrder.status !== 'RETURNED') {
     // When seller marks all items as CONFIRMED (packed/ready), move order to PROCESSING.
@@ -275,6 +291,21 @@ export async function createProductForSeller(
         ],
       },
     },
+  });
+
+  void notifyAdminEvent({
+    icon: '🆕',
+    title: `New product from ${seller.storeName}: ${product.title}`,
+    summary: `${seller.storeName} added ${product.title}${published ? '. It is live now.' : ' as a draft.'}`,
+    details: {
+      Store: seller.storeName,
+      Product: product.title,
+      Price: `${product.basePrice.toLocaleString()} EGP`,
+      Status: published
+        ? 'Published'
+        : `Draft${publishBlockedReason ? ` (${publishBlockedReason})` : ''}`,
+    },
+    link: `/product/${product.id}`,
   });
 
   revalidatePath('/seller-hub');

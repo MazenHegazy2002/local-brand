@@ -8,6 +8,7 @@ import { cookies } from 'next/headers';
 import { OrderStatus, OrderItemStatus } from '@/generated/client';
 import type { SessionUser } from '@/types';
 import { createOrderForUser, type CreateOrderResult } from '@/lib/order-creator';
+import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
 
 // User-facing order action. Reads the userId from the NextAuth session and
 // delegates to `createOrderForUser`. Server-to-server callers (e.g. the
@@ -89,6 +90,18 @@ export async function cancelOrder(
       }
     })();
 
+    void notifyAdminEvent({
+      icon: '❌',
+      title: `Order #${orderId.slice(0, 8)} cancelled by the buyer`,
+      summary: `${session?.user?.email || 'The buyer'} cancelled order #${orderId.slice(0, 8)}.`,
+      details: {
+        Order: orderId,
+        Total: `${order.totalAmount.toLocaleString()} EGP`,
+        Reason: reason,
+      },
+      link: '/admin-os?tab=orders',
+    });
+
     revalidatePath('/dashboard');
     revalidatePath('/seller-hub');
     revalidatePath('/admin-os');
@@ -135,6 +148,20 @@ export async function requestReturn(
         where: { id: orderItemId },
         data: { status: OrderItemStatus.RETURN_REQUESTED },
       });
+    });
+
+    void notifyAdminEvent({
+      icon: '↩️',
+      title: `Return requested: ${orderItem.productTitleSnapshot}`,
+      summary: `${session?.user?.email || 'A buyer'} asked to return an item from order #${orderItem.orderId.slice(0, 8)}.`,
+      details: {
+        Product: orderItem.productTitleSnapshot,
+        Seller: orderItem.sellerNameSnapshot,
+        Quantity: orderItem.quantity,
+        Reason: reason,
+        Details: details,
+      },
+      link: '/admin-os?tab=orders',
     });
 
     revalidatePath('/dashboard');

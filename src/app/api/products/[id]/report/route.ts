@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
+import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
 
 const reportSchema = z.object({
   reason: z.enum(['INACCURATE', 'COUNTERFEIT', 'HARASSMENT', 'SPAM', 'OTHER']),
@@ -56,6 +57,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         message: `Reported Product: ${product.title}\nID: ${productId}\nReason: ${parsed.data.reason}\n\nUser Message:\n${parsed.data.message}`,
         priority: 'high',
       },
+    });
+
+    void notifyAdminEvent({
+      icon: '🚩',
+      title: `Product reported (${parsed.data.reason}): ${product.title}`,
+      summary: `${reporterName} (${reporterEmail}) reported ${product.title}.`,
+      details: {
+        Ticket: ticketId,
+        Product: product.title,
+        Reason: parsed.data.reason,
+        Message: parsed.data.message,
+      },
+      link: '/admin-os?tab=support',
     });
 
     return NextResponse.json(

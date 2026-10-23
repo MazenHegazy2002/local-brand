@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
 import { createReviewSchema } from '@/lib/validation';
+import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
 
 export async function POST(req: Request) {
   try {
@@ -80,6 +81,14 @@ export async function POST(req: Request) {
         },
       }),
     ]);
+
+    void notifyAdminEvent({
+      icon: '⭐',
+      title: `New ${rating}-star review: ${product?.title || 'product'}`,
+      summary: `${session.user?.email || 'A buyer'} reviewed ${product?.title || 'a product'}.`,
+      details: { Product: product?.title, Rating: `${rating} / 5`, Comment: comment },
+      link: '/admin-os?tab=reviews',
+    });
 
     return NextResponse.json({ message: 'Review successfully submitted', review }, { status: 201 });
   } catch (error) {

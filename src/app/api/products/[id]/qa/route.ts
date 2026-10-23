@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
+import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
 
 // Q&A is now stored in its own ProductQA table (the legacy hack of overloading
 // Review with rating=0 has been retired). Each row is one question; once a
@@ -48,7 +49,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     // Confirm the product exists & is published before accepting Q&A.
     const product = await prisma.product.findUnique({
       where: { id: productId, published: true, deletedAt: null },
-      select: { id: true },
+      select: { id: true, title: true },
     });
     if (!product) {
       return NextResponse.json({ message: 'Product not found' }, { status: 404 });
@@ -60,6 +61,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         userId,
         question: question.trim(),
       },
+    });
+
+    void notifyAdminEvent({
+      icon: '❓',
+      title: `New question on ${product.title}`,
+      summary: `${session.user?.email || 'A shopper'} asked a question about ${product.title}.`,
+      details: { Product: product.title, Question: question.trim() },
+      link: `/product/${productId}`,
     });
 
     return NextResponse.json(

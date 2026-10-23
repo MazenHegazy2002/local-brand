@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
+import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
 
 const ticketSchema = z.object({
   name: z.string().min(2).max(100),
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
 <p>Thanks for reaching out. Your ticket <strong>#${ticketId}</strong> has been logged and our team will get back to you within 24 hours (Sun-Thu).</p>
 <p><strong>Subject:</strong> ${sanitizedData.subject}</p>
 <hr />
-<p style="color:#666"><em>For urgent matters, you can also email us directly at support@brandy.com.</em></p>
+<p style="color:#666"><em>For urgent matters, you can also email us directly at support@brandyy.shop.</em></p>
 <p>— Brandyy Support Team</p>
         `,
         }).catch(() => {
@@ -85,6 +86,19 @@ export async function POST(req: Request) {
       .catch(() => {
         /* ignore */
       });
+
+    void notifyAdminEvent({
+      icon: '📩',
+      title: `New support message #${ticketId}: ${parsed.data.subject}`,
+      summary: `${parsed.data.name} (${parsed.data.email}) sent a message through the contact form.`,
+      details: {
+        From: `${parsed.data.name} <${parsed.data.email}>`,
+        Category: parsed.data.category,
+        Subject: parsed.data.subject,
+        Message: parsed.data.message,
+      },
+      link: '/admin-os?tab=support',
+    });
 
     return NextResponse.json({ success: true, ticketId: ticket.ticketId }, { status: 201 });
   } catch (error: unknown) {
