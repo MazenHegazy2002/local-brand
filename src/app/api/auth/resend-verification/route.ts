@@ -13,10 +13,13 @@ import { generateEmailVerificationEmail, getEmailBaseUrl } from '@/lib/email-ver
  */
 export async function POST(req: Request) {
   try {
-    const { email } = (await req.json()) as { email?: string };
-    if (!email) return NextResponse.json({ ok: true });
+    const { email: rawEmail } = (await req.json()) as { email?: string };
+    if (!rawEmail) return NextResponse.json({ ok: true });
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: rawEmail.trim(), mode: 'insensitive' } },
+    });
+    const email = user?.email ?? rawEmail.trim();
     if (!user || user.emailVerified) {
       // Either no account or already verified — silently return
       return NextResponse.json({ ok: true });

@@ -27,8 +27,9 @@ export async function POST(req: NextRequest) {
   if (!email || !password)
     return NextResponse.json({ error: 'Missing credentials' }, { status: 400 });
 
-  const user = await prisma.user.findUnique({
-    where: { email: email.toLowerCase().trim() },
+  // Case-insensitive: older sign-ups stored the email exactly as typed.
+  const user = await prisma.user.findFirst({
+    where: { email: { equals: String(email).trim(), mode: 'insensitive' } },
     select: {
       id: true,
       email: true,
@@ -47,6 +48,14 @@ export async function POST(req: NextRequest) {
     !(await bcrypt.compare(password, user.passwordHash))
   ) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+  }
+
+  // Same rule as the website: the email link must be clicked before signing in.
+  if (!user.emailVerified) {
+    return NextResponse.json(
+      { error: 'Email not verified', code: 'EMAIL_NOT_VERIFIED', email: user.email },
+      { status: 403 }
+    );
   }
 
   const payload = { id: user.id, role: user.role, email: user.email };
