@@ -18,6 +18,10 @@ ENV NEXTAUTH_URL="https://brandyy.shop"
 ENV NEXT_PUBLIC_APP_URL="https://brandyy.shop"
 ENV TAX_REGISTRATION_NUMBER="CI-PLACEHOLDER"
 ENV BANK_ACCOUNT_SECRET="0000000000000000000000000000000000000000000000000000000000000000"
+# One ID per build: pages opened before a deploy reload instead of calling
+# Server Actions that no longer exist ("Server Action ... was not found").
+ARG NEXT_DEPLOYMENT_ID
+ENV NEXT_DEPLOYMENT_ID=$NEXT_DEPLOYMENT_ID
 RUN npx prisma generate
 RUN npm run build
 

@@ -92,12 +92,23 @@ export async function sendEmailDetailed(options: EmailOptions): Promise<SendResu
           : undefined,
       });
 
-      await transporter.sendMail({
-        from: `"${emailFromName}" <${emailFrom}>`,
-        to,
-        subject,
-        html,
-      });
+      try {
+        await transporter.sendMail({
+          from: `"${emailFromName}" <${emailFrom}>`,
+          to,
+          subject,
+          html,
+        });
+      } catch (err) {
+        // The server may refuse a From the login doesn't own (Stalwart: "501 5.5.4 You
+        // are not allowed to send from this address"). Retry from the login itself.
+        const refusedFrom = /not allowed to send from|5\.5\.4|5\.7\.1|553/i.test(
+          (err as Error).message
+        );
+        if (!refusedFrom || !smtpUser.includes('@') || smtpUser === emailFrom) throw err;
+        console.warn(`[email] SMTP refused From ${emailFrom}; retrying from ${smtpUser}`);
+        await transporter.sendMail({ from: `"${emailFromName}" <${smtpUser}>`, to, subject, html });
+      }
       return { ok: true, provider: 'smtp' };
     } catch (err) {
       smtpError = (err as Error).message;
