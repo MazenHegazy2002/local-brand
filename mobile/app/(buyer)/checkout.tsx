@@ -11,6 +11,7 @@ import {
   Switch,
   Modal,
   TextInput,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -375,54 +376,57 @@ function AddressSheet({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} />
-      <View style={styles.sheet}>
-        <Text style={styles.sheetTitle}>{t('Delivery address')}</Text>
-        {fields.map(f => (
-          <TextInput
-            key={f.key}
-            style={styles.input}
-            placeholder={t(f.placeholder)}
-            placeholderTextColor={colors.placeholder}
-            value={form[f.key]}
-            onChangeText={set(f.key)}
-            keyboardType={f.key === 'phone' ? 'phone-pad' : 'default'}
-          />
-        ))}
-        <Text style={styles.govLabel}>{t('Governorate')}</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8 }}
-        >
-          {GOVERNORATES.map(g => {
-            const active = form.governorate === g.value;
-            return (
-              <Pressable
-                key={g.value}
-                style={[styles.govChip, active && styles.govChipActive]}
-                onPress={() => set('governorate')(g.value)}
-              >
-                <Text style={[styles.govText, active && styles.govTextActive]}>
-                  {lang === 'ar' ? g.ar : g.value}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-        {!!error && <Text style={styles.error}>{error}</Text>}
-        <Pressable
-          style={[styles.ctaBtn, (saving || !form.governorate) && { opacity: 0.6 }]}
-          onPress={save}
-          disabled={saving || !form.governorate}
-        >
-          {saving ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.ctaText}>{t('Save address')}</Text>
-          )}
-        </Pressable>
-      </View>
+      {/* Lift the sheet above the keyboard so the field being typed in stays visible. */}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+        <Pressable style={styles.backdrop} onPress={onClose} />
+        <View style={styles.sheet}>
+          <Text style={styles.sheetTitle}>{t('Delivery address')}</Text>
+          {fields.map(f => (
+            <TextInput
+              key={f.key}
+              style={styles.input}
+              placeholder={t(f.placeholder)}
+              placeholderTextColor={colors.placeholder}
+              value={form[f.key]}
+              onChangeText={set(f.key)}
+              keyboardType={f.key === 'phone' ? 'phone-pad' : 'default'}
+            />
+          ))}
+          <Text style={styles.govLabel}>{t('Governorate')}</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 8 }}
+          >
+            {GOVERNORATES.map(g => {
+              const active = form.governorate === g.value;
+              return (
+                <Pressable
+                  key={g.value}
+                  style={[styles.govChip, active && styles.govChipActive]}
+                  onPress={() => set('governorate')(g.value)}
+                >
+                  <Text style={[styles.govText, active && styles.govTextActive]}>
+                    {lang === 'ar' ? g.ar : g.value}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          {!!error && <Text style={styles.error}>{error}</Text>}
+          <Pressable
+            style={[styles.ctaBtn, (saving || !form.governorate) && { opacity: 0.6 }]}
+            onPress={save}
+            disabled={saving || !form.governorate}
+          >
+            {saving ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.ctaText}>{t('Save address')}</Text>
+            )}
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
