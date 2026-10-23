@@ -31,6 +31,9 @@ export default function SignIn() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // Set after sign-up (or an unverified sign-in): show the "check your email" step.
+  const [verifyEmail, setVerifyEmail] = useState('');
+  const [resent, setResent] = useState(false);
   const { signIn } = useAuth();
   const { t } = useT();
 
@@ -49,6 +52,12 @@ export default function SignIn() {
     try {
       await signIn(email.trim(), password);
     } catch (e: unknown) {
+      if ((e as { status?: number }).status === 403) {
+        // Unverified account: send a fresh link and show the verify step.
+        await resendVerification(email.trim());
+        setVerifyEmail(email.trim());
+        return;
+      }
       showError((e as Error).message ?? t('Sign in failed'));
     } finally {
       setLoading(false);
@@ -70,12 +79,59 @@ export default function SignIn() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message ?? t('Registration failed'));
-      await signIn(email.trim(), password);
+      setResent(false);
+      setVerifyEmail(email.trim());
     } catch (e: unknown) {
       showError((e as Error).message ?? t('Registration failed'));
     } finally {
       setLoading(false);
     }
+  }
+
+  async function resendVerification(addr: string) {
+    await fetch(`${BASE}/api/auth/resend-verification`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: addr }),
+    }).catch(() => {});
+  }
+
+  if (verifyEmail) {
+    return (
+      <View style={styles.root}>
+        <StatusBar barStyle="dark-content" />
+        <ScrollView contentContainerStyle={styles.inner}>
+          <Pressable style={styles.back} onPress={() => setVerifyEmail('')}>
+            <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
+          </Pressable>
+          <Text style={styles.heading}>{t('Check your email')}</Text>
+          <Text style={styles.sub}>
+            {t('We sent a verification link to')} {verifyEmail}.{' '}
+            {t('Open it to activate your account, then sign in here.')}
+          </Text>
+          <Pressable
+            style={styles.btnPrimary}
+            onPress={() => {
+              setVerifyEmail('');
+              setTab('signin');
+            }}
+          >
+            <Text style={styles.btnPrimaryText}>{t('I verified, sign in')}</Text>
+          </Pressable>
+          <Pressable
+            style={styles.resendRow}
+            onPress={async () => {
+              await resendVerification(verifyEmail);
+              setResent(true);
+            }}
+          >
+            <Text style={styles.forgotText}>
+              {resent ? t('Email sent again') : t("Didn't get it? Resend")}
+            </Text>
+          </Pressable>
+        </ScrollView>
+      </View>
+    );
   }
 
   return (
@@ -129,7 +185,7 @@ export default function SignIn() {
           </>
         )}
 
-        <Text style={styles.label}>{t('Email or phone')}</Text>
+        <Text style={styles.label}>{t('Email')}</Text>
         <TextInput
           style={styles.input}
           placeholder="omar@gmail.com"
@@ -270,6 +326,7 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   forgotRow: { alignItems: 'flex-end', marginTop: -8, marginBottom: 20 },
+  resendRow: { alignItems: 'center', marginTop: 20 },
   forgotText: { fontFamily: 'Inter-SemiBold', fontSize: 13, color: colors.primary },
   btnPrimary: {
     height: 56,

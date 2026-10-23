@@ -31,7 +31,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: validated.error.errors[0].message }, { status: 400 });
     }
 
-    const { name, email, password, role } = validated.data;
+    const { name, password, role } = validated.data;
+    // Sign-in looks emails up in lowercase, so store them that way.
+    const email = validated.data.email.toLowerCase().trim();
     const storeName: string = (body.storeName as string | undefined)?.trim() || `${name}'s Store`;
     const phone: string = (body.phone as string | undefined)?.trim() || '';
     const type: string = (body.type as string | undefined)?.trim() || 'INDIVIDUAL';

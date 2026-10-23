@@ -512,6 +512,13 @@ export const ar: Record<string, string> = {
   '{n}% off': 'خصم {n}%',
   '{pct} Fee': 'عمولة {pct}',
   '{pct}% vs previous': '{pct}% عن الفترة السابقة',
+  'Check your email': 'تحقق من بريدك الإلكتروني',
+  "Didn't get it? Resend": 'موصلكش؟ ابعته تاني',
+  'Email sent again': 'اتبعت تاني',
+  'I verified, sign in': 'فعّلته، سجّل الدخول',
+  'Open it to activate your account, then sign in here.':
+    'افتحه علشان تفعّل حسابك، وبعدين سجّل الدخول هنا.',
+  'We sent a verification link to': 'بعتنالك لينك التفعيل على',
 };
 
 export const franco: Record<string, string> = {
@@ -1031,4 +1038,11 @@ export const franco: Record<string, string> = {
   '{n}% off': '5asm {n}%',
   '{pct} Fee': '{pct} 3omola',
   '{pct}% vs previous': '{pct}% 3an el fatra elly fatet',
+  'Check your email': 'Shoof el email bta3ak',
+  "Didn't get it? Resend": 'Mawsalaksh? Eb3ato tany',
+  'Email sent again': 'Etba3at tany',
+  'I verified, sign in': 'Fa3alto, e3mel login',
+  'Open it to activate your account, then sign in here.':
+    'Efta7o 3ashan tfa3al el account, w ba3dein e3mel login hena.',
+  'We sent a verification link to': 'Ba3atnalak link el taf3eel 3ala',
 };
