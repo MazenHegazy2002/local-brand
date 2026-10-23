@@ -55,9 +55,17 @@ export async function GET() {
     }),
   ]);
 
-  const emailOk = Boolean(
-    process.env.RESEND_API_KEY || process.env.SMTP_HOST || process.env.SENDGRID_API_KEY
-  );
+  // Admin OS → Settings → Email wins over env vars, same as sendEmail().
+  const { getSetting } = await import('@/lib/admin-settings-registry');
+  const emailProvider = await getSetting<string>('EMAIL_PROVIDER').catch(() => 'resend');
+  const smtpHost = (await getSetting<string>('SMTP_HOST').catch(() => '')) || '';
+  const resendKey =
+    (await getSetting<string>('RESEND_API_KEY').catch(() => '')) ||
+    process.env.RESEND_API_KEY ||
+    '';
+  const emailMode =
+    emailProvider === 'smtp' && smtpHost ? 'smtp' : resendKey.startsWith('re_') ? 'resend' : 'none';
+  const emailOk = emailMode !== 'none';
 
   const paymentGateways = {
     stripe: Boolean(process.env.STRIPE_SECRET_KEY),
@@ -75,7 +83,7 @@ export async function GET() {
     services: {
       database: db,
       redis: redisCheck,
-      email: { ok: emailOk },
+      email: { ok: emailOk, provider: emailMode },
       paymentGateways: {
         ok: configuredGateways > 0,
         configured: configuredGateways,
@@ -107,7 +115,7 @@ export async function GET() {
     },
     email: {
       configured: emailOk,
-      provider: process.env.RESEND_API_KEY ? 'resend' : process.env.SMTP_HOST ? 'smtp' : 'none',
+      provider: emailMode,
     },
     stripe: {
       configured: paymentGateways.stripe,

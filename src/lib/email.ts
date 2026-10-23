@@ -10,7 +10,18 @@ interface EmailOptions {
   html: string;
 }
 
+export interface SendResult {
+  ok: boolean;
+  provider: 'smtp' | 'resend' | 'none';
+  error?: string;
+}
+
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
+  return (await sendEmailDetailed(options)).ok;
+}
+
+/** Same as sendEmail, but says which provider was used and why it failed. */
+export async function sendEmailDetailed(options: EmailOptions): Promise<SendResult> {
   const { to, subject, html } = options;
 
   let provider = 'resend';
@@ -65,10 +76,10 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     console.error('[email] Failed to write to emails.log:', err);
   }
 
+  let smtpError = '';
   if (provider === 'smtp' && smtpHost) {
     try {
-      // @ts-expect-error -- nodemailer is an optional peer dep; types may not be installed
-      const nodemailer = (await import('nodemailer')) as any;
+      const nodemailer = await import('nodemailer');
       const transporter = nodemailer.createTransport({
         host: smtpHost,
         port: smtpPort,
@@ -87,8 +98,9 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
         subject,
         html,
       });
-      return true;
+      return { ok: true, provider: 'smtp' };
     } catch (err) {
+      smtpError = (err as Error).message;
       console.error('[email] SMTP send failed:', err);
       // Fall through to Resend or fallback below
     }
@@ -107,21 +119,34 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       });
       if (error) {
         console.error('[email] Resend rejected the message:', JSON.stringify(error));
-        return false;
+        return { ok: false, provider: 'resend', error: error.message };
       }
       console.log('[email] Resend successfully sent email. ID:', data?.id);
-      return true;
+      return { ok: true, provider: 'resend' };
     } catch (err) {
       console.error('[email] Failed to send via Resend:', err);
-      return false;
+      return { ok: false, provider: 'resend', error: (err as Error).message };
     }
   }
 
-  // If no email credentials or live keys, return true in dev/fallback as we logged it to file
+  if (smtpError) return { ok: false, provider: 'smtp', error: smtpError };
+
+  // No provider configured. In production that means mail is silently lost, so say so.
+  if (process.env.NODE_ENV === 'production') {
+    console.error(
+      `[email] NOT SENT to ${to}: "${subject}" — no email provider configured (Admin OS → Settings → Email).`
+    );
+    return {
+      ok: false,
+      provider: 'none',
+      error:
+        'No email provider configured. Set Custom SMTP (or a Resend key) in Admin OS → Settings → Email.',
+    };
+  }
   console.log(
     `[email] Development fallback — would have sent to ${to}: "${subject}". Check emails.log for contents.`
   );
-  return true;
+  return { ok: true, provider: 'none' };
 }
 
 export function generateOrderConfirmationEmail(order: Order, user: User | null): string {

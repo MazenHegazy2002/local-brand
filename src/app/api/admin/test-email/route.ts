@@ -1,6 +1,6 @@
 /**
  * POST /api/admin/test-email
- * Sends a test email via Resend to verify transactional delivery is working.
+ * Sends a test email through the configured provider (SMTP or Resend).
  * Body: { to: string }
  * Admin only.
  */
@@ -8,6 +8,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { sendEmailDetailed } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,25 +16,6 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
-  let resendKey = process.env.RESEND_API_KEY || '';
-  try {
-    const { getSetting } = await import('@/lib/admin-settings-registry');
-    const { readSecret } = await import('@/lib/secrets');
-    const dbKey = await getSetting<string>('RESEND_API_KEY').catch(() => '');
-    if (dbKey) {
-      resendKey = readSecret(dbKey) || dbKey;
-    }
-  } catch {
-    // ignore DB settings fallback error
-  }
-
-  if (!resendKey) {
-    return NextResponse.json(
-      { success: false, error: 'RESEND_API_KEY is not configured in env or admin settings.' },
-      { status: 503 }
-    );
   }
 
   let to: string;
@@ -52,31 +34,21 @@ export async function POST(req: Request) {
   const html = `
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 16px">
       <h1 style="font-size:20px;color:#1e3b8a;margin-bottom:8px">✅ Brandy — Mail delivery confirmed</h1>
-      <p style="color:#475569">This test email confirms transactional delivery via Resend is working.</p>
+      <p style="color:#475569">This test email confirms transactional delivery is working.</p>
       <p style="margin-top:20px;font-size:13px;color:#64748b">Sent at: ${now}</p>
     </div>`;
 
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${resendKey}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: 'Brandy Test <noreply@brandyy.shop>',
-      to,
-      subject: `[Brandy] Test email — ${now}`,
-      html,
-    }),
+  const result = await sendEmailDetailed({
+    to,
+    subject: `[Brandy] Test email — ${now}`,
+    html,
   });
-
-  const data = (await res.json()) as { id?: string; message?: string };
-  if (!res.ok) {
+  if (!result.ok) {
     return NextResponse.json(
-      { success: false, error: data.message ?? `Resend HTTP ${res.status}` },
-      { status: 502 }
+      { success: false, provider: result.provider, error: result.error ?? 'Send failed' },
+      { status: result.provider === 'none' ? 503 : 502 }
     );
   }
 
-  return NextResponse.json({ success: true, resendId: data.id, to, sentAt: now });
+  return NextResponse.json({ success: true, provider: result.provider, to, sentAt: now });
 }
