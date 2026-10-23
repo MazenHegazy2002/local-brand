@@ -1,0 +1,54 @@
+# Buyer journey: sign in, add to bag, bag survives a restart, COD checkout.
+# Local test builds only (EXPO_PUBLIC_API_URL=http://localhost:5054 + seeded DB).
+# Never run against brandyy.shop: it uses the seed passwords.
+appId: shop.brandyy.app
+---
+- launchApp:
+    clearState: true
+- repeat:
+    times: 5
+    while:
+      visible: "Next"
+    commands:
+      - tapOn: "Next"
+- tapOn: "Get started"
+- tapOn: "omar@gmail.com"
+- inputText: "user@user.com"
+- tapOn: "••••••••"
+- inputText: "user1234"
+- hideKeyboard
+- tapOn:
+    text: "Sign in"
+    index: 1
+- assertVisible: "Shop the edit"
+- tapOn: "Home"
+- tapOn: "Beaded Friendship Bracelet"
+- tapOn: "Add to bag"
+- stopApp
+- launchApp
+- waitForAnimationToEnd
+- tapOn: "Bag"
+- assertVisible: "Beaded Friendship Bracelet"
+- tapOn: "Checkout"
+- waitForAnimationToEnd
+# First run only: the test buyer has no saved address yet.
+- runFlow:
+    when:
+      visible: "Add a delivery address"
+    commands:
+      - tapOn: "Add"
+      - tapOn: "Street, building, apartment"
+      - inputText: "12 Test Street, Apt 3"
+      - tapOn: "City / area (e.g. Nasr City)"
+      - inputText: "Nasr City"
+      - tapOn: "Phone (optional)"
+      - inputText: "01000000000"
+      - hideKeyboard
+      - tapOn: "Cairo"
+      - tapOn: "Save address"
+      - waitForAnimationToEnd
+- tapOn: "Cash on delivery"
+- tapOn: "Place order"
+- waitForAnimationToEnd:
+    timeout: 15000
+- assertVisible: "Order placed!"

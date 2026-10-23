@@ -1,0 +1,33 @@
+# Seller: sign in, accept the newest order, open each tab.
+# Local test builds only — see buyer-journey.yaml. Run that first so an order exists.
+appId: shop.brandyy.app
+---
+- launchApp:
+    clearState: true
+- repeat:
+    times: 5
+    while:
+      visible: "Next"
+    commands:
+      - tapOn: "Next"
+- tapOn: "Get started"
+- tapOn: "omar@gmail.com"
+- inputText: "seller@seller.com"
+- tapOn: "••••••••"
+- inputText: "seller1234"
+- hideKeyboard
+- tapOn:
+    text: "Sign in"
+    index: 1
+- waitForAnimationToEnd:
+    timeout: 15000
+- assertVisible: "Seller Hub"
+- tapOn: "[0-9]+, Orders"  # tab label carries the count, e.g. "2, Orders"
+- tapOn: "Accept order"
+- assertVisible: "Mark ready to ship"
+- tapOn: "Products"
+- assertVisible: "Drafts"
+- tapOn: "Payouts"
+- assertVisible: "Available to withdraw"
+- tapOn: "More"
+- assertVisible: "Sign out"
