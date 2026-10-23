@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { notifyUser } from '@/lib/notification-helpers';
+import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
 import { disputeSchema } from '@/lib/validation';
 import { SessionUser } from '@/types';
 
@@ -83,8 +84,15 @@ export async function POST(req: Request) {
       },
     });
 
-    // Notify the buyer that their dispute was logged. (Admin notifications go
-    // out via the audit/dashboard surface; we don't blast every admin here.)
+    void notifyAdminEvent({
+      icon: '⚠️',
+      title: `Dispute opened ${caseReference}`,
+      summary: `${session.user.email || 'A buyer'} opened a dispute on order #${orderId.slice(0, 8)}.`,
+      details: { Case: caseReference, Order: orderId, Reason: reason, Description: description },
+      link: '/admin-os?tab=orders',
+    });
+
+    // Notify the buyer that their dispute was logged.
     await notifyUser({
       userId,
       title: 'Dispute submitted',

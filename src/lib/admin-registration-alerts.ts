@@ -1,4 +1,4 @@
-import { sendEmail } from '@/lib/email';
+import { sendEmailDetailed } from '@/lib/email';
 import { prisma } from '@/lib/prisma';
 import { notifyMultiple } from '@/lib/notification-helpers';
 
@@ -34,9 +34,148 @@ export interface NewRegistrationNotificationParams {
 
 export const DEFAULT_ADMIN_EMAILS = ['mazenhegazy6@gmail.com'];
 
+/**
+ * Who gets admin alerts: always mazenhegazy6@gmail.com, plus any extra addresses
+ * (comma-separated) in Admin OS → Settings → Email → Admin Alert Email Address.
+ */
 export async function getAdminRecipientEmails(): Promise<string[]> {
-  // Alerts strictly sent to mazenhegazy6@gmail.com only
-  return ['mazenhegazy6@gmail.com'];
+  let extra: string[] = [];
+  try {
+    const { getSetting } = await import('@/lib/admin-settings-registry');
+    const raw = await getSetting<string>('ADMIN_NOTIFICATION_EMAIL');
+    extra = String(raw || '')
+      .split(/[,;\s]+/)
+      .map(e => e.trim().toLowerCase())
+      .filter(e => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e));
+  } catch {
+    // Settings unavailable: fall back to the default recipient.
+  }
+  return Array.from(new Set([...DEFAULT_ADMIN_EMAILS, ...extra]));
+}
+
+/** Sends one admin alert and logs why it failed, instead of failing silently. */
+async function sendToAdmin(to: string, subject: string, html: string): Promise<void> {
+  try {
+    const result = await sendEmailDetailed({ to, subject, html });
+    if (!result.ok) {
+      console.error(
+        `[admin-alerts] "${subject}" to ${to} not sent via ${result.provider}: ${result.error}`
+      );
+    }
+  } catch (err) {
+    console.error(`[admin-alerts] "${subject}" to ${to} failed:`, err);
+  }
+}
+
+// ============================================================================
+// GENERIC ADMIN EVENT ALERT
+// ============================================================================
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+export interface AdminEventParams {
+  /** Short headline, e.g. "Return requested". Also the in-app notification title. */
+  title: string;
+  /** Emoji shown before the title in the subject line. */
+  icon?: string;
+  /** One sentence describing what happened. */
+  summary: string;
+  /** Detail rows; empty values are skipped. */
+  details?: Record<string, string | number | null | undefined>;
+  /** Admin OS path, e.g. "/admin-os?tab=orders". */
+  link?: string;
+  /** Also create an in-app notification for every ADMIN user (default true). */
+  inApp?: boolean;
+}
+
+export function generateAdminEventEmailHtml(
+  params: AdminEventParams,
+  appUrl: string
+): { subject: string; html: string } {
+  const subject = `${params.icon ? `${params.icon} ` : ''}${params.title}`;
+  const nowStr = new Date().toLocaleString('en-US', {
+    timeZone: 'Africa/Cairo',
+    dateStyle: 'full',
+    timeStyle: 'medium',
+  });
+  const rows = Object.entries(params.details || {})
+    .filter(([, v]) => v !== null && v !== undefined && String(v).trim() !== '')
+    .map(
+      ([k, v]) =>
+        `<tr><td style="padding: 8px 0; color: #64748b; font-weight: 600; width: 35%; vertical-align: top;">${escapeHtml(k)}</td>` +
+        `<td style="padding: 8px 0; color: #0f172a; white-space: pre-wrap;">${escapeHtml(v)}</td></tr>`
+    )
+    .join('');
+  const link = `${appUrl}${params.link || '/admin-os'}`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; padding: 24px; margin: 0;">
+  <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;">
+    <div style="background: #1e3b8a; color: #ffffff; padding: 24px; text-align: center;">
+      <h1 style="margin: 0; font-size: 20px; font-weight: 800;">${escapeHtml(subject)}</h1>
+      <p style="margin: 6px 0 0; opacity: 0.9; font-size: 13px;">Brandyy admin alert</p>
+    </div>
+    <div style="padding: 24px;">
+      <p style="margin: 0 0 16px; font-size: 15px; color: #334155; line-height: 1.5;">${escapeHtml(params.summary)}</p>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px;">
+        ${rows}
+        <tr><td style="padding: 8px 0; color: #64748b; font-weight: 600; width: 35%;">Cairo time</td><td style="padding: 8px 0; color: #0f172a;">${nowStr}</td></tr>
+      </table>
+      <div style="text-align: center; margin-top: 24px;">
+        <a href="${link}" style="display: inline-block; background: #1e3b8a; color: #ffffff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 13px;">
+          Open in Admin OS →
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  return { subject, html };
+}
+
+/**
+ * Emails every admin recipient (and, by default, adds an in-app notification for
+ * ADMIN users) about something that happened on the platform. Never throws.
+ */
+export async function notifyAdminEvent(params: AdminEventParams): Promise<void> {
+  try {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop';
+    const { subject, html } = generateAdminEventEmailHtml(params, appUrl);
+    const recipients = await getAdminRecipientEmails();
+
+    const emailPromises = recipients.map(to => sendToAdmin(to, subject, html));
+
+    const inAppPromise = (async () => {
+      if (params.inApp === false) return;
+      const admins = await prisma.user.findMany({
+        where: { role: 'ADMIN', deletedAt: null },
+        select: { id: true },
+      });
+      if (admins.length === 0) return;
+      await notifyMultiple(
+        admins.map(a => a.id),
+        { title: params.title, message: params.summary, link: params.link, save: true }
+      );
+    })();
+
+    const results = await Promise.allSettled([...emailPromises, inAppPromise]);
+    for (const r of results) {
+      if (r.status === 'rejected') console.error('[admin-alerts] alert step failed:', r.reason);
+    }
+  } catch (err) {
+    console.error(`[admin-alerts] Error sending "${params.title}" alert:`, err);
+  }
 }
 
 export function generateAdminRegistrationEmailHtml(
@@ -265,15 +404,7 @@ export async function notifyAdminNewRegistration(
     const recipientEmails = await getAdminRecipientEmails();
 
     // 1. Send Email Notification to all admins
-    const emailPromises = recipientEmails.map(to =>
-      sendEmail({
-        to,
-        subject,
-        html,
-      }).catch(err => {
-        console.error(`[admin-registration-alerts] Failed to send email to ${to}:`, err);
-      })
-    );
+    const emailPromises = recipientEmails.map(to => sendToAdmin(to, subject, html));
 
     // 2. Create in-app system notification for Admin users in DB
     const adminNotificationPromise = (async () => {
@@ -390,11 +521,7 @@ export async function notifyAdminNewOrder(params: NewOrderAlertParams): Promise<
     const { subject, html } = generateAdminNewOrderEmailHtml(params, appUrl);
     const recipients = await getAdminRecipientEmails();
 
-    const emailPromises = recipients.map(to =>
-      sendEmail({ to, subject, html }).catch(err => {
-        console.error(`[admin-alerts] Failed to send new order alert to ${to}:`, err);
-      })
-    );
+    const emailPromises = recipients.map(to => sendToAdmin(to, subject, html));
 
     await Promise.allSettled(emailPromises);
   } catch (err) {
@@ -485,11 +612,7 @@ export async function notifyAdminError(params: ErrorAlertParams): Promise<void> 
 </html>`;
 
     const recipients = await getAdminRecipientEmails();
-    const emailPromises = recipients.map(to =>
-      sendEmail({ to, subject, html }).catch(err => {
-        console.error(`[admin-alerts] Failed to send error alert to ${to}:`, err);
-      })
-    );
+    const emailPromises = recipients.map(to => sendToAdmin(to, subject, html));
 
     await Promise.allSettled(emailPromises);
   } catch (err) {

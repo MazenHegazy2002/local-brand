@@ -879,7 +879,7 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     label: 'Admin Alert Email Address',
     defaultValue: 'mazenhegazy6@gmail.com',
     description:
-      'Email address that receives administrative alerts when new customers, sellers, or affiliates register.',
+      'Extra addresses (comma-separated) for admin alerts: sign-ups, orders, cancellations, returns, disputes, payout requests, reviews, questions, reports, contact messages and new products. mazenhegazy6@gmail.com always receives them.',
   },
   {
     key: 'EMAIL_PROVIDER',

@@ -479,21 +479,26 @@ export async function createOrderForUser(
         });
         if (!orderWithItems) return;
 
-        if (userId) {
-          const user = await prisma.user.findUnique({ where: { id: userId } });
-          if (user?.email) {
+        // The admin alert below must go out even if the customer email fails.
+        try {
+          if (userId) {
+            const user = await prisma.user.findUnique({ where: { id: userId } });
+            if (user?.email) {
+              await m.sendEmail({
+                to: user.email,
+                subject: `Order Confirmation - ${order.id.slice(0, 8)}`,
+                html: m.generateOrderConfirmationEmail(orderWithItems, user),
+              });
+            }
+          } else if (guestEmail) {
             await m.sendEmail({
-              to: user.email,
+              to: guestEmail,
               subject: `Order Confirmation - ${order.id.slice(0, 8)}`,
-              html: m.generateOrderConfirmationEmail(orderWithItems, user),
+              html: m.generateOrderConfirmationEmail(orderWithItems, null),
             });
           }
-        } else if (guestEmail) {
-          await m.sendEmail({
-            to: guestEmail,
-            subject: `Order Confirmation - ${order.id.slice(0, 8)}`,
-            html: m.generateOrderConfirmationEmail(orderWithItems, null),
-          });
+        } catch (customerEmailErr) {
+          console.error('Order confirmation email failed:', customerEmailErr);
         }
 
         // Notify Admins of the new order

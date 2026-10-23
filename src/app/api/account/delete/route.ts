@@ -7,6 +7,7 @@ import { BCRYPT_COST } from '@/lib/constants';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { getRequestUser } from '@/lib/mobile-auth';
+import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
 import { redis } from '@/lib/redis';
 import { del } from '@vercel/blob';
 
@@ -214,6 +215,20 @@ export async function POST(req: Request) {
       )
     );
     await deleteReceiptBlobs(receiptUrls);
+
+    void notifyAdminEvent({
+      icon: '🗑️',
+      title: `Account deleted: ${originalEmail}`,
+      summary: `${originalEmail} deleted their ${user.role.toLowerCase()} account. Their data has been anonymised.`,
+      details: {
+        Email: originalEmail,
+        Role: user.role,
+        Orders: orders.length,
+        Seller: sellerId ? 'yes' : null,
+        Affiliate: affiliateId ? 'yes' : null,
+      },
+      link: '/admin-os?tab=users',
+    });
 
     return NextResponse.json(
       { message: 'Account successfully deleted. Your data has been anonymized.' },

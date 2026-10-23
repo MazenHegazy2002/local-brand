@@ -1385,6 +1385,15 @@ export async function submitReview(
       }),
     ]);
 
+    const { notifyAdminEvent } = await import('@/lib/admin-registration-alerts');
+    void notifyAdminEvent({
+      icon: '⭐',
+      title: `New ${reviewRating}-star review: ${product?.title || 'product'}`,
+      summary: `${session.user?.email || 'A buyer'} reviewed ${product?.title || 'a product'}.`,
+      details: { Product: product?.title, Rating: `${reviewRating} / 5`, Comment: reviewComment },
+      link: '/admin-os?tab=reviews',
+    });
+
     revalidatePath(`/product/${productId}`);
     return JSON.parse(JSON.stringify({ success: true, review })) as {
       success: boolean;
@@ -2222,6 +2231,22 @@ export async function cancelOrderBySeller(
         console.error('Failed to trigger order status email:', err);
       }
     })();
+
+    if (role === 'SELLER') {
+      const { notifyAdminEvent } = await import('@/lib/admin-registration-alerts');
+      void notifyAdminEvent({
+        icon: '❌',
+        title: `Order #${orderId.slice(0, 8)} cancelled by the seller`,
+        summary: `${session.user?.email || 'A seller'} cancelled order #${orderId.slice(0, 8)}.`,
+        details: {
+          Order: orderId,
+          Total: `${order.totalAmount.toLocaleString()} EGP`,
+          Reason: reason,
+          'Marked sold out': markSoldOut ? 'yes' : 'no',
+        },
+        link: '/admin-os?tab=orders',
+      });
+    }
 
     revalidatePath('/seller-hub');
     revalidatePath('/dashboard');

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { OrderItemStatus, OrderStatus } from '@/generated/client';
 import { VAT_RATE } from '@/lib/constants';
 import type { SessionUser } from '@/types';
+import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
 
 // Partial cancellation — buyer cancels one item from an unshipped order.
 // Restocks the variant, marks the item CANCELLED, recomputes the order total
@@ -99,6 +100,21 @@ export async function POST(req: Request) {
     }
 
     const result = await cancelOrderItemInternal(orderId, orderItemId, userId);
+    void notifyAdminEvent({
+      icon: '❌',
+      title: result.orderCancelled
+        ? `Order #${String(orderId).slice(0, 8)} cancelled by the buyer`
+        : `Item cancelled from order #${String(orderId).slice(0, 8)}`,
+      summary: `${session.user?.email || 'The buyer'} cancelled ${
+        result.orderCancelled ? 'their whole order' : 'one item'
+      }. Refund due: ${result.refundAmount.toLocaleString()} EGP.`,
+      details: {
+        Order: orderId,
+        'Refund due': `${result.refundAmount.toLocaleString()} EGP`,
+        'New total': result.orderCancelled ? null : `${result.newTotal.toLocaleString()} EGP`,
+      },
+      link: '/admin-os?tab=orders',
+    });
     return NextResponse.json(result, { status: 200 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal Server Error';

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
 import { encryptSecret, readSecret, redactBankAccount } from '@/lib/secrets';
+import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
 
 const requestPayoutSchema = z.object({
   amount: z.number().positive().optional(),
@@ -110,6 +111,18 @@ export async function POST(req: Request) {
         })
         .catch(err => console.error('[payouts/request] failed to update bank account:', err));
     }
+
+    void notifyAdminEvent({
+      icon: '💸',
+      title: `Payout requested: ${requestedAmount.toLocaleString()} EGP by ${seller.storeName}`,
+      summary: `${seller.storeName} asked to be paid ${requestedAmount.toLocaleString()} EGP.`,
+      details: {
+        Store: seller.storeName,
+        Amount: `${requestedAmount.toLocaleString()} EGP`,
+        'Bank account': redactBankAccount(cleartextBankDetails),
+      },
+      link: '/admin-os?tab=payouts',
+    });
 
     // Don't echo the encrypted bank-details blob back to the client.
     const { bankDetails: _hiddenDetails, ...safePayout } = payout;
