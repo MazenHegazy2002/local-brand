@@ -69,14 +69,14 @@ export async function POST(req: Request) {
       .then(m => {
         m.sendEmail({
           to: sanitizedData.email,
-          subject: `[${ticketId}] We received your message — Brandy Support`,
+          subject: `[${ticketId}] We received your message — Brandyy Support`,
           html: `
 <p>Hi ${sanitizedData.name},</p>
 <p>Thanks for reaching out. Your ticket <strong>#${ticketId}</strong> has been logged and our team will get back to you within 24 hours (Sun-Thu).</p>
 <p><strong>Subject:</strong> ${sanitizedData.subject}</p>
 <hr />
 <p style="color:#666"><em>For urgent matters, you can also email us directly at support@brandy.com.</em></p>
-<p>— Brandy Support Team</p>
+<p>— Brandyy Support Team</p>
         `,
         }).catch(() => {
           /* dev-mode console fallback handles this */

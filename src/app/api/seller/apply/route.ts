@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
         await sendEmail({
           to: recipientEmail,
           subject: 'We have received your seller application! 🏪',
-          html: `<p>Hi ${recipientName},</p><p>Thank you for applying to sell on Brandy! We have received your application for <strong>${storeName}</strong>.</p><p>Our admin team is currently reviewing your details. This process typically takes 1-2 business days. We will notify you via email once your account has been activated.</p><p>Best regards,<br/>The Brandy Team</p>`,
+          html: `<p>Hi ${recipientName},</p><p>Thank you for applying to sell on Brandyy! We have received your application for <strong>${storeName}</strong>.</p><p>Our admin team is currently reviewing your details. This process typically takes 1-2 business days. We will notify you via email once your account has been activated.</p><p>Best regards,<br/>The Brandyy Team</p>`,
         });
       } catch (emailErr) {
         console.error('[seller application] Failed to send email:', emailErr);

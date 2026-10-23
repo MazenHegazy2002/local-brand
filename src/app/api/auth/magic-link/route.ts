@@ -93,10 +93,10 @@ export async function POST(req: NextRequest) {
     const { sendEmail } = await import('@/lib/email');
     await sendEmail({
       to: email,
-      subject: 'Your Brandy sign-in link',
+      subject: 'Your Brandyy sign-in link',
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-          <h1 style="color: #1e3b8a; margin: 0 0 16px;">Sign in to Brandy</h1>
+          <h1 style="color: #1e3b8a; margin: 0 0 16px;">Sign in to Brandyy</h1>
           <p style="color: #444; line-height: 1.6;">
             Hi ${fallbackName}, click the button below to sign in. The link is good
             for 30 minutes and can only be used once.
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
             <a href="${link}"
                style="display: inline-block; background: #1e3b8a; color: #fff; font-weight: bold;
                       padding: 12px 24px; border-radius: 8px; text-decoration: none;">
-              Sign in to Brandy
+              Sign in to Brandyy
             </a>
           </p>
           <p style="color: #888; font-size: 13px; line-height: 1.6;">

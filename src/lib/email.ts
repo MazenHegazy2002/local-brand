@@ -58,7 +58,7 @@ export async function sendEmailDetailed(options: EmailOptions): Promise<SendResu
 
   let provider = 'resend';
   let emailFrom = 'noreply@brandyy.shop';
-  let emailFromName = 'Brandy';
+  let emailFromName = 'Brandyy';
   let resendKey = process.env.RESEND_API_KEY || '';
   let smtpHost = '';
   let smtpPort = 587;
@@ -72,7 +72,7 @@ export async function sendEmailDetailed(options: EmailOptions): Promise<SendResu
     const rawEmailFrom = await getSetting<string>('EMAIL_FROM').catch(() => '');
     const validFrom = rawEmailFrom && !rawEmailFrom.includes('brandy.com') ? rawEmailFrom : '';
     emailFrom = validFrom || process.env.RESEND_FROM_ADDRESS || 'noreply@brandyy.shop';
-    emailFromName = await getSetting<string>('EMAIL_FROM_NAME').catch(() => 'Brandy');
+    emailFromName = await getSetting<string>('EMAIL_FROM_NAME').catch(() => 'Brandyy');
 
     const dbResendKeyRaw = await getSetting<string>('RESEND_API_KEY').catch(() => '');
     const dbResendKey = dbResendKeyRaw ? readSecret(dbResendKeyRaw) || dbResendKeyRaw : '';
@@ -319,7 +319,7 @@ export function generateOrderConfirmationEmail(order: Order, user: User | null):
 
     <!-- Footer -->
     <div style="background: #333; color: white; padding: 20px; text-align: center; font-size: 12px;">
-      <p style="margin: 0;">© 2026 Brandy. All rights reserved.</p>
+      <p style="margin: 0;">© 2026 Brandyy. All rights reserved.</p>
       <p style="margin: 8px 0 0; opacity: 0.7;">This is an automated email. Please do not reply.</p>
     </div>
   </div>
@@ -379,7 +379,7 @@ export function generateOrderCancelledEmail(
       <p>If the order was already paid, a refund of <strong>${order.totalAmount.toLocaleString()} EGP</strong> will be processed back to your original payment method within 5-7 business days.</p>
       <p>If you believe this cancellation is an error, please contact us at ${SUPPORT_EMAIL}.</p>
       <hr>
-      <p style="color: #666; font-size: 13px;">— Brandy</p>
+      <p style="color: #666; font-size: 13px;">— Brandyy</p>
     </div>
   </div>
 </body>

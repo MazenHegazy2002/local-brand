@@ -97,7 +97,7 @@ export function generateAdminRegistrationEmailHtml(
     <div style="padding: 28px 24px;">
       
       <p style="margin: 0 0 20px; font-size: 15px; color: #334155; line-height: 1.5;">
-        A new account has just been registered on <strong>Brandy</strong> with the following details:
+        A new account has just been registered on <strong>Brandyy</strong> with the following details:
       </p>
 
       <!-- Account Summary Card -->
@@ -238,8 +238,8 @@ export function generateAdminRegistrationEmailHtml(
 
     <!-- Footer -->
     <div style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 18px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
-      <p style="margin: 0;">This is an automated administrative alert sent to Brandy Administrators.</p>
-      <p style="margin: 4px 0 0;">© 2026 Brandy. All rights reserved.</p>
+      <p style="margin: 0;">This is an automated administrative alert sent to Brandyy Administrators.</p>
+      <p style="margin: 4px 0 0;">© 2026 Brandyy. All rights reserved.</p>
     </div>
 
   </div>
@@ -355,7 +355,7 @@ export function generateAdminNewOrderEmailHtml(
   <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);">
     <div style="background: #1e3b8a; color: #ffffff; padding: 28px 24px; text-align: center;">
       <h1 style="margin: 0; font-size: 22px; font-weight: 800;">🛍️ NEW ORDER RECEIVED!</h1>
-      <p style="margin: 6px 0 0; opacity: 0.9; font-size: 13px;">Brandy Order Processing System</p>
+      <p style="margin: 6px 0 0; opacity: 0.9; font-size: 13px;">Brandyy Order Processing System</p>
     </div>
     <div style="padding: 24px;">
       <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: center;">
@@ -452,7 +452,7 @@ export async function notifyAdminError(params: ErrorAlertParams): Promise<void> 
   <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #fee2e2; box-shadow: 0 4px 20px rgba(220, 38, 38, 0.08);">
     <div style="background: #b91c1c; color: #ffffff; padding: 28px 24px; text-align: center;">
       <h1 style="margin: 0; font-size: 22px; font-weight: 800;">🚨 SYSTEM ERROR ALERT</h1>
-      <p style="margin: 6px 0 0; opacity: 0.9; font-size: 13px;">Brandy Automated Health Monitor</p>
+      <p style="margin: 6px 0 0; opacity: 0.9; font-size: 13px;">Brandyy Automated Health Monitor</p>
     </div>
     <div style="padding: 24px;">
       <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px; margin-bottom: 20px;">

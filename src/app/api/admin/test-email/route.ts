@@ -33,14 +33,14 @@ export async function POST(req: Request) {
   const now = new Date().toISOString();
   const html = `
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 16px">
-      <h1 style="font-size:20px;color:#1e3b8a;margin-bottom:8px">✅ Brandy — Mail delivery confirmed</h1>
+      <h1 style="font-size:20px;color:#1e3b8a;margin-bottom:8px">✅ Brandyy — Mail delivery confirmed</h1>
       <p style="color:#475569">This test email confirms transactional delivery is working.</p>
       <p style="margin-top:20px;font-size:13px;color:#64748b">Sent at: ${now}</p>
     </div>`;
 
   const result = await sendEmailDetailed({
     to,
-    subject: `[Brandy] Test email — ${now}`,
+    subject: `[Brandyy] Test email — ${now}`,
     html,
   });
   if (!result.ok) {

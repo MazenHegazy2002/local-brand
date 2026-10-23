@@ -48,7 +48,7 @@ export function generateEmailVerificationEmail(name: string, verifyUrl: string):
     <div style="padding:36px 30px">
       <h2 style="color:#1e293b;margin:0 0 12px;font-size:20px">Hey ${name} &#128075;</h2>
       <p style="color:#64748b;line-height:1.7;margin:0 0 28px">
-        Thanks for joining Brandy! Please verify your email address by clicking the button below.
+        Thanks for joining Brandyy! Please verify your email address by clicking the button below.
         This link expires in <strong>10 minutes</strong>.
       </p>
       <div style="text-align:center;margin:0 0 28px">
@@ -63,7 +63,7 @@ export function generateEmailVerificationEmail(name: string, verifyUrl: string):
       </p>
     </div>
     <div style="background:#f8fafc;padding:20px 30px;text-align:center;font-size:12px;color:#94a3b8">
-      &copy; 2026 Brandy. All rights reserved.
+      &copy; 2026 Brandyy. All rights reserved.
     </div>
   </div>
 </body>
@@ -90,7 +90,7 @@ export function generateSellerPendingEmail(name: string, storeName: string): str
     <div style="padding:36px 30px">
       <h2 style="color:#1e293b;margin:0 0 12px;font-size:20px">Hi ${name},</h2>
       <p style="color:#64748b;line-height:1.7;margin:0 0 16px">
-        We received your application to open <strong>${storeName}</strong> on Brandy.
+        We received your application to open <strong>${storeName}</strong> on Brandyy.
         Our team will review your details within <strong>1&#8211;2 business days</strong>.
       </p>
       <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:18px 20px;margin:0 0 24px">
@@ -103,7 +103,7 @@ export function generateSellerPendingEmail(name: string, storeName: string): str
       <p style="color:#94a3b8;font-size:12px">Questions? Email us at ${SUPPORT_EMAIL}</p>
     </div>
     <div style="background:#f8fafc;padding:20px 30px;text-align:center;font-size:12px;color:#94a3b8">
-      &copy; 2026 Brandy. All rights reserved.
+      &copy; 2026 Brandyy. All rights reserved.
     </div>
   </div>
 </body>
