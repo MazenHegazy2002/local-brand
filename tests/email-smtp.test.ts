@@ -18,10 +18,13 @@ jest.mock('@/lib/admin-settings-registry', () => ({
 jest.mock('@/lib/secrets', () => ({ readSecret: (v: string) => v }));
 jest.mock('fs', () => ({ appendFileSync: jest.fn() }));
 
-const sendMail = jest.fn<Promise<unknown>, [{ from: string; to: string }]>();
+const sendMail = jest.fn<
+  Promise<unknown>,
+  [{ from: string; to: string; text?: string; replyTo?: string }]
+>();
 jest.mock('nodemailer', () => ({ createTransport: () => ({ sendMail }) }));
 
-import { sendEmailDetailed } from '@/lib/email';
+import { sendEmailDetailed, htmlToText } from '@/lib/email';
 
 const MSG = { to: 'buyer@example.test', subject: 'Verify', html: '<p>hi</p>' };
 
@@ -47,6 +50,9 @@ describe('sendEmailDetailed over SMTP', () => {
     expect(r).toEqual({ ok: true, provider: 'smtp' });
     expect(sendMail).toHaveBeenCalledTimes(1);
     expect(sendMail.mock.calls[0][0].from).toBe('"Brandyy" <noreply@brandyy.shop>');
+    // Plain-text part + Reply-To: HTML-only mail scores worse with spam filters.
+    expect(sendMail.mock.calls[0][0].text).toBe('hi');
+    expect(sendMail.mock.calls[0][0].replyTo).toBe('support@brandyy.shop');
   });
 
   it('retries from the login when the server refuses the From', async () => {
@@ -69,5 +75,16 @@ describe('sendEmailDetailed over SMTP', () => {
     expect(r.provider).toBe('smtp');
     expect(r.error).toMatch(/authentication failed/i);
     expect(sendMail).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('htmlToText', () => {
+  it('keeps link targets, line breaks and decodes entities', () => {
+    const html =
+      '<style>p{color:red}</style><h1>Verify</h1><p>Hi Omar &amp; team,<br>click ' +
+      '<a href="https://brandyy.shop/v?t=1">Verify email</a></p>';
+    expect(htmlToText(html)).toBe(
+      'Verify\nHi Omar & team,\nclick Verify email (https://brandyy.shop/v?t=1)'
+    );
   });
 });
