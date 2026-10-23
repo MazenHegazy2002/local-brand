@@ -5,13 +5,13 @@
  *
  * Validates:
  *  - 403 when caller is not ADMIN
- *  - 503 when RESEND_API_KEY is not configured
+ *  - 503 when no email provider is configured
  *  - 400 on missing / invalid "to" address
- *  - 200 with resendId on success (Resend API mocked)
- *  - 502 when Resend returns an error
+ *  - 200 with the provider used on success (sendEmailDetailed mocked)
+ *  - 502 when the provider rejects the message
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 import { POST } from '@/app/api/admin/test-email/route';
 
 // ── next-auth server-side mock ────────────────────────────────────────────────
@@ -22,12 +22,16 @@ jest.mock('next-auth', () => ({
   getServerSession: jest.fn(),
 }));
 
-import { getServerSession } from 'next-auth';
-const mockGetServerSession = getServerSession as jest.Mock<any>;
+// ── email sender mock ─────────────────────────────────────────────────────────
+// The route sends through whichever provider Admin OS has set (SMTP or Resend).
+jest.mock('@/lib/email', () => ({
+  sendEmailDetailed: jest.fn(),
+}));
 
-// ── fetch mock ────────────────────────────────────────────────────────────────
-const mockFetch = jest.fn() as jest.Mock<ReturnType<typeof fetch>, Parameters<typeof fetch>>;
-global.fetch = mockFetch as unknown as typeof fetch;
+import { getServerSession } from 'next-auth';
+import { sendEmailDetailed } from '@/lib/email';
+const mockGetServerSession = getServerSession as jest.Mock<any>;
+const mockSend = sendEmailDetailed as jest.Mock<any>;
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -43,37 +47,10 @@ function makeRequest(body: unknown): Request {
   });
 }
 
-function resendOk(id = 're_abc123'): () => Promise<Response> {
-  return () =>
-    Promise.resolve(
-      new Response(JSON.stringify({ id }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      })
-    );
-}
-
-function resendError(message = 'Invalid API key'): () => Promise<Response> {
-  return () =>
-    Promise.resolve(
-      new Response(JSON.stringify({ message }), {
-        status: 401,
-        headers: { 'content-type': 'application/json' },
-      })
-    );
-}
-
-const RESEND_KEY = 're_test_key';
-
 beforeEach(() => {
   jest.clearAllMocks();
-  process.env.RESEND_API_KEY = RESEND_KEY;
   mockGetServerSession.mockResolvedValue(adminSession());
-  mockFetch.mockImplementation(resendOk());
-});
-
-afterEach(() => {
-  delete process.env.RESEND_API_KEY;
+  mockSend.mockResolvedValue({ ok: true, provider: 'smtp' });
 });
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -98,16 +75,20 @@ describe('auth', () => {
   });
 });
 
-// ── RESEND_API_KEY guard ──────────────────────────────────────────────────────
+// ── No provider configured ────────────────────────────────────────────────────
 
-describe('RESEND_API_KEY guard', () => {
-  it('returns 503 when RESEND_API_KEY is not set', async () => {
-    delete process.env.RESEND_API_KEY;
+describe('no provider configured', () => {
+  it('returns 503 with the reason', async () => {
+    mockSend.mockResolvedValue({
+      ok: false,
+      provider: 'none',
+      error: 'No email provider configured.',
+    });
     const res = await POST(makeRequest({ to: 'someone@test.com' }));
     expect(res.status).toBe(503);
     const body = (await res.json()) as { success: boolean; error: string };
     expect(body.success).toBe(false);
-    expect(body.error).toMatch(/RESEND_API_KEY/i);
+    expect(body.error).toMatch(/no email provider/i);
   });
 });
 
@@ -119,6 +100,7 @@ describe('input validation', () => {
     expect(res.status).toBe(400);
     const body = (await res.json()) as { success: boolean };
     expect(body.success).toBe(false);
+    expect(mockSend).not.toHaveBeenCalled();
   });
 
   it('returns 400 when "to" is not a valid email (no @)', async () => {
@@ -135,48 +117,43 @@ describe('input validation', () => {
 // ── Successful send ───────────────────────────────────────────────────────────
 
 describe('successful send', () => {
-  it('returns 200 with success: true and resendId', async () => {
-    mockFetch.mockImplementation(resendOk('re_testid_001'));
+  it('returns 200 with success: true and the provider used', async () => {
     const res = await POST(makeRequest({ to: 'ops@brandy.eg' }));
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       success: boolean;
-      resendId: string;
+      provider: string;
       to: string;
       sentAt: string;
     };
     expect(body.success).toBe(true);
-    expect(body.resendId).toBe('re_testid_001');
+    expect(body.provider).toBe('smtp');
     expect(body.to).toBe('ops@brandy.eg');
     expect(typeof body.sentAt).toBe('string');
   });
 
-  it('calls Resend API with correct Authorization header', async () => {
-    await POST(makeRequest({ to: 'ops@brandy.eg' }));
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('https://api.resend.com/emails');
-    const headers = init.headers as Record<string, string>;
-    expect(headers.authorization).toBe(`Bearer ${RESEND_KEY}`);
-  });
-
   it('sends to the correct recipient', async () => {
     await POST(makeRequest({ to: 'recipient@test.com' }));
-    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    const sent = JSON.parse(init.body as string) as { to: string };
-    expect(sent.to).toBe('recipient@test.com');
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const [opts] = mockSend.mock.calls[0] as [{ to: string; subject: string }];
+    expect(opts.to).toBe('recipient@test.com');
+    expect(opts.subject).toMatch(/test email/i);
   });
 });
 
-// ── Resend API error ──────────────────────────────────────────────────────────
+// ── Provider error ────────────────────────────────────────────────────────────
 
-describe('Resend API error handling', () => {
-  it('returns 502 when Resend returns a non-ok status', async () => {
-    mockFetch.mockImplementation(resendError('API key is invalid'));
+describe('provider error handling', () => {
+  it('returns 502 with the provider error', async () => {
+    mockSend.mockResolvedValue({
+      ok: false,
+      provider: 'smtp',
+      error: 'Invalid login: 535 Authentication failed',
+    });
     const res = await POST(makeRequest({ to: 'ops@brandy.eg' }));
     expect(res.status).toBe(502);
     const body = (await res.json()) as { success: boolean; error: string };
     expect(body.success).toBe(false);
-    expect(body.error).toMatch(/API key is invalid/i);
+    expect(body.error).toMatch(/authentication failed/i);
   });
 });

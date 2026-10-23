@@ -51,7 +51,10 @@ export default function HealthTab() {
       });
       const resData = await res.json();
       if (res.ok && resData.success) {
-        setEmailResult({ success: true, msg: `✓ Email delivered! Resend ID: ${resData.resendId}` });
+        setEmailResult({
+          success: true,
+          msg: `✓ Sent via ${resData.provider === 'smtp' ? 'SMTP' : 'Resend'} to ${resData.to}`,
+        });
       } else {
         setEmailResult({
           success: false,
