@@ -24,7 +24,7 @@ const sendMail = jest.fn<
 >();
 jest.mock('nodemailer', () => ({ createTransport: () => ({ sendMail }) }));
 
-import { sendEmailDetailed, htmlToText } from '@/lib/email';
+import { sendEmailDetailed, htmlToText, withLogo } from '@/lib/email';
 
 const MSG = { to: 'buyer@example.test', subject: 'Verify', html: '<p>hi</p>' };
 
@@ -85,6 +85,20 @@ describe('htmlToText', () => {
       '<a href="https://brandyy.shop/v?t=1">Verify email</a></p>';
     expect(htmlToText(html)).toBe(
       'Verify\nHi Omar & team,\nclick Verify email (https://brandyy.shop/v?t=1)'
+    );
+  });
+});
+
+describe('withLogo', () => {
+  it('adds the logo once, after <body> when there is one', () => {
+    const doc = withLogo('<html><body style="x"><p>Hi</p></body></html>');
+    expect(doc).toMatch(/<body style="x"><div[^>]*><img src="[^"]*\/email-logo\.png"/);
+    expect(withLogo(doc)).toBe(doc);
+  });
+
+  it('puts the logo first in a fragment', () => {
+    expect(withLogo('<p>Hi</p>')).toMatch(
+      /^<div[^>]*><img [^>]*email-logo\.png[^>]*\/><\/div><p>Hi<\/p>$/
     );
   });
 });
