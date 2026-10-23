@@ -46,14 +46,25 @@ export function htmlToText(html: string): string {
     .trim();
 }
 
+/** Brandyy logo at the top of every email (public/email-logo.png, 160px). */
+export function withLogo(html: string): string {
+  if (html.includes('/email-logo.png')) return html;
+  const logo =
+    `<div style="text-align:center;padding:24px 0 8px">` +
+    `<img src="${PLATFORM_URL}/email-logo.png" width="80" height="80" alt="Brandyy" ` +
+    `style="display:inline-block;border:0;outline:none;border-radius:50%" /></div>`;
+  return /<body[^>]*>/i.test(html) ? html.replace(/<body[^>]*>/i, m => m + logo) : logo + html;
+}
+
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   return (await sendEmailDetailed(options)).ok;
 }
 
 /** Same as sendEmail, but says which provider was used and why it failed. */
 export async function sendEmailDetailed(options: EmailOptions): Promise<SendResult> {
-  const { to, subject, html } = options;
-  const text = htmlToText(html);
+  const { to, subject } = options;
+  const html = withLogo(options.html);
+  const text = htmlToText(options.html);
   const replyTo = SUPPORT_EMAIL;
 
   let provider = 'resend';
