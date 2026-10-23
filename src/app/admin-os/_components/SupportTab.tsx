@@ -308,8 +308,12 @@ function ReturnsPanel() {
 // ─── Tickets ────────────────────────────────────────────────────────────────
 interface Ticket {
   id: string;
+  ticketId: string;
+  name: string;
+  email: string;
   subject: string;
-  status: 'OPEN' | 'IN_PROGRESS' | 'CLOSED';
+  message: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
   priority: string;
   createdAt: string;
 }
@@ -335,6 +339,20 @@ function TicketsPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
+  const act = async (t: Ticket, action: string) => {
+    if (action === 'DELETE') {
+      if (!confirm(`Delete ticket #${t.ticketId} permanently?`)) return;
+      await fetch(`/api/admin/tickets?id=${encodeURIComponent(t.id)}`, { method: 'DELETE' });
+    } else {
+      await fetch('/api/admin/tickets', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: t.id, status: action }),
+      });
+    }
+    load();
+  };
+
   return (
     <div className="card">
       <div className="card-head">
@@ -346,6 +364,7 @@ function TicketsPanel() {
         >
           <option value="OPEN">Open</option>
           <option value="IN_PROGRESS">In progress</option>
+          <option value="RESOLVED">Resolved</option>
           <option value="CLOSED">Closed</option>
           <option value="">All</option>
         </select>
@@ -358,21 +377,51 @@ function TicketsPanel() {
         <table className="sup-table">
           <thead>
             <tr>
+              <th>Ticket</th>
+              <th>From</th>
               <th>Subject</th>
               <th>Status</th>
-              <th>Priority</th>
               <th>Created</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {items.map(t => (
               <tr key={t.id}>
-                <td>{t.subject}</td>
+                <td className="text-xs font-mono">#{t.ticketId}</td>
+                <td>
+                  <div>{t.name}</div>
+                  <a className="sup-link text-xs" href={`mailto:${t.email}`}>
+                    {t.email}
+                  </a>
+                </td>
+                <td className="max-w-md" title={t.message}>
+                  <div>{t.subject}</div>
+                  <div className="text-xs text-slate-500 truncate">{t.message}</div>
+                </td>
                 <td>
                   <Pill status={t.status} />
                 </td>
-                <td>{t.priority}</td>
                 <td className="text-xs text-slate-500">{new Date(t.createdAt).toLocaleString()}</td>
+                <td>
+                  <select
+                    onChange={e => act(t, e.target.value)}
+                    value=""
+                    className="sup-action-select"
+                    aria-label={`Actions for ticket ${t.ticketId}`}
+                  >
+                    <option value="" disabled>
+                      Action
+                    </option>
+                    {t.status !== 'IN_PROGRESS' && (
+                      <option value="IN_PROGRESS">Mark in progress</option>
+                    )}
+                    {t.status !== 'RESOLVED' && <option value="RESOLVED">Mark resolved</option>}
+                    {t.status !== 'CLOSED' && <option value="CLOSED">Close</option>}
+                    {t.status !== 'OPEN' && <option value="OPEN">Reopen</option>}
+                    <option value="DELETE">Delete…</option>
+                  </select>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -397,6 +446,7 @@ function Pill({ status }: { status: string }) {
     INVESTIGATING: { bg: '#dbeafe', fg: '#1e40af' },
     RESOLVED_BUYER: { bg: '#d1fae5', fg: '#065f46' },
     RESOLVED_SELLER: { bg: '#d1fae5', fg: '#065f46' },
+    RESOLVED: { bg: '#d1fae5', fg: '#065f46' },
     CLOSED: { bg: '#f1f5f9', fg: '#64748b' },
     PENDING: { bg: '#fef3c7', fg: '#92400e' },
     APPROVED: { bg: '#d1fae5', fg: '#065f46' },

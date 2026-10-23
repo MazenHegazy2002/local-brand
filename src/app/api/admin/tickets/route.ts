@@ -54,3 +54,16 @@ export async function PATCH(req: Request) {
   });
   return NextResponse.json({ ticket });
 }
+
+// DELETE ?id=<id> — permanently remove a ticket (spam, tests).
+export async function DELETE(req: Request) {
+  const session = await getRequestSession(req);
+  if (!session || (session.user as SessionUser).role !== 'ADMIN') {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+  const id = new URL(req.url).searchParams.get('id');
+  if (!id) return NextResponse.json({ message: 'id required' }, { status: 400 });
+  const { count } = await prisma.supportTicket.deleteMany({ where: { id } });
+  if (!count) return NextResponse.json({ message: 'Ticket not found' }, { status: 404 });
+  return NextResponse.json({ deleted: true });
+}
