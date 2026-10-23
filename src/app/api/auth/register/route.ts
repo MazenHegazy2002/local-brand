@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
     // Send email verification link
     await sendEmail({
       to: email,
-      subject: 'Verify your Brandy email address',
+      subject: 'Verify your Brandyy email address',
       html: generateEmailVerificationEmail(name, verifyUrl),
     });
 
@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
     if (userRole === 'SELLER') {
       await sendEmail({
         to: email,
-        subject: 'Your Brandy seller application is under review',
+        subject: 'Your Brandyy seller application is under review',
         html: generateSellerPendingEmail(name, storeName),
       });
     }

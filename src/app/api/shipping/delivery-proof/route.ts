@@ -134,7 +134,7 @@ export async function POST(req: Request) {
 <p><a href="${PLATFORM_URL}/dashboard/orders/${orderItem.orderId}">View order</a></p>
 <hr />
 ${notes ? `<p><em>Courier note:</em> ${notes}</p>` : ''}
-<p>— Brandy</p>
+<p>— Brandyy</p>
             `,
             }).catch(() => {
               /* dev fallback */

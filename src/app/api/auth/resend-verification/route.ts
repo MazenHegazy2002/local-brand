@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     await sendEmail({
       to: email,
-      subject: 'Verify your Brandy email address',
+      subject: 'Verify your Brandyy email address',
       html: generateEmailVerificationEmail(user.name, verifyUrl),
     });
 

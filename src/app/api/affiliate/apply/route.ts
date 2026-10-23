@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
 
       await sendEmail({
         to: email,
-        subject: 'Verify your Brandy email address',
+        subject: 'Verify your Brandyy email address',
         html: generateEmailVerificationEmail(name, verifyUrl),
       });
     } catch (emailErr) {
