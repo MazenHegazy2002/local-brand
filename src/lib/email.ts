@@ -451,6 +451,13 @@ export function generateRefundProcessedEmail(
   `;
 }
 
+const ORDER_STATUS_NOTES: Record<string, { title: string; body: string }> = {
+  SHIPPED: { title: 'Your order shipped 🚚', body: 'is on its way.' },
+  DELIVERED: { title: 'Order delivered ✅', body: 'was delivered. Enjoy, and leave a review!' },
+  CANCELLED: { title: 'Order cancelled', body: 'was cancelled.' },
+  RETURNED: { title: 'Refund processed', body: 'was refunded.' },
+};
+
 export async function triggerOrderStatusEmail(orderId: string, status: string): Promise<boolean> {
   try {
     const { prisma } = await import('@/lib/prisma');
@@ -481,6 +488,21 @@ export async function triggerOrderStatusEmail(orderId: string, status: string): 
       html = generateRefundProcessedEmail(order as unknown as Order, userObj, order.totalAmount);
     } else {
       return false;
+    }
+
+    // App users also get it in their notifications list and as a push on their phone.
+    if (order.userId) {
+      const { notifyUser, pushToUser } = await import('@/lib/notification-helpers');
+      const ref = `#${order.id.slice(0, 8).toUpperCase()}`;
+      const note = ORDER_STATUS_NOTES[status];
+      const link = `/order/${order.id}`;
+      await notifyUser({
+        userId: order.userId,
+        title: note.title,
+        message: `${ref} ${note.body}`,
+        link,
+      });
+      await pushToUser(order.userId, note.title, `${ref} ${note.body}`, link);
     }
 
     return await sendEmail({ to: emailTo, subject, html });
