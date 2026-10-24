@@ -31,10 +31,14 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
           selectedSize: true,
           selectedColor: true,
           status: true,
+          // The app offers "Review" / "Request a return" on delivered items that have neither yet.
+          review: { select: { rating: true } },
+          returnRequest: { select: { status: true } },
           variant: {
             select: {
               product: {
                 select: {
+                  id: true,
                   title: true,
                   images: {
                     select: { id: true, url: true },
@@ -60,6 +64,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
       shippedAt: order.shipments[0]?.shippedAt ?? null,
       items: order.items.map(i => ({
         ...i,
+        productId: i.variant?.product.id ?? null,
         title: i.productTitleSnapshot || i.variant?.product.title,
         image: img(i.variant?.product.images[0]),
         price: Number(i.priceAtPurchase),

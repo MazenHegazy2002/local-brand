@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getRequestSession } from '@/lib/mobile-auth';
 import { SessionUser } from '@/types';
 import { rmaSchema } from '@/lib/validation';
 import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
@@ -9,7 +8,7 @@ import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
 // POST /api/rma — buyer requests a return
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getRequestSession(req);
     if (!session || !session.user)
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
@@ -123,9 +122,9 @@ export async function POST(req: Request) {
 }
 
 // GET /api/rma — get user's return requests
-export async function GET(_req: Request) {
+export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getRequestSession(req);
     if (!session || !session.user)
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
