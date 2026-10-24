@@ -10,7 +10,19 @@ const profileSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(100),
   phone: z.string().trim().max(30).nullable().optional(),
   // No length cap: local dev uploads come back as data: URLs (see /api/upload).
-  avatarUrl: z.string().url().nullable().optional(),
+  // Disk uploads come back as "/api/files/<name>", which isn't a full URL. Only http(s)
+  // otherwise: z.string().url() alone would also accept javascript: URLs.
+  avatarUrl: z
+    .string()
+    .refine(
+      v =>
+        /^\/api\/files\/[\w-]+(\.\w+)?$/.test(v) ||
+        (/^https?:\/\//i.test(v) && z.string().url().safeParse(v).success) ||
+        /^data:image\//.test(v),
+      { message: 'Invalid url' }
+    )
+    .nullable()
+    .optional(),
 });
 
 // GET /api/user/profile — the signed-in user's editable profile
