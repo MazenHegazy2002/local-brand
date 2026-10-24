@@ -149,12 +149,32 @@ async function resolveSku(
   return `${base}-${index + 1}-${Date.now().toString().slice(-6)}`;
 }
 
+// A courier must be able to collect the order, so a live product needs a full pickup address.
+const PICKUP_ADDRESS_MISSING =
+  'Please complete your product pickup warehouse address (governorate, city, street address, and phone) in Seller Hub Settings before publishing products.';
+function hasPickupAddress(
+  seller: {
+    governorate: string | null;
+    city: string | null;
+    pickupStreet: string | null;
+    pickupPhone: string | null;
+  },
+  userPhone: string | null | undefined
+) {
+  return (
+    Boolean(seller.governorate?.trim()) &&
+    Boolean(seller.city?.trim()) &&
+    Boolean(seller.pickupStreet?.trim()) &&
+    Boolean((seller.pickupPhone || userPhone)?.trim())
+  );
+}
+
 export async function createProductForSeller(
   userId: string,
   data: ProductData
 ): Promise<{ id?: string; published?: boolean; publishBlockedReason?: string; error?: string }> {
   const [user, seller] = await Promise.all([
-    prisma.user.findUnique({ where: { id: userId }, select: { emailVerified: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { emailVerified: true, phone: true } }),
     prisma.sellerProfile.findUnique({ where: { userId } }),
   ]);
 
@@ -193,6 +213,7 @@ export async function createProductForSeller(
   // 1. Must have at least one product image.
   // 2. The seller's email must be verified.
   // 3. The SellerProfile.status must be ACTIVE.
+  // 4. The seller has a pickup address (same rule as toggling a product live).
   const hasImages = data.mainImage || extraImages.length > 0 || (variants || []).some(v => v.image);
   const publishBlockedReason = !hasImages
     ? 'Add at least one image before publishing this product.'
@@ -200,7 +221,9 @@ export async function createProductForSeller(
       ? 'Verify your email address before publishing products.'
       : seller.status !== 'ACTIVE'
         ? 'Your seller account is not active yet. Products can only go live after admin approval.'
-        : undefined;
+        : !hasPickupAddress(seller, user?.phone)
+          ? PICKUP_ADDRESS_MISSING
+          : undefined;
 
   let published = rest.published ?? true;
   if (published && publishBlockedReason) published = false;
@@ -353,17 +376,7 @@ export async function toggleProductPublishedForSeller(
           'Your seller account is not active yet. Products can only go live after admin approval.',
       };
     }
-    const hasPickupAddress =
-      Boolean(seller.governorate?.trim()) &&
-      Boolean(seller.city?.trim()) &&
-      Boolean(seller.pickupStreet?.trim()) &&
-      Boolean((seller.pickupPhone || user?.phone)?.trim());
-    if (!hasPickupAddress) {
-      return {
-        error:
-          'Please complete your product pickup warehouse address (governorate, city, street address, and phone) in Seller Hub Settings before publishing products.',
-      };
-    }
+    if (!hasPickupAddress(seller, user?.phone)) return { error: PICKUP_ADDRESS_MISSING };
   }
 
   await prisma.product.update({ where: { id: productId }, data: { published: publish } });
