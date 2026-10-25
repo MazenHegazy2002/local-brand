@@ -260,3 +260,11 @@ jest.mock('@/lib/prisma', () => ({
     $disconnect: jest.fn(),
   },
 }));
+
+// next/jest loads .env, so a real mail key would let tests that hit error paths
+// (notifyAdminError, order alerts) email the admin for real. Tests that need a
+// provider set their own.
+delete process.env.RESEND_API_KEY;
+delete process.env.SMTP_HOST;
+delete process.env.SMTP_USER;
+delete process.env.SMTP_PASS;
