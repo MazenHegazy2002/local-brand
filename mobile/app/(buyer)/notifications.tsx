@@ -1,6 +1,6 @@
 // Screen 3f — Notifications
 import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -13,7 +13,12 @@ interface Notif {
   message: string;
   isRead: boolean;
   createdAt: string;
+  link?: string | null;
 }
+
+// Links that are app screens (others, like /admin-os, are website pages).
+const appRoute = (link?: string | null) =>
+  link && /^\/(order|product)\/[\w-]+$/.test(link) ? (link as Href) : null;
 
 // The Notification model has no type column, so pick the icon from the title.
 function iconFor(title: string): [string, string] {
@@ -56,7 +61,12 @@ export default function Notifications() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('Back')}
+          onPress={() => router.back()}
+          style={styles.backBtn}
+        >
           <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
         </Pressable>
         <Text style={styles.title}>{t('Notifications')}</Text>
@@ -78,7 +88,11 @@ export default function Notifications() {
             return (
               <Pressable
                 style={[styles.item, !n.isRead && styles.itemUnread]}
-                onPress={() => !n.isRead && markRead(n.id)}
+                onPress={() => {
+                  if (!n.isRead) markRead(n.id);
+                  const to = appRoute(n.link);
+                  if (to) router.push(to);
+                }}
               >
                 <View style={[styles.iconWrap, { backgroundColor: iconBg }]}>
                   <Text style={styles.icon}>{icon}</Text>

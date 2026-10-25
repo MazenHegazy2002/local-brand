@@ -68,24 +68,41 @@ const COLOR_HEX: Record<string, string> = {
 export const colorHex = (name: string) => COLOR_HEX[name.trim().toLowerCase()] ?? '#b8bcc6';
 
 // Multipart upload — the shared api client forces JSON, so this sets its own headers.
+type UploadBody = { url?: string; error?: string; message?: string };
+
 export async function uploadImage(uri: string, mime = 'image/jpeg'): Promise<string> {
   const token =
     Platform.OS === 'web'
       ? localStorage.getItem('access_token')
       : await SecureStore.getItemAsync('access_token');
   const form = new FormData();
+  let res: { ok: boolean; json: () => Promise<UploadBody> };
   if (Platform.OS === 'web') {
     const blob = await (await fetch(uri)).blob();
     form.append('file', blob, `photo.${blob.type.split('/')[1] ?? 'jpg'}`);
+    res = await fetch(`${API_BASE}/api/upload`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: form,
+    });
   } else {
+    // Expo's fetch rejects React Native's { uri } file parts ("Unsupported FormDataPart
+    // implementation"); XMLHttpRequest still streams them from disk.
     form.append('file', { uri, name: `photo.${mime.split('/')[1] ?? 'jpg'}`, type: mime } as never);
+    res = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_BASE}/api/upload`);
+      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.onload = () =>
+        resolve({
+          ok: xhr.status >= 200 && xhr.status < 300,
+          json: async () => JSON.parse(xhr.responseText || '{}'),
+        });
+      xhr.onerror = () => reject(new Error('Upload failed. Check your connection.'));
+      xhr.send(form);
+    });
   }
-  const res = await fetch(`${API_BASE}/api/upload`, {
-    method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    body: form,
-  });
-  const body = await res.json().catch(() => ({}));
+  const body = await res.json().catch((): UploadBody => ({}));
   if (!res.ok || !body.url) throw new Error(body.error ?? body.message ?? 'Upload failed');
   return body.url;
 }

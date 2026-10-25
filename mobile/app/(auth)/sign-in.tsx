@@ -101,7 +101,12 @@ export default function SignIn() {
       <View style={styles.root}>
         <StatusBar barStyle="dark-content" />
         <ScrollView contentContainerStyle={styles.inner}>
-          <Pressable style={styles.back} onPress={() => setVerifyEmail('')}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('Back')}
+            style={styles.back}
+            onPress={() => setVerifyEmail('')}
+          >
             <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
           </Pressable>
           <Text style={styles.heading}>{t('Check your email')}</Text>
@@ -143,7 +148,12 @@ export default function SignIn() {
       <StatusBar barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
         {/* Back */}
-        <Pressable style={styles.back} onPress={() => router.back()}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('Back')}
+          style={styles.back}
+          onPress={() => router.back()}
+        >
           <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
         </Pressable>
 
@@ -206,7 +216,12 @@ export default function SignIn() {
             onChangeText={setPassword}
             secureTextEntry={!showPw}
           />
-          <Pressable style={styles.eyeBtn} onPress={() => setShowPw(!showPw)}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={showPw ? t('Hide password') : t('Show password')}
+            style={styles.eyeBtn}
+            onPress={() => setShowPw(!showPw)}
+          >
             {showPw ? (
               <EyeOff size={18} color={colors.placeholder} strokeWidth={2} />
             ) : (

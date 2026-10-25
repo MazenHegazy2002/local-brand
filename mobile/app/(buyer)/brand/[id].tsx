@@ -81,7 +81,12 @@ export default function BrandPage() {
         <View style={styles.coverWrap}>
           {cover ? <Image source={{ uri: cover }} style={styles.cover} contentFit="cover" /> : null}
           <View style={styles.coverShade} />
-          <Pressable style={styles.backBtn} onPress={() => router.back()}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('Back')}
+            style={styles.backBtn}
+            onPress={() => router.back()}
+          >
             <ArrowLeft size={20} color={colors.ink} strokeWidth={2} />
           </Pressable>
         </View>

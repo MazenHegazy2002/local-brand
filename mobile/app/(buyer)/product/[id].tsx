@@ -176,11 +176,18 @@ export default function ProductDetail() {
             )}
           />
 
-          <Pressable style={[styles.galleryBtn, { left: 16 }]} onPress={() => router.back()}>
+          <Pressable
+            style={[styles.galleryBtn, { left: 16 }]}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel={t('Back')}
+          >
             <ArrowLeft size={20} color={colors.ink} strokeWidth={2} />
           </Pressable>
           <Pressable
             style={[styles.galleryBtn, { right: 64 }]}
+            accessibilityRole="button"
+            accessibilityLabel={t('Share')}
             onPress={() =>
               Share.share({
                 message: `${process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop'}/product/${id}`,
@@ -193,6 +200,8 @@ export default function ProductDetail() {
             style={[styles.galleryBtn, { right: 16 }]}
             onPress={() => toggleLike.mutate()}
             disabled={toggleLike.isPending}
+            accessibilityRole="button"
+            accessibilityLabel={liked ? t('Remove from wishlist') : t('Save to wishlist')}
           >
             <Heart
               size={18}

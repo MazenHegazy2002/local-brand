@@ -44,7 +44,12 @@ export default function SellerNotifications() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('Back')}
+          onPress={() => router.back()}
+          hitSlop={8}
+        >
           <ChevronLeft size={24} color={colors.ink} />
         </Pressable>
         <Text style={styles.title}>{t('Notifications')}</Text>

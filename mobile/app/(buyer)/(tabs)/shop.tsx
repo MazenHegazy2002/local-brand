@@ -158,7 +158,12 @@ export default function Shop() {
               returnKeyType="search"
             />
           </View>
-          <Pressable style={styles.filterBtn} onPress={() => setFilterOpen(true)}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('Filters')}
+            style={styles.filterBtn}
+            onPress={() => setFilterOpen(true)}
+          >
             <SlidersHorizontal size={20} color={colors.ink} strokeWidth={2} />
           </Pressable>
         </View>

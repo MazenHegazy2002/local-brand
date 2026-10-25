@@ -167,7 +167,12 @@ export default function AddProduct() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.header}>
-        <Pressable style={styles.iconBtn} onPress={() => router.back()}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('Close')}
+          style={styles.iconBtn}
+          onPress={() => router.back()}
+        >
           <X size={22} color={colors.ink} />
         </Pressable>
         <Text style={styles.headerTitle}>{t('New product')}</Text>
@@ -285,7 +290,7 @@ export default function AddProduct() {
                   value={weight}
                   onChangeText={setWeight}
                   keyboardType="decimal-pad"
-                  placeholder="0.5"
+                  placeholder={t('e.g. 0.5')}
                   placeholderTextColor={colors.placeholder}
                 />
                 <Text style={styles.suffix}>{t('kg')}</Text>
@@ -331,7 +336,12 @@ export default function AddProduct() {
                 placeholderTextColor={colors.placeholder}
                 onSubmitEditing={addVariant}
               />
-              <Pressable style={styles.addVarBtn} onPress={addVariant}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('Add variant')}
+                style={styles.addVarBtn}
+                onPress={addVariant}
+              >
                 <Plus size={18} color="#fff" />
               </Pressable>
             </View>
@@ -343,7 +353,12 @@ export default function AddProduct() {
                 {v.color}
                 {v.size ? ` · ${v.size}` : ''}
               </Text>
-              <Pressable style={styles.stepBtn} onPress={() => step(v.key, -1)}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('Decrease quantity')}
+                style={styles.stepBtn}
+                onPress={() => step(v.key, -1)}
+              >
                 <Minus size={14} color={colors.ink} />
               </Pressable>
               <Text
@@ -358,10 +373,17 @@ export default function AddProduct() {
               >
                 {v.stock}
               </Text>
-              <Pressable style={styles.stepBtn} onPress={() => step(v.key, 1)}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('Increase quantity')}
+                style={styles.stepBtn}
+                onPress={() => step(v.key, 1)}
+              >
                 <Plus size={14} color={colors.ink} />
               </Pressable>
               <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('Remove')}
                 hitSlop={8}
                 onPress={() => setVariants(vs => vs.filter(x => x.key !== v.key))}
               >

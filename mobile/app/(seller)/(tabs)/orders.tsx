@@ -85,6 +85,8 @@ export default function SellerOrders() {
       <View style={styles.header}>
         <Text style={styles.title}>{t('Orders')}</Text>
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={searchOpen ? t('Close search') : t('Search')}
           style={styles.iconBtn}
           onPress={() => {
             if (searchOpen) setText('');

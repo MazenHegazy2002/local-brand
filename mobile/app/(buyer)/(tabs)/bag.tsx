@@ -117,6 +117,8 @@ export default function Bag() {
             </View>
             <View style={styles.stepper}>
               <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('Decrease quantity')}
                 style={styles.stepBtn}
                 onPress={() =>
                   item.qty <= 1 ? remove(lineKey(item)) : setQty(lineKey(item), item.qty - 1)
@@ -125,7 +127,12 @@ export default function Bag() {
                 <Minus size={14} color={colors.ink} strokeWidth={2} />
               </Pressable>
               <Text style={styles.stepQty}>{item.qty}</Text>
-              <Pressable style={styles.stepBtn} onPress={() => setQty(lineKey(item), item.qty + 1)}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('Increase quantity')}
+                style={styles.stepBtn}
+                onPress={() => setQty(lineKey(item), item.qty + 1)}
+              >
                 <Plus size={14} color={colors.ink} strokeWidth={2} />
               </Pressable>
             </View>

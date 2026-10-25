@@ -180,7 +180,12 @@ export default function Checkout() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('Back')}
+          onPress={() => router.back()}
+          hitSlop={8}
+        >
           <ChevronLeft size={24} color={colors.ink} strokeWidth={2} />
         </Pressable>
         <Text style={styles.title}>{t('Checkout')}</Text>
