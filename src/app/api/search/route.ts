@@ -94,7 +94,7 @@ export async function GET(req: Request) {
           images: true,
           variants: true,
           seller: { select: { storeName: true, status: true } },
-          reviews: { select: { rating: true } },
+          reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
         },
         skip,
         take: limit,

@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
       }),
       prisma.notification.count({ where: { userId: user.id, isRead: false } }),
       prisma.review.aggregate({
-        where: { product: { sellerId: seller.id }, rating: { gt: 0 } },
+        where: { product: { sellerId: seller.id }, rating: { gt: 0 }, status: 'PUBLISHED' },
         _avg: { rating: true },
         _count: { _all: true },
       }),
