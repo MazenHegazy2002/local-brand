@@ -26,7 +26,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     // Aggregate rating from reviews
     const reviews = await prisma.review.findMany({
-      where: { product: { sellerId } },
+      where: { product: { sellerId }, status: 'PUBLISHED' },
       select: { rating: true },
     });
 

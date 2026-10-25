@@ -35,7 +35,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         where: { items: { some: { variant: { product: { sellerId } } } }, status: 'RETURNED' },
       }),
       prisma.review.findMany({
-        where: { product: { sellerId }, rating: { gt: 0 } },
+        where: { product: { sellerId }, rating: { gt: 0 }, status: 'PUBLISHED' },
         select: { rating: true },
       }),
     ]);

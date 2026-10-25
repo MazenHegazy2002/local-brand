@@ -43,6 +43,7 @@ const getProduct = cache(async (id: string) => {
         category: true,
         tags: true,
         reviews: {
+          where: { status: 'PUBLISHED' },
           orderBy: { createdAt: 'desc' },
           include: { user: { select: { name: true } } },
         },

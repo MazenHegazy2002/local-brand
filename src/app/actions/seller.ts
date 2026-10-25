@@ -241,7 +241,7 @@ export async function getDashboardStats() {
       // Real rating + review aggregation
       const reviewAgg = productIds.length
         ? await prisma.review.aggregate({
-            where: { productId: { in: productIds }, rating: { gt: 0 } },
+            where: { productId: { in: productIds }, rating: { gt: 0 }, status: 'PUBLISHED' },
             _avg: { rating: true },
             _count: { _all: true },
           })
@@ -855,7 +855,7 @@ export async function getHomepageData() {
               images: true,
               variants: true,
               seller: { select: { storeName: true } },
-              reviews: { select: { rating: true } },
+              reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
             },
             take: 6,
           });
@@ -867,7 +867,7 @@ export async function getHomepageData() {
               images: true,
               variants: true,
               seller: { select: { storeName: true } },
-              reviews: { select: { rating: true } },
+              reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
             },
             take: 6,
           });
@@ -881,7 +881,7 @@ export async function getHomepageData() {
               images: true,
               variants: true,
               seller: { select: { storeName: true } },
-              reviews: { select: { rating: true } },
+              reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
             },
             orderBy: { createdAt: 'desc' },
             take: 6,
@@ -894,7 +894,7 @@ export async function getHomepageData() {
               images: true,
               variants: true,
               seller: { select: { storeName: true } },
-              reviews: { select: { rating: true } },
+              reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
             },
             orderBy: { createdAt: 'desc' },
             take: 6,
@@ -909,7 +909,7 @@ export async function getHomepageData() {
               images: true,
               variants: true,
               seller: { select: { storeName: true } },
-              reviews: { select: { rating: true } },
+              reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
             },
             take: 6,
           });
@@ -928,7 +928,7 @@ export async function getHomepageData() {
               images: true,
               variants: true,
               seller: { select: { storeName: true } },
-              reviews: { select: { rating: true } },
+              reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
             },
             take: 6,
             orderBy: { updatedAt: 'desc' },

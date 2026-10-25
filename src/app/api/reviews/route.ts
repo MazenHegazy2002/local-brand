@@ -111,7 +111,7 @@ export async function GET(req: Request) {
 
     const [reviews, totalCount] = await Promise.all([
       prisma.review.findMany({
-        where: { productId },
+        where: { productId, status: 'PUBLISHED' },
         include: {
           user: { select: { name: true, avatarUrl: true } },
         },
@@ -119,11 +119,11 @@ export async function GET(req: Request) {
         take: limit,
         skip,
       }),
-      prisma.review.count({ where: { productId } }),
+      prisma.review.count({ where: { productId, status: 'PUBLISHED' } }),
     ]);
 
     const allReviewsForAvg = await prisma.review.findMany({
-      where: { productId },
+      where: { productId, status: 'PUBLISHED' },
       select: { rating: true },
     });
     const averageRating =
