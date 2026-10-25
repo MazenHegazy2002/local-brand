@@ -37,6 +37,7 @@
     "coverage/",
     "scratch/",
     "scratch/**",
-    "backups/"
+    "backups/",
+    ".claude/**"
   ]
 }

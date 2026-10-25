@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import PasswordStrength from '@/components/PasswordStrength';
+import { GOVERNORATES } from '@/lib/governorates';
 
 type Step = 'form' | 'success';
 
@@ -43,6 +44,18 @@ export default function BecomeSellerPage() {
   const [facebookUrl, setFacebookUrl] = useState('');
   const [tiktokUrl, setTiktokUrl] = useState('');
   const [referralCode, setReferralCode] = useState('');
+
+  // Warehouse Pickup Address state (Required for courier orders & Seller Hub settings sync)
+  const [governorate, setGovernorate] = useState('Cairo');
+  const [city, setCity] = useState('');
+  const [pickupStreet, setPickupStreet] = useState('');
+  const [pickupBuilding, setPickupBuilding] = useState('');
+  const [pickupPhone, setPickupPhone] = useState('');
+  const [pickupPhoneTouched, setPickupPhoneTouched] = useState(false);
+  const [pickupContactName, setPickupContactName] = useState('');
+  const [pickupGeo, setPickupGeo] = useState('');
+  const [gettingLocation, setGettingLocation] = useState(false);
+
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<Step>('form');
@@ -69,6 +82,34 @@ export default function BecomeSellerPage() {
     }
   }, []);
 
+  const handlePhoneChange = (val: string) => {
+    setPhone(val);
+    if (!pickupPhoneTouched) {
+      setPickupPhone(val);
+    }
+  };
+
+  const handleGetLocation = () => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+    setGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const coords = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+        setPickupGeo(coords);
+        setGettingLocation(false);
+      },
+      err => {
+        console.warn('Geolocation error:', err);
+        alert('Unable to retrieve location. Please check your browser location permissions.');
+        setGettingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -82,6 +123,27 @@ export default function BecomeSellerPage() {
       return;
     }
 
+    if (!governorate.trim()) {
+      setError('Please select your Pickup Governorate.');
+      return;
+    }
+
+    if (!city.trim()) {
+      setError('Please provide your Pickup City / Area.');
+      return;
+    }
+
+    if (!pickupStreet.trim()) {
+      setError('Please provide your Detailed Pickup Street Address.');
+      return;
+    }
+
+    const resolvedPickupPhone = pickupPhone.trim() || phone.trim();
+    if (!resolvedPickupPhone) {
+      setError('Please provide a Pickup Contact Phone Number for couriers.');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
@@ -90,19 +152,26 @@ export default function BecomeSellerPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name,
-          email,
+          name: name.trim(),
+          email: email.trim(),
           password,
           role: 'SELLER',
-          storeName,
-          phone: phone || undefined,
+          storeName: storeName.trim(),
+          phone: phone.trim() || undefined,
           type,
-          taxNumber: taxNumber || undefined,
-          description: description || undefined,
-          instagramUrl: instagramUrl || undefined,
-          facebookUrl: facebookUrl || undefined,
-          tiktokUrl: tiktokUrl || undefined,
+          taxNumber: taxNumber.trim() || undefined,
+          description: description.trim() || undefined,
+          instagramUrl: instagramUrl.trim() || undefined,
+          facebookUrl: facebookUrl.trim() || undefined,
+          tiktokUrl: tiktokUrl.trim() || undefined,
           referralCode: referralCode.trim() ? referralCode.trim().toUpperCase() : undefined,
+          governorate: governorate.trim(),
+          city: city.trim(),
+          pickupStreet: pickupStreet.trim(),
+          pickupBuilding: pickupBuilding.trim() || undefined,
+          pickupPhone: resolvedPickupPhone,
+          pickupContactName: pickupContactName.trim() || undefined,
+          pickupGeo: pickupGeo.trim() || undefined,
         }),
       });
 
@@ -342,7 +411,7 @@ export default function BecomeSellerPage() {
                       required
                       placeholder="+20 100 000 0000"
                       value={phone}
-                      onChange={e => setPhone(e.target.value)}
+                      onChange={e => handlePhoneChange(e.target.value)}
                       className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white"
                     />
                   </div>
@@ -379,6 +448,164 @@ export default function BecomeSellerPage() {
                       onChange={e => setConfirmPassword(e.target.value)}
                       className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white"
                     />
+                  </div>
+                </div>
+
+                {/* Warehouse & Product Pickup Address Section (Required & synced to Seller Hub settings) */}
+                <div className="bg-slate-50/90 border-2 border-emerald-600/20 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm">
+                  <div className="border-b border-slate-200 pb-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <h3 className="text-sm font-black text-gray-900 flex items-center gap-2">
+                        <span>📍</span> Product Pickup & Warehouse Address
+                      </h3>
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        Required for Couriers
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                      Shipping couriers dispatch drivers to this address to collect sold orders for
+                      buyer delivery. This address will automatically connect to your Seller Hub
+                      settings.
+                    </p>
+                  </div>
+
+                  {/* Governorate & City */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Pickup Governorate <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        required
+                        value={governorate}
+                        onChange={e => setGovernorate(e.target.value)}
+                        className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 bg-white focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm"
+                      >
+                        <option value="">Select Governorate</option>
+                        {GOVERNORATES.map(g => (
+                          <option key={g.value} value={g.en}>
+                            {g.en} ({g.ar})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Pickup City / Area <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Nasr City, Maadi, New Cairo, Dokki"
+                        value={city}
+                        onChange={e => setCity(e.target.value)}
+                        className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Detailed Street Address */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Detailed Street Address <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Street name, Building number, Floor & Flat / Unit number"
+                      value={pickupStreet}
+                      onChange={e => setPickupStreet(e.target.value)}
+                      className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white"
+                    />
+                  </div>
+
+                  {/* Building & Pickup Contact Phone */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Building / Landmark{' '}
+                        <span className="text-gray-400 font-normal">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Near Ahly Club, Mall 1st floor"
+                        value={pickupBuilding}
+                        onChange={e => setPickupBuilding(e.target.value)}
+                        className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Pickup Contact Phone <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        placeholder="+20 100 000 0000"
+                        value={pickupPhone}
+                        onChange={e => {
+                          setPickupPhoneTouched(true);
+                          setPickupPhone(e.target.value);
+                        }}
+                        className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white"
+                      />
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        Contact phone courier driver will call upon arrival.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Pickup Contact Person */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Pickup Contact Person Name{' '}
+                      <span className="text-gray-400 font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Warehouse Manager or Store Contact Person"
+                      value={pickupContactName}
+                      onChange={e => setPickupContactName(e.target.value)}
+                      className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white"
+                    />
+                  </div>
+
+                  {/* Geolocation Pinning */}
+                  <div className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <label className="block text-xs font-bold text-slate-700">
+                        🗺️ Warehouse Geolocation Coordinates{' '}
+                        <span className="text-gray-400 font-normal">(Optional)</span>
+                      </label>
+                      <button
+                        type="button"
+                        disabled={gettingLocation}
+                        onClick={handleGetLocation}
+                        className="text-xs bg-slate-50 hover:bg-slate-100 border border-slate-300 text-slate-700 px-2.5 py-1 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        {gettingLocation ? (
+                          <>
+                            <span className="w-3 h-3 border-2 border-slate-400 border-t-slate-700 rounded-full animate-spin" />
+                            Detecting...
+                          </>
+                        ) : (
+                          <>📍 Pin Current Location</>
+                        )}
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={pickupGeo}
+                      onChange={e => setPickupGeo(e.target.value)}
+                      placeholder="e.g. 30.067807, 31.518141"
+                      className="appearance-none block w-full px-3 py-2 border border-gray-200 rounded-xl text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[hsl(var(--primary))] bg-slate-50/50 font-mono"
+                    />
+                    <p className="text-[11px] text-gray-400">
+                      Coordinates help couriers navigate directly to your warehouse or store pickup
+                      point.
+                    </p>
                   </div>
                 </div>
 

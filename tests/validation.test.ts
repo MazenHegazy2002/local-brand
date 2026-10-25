@@ -49,14 +49,25 @@ describe('registerSchema', () => {
     expect(r.role).toBe('BUYER');
   });
 
-  it('lets users opt in to SELLER role at signup', () => {
+  it('lets users opt in to SELLER role at signup and accepts pickup address fields', () => {
     const r = registerSchema.parse({
       name: 'Seller One',
       email: 's@example.com',
       password: 'topsecret',
       role: 'SELLER',
+      governorate: 'Cairo',
+      city: 'Nasr City',
+      pickupStreet: '10 Abbas El Akkad',
+      pickupBuilding: 'Building 4',
+      pickupPhone: '+201012345678',
+      pickupContactName: 'Ahmed',
+      pickupGeo: '30.067807, 31.518141',
     });
     expect(r.role).toBe('SELLER');
+    expect(r.governorate).toBe('Cairo');
+    expect(r.city).toBe('Nasr City');
+    expect(r.pickupStreet).toBe('10 Abbas El Akkad');
+    expect(r.pickupPhone).toBe('+201012345678');
   });
 
   it('rejects ADMIN role on the public signup endpoint', () => {

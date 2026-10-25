@@ -16,6 +16,13 @@ export const registerSchema = z.object({
     .max(100, 'Password must be less than 100 characters'),
   role: z.enum(['BUYER', 'SELLER']).optional().default('BUYER'),
   phone: z.string().max(20).optional(),
+  governorate: z.string().max(80).optional(),
+  city: z.string().max(80).optional(),
+  pickupStreet: z.string().max(300).optional(),
+  pickupBuilding: z.string().max(100).optional(),
+  pickupPhone: z.string().max(30).optional(),
+  pickupContactName: z.string().max(100).optional(),
+  pickupGeo: z.string().max(100).optional(),
 });
 
 export const loginSchema = z.object({

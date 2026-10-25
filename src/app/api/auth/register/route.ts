@@ -45,6 +45,56 @@ export async function POST(req: NextRequest) {
     const tiktokUrl: string = (body.tiktokUrl as string | undefined)?.trim() || '';
     const logoUrl: string = (body.logoUrl as string | undefined)?.trim() || '';
 
+    // Pickup address details for sellers (required for courier dispatch and setting sync)
+    const governorate: string = (body.governorate as string | undefined)?.trim() || '';
+    const city: string = (body.city as string | undefined)?.trim() || '';
+    const pickupStreet: string = (body.pickupStreet as string | undefined)?.trim() || '';
+    const pickupBuilding: string = (body.pickupBuilding as string | undefined)?.trim() || '';
+    const pickupPhone: string = (body.pickupPhone as string | undefined)?.trim() || phone;
+    const pickupContactName: string = (body.pickupContactName as string | undefined)?.trim() || '';
+    const pickupGeo: string = (body.pickupGeo as string | undefined)?.trim() || '';
+
+    // Default to BUYER if role is missing or invalid. Allow SELLER assignment.
+    const userRole = role === 'SELLER' ? 'SELLER' : 'BUYER';
+
+    // Enforce required seller fields
+    if (userRole === 'SELLER') {
+      const existingStore = await prisma.sellerProfile.findUnique({
+        where: { storeName },
+      });
+      if (existingStore) {
+        return NextResponse.json(
+          { message: 'A store with this name already exists. Please choose another name.' },
+          { status: 409 }
+        );
+      }
+
+      if (!governorate) {
+        return NextResponse.json(
+          { message: 'Pickup Governorate is required for seller registration.' },
+          { status: 400 }
+        );
+      }
+      if (!city) {
+        return NextResponse.json(
+          { message: 'Pickup City / Area is required for seller registration.' },
+          { status: 400 }
+        );
+      }
+      if (!pickupStreet) {
+        return NextResponse.json(
+          { message: 'Detailed Pickup Street Address is required for seller registration.' },
+          { status: 400 }
+        );
+      }
+      if (!pickupPhone) {
+        return NextResponse.json(
+          { message: 'Pickup Contact Phone is required for seller registration.' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Check if referral/promo code was provided or present in cookies
     const candidateCode =
       (body.referralCode as string | undefined)?.trim() ||
@@ -79,9 +129,6 @@ export async function POST(req: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, BCRYPT_COST);
 
-    // Default to BUYER if role is missing or invalid. Allow SELLER assignment.
-    const userRole = role === 'SELLER' ? 'SELLER' : 'BUYER';
-
     // Create user — emailVerified is left null until the link is clicked
     const user = await prisma.user.create({
       data: {
@@ -94,7 +141,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // If role is SELLER, initialize a SellerProfile with PENDING_APPROVAL status
+    // If role is SELLER, initialize a SellerProfile with PENDING_APPROVAL status and pickup address
     if (userRole === 'SELLER') {
       await prisma.sellerProfile.create({
         data: {
@@ -108,6 +155,14 @@ export async function POST(req: NextRequest) {
           instagramUrl: instagramUrl || null,
           tiktokUrl: tiktokUrl || null,
           logoUrl: logoUrl || null,
+          governorate,
+          city,
+          pickupStreet,
+          pickupBuilding: pickupBuilding || null,
+          pickupPhone: pickupPhone || null,
+          pickupContactName: pickupContactName || null,
+          pickupGeo: pickupGeo || null,
+          logisticsHub: 'المركز اللوجستي الرئيسي',
         },
       });
     }
@@ -169,6 +224,12 @@ export async function POST(req: NextRequest) {
       instagramUrl: userRole === 'SELLER' ? instagramUrl : undefined,
       tiktokUrl: userRole === 'SELLER' ? tiktokUrl : undefined,
       logoUrl: userRole === 'SELLER' ? logoUrl : undefined,
+      governorate: userRole === 'SELLER' ? governorate : undefined,
+      city: userRole === 'SELLER' ? city : undefined,
+      pickupStreet: userRole === 'SELLER' ? pickupStreet : undefined,
+      pickupBuilding: userRole === 'SELLER' ? pickupBuilding : undefined,
+      pickupPhone: userRole === 'SELLER' ? pickupPhone : undefined,
+      pickupContactName: userRole === 'SELLER' ? pickupContactName : undefined,
       affiliateCode: referredBySlug || candidateCode || undefined,
     }).catch(err => console.error('[register] Admin notification error:', err));
 
