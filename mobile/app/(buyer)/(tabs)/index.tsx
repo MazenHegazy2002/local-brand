@@ -7,7 +7,6 @@ import {
   ScrollView,
   Pressable,
   FlatList,
-  ActivityIndicator,
   StatusBar,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -94,30 +93,57 @@ function ProductCard({ item }: { item: Product }) {
   );
 }
 
+interface FlashProduct {
+  id: string;
+  title: string;
+  basePrice: number;
+  flashSalePrice: number;
+  flashSaleEndsAt: string;
+  images: { url: string }[];
+}
+
 export default function Home() {
   const router = useRouter();
   const focused = useIsFocused();
   const { t } = useT();
-  const [countdown, setCountdown] = useState(19855); // ~5:31 flash sale
+  const [now, setNow] = useState(Date.now());
 
   const { data, isLoading } = useQuery({
     queryKey: ['public-products'],
     queryFn: () => api.get<{ products: Product[] }>('/api/export/public-products?limit=30'),
   });
+  // Same ['notifications'] key as the notifications screen; the bell dot only shows for unread ones.
+  const { data: notifs } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => api.get<{ notifications: { isRead: boolean }[] }>('/api/notifications'),
+  });
+  const hasUnread = !!notifs?.notifications.some(n => !n.isRead);
+
+  // Real flash sales only: the section is hidden when none is running.
+  const { data: flash } = useQuery({
+    queryKey: ['flash-sales'],
+    queryFn: () => api.get<{ products: FlashProduct[] }>('/api/flash-sales'),
+  });
+  const flashProducts = (flash?.products ?? []).filter(
+    p => new Date(p.flashSaleEndsAt).getTime() > now
+  );
 
   useEffect(() => {
-    const t = setInterval(() => setCountdown(c => (c > 0 ? c - 1 : 0)), 1000);
+    const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
 
+  // Counts down to the soonest-ending sale (the API sorts by end time).
+  const countdown = flashProducts.length
+    ? Math.max(0, Math.floor((new Date(flashProducts[0].flashSaleEndsAt).getTime() - now) / 1000))
+    : 0;
   const h = Math.floor(countdown / 3600);
   const m = Math.floor((countdown % 3600) / 60);
   const s = countdown % 60;
 
   const products = data?.products ?? [];
   const heroProduct = products[0];
-  const flashProducts = products.slice(0, 8);
-  const newProducts = products.slice(8, 20);
+  const newProducts = products.slice(0, 12);
 
   return (
     <View style={styles.root}>
@@ -141,17 +167,24 @@ export default function Home() {
           <View style={styles.heroHeader}>
             <Text style={styles.wordmark}>brandyy</Text>
             <View style={styles.heroActions}>
-              <Pressable style={styles.heroBtn} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('Search')}
+                style={styles.heroBtn}
+                onPress={() => router.push('/(buyer)/(tabs)/shop')}
+              >
                 <Search size={20} color="#fff" strokeWidth={2} />
               </Pressable>
               <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('Notifications')}
                 style={styles.heroBtnWrap}
                 onPress={() => router.push('/(buyer)/notifications' as Href)}
               >
                 <View style={styles.heroBtn}>
                   <Bell size={20} color="#fff" strokeWidth={2} />
                 </View>
-                <View style={styles.notifDot} />
+                {hasUnread && <View style={styles.notifDot} />}
               </Pressable>
             </View>
           </View>
@@ -206,55 +239,59 @@ export default function Home() {
             </ScrollView>
           )}
 
-          {/* Flash Sale */}
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('Flash Sale')}</Text>
-            <View style={styles.countdownRow}>
-              {[pad(h), pad(m), pad(s)].map((v, i) => (
-                <View key={i} style={styles.countUnit}>
-                  <Text style={styles.countDigit}>{v}</Text>
-                  {i < 2 && <Text style={styles.countSep}>:</Text>}
+          {flashProducts.length > 0 && (
+            <>
+              {/* Flash Sale */}
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>{t('Flash Sale')}</Text>
+                <View style={styles.countdownRow}>
+                  {[pad(h), pad(m), pad(s)].map((v, i) => (
+                    <View key={i} style={styles.countUnit}>
+                      <Text style={styles.countDigit}>{v}</Text>
+                      {i < 2 && <Text style={styles.countSep}>:</Text>}
+                    </View>
+                  ))}
+                  <Pressable
+                    style={styles.seeAll}
+                    onPress={() => router.push('/(buyer)/(tabs)/shop')}
+                  >
+                    <Text style={styles.seeAllText}>{t('See all')}</Text>
+                  </Pressable>
                 </View>
-              ))}
-              <Pressable style={styles.seeAll} onPress={() => router.push('/(buyer)/(tabs)/shop')}>
-                <Text style={styles.seeAllText}>{t('See all')}</Text>
-              </Pressable>
-            </View>
-          </View>
+              </View>
 
-          {isLoading ? (
-            <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
-          ) : (
-            <FlatList
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              data={flashProducts}
-              keyExtractor={i => i.id}
-              renderItem={({ item }) => (
-                <Pressable
-                  style={styles.flashCard}
-                  onPress={() => router.push(`/(buyer)/product/${item.id}`)}
-                >
-                  <View style={styles.flashImgWrap}>
-                    <Image
-                      source={{ uri: item.image }}
-                      style={styles.flashImg}
-                      contentFit="cover"
-                    />
-                    {item.category && (
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={flashProducts}
+                keyExtractor={i => i.id}
+                renderItem={({ item }) => (
+                  <Pressable
+                    style={styles.flashCard}
+                    onPress={() => router.push(`/(buyer)/product/${item.id}`)}
+                  >
+                    <View style={styles.flashImgWrap}>
+                      <Image
+                        source={{ uri: item.images[0]?.url }}
+                        style={styles.flashImg}
+                        contentFit="cover"
+                      />
                       <View style={styles.flashBadge}>
-                        <Text style={styles.flashBadgeText}>{item.category}</Text>
+                        <Text style={styles.flashBadgeText}>
+                          -{Math.round((1 - item.flashSalePrice / item.basePrice) * 100)}%
+                        </Text>
                       </View>
-                    )}
-                  </View>
-                  <Text style={styles.flashName} numberOfLines={2}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.flashPrice}>{fmtEGP(item.basePrice)}</Text>
-                </Pressable>
-              )}
-              contentContainerStyle={{ paddingHorizontal: spacing.page, gap: 12 }}
-            />
+                    </View>
+                    <Text style={styles.flashName} numberOfLines={2}>
+                      {item.title}
+                    </Text>
+                    <Text style={styles.flashPrice}>{fmtEGP(item.flashSalePrice)}</Text>
+                    <Text style={styles.flashWas}>{fmtEGP(item.basePrice)}</Text>
+                  </Pressable>
+                )}
+                contentContainerStyle={{ paddingHorizontal: spacing.page, gap: 12 }}
+              />
+            </>
           )}
 
           {/* New in */}
@@ -420,6 +457,12 @@ const styles = StyleSheet.create({
   flashBadgeText: { fontFamily: 'Inter-Bold', fontSize: 9, color: '#fff' },
   flashName: { fontFamily: 'Inter-Medium', fontSize: 12, color: colors.ink, lineHeight: 15 },
   flashPrice: { fontFamily: 'Inter-Bold', fontSize: 13, color: colors.primary, marginTop: 2 },
+  flashWas: {
+    fontFamily: 'Inter-Regular',
+    fontSize: 11,
+    color: colors.muted,
+    textDecorationLine: 'line-through',
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

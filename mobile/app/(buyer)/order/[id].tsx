@@ -15,6 +15,10 @@ import { useQuery } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useT, statusKey } from '@/lib/i18n';
+import { OrderItemActions } from '@/components/OrderItemActions';
+
+// Brandyy support (same number as the website footer); couriers don't share theirs.
+const SUPPORT_WHATSAPP = '201020960757';
 
 const STEPS = [
   { key: 'ORDER_PLACED', label: 'Order confirmed' },
@@ -82,7 +86,12 @@ export default function OrderTracking() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('Back')}
+          onPress={() => router.back()}
+          style={styles.backBtn}
+        >
           <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
         </Pressable>
         <Text style={styles.title}>
@@ -175,10 +184,25 @@ export default function OrderTracking() {
           </View>
         </View>
 
+        {status === 'DELIVERED' && (
+          <OrderItemActions
+            orderId={order.id}
+            items={order.items}
+            deliveredAt={order.deliveredAt}
+          />
+        )}
+
         {/* Actions */}
         <View style={styles.actions}>
-          <Pressable style={styles.whatsappBtn} onPress={() => Linking.openURL('https://wa.me/')}>
-            <Text style={styles.whatsappBtnText}>💬 {t('Chat courier')}</Text>
+          <Pressable
+            style={styles.whatsappBtn}
+            onPress={() =>
+              Linking.openURL(
+                `https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(`Order #${order.id.slice(0, 8).toUpperCase()}`)}`
+              )
+            }
+          >
+            <Text style={styles.whatsappBtnText}>💬 {t('Chat on WhatsApp')}</Text>
           </Pressable>
           <Pressable
             style={styles.helpBtn}

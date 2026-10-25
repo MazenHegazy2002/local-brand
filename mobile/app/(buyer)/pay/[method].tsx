@@ -136,7 +136,12 @@ export default function ManualPay() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('Back')}
+          onPress={() => router.back()}
+          hitSlop={8}
+        >
           <ChevronLeft size={24} color={colors.ink} strokeWidth={2} />
         </Pressable>
         <Text style={styles.title}>{t('Pay with {method}', { method: t(brand.title) })}</Text>
@@ -169,7 +174,13 @@ export default function ManualPay() {
                   </Text>
                 </View>
                 {!!r.value && (
-                  <Pressable hitSlop={8} onPress={() => copy(r.value!)} style={styles.copyBtn}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={t('Copy')}
+                    hitSlop={8}
+                    onPress={() => copy(r.value!)}
+                    style={styles.copyBtn}
+                  >
                     {copied === r.value ? (
                       <Check size={16} color={colors.success} />
                     ) : (

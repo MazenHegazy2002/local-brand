@@ -6,7 +6,6 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, Heart } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { api, fmtEGP } from '@/lib/api';
-import { useCart } from '@/store/cart';
 import { colors, radii, spacing, screen } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
 
@@ -28,7 +27,6 @@ interface WishItem {
 export default function Wishlist() {
   const router = useRouter();
   const { t } = useT();
-  const { add } = useCart();
   const [removing, setRemoving] = useState<string[]>([]);
 
   const { data, isLoading, refetch } = useQuery({
@@ -43,7 +41,13 @@ export default function Wishlist() {
   if (items.length === 0) {
     return (
       <View style={styles.empty}>
-        <Pressable onPress={() => router.back()} style={styles.emptyBack} hitSlop={8}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('Back')}
+          onPress={() => router.back()}
+          style={styles.emptyBack}
+          hitSlop={8}
+        >
           <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
         </Pressable>
         <Heart size={48} color={colors.border} strokeWidth={1.5} />
@@ -67,21 +71,16 @@ export default function Wishlist() {
     }
   }
 
-  function moveToBag(item: WishItem) {
-    add({
-      productId: item.product.id,
-      title: item.product.title,
-      image: item.product.image,
-      basePrice: item.product.basePrice,
-    });
-    removeFromWishlist(item.id);
-    router.push('/(buyer)/(tabs)/bag');
-  }
-
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('Back')}
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          hitSlop={8}
+        >
           <ArrowLeft size={22} color={colors.ink} strokeWidth={2} />
         </Pressable>
         <Text style={styles.title}>{t('Wishlist')}</Text>
@@ -115,8 +114,12 @@ export default function Wishlist() {
               {item.product.title}
             </Text>
             <Text style={styles.price}>{fmtEGP(item.product.basePrice)}</Text>
-            <Pressable style={styles.moveBtn} onPress={() => moveToBag(item)}>
-              <Text style={styles.moveBtnText}>{t('Move to bag')}</Text>
+            {/* Size and colour are picked on the product page, so the seller knows what to send. */}
+            <Pressable
+              style={styles.moveBtn}
+              onPress={() => router.push(`/(buyer)/product/${item.product.id}`)}
+            >
+              <Text style={styles.moveBtnText}>{t('Choose options')}</Text>
             </Pressable>
           </Pressable>
         )}

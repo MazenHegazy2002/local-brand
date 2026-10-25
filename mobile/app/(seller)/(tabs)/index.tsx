@@ -37,7 +37,12 @@ export default function SellerDashboard() {
             {data?.store.name ?? (isLoading ? ' ' : t('Your store'))}
           </Text>
         </View>
-        <Pressable style={styles.bell} onPress={() => router.push('/(seller)/notifications')}>
+        <Pressable
+          style={styles.bell}
+          onPress={() => router.push('/(seller)/notifications')}
+          accessibilityRole="button"
+          accessibilityLabel={t('Notifications')}
+        >
           <Bell size={20} color={colors.ink} strokeWidth={1.9} />
           {!!data?.unreadNotifications && (
             <View style={styles.bellBadge}>

@@ -174,6 +174,8 @@ export default function Account() {
           <Text style={styles.email}>{user?.email}</Text>
         </View>
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('Edit profile')}
           style={styles.settingsBtn}
           onPress={() => router.push('/(buyer)/edit-profile' as Href)}
         >
