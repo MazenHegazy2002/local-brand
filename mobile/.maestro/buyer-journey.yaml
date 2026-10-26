@@ -3,25 +3,15 @@
 # Never run against brandyy.shop: it uses the seed passwords.
 appId: shop.brandyy.app
 ---
-- launchApp:
-    clearState: true
-- repeat:
-    times: 5
-    while:
-      visible: "Next"
-    commands:
-      - tapOn: "Next"
-- tapOn: "Get started"
-- tapOn: "omar@gmail.com"
-- inputText: "user@user.com"
-- tapOn: "••••••••"
-- inputText: "user1234"
-- hideKeyboard
-- tapOn:
-    text: "Sign in"
-    index: 1
+- runFlow:
+    file: common/login.yaml
+    env:
+      EMAIL: user@user.com
+      PASSWORD: user1234
 - assertVisible: "Shop the edit"
 - tapOn: "Home"
+- scrollUntilVisible:
+    element: "Beaded Friendship Bracelet"
 - tapOn: "Beaded Friendship Bracelet"
 - tapOn: "Add to bag"
 - stopApp
