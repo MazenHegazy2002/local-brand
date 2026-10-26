@@ -13,9 +13,9 @@ const profile = {
   storeName: 'Nile <Crafts>',
   user: { email: 'seller@example.test', name: 'Omar', emailVerified: null },
 };
-const sellerUpdate = jest.fn(async () => profile);
-const userUpdate = jest.fn(async () => ({}));
-const auditCreate = jest.fn(async () => ({}));
+const sellerUpdate = jest.fn(async (_args?: any) => profile);
+const userUpdate = jest.fn(async (_args?: any) => ({}));
+const auditCreate = jest.fn(async (_args?: any) => ({}));
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     sellerProfile: { update: (a: unknown) => sellerUpdate(a) },
@@ -32,7 +32,9 @@ jest.mock('@/lib/email', () => ({
 
 import { setSellerStatus } from '@/lib/seller-status';
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+});
 
 describe('setSellerStatus', () => {
   it('approval emails the seller, verifies them and audits', async () => {
