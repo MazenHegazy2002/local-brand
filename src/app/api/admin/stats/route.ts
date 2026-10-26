@@ -35,7 +35,8 @@ function cairoMidnight(d: Date) {
 // Admin overview for the mobile app. `range` = today | 7d | 30d; every number is
 // compared with the previous period of the same length.
 export async function GET(req: NextRequest) {
-  if ((await getRequestUser(req))?.role !== 'ADMIN')
+  const user = await getRequestUser(req);
+  if (user?.role !== 'ADMIN' && user?.role !== 'CO_ADMIN')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const range = new URL(req.url).searchParams.get('range') ?? 'today';

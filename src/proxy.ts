@@ -275,7 +275,7 @@ export async function proxy(req: NextRequest) {
     !targetPathname.startsWith('/maintenance')
   ) {
     const role = (token?.role as string | undefined) ?? 'BUYER';
-    if (await isInMaintenance(role === 'ADMIN')) {
+    if (await isInMaintenance(role === 'ADMIN' || role === 'CO_ADMIN')) {
       return NextResponse.redirect(new URL(isArabic ? '/ar/maintenance' : '/maintenance', req.url));
     }
   }
@@ -353,7 +353,7 @@ export async function proxy(req: NextRequest) {
   }
 
   // Admin Routes Protection
-  if (adminRoutes && role !== 'ADMIN') {
+  if (adminRoutes && role !== 'ADMIN' && role !== 'CO_ADMIN') {
     if (targetPathname.startsWith('/api/')) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
@@ -370,7 +370,7 @@ export async function proxy(req: NextRequest) {
   }
 
   // Seller Routes Protection (SellerHub, /sell, /seller/*)
-  if (sellerRoutes && role !== 'SELLER' && role !== 'ADMIN') {
+  if (sellerRoutes && role !== 'SELLER' && role !== 'ADMIN' && role !== 'CO_ADMIN') {
     if (role === 'AFFILIATE') {
       return NextResponse.redirect(
         new URL(isArabic ? '/ar/affiliate/dashboard' : '/affiliate/dashboard', req.url)

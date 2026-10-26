@@ -21,14 +21,17 @@ const patchSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('suspend') }),
   z.object({ action: z.literal('reactivate') }),
   z.object({ action: z.literal('ban'), reason: z.string().max(500).optional() }),
-  z.object({ action: z.literal('changeRole'), role: z.enum(['BUYER', 'SELLER', 'ADMIN']) }),
+  z.object({
+    action: z.literal('changeRole'),
+    role: z.enum(['BUYER', 'SELLER', 'ADMIN', 'CO_ADMIN']),
+  }),
 ]);
 
 async function requireAdmin(req: Request) {
   const session = await getRequestSession(req);
   if (!session) return null;
   const user = session.user as SessionUser;
-  if (user.role !== 'ADMIN') return null;
+  if (user.role !== 'ADMIN' && user.role !== 'CO_ADMIN') return null;
   return user;
 }
 
@@ -50,6 +53,22 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     select: { id: true, email: true, role: true, deletedAt: true },
   });
   if (!target) return NextResponse.json({ message: 'User not found' }, { status: 404 });
+  if (admin.role === 'CO_ADMIN' && target.role === 'ADMIN') {
+    return NextResponse.json(
+      { message: 'Forbidden: Co-Admins cannot modify Admin accounts' },
+      { status: 403 }
+    );
+  }
+  if (
+    admin.role === 'CO_ADMIN' &&
+    parsed.data.action === 'changeRole' &&
+    parsed.data.role === 'ADMIN'
+  ) {
+    return NextResponse.json(
+      { message: 'Forbidden: Co-Admins cannot elevate users to Admin' },
+      { status: 403 }
+    );
+  }
   const { action } = parsed.data;
   const makeAudit = (a: string, extra?: Record<string, unknown>) =>
     prisma.auditLog.create({
