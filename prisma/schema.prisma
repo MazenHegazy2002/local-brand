@@ -74,6 +74,7 @@ enum Role {
   SELLER
   ADMIN
   AFFILIATE
+  CO_ADMIN
 }
 
 model Address {

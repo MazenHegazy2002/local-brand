@@ -66,10 +66,14 @@ async function runTest(slug: string, config: Record<string, string>): Promise<st
     }
 
     case 'virtual-tryon': {
-      const keys = config.apiKeys ? readSecret(config.apiKeys) : undefined;
+      const keys =
+        (config.apiKeys ? readSecret(config.apiKeys) : undefined) || process.env.GEMINI_API_KEY;
       if (!keys) return 'No API key(s) configured';
       const firstKey = keys.split(',')[0].trim();
-      const baseUrl = config.baseUrl?.trim();
+      const baseUrl =
+        config.baseUrl?.trim() ||
+        process.env.GEMINI_BASE_URL?.trim() ||
+        process.env.AI_BASE_URL?.trim();
 
       if (baseUrl || firstKey.startsWith('sk-')) {
         const targetUrl = (baseUrl || 'http://localhost:20128/v1').replace(/\/+$/, '') + '/models';

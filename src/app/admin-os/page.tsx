@@ -106,6 +106,8 @@ interface DashboardData {
 
 export default function AdminOS() {
   const { data: session } = useSession();
+  const currentRole = (session?.user as SessionUser)?.role;
+  const isCoAdmin = currentRole === 'CO_ADMIN';
   const router = useRouter();
   const { confirm } = useConfirm();
   const { toast } = useToast();
@@ -139,10 +141,18 @@ export default function AdminOS() {
   // Access control - redirect non-admins
   useEffect(() => {
     const role = (session?.user as SessionUser)?.role;
-    if (session && role !== 'ADMIN') {
+    if (session && role !== 'ADMIN' && role !== 'CO_ADMIN') {
       router.push('/dashboard');
     }
   }, [session, router]);
+
+  // Restrict co-admins to only authorized tabs
+  useEffect(() => {
+    const allowed = ['overview', 'sellers', 'users', 'products', 'orders', 'payouts', 'analytics'];
+    if (isCoAdmin && !allowed.includes(activeTab)) {
+      setActiveTab('overview');
+    }
+  }, [isCoAdmin, activeTab]);
   const [seedLoading, setSeedLoading] = useState(false);
 
   // Taxonomy Form State
@@ -548,126 +558,137 @@ export default function AdminOS() {
           icon={<AnalyticsIcon />}
         />
 
-        <div className="nav-section">Content</div>
-        <NavItem
-          active={activeTab === 'banners'}
-          onClick={() => setActiveTab('banners')}
-          label="Banners"
-          icon={<BannerIcon />}
-        />
-        <NavItem
-          active={activeTab === 'pages'}
-          onClick={() => setActiveTab('pages')}
-          label="Pages"
-          icon={<DocIcon />}
-        />
-        <NavItem
-          active={activeTab === 'reviews'}
-          onClick={() => setActiveTab('reviews')}
-          label="Reviews & Q&A"
-          icon={<ReviewIcon />}
-        />
-        <NavItem
-          active={activeTab === 'marketing'}
-          onClick={() => setActiveTab('marketing')}
-          label="Marketing"
-          icon={<MarketingIcon />}
-        />
-        <NavItem
-          active={activeTab === 'support'}
-          onClick={() => setActiveTab('support')}
-          label="Support"
-          icon={<SupportIcon />}
-        />
+        {!isCoAdmin && (
+          <>
+            <div className="nav-section">Content</div>
+            <NavItem
+              active={activeTab === 'banners'}
+              onClick={() => setActiveTab('banners')}
+              label="Banners"
+              icon={<BannerIcon />}
+            />
+            <NavItem
+              active={activeTab === 'pages'}
+              onClick={() => setActiveTab('pages')}
+              label="Pages"
+              icon={<DocIcon />}
+            />
+            <NavItem
+              active={activeTab === 'reviews'}
+              onClick={() => setActiveTab('reviews')}
+              label="Reviews & Q&A"
+              icon={<ReviewIcon />}
+            />
+            <NavItem
+              active={activeTab === 'marketing'}
+              onClick={() => setActiveTab('marketing')}
+              label="Marketing"
+              icon={<MarketingIcon />}
+            />
+            <NavItem
+              active={activeTab === 'support'}
+              onClick={() => setActiveTab('support')}
+              label="Support"
+              icon={<SupportIcon />}
+            />
 
-        <div className="nav-section">System</div>
-        <NavItem
-          active={activeTab === 'taxonomy'}
-          onClick={() => setActiveTab('taxonomy')}
-          label="Taxonomy"
-          icon={<ModerationIcon />}
-        />
-        <NavItem
-          active={activeTab === 'affiliate'}
-          onClick={() => setActiveTab('affiliate')}
-          label="Affiliate"
-          icon={<AffiliateIcon />}
-        />
-        <NavItem
-          active={activeTab === 'plugins'}
-          onClick={() => setActiveTab('plugins')}
-          label="Plugins"
-          icon={<PluginIcon />}
-        />
-        <NavItem
-          active={activeTab === 'webhooks'}
-          onClick={() => setActiveTab('webhooks')}
-          label="Webhooks"
-          icon={<WebhooksIcon />}
-        />
-        <NavItem
-          active={activeTab === 'jobs'}
-          onClick={() => setActiveTab('jobs')}
-          label="Jobs"
-          icon={<JobsIcon />}
-        />
-        <NavItem
-          active={activeTab === 'flags'}
-          onClick={() => setActiveTab('flags')}
-          label="Feature Flags"
-          icon={<FlagsIcon />}
-        />
-        <NavItem
-          active={activeTab === 'health'}
-          onClick={() => setActiveTab('health')}
-          label="System Health"
-          icon={<HealthIcon />}
-        />
+            <div className="nav-section">System</div>
+            <NavItem
+              active={activeTab === 'taxonomy'}
+              onClick={() => setActiveTab('taxonomy')}
+              label="Taxonomy"
+              icon={<ModerationIcon />}
+            />
+            <NavItem
+              active={activeTab === 'affiliate'}
+              onClick={() => setActiveTab('affiliate')}
+              label="Affiliate"
+              icon={<AffiliateIcon />}
+            />
+            <NavItem
+              active={activeTab === 'plugins'}
+              onClick={() => setActiveTab('plugins')}
+              label="Plugins"
+              icon={<PluginIcon />}
+            />
+            <NavItem
+              active={activeTab === 'webhooks'}
+              onClick={() => setActiveTab('webhooks')}
+              label="Webhooks"
+              icon={<WebhooksIcon />}
+            />
+            <NavItem
+              active={activeTab === 'jobs'}
+              onClick={() => setActiveTab('jobs')}
+              label="Jobs"
+              icon={<JobsIcon />}
+            />
+            <NavItem
+              active={activeTab === 'flags'}
+              onClick={() => setActiveTab('flags')}
+              label="Feature Flags"
+              icon={<FlagsIcon />}
+            />
+            <NavItem
+              active={activeTab === 'health'}
+              onClick={() => setActiveTab('health')}
+              label="System Health"
+              icon={<HealthIcon />}
+            />
 
-        <NavItem
-          active={activeTab === 'shipping'}
-          onClick={() => setActiveTab('shipping')}
-          label="Shipping"
-          icon={<TruckIcon />}
-        />
-        <NavItem
-          active={activeTab === 'maintenance'}
-          onClick={() => setActiveTab('maintenance')}
-          label="Maintenance"
-          icon={<WrenchIcon />}
-        />
-        <NavItem
-          active={activeTab === 'tracker'}
-          onClick={() => setActiveTab('tracker')}
-          label="Site Tracker"
-          icon={<TrackerIcon />}
-        />
-        <NavItem
-          active={activeTab === 'whatsapp'}
-          onClick={() => setActiveTab('whatsapp')}
-          label="WhatsApp Bot"
-          icon={<WhatsAppIcon />}
-        />
-        <NavItem
-          active={activeTab === 'mobile'}
-          onClick={() => setActiveTab('mobile')}
-          label="Mobile app"
-          icon={<PhoneIcon />}
-        />
-        <NavItem
-          active={activeTab === 'settings'}
-          onClick={() => setActiveTab('settings')}
-          label="Settings"
-          icon={<SettingsIcon />}
-        />
+            <NavItem
+              active={activeTab === 'shipping'}
+              onClick={() => setActiveTab('shipping')}
+              label="Shipping"
+              icon={<TruckIcon />}
+            />
+            <NavItem
+              active={activeTab === 'maintenance'}
+              onClick={() => setActiveTab('maintenance')}
+              label="Maintenance"
+              icon={<WrenchIcon />}
+            />
+            <NavItem
+              active={activeTab === 'tracker'}
+              onClick={() => setActiveTab('tracker')}
+              label="Site Tracker"
+              icon={<TrackerIcon />}
+            />
+            <NavItem
+              active={activeTab === 'whatsapp'}
+              onClick={() => setActiveTab('whatsapp')}
+              label="WhatsApp Bot"
+              icon={<WhatsAppIcon />}
+            />
+            <NavItem
+              active={activeTab === 'mobile'}
+              onClick={() => setActiveTab('mobile')}
+              label="Mobile app"
+              icon={<PhoneIcon />}
+            />
+            <NavItem
+              active={activeTab === 'settings'}
+              onClick={() => setActiveTab('settings')}
+              label="Settings"
+              icon={<SettingsIcon />}
+            />
+          </>
+        )}
 
         <div className="mt-auto px-4 pb-4 flex flex-col gap-2">
-          {process.env.NODE_ENV === 'development' && (
+          {!isCoAdmin && process.env.NODE_ENV === 'development' && (
             <button onClick={handleSeed} disabled={seedLoading} className="seed-btn">
               {seedLoading ? 'Seeding...' : 'Seed Data'}
             </button>
           )}
-          <div className="user-label">{data?.user?.email}</div>
+          <div className="user-label flex items-center justify-between gap-1">
+            <span className="truncate">{data?.user?.email}</span>
+            {isCoAdmin && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold tracking-wider shrink-0">
+                CO-ADMIN
+              </span>
+            )}
+          </div>
           <button
             onClick={() => (window.location.href = '/api/auth/signout')}
             className="flex items-center gap-2 text-xs font-semibold text-red-300 hover:text-white bg-red-500/10 hover:bg-red-500/30 px-3 py-2 rounded-xl transition-all w-full cursor-pointer border border-red-500/20"
@@ -750,13 +771,14 @@ export default function AdminOS() {
               onDelete={handleDeleteUser}
               onEdit={handleEditClick}
               onCreateClick={() => setShowCreateUser(true)}
+              isCoAdmin={isCoAdmin}
             />
           )}
           {activeTab === 'products' && data && <ProductsTab data={data} />}
           {activeTab === 'orders' && data && <OrdersTab data={data} onRefresh={refreshData} />}
           {activeTab === 'payouts' && data && <PayoutsTab data={data} />}
           {activeTab === 'analytics' && data && <AnalyticsTab data={data} />}
-          {activeTab === 'taxonomy' && data && (
+          {!isCoAdmin && activeTab === 'taxonomy' && data && (
             <TaxonomyTab
               data={data}
               onTypeChange={setTaxType}
@@ -767,23 +789,23 @@ export default function AdminOS() {
               onDelete={handleDeleteTaxonomy}
             />
           )}
-          {activeTab === 'settings' && <NewSettingsTab />}
-          {activeTab === 'plugins' && <PluginsTab />}
-          {activeTab === 'webhooks' && <WebhooksTab />}
-          {activeTab === 'jobs' && <JobsTab />}
-          {activeTab === 'flags' && <FeatureFlagsTab />}
-          {activeTab === 'health' && <HealthTab />}
-          {activeTab === 'banners' && <BannersTab />}
-          {activeTab === 'pages' && <PagesTab />}
-          {activeTab === 'reviews' && <ReviewsTab />}
-          {activeTab === 'marketing' && <MarketingTab />}
-          {activeTab === 'support' && <SupportTab />}
-          {activeTab === 'shipping' && <ShippingTab />}
-          {activeTab === 'maintenance' && <MaintenanceTab />}
-          {activeTab === 'tracker' && <TrackerTab />}
-          {activeTab === 'affiliate' && <AffiliateTab />}
-          {activeTab === 'whatsapp' && <WhatsAppTab />}
-          {activeTab === 'mobile' && (
+          {!isCoAdmin && activeTab === 'settings' && <NewSettingsTab />}
+          {!isCoAdmin && activeTab === 'plugins' && <PluginsTab />}
+          {!isCoAdmin && activeTab === 'webhooks' && <WebhooksTab />}
+          {!isCoAdmin && activeTab === 'jobs' && <JobsTab />}
+          {!isCoAdmin && activeTab === 'flags' && <FeatureFlagsTab />}
+          {!isCoAdmin && activeTab === 'health' && <HealthTab />}
+          {!isCoAdmin && activeTab === 'banners' && <BannersTab />}
+          {!isCoAdmin && activeTab === 'pages' && <PagesTab />}
+          {!isCoAdmin && activeTab === 'reviews' && <ReviewsTab />}
+          {!isCoAdmin && activeTab === 'marketing' && <MarketingTab />}
+          {!isCoAdmin && activeTab === 'support' && <SupportTab />}
+          {!isCoAdmin && activeTab === 'shipping' && <ShippingTab />}
+          {!isCoAdmin && activeTab === 'maintenance' && <MaintenanceTab />}
+          {!isCoAdmin && activeTab === 'tracker' && <TrackerTab />}
+          {!isCoAdmin && activeTab === 'affiliate' && <AffiliateTab />}
+          {!isCoAdmin && activeTab === 'whatsapp' && <WhatsAppTab />}
+          {!isCoAdmin && activeTab === 'mobile' && (
             <MobileAppTab onOpenSettings={() => setActiveTab('settings')} />
           )}
         </div>
@@ -801,6 +823,7 @@ export default function AdminOS() {
           }}
           loading={createUserLoading}
           error={createUserError}
+          isCoAdmin={isCoAdmin}
         />
       )}
 
@@ -816,6 +839,7 @@ export default function AdminOS() {
           }}
           loading={editUserLoading}
           error={editUserError}
+          isCoAdmin={isCoAdmin}
         />
       )}
 
@@ -916,6 +940,7 @@ export default function AdminOS() {
         .b-active{background:#E1F5EE;color:#085041}
         .b-banned{background:#FCEBEB;color:#791F1F}
         .b-new{background:#EEEDFE;color:#3C3489}
+        .b-coadmin{background:#E0F2FE;color:#0369A1;border:1px solid #BAE6FD}
         .action-btn{font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;border:1px solid #e2e8f0;background:transparent;color:var(--color-text-secondary);transition:all .15s}
         .action-btn:hover{background:var(--color-background-secondary);border-color:var(--color-text-primary)}
         .row-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--color-border-tertiary)}
@@ -4848,13 +4873,14 @@ interface UsersTabProps {
   onDelete: (id: string, email: string) => Promise<void>;
   onEdit: (user: User) => void;
   onCreateClick: () => void;
+  isCoAdmin?: boolean;
 }
 
-function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
+function UsersTab({ data, onDelete, onEdit, onCreateClick, isCoAdmin }: UsersTabProps) {
   const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'BUYER' | 'SELLER' | 'ADMIN' | 'AFFILIATE'>(
-    'all'
-  );
+  const [roleFilter, setRoleFilter] = useState<
+    'all' | 'BUYER' | 'SELLER' | 'ADMIN' | 'CO_ADMIN' | 'AFFILIATE'
+  >('all');
   const [resettingEmails, setResettingEmails] = useState<Record<string, boolean>>({});
 
   const handleSendResetLink = async (email: string) => {
@@ -4945,6 +4971,7 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
           <option value="BUYER">Buyers</option>
           <option value="SELLER">Sellers</option>
           <option value="ADMIN">Admins</option>
+          <option value="CO_ADMIN">Co-Admins</option>
           <option value="AFFILIATE">Affiliates</option>
         </select>
         <span className="text-[11px] text-slate-400 whitespace-nowrap">
@@ -4967,8 +4994,21 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
             className="avatar-sm"
             style={{
               background:
-                u.role === 'ADMIN' ? '#EEEDFE' : u.role === 'SELLER' ? '#E1F5EE' : '#FFF7ED',
-              color: u.role === 'ADMIN' ? '#534AB7' : u.role === 'SELLER' ? '#085041' : '#92400E',
+                u.role === 'ADMIN'
+                  ? '#EEEDFE'
+                  : u.role === 'CO_ADMIN'
+                    ? '#E0F2FE'
+                    : u.role === 'SELLER'
+                      ? '#E1F5EE'
+                      : '#FFF7ED',
+              color:
+                u.role === 'ADMIN'
+                  ? '#534AB7'
+                  : u.role === 'CO_ADMIN'
+                    ? '#0369A1'
+                    : u.role === 'SELLER'
+                      ? '#085041'
+                      : '#92400E',
             }}
           >
             {(u.name || '?')[0].toUpperCase()}
@@ -5009,9 +5049,11 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
                   ? 'b-new'
                   : u.role === 'ADMIN'
                     ? 'b-new'
-                    : u.role === 'SELLER'
-                      ? 'b-active'
-                      : 'b-pending'
+                    : u.role === 'CO_ADMIN'
+                      ? 'b-coadmin'
+                      : u.role === 'SELLER'
+                        ? 'b-active'
+                        : 'b-pending'
               }`}
               style={
                 (u as any).affiliate
@@ -5020,10 +5062,16 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
                       color: '#6d28d9',
                       borderColor: '#ddd6fe',
                     }
-                  : undefined
+                  : u.role === 'CO_ADMIN'
+                    ? {
+                        background: '#e0f2fe',
+                        color: '#0369a1',
+                        borderColor: '#bae6fd',
+                      }
+                    : undefined
               }
             >
-              {(u as any).affiliate ? 'AFFILIATE' : u.role}
+              {(u as any).affiliate ? 'AFFILIATE' : u.role === 'CO_ADMIN' ? 'CO-ADMIN' : u.role}
             </span>
           </div>
           <div style={{ fontSize: '11px', color: '#94a3b8', width: 100, textAlign: 'right' }}>
@@ -5038,31 +5086,46 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick }: UsersTabProps) {
               justifyContent: 'flex-end',
             }}
           >
-            <button
-              className="action-btn"
-              onClick={() => handleSendResetLink(u.email)}
-              disabled={resettingEmails[u.email]}
-              style={{
-                fontSize: '10px',
-                padding: '2px 6px',
-                background: '#e0f2fe',
-                color: '#0369a1',
-                borderColor: '#bae6fd',
-                cursor: 'pointer',
-              }}
-            >
-              {resettingEmails[u.email] ? 'Sending...' : 'Reset Link'}
-            </button>
-            <button
-              className="action-btn"
-              onClick={() => onEdit(u)}
-              style={{ fontSize: '10px', padding: '2px 6px' }}
-            >
-              Edit
-            </button>
-            <button className="del-btn" onClick={() => onDelete(u.id, u.email)}>
-              Delete
-            </button>
+            {isCoAdmin && u.role === 'ADMIN' ? (
+              <span
+                style={{
+                  fontSize: '10px',
+                  color: '#94a3b8',
+                  fontStyle: 'italic',
+                  padding: '2px 6px',
+                }}
+              >
+                Protected Admin
+              </span>
+            ) : (
+              <>
+                <button
+                  className="action-btn"
+                  onClick={() => handleSendResetLink(u.email)}
+                  disabled={resettingEmails[u.email]}
+                  style={{
+                    fontSize: '10px',
+                    padding: '2px 6px',
+                    background: '#e0f2fe',
+                    color: '#0369a1',
+                    borderColor: '#bae6fd',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {resettingEmails[u.email] ? 'Sending...' : 'Reset Link'}
+                </button>
+                <button
+                  className="action-btn"
+                  onClick={() => onEdit(u)}
+                  style={{ fontSize: '10px', padding: '2px 6px' }}
+                >
+                  Edit
+                </button>
+                <button className="del-btn" onClick={() => onDelete(u.id, u.email)}>
+                  Delete
+                </button>
+              </>
+            )}
           </div>
         </div>
       ))}
@@ -7204,9 +7267,18 @@ interface EditUserModalProps {
   onClose: () => void;
   loading: boolean;
   error: string | null;
+  isCoAdmin?: boolean;
 }
 
-function EditUserModal({ form, onChange, onSubmit, onClose, loading, error }: EditUserModalProps) {
+function EditUserModal({
+  form,
+  onChange,
+  onSubmit,
+  onClose,
+  loading,
+  error,
+  isCoAdmin,
+}: EditUserModalProps) {
   const update = (field: keyof typeof form, val: string) =>
     onChange({ ...form, [field]: val } as typeof form);
   return (
@@ -7249,7 +7321,8 @@ function EditUserModal({ form, onChange, onSubmit, onClose, loading, error }: Ed
             >
               <option value="BUYER">🛍️ Buyer (Customer)</option>
               <option value="SELLER">🏪 Seller (Merchant)</option>
-              <option value="ADMIN">🛡️ Admin (Staff)</option>
+              {!isCoAdmin && <option value="ADMIN">🛡️ Admin (Staff)</option>}
+              <option value="CO_ADMIN">👥 Co-Admin (Limited Staff)</option>
               <option value="AFFILIATE">📢 Affiliate (Partner)</option>
             </select>
           </div>
@@ -7281,6 +7354,7 @@ interface CreateUserModalProps {
   onClose: () => void;
   loading: boolean;
   error: string | null;
+  isCoAdmin?: boolean;
 }
 
 function CreateUserModal({
@@ -7290,6 +7364,7 @@ function CreateUserModal({
   onClose,
   loading,
   error,
+  isCoAdmin,
 }: CreateUserModalProps) {
   const update = (field: keyof typeof form, val: string) =>
     onChange({ ...form, [field]: val } as typeof form);
@@ -7346,7 +7421,8 @@ function CreateUserModal({
             >
               <option value="BUYER">🛍️ Buyer (Customer)</option>
               <option value="SELLER">🏪 Seller (Merchant)</option>
-              <option value="ADMIN">🛡️ Admin (Staff)</option>
+              {!isCoAdmin && <option value="ADMIN">🛡️ Admin (Staff)</option>}
+              <option value="CO_ADMIN">👥 Co-Admin (Limited Staff)</option>
               <option value="AFFILIATE">📢 Affiliate (Partner)</option>
             </select>
           </div>
@@ -7373,7 +7449,7 @@ function CreateUserModal({
             <button type="submit" className="btn-primary" disabled={loading}>
               {loading
                 ? 'Creating...'
-                : `Create ${form.role === 'BUYER' ? 'Customer' : form.role === 'SELLER' ? 'Seller' : 'Admin'} Account`}
+                : `Create ${form.role === 'BUYER' ? 'Customer' : form.role === 'SELLER' ? 'Seller' : form.role === 'CO_ADMIN' ? 'Co-Admin' : 'Admin'} Account`}
             </button>
           </div>
         </form>

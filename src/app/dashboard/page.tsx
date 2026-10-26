@@ -72,7 +72,7 @@ function CustomerDashboard() {
   // Access control - redirect admins/sellers/affiliates to their respective dashboards
   useEffect(() => {
     const role = (session?.user as SessionUser | undefined)?.role;
-    if (session && role === 'ADMIN') {
+    if (session && (role === 'ADMIN' || role === 'CO_ADMIN')) {
       router.push('/admin-os');
     } else if (session && role === 'SELLER') {
       router.push('/seller-hub');

@@ -34,6 +34,7 @@ import {
   rmaSchema,
   productFilterSchema,
   adminCreateUserSchema,
+  adminUpdateUserSchema,
 } from '@/lib/validation';
 
 const VALID_UUID = '11111111-1111-1111-1111-111111111111';
@@ -547,6 +548,17 @@ describe('adminCreateUserSchema', () => {
     ).toBe('ADMIN');
   });
 
+  it('allows CO_ADMIN role here', () => {
+    expect(
+      adminCreateUserSchema.parse({
+        name: 'Co Admin',
+        email: 'coadmin@a.com',
+        password: 'secret123',
+        role: 'CO_ADMIN',
+      }).role
+    ).toBe('CO_ADMIN');
+  });
+
   it('rejects 5-char passwords (admin-side min is 6)', () => {
     expect(
       adminCreateUserSchema.safeParse({
@@ -556,5 +568,13 @@ describe('adminCreateUserSchema', () => {
         role: 'BUYER',
       }).success
     ).toBe(false);
+  });
+
+  it('allows CO_ADMIN role in adminUpdateUserSchema', () => {
+    expect(
+      adminUpdateUserSchema.parse({
+        role: 'CO_ADMIN',
+      }).role
+    ).toBe('CO_ADMIN');
   });
 });

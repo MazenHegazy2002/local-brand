@@ -4,11 +4,12 @@ import { SessionUser } from '@/types';
 import { Prisma, Role, AffiliateStatus } from '@/generated/client';
 import { getRequestSession } from '@/lib/mobile-auth';
 
-const VALID_ROLES = new Set<Role>([Role.ADMIN, Role.SELLER, Role.BUYER]);
+const VALID_ROLES = new Set<Role>([Role.ADMIN, Role.CO_ADMIN, Role.SELLER, Role.BUYER]);
 
 export async function GET(req: Request) {
   const session = await getRequestSession(req);
-  if (!session || (session.user as SessionUser).role !== 'ADMIN') {
+  const userRole = (session?.user as SessionUser)?.role;
+  if (!session || (userRole !== 'ADMIN' && userRole !== 'CO_ADMIN')) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 

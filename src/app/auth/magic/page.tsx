@@ -44,7 +44,11 @@ function MagicCallback() {
         const session = await sessionRes.json();
         const role = session?.user?.role;
         const landing =
-          role === 'ADMIN' ? '/admin-os' : role === 'SELLER' ? '/seller-hub' : '/dashboard';
+          role === 'ADMIN' || role === 'CO_ADMIN'
+            ? '/admin-os'
+            : role === 'SELLER'
+              ? '/seller-hub'
+              : '/dashboard';
         router.replace(`/account/set-password?next=${encodeURIComponent(landing)}&welcome=1`);
       } catch {
         router.replace('/account/set-password?welcome=1');

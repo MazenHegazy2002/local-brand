@@ -96,14 +96,15 @@ export async function POST(req: Request) {
 
   // 4. Check plugin is installed + enabled
   const plugin = await prisma.plugin.findUnique({ where: { slug: PLUGIN_SLUG } });
-  if (!plugin || !plugin.isEnabled) {
+  const isEnabled = plugin ? plugin.isEnabled : Boolean(process.env.GEMINI_API_KEY);
+  if (!isEnabled) {
     return NextResponse.json({ error: 'Virtual Try-On feature is not enabled.' }, { status: 403 });
   }
 
   // 5. Parse + decrypt stored API keys
   let configParsed: Record<string, string> = {};
   try {
-    configParsed = JSON.parse(plugin.configJson || '{}');
+    configParsed = JSON.parse(plugin?.configJson || '{}');
   } catch {
     /* tolerate */
   }
@@ -205,8 +206,12 @@ export async function POST(req: Request) {
 
   // 7. Try configured keys & endpoints
   const shuffled = [...apiKeys].sort(() => Math.random() - 0.5);
-  const baseUrl = configParsed.baseUrl?.trim();
-  const selectedModel = configParsed.model?.trim() || MODEL;
+  const baseUrl =
+    configParsed.baseUrl?.trim() ||
+    process.env.GEMINI_BASE_URL?.trim() ||
+    process.env.AI_BASE_URL?.trim() ||
+    '';
+  const selectedModel = configParsed.model?.trim() || process.env.GEMINI_MODEL?.trim() || MODEL;
 
   const userBuffer = Buffer.from(userBase64, 'base64');
   const productBuffer = Buffer.from(productBase64, 'base64');
@@ -239,12 +244,20 @@ export async function POST(req: Request) {
         // Use strictly chat/vision-capable models for /chat/completions
         let promptToSend = promptParam;
         if (!promptToSend) {
-          const chatModels = [
-            'antigravity/gemini-2.5-flash',
-            'antigravity/gemini-3.7-flash-high',
-            'google/gemini-2.5-flash',
-            'openrouter/google/gemini-2.5-flash',
-          ];
+          const chatModels = Array.from(
+            new Set(
+              [
+                selectedModel,
+                'gemini 3.1 pro re',
+                'antigravity/gemini-3.1-flash-lite',
+                'agy/gemini-3.1-flash-lite',
+                'antigravity/gemini-2.5-flash',
+                'antigravity/gemini-3.7-flash-high',
+                'google/gemini-2.5-flash',
+                'openrouter/google/gemini-2.5-flash',
+              ].filter(Boolean)
+            )
+          );
 
           for (const cModel of chatModels) {
             try {

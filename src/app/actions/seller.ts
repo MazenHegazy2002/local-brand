@@ -351,7 +351,7 @@ export async function getDashboardStats() {
       );
     }
 
-    if (role === 'ADMIN') {
+    if (role === 'ADMIN' || role === 'CO_ADMIN') {
       const sellers = await prisma.sellerProfile.findMany({
         where: { deletedAt: null },
         include: {
@@ -958,46 +958,13 @@ export async function getHomepageData() {
 export async function updateSellerStatus(sellerId: string, status: SellerStatus) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as SessionUser).role !== 'ADMIN')
-      return { error: 'Unauthorized' };
+    const role = (session?.user as SessionUser)?.role;
+    if (!session || (role !== 'ADMIN' && role !== 'CO_ADMIN')) return { error: 'Unauthorized' };
 
     const adminId = await getRealUserId(session);
 
-    const profile = await prisma.sellerProfile.update({
-      where: { id: sellerId },
-      data: { status },
-      include: { user: true },
-    });
-
-    if (status === 'ACTIVE') {
-      await prisma.user.update({
-        where: { id: profile.userId },
-        data: { emailVerified: profile.user.emailVerified || new Date() },
-      });
-
-      try {
-        const { sendEmail } = await import('@/lib/email');
-        await sendEmail({
-          to: profile.user.email,
-          subject: 'Your Brandy seller account has been approved!',
-          html: `<p>Hi ${profile.user.name || 'Seller'},</p><p>Congratulations! Your seller application for store <strong>${profile.storeName}</strong> has been approved. You can now access your Seller Hub, list products, and start selling!</p><p><a href="${PLATFORM_URL}/seller-hub">Go to Seller Hub</a></p>`,
-        });
-      } catch (emailErr) {
-        console.error('[updateSellerStatus] Failed to send approval email:', emailErr);
-      }
-    }
-
-    // Log action
-    if (adminId) {
-      await prisma.auditLog.create({
-        data: {
-          adminId,
-          action: status === 'ACTIVE' ? 'APPROVED_SELLER' : 'SUSPENDED_SELLER',
-          targetId: sellerId,
-          details: `Status changed to ${status}`,
-        },
-      });
-    }
+    const { setSellerStatus } = await import('@/lib/seller-status');
+    await setSellerStatus(sellerId, status, adminId);
 
     revalidatePath('/admin-os');
     return { success: true };
@@ -1014,8 +981,8 @@ export async function updateBrandStatus(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as SessionUser).role !== 'ADMIN')
-      return { error: 'Unauthorized' };
+    const role = (session?.user as SessionUser)?.role;
+    if (!session || (role !== 'ADMIN' && role !== 'CO_ADMIN')) return { error: 'Unauthorized' };
 
     const adminId = await getRealUserId(session);
 
@@ -1110,7 +1077,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
     const session = await getServerSession(authOptions);
     if (!session) return { error: 'Unauthorized' };
     const role = (session.user as SessionUser).role;
-    if (role !== 'SELLER' && role !== 'ADMIN') return { error: 'Forbidden' };
+    if (role !== 'SELLER' && role !== 'ADMIN' && role !== 'CO_ADMIN') return { error: 'Forbidden' };
 
     if (role === 'SELLER') {
       const sellerProfile = await prisma.sellerProfile.findUnique({
@@ -1651,10 +1618,15 @@ export async function adminCreateUser(formData: {
     const session = await getServerSession(authOptions);
     if (!session)
       return { error: 'Unauthorized: Session is null. Please log out and log back in.' };
-    if ((session.user as SessionUser).role !== Role.ADMIN)
+    const userRole = (session.user as SessionUser).role;
+    if (userRole !== Role.ADMIN && userRole !== Role.CO_ADMIN)
       return {
-        error: `Unauthorized: Your role is ${(session.user as SessionUser).role}, but ADMIN is required.`,
+        error: `Unauthorized: Your role is ${userRole}, but ADMIN or CO_ADMIN is required.`,
       };
+
+    if (userRole === Role.CO_ADMIN && formData.role === Role.ADMIN) {
+      return { error: 'Unauthorized: Co-admins cannot create full admin accounts.' };
+    }
 
     const adminId = await getRealUserId(session);
 
@@ -1726,10 +1698,23 @@ export async function adminUpdateUser(
     const session = await getServerSession(authOptions);
     if (!session)
       return { error: 'Unauthorized: Session is null. Please log out and log back in.' };
-    if ((session.user as SessionUser).role !== Role.ADMIN)
+    const userRole = (session.user as SessionUser).role;
+    if (userRole !== Role.ADMIN && userRole !== Role.CO_ADMIN)
       return {
-        error: `Unauthorized: Your role is ${(session.user as SessionUser).role}, but ADMIN is required.`,
+        error: `Unauthorized: Your role is ${userRole}, but ADMIN or CO_ADMIN is required.`,
       };
+
+    const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+    if (!targetUser) return { error: 'User not found.' };
+
+    if (userRole === Role.CO_ADMIN) {
+      if (targetUser.role === Role.ADMIN) {
+        return { error: 'Unauthorized: Co-admins cannot modify admin accounts.' };
+      }
+      if (data.role === Role.ADMIN) {
+        return { error: 'Unauthorized: Co-admins cannot promote users to admin.' };
+      }
+    }
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
@@ -1760,7 +1745,7 @@ export async function adminDeleteSeller(sellerId: string) {
     }
 
     const userRole = (session.user as SessionUser).role;
-    if (userRole !== Role.ADMIN) {
+    if (userRole !== Role.ADMIN && userRole !== Role.CO_ADMIN) {
       console.error(`[adminDeleteSeller] Unauthorized access attempt by role: ${userRole}`);
       return { error: `Unauthorized: Admin role required (Current role: ${userRole})` };
     }
@@ -1916,7 +1901,7 @@ export async function adminDeleteUser(userId: string) {
     }
 
     const userRole = (session.user as SessionUser).role;
-    if (userRole !== Role.ADMIN) {
+    if (userRole !== Role.ADMIN && userRole !== Role.CO_ADMIN) {
       console.error(`[adminDeleteUser] Unauthorized access attempt by role: ${userRole}`);
       return { error: `Unauthorized: Admin role required (Current role: ${userRole})` };
     }
@@ -1932,6 +1917,10 @@ export async function adminDeleteUser(userId: string) {
     });
 
     if (!user) return { error: 'User not found.' };
+
+    if (user.role === Role.ADMIN) {
+      return { error: 'Unauthorized: Cannot delete admin accounts.' };
+    }
 
     // Check if user has a seller profile with products/orders
     const sellerProfile = await prisma.sellerProfile.findUnique({
@@ -2151,7 +2140,7 @@ export async function cancelOrderBySeller(
     const session = await getServerSession(authOptions);
     if (!session) return { error: 'Unauthorized' };
     const role = (session.user as SessionUser).role;
-    if (role !== 'SELLER' && role !== 'ADMIN') return { error: 'Forbidden' };
+    if (role !== 'SELLER' && role !== 'ADMIN' && role !== 'CO_ADMIN') return { error: 'Forbidden' };
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -2177,13 +2166,16 @@ export async function cancelOrderBySeller(
 
     const isOwnOrder =
       role === 'ADMIN' ||
+      role === 'CO_ADMIN' ||
       orderItems.some(item => sellerProductIds.includes(item.variant.productId));
     if (!isOwnOrder) return { error: 'Unauthorized order cancellation' };
 
     await prisma.$transaction(async tx => {
       for (const item of orderItems) {
         const belongsToSeller =
-          role === 'ADMIN' || sellerProductIds.includes(item.variant.productId);
+          role === 'ADMIN' ||
+          role === 'CO_ADMIN' ||
+          sellerProductIds.includes(item.variant.productId);
 
         if (belongsToSeller) {
           if (markSoldOut) {
