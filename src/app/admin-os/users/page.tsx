@@ -93,11 +93,13 @@ export default function AdminUsersPage() {
                     className={`px-2 py-1 rounded text-xs font-medium ${
                       user.role === 'ADMIN'
                         ? 'bg-red-100 text-red-700'
-                        : user.role === 'SELLER'
-                          ? 'bg-blue-100 text-blue-700'
-                          : user.affiliate && user.affiliate.status === 'APPROVED'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-gray-100 text-gray-700'
+                        : user.role === 'CO_ADMIN'
+                          ? 'bg-sky-100 text-sky-700'
+                          : user.role === 'SELLER'
+                            ? 'bg-blue-100 text-blue-700'
+                            : user.affiliate && user.affiliate.status === 'APPROVED'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-gray-100 text-gray-700'
                     }`}
                   >
                     {user.affiliate && user.affiliate.status === 'APPROVED'

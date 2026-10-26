@@ -60,7 +60,7 @@ export default function Navbar() {
   const dashboardHref =
     role === 'SELLER'
       ? '/seller-hub'
-      : role === 'ADMIN'
+      : role === 'ADMIN' || role === 'CO_ADMIN'
         ? '/admin-os'
         : role === 'AFFILIATE'
           ? '/affiliate/dashboard'
