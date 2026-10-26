@@ -1718,6 +1718,45 @@ async function main() {
     },
   });
 
+  // ── Brandyy Team (Admin & Co-Admins) ────────────────────────────────────
+  const staffAccounts = [
+    { name: 'Mazen', email: 'mazen@brandyy.shop', pass: 'Mazenhegazy2004', role: 'ADMIN' as const },
+    { name: 'Ali', email: 'ali@brandyy.shop', pass: 'Ali312', role: 'CO_ADMIN' as const },
+    {
+      name: 'Abdelrahman',
+      email: 'abdelrahman@brandyy.shop',
+      pass: 'Abdelrhman99',
+      role: 'CO_ADMIN' as const,
+    },
+    {
+      name: 'Darwish',
+      email: 'darwish@brandyy.shop',
+      pass: 'Darwish211',
+      role: 'CO_ADMIN' as const,
+    },
+  ];
+
+  for (const staff of staffAccounts) {
+    const pwHash = await bcrypt.hash(staff.pass, 12);
+    await prisma.user.upsert({
+      where: { email: staff.email },
+      update: {
+        name: staff.name,
+        role: staff.role,
+        passwordHash: pwHash,
+        emailVerified: new Date(),
+      },
+      create: {
+        name: staff.name,
+        email: staff.email,
+        passwordHash: pwHash,
+        role: staff.role,
+        loyaltyPoints: 0,
+        emailVerified: new Date(),
+      },
+    });
+  }
+
   const LOGO_URLS = [
     'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?q=80&w=200&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1534452286896-196903babb23?q=80&w=200&auto=format&fit=crop',

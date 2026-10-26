@@ -12,7 +12,8 @@ export const metadata: Metadata = {
 export default async function AdminOsLayout({ children }: { children: React.ReactNode }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as SessionUser)?.role !== 'ADMIN') {
+    const role = (session?.user as SessionUser)?.role;
+    if (!session || (role !== 'ADMIN' && role !== 'CO_ADMIN')) {
       redirect('/login');
     }
   } catch (err: unknown) {

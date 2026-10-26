@@ -3,7 +3,8 @@ import { getRequestUser } from '@/lib/mobile-auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
-  if ((await getRequestUser(req))?.role !== 'ADMIN')
+  const role = (await getRequestUser(req))?.role;
+  if (role !== 'ADMIN' && role !== 'CO_ADMIN')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { searchParams } = new URL(req.url);

@@ -203,7 +203,7 @@ function LoginForm() {
           target = '/dashboard';
         }
         if (!target || target === '/dashboard') {
-          if (role === 'ADMIN') target = '/admin-os';
+          if (role === 'ADMIN' || role === 'CO_ADMIN') target = '/admin-os';
           else if (role === 'SELLER') target = '/seller-hub';
           else if (role === 'AFFILIATE') target = '/affiliate/dashboard';
           else if (role === 'BUYER') {

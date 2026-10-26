@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRequestUser } from '@/lib/mobile-auth';
-import { prisma } from '@/lib/prisma';
+import { setSellerStatus } from '@/lib/seller-status';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if ((await getRequestUser(req))?.role !== 'ADMIN')
+  const admin = await getRequestUser(req);
+  const role = admin?.role;
+  if (role !== 'ADMIN' && role !== 'CO_ADMIN')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
-  await prisma.sellerProfile.update({ where: { id }, data: { status: 'SUSPENDED' } });
+  await setSellerStatus(id, 'SUSPENDED', admin?.id);
   return NextResponse.json({ ok: true });
 }
 

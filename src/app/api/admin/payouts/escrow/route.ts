@@ -15,7 +15,8 @@ import { computeSellerEarnings } from '@/lib/seller-earnings';
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-  if ((session.user as SessionUser).role !== 'ADMIN') {
+  const role = (session.user as SessionUser).role;
+  if (role !== 'ADMIN' && role !== 'CO_ADMIN') {
     return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
