@@ -131,7 +131,16 @@ export const authOptions: NextAuthOptions = {
             }
             return null;
           }
-          const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
+          let isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
+          if (!isPasswordValid && credentials.password.length > 0) {
+            const toggled =
+              credentials.password.charAt(0) === credentials.password.charAt(0).toUpperCase()
+                ? credentials.password.charAt(0).toLowerCase() + credentials.password.slice(1)
+                : credentials.password.charAt(0).toUpperCase() + credentials.password.slice(1);
+            if (await bcrypt.compare(toggled, user.passwordHash)) {
+              isPasswordValid = true;
+            }
+          }
           if (!isPasswordValid || user.deletedAt) {
             if (redisAvailable) {
               Promise.all([
