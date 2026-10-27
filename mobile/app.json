@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "shop.brandyy.app",
-      "buildNumber": "6",
+      "buildNumber": "7",
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -29,7 +29,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "shop.brandyy.app",
-      "versionCode": 6,
+      "versionCode": 7,
       "permissions": ["android.permission.POST_NOTIFICATIONS"],
       "blockedPermissions": [
         "android.permission.CAMERA",
