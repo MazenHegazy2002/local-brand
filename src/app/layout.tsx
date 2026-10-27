@@ -7,6 +7,7 @@ import { cookies, headers } from 'next/headers';
 import GoogleTranslate from '@/components/GoogleTranslate';
 import ExitIntentPopup from '@/components/ExitIntentPopup';
 import BuyerAnnouncementPopup from '@/components/BuyerAnnouncementPopup';
+import ScrollToTop from '@/components/ScrollToTop';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -203,6 +204,7 @@ export default async function RootLayout({
         >
           Skip to main content
         </a>
+        <ScrollToTop />
         <LanguageProvider defaultLang={_lang}>
           <ToastProvider>
             <ConfirmProvider>

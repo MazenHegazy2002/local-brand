@@ -66,9 +66,13 @@ html, body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-sans);
-  scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+}
+
+/* Enable smooth scrolling only for in-page anchor links, not route transitions */
+:root:has(:target) {
+  scroll-behavior: smooth;
 }
 
 html {

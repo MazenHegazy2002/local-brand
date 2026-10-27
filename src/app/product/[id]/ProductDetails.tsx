@@ -181,9 +181,20 @@ export default function ProductDetails({
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
-  // Sync initial color image ONLY when product ID actually changes
+  // Sync initial color image and reset scroll to top ONLY when product ID actually changes
   const prevProductIdRef = React.useRef(product.id);
   useEffect(() => {
+    // Scroll to the very beginning of the product page
+    if (typeof window !== 'undefined' && !window.location.hash && process.env.NODE_ENV !== 'test') {
+      try {
+        if (typeof window.scrollTo === 'function') {
+          window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        }
+      } catch {}
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+    }
+
     if (prevProductIdRef.current !== product.id) {
       prevProductIdRef.current = product.id;
       setSelectedColor(initialColor);
@@ -407,7 +418,7 @@ export default function ProductDetails({
       </div>
 
       {/* ── Right Column: Configuration & Details ── */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center">
+      <div className="w-full md:w-1/2 flex flex-col justify-start">
         {/* Brand redirect + verification badge + Share */}
         <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-2">
