@@ -86,9 +86,11 @@ export function FeeBreakdown({
 
       <Text style={s.help}>
         {add
-          ? t('Buyers see {price}. You keep the full {full}.', {
+          ? // The fee is taken from what the buyer pays, so the payout is a little under `price`.
+            t('Buyers see {price}. You receive {net} after the {pct} fee.', {
               price: egp(customerPrice(price, rate, mode)),
-              full: egp(price),
+              net: egp(round2(customerPrice(price, rate, mode) * (1 - rate))),
+              pct,
             })
           : t('Buyers see {price}. The {pct} fee comes out of your payout.', {
               price: egp(price),

@@ -69,8 +69,8 @@ export const ar: Record<string, string> = {
   Buyers: 'المشترين',
   'Buyers see {price}. The {pct} fee comes out of your payout.':
     'المشترين هيشوفوا {price}. وعمولة {pct} هتتخصم من أرباحك.',
-  'Buyers see {price}. You keep the full {full}.':
-    'المشترين هيشوفوا {price}. وانت هتاخد {full} كامل.',
+  'Buyers see {price}. You receive {net} after the {pct} fee.':
+    'المشترين هيشوفوا {price}. وانت هتاخد {net} بعد عمولة {pct}.',
   Cancel: 'إلغاء',
   'Cancel rate': 'نسبة الإلغاء',
   Cancelled: 'ملغي',
@@ -627,8 +627,8 @@ export const franco: Record<string, string> = {
   Buyers: 'El buyers',
   'Buyers see {price}. The {pct} fee comes out of your payout.':
     'El nas hatshoof {price}. W el {pct} 3omola hatet5esem men felousak.',
-  'Buyers see {price}. You keep the full {full}.':
-    'El nas hatshoof {price}. W enta hat5od {full} kamel.',
+  'Buyers see {price}. You receive {net} after the {pct} fee.':
+    'El nas hatshoof {price}. W enta hat5od {net} ba3d 3omolet el {pct}.',
   Cancel: 'Elghaa',
   'Cancel rate': 'Nesbet el elghaa',
   Cancelled: "Etl3'a",
