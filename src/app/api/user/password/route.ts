@@ -11,6 +11,7 @@ import type { SessionUser } from '@/types';
 // post-magic-link "set a password" page so first-time customers can pick a
 // password they'll remember for future credentials sign-ins.
 const schema = z.object({
+  currentPassword: z.string().optional(),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
@@ -29,6 +30,29 @@ export async function POST(req: Request) {
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ message: parsed.error.errors[0].message }, { status: 400 });
+    }
+
+    // If the account already has a password set, require verifying the current password
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+
+    if (user.passwordHash) {
+      if (!parsed.data.currentPassword) {
+        return NextResponse.json(
+          { message: 'Current password is required to change password.' },
+          { status: 400 }
+        );
+      }
+      const isMatch = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
+      if (!isMatch) {
+        return NextResponse.json({ message: 'Current password is incorrect.' }, { status: 400 });
+      }
     }
 
     const passwordHash = await bcrypt.hash(parsed.data.password, BCRYPT_COST);

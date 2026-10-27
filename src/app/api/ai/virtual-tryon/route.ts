@@ -153,14 +153,25 @@ export async function POST(req: Request) {
     } else if (productImageUrl.startsWith('/')) {
       const fs = await import('fs');
       const path = await import('path');
-      const localFilePath = path.join(process.cwd(), 'public', productImageUrl);
+      const publicDir = path.resolve(process.cwd(), 'public');
+      const normalizedPath = path.normalize(productImageUrl);
+      const localFilePath = path.resolve(
+        publicDir,
+        '.' + (normalizedPath.startsWith('/') ? normalizedPath : '/' + normalizedPath)
+      );
+
+      // Assert path containment strictly within public directory to prevent directory traversal
+      if (!localFilePath.startsWith(publicDir + path.sep) && localFilePath !== publicDir) {
+        throw new Error('Access denied: image path must reside within the public directory');
+      }
+
       if (fs.existsSync(localFilePath)) {
         const buf = fs.readFileSync(localFilePath);
         productBase64 = buf.toString('base64');
         productMime = productImageUrl.endsWith('.png') ? 'image/png' : 'image/jpeg';
       } else {
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        const imgRes = await fetch(`${appUrl}${productImageUrl}`);
+        const imgRes = await fetch(`${appUrl}${normalizedPath}`);
         if (!imgRes.ok) throw new Error(`Local fetch failed: ${imgRes.status}`);
         const arrayBuffer = await imgRes.arrayBuffer();
         productBase64 = Buffer.from(arrayBuffer).toString('base64');

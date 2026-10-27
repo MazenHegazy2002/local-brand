@@ -43,7 +43,7 @@ const mocked = prisma as unknown as {
 
 const REQUIRED_TABLES = ['users', 'products', 'orders', 'categories', 'sellerProfiles'];
 
-function makeRequest(authHeader?: string): Request {
+function makeRequest(authHeader = 'Bearer test-cron-secret'): Request {
   return new Request('http://localhost/api/cron/backup', {
     headers: authHeader ? { authorization: authHeader } : {},
   });
@@ -94,37 +94,34 @@ beforeEach(() => {
   mocked.promoCodeUsage.findMany.mockResolvedValue([]);
   mocked.auditLog.findMany.mockResolvedValue([]);
 
-  // Ensure no auth secret or blob token by default
-  delete process.env.CRON_SECRET;
+  process.env.CRON_SECRET = 'test-cron-secret';
   delete process.env.BLOB_READ_WRITE_TOKEN;
 });
 
 // ── Auth guard ──────────────────────────────────────────────────────────────
 
 describe('auth guard', () => {
-  it('returns 401 when CRON_SECRET is set but Authorization header is absent', async () => {
-    process.env.CRON_SECRET = 'supersecret';
-    const res = await GET(makeRequest());
+  it('returns 401 when Authorization header is absent', async () => {
+    const res = await GET(new Request('http://localhost/api/cron/backup'));
     expect(res.status).toBe(401);
     const body = (await res.json()) as { message: string };
     expect(body.message).toMatch(/unauthorized/i);
   });
 
-  it('returns 401 when CRON_SECRET is set and wrong token is provided', async () => {
-    process.env.CRON_SECRET = 'supersecret';
+  it('returns 401 when wrong token is provided', async () => {
     const res = await GET(makeRequest('Bearer wrongtoken'));
     expect(res.status).toBe(401);
   });
 
   it('accepts a correct Bearer token', async () => {
-    process.env.CRON_SECRET = 'supersecret';
-    const res = await GET(makeRequest('Bearer supersecret'));
+    const res = await GET(makeRequest('Bearer test-cron-secret'));
     expect(res.status).toBe(200);
   });
 
-  it('skips auth when CRON_SECRET is not set', async () => {
-    const res = await GET(makeRequest()); // no auth header
-    expect(res.status).toBe(200);
+  it('fails closed (returns 401) when CRON_SECRET is not set', async () => {
+    delete process.env.CRON_SECRET;
+    const res = await GET(makeRequest());
+    expect(res.status).toBe(401);
   });
 });
 

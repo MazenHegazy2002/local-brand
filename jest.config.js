@@ -21,8 +21,14 @@ const customJestConfig = {
     '<rootDir>/.claude/',
     '<rootDir>/tests/e2e/',
     '<rootDir>/.kilo/',
+    '<rootDir>/.agents/',
   ],
-  modulePathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/.claude/', '<rootDir>/.kilo/'],
+  modulePathIgnorePatterns: [
+    '<rootDir>/.next/',
+    '<rootDir>/.claude/',
+    '<rootDir>/.kilo/',
+    '<rootDir>/.agents/',
+  ],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',

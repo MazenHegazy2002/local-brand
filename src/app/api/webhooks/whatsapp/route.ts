@@ -85,6 +85,9 @@ export async function POST(req: Request) {
         console.error('[WhatsApp Webhook] Invalid HMAC signature');
         return NextResponse.json({ message: 'Invalid signature' }, { status: 401 });
       }
+    } else if (process.env.NODE_ENV === 'production') {
+      console.error('[WhatsApp Webhook] Rejecting unauthenticated webhook: secret not configured');
+      return NextResponse.json({ message: 'Webhook secret not configured' }, { status: 401 });
     }
 
     let body: any;

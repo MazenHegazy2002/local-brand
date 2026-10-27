@@ -27,9 +27,10 @@ const RETENTION_DAYS = parseInt(process.env.BACKUP_RETENTION_DAYS || '30', 10);
 
 export async function GET(req: Request) {
   // ── Auth ────────────────────────────────────────────────────────────────────
+  // Fail-closed: missing CRON_SECRET or mismatched token immediately rejects 401
   const authHeader = req.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 

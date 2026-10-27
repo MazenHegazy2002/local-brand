@@ -7,6 +7,9 @@
  */
 
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import type { SessionUser } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +24,16 @@ function isSet(...keys: string[]): boolean {
   return keys.every(k => !!process.env[k]);
 }
 
+async function requireAdmin(): Promise<boolean> {
+  const session = await getServerSession(authOptions);
+  return (session?.user as SessionUser | undefined)?.role === 'ADMIN';
+}
+
 export async function GET() {
+  if (process.env.NODE_ENV === 'production' && !(await requireAdmin())) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
   const gateways: GatewayStatus[] = [
     // ── Stripe ────────────────────────────────────────────────────────────────
     (() => {

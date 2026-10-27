@@ -7,19 +7,19 @@ export const maxDuration = 30;
 export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
-  
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const deletedTokens = await prisma.verificationToken.deleteMany({
-      where: { expires: { lt: thirtyDaysAgo } }
+      where: { expires: { lt: thirtyDaysAgo } },
     });
 
     const deletedPasswordTokens = await prisma.passwordResetToken.deleteMany({
-      where: { expires: { lt: new Date() } }
+      where: { expires: { lt: new Date() } },
     });
 
     return NextResponse.json({

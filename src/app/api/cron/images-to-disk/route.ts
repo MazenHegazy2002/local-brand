@@ -11,7 +11,8 @@ const data = { startsWith: 'data:' };
 
 export async function GET(req: Request) {
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && req.headers.get('authorization') !== `Bearer ${cronSecret}`) {
+  const authHeader = req.headers.get('authorization');
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
