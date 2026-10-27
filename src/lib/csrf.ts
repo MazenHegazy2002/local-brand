@@ -55,6 +55,7 @@ export const CSRF_EXEMPT_PREFIXES = [
   '/api/tracker', // visitor telemetry beacon
   '/api/upload',
   '/api/products/bulk-upload',
+  '/api/v1',
 ];
 
 export function isCsrfExempt(pathname: string): boolean {
