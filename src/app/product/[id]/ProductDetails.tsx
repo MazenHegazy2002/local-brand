@@ -12,7 +12,7 @@ import { ProductImage, Tag } from '@/types';
 import { ShareButton } from '@/components/ShareButton';
 import { ReportButton } from '@/components/ReportButton';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
-import { COLOR_MAP, getSwatchBackground, getSwatchStyle } from '@/lib/colors';
+import { getSwatchStyle } from '@/lib/colors';
 
 // Category slugs / name fragments that qualify for the Virtual Try-On button
 const TRYON_CATEGORY_SLUGS = ['men', 'women'];
@@ -43,7 +43,7 @@ export default function ProductDetails({
   const primaryImage =
     images.find((i: ProductImage) => i.isPrimary)?.url || images[0]?.url || '/placeholder.png';
 
-  const variants = product.variants || [];
+  const variants = React.useMemo(() => product.variants || [], [product.variants]);
   const hasVariants = variants.length > 0;
 
   const reviews = product.reviews || [];
@@ -55,43 +55,45 @@ export default function ProductDetails({
 
   // ── Color & Size Parsing Logic ──
   // Supports both old format { "color":"Red","size":"M" } and new format { "color":"Red","sizes":["S","M","L"] }
-  const parsedVariants = variants.flatMap((v: any) => {
-    let color = '';
-    let rawSizes: string[] = [];
-    let singleSize = '';
-    try {
-      const attrs = JSON.parse(v.attributes || '{}');
-      color = String(attrs.color || attrs.Color || '').trim();
+  const parsedVariants = React.useMemo(() => {
+    return (variants || []).flatMap((v: any) => {
+      let color = '';
+      let rawSizes: string[] = [];
+      let singleSize = '';
+      try {
+        const attrs = JSON.parse(v.attributes || '{}');
+        color = String(attrs.color || attrs.Color || '').trim();
 
-      // New seller products store sizes as an array; old seeded data uses singular "size"
-      if (Array.isArray(attrs.sizes) && attrs.sizes.length > 0) {
-        rawSizes = attrs.sizes.map((s: any) => String(s).trim()).filter(Boolean);
-      } else if (attrs.size || attrs.Size) {
-        singleSize = String(attrs.size || attrs.Size || '').trim();
-      }
-    } catch (_e) {
-      // Robust fallback for title-encoded layouts e.g. "Red - M"
-      if (v.title && v.title.includes('-')) {
-        const parts = v.title.split('-').map((p: string) => p.trim());
-        if (parts.length >= 2) {
-          color = parts[0];
-          singleSize = parts[1];
+        // New seller products store sizes as an array; old seeded data uses singular "size"
+        if (Array.isArray(attrs.sizes) && attrs.sizes.length > 0) {
+          rawSizes = attrs.sizes.map((s: any) => String(s).trim()).filter(Boolean);
+        } else if (attrs.size || attrs.Size) {
+          singleSize = String(attrs.size || attrs.Size || '').trim();
+        }
+      } catch (_e) {
+        // Robust fallback for title-encoded layouts e.g. "Red - M"
+        if (v.title && v.title.includes('-')) {
+          const parts = v.title.split('-').map((p: string) => p.trim());
+          if (parts.length >= 2) {
+            color = parts[0];
+            singleSize = parts[1];
+          }
         }
       }
-    }
 
-    // Fallback: use variant title as color name when attrs.color is missing
-    if (!color && v.title) {
-      color = v.title;
-    }
+      // Fallback: use variant title as color name when attrs.color is missing
+      if (!color && v.title) {
+        color = v.title;
+      }
 
-    // Expand a variant with a sizes array into one virtual entry per size so the
-    // existing deduplication + selection logic works without changes downstream.
-    if (rawSizes.length > 0) {
-      return rawSizes.map((sz: string) => ({ ...v, color, size: sz }));
-    }
-    return [{ ...v, color, size: singleSize }];
-  });
+      // Expand a variant with a sizes array into one virtual entry per size so the
+      // existing deduplication + selection logic works without changes downstream.
+      if (rawSizes.length > 0) {
+        return rawSizes.map((sz: string) => ({ ...v, color, size: sz }));
+      }
+      return [{ ...v, color, size: singleSize }];
+    });
+  }, [variants]);
 
   // Extract unique color entities
   const uniqueColors = React.useMemo(() => {
@@ -145,18 +147,22 @@ export default function ProductDetails({
       // 2. Search product images array by regex/substring on URL
       if (images.length > 0) {
         const matched = images.find((img: ProductImage) => {
-          const urlLower = img.url.toLowerCase();
+          const url = typeof img === 'string' ? img : img?.url || '';
+          const urlLower = url.toLowerCase();
           const regex = new RegExp(`\\b${lowerColor}\\b|[-_]${lowerColor}[-_.]`, 'i');
           return regex.test(urlLower) || urlLower.includes(lowerColor);
         });
-        if (matched?.url) return matched.url;
+        const matchedUrl = typeof matched === 'string' ? matched : matched?.url;
+        if (matchedUrl) return matchedUrl;
 
         // 3. Positional index match: if color #1 is selected and images length aligns, use image #1
         const colorIndex = uniqueColors.findIndex(
           c => c.colorName.toLowerCase().trim() === lowerColor
         );
         if (colorIndex >= 0 && colorIndex < images.length) {
-          if (images[colorIndex]?.url) return images[colorIndex].url;
+          const target = images[colorIndex];
+          const targetUrl = typeof target === 'string' ? target : target?.url;
+          if (targetUrl) return targetUrl;
         }
       }
 
@@ -168,17 +174,24 @@ export default function ProductDetails({
   // ── Interactive Client States ──
   const [selectedColor, setSelectedColor] = useState<string>(initialColor);
   const [selectedSize, setSelectedSize] = useState<string>('');
-  const [activeImage, setActiveImage] = useState<string>(primaryImage);
+  const [activeImage, setActiveImage] = useState<string>(() => {
+    const matchedImg = initialColor ? getMatchedImageUrl(initialColor) : null;
+    return matchedImg || primaryImage;
+  });
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
-  // Sync initial color image when product variants or primary image changes
+  // Sync initial color image ONLY when product ID actually changes
+  const prevProductIdRef = React.useRef(product.id);
   useEffect(() => {
-    setSelectedColor(initialColor);
-    setSelectedSize('');
-    setQty(1);
-    const matchedImg = initialColor ? getMatchedImageUrl(initialColor) : null;
-    setActiveImage(matchedImg || primaryImage);
+    if (prevProductIdRef.current !== product.id) {
+      prevProductIdRef.current = product.id;
+      setSelectedColor(initialColor);
+      setSelectedSize('');
+      setQty(1);
+      const matchedImg = initialColor ? getMatchedImageUrl(initialColor) : null;
+      setActiveImage(matchedImg || primaryImage);
+    }
   }, [product.id, primaryImage, initialColor, getMatchedImageUrl]);
 
   // Extract all unique sizes for selected color, or all sizes if no color is selected yet
@@ -202,11 +215,13 @@ export default function ProductDetails({
   }, [uniqueSizes.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Dynamic color selection handler
-  const handleColorSelect = (colorName: string) => {
+  const handleColorSelect = (colorName: string, updateImage = true) => {
     setSelectedColor(colorName);
-    const matchedImg = getMatchedImageUrl(colorName);
-    if (matchedImg) {
-      setActiveImage(matchedImg);
+    if (updateImage) {
+      const matchedImg = getMatchedImageUrl(colorName);
+      if (matchedImg) {
+        setActiveImage(matchedImg);
+      }
     }
 
     // Auto-reset size if it doesn't exist for the new color
@@ -218,6 +233,53 @@ export default function ProductDetails({
     );
     if (!sizeExists) {
       setSelectedSize('');
+    }
+  };
+
+  // Thumbnail click handler: switches active preview and syncs assigned color
+  const handleThumbnailClick = (imgUrl: string, index: number) => {
+    setActiveImage(imgUrl);
+
+    if (!hasColors) return;
+
+    const lowerUrl = (imgUrl || '').toLowerCase();
+
+    // 1. Direct match with variant image / attributes
+    const variantMatch = uniqueColors.find(({ variant }) => {
+      let vImg = (variant as any).image || (variant as any).imageUrl;
+      if (!vImg && variant.attributes) {
+        try {
+          const attrs =
+            typeof variant.attributes === 'string'
+              ? JSON.parse(variant.attributes)
+              : variant.attributes;
+          vImg = attrs.image || attrs.imageUrl || attrs.img || attrs.image_url;
+        } catch (_e) {}
+      }
+      return vImg && (vImg === imgUrl || vImg.toLowerCase() === lowerUrl);
+    });
+
+    if (variantMatch) {
+      handleColorSelect(variantMatch.colorName, false);
+      return;
+    }
+
+    // 2. Regex / substring match on URL
+    const urlMatch = uniqueColors.find(({ colorName }) => {
+      const lowerColor = colorName.toLowerCase().trim();
+      if (!lowerColor) return false;
+      const regex = new RegExp(`\\b${lowerColor}\\b|[-_]${lowerColor}[-_.]`, 'i');
+      return regex.test(lowerUrl) || lowerUrl.includes(lowerColor);
+    });
+
+    if (urlMatch) {
+      handleColorSelect(urlMatch.colorName, false);
+      return;
+    }
+
+    // 3. Positional index match if index aligns with uniqueColors
+    if (uniqueColors[index]) {
+      handleColorSelect(uniqueColors[index].colorName, false);
     }
   };
 
@@ -317,16 +379,13 @@ export default function ProductDetails({
         {images.length > 1 && (
           <div className="flex flex-wrap gap-3">
             {images.map((img: ProductImage, i: number) => {
-              const isActive = activeImage === img.url;
+              const imgUrl = typeof img === 'string' ? img : img.url;
+              const isActive = activeImage === imgUrl;
               return (
                 <button
-                  key={img.id || i}
-                  onClick={() => {
-                    setActiveImage(img.url);
-                    if (uniqueColors[i]) {
-                      setSelectedColor(uniqueColors[i].colorName);
-                    }
-                  }}
+                  key={(img as any).id || i}
+                  type="button"
+                  onClick={() => handleThumbnailClick(imgUrl, i)}
                   className={`w-20 h-20 rounded-lg bg-slate-50 dark:bg-slate-800/50 border p-1 overflow-hidden transition-all duration-300 transform hover:scale-105 ${
                     isActive
                       ? 'border-[#1e3b8a] dark:border-[#6b8ff5] ring-2 ring-[#1e3b8a]/20'
@@ -335,7 +394,7 @@ export default function ProductDetails({
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={img.url}
+                    src={imgUrl}
                     className="w-full h-full object-cover rounded"
                     alt={`${productTitle} gallery thumbnail ${i + 1}`}
                     loading="lazy"
