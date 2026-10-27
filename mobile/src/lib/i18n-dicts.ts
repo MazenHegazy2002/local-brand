@@ -548,6 +548,12 @@ export const ar: Record<string, string> = {
   'We got your return request and will contact you soon.': 'وصلنا طلب الإرجاع وهنتواصل معاك قريب.',
   'Send request': 'ابعت الطلب',
   'e.g. 0.5': 'مثلاً 0.5',
+  'Could not request a payout.': 'تعذّر طلب السحب.',
+  'Where should we send it?': 'نبعتلك الفلوس فين؟',
+  'Orange Money': 'أورنج موني',
+  'Etisalat Cash': 'اتصالات كاش',
+  'Bank, account name and IBAN': 'البنك واسم الحساب ورقم الآيبان',
+  'InstaPay address or number': 'عنوان أو رقم انستاباي',
 };
 
 export const franco: Record<string, string> = {
@@ -1106,4 +1112,10 @@ export const franco: Record<string, string> = {
     'Wasalna talab el erga3 w hantwasal ma3ak 2oryeb.',
   'Send request': 'Ab3at el talab',
   'e.g. 0.5': 'masalan 0.5',
+  'Could not request a payout.': 'Ma2darnash notlob el sa7b.',
+  'Where should we send it?': 'Neb3atlak el feloos fein?',
+  'Orange Money': 'Orange Money',
+  'Etisalat Cash': 'Etisalat Cash',
+  'Bank, account name and IBAN': 'El bank w esm el 7esab w el IBAN',
+  'InstaPay address or number': '3enwan aw rakam InstaPay',
 };

@@ -9,6 +9,9 @@ import {
   Alert,
   Platform,
   ActivityIndicator,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useState } from 'react';
 import * as Clipboard from 'expo-clipboard';
@@ -66,14 +69,22 @@ export default function Affiliate() {
     queryKey: ['affiliate-dashboard'],
     queryFn: () => api.get<Dashboard>('/api/affiliate/dashboard'),
   });
+  // The server needs where to send the money; ask for it when the button is tapped.
+  const [payoutOpen, setPayoutOpen] = useState(false);
+  const [method, setMethod] = useState<(typeof PAYOUT_METHODS)[number]['id']>('VODAFONE_CASH');
+  const [details, setDetails] = useState('');
   const payout = useMutation({
-    mutationFn: () => api.post<{ amountEgp: number }>('/api/affiliate/payout', {}),
+    mutationFn: () =>
+      api.post<{ amountEgp: number }>('/api/affiliate/payout', {
+        method,
+        payoutDetails: details.trim(),
+      }),
     onSuccess: r => {
+      setPayoutOpen(false);
       notify(t('Payout of {amount} requested.', { amount: egp(r.amountEgp) }));
       qc.invalidateQueries({ queryKey: ['affiliate-dashboard'] });
     },
-    onError: () =>
-      notify(t('Could not request a payout. Check your payout method is set on brandyy.shop.')),
+    onError: e => notify((e as Error).message || t('Could not request a payout.')),
   });
 
   function confirmSignOut() {
@@ -229,12 +240,71 @@ export default function Affiliate() {
         <Pressable
           style={[styles.payoutBtn, (confirmed <= 0 || payout.isPending) && { opacity: 0.5 }]}
           disabled={confirmed <= 0 || payout.isPending}
-          onPress={() => payout.mutate()}
+          onPress={() => setPayoutOpen(true)}
         >
           <Text style={styles.payoutBtnText}>
             {t('Request payout · {amount}', { amount: egp(confirmed) })}
           </Text>
         </Pressable>
+
+        <Modal
+          visible={payoutOpen}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setPayoutOpen(false)}
+        >
+          <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+            <Pressable style={styles.backdrop} onPress={() => setPayoutOpen(false)} />
+            <View style={styles.sheet}>
+              <Text style={styles.sheetTitle}>{t('Where should we send it?')}</Text>
+              <View style={styles.methodRow}>
+                {PAYOUT_METHODS.map(m => (
+                  <Pressable
+                    key={m.id}
+                    onPress={() => setMethod(m.id)}
+                    style={[styles.methodChip, method === m.id && styles.methodChipOn]}
+                  >
+                    <Text style={[styles.methodText, method === m.id && styles.methodTextOn]}>
+                      {t(m.label)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              <TextInput
+                style={styles.input}
+                value={details}
+                onChangeText={setDetails}
+                placeholder={t(
+                  method === 'BANK_TRANSFER'
+                    ? 'Bank, account name and IBAN'
+                    : method === 'INSTAPAY'
+                      ? 'InstaPay address or number'
+                      : 'Wallet number'
+                )}
+                placeholderTextColor={colors.placeholder}
+                keyboardType={
+                  method === 'BANK_TRANSFER' || method === 'INSTAPAY' ? 'default' : 'phone-pad'
+                }
+              />
+              <Pressable
+                style={[
+                  styles.payoutBtn,
+                  (details.trim().length < 5 || payout.isPending) && { opacity: 0.5 },
+                ]}
+                disabled={details.trim().length < 5 || payout.isPending}
+                onPress={() => payout.mutate()}
+              >
+                {payout.isPending ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.payoutBtnText}>
+                    {t('Request payout · {amount}', { amount: egp(confirmed) })}
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
 
         {/* Who used the code — sits under the original design */}
         <View style={styles.secHead}>
@@ -283,7 +353,46 @@ export default function Affiliate() {
   );
 }
 
+const PAYOUT_METHODS = [
+  { id: 'VODAFONE_CASH', label: 'Vodafone Cash' },
+  { id: 'INSTAPAY', label: 'InstaPay' },
+  { id: 'ORANGE_MONEY', label: 'Orange Money' },
+  { id: 'ETISALAT_CASH', label: 'Etisalat Cash' },
+  { id: 'BANK_TRANSFER', label: 'Bank transfer' },
+] as const;
+
 const styles = StyleSheet.create({
+  backdrop: { flex: 1, backgroundColor: 'rgba(14,22,51,0.4)' },
+  sheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radii.sheet,
+    borderTopRightRadius: radii.sheet,
+    padding: spacing.page,
+    paddingBottom: 32,
+    gap: 12,
+  },
+  sheetTitle: { fontFamily: 'Outfit-Bold', fontSize: 20, color: colors.ink },
+  methodRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  methodChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: radii.button,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  methodChipOn: { backgroundColor: colors.navy, borderColor: colors.navy },
+  methodText: { fontFamily: 'Inter-Medium', fontSize: 13, color: colors.ink },
+  methodTextOn: { color: '#fff' },
+  input: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
+    borderRadius: radii.input,
+    paddingHorizontal: 14,
+    fontFamily: 'Inter-Regular',
+    fontSize: 15,
+    color: colors.ink,
+  },
   root: { flex: 1, backgroundColor: colors.bg },
   header: {
     flexDirection: 'row',
