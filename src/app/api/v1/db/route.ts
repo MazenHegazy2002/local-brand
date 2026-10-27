@@ -70,6 +70,7 @@ function verifyInternalAccess(req: NextRequest): boolean {
 
 function sanitizeOutput(data: any): any {
   if (!data) return data;
+  if (data instanceof Date) return data;
   if (Array.isArray(data)) {
     return data.map(sanitizeOutput);
   }

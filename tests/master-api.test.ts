@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/v1/db/route';
+import { prisma } from '@/lib/prisma';
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
@@ -14,6 +15,9 @@ jest.mock('@/lib/prisma', () => ({
           { id: 'u1', name: 'Mazen', passwordHash: 'secret_hash', email: 'mazen@example.com' },
         ]),
       deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+    },
+    trafficLog: {
+      findMany: jest.fn().mockResolvedValue([]),
     },
   },
 }));
@@ -97,5 +101,31 @@ describe('Master REST API (/api/v1/db)', () => {
     const body = await res.json();
     expect(body.success).toBe(false);
     expect(body.error).toContain('Only read operations are permitted');
+  });
+
+  it('preserves Date objects in query results for JSON ISO serialization', async () => {
+    const testDate = new Date('2026-10-27T12:00:00.000Z');
+    const req = new NextRequest('http://localhost:3000/api/v1/db', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer brandyy_master_key_2026_xyz999',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'findMany',
+        model: 'trafficLog',
+        args: {},
+      }),
+    });
+    // mock trafficLog delegate with a Date field
+    (prisma as any).trafficLog = {
+      findMany: jest.fn().mockResolvedValue([{ id: 'tl_1', createdAt: testDate }]),
+    };
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.data[0].createdAt).toBe('2026-10-27T12:00:00.000Z');
   });
 });
