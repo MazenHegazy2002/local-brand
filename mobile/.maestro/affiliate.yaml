@@ -1,0 +1,13 @@
+# Affiliate dashboard. Local test builds only — see buyer-journey.yaml.
+appId: shop.brandyy.app
+---
+- runFlow:
+    file: common/login.yaml
+    env:
+      EMAIL: affiliate@demo.com
+      PASSWORD: affiliate1234
+- assertVisible: "Earn with Brandyy"
+- assertVisible: "Your referral link"
+- assertVisible: "Request payout.*"
+- scrollUntilVisible:
+    element: "Who used your code"

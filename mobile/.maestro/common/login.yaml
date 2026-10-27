@@ -1,0 +1,22 @@
+# Sign in from a fresh install. Pass EMAIL and PASSWORD (local seed accounts only).
+appId: shop.brandyy.app
+---
+- launchApp:
+    clearState: true
+- repeat:
+    times: 5
+    while:
+      visible: "Next"
+    commands:
+      - tapOn: "Next"
+- tapOn: "Get started"
+- tapOn: "omar@gmail.com"
+- inputText: ${EMAIL}
+- tapOn: "••••••••"
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn:
+    text: "Sign in"
+    index: 1
+- waitForAnimationToEnd:
+    timeout: 15000

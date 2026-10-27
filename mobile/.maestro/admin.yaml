@@ -1,0 +1,36 @@
+# Admin: overview, every tab, the Suspended filter and each More screen.
+# Local test builds only (seed passwords) — see buyer-journey.yaml.
+appId: shop.brandyy.app
+---
+- runFlow:
+    file: common/login.yaml
+    env:
+      EMAIL: admin@admin.com
+      PASSWORD: admin1234
+- assertVisible: "ADMIN OS"
+- assertVisible: "Needs attention"
+- tapOn:
+    text: "^Orders$"
+    index: 1
+- assertVisible: "Search order, name or email"
+- tapOn: "Sellers"
+- assertVisible: "Pending approval.*"
+- tapOn: "Users"
+- scrollUntilVisible:
+    element: "Suspended"
+    direction: RIGHT
+- tapOn: "More"
+- tapOn: "Returns"
+- assertVisible: "Approved.*"
+- back
+- tapOn: "Reviews"
+- assertVisible: "Hidden.*"
+- back
+- tapOn: "Support tickets"
+- assertVisible: "In progress.*"
+- back
+- tapOn: "Coupons"
+- assertVisible: "\\+ New"
+- back
+- tapOn: "Affiliate payouts"
+- assertVisible: "Requested.*"
