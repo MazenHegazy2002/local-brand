@@ -17,6 +17,7 @@ import {
   adminDeleteUser,
   adminUpdateUser,
 } from '../actions/seller';
+import StoreNameRequests from './_components/StoreNameRequests';
 // New admin control-panel tabs — extracted into _components/ to keep the
 // main file from growing without bound. These tabs each fetch their own
 // data; they don't lean on the shared `data` state below.
@@ -2816,6 +2817,7 @@ function SellersTab({
 
   return (
     <div className="card">
+      <StoreNameRequests />
       <div className="card-header flex items-center justify-between flex-wrap gap-3">
         <div className="card-title">All Sellers</div>
         <a

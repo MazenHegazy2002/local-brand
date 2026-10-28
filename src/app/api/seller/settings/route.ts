@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { notifyMultiple } from '@/lib/notification-helpers';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -44,6 +45,7 @@ export async function GET(req: Request) {
       select: {
         id: true,
         storeName: true,
+        pendingStoreName: true,
         description: true,
         logoUrl: true,
         city: true,
@@ -121,6 +123,26 @@ export async function PATCH(req: Request) {
 
     // Remove empty logo string so we don't overwrite with '' unintentionally.
     const data: Record<string, unknown> = { ...parsed.data };
+
+    // A new store name is a request: it waits in pendingStoreName until an admin approves it
+    // (/api/admin/store-name-requests). Sending the current name changes nothing.
+    delete data.storeName;
+    let requestedName: string | null = null;
+    if (typeof parsed.data.storeName === 'string') {
+      const wanted = parsed.data.storeName.trim();
+      if (wanted && wanted !== seller.storeName && wanted !== seller.pendingStoreName) {
+        const taken = await prisma.sellerProfile.findFirst({
+          where: { storeName: { equals: wanted, mode: 'insensitive' }, NOT: { id: seller.id } },
+          select: { id: true },
+        });
+        if (taken) {
+          return NextResponse.json({ message: 'This store name is already taken' }, { status: 409 });
+        }
+        data.pendingStoreName = wanted;
+        data.pendingStoreNameAt = new Date();
+        requestedName = wanted;
+      }
+    }
     if (data.logoUrl === '') delete data.logoUrl;
 
     // Encrypt the bank account before write. If the seller didn't pass one,
@@ -136,12 +158,27 @@ export async function PATCH(req: Request) {
       }
     }
 
+    if (requestedName) {
+      try {
+        const admins = await prisma.user.findMany({ where: { role: { in: ['ADMIN', 'CO_ADMIN'] } }, select: { id: true } });
+        await notifyMultiple(
+          admins.map(a => a.id),
+          {
+            title: 'Store name change request',
+            message: `"${seller.storeName}" wants to be renamed to "${requestedName}"`,
+            link: '/admin-os?tab=sellers',
+          }
+        );
+      } catch {}
+    }
+
     const updated = await prisma.sellerProfile.update({
       where: { id: seller.id },
       data,
       select: {
         id: true,
         storeName: true,
+        pendingStoreName: true,
         description: true,
         logoUrl: true,
         city: true,

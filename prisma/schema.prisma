@@ -100,6 +100,9 @@ model SellerProfile {
   id             String       @id @default(uuid())
   userId         String       @unique
   storeName      String       @unique
+  // A new name the seller asked for; it only replaces storeName once an admin approves it.
+  pendingStoreName   String?
+  pendingStoreNameAt DateTime?
   description    String?
   logoUrl        String?
   city              String?

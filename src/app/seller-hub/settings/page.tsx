@@ -25,6 +25,7 @@ interface SellerProfile {
 }
 
 export default function SellerSettingsPage() {
+  const [pendingName, setPendingName] = useState<string | null>(null); // requested store name awaiting approval
   const { data: session, status } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -72,6 +73,7 @@ export default function SellerSettingsPage() {
           const data = await res.json();
           const seller = data.seller || {};
           if (cancelled) return;
+          setPendingName(seller.pendingStoreName || null);
           setProfile({
             storeName: seller.storeName || '',
             description: seller.description || '',
@@ -119,7 +121,13 @@ export default function SellerSettingsPage() {
       if (!res.ok) {
         setMessage({ type: 'error', text: data.message || 'Failed to save settings' });
       } else {
-        setMessage({ type: 'success', text: 'Settings saved successfully.' });
+        setMessage({
+          type: 'success',
+          text: data.seller?.pendingStoreName && data.seller.pendingStoreName === profile.storeName.trim()
+            ? 'Saved. Your new store name is waiting for admin approval.'
+            : 'Settings saved successfully.',
+        });
+        if (data.seller) setPendingName(data.seller.pendingStoreName || null);
         if (data.seller) {
           setProfile(p => ({
             ...p,
@@ -267,6 +275,11 @@ export default function SellerSettingsPage() {
                   className="input-field"
                   required
                 />
+                {pendingName && (
+                  <div className="text-[11px] text-amber-700 mt-1">
+                    ⏳ “{pendingName}” is waiting for admin approval — your store keeps its current name until then.
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">
