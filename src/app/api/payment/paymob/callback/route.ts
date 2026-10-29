@@ -154,6 +154,8 @@ export async function POST(req: Request) {
             idempotencyKey,
           },
         });
+        const { notifySellersOfOrder } = await import('@/lib/seller-order-alerts');
+        void notifySellersOfOrder(result.orderId);
       } catch (e: unknown) {
         const err = e as { code?: string };
         if (err.code === 'P2002') {

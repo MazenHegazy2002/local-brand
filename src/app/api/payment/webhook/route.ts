@@ -186,6 +186,8 @@ export async function POST(req: Request) {
             idempotencyKey,
           },
         });
+        const { notifySellersOfOrder } = await import('@/lib/seller-order-alerts');
+        void notifySellersOfOrder(result.orderId);
       } else {
         console.error('[stripe webhook] createOrder failed for', idempotencyKey, result.error);
         if (loggedRowId) {
