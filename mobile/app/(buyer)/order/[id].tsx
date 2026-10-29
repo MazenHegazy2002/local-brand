@@ -30,6 +30,7 @@ const STEPS = [
 // Order.status values from the server mapped onto the 4 timeline steps.
 const STEP_RANK: Record<string, number> = {
   PENDING_PAYMENT: 0,
+  PENDING: 0,
   CONFIRMED: 0,
   PROCESSING: 1,
   SHIPPED: 2,
@@ -75,7 +76,9 @@ export default function OrderTracking() {
         ? t('Delivered')
         : status === 'CANCELLED' || status === 'RETURNED'
           ? t(statusKey(status))
-          : t('In progress');
+          : status === 'PENDING' || status === 'PENDING_PAYMENT'
+            ? t('Waiting for confirmation')
+            : t('In progress');
 
   const subtotal: number = order.total;
   const payMethod: string = order.paymentMethod;
@@ -149,7 +152,10 @@ export default function OrderTracking() {
                 </View>
                 <View style={styles.timelineContent}>
                   <Text style={[styles.timelineLabel, !done && styles.timelineLabelPending]}>
-                    {t(step.label)}
+                    {/* Until the seller confirms, the first step says so instead of "Order confirmed". */}
+                    {i === 0 && (status === 'PENDING' || status === 'PENDING_PAYMENT')
+                      ? t('Waiting for the seller to confirm')
+                      : t(step.label)}
                   </Text>
                   <Text style={styles.timelineTime}>
                     {stepTimes[i] ? fmtTime(stepTimes[i]!, t) : '—'}
