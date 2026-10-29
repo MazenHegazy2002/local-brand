@@ -117,8 +117,18 @@ export default function Navbar() {
       <header className="w-full bg-[hsl(var(--primary))] text-[hsl(var(--background))] sticky top-0 z-50 shadow-lg border-b border-primary-light/10">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link href="/" className="text-xl font-black tracking-tight shrink-0 text-white">
-            {t('Marketplace')}
+          <Link
+            href="/"
+            className="text-xl font-black tracking-tight shrink-0 text-white flex items-center gap-2"
+          >
+            <img
+              src="/icon-192.png"
+              alt="Brandyy"
+              className="w-8 h-8 rounded-full object-contain bg-white shadow-sm ring-1 ring-white/20"
+              width={32}
+              height={32}
+            />
+            <span>{t('Marketplace')}</span>
           </Link>
 
           {/* Search */}

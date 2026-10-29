@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
 
-    const title = searchParams.get('title') || 'Brandy — Egyptian Local Brands';
+    const title = searchParams.get('title') || 'Brandyy — Egyptian Local Brands';
     const price = searchParams.get('price');
     const brand = searchParams.get('brand');
     const category = searchParams.get('category');
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
                 color: '#ffffff',
               }}
             >
-              Brandy
+              Brandyy
             </span>
           </div>
 

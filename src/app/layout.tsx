@@ -41,16 +41,16 @@ export const metadata: Metadata = {
     },
   },
   title: {
-    default: 'Brandy — Egyptian Marketplace for Local Sellers',
-    template: '%s | Brandy',
+    default: 'Brandyy — Egyptian Marketplace for Local Sellers',
+    template: '%s | Brandyy',
   },
   description:
-    'Discover authentic Egyptian local sellers on Brandy. Shop fashion, electronics, home goods, watches and more from verified Egyptian sellers. Fast delivery across Egypt with 14-day escrow protection.',
+    'Discover authentic Egyptian local sellers on Brandyy. Shop fashion, electronics, home goods, watches and more from verified Egyptian sellers. Fast delivery across Egypt with 14-day escrow protection.',
   keywords: [
     'Egyptian local brands',
     'Made in Egypt',
-    'Brandy Egypt',
-    'Brandy marketplace',
+    'Brandyy Egypt',
+    'Brandyy marketplace',
     'براندات مصرية',
     'تسوق اونلاين مصر',
     'ماركات محلية مصرية',
@@ -60,32 +60,42 @@ export const metadata: Metadata = {
     'سوق مصري',
     'الدفع عند الاستلام مصر',
   ],
-  authors: [{ name: 'Brandy' }],
-  creator: 'Brandy',
-  publisher: 'Brandy',
+  authors: [{ name: 'Brandyy' }],
+  creator: 'Brandyy',
+  publisher: 'Brandyy',
   formatDetection: { email: false, address: false, telephone: false },
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    shortcut: '/favicon.ico',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Brandy',
+    title: 'Brandyy',
   },
   openGraph: {
     type: 'website',
     locale: 'en_EG',
     alternateLocale: 'ar_EG',
-    siteName: 'Brandy',
-    title: 'Brandy — Egyptian Marketplace for Local Sellers',
+    siteName: 'Brandyy',
+    title: 'Brandyy — Egyptian Marketplace for Local Sellers',
     description:
-      'Discover authentic Egyptian local sellers on Brandy. Shop fashion, electronics, home goods and more from verified Egyptian sellers. Fast delivery across Egypt with 14-day escrow buyer protection.',
+      'Discover authentic Egyptian local sellers on Brandyy. Shop fashion, electronics, home goods and more from verified Egyptian sellers. Fast delivery across Egypt with 14-day escrow buyer protection.',
     url: process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop',
-    images: [{ url: '/api/og?badge=Egyptian+Local+Marketplace', width: 1200, height: 630 }],
+    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Brandy — Egyptian Marketplace',
-    description: 'Discover authentic Egyptian local sellers on Brandy. Fast delivery across Egypt.',
-    images: ['/api/og?badge=Egyptian+Local+Marketplace'],
+    title: 'Brandyy — Egyptian Marketplace',
+    description:
+      'Discover authentic Egyptian local sellers on Brandyy. Fast delivery across Egypt.',
+    images: ['/og-image.png'],
     site: '@brandyeg',
     ...(process.env.NEXT_PUBLIC_TWITTER_HANDLE
       ? { creator: process.env.NEXT_PUBLIC_TWITTER_HANDLE }
@@ -184,6 +194,8 @@ export default async function RootLayout({
           <link key={`dns-${href}`} rel="dns-prefetch" href={href} />
         ))}
         {csrfToken && <meta name="csrf-token" content={csrfToken} />}
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM Knowledge Base" />
         <link
           rel="alternate"

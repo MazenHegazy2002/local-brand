@@ -119,8 +119,18 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-6 gap-8 md:gap-12">
           {/* Brand column */}
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="text-xl font-black tracking-tight text-white">
-              {PLATFORM_NAME}
+            <Link
+              href="/"
+              className="text-xl font-black tracking-tight text-white flex items-center gap-2"
+            >
+              <img
+                src="/icon-192.png"
+                alt="Brandyy"
+                className="w-7 h-7 rounded-full object-contain bg-white shadow-sm"
+                width={28}
+                height={28}
+              />
+              <span>{PLATFORM_NAME}</span>
             </Link>
             <p className="mt-3 text-sm text-white/80 leading-relaxed max-w-xs">
               {t('FooterTagline')}

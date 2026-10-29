@@ -1,6 +1,6 @@
 export const en = {
   // Navbar
-  Marketplace: 'Brandy',
+  Marketplace: 'Brandyy',
   SearchPlaceholder: 'Search products, brands...',
   FlashSales: 'Flash Sales',
   TopBrands: 'Top Brands',
@@ -702,7 +702,7 @@ export const ar: Partial<typeof en> = {
 // Numbers: 2=ء/أ  3=ع  5=خ  6=ط  7=ح  9=ص/ق
 export const fk: Partial<typeof en> = {
   // Navbar
-  Marketplace: 'Brandy',
+  Marketplace: 'Brandyy',
   SearchPlaceholder: '2edwar 3n 7agat, brands...',
   FlashSales: '3orod nar',
   TopBrands: 'a7san el brands',
