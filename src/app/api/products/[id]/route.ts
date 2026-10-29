@@ -86,8 +86,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ message: 'Product not found' }, { status: 404 });
     }
 
-    // Authorization: Only the seller owner or an ADMIN can edit
-    if (user.role !== 'ADMIN') {
+    // Authorization: Only the seller owner, an ADMIN or a CO_ADMIN can edit
+    if (user.role !== 'ADMIN' && user.role !== 'CO_ADMIN') {
       const sellerProfile = await prisma.sellerProfile.findUnique({
         where: { userId: user.id },
       });
@@ -247,8 +247,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       return NextResponse.json({ message: 'Product not found' }, { status: 404 });
     }
 
-    // Authorization: Only the seller owner or an ADMIN can delete
-    if (user.role !== 'ADMIN') {
+    // Authorization: Only the seller owner, an ADMIN or a CO_ADMIN can delete
+    if (user.role !== 'ADMIN' && user.role !== 'CO_ADMIN') {
       const sellerProfile = await prisma.sellerProfile.findUnique({
         where: { userId: user.id },
       });
