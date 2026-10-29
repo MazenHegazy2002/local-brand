@@ -177,6 +177,8 @@ export async function POST(req: Request) {
             idempotencyKey: parsed.data.MerchantReference,
           },
         });
+        const { notifySellersOfOrder } = await import('@/lib/seller-order-alerts');
+        void notifySellersOfOrder(result.orderId);
       } catch (e: any) {
         // Unique constraint violation (race condition backup check)
         if (e.code === 'P2002') {

@@ -528,6 +528,10 @@ export async function createOrderForUser(
         } catch (adminAlertErr) {
           console.error('Failed to notify admin of new order:', adminAlertErr);
         }
+
+        // Sellers hear about it now for cash on delivery; prepaid orders wait for payment.
+        const { notifySellersOfOrder } = await import('@/lib/seller-order-alerts');
+        await notifySellersOfOrder(order.id);
       } catch (err) {
         console.error('Order confirmation email failed:', err);
       }

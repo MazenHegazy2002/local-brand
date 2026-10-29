@@ -179,6 +179,16 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     // Same points / commission / email effects as a normal status change.
     if (data.status) await runStatusSideEffects(order, data.status);
 
+    // Verifying an InstaPay / Vodafone Cash transfer makes the order visible to its sellers.
+    if (
+      data.paymentStatus &&
+      ['PAID', 'AUTHORIZED'].includes(data.paymentStatus) &&
+      !['PAID', 'AUTHORIZED'].includes(order.paymentStatus)
+    ) {
+      const { notifySellersOfOrder } = await import('@/lib/seller-order-alerts');
+      void notifySellersOfOrder(id);
+    }
+
     return NextResponse.json({ message: 'Order updated', order: updated }, { status: 200 });
   } catch (err) {
     console.error('[admin/orders] PATCH error:', err);
