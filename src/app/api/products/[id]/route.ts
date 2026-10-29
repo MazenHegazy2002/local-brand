@@ -38,11 +38,21 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         variants: true,
         category: true,
         tags: true,
+        seller: { select: { status: true, userId: true } },
       },
     });
 
     if (!product) {
       return NextResponse.json({ message: 'Product not found' }, { status: 404 });
+    }
+    // Drafts and products of a suspended seller are only visible to their seller and admins.
+    if (!product.published || product.seller?.status !== 'ACTIVE') {
+      const viewer = await getRequestUser(req);
+      const allowed =
+        viewer?.role === 'ADMIN' ||
+        viewer?.role === 'CO_ADMIN' ||
+        viewer?.id === product.seller?.userId;
+      if (!allowed) return NextResponse.json({ message: 'Product not found' }, { status: 404 });
     }
 
     // Disk-stored paths become absolute for the app. data: URLs stay as-is: the web

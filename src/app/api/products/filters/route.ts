@@ -21,7 +21,7 @@ export async function GET() {
     });
 
     const priceRange = await prisma.product.aggregate({
-      where: { published: true, deletedAt: null },
+      where: { published: true, seller: { status: 'ACTIVE' }, deletedAt: null },
       _min: { basePrice: true },
       _max: { basePrice: true },
     });

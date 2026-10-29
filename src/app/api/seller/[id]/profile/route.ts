@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       include: {
         user: { select: { name: true, createdAt: true } },
         products: {
-          where: { published: true, deletedAt: null },
+          where: { published: true, seller: { status: 'ACTIVE' }, deletedAt: null },
           take: 12,
           orderBy: { createdAt: 'desc' },
           include: { images: { where: { isPrimary: true } } },

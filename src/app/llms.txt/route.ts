@@ -22,7 +22,7 @@ export async function GET() {
         take: 30,
       }),
       prisma.product.count({
-        where: { published: true, deletedAt: null },
+        where: { published: true, seller: { status: 'ACTIVE' }, deletedAt: null },
       }),
     ]);
 

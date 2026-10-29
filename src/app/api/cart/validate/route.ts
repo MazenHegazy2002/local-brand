@@ -28,10 +28,10 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
     const ids: unknown = body?.variantIds;
-    if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'string')) {
+    if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string')) {
       return NextResponse.json(
         { message: 'variantIds must be an array of strings' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -51,12 +51,12 @@ export async function POST(req: Request) {
     });
     const variantIds = new Set(
       foundVariants
-        .filter((v) => v.product?.published !== false && !v.product?.deletedAt)
-        .map((v) => v.id),
+        .filter(v => v.product?.published !== false && !v.product?.deletedAt)
+        .map(v => v.id)
     );
 
     // 2) The remainder might be legacy product IDs. Look them up.
-    const remaining = submitted.filter((id) => !variantIds.has(id));
+    const remaining = submitted.filter(id => !variantIds.has(id));
     const rewrites: Record<string, string> = {};
     const rewriteStock: Record<string, number> = {};
 
@@ -65,6 +65,7 @@ export async function POST(req: Request) {
         where: {
           id: { in: remaining },
           published: true,
+          seller: { status: 'ACTIVE' },
           deletedAt: null,
         },
         select: {
@@ -85,17 +86,15 @@ export async function POST(req: Request) {
       }
     }
 
-    const invalid = submitted.filter(
-      (id) => !variantIds.has(id) && !(id in rewrites),
-    );
+    const invalid = submitted.filter(id => !variantIds.has(id) && !(id in rewrites));
 
     const stock: Record<string, number> = {
-      ...Object.fromEntries(foundVariants.map((v) => [v.id, v.stockCount])),
+      ...Object.fromEntries(foundVariants.map(v => [v.id, v.stockCount])),
       ...rewriteStock,
     };
 
     return NextResponse.json({
-      valid: submitted.filter((id) => variantIds.has(id)),
+      valid: submitted.filter(id => variantIds.has(id)),
       invalid,
       rewrites,
       stock,

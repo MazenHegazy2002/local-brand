@@ -48,7 +48,12 @@ export async function GET(_req: Request) {
     if (!productIds.length) return NextResponse.json({ products: [] });
 
     const products = await prisma.product.findMany({
-      where: { id: { in: productIds }, published: true, deletedAt: null },
+      where: {
+        id: { in: productIds },
+        published: true,
+        seller: { status: 'ACTIVE' },
+        deletedAt: null,
+      },
       include: { images: { where: { isPrimary: true } } },
       take: 8,
     });

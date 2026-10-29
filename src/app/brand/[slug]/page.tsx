@@ -157,6 +157,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
     products = await prisma.product.findMany({
       where: {
         published: true,
+        seller: { status: 'ACTIVE' },
         deletedAt: null,
         OR: orConditions.length > 0 ? orConditions : undefined,
       },

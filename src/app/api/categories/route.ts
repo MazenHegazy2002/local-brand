@@ -32,6 +32,7 @@ export async function GET(req: Request) {
       const where: Prisma.ProductWhereInput = {
         categoryId: category.id,
         published: true,
+        seller: { status: 'ACTIVE' },
         deletedAt: null,
       };
       const orderBy: Prisma.ProductOrderByWithRelationInput = ({
@@ -87,7 +88,12 @@ export async function GET(req: Request) {
         _count: { select: { products: { where: { published: true, deletedAt: null } } } },
         // Newest product's image doubles as the category card cover
         products: {
-          where: { published: true, deletedAt: null, images: { some: {} } },
+          where: {
+            published: true,
+            seller: { status: 'ACTIVE' },
+            deletedAt: null,
+            images: { some: {} },
+          },
           orderBy: { createdAt: 'desc' },
           take: 1,
           select: {

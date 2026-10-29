@@ -46,6 +46,7 @@ export async function GET(req: Request) {
         prisma.product.findMany({
           where: {
             published: true,
+            seller: { status: 'ACTIVE' },
             deletedAt: null,
             OR: [
               { title: { contains: searchTerm, mode: 'insensitive' } },
@@ -82,6 +83,7 @@ export async function GET(req: Request) {
       prisma.product.findMany({
         where: {
           published: true,
+          seller: { status: 'ACTIVE' },
           deletedAt: null,
           OR: [
             { title: { contains: searchTerm, mode: 'insensitive' } },
@@ -103,6 +105,7 @@ export async function GET(req: Request) {
       prisma.product.count({
         where: {
           published: true,
+          seller: { status: 'ACTIVE' },
           deletedAt: null,
           OR: [
             { title: { contains: searchTerm, mode: 'insensitive' } },

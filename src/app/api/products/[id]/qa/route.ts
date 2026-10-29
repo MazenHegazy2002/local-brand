@@ -48,7 +48,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     // Confirm the product exists & is published before accepting Q&A.
     const product = await prisma.product.findUnique({
-      where: { id: productId, published: true, deletedAt: null },
+      where: { id: productId, published: true, seller: { status: 'ACTIVE' }, deletedAt: null },
       select: { id: true, title: true },
     });
     if (!product) {

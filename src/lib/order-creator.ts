@@ -175,7 +175,11 @@ export async function createOrderForUser(
         };
       }
       // Guard: reject deleted or unpublished products server-side
-      if (variant.product.deletedAt || !variant.product.published) {
+      if (
+        variant.product.deletedAt ||
+        !variant.product.published ||
+        variant.product.seller?.status !== 'ACTIVE'
+      ) {
         return {
           error: `"${variant.product.title}" is no longer available. Please remove it from your cart.`,
         };

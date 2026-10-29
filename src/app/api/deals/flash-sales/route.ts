@@ -12,16 +12,17 @@ export async function GET() {
     const flashSales = await prisma.product.findMany({
       where: {
         published: true,
+        seller: { status: 'ACTIVE' },
         deletedAt: null,
         flashSalePrice: { not: null },
-        flashSaleEndsAt: { gt: now }
+        flashSaleEndsAt: { gt: now },
       },
       include: {
         images: { where: { isPrimary: true } },
-        variants: { take: 1 }
+        variants: { take: 1 },
       },
       orderBy: { flashSaleEndsAt: 'asc' },
-      take: 20
+      take: 20,
     });
 
     const parsedSales = flashSales.map(p => ({
@@ -33,7 +34,7 @@ export async function GET() {
       discountPercentage: Math.round(((p.basePrice - p.flashSalePrice!) / p.basePrice) * 100),
       endsAt: p.flashSaleEndsAt,
       image: p.images[0]?.url,
-      stock: p.variants[0]?.stockCount ?? 0
+      stock: p.variants[0]?.stockCount ?? 0,
     }));
 
     return NextResponse.json({ flashSales: parsedSales }, { status: 200 });
