@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, ChevronRight } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
-import { api, fmtEGP } from '@/lib/api';
+import { api, fmtEGP, absUrl } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useT, statusKey } from '@/lib/i18n';
 
@@ -49,7 +49,11 @@ export default function Orders() {
           ListEmptyComponent={<Text style={styles.empty}>{t('No orders yet.')}</Text>}
           renderItem={({ item }) => (
             <Pressable style={styles.card} onPress={() => router.push(`/(buyer)/order/${item.id}`)}>
-              <Image source={item.image} style={styles.thumb} contentFit="cover" />
+              <Image
+                source={absUrl(item.image) ? { uri: absUrl(item.image) } : null}
+                style={styles.thumb}
+                contentFit="cover"
+              />
               <View style={{ flex: 1 }}>
                 <Text style={styles.name} numberOfLines={1}>
                   {item.title}

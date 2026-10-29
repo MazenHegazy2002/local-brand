@@ -2,12 +2,8 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
-
-export const API_BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
-
-// Disk-stored images come back as "/api/files/..."; React Native needs a full URL.
-export const absUrl = (u: string) => (u.startsWith('/') ? `${API_BASE}${u}` : u);
+import { api, absUrl, BASE_URL as API_BASE } from '@/lib/api';
+export { absUrl, API_BASE };
 
 export type Range = 'today' | '7d' | '30d';
 

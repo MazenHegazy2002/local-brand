@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Heart } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
-import { api, fmtEGP } from '@/lib/api';
+import { api, fmtEGP, absUrl } from '@/lib/api';
 import { colors, radii, spacing, screen } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
 
@@ -101,7 +101,11 @@ export default function Wishlist() {
             onPress={() => router.push(`/(buyer)/product/${item.product.id}`)}
           >
             <View style={styles.imgWrap}>
-              <Image source={{ uri: item.product.image }} style={styles.img} contentFit="cover" />
+              <Image
+                source={absUrl(item.product.image) ? { uri: absUrl(item.product.image) } : null}
+                style={styles.img}
+                contentFit="cover"
+              />
               <Pressable
                 style={styles.heartBtn}
                 onPress={() => removeFromWishlist(item.id)}

@@ -12,7 +12,7 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
-import { api, fmtEGP } from '@/lib/api';
+import { api, fmtEGP, absUrl } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useT, statusKey } from '@/lib/i18n';
 import { OrderItemActions } from '@/components/OrderItemActions';
@@ -172,7 +172,7 @@ export default function OrderTracking() {
             {order.items.slice(0, 2).map((i: any) => (
               <Image
                 key={i.id}
-                source={i.image ? { uri: i.image } : undefined}
+                source={absUrl(i.image) ? { uri: absUrl(i.image) } : undefined}
                 style={styles.thumb}
                 contentFit="cover"
               />

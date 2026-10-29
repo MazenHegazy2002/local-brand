@@ -14,7 +14,7 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Heart, Share2, ArrowLeft, BadgeCheck, Star, Sparkles, Truck } from 'lucide-react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, fmtEGP } from '@/lib/api';
+import { api, fmtEGP, absUrl } from '@/lib/api';
 import { useCart } from '@/store/cart';
 import { colors, radii, spacing, screen } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
@@ -112,8 +112,11 @@ export default function ProductDetail() {
   if (isLoading) return <ActivityIndicator style={{ flex: 1 }} color={colors.primary} />;
   if (!product) return <Text style={{ margin: 40 }}>{t('Product not found')}</Text>;
 
-  const baseImages = product.images?.length ? product.images.map(i => i.url) : [''];
-  const images = extraImg ? [extraImg, ...baseImages] : baseImages;
+  const baseImages = product.images?.length
+    ? product.images.map(i => absUrl(i.url) || '').filter(Boolean)
+    : [''];
+  const resolvedExtra = absUrl(extraImg);
+  const images = resolvedExtra ? [resolvedExtra, ...baseImages] : baseImages;
   const variants = product.variants ?? [];
   const stockOf = (size: string) =>
     variants.filter(v => v.size === size).reduce((n, v) => n + (v.stockCount ?? 0), 0);
@@ -262,7 +265,7 @@ export default function ProductDetail() {
                   const active = (selectedColor ?? productColors[0]) === c;
                   // Same order as the website: the variant's own photo, else the gallery photo at the color's position.
                   const uri =
-                    variants.find(v => v.color === c && v.image)?.image ??
+                    absUrl(variants.find(v => v.color === c && v.image)?.image) ??
                     baseImages[i % baseImages.length];
                   return (
                     <Pressable

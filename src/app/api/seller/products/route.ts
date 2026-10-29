@@ -4,6 +4,7 @@ import { createProductForSeller } from '@/lib/seller-core';
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@/generated/client';
 import { CORS_HEADERS, LOW_STOCK_THRESHOLD } from '@/lib/seller-mobile';
+import { productImageUrl } from '@/lib/image-url';
 
 const json = (body: object, status = 200) =>
   NextResponse.json(body, { status, headers: CORS_HEADERS });
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
       basePrice: true,
       published: true,
       category: { select: { name: true } },
-      images: { select: { url: true, isPrimary: true }, orderBy: { isPrimary: 'desc' } },
+      images: { select: { id: true, url: true, isPrimary: true }, orderBy: { isPrimary: 'desc' } },
       variants: { select: { stockCount: true } },
     },
     orderBy: { createdAt: 'desc' },
@@ -41,14 +42,15 @@ export async function GET(req: NextRequest) {
   return json({
     products: products.map(p => {
       const totalStock = p.variants.reduce((sum, v) => sum + (v.stockCount ?? 0), 0);
+      const primaryImg = p.images[0];
       return {
         id: p.id,
         title: p.title,
         basePrice: Number(p.basePrice),
         published: p.published,
-        images: p.images.map(i => i.url),
+        images: p.images.map(i => productImageUrl(req, i)),
         stock: totalStock,
-        image: p.images[0]?.url ?? null,
+        image: primaryImg ? productImageUrl(req, primaryImg) : null,
         totalStock,
         variantCount: p.variants.length,
         lowStock: p.variants.some(v => v.stockCount <= LOW_STOCK_THRESHOLD),

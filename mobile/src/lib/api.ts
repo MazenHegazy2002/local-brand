@@ -2,7 +2,15 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import type { Lang } from '@/lib/i18n';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
+export const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
+
+// Disk-stored images come back as "/api/files/..."; React Native needs a full URL.
+export function absUrl(u: string): string;
+export function absUrl(u?: string | null): string | undefined;
+export function absUrl(u?: string | null): string | undefined {
+  if (!u) return undefined;
+  return u.startsWith('/') ? `${BASE_URL}${u}` : u;
+}
 
 const storage = {
   get: (key: string) =>

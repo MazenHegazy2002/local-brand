@@ -15,7 +15,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/store/auth';
 import { useT, LANGS, LANG_NAMES } from '@/lib/i18n';
-import { api, fmtEGP } from '@/lib/api';
+import { api, fmtEGP, absUrl } from '@/lib/api';
 import { confirmDeleteAccount } from '@/lib/delete-account';
 import type { OrderRow } from '../orders';
 import type { AddressRow } from '../addresses';
@@ -164,7 +164,7 @@ export default function Account() {
       <View style={styles.profileRow}>
         <View style={styles.avatar}>
           {user?.image ? (
-            <Image source={{ uri: user.image }} style={StyleSheet.absoluteFill} />
+            <Image source={{ uri: absUrl(user.image) }} style={StyleSheet.absoluteFill} />
           ) : (
             <Text style={styles.avatarText}>{initials}</Text>
           )}

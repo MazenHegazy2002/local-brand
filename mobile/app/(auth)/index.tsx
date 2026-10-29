@@ -50,7 +50,7 @@ export default function Onboarding() {
   }, []);
 
   const slide = SLIDES_STATIC[step];
-  const bgUri = bgImages[step];
+  const bgUri = bgImages[step]?.startsWith('/') ? `${BASE}${bgImages[step]}` : bgImages[step];
 
   return (
     <View style={styles.root}>

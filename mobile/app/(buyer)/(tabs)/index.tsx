@@ -1,19 +1,11 @@
 // Screen 1a — Home (Editorial)
 import { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  FlatList,
-  StatusBar,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, FlatList, StatusBar } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter, useIsFocused, type Href } from 'expo-router';
 import { Bell, Search, Heart } from 'lucide-react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, fmtEGP } from '@/lib/api';
+import { api, fmtEGP, absUrl } from '@/lib/api';
 import { colors, spacing, radii, screen } from '@/lib/tokens';
 import { useAuth } from '@/store/auth';
 import { useT } from '@/lib/i18n';
@@ -62,7 +54,11 @@ function ProductCard({ item }: { item: Product }) {
   return (
     <Pressable style={styles.card} onPress={() => router.push(`/(buyer)/product/${item.id}`)}>
       <View style={styles.cardImgWrap}>
-        <Image source={{ uri: item.image }} style={styles.cardImg} contentFit="cover" />
+        <Image
+          source={absUrl(item.image) ? { uri: absUrl(item.image) } : null}
+          style={styles.cardImg}
+          contentFit="cover"
+        />
         <Pressable
           style={styles.cardHeart}
           onPress={() => toggleLike.mutate()}
@@ -154,7 +150,7 @@ export default function Home() {
         <View style={styles.hero}>
           {heroProduct?.image ? (
             <Image
-              source={{ uri: heroProduct.image }}
+              source={{ uri: absUrl(heroProduct.image) }}
               style={StyleSheet.absoluteFill}
               contentFit="cover"
             />
@@ -272,7 +268,9 @@ export default function Home() {
                   >
                     <View style={styles.flashImgWrap}>
                       <Image
-                        source={{ uri: item.images[0]?.url }}
+                        source={
+                          absUrl(item.images[0]?.url) ? { uri: absUrl(item.images[0]?.url) } : null
+                        }
                         style={styles.flashImg}
                         contentFit="cover"
                       />

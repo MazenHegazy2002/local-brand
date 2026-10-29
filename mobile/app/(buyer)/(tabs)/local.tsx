@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator } from '
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, absUrl } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { MapPin } from 'lucide-react-native';
 import { useT } from '@/lib/i18n';
@@ -44,7 +44,11 @@ export default function Local() {
                 router.push(`/(buyer)/brand/${encodeURIComponent(item.sellerId ?? item.brand)}`)
               }
             >
-              <Image source={{ uri: item.image }} style={styles.cardImg} contentFit="cover" />
+              <Image
+                source={absUrl(item.image) ? { uri: absUrl(item.image) } : null}
+                style={styles.cardImg}
+                contentFit="cover"
+              />
               <View style={styles.cardInfo}>
                 <MapPin size={12} color={colors.primary} strokeWidth={2} />
                 <Text style={styles.cardName} numberOfLines={1}>

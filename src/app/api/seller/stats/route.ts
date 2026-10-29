@@ -8,6 +8,7 @@ import {
   deriveSellerOrderStatus,
 } from '@/lib/seller-mobile';
 import { cairoDay, getStoreVisits } from '@/lib/store-visits';
+import { publicOrigin } from '@/lib/image-url';
 
 type Range = 'today' | '7d' | '30d';
 const DAY = 86_400_000;
@@ -145,7 +146,13 @@ export async function GET(req: NextRequest) {
   const avg = ratingAgg._avg.rating;
   return NextResponse.json(
     {
-      store: { name: seller.storeName, logoUrl: seller.logoUrl, status: seller.status },
+      store: {
+        name: seller.storeName,
+        logoUrl: seller.logoUrl?.startsWith('/')
+          ? `${publicOrigin(req)}${seller.logoUrl}`
+          : seller.logoUrl,
+        status: seller.status,
+      },
       unreadNotifications,
       netSales: Math.round(netSales * 100) / 100,
       changePct: prevSales === 0 ? null : Math.round(((netSales - prevSales) / prevSales) * 100),

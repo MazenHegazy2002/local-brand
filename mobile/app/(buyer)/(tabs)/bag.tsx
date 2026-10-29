@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { Minus, Plus } from 'lucide-react-native';
 import { useCart, lineKey } from '@/store/cart';
 import { colors, radii, spacing } from '@/lib/tokens';
-import { api, fmtEGP } from '@/lib/api';
+import { api, fmtEGP, absUrl } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 
 const FREE_THRESHOLD = 1000;
@@ -100,7 +100,11 @@ export default function Bag() {
         {/* Line items */}
         {items.map(item => (
           <View key={lineKey(item)} style={styles.item}>
-            <Image source={{ uri: item.image }} style={styles.itemImg} contentFit="cover" />
+            <Image
+              source={absUrl(item.image) ? { uri: absUrl(item.image) } : null}
+              style={styles.itemImg}
+              contentFit="cover"
+            />
             <View style={styles.itemInfo}>
               <Text style={styles.itemBrand} numberOfLines={1}>
                 {item.brand ? item.brand.toUpperCase() : t('BRANDYY STORE')}

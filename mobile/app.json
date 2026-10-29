@@ -58,13 +58,6 @@
         }
       ],
       [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#1e3b8a"
-        }
-      ],
-      [
         "expo-image-picker",
         {
           "photosPermission": "Brandyy needs access to your photos so you can upload images for your profile, reviews and product listings.",

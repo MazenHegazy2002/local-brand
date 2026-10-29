@@ -10,6 +10,7 @@ import {
   type SellerOrderTab,
   VISIBLE_ORDER_WHERE,
 } from '@/lib/seller-mobile';
+import { productImageUrl } from '@/lib/image-url';
 
 const TABS: SellerOrderTab[] = ['all', 'new', 'to_ship', 'shipped', 'delivered'];
 
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
             select: {
               title: true,
               category: { select: { name: true } },
-              images: { select: { url: true }, orderBy: { isPrimary: 'desc' }, take: 1 },
+              images: { select: { id: true, url: true }, orderBy: { isPrimary: 'desc' }, take: 1 },
             },
           },
         },
@@ -106,7 +107,9 @@ export async function GET(req: NextRequest) {
       itemCount: its.reduce((s, i) => s + i.quantity, 0),
       firstItem: {
         title: first.productTitleSnapshot || first.variant.product.title,
-        image: first.variant.product.images[0]?.url ?? null,
+        image: first.variant.product.images[0]
+          ? productImageUrl(req, first.variant.product.images[0])
+          : null,
         category: first.variant.product.category?.name ?? null,
         quantity: first.quantity,
       },

@@ -15,7 +15,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Search, SlidersHorizontal } from 'lucide-react-native';
 import { useQuery } from '@tanstack/react-query';
-import { api, fmtEGP } from '@/lib/api';
+import { api, fmtEGP, absUrl } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
 
@@ -251,7 +251,7 @@ export default function Shop() {
             keyExtractor={c => c.id}
             contentContainerStyle={styles.catList}
             renderItem={({ item: cat, index }) => {
-              const img = cat.image;
+              const img = absUrl(cat.image);
               return (
                 <Pressable
                   style={[styles.catCard, { backgroundColor: CAT_BG[index % CAT_BG.length] }]}
@@ -290,7 +290,7 @@ export default function Shop() {
               onPress={() => router.push(`/(buyer)/product/${item.id}`)}
             >
               <Image
-                source={{ uri: item.images?.[0]?.url }}
+                source={absUrl(item.images?.[0]?.url) ? { uri: absUrl(item.images[0].url) } : null}
                 style={styles.cardImg}
                 contentFit="cover"
               />

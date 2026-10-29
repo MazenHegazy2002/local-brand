@@ -17,7 +17,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { ArrowLeft, Camera, Check } from 'lucide-react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, absUrl } from '@/lib/api';
 import { uploadImage } from '@/lib/seller';
 import { useAuth } from '@/store/auth';
 import { colors, radii, spacing } from '@/lib/tokens';
@@ -137,7 +137,7 @@ export default function EditProfile() {
               <View>
                 <View style={styles.avatar}>
                   {shown ? (
-                    <Image source={{ uri: shown }} style={StyleSheet.absoluteFill} />
+                    <Image source={{ uri: absUrl(shown) }} style={StyleSheet.absoluteFill} />
                   ) : (
                     <Text style={styles.avatarText}>{initials}</Text>
                   )}

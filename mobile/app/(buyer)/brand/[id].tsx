@@ -66,7 +66,7 @@ export default function BrandPage() {
 
   const products = list?.products ?? [];
   const name = storeName || t('Brand');
-  const cover = products[0]?.images?.[0]?.url;
+  const cover = absUrl(products[0]?.images?.[0]?.url);
   const rating = parseFloat(seller?.seller.averageRating ?? '0');
   const topCategory = mostCommon(products.map(p => p.category?.name).filter(Boolean) as string[]);
   const verified = isSellerId || products.some(p => p.isVerifiedLocal);
@@ -169,7 +169,7 @@ export default function BrandPage() {
                 onPress={() => router.push(`/(buyer)/product/${p.id}`)}
               >
                 <Image
-                  source={p.images?.[0]?.url ? { uri: p.images[0].url } : undefined}
+                  source={absUrl(p.images?.[0]?.url) ? { uri: absUrl(p.images[0].url) } : undefined}
                   style={styles.cardImg}
                   contentFit="cover"
                 />

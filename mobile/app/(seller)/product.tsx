@@ -20,7 +20,7 @@ import {
   customerPrice,
   type FeeMode,
 } from '@/components/seller/FeeBreakdown';
-import { api, fmtEGP } from '@/lib/api';
+import { api, fmtEGP, absUrl } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
 
@@ -157,7 +157,7 @@ export default function SellerProduct() {
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         <View style={styles.hero}>
           <Image
-            source={p.images[0] ? { uri: p.images[0].url } : null}
+            source={absUrl(p.images[0]?.url) ? { uri: absUrl(p.images[0]?.url) } : null}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
           />

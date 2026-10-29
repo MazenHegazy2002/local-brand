@@ -16,7 +16,7 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { Plus } from 'lucide-react-native';
-import { api, fmtEGP } from '@/lib/api';
+import { api, fmtEGP, absUrl } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
 
@@ -136,7 +136,11 @@ function ProductCard({ p }: { p: Product }) {
         router.push({ pathname: '/(seller)/product', params: { id: p.id } } as unknown as Href)
       }
     >
-      <Image source={p.image ? { uri: p.image } : null} style={styles.thumb} contentFit="cover" />
+      <Image
+        source={absUrl(p.image) ? { uri: absUrl(p.image) } : null}
+        style={styles.thumb}
+        contentFit="cover"
+      />
       <View style={{ flex: 1 }}>
         <Text style={styles.pTitle} numberOfLines={1}>
           {p.title}

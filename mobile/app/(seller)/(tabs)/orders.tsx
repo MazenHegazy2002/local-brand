@@ -18,7 +18,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as WebBrowser from 'expo-web-browser';
 import { Image } from 'expo-image';
 import { Search, X } from 'lucide-react-native';
-import { api, fmtEGP } from '@/lib/api';
+import { api, fmtEGP, absUrl } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
 
@@ -216,7 +216,7 @@ function OrderCard({ order }: { order: Order }) {
       </View>
       <View style={styles.itemRow}>
         <Image
-          source={order.firstItem.image ? { uri: order.firstItem.image } : null}
+          source={absUrl(order.firstItem.image) ? { uri: absUrl(order.firstItem.image) } : null}
           style={styles.thumb}
           contentFit="cover"
         />
