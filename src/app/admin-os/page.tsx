@@ -113,6 +113,11 @@ export default function AdminOS() {
   const { confirm } = useConfirm();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
+  // Links like /admin-os?tab=products (e.g. back from editing a product) open that tab.
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    if (tab) setActiveTab(tab);
+  }, []);
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -6296,6 +6301,7 @@ function ProductsTab({ data }: ProductsTabProps) {
         <div style={{ width: 160 }}>Seller</div>
         <div style={{ width: 90, textAlign: 'right' }}>Price</div>
         <div style={{ width: 80, textAlign: 'right' }}>Stock</div>
+        <div style={{ width: 40 }} />
       </div>
       {filtered.map(p => {
         const stock = (p.variants || []).reduce((a, b) => a + (b.stockCount || 0), 0);
@@ -6365,6 +6371,22 @@ function ProductsTab({ data }: ProductsTabProps) {
             >
               {stock}
             </div>
+            {/* Admins and co-admins edit with the same form sellers use. */}
+            <a
+              href={`/seller-hub/products/${p.id}`}
+              onClick={e => e.stopPropagation()}
+              title="Edit product"
+              aria-label={`Edit ${p.title}`}
+              style={{
+                width: 40,
+                textAlign: 'center',
+                fontSize: '15px',
+                textDecoration: 'none',
+                lineHeight: '28px',
+              }}
+            >
+              ⚙️
+            </a>
           </div>
         );
       })}
@@ -6545,7 +6567,21 @@ function ProductDetailsModal({ product, onClose }: ProductDetailsModalProps) {
           </div>
         )}
 
-        <div className="border-t pt-4 mt-6 flex justify-end">
+        <div className="border-t pt-4 mt-6 flex justify-end gap-2">
+          <a
+            href={`/seller-hub/products/${product.id}`}
+            style={{
+              padding: '8px 20px',
+              fontSize: '12px',
+              fontWeight: 600,
+              border: '1px solid #cbd5e1',
+              borderRadius: 8,
+              color: '#334155',
+              textDecoration: 'none',
+            }}
+          >
+            ⚙️ Edit product
+          </a>
           <button
             onClick={onClose}
             className="btn-primary"

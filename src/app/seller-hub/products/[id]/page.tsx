@@ -180,6 +180,10 @@ const detectImageColor = async (file: File): Promise<string> => {
 
 export default function EditProductPage() {
   const { data: session, status } = useSession();
+  // Admins and co-admins edit any seller's product here and return to Admin OS.
+  const viewerRole = (session?.user as SessionUser)?.role;
+  const isStaff = viewerRole === 'ADMIN' || viewerRole === 'CO_ADMIN';
+  const backHref = isStaff ? '/admin-os?tab=products' : '/seller-hub?tab=products';
   const router = useRouter();
   const params = useParams();
   const productId = params.id as string;
@@ -217,7 +221,7 @@ export default function EditProductPage() {
       router.push('/login?callbackUrl=/seller-hub');
     } else if (status === 'authenticated') {
       const role = (session?.user as SessionUser)?.role;
-      if (role !== 'SELLER') {
+      if (role !== 'SELLER' && role !== 'ADMIN' && role !== 'CO_ADMIN') {
         router.push('/dashboard');
       }
     }
@@ -423,7 +427,7 @@ export default function EditProductPage() {
         }),
       });
       if (res.ok) {
-        router.push('/seller-hub?tab=products');
+        router.push(backHref);
       } else {
         toast({ title: 'Failed to update product', variant: 'error' });
       }
@@ -445,7 +449,7 @@ export default function EditProductPage() {
     try {
       const res = await fetch(`/api/products/${productId}`, { method: 'DELETE' });
       if (res.ok) {
-        router.push('/seller-hub?tab=products');
+        router.push(backHref);
       }
     } catch (e) {
       console.error(e);
@@ -572,7 +576,7 @@ export default function EditProductPage() {
                 onClick={() => {
                   setActiveBrand('all');
                   setMobileMenuOpen(false);
-                  router.push('/seller-hub?tab=products');
+                  router.push(backHref);
                 }}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                   activeBrand === 'all'
@@ -593,7 +597,7 @@ export default function EditProductPage() {
                     onClick={() => {
                       setActiveBrand(b.slug);
                       setMobileMenuOpen(false);
-                      router.push('/seller-hub?tab=products');
+                      router.push(backHref);
                     }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-all cursor-pointer ${
                       isSelected
@@ -774,7 +778,7 @@ export default function EditProductPage() {
             type="button"
             onClick={() => {
               setActiveBrand('all');
-              router.push('/seller-hub?tab=products');
+              router.push(backHref);
             }}
             style={{
               display: 'flex',
@@ -829,7 +833,7 @@ export default function EditProductPage() {
                   type="button"
                   onClick={() => {
                     setActiveBrand(b.slug);
-                    router.push('/seller-hub?tab=products');
+                    router.push(backHref);
                   }}
                   style={{
                     display: 'flex',
@@ -946,12 +950,9 @@ export default function EditProductPage() {
 
       <div className="main">
         <div className="topbar">
-          <div className="page-title">Edit Product</div>
+          <div className="page-title">{isStaff ? 'Edit Product (Admin)' : 'Edit Product'}</div>
           <div className="flex gap-3">
-            <Link
-              href="/seller-hub?tab=products"
-              className="px-4 py-2 border border-slate-200 rounded text-sm"
-            >
+            <Link href={backHref} className="px-4 py-2 border border-slate-200 rounded text-sm">
               Cancel
             </Link>
             <button
