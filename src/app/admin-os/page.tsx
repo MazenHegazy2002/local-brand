@@ -5762,6 +5762,15 @@ function OrderDetailsModal({ order, onClose, onEdit, onRefresh }: OrderDetailsMo
         <div className="space-y-3">
           <div className="text-xs font-bold text-slate-700 flex items-center justify-between">
             <span>📦 Order Items ({items.length})</span>
+            {/* One bill of lading page per product, opened as a printable preview. */}
+            <a
+              href={`/api/admin/orders/${order.id}/bill-of-lading`}
+              target="_blank"
+              rel="noopener"
+              className="px-2.5 py-1 rounded-md border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50"
+            >
+              📄 Bill of lading
+            </a>
           </div>
           <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden text-xs">
             {items.map((item: any, idx: number) => {
@@ -5794,6 +5803,17 @@ function OrderDetailsModal({ order, onClose, onEdit, onRefresh }: OrderDetailsMo
                     </div>
                     <div className="text-right font-bold text-slate-900">
                       {((item.priceAtPurchase || 0) * item.quantity).toLocaleString()} EGP
+                      {item.id && item.status !== 'CANCELLED' && (
+                        <a
+                          href={`/api/admin/orders/${order.id}/bill-of-lading?item=${item.id}`}
+                          target="_blank"
+                          rel="noopener"
+                          title="Bill of lading for this product"
+                          className="block mt-1 text-[11px] font-semibold text-blue-600 hover:underline"
+                        >
+                          📄 Bill of lading
+                        </a>
+                      )}
                     </div>
                   </div>
                   {/* Seller Warehouse info */}
