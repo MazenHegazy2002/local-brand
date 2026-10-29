@@ -199,7 +199,10 @@ function iconFor(name: string) {
 export default async function CategoriesIndexPage() {
   const allCategories = await prisma.category.findMany({
     include: {
-      products: { where: { published: true, deletedAt: null }, select: { id: true } },
+      products: {
+        where: { published: true, deletedAt: null, seller: { status: 'ACTIVE' } },
+        select: { id: true },
+      },
     },
     orderBy: { name: 'asc' },
   });

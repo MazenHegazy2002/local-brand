@@ -850,7 +850,12 @@ export async function getHomepageData() {
         let bestsellers: any[] = [];
         if (bestSellersSlug) {
           bestsellers = await prisma.product.findMany({
-            where: { published: true, category: { slug: bestSellersSlug }, deletedAt: null },
+            where: {
+              published: true,
+              seller: { status: 'ACTIVE' },
+              category: { slug: bestSellersSlug },
+              deletedAt: null,
+            },
             include: {
               images: true,
               variants: true,
@@ -862,7 +867,12 @@ export async function getHomepageData() {
         }
         if (bestsellers.length === 0) {
           bestsellers = await prisma.product.findMany({
-            where: { isFeatured: true, published: true, deletedAt: null },
+            where: {
+              isFeatured: true,
+              published: true,
+              seller: { status: 'ACTIVE' },
+              deletedAt: null,
+            },
             include: {
               images: true,
               variants: true,
@@ -876,7 +886,12 @@ export async function getHomepageData() {
         let newArrivals: any[] = [];
         if (newArrivalsSlug) {
           newArrivals = await prisma.product.findMany({
-            where: { published: true, category: { slug: newArrivalsSlug }, deletedAt: null },
+            where: {
+              published: true,
+              seller: { status: 'ACTIVE' },
+              category: { slug: newArrivalsSlug },
+              deletedAt: null,
+            },
             include: {
               images: true,
               variants: true,
@@ -889,7 +904,7 @@ export async function getHomepageData() {
         }
         if (newArrivals.length === 0) {
           newArrivals = await prisma.product.findMany({
-            where: { published: true, deletedAt: null },
+            where: { published: true, seller: { status: 'ACTIVE' }, deletedAt: null },
             include: {
               images: true,
               variants: true,
@@ -904,7 +919,12 @@ export async function getHomepageData() {
         let recommended: any[] = [];
         if (recommendedSlug) {
           recommended = await prisma.product.findMany({
-            where: { published: true, category: { slug: recommendedSlug }, deletedAt: null },
+            where: {
+              published: true,
+              seller: { status: 'ACTIVE' },
+              category: { slug: recommendedSlug },
+              deletedAt: null,
+            },
             include: {
               images: true,
               variants: true,
@@ -920,6 +940,7 @@ export async function getHomepageData() {
           recommended = await prisma.product.findMany({
             where: {
               published: true,
+              seller: { status: 'ACTIVE' },
               deletedAt: null,
               isFeatured: true,
               id: excludeIds.length > 0 ? { notIn: excludeIds } : undefined,
