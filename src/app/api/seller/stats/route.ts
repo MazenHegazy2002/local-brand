@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
           ...sellerItem,
           order: {
             ...VISIBLE_ORDER_WHERE,
-            status: { in: ['PENDING_PAYMENT', 'CONFIRMED', 'PROCESSING'] },
+            status: { in: ['PENDING_PAYMENT', 'PENDING', 'CONFIRMED', 'PROCESSING'] },
           },
         },
         select: { status: true, order: { select: { id: true, status: true } } },

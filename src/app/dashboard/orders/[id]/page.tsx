@@ -55,9 +55,10 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
     );
   }
 
-  const steps = ['PENDING_PAYMENT', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+  const steps = ['PENDING_PAYMENT', 'PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
   const stepLabels: Record<string, string> = {
     PENDING_PAYMENT: t('Awaiting Payment', 'في انتظار الدفع'),
+    PENDING: t('Waiting for confirmation', 'في انتظار التأكيد'),
     CONFIRMED: t('Confirmed', 'تم التأكيد'),
     PROCESSING: t('Processing', 'قيد التجهيز'),
     SHIPPED: t('Shipped', 'تم الشحن'),

@@ -12,7 +12,8 @@ export async function updateOrderItemStatusCore(
   itemId: string,
   status: OrderItemStatus
 ): Promise<{ success?: true; error?: string }> {
-  if (user.role !== 'SELLER' && user.role !== 'ADMIN') return { error: 'Forbidden' };
+  if (user.role !== 'SELLER' && user.role !== 'ADMIN' && user.role !== 'CO_ADMIN')
+    return { error: 'Forbidden' };
 
   if (user.role === 'SELLER') {
     const sellerProfile = await prisma.sellerProfile.findUnique({ where: { userId: user.id } });
@@ -51,22 +52,24 @@ export async function updateOrderItemStatusCore(
   }
   // Only check transitions if the order is still "live"
   if (parentOrder.status !== 'CANCELLED' && parentOrder.status !== 'RETURNED') {
-    // When seller marks all items as CONFIRMED (packed/ready), move order to PROCESSING.
+    // When the seller has accepted every item, a PENDING order becomes CONFIRMED
+    // (older orders that were created CONFIRMED move on to PROCESSING as before).
     // We ignore items that are already cancelled; they no longer block the transition.
     const liveItems = parentOrder.items.filter(i => i.status !== 'CANCELLED');
     const allPrepared = liveItems.every(i =>
       ['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(i.status)
     );
 
-    if (
-      allPrepared &&
-      liveItems.length > 0 &&
-      (parentOrder.status === 'PENDING_PAYMENT' || parentOrder.status === 'CONFIRMED')
-    ) {
-      await prisma.order.update({
-        where: { id: parentOrder.id },
-        data: { status: 'PROCESSING' },
-      });
+    if (allPrepared && liveItems.length > 0) {
+      const next =
+        parentOrder.status === 'PENDING' || parentOrder.status === 'PENDING_PAYMENT'
+          ? 'CONFIRMED'
+          : parentOrder.status === 'CONFIRMED'
+            ? 'PROCESSING'
+            : null;
+      if (next) {
+        await prisma.order.update({ where: { id: parentOrder.id }, data: { status: next } });
+      }
     }
   }
 

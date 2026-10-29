@@ -147,7 +147,7 @@ export async function POST(req: Request) {
           where: { id: result.orderId },
           data: {
             paymentStatus: 'PAID',
-            status: 'CONFIRMED',
+            status: 'PENDING', // paid; the seller still confirms it
             paymentId: flat['id'] || null,
             paymentChannel: flat['source_data.type'] || null,
             paymentMaskedPan: flat['source_data.pan'] || null,

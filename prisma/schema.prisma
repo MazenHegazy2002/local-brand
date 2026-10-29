@@ -454,6 +454,7 @@ model OrderItem {
 
 enum OrderStatus {
   PENDING_PAYMENT
+  PENDING // placed (and paid, if prepaid); waiting for the seller or an admin to confirm
   CONFIRMED
   PROCESSING
   SHIPPED

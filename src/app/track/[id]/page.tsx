@@ -36,6 +36,7 @@ interface Order {
 
 const STATUS_STEPS = [
   { key: 'PENDING_PAYMENT', label: 'Order Placed', icon: '📋' },
+  { key: 'PENDING', label: 'Waiting for confirmation', icon: '⏳' },
   { key: 'CONFIRMED', label: 'Confirmed', icon: '✔️' },
   { key: 'PROCESSING', label: 'Processing', icon: '📦' },
   { key: 'SHIPPED', label: 'Shipped', icon: '🚚' },

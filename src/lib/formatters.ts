@@ -84,5 +84,6 @@ export function formatOrderStatus(status: string, paymentMethod?: string): strin
     }
     return 'Awaiting Payment';
   }
+  if (status === 'PENDING') return 'Waiting for confirmation';
   return status.replace(/_/g, ' ');
 }

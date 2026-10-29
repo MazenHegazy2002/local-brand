@@ -2,8 +2,14 @@ import { prisma } from '@/lib/prisma';
 import { OrderStatus, type Order } from '@/generated/client';
 
 const VALID_TRANSITIONS: Record<string, OrderStatus[]> = {
-  [OrderStatus.PENDING_PAYMENT]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
-  [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
+  [OrderStatus.PENDING_PAYMENT]: [
+    OrderStatus.PENDING,
+    OrderStatus.CONFIRMED,
+    OrderStatus.CANCELLED,
+  ],
+  [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+  // A confirmed order can be packed first (PROCESSING) or handed straight to the courier.
+  [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.CANCELLED],
   [OrderStatus.PROCESSING]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
   [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED, OrderStatus.RETURNED],
   [OrderStatus.DELIVERED]: [OrderStatus.RETURNED],

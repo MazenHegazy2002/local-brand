@@ -182,7 +182,7 @@ export async function POST(req: Request) {
           data: {
             paymentStatus: 'PAID',
             paymentId: intent.id,
-            status: 'CONFIRMED',
+            status: 'PENDING', // paid; the seller still confirms it
             idempotencyKey,
           },
         });

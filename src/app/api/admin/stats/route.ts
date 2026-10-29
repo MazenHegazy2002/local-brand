@@ -110,7 +110,7 @@ export async function GET(req: NextRequest) {
         prisma.sellerProfile.count({ where: { status: 'ACTIVE' } }),
         prisma.sellerProfile.count({ where: { status: 'PENDING_APPROVAL' } }),
         prisma.product.count({ where: { published: true } }),
-        prisma.order.count({ where: { status: { in: ['CONFIRMED', 'PROCESSING'] } } }),
+        prisma.order.count({ where: { status: { in: ['PENDING', 'CONFIRMED', 'PROCESSING'] } } }),
         prisma.order.count({ where: { status: 'PENDING_PAYMENT' } }),
         prisma.dispute.count({ where: { status: { in: ['OPEN', 'UNDER_REVIEW'] } } }),
         prisma.supportTicket.count({ where: { status: { in: ['OPEN', 'IN_PROGRESS'] } } }),

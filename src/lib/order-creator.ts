@@ -387,11 +387,13 @@ export async function createOrderForUser(
           paymentSenderDetail: paymentSenderDetail || null,
           paymentReference: paymentReference || null,
           paymentReceiptUrl: paymentReceiptUrl || null,
+          // New orders wait for the seller (or an admin) to confirm them; online card
+          // payments stay PENDING_PAYMENT until the gateway confirms.
           status:
             paymentMethod === 'CASH_ON_DELIVERY' ||
             isManualTransfer ||
             process.env.NODE_ENV === 'development'
-              ? OrderStatus.CONFIRMED
+              ? OrderStatus.PENDING
               : OrderStatus.PENDING_PAYMENT,
           shippingAddressSnapshot: JSON.stringify(addressSnapshot),
           orderNotes: orderNotes || null,

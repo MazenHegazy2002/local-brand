@@ -23,7 +23,7 @@ export const FAQ_DATA: Record<Category, Array<{ q: string; a: string }>> = {
     },
     {
       q: 'Can I modify my order after placing it?',
-      a: 'Orders in PENDING_PAYMENT or CONFIRMED status can be cancelled from your dashboard. Once shipped, contact the seller for changes.',
+      a: 'Orders that are pending or confirmed can be cancelled from your dashboard. Once shipped, contact the seller for changes.',
     },
     {
       q: 'How do I track my order?',

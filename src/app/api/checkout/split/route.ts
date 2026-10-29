@@ -176,7 +176,7 @@ export async function POST(req: Request) {
                   : PaymentStatus.UNPAID,
             status:
               paymentMethod === 'CASH_ON_DELIVERY' || process.env.NODE_ENV === 'development'
-                ? OrderStatus.CONFIRMED
+                ? OrderStatus.PENDING
                 : OrderStatus.PENDING_PAYMENT,
             shippingAddressSnapshot: JSON.stringify(address),
             couponId: coupon?.id,

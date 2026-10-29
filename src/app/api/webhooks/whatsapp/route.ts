@@ -145,13 +145,10 @@ export async function POST(req: Request) {
     );
 
     if (isConfirm) {
-      // Transition order status to CONFIRMED
+      // Record the customer's confirmation; the order itself is confirmed by the seller or an admin.
       await prisma.order.update({
         where: { id: matchedOrder.id },
-        data: {
-          whatsappConfirmStatus: 'CONFIRMED',
-          status: 'CONFIRMED',
-        },
+        data: { whatsappConfirmStatus: 'CONFIRMED' },
       });
 
       console.log(`[WhatsApp Webhook] Order ${matchedOrder.id} CONFIRMED by customer reply`);
