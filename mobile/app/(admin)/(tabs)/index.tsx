@@ -72,6 +72,7 @@ const RANGES: { id: Range; label: string }[] = [
 ];
 const STATUS_COLORS: Record<string, string> = {
   PENDING_PAYMENT: '#a78bfa',
+  PENDING: '#fbbf24',
   CONFIRMED: '#60a5fa',
   PROCESSING: colors.accent,
   SHIPPED: '#38bdf8',

@@ -554,6 +554,8 @@ export const ar: Record<string, string> = {
   'Etisalat Cash': 'اتصالات كاش',
   'Bank, account name and IBAN': 'البنك واسم الحساب ورقم الآيبان',
   'InstaPay address or number': 'عنوان أو رقم انستاباي',
+  'Waiting for confirmation': 'في انتظار التأكيد',
+  'Waiting for the seller to confirm': 'في انتظار تأكيد البائع',
 };
 
 export const franco: Record<string, string> = {
@@ -1118,4 +1120,6 @@ export const franco: Record<string, string> = {
   'Etisalat Cash': 'Etisalat Cash',
   'Bank, account name and IBAN': 'El bank w esm el 7esab w el IBAN',
   'InstaPay address or number': '3enwan aw rakam InstaPay',
+  'Waiting for confirmation': 'Mestanny el ta2keed',
+  'Waiting for the seller to confirm': 'Mestanny el bayya3 yeakked',
 };

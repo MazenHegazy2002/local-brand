@@ -21,6 +21,7 @@ import {
 
 const STATUSES = [
   'PENDING_PAYMENT',
+  'PENDING',
   'CONFIRMED',
   'PROCESSING',
   'SHIPPED',
