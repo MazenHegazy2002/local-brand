@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ProductPhotoTools from './_components/ProductPhotoTools';
 import {
   getDashboardStats,
   updateSellerStatus,
@@ -6453,38 +6454,12 @@ function ProductDetailsModal({ product, onClose }: ProductDetailsModalProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {/* Images Gallery */}
-          <div>
-            <div className="aspect-square bg-slate-50 border rounded-xl overflow-hidden mb-3 relative flex items-center justify-center">
-              {product.images && product.images.length > 0 ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={product.images.find((i: any) => i.isPrimary)?.url || product.images[0].url}
-                  alt={product.title}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              ) : (
-                <span className="text-slate-400 text-xs">No image attached</span>
-              )}
-            </div>
-            {product.images && product.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {product.images.map((img: any) => (
-                  <div
-                    key={img.id}
-                    className="w-12 h-12 rounded border overflow-hidden flex-shrink-0"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={img.url}
-                      alt=""
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Images: download, or edit and save back (admins and co-admins). */}
+          <ProductPhotoTools
+            productId={product.id}
+            title={product.title}
+            images={product.images || []}
+          />
 
           {/* Details */}
           <div className="space-y-4 text-left">
