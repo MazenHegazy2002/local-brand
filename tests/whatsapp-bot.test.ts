@@ -93,7 +93,7 @@ describe('WhatsApp Confirmation Bot & Webhook Tests', () => {
   });
 
   describe('POST Webhook reply handler', () => {
-    it('confirms the order on receiving confirmation code "1"', async () => {
+    it('records the customer confirmation on "1" (the seller still confirms the order)', async () => {
       mockPrisma.order.findMany.mockResolvedValue([
         {
           id: 'order-1',
@@ -134,10 +134,7 @@ describe('WhatsApp Confirmation Bot & Webhook Tests', () => {
 
       expect(mockPrisma.order.update).toHaveBeenCalledWith({
         where: { id: 'order-1' },
-        data: {
-          whatsappConfirmStatus: 'CONFIRMED',
-          status: 'CONFIRMED',
-        },
+        data: { whatsappConfirmStatus: 'CONFIRMED' },
       });
     });
 

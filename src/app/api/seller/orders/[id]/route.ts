@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
 
   if (action === 'ship') {
-    // Same path as the web "Ship" button: order must be PROCESSING (all sellers accepted).
+    // Same path as the web "Ship" button: every seller must have accepted (CONFIRMED or PROCESSING).
     const r = await changeOrderStatus(user, id, 'SHIPPED');
     if (!r.ok) return json({ error: r.message }, r.httpStatus);
     return json({ ok: true, status: 'shipped' });

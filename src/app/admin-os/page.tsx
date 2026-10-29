@@ -5152,6 +5152,7 @@ interface OrdersTabProps {
 
 const ADMIN_ORDER_STATUSES = [
   'PENDING_PAYMENT',
+  'PENDING',
   'CONFIRMED',
   'PROCESSING',
   'SHIPPED',

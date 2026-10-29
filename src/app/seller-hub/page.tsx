@@ -2913,7 +2913,8 @@ function OrdersTab({
               </div>
 
               <div className="mt-6 pt-6 border-t border-slate-100 flex justify-between items-center gap-3">
-                {selectedOrder.orderStatus === 'PROCESSING' && (
+                {(selectedOrder.orderStatus === 'CONFIRMED' ||
+                  selectedOrder.orderStatus === 'PROCESSING') && (
                   <button
                     onClick={() => handleMarkShipped(selectedOrder.orderId)}
                     disabled={shippingLoading}

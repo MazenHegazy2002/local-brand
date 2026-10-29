@@ -29,7 +29,11 @@ async function cancelOrderItemInternal(
   if (!order || order.userId !== userId) {
     throw new Error('Order not found or forbidden');
   }
-  if (order.status !== OrderStatus.PENDING_PAYMENT && order.status !== OrderStatus.CONFIRMED) {
+  if (
+    order.status !== OrderStatus.PENDING_PAYMENT &&
+    order.status !== OrderStatus.PENDING &&
+    order.status !== OrderStatus.CONFIRMED
+  ) {
     throw new Error('Order cannot be cancelled at this stage');
   }
 

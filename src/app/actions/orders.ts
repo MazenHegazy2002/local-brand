@@ -49,6 +49,7 @@ export async function cancelOrder(
     if (!order) return { error: 'Order not found' };
     if (
       order.status !== OrderStatus.PENDING_PAYMENT &&
+      order.status !== OrderStatus.PENDING &&
       order.status !== OrderStatus.CONFIRMED &&
       order.status !== OrderStatus.PROCESSING
     ) {

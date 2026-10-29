@@ -959,7 +959,7 @@ function OrdersTab({
   onReorder: (order: Order) => void;
 }) {
   const canCancel = (status: string) =>
-    ['PENDING_PAYMENT', 'CONFIRMED', 'PROCESSING'].includes(status);
+    ['PENDING_PAYMENT', 'PENDING', 'CONFIRMED', 'PROCESSING'].includes(status);
 
   return (
     <div className="card">
@@ -1625,9 +1625,10 @@ function TrackLookupTab({ data }: TrackLookupTabProps) {
     }
   };
 
-  const steps = ['PENDING_PAYMENT', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+  const steps = ['PENDING_PAYMENT', 'PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
   const stepLabels: Record<string, string> = {
     PENDING_PAYMENT: 'Pending Payment',
+    PENDING: 'Waiting for confirmation',
     CONFIRMED: 'Confirmed',
     PROCESSING: 'Processing',
     SHIPPED: 'Shipped',

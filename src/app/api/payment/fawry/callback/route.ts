@@ -134,7 +134,7 @@ export async function POST(req: Request) {
           where: { id: result.orderId },
           data: {
             paymentStatus: 'PAID',
-            status: 'CONFIRMED',
+            status: 'PENDING', // paid; the seller still confirms it
             paymentId: String(body['fawryRefNumber'] ?? ''),
             paymentChannel: 'FAWRY',
             idempotencyKey,

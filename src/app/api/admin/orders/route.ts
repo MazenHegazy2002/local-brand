@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 
 const STATUSES = new Set([
   'PENDING_PAYMENT',
+  'PENDING',
   'CONFIRMED',
   'PROCESSING',
   'SHIPPED',

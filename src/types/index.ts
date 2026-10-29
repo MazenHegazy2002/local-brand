@@ -202,6 +202,7 @@ export interface CartItem {
 
 export type OrderStatus =
   | 'PENDING_PAYMENT'
+  | 'PENDING'
   | 'CONFIRMED'
   | 'PROCESSING'
   | 'SHIPPED'
