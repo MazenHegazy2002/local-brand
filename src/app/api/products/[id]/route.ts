@@ -160,9 +160,17 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
               ? v.sizes
               : [];
 
+        const variantImages: string[] = Array.isArray(v.images)
+          ? v.images.filter(Boolean)
+          : v.image
+            ? [v.image]
+            : [];
+
         const attributesStr = JSON.stringify({
           color: colorVal,
           sizes: sizesArray,
+          image: variantImages[0] || v.image || '',
+          images: variantImages,
         });
 
         if (v.id) {
@@ -203,13 +211,24 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       }
 
       // 3. Synchronize variant images to ProductImage table if present
-      const uniqueImages = Array.from(new Set(variants.map(v => v.image).filter(Boolean)));
-      if (uniqueImages.length > 0) {
+      const allVariantImages: string[] = [];
+      for (const v of variants) {
+        if (Array.isArray(v.images)) {
+          for (const img of v.images) {
+            if (img && !allVariantImages.includes(img)) allVariantImages.push(img);
+          }
+        }
+        if (v.image && !allVariantImages.includes(v.image)) {
+          allVariantImages.push(v.image);
+        }
+      }
+
+      if (allVariantImages.length > 0) {
         await prisma.productImage.deleteMany({
           where: { productId: id },
         });
         await prisma.productImage.createMany({
-          data: uniqueImages.map((url, idx) => ({
+          data: allVariantImages.map((url, idx) => ({
             productId: id,
             url,
             isPrimary: idx === 0,

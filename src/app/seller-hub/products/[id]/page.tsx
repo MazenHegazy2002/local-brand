@@ -77,6 +77,7 @@ interface LocalVariant {
   price: number;
   color: string;
   image?: string;
+  images?: string[];
   sizes?: string;
   sku?: string;
   upc?: string;
@@ -312,7 +313,19 @@ export default function EditProductPage() {
                 console.error(err);
               }
               const sizesStr = Array.isArray(parsedAttrs.sizes) ? parsedAttrs.sizes.join(', ') : '';
-              const imgUrl = data.images?.[idx]?.url || '';
+
+              // Extract images for this variant:
+              let variantImages: string[] = [];
+              if (Array.isArray(parsedAttrs.images) && parsedAttrs.images.length > 0) {
+                variantImages = parsedAttrs.images.filter(Boolean);
+              } else if (parsedAttrs.image) {
+                variantImages = [parsedAttrs.image];
+              } else if (data.variants.length === 1 && data.images && data.images.length > 0) {
+                variantImages = data.images.map((img: any) => img.url).filter(Boolean);
+              } else if (data.images?.[idx]?.url) {
+                variantImages = [data.images[idx].url];
+              }
+
               return {
                 id: v.id,
                 title: v.title || parsedAttrs.color || '',
@@ -320,7 +333,8 @@ export default function EditProductPage() {
                 price: v.price || data.basePrice,
                 color: v.color || parsedAttrs.color || v.title || 'Standard',
                 sizes: sizesStr,
-                image: imgUrl,
+                image: variantImages[0] || '',
+                images: variantImages,
                 sku: v.sku || '',
                 upc: v.upc || '',
               };
@@ -337,13 +351,17 @@ export default function EditProductPage() {
   };
 
   const handleImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    const previewUrl = URL.createObjectURL(file);
+    // Reset input so same file can be selected again
+    e.target.value = '';
+
+    const previewUrls = files.map(f => URL.createObjectURL(f));
+
     let suggestedColor = '';
     try {
-      suggestedColor = await detectImageColor(file);
+      suggestedColor = await detectImageColor(files[0]);
     } catch (err) {
       console.error(err);
     }
@@ -351,9 +369,12 @@ export default function EditProductPage() {
     setVariants(prev => {
       const next = [...prev];
       if (next[index]) {
+        const currentImages = next[index].images || (next[index].image ? [next[index].image] : []);
+        const combined = [...currentImages, ...previewUrls];
         next[index] = {
           ...next[index],
-          image: previewUrl,
+          images: combined,
+          image: combined[0] || '',
           uploading: true,
           color:
             next[index].color && next[index].color !== 'Default' && next[index].color !== ''
@@ -370,25 +391,32 @@ export default function EditProductPage() {
 
     try {
       const { compressImage } = await import('@/lib/compress-image');
-      const uploadFile = await compressImage(file);
 
-      const formData = new FormData();
-      formData.append('file', uploadFile);
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (!res.ok || !data.url) {
-        throw new Error(data.message || 'Upload failed');
-      }
-      if (data.url.startsWith('data:') && data.url.length > 5 * 1024 * 1024) {
-        throw new Error('Image is too large after compression. Pick a smaller photo.');
+      const uploadedUrls: string[] = [];
+      for (const file of files) {
+        const uploadFile = await compressImage(file);
+        const formData = new FormData();
+        formData.append('file', uploadFile);
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok || !data.url) {
+          throw new Error(data.message || 'Upload failed');
+        }
+        if (data.url.startsWith('data:') && data.url.length > 5 * 1024 * 1024) {
+          throw new Error('Image is too large after compression. Pick a smaller photo.');
+        }
+        uploadedUrls.push(data.url);
       }
 
       setVariants(prev => {
         const next = [...prev];
         if (next[index]) {
+          const currentImages = (next[index].images || []).filter(u => !previewUrls.includes(u));
+          const finalImages = [...currentImages, ...uploadedUrls];
           next[index] = {
             ...next[index],
-            image: data.url,
+            images: finalImages,
+            image: finalImages[0] || '',
             uploading: false,
           };
         }
@@ -400,11 +428,67 @@ export default function EditProductPage() {
       setVariants(prev => {
         const next = [...prev];
         if (next[index]) {
-          next[index].uploading = false;
+          const cleaned = (next[index].images || []).filter(u => !previewUrls.includes(u));
+          next[index] = {
+            ...next[index],
+            images: cleaned,
+            image: cleaned[0] || '',
+            uploading: false,
+          };
         }
         return next;
       });
     }
+  };
+
+  const removeVariantImage = (variantIndex: number, imageIndex: number) => {
+    setVariants(prev => {
+      const next = [...prev];
+      if (next[variantIndex]) {
+        const current = (
+          next[variantIndex].images || (next[variantIndex].image ? [next[variantIndex].image] : [])
+        ).filter((_, idx) => idx !== imageIndex);
+        next[variantIndex] = {
+          ...next[variantIndex],
+          images: current,
+          image: current[0] || '',
+        };
+      }
+      return next;
+    });
+  };
+
+  const setVariantPrimaryImage = (variantIndex: number, imageIndex: number) => {
+    setVariants(prev => {
+      const next = [...prev];
+      if (next[variantIndex]) {
+        const current = [...(next[variantIndex].images || [])];
+        if (current[imageIndex]) {
+          const [moved] = current.splice(imageIndex, 1);
+          current.unshift(moved);
+          next[variantIndex] = {
+            ...next[variantIndex],
+            images: current,
+            image: current[0] || '',
+          };
+        }
+      }
+      return next;
+    });
+  };
+
+  const clearVariantImages = (variantIndex: number) => {
+    setVariants(prev => {
+      const next = [...prev];
+      if (next[variantIndex]) {
+        next[variantIndex] = {
+          ...next[variantIndex],
+          images: [],
+          image: '',
+        };
+      }
+      return next;
+    });
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -419,11 +503,16 @@ export default function EditProductPage() {
           flashSaleEndsAt: form.flashSaleEndsAt
             ? new Date(form.flashSaleEndsAt).toISOString()
             : null,
-          variants: variants.map(v => ({
-            ...v,
-            title: v.color || v.title || 'Standard',
-            sizes: v.sizes || '',
-          })),
+          variants: variants.map(v => {
+            const imgList = v.images && v.images.length > 0 ? v.images : v.image ? [v.image] : [];
+            return {
+              ...v,
+              title: v.color || v.title || 'Standard',
+              sizes: v.sizes || '',
+              images: imgList,
+              image: imgList[0] || '',
+            };
+          }),
         }),
       });
       if (res.ok) {
@@ -1126,11 +1215,11 @@ export default function EditProductPage() {
                       </div>
                       <div className="col-span-3">
                         <label className="text-[10px] text-slate-400 block font-semibold">
-                          Image
+                          {(v.images?.length || 0) > 0 ? `Photos (${v.images?.length})` : 'Photos'}
                         </label>
                         <label
-                          className="flex items-center justify-center gap-1 px-2 py-2 rounded-lg border border-dashed border-slate-300 bg-white hover:bg-slate-50 cursor-pointer text-[10px] text-slate-600 font-semibold h-[34px]"
-                          title={v.image ? 'Replace image' : 'Choose image'}
+                          className="flex items-center justify-center gap-1 px-2 py-2 rounded-lg border border-dashed border-slate-300 bg-white hover:bg-slate-50 cursor-pointer text-[10px] text-slate-600 font-semibold h-[34px] transition-colors"
+                          title="Add photos for this variant"
                         >
                           <svg
                             width="12"
@@ -1144,10 +1233,11 @@ export default function EditProductPage() {
                             <polyline points="17 8 12 3 7 8" />
                             <line x1="12" y1="3" x2="12" y2="15" />
                           </svg>
-                          {v.image ? 'Replace' : 'Upload'}
+                          {(v.images && v.images.length > 0) || v.image ? '+ Add Photos' : 'Upload'}
                           <input
                             type="file"
                             accept="image/*"
+                            multiple
                             onChange={e => handleImageUpload(i, e)}
                             className="hidden"
                           />
@@ -1253,32 +1343,131 @@ export default function EditProductPage() {
                       </div>
                     </div>
 
-                    {v.image && (
-                      <div className="pt-2 flex items-center gap-3">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={v.image}
-                          alt={`Variant ${i + 1} preview`}
-                          className="h-16 w-16 rounded-lg object-cover border border-slate-200"
-                        />
-                        <div className="text-xs flex-1">
-                          {v.uploading ? (
-                            <span className="text-amber-600 font-semibold">Uploading…</span>
-                          ) : (
-                            <span className="text-emerald-600 font-semibold">✓ Image ready</span>
-                          )}
+                    {(() => {
+                      const imgList =
+                        v.images && v.images.length > 0 ? v.images : v.image ? [v.image] : [];
+                      if (imgList.length === 0 && !v.uploading) return null;
+                      return (
+                        <div className="pt-2">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold text-slate-700">
+                                Variant Photos ({imgList.length})
+                              </span>
+                              {v.uploading ? (
+                                <span className="text-[11px] text-amber-600 font-medium animate-pulse flex items-center gap-1">
+                                  <svg
+                                    className="animate-spin h-3 w-3"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                    />
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                    />
+                                  </svg>
+                                  Uploading…
+                                </span>
+                              ) : (
+                                <span className="text-[11px] text-emerald-600 font-medium">
+                                  ✓ Ready
+                                </span>
+                              )}
+                            </div>
+                            {imgList.length > 0 && !v.uploading && (
+                              <button
+                                type="button"
+                                onClick={() => clearVariantImages(i)}
+                                className="text-[11px] text-slate-400 hover:text-red-600 font-semibold transition-colors"
+                              >
+                                Remove All
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="flex flex-wrap gap-2.5 items-center">
+                            {imgList.map((url, imgIdx) => (
+                              <div
+                                key={`${url}-${imgIdx}`}
+                                className="relative group w-16 h-16 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 shadow-sm flex-shrink-0"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={url}
+                                  alt={`Variant ${i + 1} photo ${imgIdx + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                                {imgIdx === 0 && (
+                                  <span className="absolute bottom-1 left-1 right-1 bg-emerald-600/90 text-white text-[9px] font-bold text-center py-0.5 rounded shadow">
+                                    Cover
+                                  </span>
+                                )}
+                                {!v.uploading && (
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                                    {imgIdx !== 0 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setVariantPrimaryImage(i, imgIdx)}
+                                        title="Make Cover Image"
+                                        className="p-1 bg-white/90 hover:bg-white text-amber-500 rounded text-[11px] leading-none shadow"
+                                      >
+                                        ★
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => removeVariantImage(i, imgIdx)}
+                                      title="Remove photo"
+                                      className="p-1 bg-white/90 hover:bg-red-50 text-red-600 rounded text-[11px] leading-none shadow"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+
+                            <label
+                              className="w-16 h-16 rounded-lg border-2 border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50/50 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-emerald-600 transition-all flex-shrink-0"
+                              title="Add more photos"
+                            >
+                              <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                              >
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                              </svg>
+                              <span className="text-[9px] font-semibold mt-0.5">+ Add</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={e => handleImageUpload(i, e)}
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
+                          <p className="text-[10px] text-slate-400 mt-1.5">
+                            Tip: You can add multiple photos. Hover over a photo to delete it or set
+                            it as the cover image.
+                          </p>
                         </div>
-                        {!v.uploading && (
-                          <button
-                            type="button"
-                            onClick={() => updateVariant(i, 'image', '')}
-                            className="text-slate-400 hover:text-red-500 text-xs font-semibold"
-                          >
-                            Remove Image
-                          </button>
-                        )}
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 ))}
               </div>

@@ -100,6 +100,7 @@ export interface ProductData {
     price?: number;
     stock?: number;
     image?: string;
+    images?: string[];
     sku?: string;
     upc?: string;
     sizes?: string | string[];
@@ -217,7 +218,10 @@ export async function createProductForSeller(
   // 2. The seller's email must be verified.
   // 3. The SellerProfile.status must be ACTIVE.
   // 4. The seller has a pickup address (same rule as toggling a product live).
-  const hasImages = data.mainImage || extraImages.length > 0 || (variants || []).some(v => v.image);
+  const hasImages =
+    Boolean(data.mainImage) ||
+    extraImages.length > 0 ||
+    (variants || []).some(v => v.image || (Array.isArray(v.images) && v.images.length > 0));
   const publishBlockedReason = !hasImages
     ? 'Add at least one image before publishing this product.'
     : !user?.emailVerified
@@ -289,6 +293,11 @@ export async function createProductForSeller(
               : Array.isArray(v.sizes)
                 ? v.sizes
                 : [];
+          const vImages: string[] = Array.isArray(v.images)
+            ? v.images.filter(Boolean)
+            : v.image
+              ? [v.image]
+              : [];
           return {
             sku: resolvedSkus[idx],
             upc: v.upc?.trim() || null,
@@ -296,6 +305,8 @@ export async function createProductForSeller(
             attributes: JSON.stringify({
               color: v.color || 'Standard',
               sizes: sizesArray,
+              image: vImages[0] || v.image || '',
+              images: vImages,
             }),
             price: v.price || rest.basePrice,
             stockCount: v.stock || 0,
@@ -307,13 +318,28 @@ export async function createProductForSeller(
           // Main product image (if provided) is always primary
           ...(data.mainImage ? [{ url: data.mainImage, isPrimary: true }] : []),
           // Variant images follow — isPrimary only if no main image was set
-          ...variantList
-            .filter(v => v.image)
-            .map((v, idx) => ({
-              url: v.image!,
+          ...(() => {
+            const allVarImgs: string[] = [];
+            for (const v of variantList) {
+              if (Array.isArray(v.images)) {
+                for (const img of v.images) {
+                  if (img && !allVarImgs.includes(img) && img !== data.mainImage) {
+                    allVarImgs.push(img);
+                  }
+                }
+              }
+              if (v.image && !allVarImgs.includes(v.image) && v.image !== data.mainImage) {
+                allVarImgs.push(v.image);
+              }
+            }
+            return allVarImgs.map((url, idx) => ({
+              url,
               isPrimary: !data.mainImage && idx === 0,
-            })),
-          ...extraImages.map(url => ({ url, isPrimary: false })),
+            }));
+          })(),
+          ...extraImages
+            .filter(url => url !== data.mainImage)
+            .map(url => ({ url, isPrimary: false })),
         ],
       },
     },

@@ -93,6 +93,7 @@ interface VariantState {
   stock: number;
   price: string | number;
   image: string;
+  images?: string[];
   // Optional inventory codes — sku is auto-generated server-side when blank.
   sku?: string;
   upc?: string;
@@ -409,16 +410,17 @@ export default function SellerHub() {
   };
 
   const handleImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    // Show an immediate preview using a local object URL — much cheaper than
-    // base64 and avoids the FileReader race condition.
-    const previewUrl = URL.createObjectURL(file);
+    // Reset input so same files can be re-selected if needed
+    e.target.value = '';
+
+    const previewUrls = files.map(f => URL.createObjectURL(f));
 
     let suggestedColor = '';
     try {
-      suggestedColor = await detectImageColor(file);
+      suggestedColor = await detectImageColor(files[0]);
     } catch (err) {
       console.error(err);
     }
@@ -426,9 +428,12 @@ export default function SellerHub() {
     setVariants(prev => {
       const next = [...prev];
       if (next[index]) {
+        const currentImages = next[index].images || (next[index].image ? [next[index].image] : []);
+        const combined = [...currentImages, ...previewUrls];
         next[index] = {
           ...next[index],
-          image: previewUrl,
+          images: combined,
+          image: combined[0] || '',
           uploading: true,
           color:
             next[index].color && next[index].color !== 'Default' && next[index].color !== ''
@@ -440,34 +445,39 @@ export default function SellerHub() {
     });
 
     try {
-      // Phone photos are routinely 5-12 MB. We compress them down to a
-      // reasonable size before upload so (a) the upload itself is fast on
-      // mobile data and (b) the resulting URL — even if the server falls
-      // back to a base64 data URL — stays well under the Server Action
-      // request limit when it later flows through createProduct.
       const { compressImage } = await import('@/lib/compress-image');
-      const uploadFile = await compressImage(file);
+      const uploadedUrls: string[] = [];
 
-      const formData = new FormData();
-      formData.append('file', uploadFile);
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const data = await res.json().catch(() => ({}) as { url?: string; message?: string });
+      for (const file of files) {
+        const uploadFile = await compressImage(file);
+        const formData = new FormData();
+        formData.append('file', uploadFile);
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const data = await res.json().catch(() => ({}) as { url?: string; message?: string });
 
-      if (!res.ok || !data.url) {
-        throw new Error(data.message || 'Upload failed');
+        if (!res.ok || !data.url) {
+          throw new Error(data.message || 'Upload failed');
+        }
+
+        if (data.url.startsWith('data:') && data.url.length > 5 * 1024 * 1024) {
+          throw new Error('Image is too large after compression. Please pick a smaller photo.');
+        }
+
+        uploadedUrls.push(data.url);
       }
 
-      // Hard guard: if the server returned a base64 data URL that's still
-      // too big to be embedded in a server-action payload, refuse the
-      // upload with a clear message instead of crashing the next render.
-      if (data.url.startsWith('data:') && data.url.length > 5 * 1024 * 1024) {
-        throw new Error('Image is too large after compression. Please pick a smaller photo.');
-      }
-
-      // Swap the local preview for the uploaded URL.
       setVariants(prev => {
         const next = [...prev];
-        if (next[index]) next[index] = { ...next[index], image: data.url, uploading: false };
+        if (next[index]) {
+          const currentImages = (next[index].images || []).filter(u => !previewUrls.includes(u));
+          const finalImages = [...currentImages, ...uploadedUrls];
+          next[index] = {
+            ...next[index],
+            images: finalImages,
+            image: finalImages[0] || '',
+            uploading: false,
+          };
+        }
         return next;
       });
     } catch (err) {
@@ -477,17 +487,70 @@ export default function SellerHub() {
         title: 'Upload Failed',
         description: (err as Error).message || 'Upload failed. Please try a different photo.',
       });
-      // Drop the broken preview so the user can pick again without the
-      // submit button silently posting a stale local-only URL.
       setVariants(prev => {
         const next = [...prev];
-        if (next[index]) next[index] = { ...next[index], image: '', uploading: false };
+        if (next[index]) {
+          const cleaned = (next[index].images || []).filter(u => !previewUrls.includes(u));
+          next[index] = {
+            ...next[index],
+            images: cleaned,
+            image: cleaned[0] || '',
+            uploading: false,
+          };
+        }
         return next;
       });
-    } finally {
-      // The object URL is kept alive while the preview is shown; it'll be
-      // garbage-collected when the component unmounts.
     }
+  };
+
+  const removeVariantImage = (variantIndex: number, imageIndex: number) => {
+    setVariants(prev => {
+      const next = [...prev];
+      if (next[variantIndex]) {
+        const current = (
+          next[variantIndex].images || (next[variantIndex].image ? [next[variantIndex].image] : [])
+        ).filter((_, idx) => idx !== imageIndex);
+        next[variantIndex] = {
+          ...next[variantIndex],
+          images: current,
+          image: current[0] || '',
+        };
+      }
+      return next;
+    });
+  };
+
+  const setVariantPrimaryImage = (variantIndex: number, imageIndex: number) => {
+    setVariants(prev => {
+      const next = [...prev];
+      if (next[variantIndex]) {
+        const current = [...(next[variantIndex].images || [])];
+        if (current[imageIndex]) {
+          const [moved] = current.splice(imageIndex, 1);
+          current.unshift(moved);
+          next[variantIndex] = {
+            ...next[variantIndex],
+            images: current,
+            image: current[0] || '',
+          };
+        }
+      }
+      return next;
+    });
+  };
+
+  const clearVariantImages = (variantIndex: number) => {
+    setVariants(prev => {
+      const next = [...prev];
+      if (next[variantIndex]) {
+        next[variantIndex] = {
+          ...next[variantIndex],
+          images: [],
+          image: '',
+        };
+      }
+      return next;
+    });
   };
 
   const addVariant = () => {
@@ -527,12 +590,17 @@ export default function SellerHub() {
         weightKg: Number(newProduct.weightKg),
         flashSalePrice:
           Number(newProduct.flashSalePrice) > 0 ? Number(newProduct.flashSalePrice) : undefined,
-        variants: variants.map(v => ({
-          ...v,
-          stock: Number(v.stock),
-          price: Number(v.price) || Number(newProduct.basePrice),
-          sizes: v.sizes || '',
-        })),
+        variants: variants.map(v => {
+          const imgList = v.images && v.images.length > 0 ? v.images : v.image ? [v.image] : [];
+          return {
+            ...v,
+            stock: Number(v.stock),
+            price: Number(v.price) || Number(newProduct.basePrice),
+            sizes: v.sizes || '',
+            image: imgList[0] || '',
+            images: imgList,
+          };
+        }),
         published: true,
         mainImage: mainImageUrl,
       })) as { error?: string };
@@ -1477,6 +1545,9 @@ export default function SellerHub() {
           categories={data?.categories}
           isSubmitting={isSubmitting}
           handleImageUpload={handleImageUpload}
+          removeVariantImage={removeVariantImage}
+          setVariantPrimaryImage={setVariantPrimaryImage}
+          clearVariantImages={clearVariantImages}
           addVariant={addVariant}
           updateVariant={updateVariant}
           isMultiBrand={isMultiBrand}
@@ -4024,6 +4095,9 @@ interface AddProductModalProps {
   categories?: Category[];
   isSubmitting: boolean;
   handleImageUpload: (index: number, e: React.ChangeEvent<HTMLInputElement>) => void;
+  removeVariantImage?: (variantIndex: number, imageIndex: number) => void;
+  setVariantPrimaryImage?: (variantIndex: number, imageIndex: number) => void;
+  clearVariantImages?: (variantIndex: number) => void;
   addVariant: () => void;
   updateVariant: <K extends keyof VariantState>(
     index: number,
@@ -4045,6 +4119,9 @@ function AddProductModal({
   categories,
   isSubmitting,
   handleImageUpload,
+  removeVariantImage,
+  setVariantPrimaryImage,
+  clearVariantImages,
   addVariant,
   updateVariant,
   isMultiBrand,
@@ -4300,8 +4377,8 @@ function AddProductModal({
                     className="col-span-3 px-3 py-2 bg-white border border-slate-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                   <label
-                    className="col-span-3 flex items-center justify-center gap-1 px-2 py-2 rounded-lg border border-dashed border-slate-300 bg-white hover:bg-slate-50 cursor-pointer text-[10px] text-slate-600 font-semibold"
-                    title={v.image ? 'Replace image' : 'Choose image'}
+                    className="col-span-3 flex items-center justify-center gap-1 px-2 py-2 rounded-lg border border-dashed border-slate-300 bg-white hover:bg-slate-50 cursor-pointer text-[10px] text-slate-600 font-semibold transition-colors"
+                    title="Add photos for this variant"
                   >
                     <svg
                       width="12"
@@ -4315,10 +4392,13 @@ function AddProductModal({
                       <polyline points="17 8 12 3 7 8" />
                       <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
-                    {v.image ? 'Replace' : 'Upload'}
+                    {(v.images && v.images.length > 0) || v.image
+                      ? `+ Photos (${v.images?.length || 1})`
+                      : 'Upload'}
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       onChange={e => handleImageUpload(i, e)}
                       className="hidden"
                     />
@@ -4440,32 +4520,129 @@ function AddProductModal({
                     className="col-span-6 px-3 py-2 bg-white border border-slate-100 rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-emerald-500"
                     autoComplete="off"
                   />
-                  {v.image && (
-                    <div className="col-span-12 pt-2 flex items-center gap-3">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={v.image}
-                        alt={`Variant ${i + 1} preview`}
-                        className="h-16 w-16 rounded-lg object-cover border border-slate-200"
-                      />
-                      <div className="text-xs flex-1">
-                        {v.uploading ? (
-                          <span className="text-amber-600 font-semibold">Uploading…</span>
-                        ) : (
-                          <span className="text-emerald-600 font-semibold">✓ Image ready</span>
-                        )}
+                  {(() => {
+                    const imgList =
+                      v.images && v.images.length > 0 ? v.images : v.image ? [v.image] : [];
+                    if (imgList.length === 0 && !v.uploading) return null;
+                    return (
+                      <div className="col-span-12 pt-2 border-t border-slate-200/60 mt-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-semibold text-slate-700">
+                              Variant Photos ({imgList.length})
+                            </span>
+                            {v.uploading ? (
+                              <span className="text-[10px] text-amber-600 font-medium animate-pulse flex items-center gap-1">
+                                <svg
+                                  className="animate-spin h-3 w-3"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  />
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                  />
+                                </svg>
+                                Uploading…
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-emerald-600 font-medium">
+                                ✓ Ready
+                              </span>
+                            )}
+                          </div>
+                          {imgList.length > 0 && !v.uploading && clearVariantImages && (
+                            <button
+                              type="button"
+                              onClick={() => clearVariantImages(i)}
+                              className="text-[10px] text-slate-400 hover:text-red-600 font-semibold transition-colors"
+                            >
+                              Remove All
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 items-center">
+                          {imgList.map((url, imgIdx) => (
+                            <div
+                              key={`${url}-${imgIdx}`}
+                              className="relative group w-14 h-14 rounded-lg overflow-hidden border border-slate-200 bg-white shadow-sm flex-shrink-0"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={url}
+                                alt={`Variant ${i + 1} photo ${imgIdx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              {imgIdx === 0 && (
+                                <span className="absolute bottom-1 left-1 right-1 bg-emerald-600/90 text-white text-[8px] font-bold text-center py-0.2 rounded shadow">
+                                  Cover
+                                </span>
+                              )}
+                              {!v.uploading && (
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                                  {imgIdx !== 0 && setVariantPrimaryImage && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setVariantPrimaryImage(i, imgIdx)}
+                                      title="Make Cover Image"
+                                      className="p-1 bg-white/90 hover:bg-white text-amber-500 rounded text-[10px] leading-none shadow"
+                                    >
+                                      ★
+                                    </button>
+                                  )}
+                                  {removeVariantImage && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removeVariantImage(i, imgIdx)}
+                                      title="Remove photo"
+                                      className="p-1 bg-white/90 hover:bg-red-50 text-red-600 rounded text-[10px] leading-none shadow"
+                                    >
+                                      ✕
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+
+                          <label
+                            className="w-14 h-14 rounded-lg border-2 border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50/50 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-emerald-600 transition-all flex-shrink-0"
+                            title="Add more photos"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                            >
+                              <line x1="12" y1="5" x2="12" y2="19" />
+                              <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            <span className="text-[8px] font-semibold mt-0.5">+ Add</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={e => handleImageUpload(i, e)}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
                       </div>
-                      {!v.uploading && (
-                        <button
-                          type="button"
-                          onClick={() => updateVariant(i, 'image', '')}
-                          className="text-[11px] font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-md hover:bg-red-50"
-                        >
-                          Remove image
-                        </button>
-                      )}
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               ))}
             </div>

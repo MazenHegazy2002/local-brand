@@ -138,7 +138,13 @@ export default function ProductDetails({
               typeof variant.attributes === 'string'
                 ? JSON.parse(variant.attributes)
                 : variant.attributes;
-            vImg = attrs.image || attrs.imageUrl || attrs.img || attrs.image_url;
+            vImg =
+              attrs.image ||
+              attrs.imageUrl ||
+              attrs.img ||
+              attrs.image_url ||
+              (Array.isArray(attrs.images) && attrs.images[0]) ||
+              null;
           } catch (_e) {}
         }
         if (vImg) return vImg;
@@ -258,16 +264,23 @@ export default function ProductDetails({
     // 1. Direct match with variant image / attributes
     const variantMatch = uniqueColors.find(({ variant }) => {
       let vImg = (variant as any).image || (variant as any).imageUrl;
-      if (!vImg && variant.attributes) {
+      let vImgs: string[] = [];
+      if (variant.attributes) {
         try {
           const attrs =
             typeof variant.attributes === 'string'
               ? JSON.parse(variant.attributes)
               : variant.attributes;
-          vImg = attrs.image || attrs.imageUrl || attrs.img || attrs.image_url;
+          vImg = vImg || attrs.image || attrs.imageUrl || attrs.img || attrs.image_url;
+          if (Array.isArray(attrs.images)) {
+            vImgs = attrs.images;
+          }
         } catch (_e) {}
       }
-      return vImg && (vImg === imgUrl || vImg.toLowerCase() === lowerUrl);
+      return (
+        (vImg && (vImg === imgUrl || vImg.toLowerCase() === lowerUrl)) ||
+        vImgs.some(u => u === imgUrl || u.toLowerCase() === lowerUrl)
+      );
     });
 
     if (variantMatch) {
