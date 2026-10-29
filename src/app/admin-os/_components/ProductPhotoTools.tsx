@@ -28,6 +28,23 @@ function saveBlob(blob: Blob, name: string) {
 const photoUrl = (productId: string, imageId: string) =>
   `/api/admin/products/${productId}/images?imageId=${encodeURIComponent(imageId)}`;
 
+// Upload a new photo, then point this product image at it. Returns the new url.
+async function replacePhoto(productId: string, imageId: string, file: File): Promise<string> {
+  const form = new FormData();
+  form.append('file', file);
+  const up = await fetch('/api/upload', { method: 'POST', body: form });
+  const upBody = await up.json().catch(() => ({}));
+  if (!up.ok || !upBody.url) throw new Error(upBody.error || upBody.message || 'Upload failed');
+  const res = await fetch(`/api/admin/products/${productId}/images`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imageId, url: upBody.url }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || 'Could not save the photo');
+  return upBody.url;
+}
+
 async function loadBlob(url: string): Promise<Blob> {
   const res = await fetch(url, { credentials: 'same-origin' });
   if (!res.ok) throw new Error(`Could not load the photo (${res.status})`);
@@ -52,6 +69,26 @@ export default function ProductPhotoTools({
   );
   const [editing, setEditing] = useState(false);
   const [msg, setMsg] = useState('');
+  const [replacing, setReplacing] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  const replace = async (file: File | undefined) => {
+    if (!file || !current) return;
+    if (!file.type.startsWith('image/')) return setMsg('Choose an image file (JPG, PNG or WebP).');
+    if (!confirm(`Replace photo ${sel + 1} of "${title}" with ${file.name}?`)) return;
+    setReplacing(true);
+    setMsg('');
+    try {
+      const url = await replacePhoto(productId, current.id, file);
+      setImages(imgs => imgs.map((im, i) => (i === sel ? { ...im, url } : im)));
+      setMsg('Photo replaced.');
+    } catch (e) {
+      setMsg((e as Error).message);
+    } finally {
+      setReplacing(false);
+      if (fileInput.current) fileInput.current.value = '';
+    }
+  };
   const current = images[sel];
 
   const download = async () => {
@@ -118,9 +155,30 @@ export default function ProductPhotoTools({
           >
             ✏️ Edit photo
           </button>
+          <button
+            type="button"
+            disabled={replacing}
+            onClick={() => fileInput.current?.click()}
+            className="flex-1 px-3 py-2 text-xs font-semibold border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50"
+          >
+            {replacing ? 'Uploading…' : '🔁 Replace'}
+          </button>
+          <input
+            ref={fileInput}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            hidden
+            onChange={e => replace(e.target.files?.[0])}
+          />
         </div>
       )}
-      {msg && <div className="text-xs text-red-600 mt-2">{msg}</div>}
+      {msg && (
+        <div
+          className={`text-xs mt-2 ${msg === 'Photo replaced.' ? 'text-green-700' : 'text-red-600'}`}
+        >
+          {msg}
+        </div>
+      )}
       {editing && current && (
         <PhotoEditor
           image={current}
@@ -211,19 +269,8 @@ function PhotoEditor({
     setError('');
     try {
       const blob = await toBlob();
-      const form = new FormData();
-      form.append('file', new File([blob], fileName(title, index + 1), { type: 'image/jpeg' }));
-      const up = await fetch('/api/upload', { method: 'POST', body: form });
-      const upBody = await up.json().catch(() => ({}));
-      if (!up.ok || !upBody.url) throw new Error(upBody.error || upBody.message || 'Upload failed');
-      const res = await fetch(`/api/admin/products/${productId}/images`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageId: image.id, url: upBody.url }),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error || 'Could not save the photo');
-      onSaved(upBody.url);
+      const file = new File([blob], fileName(title, index + 1), { type: 'image/jpeg' });
+      onSaved(await replacePhoto(productId, image.id, file));
     } catch (e) {
       setError((e as Error).message);
     } finally {
