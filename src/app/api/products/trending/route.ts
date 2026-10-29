@@ -29,6 +29,7 @@ export async function GET(req: Request) {
       where: {
         variants: { some: { id: { in: variantIds } } },
         published: true,
+        seller: { status: 'ACTIVE' },
         deletedAt: null,
       },
       include: {

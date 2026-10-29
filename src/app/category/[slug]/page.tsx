@@ -61,7 +61,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     where: { slug },
     include: {
       products: {
-        where: { published: true, deletedAt: null },
+        where: { published: true, seller: { status: 'ACTIVE' }, deletedAt: null },
         include: { images: true, category: true },
         take: 60,
       },

@@ -65,7 +65,7 @@ export async function GET(req: Request) {
         return NextResponse.json({ products: [] }, { status: 200 });
       }
       const products = await prisma.product.findMany({
-        where: { id: { in: ids }, published: true, deletedAt: null },
+        where: { id: { in: ids }, published: true, seller: { status: 'ACTIVE' }, deletedAt: null },
         include: {
           images: true,
           variants: true,
@@ -147,6 +147,7 @@ export async function GET(req: Request) {
 
     const where: Prisma.ProductWhereInput = {
       published: true,
+      seller: { status: 'ACTIVE' },
       deletedAt: null,
       basePrice: { gte: minPrice, lte: maxPrice },
     };

@@ -13,7 +13,7 @@ export const metadata = {
 async function getLookbookProducts() {
   try {
     return await prisma.product.findMany({
-      where: { published: true, deletedAt: null },
+      where: { published: true, seller: { status: 'ACTIVE' }, deletedAt: null },
       include: {
         images: { where: { isPrimary: true }, take: 1 },
         seller: { select: { storeName: true } },

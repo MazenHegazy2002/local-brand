@@ -44,6 +44,7 @@ async function fetchProductsByCategory(categorySlug: string, limit: number) {
       where: {
         category: { slug: categorySlug },
         published: true,
+        seller: { status: 'ACTIVE' },
       },
       take: limit,
       include: {

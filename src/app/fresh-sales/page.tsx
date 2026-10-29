@@ -15,6 +15,7 @@ async function getFlashSaleProducts() {
   const products = await prisma.product.findMany({
     where: {
       published: true,
+      seller: { status: 'ACTIVE' },
       deletedAt: null,
       flashSalePrice: { not: null },
       flashSaleEndsAt: { gt: now },

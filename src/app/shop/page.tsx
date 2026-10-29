@@ -19,7 +19,7 @@ export default async function Page() {
   let catalogLd: ReturnType<typeof shopCatalogJsonLd> | null = null;
   try {
     const products = await prisma.product.findMany({
-      where: { published: true, deletedAt: null },
+      where: { published: true, seller: { status: 'ACTIVE' }, deletedAt: null },
       select: {
         title: true,
         slug: true,

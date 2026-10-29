@@ -27,6 +27,7 @@ export async function GET(req: Request) {
     const products = await prisma.product.findMany({
       where: {
         published: true,
+        seller: { status: 'ACTIVE' },
         deletedAt: null,
         categoryId: { in: categories },
         id: { notIn: excludeIds },

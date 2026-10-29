@@ -41,6 +41,15 @@ export async function setSellerStatus(
     }
   }
 
+  // Suspending hides the seller's products from shoppers and approving shows them again,
+  // so cached product lists must be rebuilt.
+  try {
+    const { invalidateCache } = await import('@/lib/cache');
+    await invalidateCache('products:*');
+  } catch (err) {
+    console.error('[setSellerStatus] cache invalidation failed:', err);
+  }
+
   if (adminId) {
     await prisma.auditLog.create({
       data: {

@@ -73,7 +73,7 @@ describe('createOrderForUser — input validation', () => {
           deletedAt: null,
           flashSalePrice: null,
           flashSaleEndsAt: null,
-          seller: { storeName: 'Demo Store' },
+          seller: { storeName: 'Demo Store', status: 'ACTIVE' },
         },
       },
     ]);
@@ -145,7 +145,7 @@ describe('createOrderForUser — stock + variant resolution', () => {
           deletedAt: null,
           flashSalePrice: null,
           flashSaleEndsAt: null,
-          seller: { storeName: 'Demo Store' },
+          seller: { storeName: 'Demo Store', status: 'ACTIVE' },
         },
       },
     ]);
@@ -158,6 +158,33 @@ describe('createOrderForUser — stock + variant resolution', () => {
 
     expect(result.error).toMatch(/out of stock/i);
     expect(result.error).toContain('Out-of-stock Item');
+  });
+
+  it('rejects items from a suspended seller', async () => {
+    mocked.productVariant.findMany.mockResolvedValue([
+      {
+        id: VALID_VARIANT_ID,
+        stockCount: 10,
+        price: 100,
+        product: {
+          title: 'Suspended Store Item',
+          basePrice: 100,
+          published: true,
+          deletedAt: null,
+          flashSalePrice: null,
+          flashSaleEndsAt: null,
+          seller: { storeName: 'Demo Store', status: 'SUSPENDED' },
+        },
+      },
+    ]);
+
+    const result = await createOrderForUser('user-1', {
+      items: [{ variantId: VALID_VARIANT_ID, quantity: 1 }],
+      shippingAddress: baseInlineAddress,
+      paymentMethod: 'CASH_ON_DELIVERY',
+    });
+
+    expect(result.error).toMatch(/no longer available/i);
   });
 
   it('aggregates pricing across multiple line items in the address fee path', async () => {
@@ -173,7 +200,7 @@ describe('createOrderForUser — stock + variant resolution', () => {
           deletedAt: null,
           flashSalePrice: null,
           flashSaleEndsAt: null,
-          seller: { storeName: 'S' },
+          seller: { storeName: 'S', status: 'ACTIVE' },
         },
       },
       {
@@ -187,7 +214,7 @@ describe('createOrderForUser — stock + variant resolution', () => {
           deletedAt: null,
           flashSalePrice: null,
           flashSaleEndsAt: null,
-          seller: { storeName: 'S' },
+          seller: { storeName: 'S', status: 'ACTIVE' },
         },
       },
     ]);
@@ -236,7 +263,7 @@ describe('createOrderForUser — coupon application', () => {
           deletedAt: null,
           flashSalePrice: null,
           flashSaleEndsAt: null,
-          seller: { storeName: 'S' },
+          seller: { storeName: 'S', status: 'ACTIVE' },
         },
       },
     ]);
@@ -298,7 +325,7 @@ describe('createOrderForUser — coupon application', () => {
           deletedAt: null,
           flashSalePrice: null,
           flashSaleEndsAt: null,
-          seller: { storeName: 'S' },
+          seller: { storeName: 'S', status: 'ACTIVE' },
         },
       },
     ]);
@@ -347,7 +374,7 @@ describe('createOrderForUser — concurrency / stock race', () => {
           deletedAt: null,
           flashSalePrice: null,
           flashSaleEndsAt: null,
-          seller: { storeName: 'S' },
+          seller: { storeName: 'S', status: 'ACTIVE' },
         },
       },
     ]);
@@ -390,7 +417,7 @@ describe('createOrderForUser — selected size and color snapshots', () => {
           deletedAt: null,
           flashSalePrice: null,
           flashSaleEndsAt: null,
-          seller: { storeName: 'Demo Store' },
+          seller: { storeName: 'Demo Store', status: 'ACTIVE' },
         },
       },
     ]);

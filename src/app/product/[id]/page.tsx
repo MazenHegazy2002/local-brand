@@ -66,7 +66,12 @@ export async function generateMetadata({
 
     const product = await getProduct(id);
 
-    if (!product || !product.published || product.deletedAt !== null) {
+    if (
+      !product ||
+      !product.published ||
+      product.deletedAt !== null ||
+      product.seller?.status !== 'ACTIVE'
+    ) {
       return { title: 'Product Not Found | Brandy' };
     }
 
@@ -159,7 +164,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     }
 
     // Authorize viewing draft/deleted products only for admins and the owner seller
-    const isDraftOrDeleted = !product.published || product.deletedAt !== null;
+    // A suspended seller's products are hidden like drafts until the seller is active again.
+    const isDraftOrDeleted =
+      !product.published || product.deletedAt !== null || product.seller?.status !== 'ACTIVE';
     if (isDraftOrDeleted) {
       const isOwner =
         session?.user &&

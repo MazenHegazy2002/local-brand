@@ -49,6 +49,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
               where: {
                 id: { not: productId },
                 published: true,
+                seller: { status: 'ACTIVE' },
                 deletedAt: null,
                 categoryId: { in: catIds },
               },
@@ -87,6 +88,7 @@ async function getSimilar(product: Product, productId: string, limit: number) {
       categoryId: product.categoryId,
       id: { not: productId },
       published: true,
+      seller: { status: 'ACTIVE' },
       deletedAt: null,
     },
     take: limit,
@@ -97,7 +99,7 @@ async function getSimilar(product: Product, productId: string, limit: number) {
 
 async function getTrending(limit: number) {
   return prisma.product.findMany({
-    where: { published: true, deletedAt: null },
+    where: { published: true, seller: { status: 'ACTIVE' }, deletedAt: null },
     take: limit,
     include: { images: { where: { isPrimary: true } }, seller: { select: { storeName: true } } },
     orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],

@@ -86,7 +86,7 @@ export async function getCachedFeaturedProducts() {
     'products:featured',
     () =>
       prisma.product.findMany({
-        where: { isFeatured: true, published: true, deletedAt: null },
+        where: { isFeatured: true, published: true, seller: { status: 'ACTIVE' }, deletedAt: null },
         take: 8,
         include: { images: true, category: true },
       }),
@@ -99,7 +99,11 @@ export async function getCachedProducts(params: { q?: string; category?: string;
   return getCachedData(
     cacheKey,
     () => {
-      const where: Prisma.ProductWhereInput = { published: true, deletedAt: null };
+      const where: Prisma.ProductWhereInput = {
+        published: true,
+        seller: { status: 'ACTIVE' },
+        deletedAt: null,
+      };
       if (params.q) {
         where.OR = [
           { title: { contains: params.q, mode: 'insensitive' } },
@@ -129,6 +133,7 @@ export async function getCachedSingleProduct(idOrSlug: string) {
         where: {
           OR: [{ id: idOrSlug }, { slug: idOrSlug }],
           published: true,
+          seller: { status: 'ACTIVE' },
           deletedAt: null,
         },
         include: {
@@ -157,6 +162,7 @@ export async function getCachedCategoryProducts(categorySlug: string) {
         where: {
           category: { slug: categorySlug },
           published: true,
+          seller: { status: 'ACTIVE' },
           deletedAt: null,
         },
         include: { images: true, category: true, variants: true },
