@@ -46,6 +46,10 @@ export async function setSellerStatus(
   try {
     const { invalidateCache } = await import('@/lib/cache');
     await invalidateCache('products:*');
+    await invalidateCache('homepage:*');
+    const { revalidatePath } = await import('next/cache');
+    revalidatePath('/');
+    revalidatePath('/shop');
   } catch (err) {
     console.error('[setSellerStatus] cache invalidation failed:', err);
   }
