@@ -50,17 +50,18 @@ describe('createOrderForUser — input validation', () => {
     expect(result.success).toBeUndefined();
   });
 
-  it('rejects when neither userId nor guestEmail is supplied', async () => {
+  it('rejects an order without an account, even with a guest email', async () => {
     const result = await createOrderForUser(null, {
+      guestEmail: 'guest@example.com',
       items: [{ variantId: VALID_VARIANT_ID, quantity: 1 }],
       shippingAddress: baseInlineAddress,
       paymentMethod: 'CASH_ON_DELIVERY',
     });
 
-    expect(result.error).toMatch(/Unauthorized|guest email/i);
+    expect(result.error).toMatch(/sign in/i);
   });
 
-  it('accepts guest checkout with a valid email + inline address', async () => {
+  it('creates an order for a signed-in user with an inline address', async () => {
     mocked.productVariant.findMany.mockResolvedValue([
       {
         id: VALID_VARIANT_ID,
@@ -90,11 +91,10 @@ describe('createOrderForUser — input validation', () => {
     );
     mocked.order.findUnique.mockResolvedValue(null);
 
-    const result = await createOrderForUser(null, {
+    const result = await createOrderForUser('user-1', {
       items: [{ variantId: VALID_VARIANT_ID, quantity: 1 }],
       shippingAddress: baseInlineAddress,
       paymentMethod: 'CASH_ON_DELIVERY',
-      guestEmail: 'guest@example.com',
     });
 
     expect(result.success).toBe(true);
@@ -109,13 +109,11 @@ describe('createOrderForUser — input validation', () => {
         data: expect.objectContaining({ stockCount: { decrement: 1 } }),
       })
     );
-    // Order.create stamps the inline address (with guest email tucked in).
+    // Order.create stamps the inline address.
     const createPayload = (txOrderCreate.mock.calls[0][0] as any).data;
     const snapshot = JSON.parse(createPayload.shippingAddressSnapshot);
-    expect(snapshot.email).toBe('guest@example.com');
     expect(snapshot.governorate).toBe('Cairo');
-    expect(createPayload.userId).toBeNull();
-    expect(createPayload.guestEmail).toBe('guest@example.com');
+    expect(createPayload.userId).toBe('user-1');
   });
 });
 
