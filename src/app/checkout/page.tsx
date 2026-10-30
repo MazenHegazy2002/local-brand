@@ -37,7 +37,11 @@ function CheckoutPageInner() {
   const { items, total, clearCart, removeItem, rewriteId } = useCartStore();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
+  const { data: session, status: authStatus } = useSession();
+  // Buying requires an account: send signed-out visitors to sign in, then back here.
+  useEffect(() => {
+    if (authStatus === 'unauthenticated') router.replace('/login?callbackUrl=%2Fcheckout');
+  }, [authStatus, router]);
   const role = session ? (session.user as SessionUser).role : null;
   const isRestrictedRole = role && role !== 'BUYER';
   const { lang, isRTL, t } = useLanguage();

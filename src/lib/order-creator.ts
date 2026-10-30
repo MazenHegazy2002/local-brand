@@ -45,6 +45,12 @@ export async function createOrderForUser(
   opts: { quoteOnly?: boolean } = {}
 ): Promise<CreateOrderResult> {
   try {
+    // Every order needs an account: all order paths end here, so guests are refused for good.
+    // Quotes stay open (they create nothing).
+    if (!userId && !opts.quoteOnly) {
+      return { error: 'Please sign in or create an account to place your order.' };
+    }
+
     // ── 0. Guard Read-Only Mode ───────────────────────────────────────────────
     const isReadOnly = await getSetting<boolean>('READ_ONLY_MODE');
     if (isReadOnly) {
