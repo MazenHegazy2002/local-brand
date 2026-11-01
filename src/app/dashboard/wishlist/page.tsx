@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -20,6 +21,7 @@ interface WishlistItem {
 }
 
 export default function WishlistPage() {
+  const { tr } = useLanguage();
   const { data: _session, status } = useSession();
   const router = useRouter();
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -99,7 +101,7 @@ export default function WishlistPage() {
   if (loading) {
     return (
       <div className="db">
-        <div className="main">Loading...</div>
+        <div className="main">{tr('Loading...')}</div>
       </div>
     );
   }
@@ -108,50 +110,53 @@ export default function WishlistPage() {
     <div className="db">
       <div className="sidebar">
         <div className="logo">
-          My<span>LB</span>
+          {tr('My')}
+          <span>LB</span>
         </div>
 
-        <div className="nav-section">Personal</div>
+        <div className="nav-section">{tr('Personal')}</div>
         <Link href="/dashboard" className="nav-item">
-          Overview
+          {tr('Overview')}
         </Link>
         <Link href="/dashboard/orders" className="nav-item">
-          My Orders
+          {tr('My Orders')}
         </Link>
         <Link href="/dashboard/wishlist" className="nav-item active">
-          Wishlist
+          {tr('Wishlist')}
         </Link>
         <Link href="/dashboard/notifications" className="nav-item">
-          Alerts
+          {tr('Alerts')}
         </Link>
 
-        <div className="nav-section">Finance</div>
+        <div className="nav-section">{tr('Finance')}</div>
         <Link href="/dashboard/wallet" className="nav-item">
-          Wallet
+          {tr('Wallet')}
         </Link>
 
-        <div className="nav-section">System</div>
+        <div className="nav-section">{tr('System')}</div>
         <Link href="/dashboard/settings" className="nav-item">
-          Settings
+          {tr('Settings')}
         </Link>
       </div>
 
       <div className="main">
         <div className="topbar">
-          <div className="page-title">Saved items</div>
+          <div className="page-title">{tr('Saved items')}</div>
           <span className="text-xs text-slate-500">{wishlist.length} items</span>
         </div>
 
         {wishlist.length === 0 ? (
           <div className="card text-center py-20">
             <div className="text-5xl mb-4">❤️</div>
-            <h3 className="text-lg font-semibold mb-2">Your wishlist is empty</h3>
-            <p className="text-sm text-slate-500 mb-6">Save items you love to see them here</p>
+            <h3 className="text-lg font-semibold mb-2">{tr('Your wishlist is empty')}</h3>
+            <p className="text-sm text-slate-500 mb-6">
+              {tr('Save items you love to see them here')}
+            </p>
             <Link
               href="/shop"
               className="inline-block px-6 py-3 bg-[#534AB7] text-white rounded-lg font-medium"
             >
-              Browse Products
+              {tr('Browse Products')}
             </Link>
           </div>
         ) : (
@@ -178,7 +183,7 @@ export default function WishlistPage() {
                     </Link>
                     <p className="text-xs text-slate-500 mb-2">{item.product.category?.name}</p>
                     <p className="font-bold text-[#534AB7]">
-                      {item.product.basePrice?.toLocaleString()} EGP
+                      {item.product.basePrice?.toLocaleString()} {tr('EGP')}
                     </p>
                   </div>
                 </div>
@@ -187,7 +192,7 @@ export default function WishlistPage() {
                     onClick={() => moveToCart(item)}
                     className="flex-1 py-2 text-xs font-medium border border-slate-200 rounded hover:bg-slate-50"
                   >
-                    Move to Cart
+                    {tr('Move to Cart')}
                   </button>
                   <button
                     onClick={() => addToCart(item)}
@@ -198,7 +203,7 @@ export default function WishlistPage() {
                         : 'bg-[#534AB7] text-white hover:opacity-90'
                     }`}
                   >
-                    {addedToCart[item.productId] ? 'Added!' : 'Add to Cart'}
+                    {addedToCart[item.productId] ? tr('Added!') : tr('Add to Cart')}
                   </button>
                   <button
                     onClick={() => removeFromWishlist(item.productId)}

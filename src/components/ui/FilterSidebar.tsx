@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState } from 'react';
 
@@ -22,11 +23,18 @@ interface FilterSidebarProps {
   className?: string;
 }
 
-export function FilterSidebar({ groups, activeFilters, onFilterChange, onClearAll, className = '' }: FilterSidebarProps) {
-  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(groups.map((g) => g.id)));
+export function FilterSidebar({
+  groups,
+  activeFilters,
+  onFilterChange,
+  onClearAll,
+  className = '',
+}: FilterSidebarProps) {
+  const { tr } = useLanguage();
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(groups.map(g => g.id)));
 
   const toggleGroup = (id: string) => {
-    setOpenGroups((prev) => {
+    setOpenGroups(prev => {
       const newSet = new Set(prev);
       if (newSet.has(id)) newSet.delete(id);
       else newSet.add(id);
@@ -38,12 +46,12 @@ export function FilterSidebar({ groups, activeFilters, onFilterChange, onClearAl
 
   const handleCheckboxChange = (groupId: string, value: string, checked: boolean) => {
     const current = activeFilters[groupId] || [];
-    const updated = checked ? [...current, value] : current.filter((v) => v !== value);
+    const updated = checked ? [...current, value] : current.filter(v => v !== value);
     onFilterChange(groupId, updated);
   };
 
   const handleRangeChange = (groupId: string, type: 'min' | 'max', value: string) => {
-    const group = groups.find((g) => g.id === groupId);
+    const group = groups.find(g => g.id === groupId);
     if (!group) return;
     const numValue = parseFloat(value) || 0;
     if (type === 'min') {
@@ -56,19 +64,20 @@ export function FilterSidebar({ groups, activeFilters, onFilterChange, onClearAl
   return (
     <div className={`bg-white rounded-[var(--radius)] border border-gray-100 p-5 ${className}`}>
       <div className="flex items-center justify-between mb-5">
-        <h3 className="font-bold text-lg text-gray-900">Filters</h3>
+        <h3 className="font-bold text-lg text-gray-900">{tr('Filters')}</h3>
         {activeCount > 0 && (
           <button
             onClick={onClearAll}
             className="text-sm text-[hsl(var(--primary))] hover:underline"
           >
-            Clear all ({activeCount})
+            {tr('Clear all (')}
+            {activeCount})
           </button>
         )}
       </div>
 
       <div className="space-y-4">
-        {groups.map((group) => {
+        {groups.map(group => {
           const isOpen = openGroups.has(group.id);
           const selected = activeFilters[group.id] || [];
 
@@ -76,7 +85,7 @@ export function FilterSidebar({ groups, activeFilters, onFilterChange, onClearAl
             <div key={group.id} className="border-b border-gray-100 pb-4 last:border-0">
               <button
                 onClick={() => toggleGroup(group.id)}
-                className="w-full flex items-center justify-between text-left"
+                className="w-full flex items-center justify-between text-start"
               >
                 <span className="font-semibold text-gray-800">{group.title}</span>
                 <svg
@@ -96,12 +105,14 @@ export function FilterSidebar({ groups, activeFilters, onFilterChange, onClearAl
                 <div className="mt-3">
                   {group.type === 'checkbox' && group.options && (
                     <div className="space-y-2">
-                      {group.options.map((opt) => (
+                      {group.options.map(opt => (
                         <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={selected.includes(opt.value)}
-                            onChange={(e) => handleCheckboxChange(group.id, opt.value, e.target.checked)}
+                            onChange={e =>
+                              handleCheckboxChange(group.id, opt.value, e.target.checked)
+                            }
                             className="w-4 h-4 rounded border-gray-300 text-[hsl(var(--primary))] focus:ring-[hsl(var(--ring))]"
                           />
                           <span className="text-sm text-gray-600 flex-1">{opt.label}</span>
@@ -115,7 +126,7 @@ export function FilterSidebar({ groups, activeFilters, onFilterChange, onClearAl
 
                   {group.type === 'radio' && group.options && (
                     <div className="space-y-2">
-                      {group.options.map((opt) => (
+                      {group.options.map(opt => (
                         <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="radio"
@@ -136,16 +147,16 @@ export function FilterSidebar({ groups, activeFilters, onFilterChange, onClearAl
                         <input
                           type="number"
                           value={group.minValue ?? group.min ?? ''}
-                          onChange={(e) => handleRangeChange(group.id, 'min', e.target.value)}
-                          placeholder="Min"
+                          onChange={e => handleRangeChange(group.id, 'min', e.target.value)}
+                          placeholder={tr('Min')}
                           className="w-full px-2 py-1 text-sm border border-gray-200 rounded"
                         />
                         <span className="text-gray-400">-</span>
                         <input
                           type="number"
                           value={group.maxValue ?? group.max ?? ''}
-                          onChange={(e) => handleRangeChange(group.id, 'max', e.target.value)}
-                          placeholder="Max"
+                          onChange={e => handleRangeChange(group.id, 'max', e.target.value)}
+                          placeholder={tr('Max')}
                           className="w-full px-2 py-1 text-sm border border-gray-200 rounded"
                         />
                       </div>
@@ -154,7 +165,7 @@ export function FilterSidebar({ groups, activeFilters, onFilterChange, onClearAl
                         min={group.min ?? 0}
                         max={group.max ?? 1000}
                         value={group.maxValue ?? group.max ?? 0}
-                        onChange={(e) => handleRangeChange(group.id, 'max', e.target.value)}
+                        onChange={e => handleRangeChange(group.id, 'max', e.target.value)}
                         className="w-full"
                       />
                     </div>

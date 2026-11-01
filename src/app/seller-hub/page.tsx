@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
@@ -197,6 +198,7 @@ const detectImageColor = async (file: File): Promise<string> => {
 };
 
 export default function SellerHub() {
+  const { tr } = useLanguage();
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const { confirm } = useConfirm();
@@ -315,7 +317,7 @@ export default function SellerHub() {
         resData.brand.status === 'PENDING_APPROVAL' || resData.requiresApproval;
       toast({
         variant: 'success',
-        title: requiresApproval ? 'Brand Submitted for Approval' : 'Brand Created',
+        title: requiresApproval ? tr('Brand Submitted for Approval') : tr('Brand Created'),
         description: requiresApproval
           ? `Brand "${resData.brand.name}" submitted! Admin review required before it goes live.`
           : `Brand "${resData.brand.name}" has been created!`,
@@ -325,7 +327,7 @@ export default function SellerHub() {
       await refreshData();
       setActiveBrand(resData.brand.slug);
     } catch (err) {
-      toast({ variant: 'error', title: 'Error', description: (err as Error).message });
+      toast({ variant: 'error', title: tr('Error'), description: (err as Error).message });
     } finally {
       setCreatingBrand(false);
     }
@@ -403,7 +405,7 @@ export default function SellerHub() {
       setData(res);
     } catch (error: unknown) {
       const err = error as Error;
-      setError(err.message || 'Failed to load dashboard');
+      setError(err.message || tr('Failed to load dashboard'));
     } finally {
       setLoading(false);
     }
@@ -484,8 +486,8 @@ export default function SellerHub() {
       console.error('Upload failed:', err);
       toast({
         variant: 'error',
-        title: 'Upload Failed',
-        description: (err as Error).message || 'Upload failed. Please try a different photo.',
+        title: tr('Upload Failed'),
+        description: (err as Error).message || tr('Upload failed. Please try a different photo.'),
       });
       setVariants(prev => {
         const next = [...prev];
@@ -606,7 +608,7 @@ export default function SellerHub() {
       })) as { error?: string };
 
       if (res?.error) {
-        toast({ variant: 'error', title: 'Creation Failed', description: res.error });
+        toast({ variant: 'error', title: tr('Creation Failed'), description: res.error });
         return;
       }
 
@@ -621,13 +623,13 @@ export default function SellerHub() {
       ) {
         toast({
           variant: 'error',
-          title: 'Update Available',
-          description: 'The app was updated. Refreshing the page to load the latest version...',
+          title: tr('Update Available'),
+          description: tr('The app was updated. Refreshing the page to load the latest version...'),
         });
         setTimeout(() => window.location.reload(), 1500);
         return;
       }
-      toast({ variant: 'error', title: 'Creation Failed', description: err.message });
+      toast({ variant: 'error', title: tr('Creation Failed'), description: err.message });
     } finally {
       setIsSubmitting(false);
     }
@@ -635,21 +637,21 @@ export default function SellerHub() {
 
   const handleDeleteProduct = async (id: string) => {
     const confirmed = await confirm({
-      title: 'Delete Product',
-      message: 'Are you sure you want to delete this product?',
+      title: tr('Delete Product'),
+      message: tr('Are you sure you want to delete this product?'),
       type: 'danger',
     });
     if (!confirmed) return;
     try {
       const res = (await deleteProduct(id)) as { error?: string };
       if (res?.error) {
-        toast({ variant: 'error', title: 'Delete Failed', description: res.error });
+        toast({ variant: 'error', title: tr('Delete Failed'), description: res.error });
         return;
       }
       await refreshData();
     } catch (error: unknown) {
       const err = error as Error;
-      toast({ variant: 'error', title: 'Error', description: err.message });
+      toast({ variant: 'error', title: tr('Error'), description: err.message });
     }
   };
 
@@ -659,13 +661,13 @@ export default function SellerHub() {
     try {
       const res = (await updateOrderItemStatus(itemId, 'CONFIRMED')) as { error?: string };
       if (res?.error) {
-        toast({ variant: 'error', title: 'Fulfillment Failed', description: res.error });
+        toast({ variant: 'error', title: tr('Fulfillment Failed'), description: res.error });
         return;
       }
       await refreshData();
     } catch (error: unknown) {
       const err = error as Error;
-      toast({ variant: 'error', title: 'Error', description: err.message });
+      toast({ variant: 'error', title: tr('Error'), description: err.message });
     }
   };
 
@@ -688,7 +690,7 @@ export default function SellerHub() {
   if (!mounted || (loading && !data))
     return (
       <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#0F6E56] font-medium animate-pulse">
-        Loading SellerHub...
+        {tr('Loading SellerHub...')}
       </div>
     );
   if (error)
@@ -731,26 +733,27 @@ export default function SellerHub() {
               <path d="M12 6v6l4 2" stroke="#d97706" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
-          <h1 className="text-xl font-black text-gray-900 mb-2">Account under review</h1>
+          <h1 className="text-xl font-black text-gray-900 mb-2">{tr('Account under review')}</h1>
           <p className="text-gray-500 text-sm leading-relaxed mb-5">
-            Your seller application for{' '}
-            <strong className="text-gray-800">{data.currentSeller.storeName}</strong> is being
-            reviewed by our team. You&apos;ll receive an email once it&apos;s approved — usually
-            within 1–2 business days.
+            {tr('Your seller application for')}{' '}
+            <strong className="text-gray-800">{data.currentSeller.storeName}</strong>{' '}
+            {tr(
+              "is being reviewed by our team. You'll receive an email once it's approved — usually within 1–2 business days."
+            )}
           </p>
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left mb-6">
-            <p className="text-amber-800 text-xs font-semibold mb-1">While you wait:</p>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-start mb-6">
+            <p className="text-amber-800 text-xs font-semibold mb-1">{tr('While you wait:')}</p>
             <ul className="text-amber-700 text-xs space-y-1 list-disc list-inside">
-              <li>Make sure you verified your email address</li>
-              <li>Prepare your product photos and descriptions</li>
-              <li>Check your inbox for updates from our team</li>
+              <li>{tr('Make sure you verified your email address')}</li>
+              <li>{tr('Prepare your product photos and descriptions')}</li>
+              <li>{tr('Check your inbox for updates from our team')}</li>
             </ul>
           </div>
           <button
             onClick={() => (window.location.href = '/api/auth/signout')}
             className="text-sm text-red-400 hover:text-red-600 transition-colors"
           >
-            Sign out
+            {tr('Sign out')}
           </button>
         </div>
       </div>
@@ -765,8 +768,8 @@ export default function SellerHub() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
-            className="p-1.5 -ml-1 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
-            aria-label="Open menu"
+            className="p-1.5 -ms-1 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
+            aria-label={tr('Open menu')}
           >
             <Menu size={22} />
           </button>
@@ -774,8 +777,8 @@ export default function SellerHub() {
             <ShoppingBag size={18} />
             <span>SellerHub</span>
           </div>
-          <span className="text-[10px] font-bold bg-[#fbbf24] text-[#3b2a00] px-2 py-0.5 rounded-full ml-1">
-            {isMultiBrand ? 'MULTI-BRAND' : 'SINGLE BRAND'}
+          <span className="text-[10px] font-bold bg-[#fbbf24] text-[#3b2a00] px-2 py-0.5 rounded-full ms-1">
+            {isMultiBrand ? tr('MULTI-BRAND') : tr('SINGLE BRAND')}
           </span>
         </div>
 
@@ -784,7 +787,7 @@ export default function SellerHub() {
           onClick={() => setShowAddModal(true)}
           className="bg-white text-[#0f6b50] px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm hover:bg-white/90 cursor-pointer"
         >
-          <Plus size={14} /> Add
+          <Plus size={14} /> {tr('Add')}
         </button>
       </div>
 
@@ -812,7 +815,7 @@ export default function SellerHub() {
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-1 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors cursor-pointer"
-                aria-label="Close menu"
+                aria-label={tr('Close menu')}
               >
                 <X size={20} />
               </button>
@@ -820,7 +823,7 @@ export default function SellerHub() {
 
             {/* Active Brand Section */}
             <div className="mt-4 mb-2 text-[11px] font-bold text-white/70 tracking-wider">
-              ACTIVE BRAND
+              {tr('ACTIVE BRAND')}
             </div>
 
             <div className="flex flex-col gap-1.5 mb-4">
@@ -836,7 +839,7 @@ export default function SellerHub() {
                     : 'text-white hover:bg-white/10'
                 }`}
               >
-                <span>All brands</span>
+                <span>{tr('All brands')}</span>
                 <span className="text-xs opacity-80 font-normal">
                   {(data?.myOrders || []).length > 0 ? (data?.myOrders || []).length : 635}
                 </span>
@@ -868,7 +871,7 @@ export default function SellerHub() {
                       className="w-3 h-3 rounded-full flex-shrink-0"
                       style={{ background: b.accentColor || '#0c674a' }}
                     />
-                    <span className="truncate flex-1 text-left">{b.name}</span>
+                    <span className="truncate flex-1 text-start">{b.name}</span>
                     <span className="text-xs opacity-80 font-normal">{bOrdersCount}</span>
                   </button>
                 );
@@ -893,7 +896,7 @@ export default function SellerHub() {
                 }`}
               >
                 <LayoutDashboard size={18} />
-                <span>Overview</span>
+                <span>{tr('Overview')}</span>
               </div>
 
               <div
@@ -909,7 +912,7 @@ export default function SellerHub() {
               >
                 <div className="flex items-center gap-3">
                   <Package size={18} />
-                  <span>Orders</span>
+                  <span>{tr('Orders')}</span>
                 </div>
                 {filteredOrders
                   .flatMap((o: any) => o.items || [])
@@ -936,7 +939,7 @@ export default function SellerHub() {
                 }`}
               >
                 <ShoppingBag size={18} />
-                <span>Inventory & Products</span>
+                <span>{tr('Inventory & Products')}</span>
               </div>
 
               <div
@@ -951,7 +954,7 @@ export default function SellerHub() {
                 }`}
               >
                 <BarChart3 size={18} />
-                <span>Analytics</span>
+                <span>{tr('Analytics')}</span>
               </div>
 
               <div
@@ -966,7 +969,7 @@ export default function SellerHub() {
                 }`}
               >
                 <Wallet size={18} />
-                <span>Wallet & Payouts</span>
+                <span>{tr('Wallet & Payouts')}</span>
               </div>
 
               <div
@@ -981,7 +984,7 @@ export default function SellerHub() {
                 }`}
               >
                 <Settings size={18} />
-                <span>Store Settings</span>
+                <span>{tr('Store Settings')}</span>
               </div>
             </div>
 
@@ -1002,20 +1005,20 @@ export default function SellerHub() {
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
-              <span>Back to Public Shop</span>
+              <span>{tr('Back to Public Shop')}</span>
             </Link>
 
             {/* Drawer Footer */}
             <div className="mt-auto pt-6 flex flex-col gap-3">
               <div>
                 <div className="font-bold text-white text-xs truncate">
-                  {data?.currentSeller?.storeName || 'Store'}
+                  {data?.currentSeller?.storeName || tr('Store')}
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-white/75 mt-0.5">
                   <div
                     className={`w-2 h-2 rounded-full ${isMultiBrand ? 'bg-amber-400' : 'bg-green-400'}`}
                   />
-                  <span>{isMultiBrand ? 'Multi-brand seller' : 'Active seller'}</span>
+                  <span>{isMultiBrand ? tr('Multi-brand seller') : tr('Active seller')}</span>
                 </div>
               </div>
               <button
@@ -1024,7 +1027,7 @@ export default function SellerHub() {
                 className="flex items-center justify-center gap-2 text-xs font-semibold text-emerald-100 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-2.5 rounded-xl transition-all w-full cursor-pointer border border-white/10"
               >
                 <LogOut size={15} />
-                <span>Sign Out</span>
+                <span>{tr('Sign Out')}</span>
               </button>
             </div>
           </div>
@@ -1032,7 +1035,7 @@ export default function SellerHub() {
       )}
 
       {/* Mobile Sticky Bottom Navigation Bar (visible on <900px) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-1.5 px-2 flex items-center justify-around md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+      <div className="fixed bottom-0 start-0 end-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-1.5 px-2 flex items-center justify-around md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
         <button
           type="button"
           onClick={() => setActiveTab('overview')}
@@ -1043,7 +1046,7 @@ export default function SellerHub() {
           }`}
         >
           <LayoutDashboard size={20} />
-          <span className="text-[10px]">Overview</span>
+          <span className="text-[10px]">{tr('Overview')}</span>
         </button>
 
         <button
@@ -1060,7 +1063,7 @@ export default function SellerHub() {
             {filteredOrders
               .flatMap((o: any) => o.items || [])
               .filter((i: any) => i.status === 'PENDING').length > 0 && (
-              <span className="absolute -top-1.5 -right-2 bg-amber-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              <span className="absolute -top-1.5 -end-2 bg-amber-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                 {
                   filteredOrders
                     .flatMap((o: any) => o.items || [])
@@ -1069,7 +1072,7 @@ export default function SellerHub() {
               </span>
             )}
           </div>
-          <span className="text-[10px]">Orders</span>
+          <span className="text-[10px]">{tr('Orders')}</span>
         </button>
 
         <button
@@ -1082,7 +1085,7 @@ export default function SellerHub() {
           }`}
         >
           <ShoppingBag size={20} />
-          <span className="text-[10px]">Inventory</span>
+          <span className="text-[10px]">{tr('Inventory')}</span>
         </button>
 
         <button
@@ -1095,7 +1098,7 @@ export default function SellerHub() {
           }`}
         >
           <BarChart3 size={20} />
-          <span className="text-[10px]">Analytics</span>
+          <span className="text-[10px]">{tr('Analytics')}</span>
         </button>
 
         <button
@@ -1108,7 +1111,7 @@ export default function SellerHub() {
           }`}
         >
           <Menu size={20} />
-          <span className="text-[10px]">Menu</span>
+          <span className="text-[10px]">{tr('Menu')}</span>
         </button>
       </div>
 
@@ -1141,7 +1144,7 @@ export default function SellerHub() {
               letterSpacing: '.5px',
             }}
           >
-            {isMultiBrand ? 'MULTI-BRAND' : 'SINGLE BRAND'}
+            {isMultiBrand ? tr('MULTI-BRAND') : tr('SINGLE BRAND')}
           </span>
           {isMultiBrand && (
             <span style={{ fontSize: '12px', opacity: 0.8, color: '#fff' }}>
@@ -1161,7 +1164,7 @@ export default function SellerHub() {
             fontWeight: 700,
           }}
         >
-          ACTIVE BRAND
+          {tr('ACTIVE BRAND')}
         </div>
         <div
           style={{
@@ -1197,7 +1200,7 @@ export default function SellerHub() {
             <span
               style={{ textAlign: 'left', flex: 1, fontWeight: activeBrand === 'all' ? 700 : 400 }}
             >
-              All brands
+              {tr('All brands')}
             </span>
             <span
               style={{
@@ -1283,7 +1286,7 @@ export default function SellerHub() {
                         borderRadius: '6px',
                       }}
                     >
-                      ⏳ Review
+                      {tr('⏳ Review')}
                     </span>
                   ) : (
                     <span
@@ -1368,7 +1371,7 @@ export default function SellerHub() {
                 e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)';
               }}
             >
-              + Add brand
+              {tr('+ Add brand')}
             </button>
           )}
         </div>
@@ -1385,7 +1388,7 @@ export default function SellerHub() {
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
-          Back to Shop
+          {tr('Back to Shop')}
         </Link>
 
         {/* Main Nav Items - only show Overview, Orders, Inventory, Analytics here when All Brands is selected */}
@@ -1394,7 +1397,7 @@ export default function SellerHub() {
             <NavItem
               active={activeTab === 'overview'}
               onClick={() => setActiveTab('overview')}
-              label="Overview"
+              label={tr('Overview')}
               icon={<LayoutDashboard size={18} />}
             />
             <NavItem
@@ -1406,13 +1409,13 @@ export default function SellerHub() {
             <NavItem
               active={activeTab === 'products'}
               onClick={() => setActiveTab('products')}
-              label="Inventory"
+              label={tr('Inventory')}
               icon={<ShoppingBag size={18} />}
             />
             <NavItem
               active={activeTab === 'analytics'}
               onClick={() => setActiveTab('analytics')}
-              label="Analytics"
+              label={tr('Analytics')}
               icon={<BarChart3 size={18} />}
             />
           </>
@@ -1420,26 +1423,26 @@ export default function SellerHub() {
         <NavItem
           active={activeTab === 'wallet'}
           onClick={() => setActiveTab('wallet')}
-          label="Wallet"
+          label={tr('Wallet')}
           icon={<Wallet size={18} />}
         />
         <NavItem
           active={activeTab === 'settings'}
           onClick={() => setActiveTab('settings')}
-          label="Settings"
+          label={tr('Settings')}
           icon={<Settings size={18} />}
         />
 
         <div className="mt-auto px-4 pb-6 flex flex-col gap-3">
           <div>
             <div className="store-label truncate max-w-full font-bold text-white text-xs">
-              {data?.currentSeller?.storeName || 'Store'}
+              {data?.currentSeller?.storeName || tr('Store')}
             </div>
             <div className="active-dot-row flex items-center gap-2 text-[10px] text-white/80 mt-0.5">
               <div
                 className={`active-dot w-2 h-2 rounded-full ${isMultiBrand ? 'bg-amber-400' : 'bg-green-400'}`}
               ></div>
-              {isMultiBrand ? 'Upgraded by admin' : 'Active seller'}
+              {isMultiBrand ? tr('Upgraded by admin') : tr('Active seller')}
             </div>
           </div>
           <button
@@ -1447,7 +1450,7 @@ export default function SellerHub() {
             className="flex items-center gap-2 text-xs font-semibold text-emerald-100 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-2 rounded-xl transition-all w-full cursor-pointer border border-white/10"
           >
             <LogOut size={15} />
-            <span>Sign Out</span>
+            <span>{tr('Sign Out')}</span>
           </button>
         </div>
       </div>
@@ -1458,20 +1461,20 @@ export default function SellerHub() {
           <div className="flex flex-col md:flex-row md:items-center gap-3">
             <div>
               <div className="page-title flex items-center gap-2">
-                <span>{activeBrandObj ? activeBrandObj.name : 'All Brands'}</span>
+                <span>{activeBrandObj ? activeBrandObj.name : tr('All Brands')}</span>
                 <span className="text-slate-300">·</span>
-                <span className="capitalize">{TITLES[activeTab] || activeTab}</span>
+                <span className="capitalize">{tr(TITLES[activeTab] || activeTab)}</span>
               </div>
               <div className="text-xs text-slate-400 font-medium">
                 {activeBrandObj
                   ? `Managing brand store: ${activeBrandObj.name}`
-                  : 'Combined overview across all seller brands'}
+                  : tr('Combined overview across all seller brands')}
               </div>
             </div>
 
             {storeLink && (
               <div className="flex items-center gap-2 bg-[#0F6E56]/10 text-[#0F6E56] border border-[#0F6E56]/20 rounded-full px-3 py-1 text-xs font-semibold select-none">
-                <span>Store URL:</span>
+                <span>{tr('Store URL:')}</span>
                 <a
                   href={storeLink}
                   target="_blank"
@@ -1486,10 +1489,10 @@ export default function SellerHub() {
                   type="button"
                   onClick={handleCopyLink}
                   className="hover:opacity-70 transition-opacity flex items-center gap-1 cursor-pointer bg-transparent border-none text-[#0F6E56] p-0 outline-none"
-                  title="Copy storefront link"
+                  title={tr('Copy storefront link')}
                 >
                   <span className="font-bold text-[10px] tracking-wider uppercase">
-                    {copied ? 'Copied ✓' : 'Copy'}
+                    {copied ? tr('Copied ✓') : tr('Copy')}
                   </span>
                   {!copied && <Copy size={11} />}
                 </button>
@@ -1497,7 +1500,7 @@ export default function SellerHub() {
             )}
           </div>
           <button className="add-product-btn" onClick={() => setShowAddModal(true)}>
-            <Plus size={16} /> Add product
+            <Plus size={16} /> {tr('Add product')}
           </button>
         </div>
 
@@ -1568,9 +1571,9 @@ export default function SellerHub() {
           >
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h3 className="text-lg font-extrabold text-slate-900">New Brand</h3>
+                <h3 className="text-lg font-extrabold text-slate-900">{tr('New Brand')}</h3>
                 <p className="text-xs text-slate-400 font-medium">
-                  Create a new brand under your seller account.
+                  {tr('Create a new brand under your seller account.')}
                 </p>
               </div>
               <button
@@ -1583,7 +1586,9 @@ export default function SellerHub() {
             </div>
             <div className="flex flex-col gap-4">
               <div>
-                <label className="text-xs font-bold text-slate-600 mb-1 block">Brand Name *</label>
+                <label className="text-xs font-bold text-slate-600 mb-1 block">
+                  {tr('Brand Name *')}
+                </label>
                 <input
                   type="text"
                   required
@@ -1594,18 +1599,20 @@ export default function SellerHub() {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-600 mb-1 block">Description</label>
+                <label className="text-xs font-bold text-slate-600 mb-1 block">
+                  {tr('Description')}
+                </label>
                 <textarea
                   rows={2}
                   value={brandDraft.description}
                   onChange={e => setBrandDraft({ ...brandDraft, description: e.target.value })}
-                  placeholder="Short tagline or description..."
+                  placeholder={tr('Short tagline or description...')}
                   className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-[#0f6b50] outline-none resize-none"
                 />
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-600 mb-2 block">
-                  Brand Accent Color
+                  {tr('Brand Accent Color')}
                 </label>
                 <div className="flex items-center gap-2">
                   {[
@@ -1638,7 +1645,7 @@ export default function SellerHub() {
                 onClick={() => setShowAddBrandModal(false)}
                 className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-50 cursor-pointer"
               >
-                Cancel
+                {tr('Cancel')}
               </button>
               <button
                 type="button"
@@ -1646,7 +1653,7 @@ export default function SellerHub() {
                 onClick={handleCreateBrand}
                 className="px-4 py-2 bg-[#0f6b50] text-white rounded-xl font-bold text-xs hover:bg-[#0b5442] disabled:opacity-50 cursor-pointer"
               >
-                {creatingBrand ? 'Creating...' : 'Create Brand'}
+                {creatingBrand ? tr('Creating...') : tr('Create Brand')}
               </button>
             </div>
           </div>
@@ -1915,6 +1922,7 @@ function OverviewTab({
   onSelectBrand?: (slug: string) => void;
   setShowAddBrandModal?: (show: boolean) => void;
 }) {
+  const { tr } = useLanguage();
   const activeBrandObj = brands.find((b: any) => b.slug === activeBrand);
   const dailyData =
     stats.dailyRevenue && stats.dailyRevenue.length > 0
@@ -2051,7 +2059,7 @@ function OverviewTab({
         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Total Sales
+              {tr('Total Sales')}
             </span>
             <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm">
               🛍️
@@ -2060,13 +2068,13 @@ function OverviewTab({
           <div className="mt-3">
             <div className="text-xl font-black text-slate-900">
               {stats.revenue.toLocaleString()}{' '}
-              <span className="text-xs font-semibold text-slate-400">EGP</span>
+              <span className="text-xs font-semibold text-slate-400">{tr('EGP')}</span>
             </div>
             <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
               {stats.monthlyChangePct >= 0
                 ? `+${stats.monthlyChangePct}%`
                 : `${stats.monthlyChangePct}%`}{' '}
-              vs last month
+              {tr('vs last month')}
             </span>
           </div>
         </div>
@@ -2075,7 +2083,7 @@ function OverviewTab({
         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Total Orders
+              {tr('Total Orders')}
             </span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
               📦
@@ -2093,7 +2101,7 @@ function OverviewTab({
         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Available Balance
+              {tr('Available Balance')}
             </span>
             <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
               💰
@@ -2102,10 +2110,10 @@ function OverviewTab({
           <div className="mt-3">
             <div className="text-xl font-black text-slate-900">
               {stats.balance.toLocaleString()}{' '}
-              <span className="text-xs font-semibold text-slate-400">EGP</span>
+              <span className="text-xs font-semibold text-slate-400">{tr('EGP')}</span>
             </div>
             <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full inline-block mt-1">
-              Ready to withdraw
+              {tr('Ready to withdraw')}
             </span>
           </div>
         </div>
@@ -2114,7 +2122,7 @@ function OverviewTab({
         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Avg Order Value
+              {tr('Avg Order Value')}
             </span>
             <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
               💳
@@ -2123,10 +2131,10 @@ function OverviewTab({
           <div className="mt-3">
             <div className="text-xl font-black text-slate-900">
               {avgOrderVal.toLocaleString()}{' '}
-              <span className="text-xs font-semibold text-slate-400">EGP</span>
+              <span className="text-xs font-semibold text-slate-400">{tr('EGP')}</span>
             </div>
             <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
-              +15.5% vs last month
+              {tr('+15.5% vs last month')}
             </span>
           </div>
         </div>
@@ -2135,7 +2143,7 @@ function OverviewTab({
         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Store Rating
+              {tr('Store Rating')}
             </span>
             <div className="w-8 h-8 rounded-xl bg-yellow-50 text-yellow-600 flex items-center justify-center font-bold text-sm">
               ⭐
@@ -2146,7 +2154,7 @@ function OverviewTab({
               {stats.avgRating > 0 ? stats.avgRating.toFixed(1) : '5.0'}
             </div>
             <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full inline-block mt-1">
-              {stats.reviewCount} total reviews
+              {stats.reviewCount} {tr('total reviews')}
             </span>
           </div>
         </div>
@@ -2159,17 +2167,17 @@ function OverviewTab({
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <strong className="font-extrabold text-amber-950 text-sm">
-                Brand Pending Admin Approval
+                {tr('Brand Pending Admin Approval')}
               </strong>
               <span className="text-[10px] font-bold bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-full border border-amber-300">
-                Under Review
+                {tr('Under Review')}
               </span>
             </div>
             <p className="text-amber-800 leading-relaxed">
-              Your request for brand <strong>&quot;{activeBrandObj.name}&quot;</strong> is currently
-              waiting for admin approval. You can prepare brand assets and preview the dashboard,
-              but products cannot go live or accept orders until an administrator reviews and
-              approves this brand.
+              {tr('Your request for brand')} <strong>&quot;{activeBrandObj.name}&quot;</strong>{' '}
+              {tr(
+                'is currently waiting for admin approval. You can prepare brand assets and preview the dashboard, but products cannot go live or accept orders until an administrator reviews and approves this brand.'
+              )}
             </p>
           </div>
         </div>
@@ -2180,9 +2188,9 @@ function OverviewTab({
         <section className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm overflow-x-auto w-full">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h3 className="font-extrabold text-slate-900 text-base">Brand Performance</h3>
+              <h3 className="font-extrabold text-slate-900 text-base">{tr('Brand Performance')}</h3>
               <p className="text-xs text-slate-400 font-medium">
-                Click any brand row to switch context and manage it directly
+                {tr('Click any brand row to switch context and manage it directly')}
               </p>
             </div>
             <button
@@ -2190,13 +2198,13 @@ function OverviewTab({
               onClick={() => setShowAddBrandModal?.(true)}
               className="px-3.5 py-2 bg-[#0f6b50] text-white text-xs font-bold rounded-xl hover:bg-[#0b5442] transition-colors cursor-pointer"
             >
-              + Add brand
+              {tr('+ Add brand')}
             </button>
           </div>
           <div className="min-w-[680px] text-xs">
             <div className="grid grid-cols-7 gap-3 py-2 px-3 text-slate-400 font-bold uppercase tracking-wider text-[11px] border-b border-slate-100">
               <div className="col-span-2">BRAND</div>
-              <div>SALES (EGP)</div>
+              <div>{tr('SALES (EGP)')}</div>
               <div>ORDERS</div>
               <div>PRODUCTS</div>
               <div>SHARE</div>
@@ -2215,7 +2223,9 @@ function OverviewTab({
                   />
                   <span>{r.name}</span>
                 </div>
-                <div className="font-black text-slate-900">{r.sales.toLocaleString()} EGP</div>
+                <div className="font-black text-slate-900">
+                  {r.sales.toLocaleString()} {tr('EGP')}
+                </div>
                 <div className="font-semibold text-slate-600">{r.orders}</div>
                 <div className="font-semibold text-slate-600">{r.products}</div>
                 <div className="flex items-center gap-2">
@@ -2238,10 +2248,10 @@ function OverviewTab({
                     }`}
                   >
                     {r.status === 'ACTIVE'
-                      ? 'Live'
+                      ? tr('Live')
                       : r.status === 'PENDING_APPROVAL'
-                        ? '⏳ Under Review'
-                        : 'Draft'}
+                        ? tr('⏳ Under Review')
+                        : tr('Draft')}
                   </span>
                 </div>
               </div>
@@ -2259,17 +2269,21 @@ function OverviewTab({
         >
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h3 className="font-extrabold text-slate-900 text-base">Weekly Sales Performance</h3>
+              <h3 className="font-extrabold text-slate-900 text-base">
+                {tr('Weekly Sales Performance')}
+              </h3>
               <p className="text-xs text-slate-400 font-medium">
-                Daily store revenue vs total order volume breakdown
+                {tr('Daily store revenue vs total order volume breakdown')}
               </p>
             </div>
             <div className="flex items-center gap-4 text-xs font-bold">
               <span className="flex items-center gap-1.5 text-purple-600">
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-600 inline-block" /> Sales (EGP)
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-600 inline-block" />{' '}
+                {tr('Sales (EGP)')}
               </span>
               <span className="flex items-center gap-1.5 text-slate-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-300 inline-block" /> Orders
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-300 inline-block" />{' '}
+                {tr('Orders')}
               </span>
             </div>
           </div>
@@ -2336,9 +2350,11 @@ function OverviewTab({
         >
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-extrabold text-slate-900 text-base">Recent Store Orders</h3>
+              <h3 className="font-extrabold text-slate-900 text-base">
+                {tr('Recent Store Orders')}
+              </h3>
               <span className="text-xs font-bold text-purple-600 cursor-pointer hover:underline">
-                View All
+                {tr('View All')}
               </span>
             </div>
             <div className="space-y-3">
@@ -2353,26 +2369,26 @@ function OverviewTab({
                     </div>
                     <div>
                       <p className="text-xs font-bold text-slate-800">
-                        {ord.user?.name || ord.guestEmail || 'Customer'}
+                        {ord.user?.name || ord.guestEmail || tr('Customer')}
                       </p>
                       <span className="text-[10px] text-slate-400 font-mono">
                         #{ord.id ? ord.id.substring(0, 8).toUpperCase() : `125${8 - idx}`}
                       </span>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-end">
                     <p className="text-xs font-black text-slate-900">
-                      {(ord.totalAmount || 240).toLocaleString()} EGP
+                      {(ord.totalAmount || 240).toLocaleString()} {tr('EGP')}
                     </p>
                     <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 inline-block mt-0.5">
-                      {ord.status || 'CONFIRMED'}
+                      {tr(ord.status || 'CONFIRMED')}
                     </span>
                   </div>
                 </div>
               ))}
               {!myOrders.length && (
                 <div className="py-8 text-center text-xs text-slate-400 font-medium">
-                  No recent orders yet.
+                  {tr('No recent orders yet.')}
                 </div>
               )}
             </div>
@@ -2392,9 +2408,11 @@ function OverviewTab({
         {/* Top Selling Products */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-extrabold text-slate-900 text-base">Top Selling Products</h3>
+            <h3 className="font-extrabold text-slate-900 text-base">
+              {tr('Top Selling Products')}
+            </h3>
             <span className="text-xs font-bold text-purple-600 cursor-pointer hover:underline">
-              View All
+              {tr('View All')}
             </span>
           </div>
           <div className="space-y-4">
@@ -2411,7 +2429,9 @@ function OverviewTab({
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold text-slate-800 truncate">{item.title}</p>
-                  <p className="text-[11px] text-slate-400 font-medium">{item.sold} units sold</p>
+                  <p className="text-[11px] text-slate-400 font-medium">
+                    {item.sold} {tr('units sold')}
+                  </p>
                 </div>
               </div>
             ))}
@@ -2420,7 +2440,7 @@ function OverviewTab({
 
         {/* Traffic Sources */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-          <h3 className="font-extrabold text-slate-900 text-base mb-4">Traffic Sources</h3>
+          <h3 className="font-extrabold text-slate-900 text-base mb-4">{tr('Traffic Sources')}</h3>
           <div className="space-y-3">
             {trafficSources.map((item: any) => (
               <div key={item.name} className="space-y-1">
@@ -2447,7 +2467,7 @@ function OverviewTab({
 
         {/* Top Demographics / Countries */}
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-          <h3 className="font-extrabold text-slate-900 text-base mb-4">Top Demographics</h3>
+          <h3 className="font-extrabold text-slate-900 text-base mb-4">{tr('Top Demographics')}</h3>
           <div className="space-y-3">
             {topCountries.map((c: any) => (
               <div
@@ -2600,6 +2620,7 @@ function OrdersTab({
   onFulfill: (id: string) => void;
   onRefresh?: () => Promise<void>;
 }) {
+  const { tr } = useLanguage();
   const { confirm } = useConfirm();
   const { toast } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -2612,8 +2633,8 @@ function OrdersTab({
 
   const handleMarkShipped = async (orderId: string) => {
     const confirmed = await confirm({
-      title: 'Mark Shipped',
-      message: 'Mark this order as shipped? This notifies the buyer.',
+      title: tr('Mark Shipped'),
+      message: tr('Mark this order as shipped? This notifies the buyer.'),
     });
     if (!confirmed) return;
     setShippingLoading(true);
@@ -2627,8 +2648,8 @@ function OrdersTab({
         const d = await res.json();
         toast({
           variant: 'error',
-          title: 'Action Failed',
-          description: d.message || 'Failed to mark as shipped',
+          title: tr('Action Failed'),
+          description: d.message || tr('Failed to mark as shipped'),
         });
         return;
       }
@@ -2637,8 +2658,8 @@ function OrdersTab({
     } catch (err: unknown) {
       toast({
         variant: 'error',
-        title: 'Error',
-        description: (err as Error).message || 'Failed to mark as shipped',
+        title: tr('Error'),
+        description: (err as Error).message || tr('Failed to mark as shipped'),
       });
     } finally {
       setShippingLoading(false);
@@ -2657,15 +2678,15 @@ function OrdersTab({
       if (res?.error) {
         toast({
           variant: 'error',
-          title: 'Cancellation Failed',
+          title: tr('Cancellation Failed'),
           description: res.error,
         });
         return;
       }
       toast({
         variant: 'success',
-        title: 'Order Cancelled',
-        description: 'The order has been cancelled successfully.',
+        title: tr('Order Cancelled'),
+        description: tr('The order has been cancelled successfully.'),
       });
       setShowCancelModal(false);
       setSelectedOrder(null);
@@ -2673,8 +2694,8 @@ function OrdersTab({
     } catch (err: unknown) {
       toast({
         variant: 'error',
-        title: 'Error',
-        description: (err as Error).message || 'Failed to cancel order',
+        title: tr('Error'),
+        description: (err as Error).message || tr('Failed to cancel order'),
       });
     } finally {
       setCancelLoading(false);
@@ -2729,10 +2750,10 @@ function OrdersTab({
                 : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
             }`}
           >
-            {s === 'all' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}
+            {s === 'all' ? tr('All') : s.charAt(0) + s.slice(1).toLowerCase()}
             {s !== 'all' && statusCounts[s] ? (
               <span
-                className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                className={`ms-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${
                   statusFilter === s ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
                 }`}
               >
@@ -2740,7 +2761,7 @@ function OrdersTab({
               </span>
             ) : s === 'all' ? (
               <span
-                className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                className={`ms-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${
                   statusFilter === s ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
                 }`}
               >
@@ -2752,14 +2773,14 @@ function OrdersTab({
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden overflow-x-auto">
-        <table className="w-full text-left min-w-[500px]">
+        <table className="w-full text-start min-w-[500px]">
           <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
             <tr>
-              <th className="px-6 py-4">Item</th>
-              <th className="px-6 py-4">Order ID</th>
-              <th className="px-6 py-4">Customer</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right">Action</th>
+              <th className="px-6 py-4">{tr('Item')}</th>
+              <th className="px-6 py-4">{tr('Order ID')}</th>
+              <th className="px-6 py-4">{tr('Customer')}</th>
+              <th className="px-6 py-4">{tr('Status')}</th>
+              <th className="px-6 py-4 text-end">{tr('Action')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
@@ -2777,12 +2798,12 @@ function OrdersTab({
                     <div className="text-[10px] text-slate-505 mt-0.5 flex flex-wrap gap-1.5 font-medium">
                       {item.selectedColor && (
                         <span className="bg-slate-100 px-2 py-0.5 rounded-full">
-                          Color: {item.selectedColor}
+                          {tr('Color:')} {item.selectedColor}
                         </span>
                       )}
                       {item.selectedSize && (
                         <span className="bg-slate-100 px-2 py-0.5 rounded-full">
-                          Size: {item.selectedSize}
+                          {tr('Size:')} {item.selectedSize}
                         </span>
                       )}
                     </div>
@@ -2806,9 +2827,17 @@ function OrdersTab({
                   ) : null}
                   {(item.variant?.sku || item.variant?.upc) && (
                     <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                      {item.variant.sku && <>SKU: {item.variant.sku}</>}
+                      {item.variant.sku && (
+                        <>
+                          {tr('SKU:')} {item.variant.sku}
+                        </>
+                      )}
                       {item.variant.sku && item.variant.upc && <span className="mx-1">·</span>}
-                      {item.variant.upc && <>UPC: {item.variant.upc}</>}
+                      {item.variant.upc && (
+                        <>
+                          {tr('UPC:')} {item.variant.upc}
+                        </>
+                      )}
                     </div>
                   )}
                 </td>
@@ -2817,12 +2846,12 @@ function OrdersTab({
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-xs font-semibold text-slate-700">
-                    {item.customerName || (item.isGuest ? 'Guest' : '—')}
+                    {item.customerName || (item.isGuest ? tr('Guest') : '—')}
                   </div>
                   {item.customerEmail && (
                     <div className="text-[11px] text-slate-400 truncate max-w-[180px]">
                       {item.customerEmail}
-                      {item.isGuest && ' (guest)'}
+                      {item.isGuest && tr('(guest)')}
                     </div>
                   )}
                 </td>
@@ -2840,24 +2869,24 @@ function OrdersTab({
                               : 'bg-amber-50 text-amber-600'
                     }`}
                   >
-                    {item.status === 'CONFIRMED' ? 'Ready' : item.status.replace(/_/g, ' ')}
+                    {item.status === 'CONFIRMED' ? tr('Ready') : tr(item.status)}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-right">
+                <td className="px-6 py-4 text-end">
                   <div className="flex justify-end gap-3 items-center">
                     <button
                       onClick={() => setSelectedOrder(item)}
                       className="text-xs font-bold text-slate-500 hover:text-slate-700"
                     >
-                      View Details
+                      {tr('View Details')}
                     </button>
                     {item.status === 'PENDING' && (
                       <button
                         onClick={() => onFulfill(item.id)}
                         className="text-xs font-bold text-[#0F6E56] hover:underline"
-                        title="Mark this item as packed and ready to ship"
+                        title={tr('Mark this item as packed and ready to ship')}
                       >
-                        Mark Ready
+                        {tr('Mark Ready')}
                       </button>
                     )}
                   </div>
@@ -2867,7 +2896,7 @@ function OrdersTab({
           </tbody>
         </table>
         {orderItems.length === 0 && (
-          <div className="p-20 text-center text-slate-400 text-sm">No orders to show.</div>
+          <div className="p-20 text-center text-slate-400 text-sm">{tr('No orders to show.')}</div>
         )}
 
         {/* Order Details Modal */}
@@ -2876,21 +2905,23 @@ function OrdersTab({
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative">
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+                className="absolute top-4 end-4 text-slate-400 hover:text-slate-600"
               >
                 <XCircle size={24} />
               </button>
-              <h3 className="font-black text-lg mb-6">Order Details</h3>
+              <h3 className="font-black text-lg mb-6">{tr('Order Details')}</h3>
 
               <div className="space-y-4 text-sm text-slate-700">
                 <div className="grid grid-cols-2 gap-4 pb-4 border-b border-slate-100">
                   <div>
-                    <div className="text-xs font-bold text-slate-400 uppercase mb-1">Order ID</div>
+                    <div className="text-xs font-bold text-slate-400 uppercase mb-1">
+                      {tr('Order ID')}
+                    </div>
                     <div className="font-mono">#{selectedOrder.orderId}</div>
                   </div>
                   <div>
                     <div className="text-xs font-bold text-slate-400 uppercase mb-1">
-                      Order Status
+                      {tr('Order Status')}
                     </div>
                     <div className="font-bold">{selectedOrder.orderStatus}</div>
                   </div>
@@ -2899,26 +2930,26 @@ function OrdersTab({
                 {/* Item Specifications (Task 11) */}
                 <div className="pb-4 border-b border-slate-100">
                   <div className="text-xs font-bold text-slate-400 uppercase mb-2">
-                    Item Details
+                    {tr('Item Details')}
                   </div>
                   <div className="font-semibold text-slate-800">
                     {selectedOrder.productTitleSnapshot}
                   </div>
                   {selectedOrder.variant?.title && selectedOrder.variant.title !== 'Standard' && (
                     <div className="text-xs text-indigo-600 font-semibold mt-1">
-                      Variant: {selectedOrder.variant.title}
+                      {tr('Variant:')} {selectedOrder.variant.title}
                     </div>
                   )}
                   {selectedOrder.selectedColor || selectedOrder.selectedSize ? (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {selectedOrder.selectedColor && (
                         <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
-                          Color: {selectedOrder.selectedColor}
+                          {tr('Color:')} {selectedOrder.selectedColor}
                         </span>
                       )}
                       {selectedOrder.selectedSize && (
                         <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
-                          Size: {selectedOrder.selectedSize}
+                          {tr('Size:')} {selectedOrder.selectedSize}
                         </span>
                       )}
                     </div>
@@ -2930,12 +2961,12 @@ function OrdersTab({
                           <div className="flex flex-wrap gap-2 mt-2">
                             {attrs.color && (
                               <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
-                                Color: {attrs.color}
+                                {tr('Color:')} {attrs.color}
                               </span>
                             )}
                             {(attrs.size || attrs.sizes) && (
                               <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
-                                Size: {attrs.size || attrs.sizes}
+                                {tr('Size:')} {attrs.size || attrs.sizes}
                               </span>
                             )}
                           </div>
@@ -2946,8 +2977,8 @@ function OrdersTab({
                     })()
                   ) : null}
                   <div className="text-xs text-slate-500 mt-1">
-                    Qty: {selectedOrder.quantity} ·{' '}
-                    {selectedOrder.priceAtPurchase?.toLocaleString()} EGP each
+                    {tr('Qty:')} {selectedOrder.quantity} ·{' '}
+                    {selectedOrder.priceAtPurchase?.toLocaleString()} {tr('EGP each')}
                   </div>
                   {(selectedOrder.variant?.sku || selectedOrder.variant?.upc) && (
                     <div className="text-[10px] font-mono text-slate-400 mt-1">
@@ -2959,15 +2990,19 @@ function OrdersTab({
                 </div>
 
                 <div className="pb-4 border-b border-slate-100">
-                  <div className="text-xs font-bold text-slate-400 uppercase mb-2">Customer</div>
-                  <div>{selectedOrder.customerName || (selectedOrder.isGuest ? 'Guest' : '—')}</div>
+                  <div className="text-xs font-bold text-slate-400 uppercase mb-2">
+                    {tr('Customer')}
+                  </div>
+                  <div>
+                    {selectedOrder.customerName || (selectedOrder.isGuest ? tr('Guest') : '—')}
+                  </div>
                   <div className="text-slate-500">{selectedOrder.customerEmail}</div>
                 </div>
 
                 {selectedOrder.shippingAddress && (
                   <div className="pb-4">
                     <div className="text-xs font-bold text-slate-400 uppercase mb-2">
-                      Shipping Address
+                      {tr('Shipping Address')}
                     </div>
                     <div className="font-medium">{selectedOrder.shippingAddress.name}</div>
                     <div>{selectedOrder.shippingAddress.phone}</div>
@@ -2991,7 +3026,7 @@ function OrdersTab({
                     disabled={shippingLoading}
                     className="px-5 py-2 bg-[#0F6E56] hover:bg-[#0a5a45] text-white rounded-lg font-bold text-sm transition-colors disabled:opacity-40"
                   >
-                    {shippingLoading ? 'Updating…' : '🚚 Mark as Shipped'}
+                    {shippingLoading ? tr('Updating…') : tr('🚚 Mark as Shipped')}
                   </button>
                 )}
                 {selectedOrder.orderStatus !== 'CANCELLED' &&
@@ -3005,14 +3040,14 @@ function OrdersTab({
                       }}
                       className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm transition-colors"
                     >
-                      ❌ Cancel Order
+                      {tr('❌ Cancel Order')}
                     </button>
                   )}
                 <button
                   onClick={() => setSelectedOrder(null)}
-                  className="ml-auto px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors"
+                  className="ms-auto px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition-colors"
                 >
-                  Close
+                  {tr('Close')}
                 </button>
               </div>
             </div>
@@ -3021,22 +3056,24 @@ function OrdersTab({
 
         {showCancelModal && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative text-left">
-              <h4 className="font-black text-base mb-4 text-slate-800">Cancel Order</h4>
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative text-start">
+              <h4 className="font-black text-base mb-4 text-slate-800">{tr('Cancel Order')}</h4>
               <p className="text-xs text-slate-500 mb-4">
-                Are you sure you want to cancel order #{selectedOrder?.orderId.slice(0, 8)}? This
-                action cannot be undone.
+                {tr('Are you sure you want to cancel order #')}
+                {selectedOrder?.orderId.slice(0, 8)}? This action cannot be undone.
               </p>
 
               <div className="space-y-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1">
-                    Reason for Cancellation
+                    {tr('Reason for Cancellation')}
                   </label>
                   <textarea
                     value={cancelReason}
                     onChange={e => setCancelReason(e.target.value)}
-                    placeholder="e.g. Item is out of stock, customer requested cancellation..."
+                    placeholder={tr(
+                      'e.g. Item is out of stock, customer requested cancellation...'
+                    )}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-red-500 h-20 resize-none"
                   />
                 </div>
@@ -3053,7 +3090,7 @@ function OrdersTab({
                     htmlFor="markSoldOutCheckbox"
                     className="text-xs font-semibold text-slate-700 cursor-pointer select-none"
                   >
-                    Mark this item variant as sold out (set stock to 0)
+                    {tr('Mark this item variant as sold out (set stock to 0)')}
                   </label>
                 </div>
 
@@ -3062,14 +3099,14 @@ function OrdersTab({
                     onClick={() => setShowCancelModal(false)}
                     className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs transition-colors"
                   >
-                    Cancel
+                    {tr('Cancel')}
                   </button>
                   <button
                     onClick={handleCancelSubmit}
                     disabled={cancelLoading}
                     className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition-colors disabled:opacity-50"
                   >
-                    {cancelLoading ? 'Cancelling...' : 'Confirm Cancellation'}
+                    {cancelLoading ? tr('Cancelling...') : tr('Confirm Cancellation')}
                   </button>
                 </div>
               </div>
@@ -3094,6 +3131,7 @@ function ProductsTab({
   onAfterRefresh: () => Promise<void>;
   categories?: { id: string; name: string }[];
 }) {
+  const { tr } = useLanguage();
   const router = useRouter();
   const { toast } = useToast();
   const [search, setSearch] = useState('');
@@ -3158,7 +3196,7 @@ function ProductsTab({
   const handlePublishToggle = async (id: string, publish: boolean) => {
     const res = await toggleProductPublished(id, publish);
     if ('error' in res && res.error) {
-      toast({ variant: 'error', title: 'Action Failed', description: res.error });
+      toast({ variant: 'error', title: tr('Action Failed'), description: res.error });
       return;
     }
     await onAfterRefresh();
@@ -3169,10 +3207,11 @@ function ProductsTab({
       {/* Bulk import banner */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-bold text-slate-900">Bulk import via Excel</div>
+          <div className="text-sm font-bold text-slate-900">{tr('Bulk import via Excel')}</div>
           <div className="text-xs text-slate-500 mt-0.5">
-            Download the template, fill in your products, then upload it back here. Products without
-            an image stay as drafts until you add one.
+            {tr(
+              'Download the template, fill in your products, then upload it back here. Products without an image stay as drafts until you add one.'
+            )}
           </div>
         </div>
         <button
@@ -3180,10 +3219,10 @@ function ProductsTab({
           onClick={downloadTemplate}
           className="text-xs font-bold text-[#0F6E56] border border-emerald-200 hover:bg-emerald-50 px-3 py-2 rounded-lg whitespace-nowrap"
         >
-          Download template
+          {tr('Download template')}
         </button>
         <label className="text-xs font-bold text-white bg-[#0F6E56] hover:opacity-90 px-3 py-2 rounded-lg cursor-pointer whitespace-nowrap inline-flex items-center gap-2">
-          {bulkUploading ? 'Uploading…' : 'Upload filled file'}
+          {bulkUploading ? tr('Uploading…') : tr('Upload filled file')}
           <input
             type="file"
             accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -3198,7 +3237,7 @@ function ProductsTab({
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="font-bold text-slate-900">Bulk import result</div>
+              <div className="font-bold text-slate-900">{tr('Bulk import result')}</div>
               <div className="text-xs text-slate-500 mt-1">
                 <span className="text-emerald-600 font-semibold">{bulkResult.success}</span>{' '}
                 imported
@@ -3206,7 +3245,7 @@ function ProductsTab({
                   <>
                     {' '}
                     — <span className="text-amber-600 font-semibold">{bulkResult.drafts}</span>{' '}
-                    drafts (need an image)
+                    {tr('drafts (need an image)')}
                   </>
                 )}
                 {typeof bulkResult.published === 'number' && bulkResult.published > 0 && (
@@ -3228,14 +3267,14 @@ function ProductsTab({
             </div>
             <button
               onClick={() => setBulkResult(null)}
-              aria-label="Dismiss"
+              aria-label={tr('Dismiss')}
               className="text-slate-400 hover:text-slate-700 text-lg"
             >
               ×
             </button>
           </div>
           {bulkResult.errors && bulkResult.errors.length > 0 && (
-            <ul className="mt-3 max-h-32 overflow-y-auto text-xs text-red-600 list-disc pl-5 space-y-1">
+            <ul className="mt-3 max-h-32 overflow-y-auto text-xs text-red-600 list-disc ps-5 space-y-1">
               {bulkResult.errors.slice(0, 50).map((e, i) => (
                 <li key={i}>{e}</li>
               ))}
@@ -3255,7 +3294,7 @@ function ProductsTab({
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400"
           >
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -3264,15 +3303,15 @@ function ProductsTab({
             type="search"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by product name, category or ID…"
-            className="w-full pl-9 pr-9 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+            placeholder={tr('Search by product name, category or ID…')}
+            className="w-full ps-9 pe-9 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch('')}
-              aria-label="Clear search"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-base px-1"
+              aria-label={tr('Clear search')}
+              className="absolute end-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-base px-1"
             >
               ×
             </button>
@@ -3283,19 +3322,19 @@ function ProductsTab({
           onChange={e => setPublishFilter(e.target.value as typeof publishFilter)}
           className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
-          <option value="all">All status</option>
-          <option value="published">Published</option>
-          <option value="draft">Drafts</option>
+          <option value="all">{tr('All status')}</option>
+          <option value="published">{tr('Published')}</option>
+          <option value="draft">{tr('Drafts')}</option>
         </select>
         <select
           value={stockFilter}
           onChange={e => setStockFilter(e.target.value as typeof stockFilter)}
           className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
-          <option value="all">All stock</option>
-          <option value="in">In stock</option>
-          <option value="low">Low stock (≤5)</option>
-          <option value="out">Out of stock</option>
+          <option value="all">{tr('All stock')}</option>
+          <option value="in">{tr('In stock')}</option>
+          <option value="low">{tr('Low stock (≤5)')}</option>
+          <option value="out">{tr('Out of stock')}</option>
         </select>
         {categories && categories.length > 0 && (
           <select
@@ -3303,10 +3342,10 @@ function ProductsTab({
             onChange={e => setCategoryFilter(e.target.value)}
             className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
           >
-            <option value="all">All categories</option>
+            <option value="all">{tr('All categories')}</option>
             {categories.map(c => (
               <option key={c.id} value={c.id}>
-                {c.name}
+                {tr(c.name)}
               </option>
             ))}
           </select>
@@ -3318,7 +3357,7 @@ function ProductsTab({
 
       {filtered.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-12 text-center text-slate-400">
-          {q ? `No products match "${search}".` : 'No products yet — add your first one.'}
+          {q ? `No products match "${search}".` : tr('No products yet — add your first one.')}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -3353,46 +3392,48 @@ function ProductsTab({
                         <polyline points="21 15 16 10 5 21" />
                       </svg>
                       <span className="text-[10px] font-bold uppercase tracking-wider">
-                        No image
+                        {tr('No image')}
                       </span>
                     </div>
                   )}
-                  <div className="absolute top-2 right-2 flex gap-1">
+                  <div className="absolute top-2 end-2 flex gap-1">
                     <button
                       onClick={() => router.push(`/seller-hub/products/${product.id}`)}
-                      aria-label="Edit product"
+                      aria-label={tr('Edit product')}
                       className="w-8 h-8 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-blue-500 hover:bg-white"
                     >
                       <Settings size={14} />
                     </button>
                     <button
                       onClick={() => onDelete(product.id)}
-                      aria-label="Delete product"
+                      aria-label={tr('Delete product')}
                       className="w-8 h-8 rounded-lg bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-red-500 hover:bg-white"
                     >
                       <Trash2 size={14} />
                     </button>
                   </div>
-                  <div className="absolute bottom-2 left-2 flex gap-1">
+                  <div className="absolute bottom-2 start-2 flex gap-1">
                     {!isPublished && (
                       <span className="text-[10px] font-black bg-amber-500 text-white px-2 py-0.5 rounded-md uppercase">
-                        Draft
+                        {tr('Draft')}
                       </span>
                     )}
                     {stock === 0 && (
                       <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-md uppercase">
-                        Out of stock
+                        {tr('Out of stock')}
                       </span>
                     )}
                   </div>
                 </div>
                 <h4 className="font-bold text-sm text-slate-900 mb-1 truncate">{product.title}</h4>
                 <div className="flex justify-between items-center text-xs mb-2">
-                  <span className="font-black text-emerald-600">{product.basePrice} EGP</span>
+                  <span className="font-black text-emerald-600">
+                    {product.basePrice} {tr('EGP')}
+                  </span>
                   <span
                     className={`font-bold ${stock === 0 ? 'text-red-500' : stock <= 5 ? 'text-amber-500' : 'text-slate-400'}`}
                   >
-                    {stock} in stock
+                    {stock} {tr('in stock')}
                   </span>
                 </div>
                 <button
@@ -3406,9 +3447,15 @@ function ProductsTab({
                         ? 'border-emerald-200 text-emerald-600 hover:bg-emerald-50'
                         : 'border-slate-100 text-slate-300 cursor-not-allowed'
                   }`}
-                  title={!hasImage && !isPublished ? 'Add an image before publishing' : undefined}
+                  title={
+                    !hasImage && !isPublished ? tr('Add an image before publishing') : undefined
+                  }
                 >
-                  {isPublished ? 'Unpublish' : hasImage ? 'Publish' : 'Add image to publish'}
+                  {isPublished
+                    ? tr('Unpublish')
+                    : hasImage
+                      ? tr('Publish')
+                      : tr('Add image to publish')}
                 </button>
               </div>
             );
@@ -3418,7 +3465,7 @@ function ProductsTab({
             className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center p-8 text-slate-400 hover:border-emerald-300 hover:bg-emerald-50 transition-all gap-2 min-h-[200px]"
           >
             <Plus size={32} />
-            <span className="text-sm font-bold">Add Product</span>
+            <span className="text-sm font-bold">{tr('Add Product')}</span>
           </button>
         </div>
       )}
@@ -3427,6 +3474,7 @@ function ProductsTab({
 }
 
 function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[] }) {
+  const { tr } = useLanguage();
   // Compute product-wise top-sellers & status breakdown from real data
   const totalRevenue = stats.revenue;
   const avgOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
@@ -3477,10 +3525,10 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-            Total Revenue
+            {tr('Total Revenue')}
           </div>
           <div className="text-3xl font-black text-slate-900">
-            {totalRevenue.toLocaleString()} EGP
+            {totalRevenue.toLocaleString()} {tr('EGP')}
           </div>
           <div className="text-[11px] text-slate-400 mt-2">
             {stats.monthlyChangePct > 0 ? '+' : ''}
@@ -3489,20 +3537,22 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
         </div>
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-            Avg Order Value
+            {tr('Avg Order Value')}
           </div>
           <div className="text-3xl font-black text-slate-900">
-            {Math.round(avgOrderValue).toLocaleString()} EGP
+            {Math.round(avgOrderValue).toLocaleString()} {tr('EGP')}
           </div>
-          <div className="text-[11px] text-slate-400 mt-2">Across {orders.length} orders</div>
+          <div className="text-[11px] text-slate-400 mt-2">
+            {tr('Across')} {orders.length} orders
+          </div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-            Store Rating
+            {tr('Store Rating')}
           </div>
           <div className="text-3xl font-black text-slate-900">
-            {stats.avgRating > 0 ? stats.avgRating.toFixed(1) : 'New'}
-            <span className="text-yellow-500 ml-1">★</span>
+            {stats.avgRating > 0 ? stats.avgRating.toFixed(1) : tr('New')}
+            <span className="text-yellow-500 ms-1">★</span>
           </div>
           <div className="text-[11px] text-slate-400 mt-2">{stats.reviewCount} reviews</div>
         </div>
@@ -3510,7 +3560,7 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
 
       {/* Monthly revenue area chart */}
       <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm">
-        <h3 className="font-black text-lg mb-6">Revenue — Last 6 Months</h3>
+        <h3 className="font-black text-lg mb-6">{tr('Revenue — Last 6 Months')}</h3>
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart data={monthlyRevenue} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
             <defs>
@@ -3551,10 +3601,10 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm">
-          <h3 className="font-black text-lg mb-6">Order Status Breakdown</h3>
+          <h3 className="font-black text-lg mb-6">{tr('Order Status Breakdown')}</h3>
           {Object.entries(statusBreakdown).length === 0 ? (
             <div className="py-10 text-center text-sm text-slate-400">
-              No orders to analyze yet.
+              {tr('No orders to analyze yet.')}
             </div>
           ) : (
             <div className="space-y-4">
@@ -3563,7 +3613,7 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
                 return (
                   <div key={status}>
                     <div className="flex justify-between items-center text-xs mb-1">
-                      <span className="font-bold text-slate-600">{status}</span>
+                      <span className="font-bold text-slate-600">{tr(status)}</span>
                       <span className="text-slate-400">
                         {count} orders ({pct}%)
                       </span>
@@ -3579,9 +3629,11 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
         </div>
 
         <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm">
-          <h3 className="font-black text-lg mb-6">Top Products</h3>
+          <h3 className="font-black text-lg mb-6">{tr('Top Products')}</h3>
           {topProducts.length === 0 ? (
-            <div className="py-10 text-center text-sm text-slate-400">No sales data yet.</div>
+            <div className="py-10 text-center text-sm text-slate-400">
+              {tr('No sales data yet.')}
+            </div>
           ) : (
             <div className="space-y-3">
               {topProducts.map((p, i) => (
@@ -3597,11 +3649,13 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
                       {p.title}
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-end">
                     <div className="text-sm font-black text-slate-900">
-                      {Math.round(p.revenue).toLocaleString()} EGP
+                      {Math.round(p.revenue).toLocaleString()} {tr('EGP')}
                     </div>
-                    <div className="text-[10px] text-slate-400">{p.count} units sold</div>
+                    <div className="text-[10px] text-slate-400">
+                      {p.count} {tr('units sold')}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -3614,6 +3668,7 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
 }
 
 function WalletTab({ data }: { data: DashboardData }) {
+  const { tr } = useLanguage();
   // Don't seed balance from data?.currentSeller?.balance — that column is
   // legacy/stale. Always fetch the computed value from the payouts API.
   const [balance, setBalance] = useState(0);
@@ -3694,11 +3749,11 @@ function WalletTab({ data }: { data: DashboardData }) {
       });
       const d = await res.json();
       if (!res.ok) {
-        setMessage({ type: 'error', text: d.message || 'Request failed' });
+        setMessage({ type: 'error', text: d.message || tr('Request failed') });
       } else {
         setMessage({
           type: 'success',
-          text: 'Payout request submitted! It will be processed shortly.',
+          text: tr('Payout request submitted! It will be processed shortly.'),
         });
         setRequestAmount('');
         await loadPayouts();
@@ -3718,27 +3773,28 @@ function WalletTab({ data }: { data: DashboardData }) {
           <div className="flex items-start justify-between mb-6">
             <div className="flex-1">
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                Mature Funds (Available to withdraw)
+                {tr('Mature Funds (Available to withdraw)')}
               </div>
               <div className="text-4xl font-black text-emerald-600">
-                {balance.toLocaleString()} <span className="text-lg text-slate-400">EGP</span>
+                {balance.toLocaleString()}{' '}
+                <span className="text-lg text-slate-400">{tr('EGP')}</span>
               </div>
               <div className="text-[11px] text-slate-500 mt-1">
-                Earnings past the 14-day escrow window
+                {tr('Earnings past the 14-day escrow window')}
               </div>
 
               {(heldBalance > 0 || isLoading) && (
                 <div className="mt-4 pt-4 border-t border-slate-100">
                   <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1.5">
-                    In Escrow (Pending Maturity)
+                    {tr('In Escrow (Pending Maturity)')}
                   </div>
                   <div className="text-2xl font-black text-amber-600">
                     {heldBalance.toLocaleString()}{' '}
-                    <span className="text-base text-slate-400">EGP</span>
+                    <span className="text-base text-slate-400">{tr('EGP')}</span>
                   </div>
                   {nextReleaseAt && (
                     <div className="text-[11px] text-slate-500 mt-1">
-                      Next release on{' '}
+                      {tr('Next release on')}{' '}
                       <span className="font-semibold text-slate-700">
                         {new Date(nextReleaseAt).toLocaleDateString(undefined, {
                           day: 'numeric',
@@ -3751,7 +3807,7 @@ function WalletTab({ data }: { data: DashboardData }) {
                   {countdown && (
                     <div className="mt-2 inline-flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
                       <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">
-                        Matures in
+                        {tr('Matures in')}
                       </span>
                       <span className="font-mono font-black text-amber-700 text-sm">
                         {countdown}
@@ -3767,10 +3823,10 @@ function WalletTab({ data }: { data: DashboardData }) {
           </div>
 
           <form onSubmit={handleRequestPayout} className="border-t border-slate-50 pt-6 space-y-4">
-            <h3 className="font-black text-sm">Request Payout</h3>
+            <h3 className="font-black text-sm">{tr('Request Payout')}</h3>
             <div>
               <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
-                Amount (EGP) — leave empty to withdraw full balance
+                {tr('Amount (EGP) — leave empty to withdraw full balance')}
               </label>
               <input
                 type="number"
@@ -3785,7 +3841,7 @@ function WalletTab({ data }: { data: DashboardData }) {
             </div>
             <div>
               <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
-                Bank Account / IBAN
+                {tr('Bank Account / IBAN')}
               </label>
               <input
                 type="text"
@@ -3811,42 +3867,42 @@ function WalletTab({ data }: { data: DashboardData }) {
               disabled={isRequesting || balance <= 0}
               className="w-full py-3 bg-[#0F6E56] text-white rounded-xl font-bold disabled:opacity-50"
             >
-              {isRequesting ? 'Submitting...' : 'Request Payout'}
+              {isRequesting ? tr('Submitting...') : tr('Request Payout')}
             </button>
           </form>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-          <h3 className="font-black text-sm mb-4">Your Commission Rate</h3>
+          <h3 className="font-black text-sm mb-4">{tr('Your Commission Rate')}</h3>
           <div className="text-3xl font-black text-slate-900">
             {((data?.currentSeller?.commissionRate || 0.1) * 100).toFixed(0)}%
           </div>
-          <div className="text-xs text-slate-400 mt-1">Platform fee per order</div>
+          <div className="text-xs text-slate-400 mt-1">{tr('Platform fee per order')}</div>
           <div className="mt-6 pt-6 border-t border-slate-50 text-[11px] text-slate-500 leading-relaxed">
-            Earnings from delivered orders are held in escrow for 14 days to allow for returns. Once
-            that window closes, your share moves into &quot;Available Balance&quot; and is ready to
-            withdraw.
+            {tr(
+              'Earnings from delivered orders are held in escrow for 14 days to allow for returns. Once that window closes, your share moves into "Available Balance" and is ready to withdraw.'
+            )}
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-50">
-          <h3 className="font-black text-sm">Payout History</h3>
+          <h3 className="font-black text-sm">{tr('Payout History')}</h3>
         </div>
         {isLoading ? (
-          <div className="p-10 text-center text-xs text-slate-400">Loading history…</div>
+          <div className="p-10 text-center text-xs text-slate-400">{tr('Loading history…')}</div>
         ) : payouts.length === 0 ? (
-          <div className="p-10 text-center text-xs text-slate-400">No payouts yet.</div>
+          <div className="p-10 text-center text-xs text-slate-400">{tr('No payouts yet.')}</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[450px]">
+            <table className="w-full text-start min-w-[450px]">
               <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
                 <tr>
-                  <th className="px-6 py-3">Date</th>
-                  <th className="px-6 py-3">Amount</th>
-                  <th className="px-6 py-3">Bank</th>
-                  <th className="px-6 py-3">Status</th>
+                  <th className="px-6 py-3">{tr('Date')}</th>
+                  <th className="px-6 py-3">{tr('Amount')}</th>
+                  <th className="px-6 py-3">{tr('Bank')}</th>
+                  <th className="px-6 py-3">{tr('Status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 text-sm">
@@ -3856,7 +3912,7 @@ function WalletTab({ data }: { data: DashboardData }) {
                       {new Date(p.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-3 font-black text-slate-900">
-                      {p.amount.toLocaleString()} EGP
+                      {p.amount.toLocaleString()} {tr('EGP')}
                     </td>
                     <td className="px-6 py-3 text-xs text-slate-400 truncate max-w-[160px]">
                       {p.bankDetails || '—'}
@@ -3873,7 +3929,7 @@ function WalletTab({ data }: { data: DashboardData }) {
                                 : 'bg-slate-50 text-slate-500'
                         }`}
                       >
-                        {p.status}
+                        {tr(p.status)}
                       </span>
                     </td>
                   </tr>
@@ -3888,6 +3944,7 @@ function WalletTab({ data }: { data: DashboardData }) {
 }
 
 function SettingsTab({ data }: { data: DashboardData }) {
+  const { tr } = useLanguage();
   const [form, setForm] = useState({
     storeName: data?.currentSeller?.storeName || '',
     description: data?.currentSeller?.description || '',
@@ -3918,7 +3975,7 @@ function SettingsTab({ data }: { data: DashboardData }) {
       setForm(f => ({ ...f, logoUrl: d.url }));
     } catch (err) {
       console.error('Logo upload failed:', err);
-      setMessage({ type: 'error', text: (err as Error).message || 'Logo upload failed' });
+      setMessage({ type: 'error', text: (err as Error).message || tr('Logo upload failed') });
     } finally {
       setIsUploading(false);
     }
@@ -3936,9 +3993,9 @@ function SettingsTab({ data }: { data: DashboardData }) {
       });
       const d = await res.json();
       if (!res.ok) {
-        setMessage({ type: 'error', text: d.message || 'Update failed' });
+        setMessage({ type: 'error', text: d.message || tr('Update failed') });
       } else {
-        setMessage({ type: 'success', text: 'Settings saved successfully.' });
+        setMessage({ type: 'success', text: tr('Settings saved successfully.') });
       }
     } catch (err: unknown) {
       const e = err as Error;
@@ -3954,24 +4011,28 @@ function SettingsTab({ data }: { data: DashboardData }) {
         onSubmit={handleSubmit}
         className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm space-y-6"
       >
-        <h3 className="font-black text-lg">Store Settings</h3>
+        <h3 className="font-black text-lg">{tr('Store Settings')}</h3>
 
         <div className="flex items-center gap-6">
           <div className="w-24 h-24 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center">
             {form.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={form.logoUrl} alt="Store logo" className="w-full h-full object-cover" />
+              <img
+                src={form.logoUrl}
+                alt={tr('Store logo')}
+                className="w-full h-full object-cover"
+              />
             ) : (
               <span className="text-2xl text-slate-300">🏪</span>
             )}
           </div>
           <div className="flex-1">
             <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">
-              Store Logo
+              {tr('Store Logo')}
             </label>
             <div className="flex items-center gap-2 flex-wrap">
               <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-semibold text-slate-700">
-                {form.logoUrl ? 'Replace logo' : 'Upload logo'}
+                {form.logoUrl ? tr('Replace logo') : tr('Upload logo')}
                 <input
                   type="file"
                   accept="image/*"
@@ -3986,17 +4047,19 @@ function SettingsTab({ data }: { data: DashboardData }) {
                   onClick={() => setForm(f => ({ ...f, logoUrl: '' }))}
                   className="text-xs font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-md hover:bg-red-50"
                 >
-                  Remove
+                  {tr('Remove')}
                 </button>
               )}
-              {isUploading && <span className="text-[11px] text-slate-400">Uploading…</span>}
+              {isUploading && (
+                <span className="text-[11px] text-slate-400">{tr('Uploading…')}</span>
+              )}
             </div>
           </div>
         </div>
 
         <div>
           <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
-            Store Name
+            {tr('Store Name')}
           </label>
           <input
             required
@@ -4009,21 +4072,21 @@ function SettingsTab({ data }: { data: DashboardData }) {
 
         <div>
           <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
-            Description
+            {tr('Description')}
           </label>
           <textarea
             rows={4}
             value={form.description}
             onChange={e => setForm({ ...form, description: e.target.value })}
             className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none resize-none"
-            placeholder="Tell customers what makes your store unique..."
+            placeholder={tr('Tell customers what makes your store unique...')}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
-              City
+              {tr('City')}
             </label>
             <input
               type="text"
@@ -4034,7 +4097,7 @@ function SettingsTab({ data }: { data: DashboardData }) {
           </div>
           <div>
             <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
-              Governorate
+              {tr('Governorate')}
             </label>
             <input
               type="text"
@@ -4047,17 +4110,19 @@ function SettingsTab({ data }: { data: DashboardData }) {
 
         <div>
           <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
-            Bank Account / IBAN for Payouts
+            {tr('Bank Account / IBAN for Payouts')}
           </label>
           <input
             type="text"
             value={form.bankAccount}
             onChange={e => setForm({ ...form, bankAccount: e.target.value })}
-            placeholder="Enter your IBAN or account details"
+            placeholder={tr('Enter your IBAN or account details')}
             className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-mono text-sm"
           />
           <div className="text-[11px] text-slate-400 mt-1">
-            This info is stored securely and only visible to admins during payout processing.
+            {tr(
+              'This info is stored securely and only visible to admins during payout processing.'
+            )}
           </div>
         </div>
 
@@ -4078,7 +4143,7 @@ function SettingsTab({ data }: { data: DashboardData }) {
           disabled={isSaving}
           className="w-full py-3 bg-[#0F6E56] text-white rounded-xl font-bold disabled:opacity-50"
         >
-          {isSaving ? 'Saving…' : 'Save Settings'}
+          {isSaving ? tr('Saving…') : tr('Save Settings')}
         </button>
       </form>
     </div>
@@ -4128,6 +4193,7 @@ function AddProductModal({
   brands,
   commissionRate = 0.1,
 }: AddProductModalProps) {
+  const { tr } = useLanguage();
   return (
     <div
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
@@ -4138,7 +4204,7 @@ function AddProductModal({
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-black">New Product</h3>
+          <h3 className="text-xl font-black">{tr('New Product')}</h3>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-900">
             <XCircle size={24} />
           </button>
@@ -4146,7 +4212,9 @@ function AddProductModal({
         <form onSubmit={onSubmit} className="flex flex-col gap-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Title</label>
+              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+                {tr('Title')}
+              </label>
               <input
                 required
                 type="text"
@@ -4157,7 +4225,7 @@ function AddProductModal({
             </div>
             <div className="col-span-2">
               <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
-                Description
+                {tr('Description')}
               </label>
               <textarea
                 rows={3}
@@ -4171,17 +4239,17 @@ function AddProductModal({
             {isMultiBrand && brands && brands.length > 0 && (
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
-                  Brand
+                  {tr('Brand')}
                 </label>
                 <select
                   value={newProduct.brandId || ''}
                   onChange={e => setNewProduct({ ...newProduct, brandId: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
                 >
-                  <option value="">Default Brand</option>
+                  <option value="">{tr('Default Brand')}</option>
                   {brands.map((b: any) => (
                     <option key={b.id} value={b.id} disabled={b.status === 'PENDING_APPROVAL'}>
-                      {b.name} {b.status === 'PENDING_APPROVAL' ? '(⏳ Pending Approval)' : ''}
+                      {b.name} {b.status === 'PENDING_APPROVAL' ? tr('(⏳ Pending Approval)') : ''}
                     </option>
                   ))}
                 </select>
@@ -4189,7 +4257,7 @@ function AddProductModal({
             )}
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
-                Category *
+                {tr('Category *')}
               </label>
               <select
                 required
@@ -4197,17 +4265,17 @@ function AddProductModal({
                 onChange={e => setNewProduct({ ...newProduct, categoryId: e.target.value })}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
               >
-                <option value="">Select Category...</option>
+                <option value="">{tr('Select Category...')}</option>
                 {categories?.map(c => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {tr(c.name)}
                   </option>
                 ))}
               </select>
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
-                Base Price (EGP) *
+                {tr('Base Price (EGP) *')}
               </label>
               <input
                 required
@@ -4220,7 +4288,7 @@ function AddProductModal({
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
-                Weight (KG) <span className="text-red-500">*</span>
+                {tr('Weight (KG)')} <span className="text-red-500">*</span>
               </label>
               <input
                 required
@@ -4245,22 +4313,22 @@ function AddProductModal({
           {/* Primary product image */}
           <div>
             <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
-              Product Image
+              {tr('Product Image')}
             </label>
             <p className="text-[10px] text-gray-400 mb-2">
-              Upload a main product image. You can also add images per variant below.
+              {tr('Upload a main product image. You can also add images per variant below.')}
             </p>
             {newProduct.mainImage && (
               <div className="flex items-center gap-3 mb-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={newProduct.mainImage}
-                  alt="Product preview"
+                  alt={tr('Product preview')}
                   className="h-20 w-20 rounded-xl object-cover border border-slate-200"
                 />
                 <div className="flex-1 text-xs">
                   {newProduct.mainImageUploading ? (
-                    <span className="text-amber-600 font-semibold">Uploading…</span>
+                    <span className="text-amber-600 font-semibold">{tr('Uploading…')}</span>
                   ) : (
                     <span className="text-emerald-600 font-semibold">✓ Image ready</span>
                   )}
@@ -4273,7 +4341,7 @@ function AddProductModal({
                     }
                     className="text-xs font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-md hover:bg-red-50"
                   >
-                    Remove
+                    {tr('Remove')}
                   </button>
                 )}
               </div>
@@ -4291,7 +4359,7 @@ function AddProductModal({
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              {newProduct.mainImage ? 'Replace Image' : 'Upload Product Image'}
+              {newProduct.mainImage ? tr('Replace Image') : tr('Upload Product Image')}
               <input
                 type="file"
                 accept="image/*"
@@ -4324,7 +4392,7 @@ function AddProductModal({
 
           <div>
             <div className="flex justify-between items-center mb-3">
-              <label className="text-xs font-bold text-gray-500 uppercase">Variants</label>
+              <label className="text-xs font-bold text-gray-500 uppercase">{tr('Variants')}</label>
               <div className="flex items-center gap-4">
                 <button
                   type="button"
@@ -4336,14 +4404,14 @@ function AddProductModal({
                   }}
                   className="text-xs font-bold text-[#0F6E56] hover:underline"
                 >
-                  Same Price for All Variants
+                  {tr('Same Price for All Variants')}
                 </button>
                 <button
                   type="button"
                   onClick={addVariant}
                   className="text-xs font-bold text-emerald-600 hover:underline"
                 >
-                  + Add variant
+                  {tr('+ Add variant')}
                 </button>
               </div>
             </div>
@@ -4357,14 +4425,14 @@ function AddProductModal({
                     type="text"
                     value={v.color}
                     onChange={e => updateVariant(i, 'color', e.target.value)}
-                    placeholder="Color / Variant"
+                    placeholder={tr('Color / Variant')}
                     className="col-span-3 px-3 py-2 bg-white border border-slate-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                   <input
                     type="number"
                     value={v.stock}
                     onChange={e => updateVariant(i, 'stock', Number(e.target.value))}
-                    placeholder="Stock"
+                    placeholder={tr('Stock')}
                     min="0"
                     className="col-span-2 px-3 py-2 bg-white border border-slate-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
                   />
@@ -4372,13 +4440,13 @@ function AddProductModal({
                     type="number"
                     value={v.price}
                     onChange={e => updateVariant(i, 'price', Number(e.target.value))}
-                    placeholder="Price"
+                    placeholder={tr('Price')}
                     min="1"
                     className="col-span-3 px-3 py-2 bg-white border border-slate-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                   <label
                     className="col-span-3 flex items-center justify-center gap-1 px-2 py-2 rounded-lg border border-dashed border-slate-300 bg-white hover:bg-slate-50 cursor-pointer text-[10px] text-slate-600 font-semibold transition-colors"
-                    title="Add photos for this variant"
+                    title={tr('Add photos for this variant')}
                   >
                     <svg
                       width="12"
@@ -4394,7 +4462,7 @@ function AddProductModal({
                     </svg>
                     {(v.images && v.images.length > 0) || v.image
                       ? `+ Photos (${v.images?.length || 1})`
-                      : 'Upload'}
+                      : tr('Upload')}
                     <input
                       type="file"
                       accept="image/*"
@@ -4408,7 +4476,7 @@ function AddProductModal({
                     onClick={() => setVariants(variants.filter((_, idx) => idx !== i))}
                     disabled={variants.length === 1}
                     className="col-span-1 text-red-500 disabled:opacity-30"
-                    aria-label="Remove variant"
+                    aria-label={tr('Remove variant')}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -4417,13 +4485,13 @@ function AddProductModal({
                       type="text"
                       value={v.sizes || ''}
                       onChange={e => updateVariant(i, 'sizes', e.target.value)}
-                      placeholder="Sizes (CSV, e.g. S, M, L, XL)"
+                      placeholder={tr('Sizes (CSV, e.g. S, M, L, XL)')}
                       className="w-full px-3 py-2 bg-white border border-slate-100 rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-emerald-500"
                       autoComplete="off"
                     />
                     <div className="flex flex-wrap gap-1.5 mt-2 items-center">
-                      <span className="text-[10px] font-bold text-slate-400 mr-1 select-none">
-                        Clothing:
+                      <span className="text-[10px] font-bold text-slate-400 me-1 select-none">
+                        {tr('Clothing:')}
                       </span>
                       {['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Free Size'].map(sz => {
                         const active = (v.sizes || '')
@@ -4461,8 +4529,8 @@ function AddProductModal({
                       })}
                     </div>
                     <div className="flex flex-wrap gap-1.5 mt-1.5 items-center">
-                      <span className="text-[10px] font-bold text-slate-400 mr-1 select-none">
-                        Shoes:
+                      <span className="text-[10px] font-bold text-slate-400 me-1 select-none">
+                        {tr('Shoes:')}
                       </span>
                       {['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'].map(sz => {
                         const active = (v.sizes || '')
@@ -4508,7 +4576,7 @@ function AddProductModal({
                     type="text"
                     value={v.sku || ''}
                     onChange={e => updateVariant(i, 'sku', e.target.value)}
-                    placeholder="SKU (auto if blank)"
+                    placeholder={tr('SKU (auto if blank)')}
                     className="col-span-6 px-3 py-2 bg-white border border-slate-100 rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-emerald-500"
                     autoComplete="off"
                   />
@@ -4516,7 +4584,7 @@ function AddProductModal({
                     type="text"
                     value={v.upc || ''}
                     onChange={e => updateVariant(i, 'upc', e.target.value.slice(0, 14))}
-                    placeholder="UPC / barcode (optional)"
+                    placeholder={tr('UPC / barcode (optional)')}
                     className="col-span-6 px-3 py-2 bg-white border border-slate-100 rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-emerald-500"
                     autoComplete="off"
                   />
@@ -4529,7 +4597,8 @@ function AddProductModal({
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <span className="text-[11px] font-semibold text-slate-700">
-                              Variant Photos ({imgList.length})
+                              {tr('Variant Photos (')}
+                              {imgList.length})
                             </span>
                             {v.uploading ? (
                               <span className="text-[10px] text-amber-600 font-medium animate-pulse flex items-center gap-1">
@@ -4552,7 +4621,7 @@ function AddProductModal({
                                     d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                                   />
                                 </svg>
-                                Uploading…
+                                {tr('Uploading…')}
                               </span>
                             ) : (
                               <span className="text-[10px] text-emerald-600 font-medium">
@@ -4566,7 +4635,7 @@ function AddProductModal({
                               onClick={() => clearVariantImages(i)}
                               className="text-[10px] text-slate-400 hover:text-red-600 font-semibold transition-colors"
                             >
-                              Remove All
+                              {tr('Remove All')}
                             </button>
                           )}
                         </div>
@@ -4584,8 +4653,8 @@ function AddProductModal({
                                 className="w-full h-full object-cover"
                               />
                               {imgIdx === 0 && (
-                                <span className="absolute bottom-1 left-1 right-1 bg-emerald-600/90 text-white text-[8px] font-bold text-center py-0.2 rounded shadow">
-                                  Cover
+                                <span className="absolute bottom-1 start-1 end-1 bg-emerald-600/90 text-white text-[8px] font-bold text-center py-0.2 rounded shadow">
+                                  {tr('Cover')}
                                 </span>
                               )}
                               {!v.uploading && (
@@ -4594,7 +4663,7 @@ function AddProductModal({
                                     <button
                                       type="button"
                                       onClick={() => setVariantPrimaryImage(i, imgIdx)}
-                                      title="Make Cover Image"
+                                      title={tr('Make Cover Image')}
                                       className="p-1 bg-white/90 hover:bg-white text-amber-500 rounded text-[10px] leading-none shadow"
                                     >
                                       ★
@@ -4604,7 +4673,7 @@ function AddProductModal({
                                     <button
                                       type="button"
                                       onClick={() => removeVariantImage(i, imgIdx)}
-                                      title="Remove photo"
+                                      title={tr('Remove photo')}
                                       className="p-1 bg-white/90 hover:bg-red-50 text-red-600 rounded text-[10px] leading-none shadow"
                                     >
                                       ✕
@@ -4617,7 +4686,7 @@ function AddProductModal({
 
                           <label
                             className="w-14 h-14 rounded-lg border-2 border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50/50 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-emerald-600 transition-all flex-shrink-0"
-                            title="Add more photos"
+                            title={tr('Add more photos')}
                           >
                             <svg
                               width="16"
@@ -4630,7 +4699,7 @@ function AddProductModal({
                               <line x1="12" y1="5" x2="12" y2="19" />
                               <line x1="5" y1="12" x2="19" y2="12" />
                             </svg>
-                            <span className="text-[8px] font-semibold mt-0.5">+ Add</span>
+                            <span className="text-[8px] font-semibold mt-0.5">{tr('+ Add')}</span>
                             <input
                               type="file"
                               accept="image/*"
@@ -4654,14 +4723,14 @@ function AddProductModal({
               onClick={onClose}
               className="flex-1 py-3 border border-gray-100 rounded-xl font-bold"
             >
-              Cancel
+              {tr('Cancel')}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="flex-1 py-3 bg-[#0F6E56] text-white rounded-xl font-bold disabled:opacity-50"
             >
-              {isSubmitting ? 'Creating…' : 'Create Product'}
+              {isSubmitting ? tr('Creating…') : tr('Create Product')}
             </button>
           </div>
         </form>

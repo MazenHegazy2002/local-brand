@@ -1,10 +1,12 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
 export default function ForgotPasswordClient() {
+  const { tr } = useLanguage();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [msg, setMsg] = useState('');
@@ -26,7 +28,9 @@ export default function ForgotPasswordClient() {
 
       setStatus('success');
       setMsg(
-        'Check your email for a reset link. We have sent you a temporary token link valid for 1 hour.'
+        tr(
+          'Check your email for a reset link. We have sent you a temporary token link valid for 1 hour.'
+        )
       );
     } catch (error: unknown) {
       setStatus('error');
@@ -39,8 +43,10 @@ export default function ForgotPasswordClient() {
       <Navbar />
       <div className="flex flex-col justify-center py-12 sm:px-6 lg:px-8 mt-10">
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900">Reset Password</h2>
-          <p className="mt-2 text-sm text-gray-600">Enter your email and we'll send you a link.</p>
+          <h2 className="text-3xl font-extrabold text-gray-900">{tr('Reset Password')}</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            {tr("Enter your email and we'll send you a link.")}
+          </p>
         </div>
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -60,7 +66,9 @@ export default function ForgotPasswordClient() {
               {status !== 'success' && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Email address</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      {tr('Email address')}
+                    </label>
                     <div className="mt-1">
                       <input
                         type="email"
@@ -78,7 +86,7 @@ export default function ForgotPasswordClient() {
                       disabled={status === 'loading'}
                       className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-all bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-dark))] disabled:opacity-50"
                     >
-                      {status === 'loading' ? 'Sending...' : 'Send Reset Link'}
+                      {status === 'loading' ? tr('Sending...') : tr('Send Reset Link')}
                     </button>
                   </div>
                 </>
@@ -89,7 +97,7 @@ export default function ForgotPasswordClient() {
                   href="/login"
                   className="text-sm font-medium text-gray-600 hover:text-gray-900"
                 >
-                  Return to Login
+                  {tr('Return to Login')}
                 </Link>
               </div>
             </form>

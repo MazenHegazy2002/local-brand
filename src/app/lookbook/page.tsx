@@ -1,3 +1,4 @@
+import { getServerTr } from '@/lib/i18n/server';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
@@ -28,16 +29,18 @@ async function getLookbookProducts() {
 }
 
 export default async function LookbookPage() {
+  const tr = await getServerTr();
   const products = await getLookbookProducts();
 
   // Define curated aesthetic spreads
   const spreads = [
     {
       id: 'summer-linen',
-      tag: 'COLLECTION 01',
-      title: 'Desert Linen Whispers',
-      subtitle:
-        'Effortless breathing fabrics crafted for warm Mediterranean nights and sunny afternoons.',
+      tag: tr('COLLECTION 01'),
+      title: tr('Desert Linen Whispers'),
+      subtitle: tr(
+        'Effortless breathing fabrics crafted for warm Mediterranean nights and sunny afternoons.'
+      ),
       heroImage:
         'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=800&auto=format&fit=crop',
       colorTheme: 'bg-[#F7F5F0] text-[#2C2A29]',
@@ -46,10 +49,11 @@ export default async function LookbookPage() {
     },
     {
       id: 'urban-minimalism',
-      tag: 'COLLECTION 02',
-      title: 'Cairo Street Architecture',
-      subtitle:
-        'Structured silhouettes, bold lines, and premium Egyptian cotton tailoring for the modern nomad.',
+      tag: tr('COLLECTION 02'),
+      title: tr('Cairo Street Architecture'),
+      subtitle: tr(
+        'Structured silhouettes, bold lines, and premium Egyptian cotton tailoring for the modern nomad.'
+      ),
       heroImage:
         'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=800&auto=format&fit=crop',
       colorTheme: 'bg-[#1E1E1E] text-[#FAF9F6]',
@@ -58,10 +62,11 @@ export default async function LookbookPage() {
     },
     {
       id: 'timeless-accents',
-      tag: 'COLLECTION 03',
-      title: 'Timeless Accents',
-      subtitle:
-        'Sleek premium detailing, handpicked local leather products, and heritage wrist accessories.',
+      tag: tr('COLLECTION 03'),
+      title: tr('Timeless Accents'),
+      subtitle: tr(
+        'Sleek premium detailing, handpicked local leather products, and heritage wrist accessories.'
+      ),
       heroImage:
         'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop',
       colorTheme: 'bg-[#E5D5C5] text-[#2F251E]',
@@ -77,16 +82,16 @@ export default async function LookbookPage() {
       {/* Editorial Intro */}
       <section className="py-24 px-4 text-center max-w-3xl mx-auto">
         <span className="text-[10px] tracking-[0.25em] font-black uppercase text-slate-400 block mb-3">
-          BRANDY EDITORIAL
+          {tr('BRANDY EDITORIAL')}
         </span>
         <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter mb-6 uppercase">
-          The Lookbook
+          {tr('The Lookbook')}
         </h1>
         <div className="w-16 h-1 bg-slate-900 mx-auto mb-6"></div>
         <p className="text-slate-600 text-lg md:text-xl font-light leading-relaxed">
-          A physical-meets-digital curated catalog showcasing high-fashion styling from Egypt’s
-          premiere local independent designers. Explore seasonal lookbooks and shop individual items
-          directly below.
+          {tr(
+            'A physical-meets-digital curated catalog showcasing high-fashion styling from Egypt’s premiere local independent designers. Explore seasonal lookbooks and shop individual items directly below.'
+          )}
         </p>
       </section>
 
@@ -115,7 +120,7 @@ export default async function LookbookPage() {
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-500" />
 
                   {/* Floating Catalog Stamp */}
-                  <div className="absolute top-8 left-8 bg-black/85 text-white backdrop-blur-sm px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg">
+                  <div className="absolute top-8 start-8 bg-black/85 text-white backdrop-blur-sm px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg">
                     {spread.tag}
                   </div>
                 </div>
@@ -137,12 +142,12 @@ export default async function LookbookPage() {
 
                     {/* Shoppable Products in this Look */}
                     <h3 className="text-xs font-black tracking-widest uppercase mb-4 opacity-70">
-                      Shop the Look:
+                      {tr('Shop the Look:')}
                     </h3>
 
                     {spread.items.length === 0 ? (
                       <div className="py-6 text-sm italic opacity-50">
-                        Check back soon to shop pieces from this look!
+                        {tr('Check back soon to shop pieces from this look!')}
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -166,17 +171,17 @@ export default async function LookbookPage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <span className="text-[10px] font-black uppercase tracking-wider opacity-60 block">
-                                  {item.seller?.storeName || 'Local Brand'}
+                                  {item.seller?.storeName || tr('Local Brand')}
                                 </span>
                                 <h4 className="font-bold text-sm truncate group-hover/item:underline">
                                   {item.title}
                                 </h4>
                                 <span className="text-xs font-black">
-                                  EGP {item.basePrice.toLocaleString()}
+                                  {tr('EGP')} {item.basePrice.toLocaleString()}
                                 </span>
                               </div>
                               <span className="text-xs font-bold px-3 py-1 rounded-full border border-current/30 group-hover/item:border-current transition-colors">
-                                View →
+                                {tr('View →')}
                               </span>
                             </Link>
                           );
@@ -190,7 +195,7 @@ export default async function LookbookPage() {
                       href="/shop"
                       className={`inline-block px-6 py-3 border font-bold text-xs uppercase tracking-widest rounded-xl transition-all duration-300 ${spread.accentColor}`}
                     >
-                      Explore Full Catalog
+                      {tr('Explore Full Catalog')}
                     </Link>
                   </div>
                 </div>
@@ -206,21 +211,21 @@ export default async function LookbookPage() {
           <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#FAF9F6_1px,transparent_1px)] [background-size:16px_16px]"></div>
           <div className="relative z-10 max-w-2xl mx-auto">
             <span className="text-[10px] tracking-[0.25em] font-black uppercase text-amber-300 block mb-3">
-              LATEST EDITION
+              {tr('LATEST EDITION')}
             </span>
             <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-6">
-              Brandy Print Catalog
+              {tr('Brandy Print Catalog')}
             </h2>
             <p className="text-slate-300 font-light text-base leading-relaxed mb-8">
-              Receive our seasonal high-fashion magazine directly to your doorstep. Features
-              exclusive discounts, designer interviews, and full styled spreads. Free with any
-              purchase over EGP 1,500.
+              {tr(
+                'Receive our seasonal high-fashion magazine directly to your doorstep. Features exclusive discounts, designer interviews, and full styled spreads. Free with any purchase over EGP 1,500.'
+              )}
             </p>
             <Link
               href="/shop"
               className="inline-block px-8 py-4 bg-white text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-100 transition-colors shadow-lg"
             >
-              Shop to Qualify
+              {tr('Shop to Qualify')}
             </Link>
           </div>
         </div>

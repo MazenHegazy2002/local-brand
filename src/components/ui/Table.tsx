@@ -52,7 +52,7 @@ export function Table<T extends Record<string, unknown>>({
           <thead>
             <tr className="border-b border-gray-200">
               {columns.map((col, i) => (
-                <th key={i} className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                <th key={i} className="px-4 py-3 text-start text-sm font-semibold text-gray-600">
                   <div className="h-4 bg-gray-200 rounded w-20 animate-pulse" />
                 </th>
               ))}
@@ -87,7 +87,7 @@ export function Table<T extends Record<string, unknown>>({
               <th
                 key={i}
                 className={`
-                  px-4 py-3 text-left text-sm font-semibold text-gray-600
+                  px-4 py-3 text-start text-sm font-semibold text-gray-600
                   ${col.sortable ? 'cursor-pointer hover:bg-gray-100' : ''}
                 `}
                 onClick={() => col.sortable && handleSort(String(col.accessor))}

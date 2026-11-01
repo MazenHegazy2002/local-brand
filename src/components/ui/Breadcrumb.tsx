@@ -1,3 +1,6 @@
+'use client';
+
+import { useLanguage } from '@/providers/LanguageContext';
 import Link from 'next/link';
 import { ReactNode } from 'react';
 
@@ -31,8 +34,9 @@ const defaultSeparator = (
 const itemClass = 'truncate max-w-[200px]';
 
 export function Breadcrumb({ items, separator, className = '' }: BreadcrumbProps) {
+  const { tr } = useLanguage();
   return (
-    <nav aria-label="Breadcrumb" className={className}>
+    <nav aria-label={tr('Breadcrumb')} className={className}>
       <ol className="flex items-center flex-wrap gap-1 text-sm">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;

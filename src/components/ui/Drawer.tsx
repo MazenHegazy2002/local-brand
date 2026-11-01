@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { ReactNode, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
@@ -16,9 +17,9 @@ interface DrawerProps {
 }
 
 const positionStyles: Record<DrawerPosition, string> = {
-  left: 'left-0 top-0 bottom-0',
-  right: 'right-0 top-0 bottom-0',
-  bottom: 'bottom-0 left-0 right-0',
+  left: 'start-0 top-0 bottom-0',
+  right: 'end-0 top-0 bottom-0',
+  bottom: 'bottom-0 start-0 end-0',
 };
 
 const transformStyles: Record<DrawerPosition, string> = {
@@ -27,10 +28,22 @@ const transformStyles: Record<DrawerPosition, string> = {
   bottom: 'translate-y-0',
 };
 
-export function Drawer({ open, onClose, title, position = 'right', width = '400px', height, children }: DrawerProps) {
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
-  }, [onClose]);
+export function Drawer({
+  open,
+  onClose,
+  title,
+  position = 'right',
+  width = '400px',
+  height,
+  children,
+}: DrawerProps) {
+  const { tr } = useLanguage();
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    },
+    [onClose]
+  );
 
   useEffect(() => {
     if (open) {
@@ -69,9 +82,18 @@ export function Drawer({ open, onClose, title, position = 'right', width = '400p
             <button
               onClick={onClose}
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-              aria-label="Close drawer"
+              aria-label={tr('Close drawer')}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -81,18 +103,25 @@ export function Drawer({ open, onClose, title, position = 'right', width = '400p
         {!title && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-            aria-label="Close drawer"
+            className="absolute top-4 end-4 z-10 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            aria-label={tr('Close drawer')}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         )}
-        <div className="h-full overflow-y-auto">
-          {children}
-        </div>
+        <div className="h-full overflow-y-auto">{children}</div>
       </div>
     </div>
   );

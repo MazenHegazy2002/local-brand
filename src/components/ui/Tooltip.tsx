@@ -15,8 +15,8 @@ interface TooltipProps {
 const positionStyles: Record<TooltipPosition, string> = {
   top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
   bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
-  left: 'right-full top-1/2 -translate-y-1/2 mr-2',
-  right: 'left-full top-1/2 -translate-y-1/2 ml-2',
+  left: 'right-full top-1/2 -translate-y-1/2 me-2',
+  right: 'left-full top-1/2 -translate-y-1/2 ms-2',
 };
 
 const arrowPositions: Record<TooltipPosition, string> = {
@@ -26,7 +26,13 @@ const arrowPositions: Record<TooltipPosition, string> = {
   right: 'right-full top-1/2 -translate-y-1/2 border-r-gray-900',
 };
 
-export function Tooltip({ content, children, position = 'top', delay = 300, className = '' }: TooltipProps) {
+export function Tooltip({
+  content,
+  children,
+  position = 'top',
+  delay = 300,
+  className = '',
+}: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -46,7 +52,12 @@ export function Tooltip({ content, children, position = 'top', delay = 300, clas
   }, []);
 
   return (
-    <div className="relative inline-block" onMouseEnter={showTooltip} onMouseLeave={hideTooltip} onFocus={showTooltip} onBlur={hideTooltip}
+    <div
+      className="relative inline-block"
+      onMouseEnter={showTooltip}
+      onMouseLeave={hideTooltip}
+      onFocus={showTooltip}
+      onBlur={hideTooltip}
     >
       {children}
       {isVisible && (

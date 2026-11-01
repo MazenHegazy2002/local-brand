@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -16,6 +17,7 @@ interface Notification {
 }
 
 export default function NotificationsPage() {
+  const { tr } = useLanguage();
   const { data: _session, status } = useSession();
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -145,7 +147,7 @@ export default function NotificationsPage() {
   if (loading) {
     return (
       <div className="db">
-        <div className="main">Loading...</div>
+        <div className="main">{tr('Loading...')}</div>
       </div>
     );
   }
@@ -154,39 +156,40 @@ export default function NotificationsPage() {
     <div className="db">
       <div className="sidebar">
         <div className="logo">
-          My<span>LB</span>
+          {tr('My')}
+          <span>LB</span>
         </div>
 
-        <div className="nav-section">Personal</div>
+        <div className="nav-section">{tr('Personal')}</div>
         <Link href="/dashboard" className="nav-item">
-          Overview
+          {tr('Overview')}
         </Link>
         <Link href="/dashboard/orders" className="nav-item">
-          My Orders
+          {tr('My Orders')}
         </Link>
         <Link href="/dashboard/wishlist" className="nav-item">
-          Wishlist
+          {tr('Wishlist')}
         </Link>
         <Link href="/dashboard/notifications" className="nav-item active">
-          Alerts
+          {tr('Alerts')}
         </Link>
 
-        <div className="nav-section">Finance</div>
+        <div className="nav-section">{tr('Finance')}</div>
         <Link href="/dashboard/wallet" className="nav-item">
-          Wallet
+          {tr('Wallet')}
         </Link>
 
-        <div className="nav-section">System</div>
+        <div className="nav-section">{tr('System')}</div>
         <Link href="/dashboard/settings" className="nav-item">
-          Settings
+          {tr('Settings')}
         </Link>
       </div>
 
       <div className="main">
         <div className="topbar">
-          <div className="page-title">System alerts</div>
+          <div className="page-title">{tr('System alerts')}</div>
           <button onClick={markAllAsRead} className="refresh-btn">
-            Mark all read
+            {tr('Mark all read')}
           </button>
         </div>
 
@@ -205,7 +208,7 @@ export default function NotificationsPage() {
               }`}
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
-              <span className="ml-2 opacity-70">
+              <span className="ms-2 opacity-70">
                 {f === 'all'
                   ? notifications.length
                   : f === 'unread'
@@ -218,7 +221,7 @@ export default function NotificationsPage() {
 
         <div className="card">
           {paginatedNotifications.length === 0 ? (
-            <div className="py-20 text-center text-xs text-slate-400">No notifications</div>
+            <div className="py-20 text-center text-xs text-slate-400">{tr('No notifications')}</div>
           ) : (
             paginatedNotifications.map(n => (
               <div
@@ -236,13 +239,13 @@ export default function NotificationsPage() {
                   </div>
                   <div style={{ fontSize: '11px', color: '#64748b' }}>{n.message}</div>
                 </div>
-                <div className="text-right">
+                <div className="text-end">
                   <div style={{ fontSize: '10px', color: '#94a3b8' }}>
                     {getRelativeTime(n.createdAt)}
                   </div>
                   {n.link && (
                     <Link href={n.link} className="text-xs text-[#534AB7] hover:underline">
-                      View →
+                      {tr('View →')}
                     </Link>
                   )}
                 </div>
@@ -258,17 +261,17 @@ export default function NotificationsPage() {
               disabled={currentPage === 1}
               className="px-3 py-1 border border-gray-200 rounded text-sm disabled:opacity-50"
             >
-              Previous
+              {tr('Previous')}
             </button>
             <span className="px-3 py-1 text-sm text-gray-500">
-              Page {currentPage} of {totalPages}
+              {tr('Page')} {currentPage} of {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
               className="px-3 py-1 border border-gray-200 rounded text-sm disabled:opacity-50"
             >
-              Next
+              {tr('Next')}
             </button>
           </div>
         )}

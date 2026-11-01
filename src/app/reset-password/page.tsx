@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -6,6 +7,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
 function ResetPasswordForm() {
+  const { tr } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -18,12 +20,14 @@ function ResetPasswordForm() {
   if (!token) {
     return (
       <div className="text-center bg-white p-8 rounded-xl border border-[#e8dfd1] shadow-sm">
-        <h3 className="text-red-600 font-bold mb-2">Invalid Link</h3>
+        <h3 className="text-red-600 font-bold mb-2">{tr('Invalid Link')}</h3>
         <p className="text-gray-600 mb-6">
-          No reset token found in the URL. Your link may be broken or manually typed incorrectly.
+          {tr(
+            'No reset token found in the URL. Your link may be broken or manually typed incorrectly.'
+          )}
         </p>
         <Link href="/forgot-password" className="text-blue-600 font-bold hover:underline">
-          Request a new link
+          {tr('Request a new link')}
         </Link>
       </div>
     );
@@ -33,7 +37,7 @@ function ResetPasswordForm() {
     e.preventDefault();
     if (password !== confirmPassword) {
       setStatus('error');
-      setMsg('Passwords do not match');
+      setMsg(tr('Passwords do not match'));
       return;
     }
 
@@ -49,7 +53,7 @@ function ResetPasswordForm() {
       if (!res.ok) throw new Error(data.message || 'Failed to reset password');
 
       setStatus('success');
-      setMsg('Your password has been successfully updated.');
+      setMsg(tr('Your password has been successfully updated.'));
 
       setTimeout(() => {
         router.push('/login');
@@ -67,12 +71,12 @@ function ResetPasswordForm() {
           <div className="bg-green-50 text-green-700 p-4 rounded-xl font-medium border border-green-200 mb-4">
             {msg}
           </div>
-          <p className="text-sm text-gray-500">Redirecting you to login...</p>
+          <p className="text-sm text-gray-500">{tr('Redirecting you to login...')}</p>
           <Link
             href="/login"
             className="mt-6 inline-block bg-[hsl(var(--primary))] text-white font-bold px-6 py-2 rounded-xl transition hover:bg-[hsl(var(--primary-dark))]"
           >
-            Back to Login
+            {tr('Back to Login')}
           </Link>
         </div>
       ) : (
@@ -84,7 +88,7 @@ function ResetPasswordForm() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">New Password</label>
+            <label className="block text-sm font-medium text-gray-700">{tr('New Password')}</label>
             <div className="mt-1">
               <input
                 type="password"
@@ -98,7 +102,9 @@ function ResetPasswordForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Confirm New Password</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {tr('Confirm New Password')}
+            </label>
             <div className="mt-1">
               <input
                 type="password"
@@ -117,7 +123,7 @@ function ResetPasswordForm() {
               disabled={status === 'loading'}
               className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-colors bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-dark))] disabled:opacity-50"
             >
-              {status === 'loading' ? 'Saving...' : 'Reset Password'}
+              {status === 'loading' ? tr('Saving...') : tr('Reset Password')}
             </button>
           </div>
         </form>
@@ -127,19 +133,22 @@ function ResetPasswordForm() {
 }
 
 export default function ResetPasswordPage() {
+  const { tr } = useLanguage();
   return (
     <div className="min-h-screen bg-[#faf9f6]">
       <Navbar />
       <div className="flex flex-col justify-center py-12 sm:px-6 lg:px-8 mt-10">
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900">Create New Password</h2>
+          <h2 className="text-3xl font-extrabold text-gray-900">{tr('Create New Password')}</h2>
           <p className="mt-2 text-sm text-gray-600">
-            Enter your new secure password below to regain access.
+            {tr('Enter your new secure password below to regain access.')}
           </p>
         </div>
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <Suspense fallback={<div className="text-center py-10">Loading security token...</div>}>
+          <Suspense
+            fallback={<div className="text-center py-10">{tr('Loading security token...')}</div>}
+          >
             <ResetPasswordForm />
           </Suspense>
         </div>

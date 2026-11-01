@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState, useEffect, useCallback } from 'react';
 import Navbar from '@/components/Navbar';
@@ -40,8 +41,9 @@ function useCountdown(endsAt: string) {
 }
 
 function CountdownBadge({ endsAt }: { endsAt: string }) {
+  const { tr } = useLanguage();
   const { h, m, s, expired } = useCountdown(endsAt);
-  if (expired) return <span className="text-xs font-bold text-red-500">Expired</span>;
+  if (expired) return <span className="text-xs font-bold text-red-500">{tr('Expired')}</span>;
   const pad = (n: number) => String(n).padStart(2, '0');
   return (
     <div className="flex items-center gap-1 text-xs font-mono font-bold">
@@ -55,6 +57,7 @@ function CountdownBadge({ endsAt }: { endsAt: string }) {
 }
 
 function FlashCard({ product }: { product: FlashProduct }) {
+  const { tr } = useLanguage();
   const discount = Math.round(
     ((product.basePrice - product.flashSalePrice) / product.basePrice) * 100
   );
@@ -73,11 +76,11 @@ function FlashCard({ product }: { product: FlashProduct }) {
           className="object-cover group-hover:scale-105 transition-transform duration-300"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         />
-        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded-full">
+        <div className="absolute top-2 start-2 bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded-full">
           -{discount}%
         </div>
         {product.flashSaleLimit && (
-          <div className="absolute bottom-2 left-2 right-2">
+          <div className="absolute bottom-2 start-2 end-2">
             <div className="bg-white/90 backdrop-blur-sm rounded-full px-2 py-1">
               <div className="text-[10px] text-gray-500 mb-0.5">{product.stockCount} left</div>
               <div className="w-full bg-gray-200 rounded-full h-1.5">
@@ -100,10 +103,10 @@ function FlashCard({ product }: { product: FlashProduct }) {
         </h3>
         <div className="flex items-center gap-2 mb-2">
           <span className="text-base font-black text-red-600">
-            {product.flashSalePrice.toLocaleString()} EGP
+            {product.flashSalePrice.toLocaleString()} {tr('EGP')}
           </span>
           <span className="text-xs text-gray-400 line-through">
-            {product.basePrice.toLocaleString()} EGP
+            {product.basePrice.toLocaleString()} {tr('EGP')}
           </span>
         </div>
         <CountdownBadge endsAt={product.flashSaleEndsAt} />
@@ -113,6 +116,7 @@ function FlashCard({ product }: { product: FlashProduct }) {
 }
 
 export default function FlashSalesPage() {
+  const { tr } = useLanguage();
   const [products, setProducts] = useState<FlashProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'discount' | 'ending' | 'price'>('ending');
@@ -146,14 +150,14 @@ export default function FlashSalesPage() {
         <div className="container mx-auto max-w-6xl">
           <div className="flex items-center gap-3 mb-2">
             <Zap className="w-7 h-7 fill-yellow-300 stroke-yellow-300" />
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight">Flash Sales</h1>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight">{tr('Flash Sales')}</h1>
           </div>
           <p className="text-white/80 text-sm md:text-base max-w-lg">
-            Massive discounts for a limited time only. Grab them before they expire!
+            {tr('Massive discounts for a limited time only. Grab them before they expire!')}
           </p>
           {products.length > 0 && (
             <p className="text-white/70 text-xs mt-2">
-              {products.length} deal{products.length !== 1 ? 's' : ''} live right now
+              {products.length} deal{products.length !== 1 ? 's' : ''} {tr('live right now')}
             </p>
           )}
         </div>
@@ -163,16 +167,16 @@ export default function FlashSalesPage() {
         {/* Sort bar */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-gray-500">
-            {loading ? 'Loading...' : `${sorted.length} deals`}
+            {loading ? tr('Loading...') : `${sorted.length} deals`}
           </p>
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value as typeof sortBy)}
             className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-red-400"
           >
-            <option value="ending">Ending Soon</option>
-            <option value="discount">Biggest Discount</option>
-            <option value="price">Lowest Price</option>
+            <option value="ending">{tr('Ending Soon')}</option>
+            <option value="discount">{tr('Biggest Discount')}</option>
+            <option value="price">{tr('Lowest Price')}</option>
           </select>
         </div>
 
@@ -193,15 +197,17 @@ export default function FlashSalesPage() {
         ) : sorted.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-3xl border border-gray-100">
             <Zap className="w-14 h-14 text-gray-200 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-700 mb-2">No flash sales right now</h2>
+            <h2 className="text-2xl font-bold text-gray-700 mb-2">
+              {tr('No flash sales right now')}
+            </h2>
             <p className="text-gray-400 text-sm mb-6 max-w-xs mx-auto">
-              Check back soon — sellers launch new deals throughout the day.
+              {tr('Check back soon — sellers launch new deals throughout the day.')}
             </p>
             <Link
               href="/shop"
               className="inline-block px-6 py-2.5 bg-[#1e3b8a] text-white rounded-full text-sm font-semibold hover:bg-[#16307a] transition-colors"
             >
-              Browse All Products
+              {tr('Browse All Products')}
             </Link>
           </div>
         ) : (

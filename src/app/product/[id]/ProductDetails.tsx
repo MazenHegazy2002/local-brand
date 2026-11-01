@@ -30,6 +30,7 @@ export default function ProductDetails({
   product: any;
   virtualTryOnEnabled?: boolean;
 }) {
+  const { tr } = useLanguage();
   const { t, lang } = useLanguage();
   const isAr = lang === 'ar';
   const router = useRouter();
@@ -439,11 +440,11 @@ export default function ProductDetails({
               href={`/brand/${(product.seller?.storeName || product.brand || 'brandy-store').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
               className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest hover:text-[#534AB7] dark:hover:text-[#6b8ff5] transition-colors"
             >
-              {product.seller?.storeName || product.brand || 'Brandy Store'}
+              {product.seller?.storeName || product.brand || tr('Brandy Store')}
             </Link>
             {(product.seller as { status?: string }).status === 'ACTIVE' && (
               <span
-                title="Verified seller on Brandy"
+                title={tr('Verified seller on Brandy')}
                 className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#534AB7]/10 text-[#534AB7] dark:bg-[#534AB7]/20 dark:text-[#6b8ff5] rounded text-[10px] font-bold uppercase tracking-wide"
               >
                 <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
@@ -452,7 +453,7 @@ export default function ProductDetails({
                     d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                   />
                 </svg>
-                Verified
+                {tr('Verified')}
               </span>
             )}
           </div>
@@ -484,7 +485,7 @@ export default function ProductDetails({
         {/* Dynamic Price & In-stock Indicators */}
         <div className="flex items-center gap-4 mb-6 flex-wrap">
           <div className="text-3xl font-black text-[#534AB7] dark:text-[#6b8ff5]">
-            {activePrice.toLocaleString()} {t('EGP') || 'EGP'}
+            {activePrice.toLocaleString()} {t('EGP') || tr('EGP')}
           </div>
 
           <div
@@ -499,12 +500,12 @@ export default function ProductDetails({
             {availableStock > 0 ? (
               <>
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse" />
-                {t('InStock') || 'In Stock'} ({availableStock} {t('Left') || 'Left'})
+                {t('InStock') || tr('In Stock')} ({availableStock} {t('Left') || tr('Left')})
               </>
             ) : (
               <>
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                {t('OutOfStock') || 'Out of Stock'}
+                {t('OutOfStock') || tr('Out of Stock')}
               </>
             )}
           </div>
@@ -516,17 +517,19 @@ export default function ProductDetails({
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div>
                 <span className="inline-block bg-red-650 text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded mb-1 animate-pulse">
-                  ⚡ Flash Sale
+                  {tr('⚡ Flash Sale')}
                 </span>
                 <div className="text-xs text-red-700 dark:text-red-400 font-semibold">
-                  Original Price:{' '}
-                  <span className="line-through">{product.basePrice.toLocaleString()} EGP</span>
+                  {tr('Original Price:')}{' '}
+                  <span className="line-through">
+                    {product.basePrice.toLocaleString()} {tr('EGP')}
+                  </span>
                 </div>
               </div>
               {product.flashSaleEndsAt && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                    Ends in:
+                    {tr('Ends in:')}
                   </span>
                   <CountdownTimer
                     targetDate={
@@ -545,8 +548,8 @@ export default function ProductDetails({
         {/* Low Stock Urgency Banner */}
         {availableStock > 0 && availableStock <= 5 && (
           <div className="mb-6 p-3.5 bg-amber-50 dark:bg-amber-950/20 border border-amber-250 dark:border-amber-900/50 text-amber-850 dark:text-amber-400 text-xs font-bold rounded-xl flex items-center gap-2.5 animate-pulse">
-            <span className="text-sm">⚠️</span> Low Stock! Only {availableStock} items left in
-            stock.
+            <span className="text-sm">⚠️</span> {tr('Low Stock! Only')} {availableStock}{' '}
+            {tr('items left in stock.')}
           </div>
         )}
 
@@ -558,10 +561,26 @@ export default function ProductDetails({
         {/* SKU/UPC code indicator */}
         {(variants.some((v: any) => v.sku) || variants.some((v: any) => v.upc)) && (
           <div className="mb-8 text-[11px] text-gray-400 dark:text-slate-500 font-mono flex flex-wrap gap-x-4 gap-y-1 bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-lg border border-gray-100 dark:border-slate-800/80">
-            {resolvedVariant?.sku && <span>SKU: {resolvedVariant.sku}</span>}
-            {!resolvedVariant?.sku && variants[0]?.sku && <span>SKU: {variants[0].sku}</span>}
-            {resolvedVariant?.upc && <span>UPC: {resolvedVariant.upc}</span>}
-            {!resolvedVariant?.upc && variants[0]?.upc && <span>UPC: {variants[0].upc}</span>}
+            {resolvedVariant?.sku && (
+              <span>
+                {tr('SKU:')} {resolvedVariant.sku}
+              </span>
+            )}
+            {!resolvedVariant?.sku && variants[0]?.sku && (
+              <span>
+                {tr('SKU:')} {variants[0].sku}
+              </span>
+            )}
+            {resolvedVariant?.upc && (
+              <span>
+                {tr('UPC:')} {resolvedVariant.upc}
+              </span>
+            )}
+            {!resolvedVariant?.upc && variants[0]?.upc && (
+              <span>
+                {tr('UPC:')} {variants[0].upc}
+              </span>
+            )}
           </div>
         )}
 
@@ -573,7 +592,9 @@ export default function ProductDetails({
           {hasColors && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Colors</span>
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                  {tr('Colors')}
+                </span>
                 <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   {selectedColor}
                 </span>
@@ -610,7 +631,9 @@ export default function ProductDetails({
           {hasSizes && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Size</span>
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                  {tr('Size')}
+                </span>
                 {selectedSize && (
                   <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     {selectedSize}
@@ -689,9 +712,9 @@ export default function ProductDetails({
             }`}
           >
             {added ? (
-              <>{t('AddedToCart') || 'Added ✓'}</>
+              <>{t('AddedToCart') || tr('Added ✓')}</>
             ) : availableStock === 0 ? (
-              <>{t('OutOfStock') || 'Out of Stock'}</>
+              <>{t('OutOfStock') || tr('Out of Stock')}</>
             ) : (
               <>
                 <svg
@@ -708,7 +731,7 @@ export default function ProductDetails({
                   <circle cx="20" cy="21" r="1" />
                   <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                 </svg>
-                {t('AddToCart') || 'Add to Cart'}
+                {t('AddToCart') || tr('Add to Cart')}
               </>
             )}
           </button>
@@ -743,14 +766,14 @@ export default function ProductDetails({
             className="mt-3 w-full h-12 rounded-xl font-black text-sm tracking-wider uppercase transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-lg shadow-violet-500/20 active:scale-95"
           >
             <span className="text-base">✨</span>
-            Try It On — AI Fitting Room
+            {tr('Try It On — AI Fitting Room')}
           </button>
         )}
 
         {/* Global stock overview */}
         {hasVariants && (
-          <div className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold mt-4 text-center sm:text-left">
-            Total available: {totalStockCount} units across all options
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold mt-4 text-center sm:text-start">
+            {tr('Total available:')} {totalStockCount} {tr('units across all options')}
           </div>
         )}
 
@@ -772,11 +795,13 @@ export default function ProductDetails({
           </div>
           <div>
             <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm mb-1">
-              🛡️ {t('BrandyGuarantee') || '14-Day Escrow Protection'}
+              🛡️ {t('BrandyGuarantee') || tr('14-Day Escrow Protection')}
             </h4>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               {t('GuaranteeText') ||
-                'Every product is authenticated. Your payment is safely held in escrow for 14 days post-delivery to guarantee product quality, authenticity, and stress-free returns.'}
+                tr(
+                  'Every product is authenticated. Your payment is safely held in escrow for 14 days post-delivery to guarantee product quality, authenticity, and stress-free returns.'
+                )}
             </p>
           </div>
         </div>

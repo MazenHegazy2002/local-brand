@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useEffect, useState } from 'react';
 
@@ -10,6 +11,7 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 export default function InstallPrompt() {
+  const { tr } = useLanguage();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
 
@@ -56,18 +58,19 @@ export default function InstallPrompt() {
   return (
     <div
       role="dialog"
-      aria-label="Install app"
-      className="fixed bottom-20 left-4 right-4 md:left-auto md:right-6 md:bottom-6 md:max-w-sm z-[59] bg-white rounded-2xl shadow-2xl p-5 border border-gray-200 animate-slideUp"
+      aria-label={tr('Install app')}
+      className="fixed bottom-20 start-4 end-4 md:left-auto md:end-6 md:bottom-6 md:max-w-sm z-[59] bg-white rounded-2xl shadow-2xl p-5 border border-gray-200 animate-slideUp"
     >
       <div className="flex items-start gap-3 mb-4">
         <div className="w-12 h-12 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center shrink-0 overflow-hidden">
-          <img src="/icon-192.png" alt="Brandyy" className="w-10 h-10 object-contain" />
+          <img src="/icon-192.png" alt={tr('Brandyy')} className="w-10 h-10 object-contain" />
         </div>
         <div className="flex-1">
-          <h3 className="font-black text-gray-900 text-sm">Install Brandyy</h3>
+          <h3 className="font-black text-gray-900 text-sm">{tr('Install Brandyy')}</h3>
           <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-            Get faster checkout, exclusive deals, and push notifications — installs like a native
-            app.
+            {tr(
+              'Get faster checkout, exclusive deals, and push notifications — installs like a native app.'
+            )}
           </p>
         </div>
       </div>
@@ -76,13 +79,13 @@ export default function InstallPrompt() {
           onClick={handleDismiss}
           className="flex-1 px-4 py-2 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50"
         >
-          Not now
+          {tr('Not now')}
         </button>
         <button
           onClick={handleInstall}
           className="flex-1 px-4 py-2 bg-[#1e3b8a] text-white rounded-xl text-xs font-bold hover:bg-[#152c6e]"
         >
-          Install App
+          {tr('Install App')}
         </button>
       </div>
 

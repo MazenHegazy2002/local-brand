@@ -35,6 +35,7 @@ export default function ProductCard({
   product: ProductCardProduct;
   index?: number;
 }) {
+  const { tr } = useLanguage();
   const { t, lang } = useLanguage();
   const { toast } = useToast();
   const isAr = lang === 'ar';
@@ -274,7 +275,7 @@ export default function ProductCard({
 
     if (hasRealColors && !selectedColor) {
       toast({
-        title: lang === 'ar' ? 'يرجى اختيار اللون أولاً' : 'Please select a color first',
+        title: lang === 'ar' ? 'يرجى اختيار اللون أولاً' : tr('Please select a color first'),
         variant: 'error',
       });
       return;
@@ -282,7 +283,7 @@ export default function ProductCard({
 
     if (uniqueSizes.length > 0 && !selectedSize) {
       toast({
-        title: lang === 'ar' ? 'يرجى اختيار المقاس أولاً' : 'Please select a size first',
+        title: lang === 'ar' ? 'يرجى اختيار المقاس أولاً' : tr('Please select a size first'),
         variant: 'error',
       });
       return;
@@ -342,7 +343,7 @@ export default function ProductCard({
         <div className="absolute top-4 start-4 flex flex-wrap gap-2 z-10">
           {isVerifiedLocal && (
             <span
-              title={isAr ? 'علامة تجارية محلية موثّقة' : 'Verified Local Brand'}
+              title={isAr ? 'علامة تجارية محلية موثّقة' : tr('Verified Local Brand')}
               className="inline-flex items-center gap-1 bg-[#1e3b8a] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow"
             >
               <svg
@@ -455,7 +456,7 @@ export default function ProductCard({
               style={{ direction: isAr ? 'rtl' : 'ltr' }}
             >
               <span className="text-[10px] font-semibold text-slate-500 tracking-wider select-none me-0.5">
-                {isAr ? 'المقاسات:' : 'Sizes:'}
+                {isAr ? 'المقاسات:' : tr('Sizes:')}
               </span>
               <div className="flex flex-wrap gap-1">
                 {uniqueSizes.map(sz => {

@@ -15,11 +15,16 @@ interface AccordionProps {
   className?: string;
 }
 
-export function Accordion({ items, allowMultipleOpen = false, defaultOpen = [], className = '' }: AccordionProps) {
+export function Accordion({
+  items,
+  allowMultipleOpen = false,
+  defaultOpen = [],
+  className = '',
+}: AccordionProps) {
   const [openIds, setOpenIds] = useState<Set<string>>(new Set(defaultOpen));
 
   const toggleItem = (id: string) => {
-    setOpenIds((prev) => {
+    setOpenIds(prev => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
         newSet.delete(id);
@@ -33,14 +38,17 @@ export function Accordion({ items, allowMultipleOpen = false, defaultOpen = [], 
 
   return (
     <div className={`space-y-2 ${className}`}>
-      {items.map((item) => {
+      {items.map(item => {
         const isOpen = openIds.has(item.id);
-        
+
         return (
-          <div key={item.id} className="border border-[hsl(var(--border))] rounded-[var(--radius)] overflow-hidden">
+          <div
+            key={item.id}
+            className="border border-[hsl(var(--border))] rounded-[var(--radius)] overflow-hidden"
+          >
             <button
               onClick={() => toggleItem(item.id)}
-              className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors text-left"
+              className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors text-start"
               aria-expanded={isOpen}
             >
               <span className="font-semibold text-[hsl(var(--foreground))]">{item.title}</span>

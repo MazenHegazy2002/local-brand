@@ -1,3 +1,4 @@
+import { getServerTr } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
@@ -197,6 +198,7 @@ function iconFor(name: string) {
 }
 
 export default async function CategoriesIndexPage() {
+  const tr = await getServerTr();
   const allCategories = await prisma.category.findMany({
     include: {
       products: {
@@ -224,14 +226,15 @@ export default async function CategoriesIndexPage() {
       <div className="container mx-auto px-4 py-10 md:py-14">
         <div className="mb-10">
           <p className="text-xs uppercase tracking-[0.2em] text-[hsl(var(--accent))] font-semibold mb-2">
-            Browse
+            {tr('Browse')}
           </p>
           <h1 className="text-4xl md:text-5xl font-black text-[hsl(var(--foreground))] mb-3">
-            All <span className="text-[hsl(var(--primary))]">Categories</span>
+            {tr('All')} <span className="text-[hsl(var(--primary))]">{tr('Categories')}</span>
           </h1>
           <p className="text-[hsl(var(--muted-foreground))] text-base max-w-2xl">
-            Explore every category on Brandy. {totalProducts.toLocaleString()} products across{' '}
-            {categories.length} categories from verified Egyptian sellers.
+            {tr('Explore every category on Brandy.')} {totalProducts.toLocaleString()}{' '}
+            {tr('products across')} {categories.length}{' '}
+            {tr('categories from verified Egyptian sellers.')}
           </p>
         </div>
 
@@ -247,10 +250,10 @@ export default async function CategoriesIndexPage() {
               </div>
               <div className="text-center">
                 <h3 className="text-sm font-bold text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors">
-                  {cat.name}
+                  {tr(cat.name)}
                 </h3>
                 <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5">
-                  {cat.products.length} {cat.products.length === 1 ? 'product' : 'products'}
+                  {cat.products.length} {tr(cat.products.length === 1 ? 'product' : 'products')}
                 </p>
               </div>
             </Link>
@@ -261,10 +264,10 @@ export default async function CategoriesIndexPage() {
           <div className="text-center py-24 bg-white rounded-3xl border border-[hsl(var(--border))]">
             <div className="text-6xl mb-4">🏪</div>
             <h2 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-2">
-              No categories yet
+              {tr('No categories yet')}
             </h2>
             <p className="text-[hsl(var(--muted-foreground))]">
-              Categories will appear here once added to the database.
+              {tr('Categories will appear here once added to the database.')}
             </p>
           </div>
         )}

@@ -255,3 +255,11 @@ a:focus:not(:focus-visible) {
   flex-shrink: 0;
 }
 
+
+/* Direction icons point the other way in RTL. */
+html[dir='rtl'] .lucide-chevron-left,
+html[dir='rtl'] .lucide-chevron-right,
+html[dir='rtl'] .lucide-arrow-left,
+html[dir='rtl'] .lucide-arrow-right {
+  transform: scaleX(-1);
+}

@@ -39,6 +39,7 @@ const PAYOUT_METHODS = [
 ];
 
 export default function SellPage() {
+  const { tr } = useLanguage();
   const { data: session } = useSession();
   const { t, lang, isRTL } = useLanguage();
   const router = useRouter();
@@ -368,19 +369,19 @@ export default function SellPage() {
             fontFamily: 'inherit',
           }}
         >
-          {isRTL ? '→ رجوع' : '← Back'}
+          {isRTL ? '→ رجوع' : tr('← Back')}
         </button>
 
         {/* Header */}
         <div style={{ textAlign: isRTL ? 'right' : 'left', marginBottom: 28 }}>
           <div style={{ fontSize: 24, marginBottom: 8 }}>🚀</div>
           <h1 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 6px' }}>
-            {lang === 'ar' ? 'انضم إلى برنامج التسويق بالعمولة' : 'Join the Affiliate Program'}
+            {lang === 'ar' ? 'انضم إلى برنامج التسويق بالعمولة' : tr('Join the Affiliate Program')}
           </h1>
           <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>
             {lang === 'ar'
               ? 'سجّل دخولك أو أنشئ حساباً للمتابعة'
-              : 'Sign in or create an account to continue'}
+              : tr('Sign in or create an account to continue')}
           </p>
         </div>
 
@@ -434,7 +435,7 @@ export default function SellPage() {
             <>
               <div>
                 <label style={labelStyle}>
-                  {lang === 'ar' ? 'الاسم الكامل' : 'Full name'}{' '}
+                  {lang === 'ar' ? 'الاسم الكامل' : tr('Full name')}{' '}
                   <span style={{ color: '#EF4444' }}>*</span>
                 </label>
                 <input
@@ -448,7 +449,7 @@ export default function SellPage() {
               </div>
               <div>
                 <label style={labelStyle}>
-                  {lang === 'ar' ? 'رقم الهاتف' : 'Phone number'}{' '}
+                  {lang === 'ar' ? 'رقم الهاتف' : tr('Phone number')}{' '}
                   <span style={{ color: '#EF4444' }}>*</span>
                 </label>
                 <input
@@ -465,7 +466,7 @@ export default function SellPage() {
 
           <div>
             <label style={labelStyle}>
-              {lang === 'ar' ? 'البريد الإلكتروني' : 'Email'}{' '}
+              {lang === 'ar' ? 'البريد الإلكتروني' : tr('Email')}{' '}
               <span style={{ color: '#EF4444' }}>*</span>
             </label>
             <input
@@ -480,7 +481,7 @@ export default function SellPage() {
 
           <div>
             <label style={labelStyle}>
-              {lang === 'ar' ? 'كلمة المرور' : 'Password'}{' '}
+              {lang === 'ar' ? 'كلمة المرور' : tr('Password')}{' '}
               <span style={{ color: '#EF4444' }}>*</span>
             </label>
             <input
@@ -502,7 +503,7 @@ export default function SellPage() {
                   textAlign: isRTL ? 'right' : 'left',
                 }}
               >
-                {lang === 'ar' ? '٨ أحرف على الأقل' : 'At least 8 characters'}
+                {lang === 'ar' ? '٨ أحرف على الأقل' : tr('At least 8 characters')}
               </p>
             )}
           </div>
@@ -546,16 +547,16 @@ export default function SellPage() {
               : authTab === 'login'
                 ? lang === 'ar'
                   ? 'تسجيل الدخول والمتابعة'
-                  : 'Sign in & continue'
+                  : tr('Sign in & continue')
                 : lang === 'ar'
                   ? 'إنشاء حساب والمتابعة'
-                  : 'Create account & continue'}
+                  : tr('Create account & continue')}
           </button>
 
           {authTab === 'login' && (
             <p style={{ textAlign: 'center', fontSize: 13, color: '#64748b', margin: 0 }}>
               <Link href="/forgot-password" style={{ color: '#1e3b8a' }}>
-                {lang === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
+                {lang === 'ar' ? 'نسيت كلمة المرور؟' : tr('Forgot password?')}
               </Link>
             </p>
           )}
@@ -589,7 +590,7 @@ export default function SellPage() {
             fontFamily: 'inherit',
           }}
         >
-          {isRTL ? '→ رجوع' : '← Back'}
+          {isRTL ? '→ رجوع' : tr('← Back')}
         </button>
         <h1
           style={{
@@ -628,7 +629,9 @@ export default function SellPage() {
           >
             {lang === 'ar'
               ? 'لديك طلب انضمام قيد المراجعة حالياً. يمكنك تعديل بياناته أدناه وحفظ التغييرات.'
-              : 'You currently have a PENDING application under review. You can modify your application details below and save changes.'}
+              : tr(
+                  'You currently have a PENDING application under review. You can modify your application details below and save changes.'
+                )}
           </div>
         )}
 
@@ -648,7 +651,9 @@ export default function SellPage() {
           >
             {lang === 'ar'
               ? 'تم رفض طلبك السابق. يرجى تعديل بيانات طلبك وإعادة تقديمه للمراجعة.'
-              : 'Your previous application was rejected. Please revise your application details and resubmit for review.'}
+              : tr(
+                  'Your previous application was rejected. Please revise your application details and resubmit for review.'
+                )}
           </div>
         )}
 
@@ -1094,9 +1099,9 @@ export default function SellPage() {
               {stat.value}
             </div>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b', marginBottom: 2 }}>
-              {stat.sub}
+              {tr(stat.sub)}
             </div>
-            <div style={{ fontSize: 12, color: '#94a3b8' }}>{stat.label}</div>
+            <div style={{ fontSize: 12, color: '#94a3b8' }}>{tr(stat.label)}</div>
           </div>
         ))}
       </div>
@@ -1146,7 +1151,7 @@ export default function SellPage() {
                 marginBottom: 16,
               }}
             >
-              {item.step}
+              {tr(item.step)}
             </div>
             <h3
               style={{
@@ -1156,7 +1161,7 @@ export default function SellPage() {
                 textAlign: isRTL ? 'right' : 'left',
               }}
             >
-              {item.title}
+              {tr(item.title)}
             </h3>
             <p
               style={{
@@ -1166,7 +1171,7 @@ export default function SellPage() {
                 textAlign: isRTL ? 'right' : 'left',
               }}
             >
-              {item.desc}
+              {tr(item.desc)}
             </p>
           </div>
         ))}

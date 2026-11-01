@@ -1,3 +1,4 @@
+import { getServerTr } from '@/lib/i18n/server';
 // Public CMS page renderer.
 //
 // Pages live in the Page Prisma model and are managed at /admin-os →
@@ -78,7 +79,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 function CmsHeroBlock({ title, description, bgImage, btnText, btnLink }: any) {
   return (
     <div
-      className="relative bg-slate-900 text-white rounded-3xl overflow-hidden py-16 px-8 md:px-12 my-8 border border-slate-800 text-center md:text-left flex flex-col md:flex-row items-center gap-8 shadow-md"
+      className="relative bg-slate-900 text-white rounded-3xl overflow-hidden py-16 px-8 md:px-12 my-8 border border-slate-800 text-center md:text-start flex flex-col md:flex-row items-center gap-8 shadow-md"
       style={
         bgImage
           ? {
@@ -154,7 +155,8 @@ function CmsProductGridBlock({ title, products, dict }: any) {
   );
 }
 
-function CmsFeatureGridBlock({ items }: any) {
+async function CmsFeatureGridBlock({ items }: any) {
+  const tr = await getServerTr();
   if (!items || items.length === 0) return null;
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-10">
@@ -168,9 +170,9 @@ function CmsFeatureGridBlock({ items }: any) {
               {item.emoji}
             </div>
           )}
-          <h3 className="font-bold text-slate-900 text-base mb-2">{item.title}</h3>
+          <h3 className="font-bold text-slate-900 text-base mb-2">{tr(item.title)}</h3>
           {item.description && (
-            <p className="text-xs text-slate-500 leading-relaxed">{item.description}</p>
+            <p className="text-xs text-slate-500 leading-relaxed">{tr(item.description)}</p>
           )}
         </div>
       ))}
@@ -178,7 +180,8 @@ function CmsFeatureGridBlock({ items }: any) {
   );
 }
 
-function CmsFaqBlock({ items }: any) {
+async function CmsFaqBlock({ items }: any) {
+  const tr = await getServerTr();
   if (!items || items.length === 0) return null;
   return (
     <div className="my-10 space-y-4">
@@ -188,11 +191,11 @@ function CmsFaqBlock({ items }: any) {
           className="group bg-white rounded-2xl border border-slate-100 p-6 [&_summary::-webkit-details-marker]:hidden cursor-pointer transition hover:border-slate-200"
         >
           <summary className="flex items-center justify-between gap-4 font-bold text-slate-900 text-sm md:text-base">
-            <span>{item.question}</span>
+            <span>{tr(item.question)}</span>
             <span className="transition group-open:-rotate-180 text-[#1e3b8a]">▼</span>
           </summary>
-          <p className="mt-4 text-xs md:text-sm text-slate-650 leading-relaxed pr-6">
-            {item.answer}
+          <p className="mt-4 text-xs md:text-sm text-slate-650 leading-relaxed pe-6">
+            {tr(item.answer)}
           </p>
         </details>
       ))}

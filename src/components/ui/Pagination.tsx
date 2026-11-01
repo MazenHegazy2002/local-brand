@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState } from 'react';
 
@@ -21,6 +22,7 @@ export function Pagination({
   totalItems,
   className = '',
 }: PaginationProps) {
+  const { tr } = useLanguage();
   const [_pageInput, _setPageInput] = useState('');
 
   const getPageNumbers = () => {
@@ -53,11 +55,11 @@ export function Pagination({
       <div className="text-sm text-gray-500 order-2 sm:order-1">
         {totalItems ? (
           <span>
-            Showing {startItem}-{endItem} of {totalItems}
+            {tr('Showing')} {startItem}-{endItem} of {totalItems}
           </span>
         ) : (
           <span>
-            Page {currentPage} of {totalPages}
+            {tr('Page')} {currentPage} of {totalPages}
           </span>
         )}
       </div>
@@ -123,7 +125,7 @@ export function Pagination({
 
       {onItemsPerPageChange && (
         <div className="flex items-center gap-2 text-sm order-3">
-          <span className="text-gray-500">Show:</span>
+          <span className="text-gray-500">{tr('Show:')}</span>
           <select
             value={itemsPerPage}
             onChange={e => onItemsPerPageChange(Number(e.target.value))}

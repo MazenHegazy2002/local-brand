@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -12,6 +13,7 @@ const popularCategories = [
 ];
 
 export default function NotFoundPage() {
+  const { tr } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
@@ -24,7 +26,7 @@ export default function NotFoundPage() {
   return (
     <div className="min-h-screen bg-[#f9f8f6]">
       <Navbar />
-      
+
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-2xl mx-auto text-center">
           {/* 404 Large Heading */}
@@ -34,10 +36,12 @@ export default function NotFoundPage() {
             </h1>
             <div className="-mt-16 md:-mt-20">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                Page Not Found
+                {tr('Page Not Found')}
               </h2>
               <p className="text-gray-500 text-lg max-w-md mx-auto">
-                Sorry, we couldn&apos;t find the page you&apos;re looking for. Let&apos;s help you find what you need.
+                {tr(
+                  "Sorry, we couldn't find the page you're looking for. Let's help you find what you need."
+                )}
               </p>
             </div>
           </div>
@@ -49,62 +53,60 @@ export default function NotFoundPage() {
                 <input
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search for products..."
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder={tr('Search for products...')}
                   className="w-full px-5 py-4 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1e3b8a] focus:border-transparent"
                 />
-                <svg 
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" 
-                  width="20" 
-                  height="20" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className="absolute end-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
                   strokeWidth="2"
                 >
-                  <circle cx="11" cy="11" r="8"/>
-                  <path d="M21 21l-4.35-4.35"/>
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
                 </svg>
               </div>
-              <button 
+              <button
                 type="submit"
                 className="px-6 py-4 bg-[#1e3b8a] hover:bg-[#152c6e] text-white font-bold rounded-xl transition-colors"
               >
-                Search
+                {tr('Search')}
               </button>
             </div>
           </form>
 
           {/* Quick Links */}
           <div className="flex flex-wrap justify-center gap-4 mb-16">
-            <Link 
+            <Link
               href="/"
               className="px-6 py-3 bg-white border border-gray-200 hover:border-[#1e3b8a] text-gray-700 hover:text-[#1e3b8a] font-semibold rounded-xl transition-colors"
             >
-              Go to Homepage
+              {tr('Go to Homepage')}
             </Link>
-            <Link 
+            <Link
               href="/shop"
               className="px-6 py-3 bg-[#1e3b8a] hover:bg-[#152c6e] text-white font-bold rounded-xl transition-colors"
             >
-              Browse Shop
+              {tr('Browse Shop')}
             </Link>
           </div>
 
           {/* Popular Categories Grid */}
           <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
-            <h3 className="text-lg font-bold text-gray-900 mb-6">
-              Popular Categories
-            </h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-6">{tr('Popular Categories')}</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {popularCategories.map((cat) => (
-                <Link 
+              {popularCategories.map(cat => (
+                <Link
                   key={cat.slug}
                   href={`/category/${cat.slug}`}
                   className={`p-6 rounded-xl ${cat.color} hover:shadow-md transition-all group`}
                 >
-                  <span className="font-bold text-lg block">{cat.name}</span>
-                  <span className="text-xs opacity-75 mt-1 block">Explore →</span>
+                  <span className="font-bold text-lg block">{tr(cat.name)}</span>
+                  <span className="text-xs opacity-75 mt-1 block">{tr('Explore →')}</span>
                 </Link>
               ))}
             </div>
@@ -113,9 +115,9 @@ export default function NotFoundPage() {
           {/* Help Section */}
           <div className="mt-10 text-gray-500 text-sm">
             <p>
-              Need help?{' '}
+              {tr('Need help?')}{' '}
               <Link href="/help" className="text-[#1e3b8a] hover:underline font-semibold">
-                Contact Support
+                {tr('Contact Support')}
               </Link>
             </p>
           </div>

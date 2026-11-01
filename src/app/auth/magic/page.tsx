@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -10,6 +11,7 @@ import Link from 'next/link';
 // password (the auto-created hash is a random unguessable value so the
 // credentials provider can't authenticate until they set one).
 function MagicCallback() {
+  const { tr } = useLanguage();
   const params = useSearchParams();
   const router = useRouter();
   const token = params.get('token');
@@ -32,7 +34,9 @@ function MagicCallback() {
       if (!res || res.error) {
         setStatus('error');
         setMessage(
-          'This sign-in link is invalid or has expired. Magic links work once and last 30 minutes.'
+          tr(
+            'This sign-in link is invalid or has expired. Magic links work once and last 30 minutes.'
+          )
         );
         return;
       }
@@ -66,20 +70,24 @@ function MagicCallback() {
           <>
             <div className="w-12 h-12 border-4 border-[#1e3b8a] border-t-transparent rounded-full animate-spin mx-auto mb-6" />
             <h1 className="text-xl font-bold text-gray-900 mb-2">{message}</h1>
-            <p className="text-sm text-gray-500">Hold tight, this should only take a moment.</p>
+            <p className="text-sm text-gray-500">
+              {tr('Hold tight, this should only take a moment.')}
+            </p>
           </>
         ) : (
           <>
             <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">
               !
             </div>
-            <h1 className="text-xl font-bold text-gray-900 mb-2">Sign-in link unavailable</h1>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">
+              {tr('Sign-in link unavailable')}
+            </h1>
             <p className="text-sm text-gray-500 mb-6">{message}</p>
             <Link
               href="/login"
               className="inline-block bg-[#1e3b8a] text-white font-bold py-2.5 px-6 rounded-lg hover:bg-[#152c6e] transition-colors text-sm"
             >
-              Back to sign in
+              {tr('Back to sign in')}
             </Link>
           </>
         )}
@@ -89,11 +97,12 @@ function MagicCallback() {
 }
 
 export default function MagicLinkCallbackPage() {
+  const { tr } = useLanguage();
   return (
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center text-gray-400">
-          Loading...
+          {tr('Loading...')}
         </div>
       }
     >

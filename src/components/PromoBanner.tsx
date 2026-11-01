@@ -19,6 +19,7 @@ export default function PromoBanner({
   ctaHref = '/shop',
   id = 'default',
 }: PromoBannerProps) {
+  const { tr } = useLanguage();
   const { t } = useLanguage();
   const displayMessage = message ?? t('PromoBannerMessage');
   const displayCta = ctaLabel ?? t('ShopNow');
@@ -53,8 +54,8 @@ export default function PromoBanner({
         </Link>
         <button
           onClick={handleDismiss}
-          aria-label="Dismiss"
-          className="ml-auto text-white/70 hover:text-white transition-colors"
+          aria-label={tr('Dismiss')}
+          className="ms-auto text-white/70 hover:text-white transition-colors"
         >
           <svg
             width="14"

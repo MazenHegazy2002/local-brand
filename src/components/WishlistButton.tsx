@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useWishlistStore } from '@/lib/wishlistStore';
 import { useEffect, useState } from 'react';
@@ -23,6 +24,7 @@ export default function WishlistButton({
   product: WishlistProduct;
   className?: string;
 }) {
+  const { tr } = useLanguage();
   const { hasItem, toggleItem } = useWishlistStore();
   const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
@@ -50,7 +52,7 @@ export default function WishlistButton({
         );
       }}
       className={`z-20 flex items-center justify-center w-8 h-8 rounded-full bg-white/80 backdrop-blur shadow hover:bg-white transition-colors ${className}`}
-      aria-label="Toggle wishlist"
+      aria-label={tr('Toggle wishlist')}
     >
       <svg
         width="16"

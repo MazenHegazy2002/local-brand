@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -20,6 +21,7 @@ export default function RecentlyViewed({
   heading = 'Recently viewed',
   limit = 6,
 }: RecentlyViewedProps) {
+  const { tr } = useLanguage();
   const { productIds, addProduct } = useRecentlyViewedStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -31,7 +33,7 @@ export default function RecentlyViewed({
 
   // Load full product data for the tracked ids
   useEffect(() => {
-    const ids = productIds.filter((id) => id !== excludeId).slice(0, limit);
+    const ids = productIds.filter(id => id !== excludeId).slice(0, limit);
     if (ids.length === 0) {
       setProducts([]);
       return;
@@ -48,9 +50,7 @@ export default function RecentlyViewed({
             const map = new Map<string, Product>(
               (data.products || []).map((p: Product) => [p.id, p])
             );
-            const ordered = ids
-              .map((id) => map.get(id))
-              .filter((p): p is Product => !!p);
+            const ordered = ids.map(id => map.get(id)).filter((p): p is Product => !!p);
             setProducts(ordered);
           }
         }
@@ -85,7 +85,7 @@ export default function RecentlyViewed({
                 </div>
               </div>
             ))
-          : products.map((product) => {
+          : products.map(product => {
               const image = product.images?.[0]?.url;
               return (
                 <Link
@@ -108,7 +108,7 @@ export default function RecentlyViewed({
                       {product.title}
                     </h3>
                     <div className="text-sm font-black text-[#1e3b8a] mt-2">
-                      {product.basePrice.toLocaleString()} EGP
+                      {product.basePrice.toLocaleString()} {tr('EGP')}
                     </div>
                   </div>
                 </Link>

@@ -1,3 +1,4 @@
+import { getServerTr } from '@/lib/i18n/server';
 // Maintenance page — shown when MAINTENANCE_MODE is on.
 // Reads the custom MAINTENANCE_MESSAGE from the settings registry.
 import { getSetting } from '@/lib/admin-settings-registry';
@@ -5,6 +6,7 @@ import { getSetting } from '@/lib/admin-settings-registry';
 export const dynamic = 'force-dynamic';
 
 export default async function MaintenancePage() {
+  const tr = await getServerTr();
   // If we hit this page but the flag is off, don't trap the user — show
   // them a normal "redirecting…" message instead of a maintenance error.
   const isOn = await getSetting<boolean>('MAINTENANCE_MODE');
@@ -15,13 +17,13 @@ export default async function MaintenancePage() {
     <main className="m-shell">
       <div className="m-card">
         <div className="m-emoji">🛠️</div>
-        <h1 className="m-title">{isOn ? 'Back soon' : 'Site is online'}</h1>
+        <h1 className="m-title">{isOn ? tr('Back soon') : tr('Site is online')}</h1>
         <p className="m-msg">
           {isOn ? message : `The ${storeName} site is now online. Refresh to continue.`}
         </p>
         {!isOn && (
           <a href="/" className="m-cta">
-            Go to {storeName}
+            {tr('Go to')} {storeName}
           </a>
         )}
       </div>

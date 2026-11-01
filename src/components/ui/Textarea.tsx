@@ -13,11 +13,26 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ label, error, helperText, autoResize, showCharCount, maxLength, required, className = '', id, value, ...props }, ref) => {
+  (
+    {
+      label,
+      error,
+      helperText,
+      autoResize,
+      showCharCount,
+      maxLength,
+      required,
+      className = '',
+      id,
+      value,
+      ...props
+    },
+    ref
+  ) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fallbackId = useId();
     const selectId = id || fallbackId;
-    const [localValue, setLocalValue] = useState(value as string || '');
+    const [localValue, setLocalValue] = useState((value as string) || '');
 
     useEffect(() => {
       if (autoResize && textareaRef.current) {
@@ -26,18 +41,22 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       }
     }, [localValue, autoResize]);
 
-    const charCount = typeof value === 'string' ? value.length : (localValue as string)?.length || 0;
+    const charCount =
+      typeof value === 'string' ? value.length : (localValue as string)?.length || 0;
 
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={selectId} className="block text-sm font-semibold text-[hsl(var(--foreground))] mb-1.5">
+          <label
+            htmlFor={selectId}
+            className="block text-sm font-semibold text-[hsl(var(--foreground))] mb-1.5"
+          >
             {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && <span className="text-red-500 ms-1">*</span>}
           </label>
         )}
         <textarea
-          ref={(el) => {
+          ref={el => {
             (textareaRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
             if (ref && typeof ref === 'object') ref.current = el;
           }}
@@ -45,7 +64,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           required={required}
           maxLength={maxLength}
           value={value}
-          onChange={(e) => setLocalValue(e.target.value)}
+          onChange={e => setLocalValue(e.target.value)}
           className={`
             w-full px-4 py-2.5 rounded-[var(--radius)] border transition-all duration-200
             bg-white text-[hsl(var(--foreground))]
@@ -65,7 +84,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             </p>
           )}
           {showCharCount && maxLength && (
-            <p className={`text-sm ml-auto ${charCount >= maxLength ? 'text-red-500' : 'text-gray-400'}`}>
+            <p
+              className={`text-sm ms-auto ${charCount >= maxLength ? 'text-red-500' : 'text-gray-400'}`}
+            >
               {charCount}/{maxLength}
             </p>
           )}

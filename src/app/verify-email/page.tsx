@@ -1,10 +1,12 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 export default function VerifyEmailPage() {
+  const { tr } = useLanguage();
   const params = useSearchParams();
   const error = params.get('error');
   const email = params.get('email') || '';
@@ -50,10 +52,10 @@ export default function VerifyEmailPage() {
                   />
                 </svg>
               </div>
-              <h1 className="text-2xl font-black text-gray-900 mb-2">Link expired</h1>
+              <h1 className="text-2xl font-black text-gray-900 mb-2">{tr('Link expired')}</h1>
               <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-                Your verification link has expired (links are valid for 10 minutes).
-                {email && ' Click below to get a fresh one.'}
+                {tr('Your verification link has expired (links are valid for 10 minutes).')}
+                {email && tr('Click below to get a fresh one.')}
               </p>
               {email &&
                 (resent ? (
@@ -66,7 +68,7 @@ export default function VerifyEmailPage() {
                     disabled={resending}
                     className="w-full py-3 bg-[hsl(var(--primary))] text-white font-bold rounded-xl disabled:opacity-50"
                   >
-                    {resending ? 'Sending...' : 'Resend verification email'}
+                    {resending ? tr('Sending...') : tr('Resend verification email')}
                   </button>
                 ))}
             </>
@@ -81,12 +83,17 @@ export default function VerifyEmailPage() {
                   />
                 </svg>
               </div>
-              <h1 className="text-2xl font-black text-gray-900 mb-2">Check your email</h1>
+              <h1 className="text-2xl font-black text-gray-900 mb-2">{tr('Check your email')}</h1>
               <p className="text-gray-500 text-sm mb-2 leading-relaxed">
-                We&apos;ve sent a verification link to{' '}
-                {email ? <strong className="text-gray-800">{email}</strong> : 'your email address'}.
+                {tr("We've sent a verification link to")}{' '}
+                {email ? (
+                  <strong className="text-gray-800">{email}</strong>
+                ) : (
+                  tr('your email address')
+                )}
+                .
               </p>
-              <p className="text-gray-400 text-xs mb-6">The link expires in 10 minutes.</p>
+              <p className="text-gray-400 text-xs mb-6">{tr('The link expires in 10 minutes.')}</p>
 
               {email &&
                 (resent ? (
@@ -99,7 +106,7 @@ export default function VerifyEmailPage() {
                     disabled={resending}
                     className="text-sm text-[hsl(var(--primary))] hover:underline disabled:opacity-50 mb-4"
                   >
-                    {resending ? 'Sending...' : "Didn't receive it? Resend"}
+                    {resending ? tr('Sending...') : tr("Didn't receive it? Resend")}
                   </button>
                 ))}
             </>
@@ -107,7 +114,7 @@ export default function VerifyEmailPage() {
 
           <p className="text-xs text-gray-400 mt-6">
             <Link href="/login" className="hover:underline text-gray-500">
-              Back to sign in
+              {tr('Back to sign in')}
             </Link>
           </p>
         </div>

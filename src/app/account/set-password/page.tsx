@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -10,6 +11,7 @@ import Navbar from '@/components/Navbar';
 // with credentials too. The page is reachable any time — existing users can
 // also use it to update their password from a known-good session.
 function SetPasswordContent() {
+  const { tr } = useLanguage();
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get('next') || '/dashboard';
@@ -32,11 +34,11 @@ function SetPasswordContent() {
     e.preventDefault();
     setError('');
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.');
+      setError(tr('Password must be at least 8 characters.'));
       return;
     }
     if (password !== confirm) {
-      setError('Passwords do not match.');
+      setError(tr('Passwords do not match.'));
       return;
     }
 
@@ -49,12 +51,12 @@ function SetPasswordContent() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message || 'Failed to set password');
+        setError(data.message || tr('Failed to set password'));
         return;
       }
       router.replace(next);
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError(tr('Something went wrong. Please try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -71,22 +73,29 @@ function SetPasswordContent() {
       <div className="container mx-auto px-4 py-12 max-w-lg">
         {isWelcome && (
           <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-xl px-4 py-3 mb-6 text-sm">
-            <strong>Welcome{session?.user?.name ? `, ${session.user.name}` : ''}!</strong>{' '}
-            You&apos;re signed in via your sign-in link. Set a password below so you can also use
-            email + password to sign in next time.
+            <strong>
+              {tr('Welcome')}
+              {session?.user?.name ? `, ${session.user.name}` : ''}!
+            </strong>{' '}
+            {tr(
+              "You're signed in via your sign-in link. Set a password below so you can also use email + password to sign in next time."
+            )}
           </div>
         )}
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <h1 className="text-2xl font-black text-gray-900 mb-2">Set a password</h1>
+          <h1 className="text-2xl font-black text-gray-900 mb-2">{tr('Set a password')}</h1>
           <p className="text-sm text-gray-500 mb-6">
-            Choose a password (at least 8 characters). Your password is hashed and stored securely —
-            nobody at Brandy can see it.
+            {tr(
+              'Choose a password (at least 8 characters). Your password is hashed and stored securely — nobody at Brandy can see it.'
+            )}
           </p>
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">New Password</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                {tr('New Password')}
+              </label>
               <input
                 type="password"
                 required
@@ -94,14 +103,14 @@ function SetPasswordContent() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
-                placeholder="At least 8 characters"
+                placeholder={tr('At least 8 characters')}
                 autoComplete="new-password"
                 autoFocus
               />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Confirm Password
+                {tr('Confirm Password')}
               </label>
               <input
                 type="password"
@@ -110,7 +119,7 @@ function SetPasswordContent() {
                 value={confirm}
                 onChange={e => setConfirm(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
-                placeholder="Type the same password again"
+                placeholder={tr('Type the same password again')}
                 autoComplete="new-password"
               />
             </div>
@@ -127,7 +136,7 @@ function SetPasswordContent() {
                 disabled={submitting}
                 className="flex-1 bg-[#1e3b8a] text-white font-bold py-3 rounded-lg hover:bg-[#152c6e] disabled:opacity-50 transition-colors"
               >
-                {submitting ? 'Saving...' : 'Save password'}
+                {submitting ? tr('Saving...') : tr('Save password')}
               </button>
               {isWelcome && (
                 <button
@@ -135,7 +144,7 @@ function SetPasswordContent() {
                   onClick={onSkip}
                   className="flex-1 sm:flex-none bg-white text-gray-700 border border-gray-200 font-medium py-3 px-6 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  Skip for now
+                  {tr('Skip for now')}
                 </button>
               )}
             </div>
@@ -143,8 +152,9 @@ function SetPasswordContent() {
 
           {isWelcome && (
             <p className="mt-6 text-xs text-gray-400 text-center">
-              You can come back to this page any time from your account settings to change your
-              password.
+              {tr(
+                'You can come back to this page any time from your account settings to change your password.'
+              )}
             </p>
           )}
         </div>
@@ -154,11 +164,12 @@ function SetPasswordContent() {
 }
 
 export default function SetPasswordPage() {
+  const { tr } = useLanguage();
   return (
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center text-gray-400">
-          Loading...
+          {tr('Loading...')}
         </div>
       }
     >

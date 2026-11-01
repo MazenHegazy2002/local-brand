@@ -18,16 +18,22 @@ interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'chi
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ label, error, helperText, options, placeholder, required, className = '', id, ...props }, ref) => {
+  (
+    { label, error, helperText, options, placeholder, required, className = '', id, ...props },
+    ref
+  ) => {
     const fallbackId = useId();
     const selectId = id || fallbackId;
 
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={selectId} className="block text-sm font-semibold text-[hsl(var(--foreground))] mb-1.5">
+          <label
+            htmlFor={selectId}
+            className="block text-sm font-semibold text-[hsl(var(--foreground))] mb-1.5"
+          >
             {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && <span className="text-red-500 ms-1">*</span>}
           </label>
         )}
         <div className="relative">
@@ -51,13 +57,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 {placeholder}
               </option>
             )}
-            {options.map((option) => (
+            {options.map(option => (
               <option key={option.value} value={option.value} disabled={option.disabled}>
                 {option.label}
               </option>
             ))}
           </select>
-          <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" />
+          <ChevronDownIcon className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" />
         </div>
         {(error || helperText) && (
           <p className={`mt-1.5 text-sm ${error ? 'text-red-500' : 'text-gray-500'}`}>
@@ -73,7 +79,17 @@ Select.displayName = 'Select';
 
 function ChevronDownIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <polyline points="6 9 12 15 18 9" />
     </svg>
   );

@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -27,6 +28,7 @@ interface ReturnRequest {
 }
 
 export default function ReturnsPage() {
+  const { tr } = useLanguage();
   const { data: session, status } = useSession();
   const router = useRouter();
   const { toast } = useToast();
@@ -85,11 +87,11 @@ export default function ReturnsPage() {
         setNotes('');
       } else {
         const data = await res.json();
-        toast({ title: data.message || 'Failed to update return', variant: 'error' });
+        toast({ title: data.message || tr('Failed to update return'), variant: 'error' });
       }
     } catch (e) {
       console.error(e);
-      toast({ title: 'Failed to update return request', variant: 'error' });
+      toast({ title: tr('Failed to update return request'), variant: 'error' });
     } finally {
       setProcessing(false);
     }
@@ -118,7 +120,7 @@ export default function ReturnsPage() {
   if (!mounted || loading) {
     return (
       <div className="db">
-        <div className="main">Loading...</div>
+        <div className="main">{tr('Loading...')}</div>
       </div>
     );
   }
@@ -140,28 +142,28 @@ export default function ReturnsPage() {
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
-          Back to Shop
+          {tr('Back to Shop')}
         </Link>
         <Link href="/seller-hub" className="nav-item">
-          Overview
+          {tr('Overview')}
         </Link>
         <Link href="/seller-hub/orders" className="nav-item">
-          Orders
+          {tr('Orders')}
         </Link>
         <Link href="/seller-hub/products" className="nav-item">
-          Products
+          {tr('Products')}
         </Link>
         <Link href="/seller-hub/returns" className="nav-item active">
-          Returns
+          {tr('Returns')}
         </Link>
         <Link href="/seller-hub/settings" className="nav-item">
-          Settings
+          {tr('Settings')}
         </Link>
       </div>
 
       <div className="main">
         <div className="topbar">
-          <div className="page-title">Return Requests</div>
+          <div className="page-title">{tr('Return Requests')}</div>
           <span className="text-xs text-slate-500">{returns.length} total</span>
         </div>
 
@@ -176,22 +178,24 @@ export default function ReturnsPage() {
                   : 'bg-white border border-slate-200 text-slate-600 hover:border-[#0F6E56]'
               }`}
             >
-              {f === 'all' ? 'All' : f}
+              {f === 'all' ? tr('All') : f}
             </button>
           ))}
         </div>
 
         <div className="card">
           <div className="hidden md:flex row-item font-bold text-[11px] text-slate-400 uppercase mb-2">
-            <span className="flex-1">Product</span>
-            <span className="w-32">Customer</span>
-            <span className="w-24">Reason</span>
-            <span className="w-24">Date</span>
-            <span className="w-24 text-center">Status</span>
+            <span className="flex-1">{tr('Product')}</span>
+            <span className="w-32">{tr('Customer')}</span>
+            <span className="w-24">{tr('Reason')}</span>
+            <span className="w-24">{tr('Date')}</span>
+            <span className="w-24 text-center">{tr('Status')}</span>
             <span className="w-32"></span>
           </div>
           {filteredReturns.length === 0 ? (
-            <div className="py-20 text-center text-xs text-slate-400">No return requests</div>
+            <div className="py-20 text-center text-xs text-slate-400">
+              {tr('No return requests')}
+            </div>
           ) : (
             filteredReturns.map(ret => {
               const badge = getStatusBadge(ret.status);
@@ -203,7 +207,8 @@ export default function ReturnsPage() {
                         {ret.orderItem?.productTitleSnapshot}
                       </div>
                       <div className="text-xs text-slate-500">
-                        Qty: {ret.orderItem?.quantity} · ORD-{ret.orderItem?.order?.id?.slice(0, 8)}
+                        {tr('Qty:')} {ret.orderItem?.quantity} · ORD-
+                        {ret.orderItem?.order?.id?.slice(0, 8)}
                       </div>
                     </div>
                     <div className="w-32 text-sm text-slate-600">
@@ -221,7 +226,7 @@ export default function ReturnsPage() {
                         onClick={() => setSelectedReturn(ret)}
                         className="text-xs text-[#0F6E56] hover:underline"
                       >
-                        View Details
+                        {tr('View Details')}
                       </button>
                     </div>
                   </div>
@@ -235,26 +240,28 @@ export default function ReturnsPage() {
       {selectedReturn && (
         <div className="modal-overlay" onClick={() => setSelectedReturn(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3 className="card-title mb-4">Return Request Details</h3>
+            <h3 className="card-title mb-4">{tr('Return Request Details')}</h3>
             <div className="space-y-4 mb-6">
               <div>
-                <div className="text-xs text-slate-500">Product</div>
+                <div className="text-xs text-slate-500">{tr('Product')}</div>
                 <div className="font-medium">{selectedReturn.orderItem?.productTitleSnapshot}</div>
               </div>
               <div>
-                <div className="text-xs text-slate-500">Customer</div>
+                <div className="text-xs text-slate-500">{tr('Customer')}</div>
                 <div className="font-medium">{selectedReturn.orderItem?.order?.user?.name}</div>
               </div>
               <div>
-                <div className="text-xs text-slate-500">Reason</div>
+                <div className="text-xs text-slate-500">{tr('Reason')}</div>
                 <div className="font-medium">{selectedReturn.reason}</div>
               </div>
               <div>
-                <div className="text-xs text-slate-500">Details</div>
-                <div className="text-sm">{selectedReturn.details || 'No additional details'}</div>
+                <div className="text-xs text-slate-500">{tr('Details')}</div>
+                <div className="text-sm">
+                  {selectedReturn.details || tr('No additional details')}
+                </div>
               </div>
               <div>
-                <div className="text-xs text-slate-500">Status</div>
+                <div className="text-xs text-slate-500">{tr('Status')}</div>
                 <span
                   className={`badge ${getStatusBadge(selectedReturn.status).bg} ${getStatusBadge(selectedReturn.status).text}`}
                 >
@@ -265,13 +272,15 @@ export default function ReturnsPage() {
             {selectedReturn.status === 'PENDING' && (
               <>
                 <div className="mb-4">
-                  <label className="block text-xs text-slate-500 mb-1">Processing Notes</label>
+                  <label className="block text-xs text-slate-500 mb-1">
+                    {tr('Processing Notes')}
+                  </label>
                   <textarea
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
                     className="input-field"
                     rows={3}
-                    placeholder="Add notes..."
+                    placeholder={tr('Add notes...')}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -280,14 +289,14 @@ export default function ReturnsPage() {
                     disabled={processing}
                     className="flex-1 py-3 bg-green-600 text-white rounded font-medium hover:bg-green-700 disabled:opacity-50"
                   >
-                    Approve
+                    {tr('Approve')}
                   </button>
                   <button
                     onClick={() => updateStatus(selectedReturn.id, 'REJECTED')}
                     disabled={processing}
                     className="flex-1 py-3 bg-red-600 text-white rounded font-medium hover:bg-red-700 disabled:opacity-50"
                   >
-                    Reject
+                    {tr('Reject')}
                   </button>
                 </div>
               </>
@@ -298,14 +307,14 @@ export default function ReturnsPage() {
                 disabled={processing}
                 className="w-full py-3 bg-[#0F6E56] text-white rounded font-medium hover:opacity-90 disabled:opacity-50"
               >
-                {processing ? 'Processing...' : 'Mark Complete (Refund Processed)'}
+                {processing ? tr('Processing...') : tr('Mark Complete (Refund Processed)')}
               </button>
             )}
             <button
               onClick={() => setSelectedReturn(null)}
               className="w-full py-3 border border-slate-200 rounded font-medium mt-2"
             >
-              Close
+              {tr('Close')}
             </button>
           </div>
         </div>

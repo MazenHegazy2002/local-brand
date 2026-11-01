@@ -17,6 +17,7 @@ import DropdownMenu from './ui/DropdownMenu';
 import { useWishlistStore } from '@/lib/wishlistStore';
 
 export default function Navbar() {
+  const { tr } = useLanguage();
   const router = useRouter();
   const { data: session } = useSession();
   const [categories, setCategories] = useState<any[]>([]);
@@ -123,7 +124,7 @@ export default function Navbar() {
           >
             <img
               src="/icon-192.png"
-              alt="Brandyy"
+              alt={tr('Brandyy')}
               className="w-8 h-8 rounded-full object-contain bg-white shadow-sm ring-1 ring-white/20"
               width={32}
               height={32}
@@ -204,7 +205,7 @@ export default function Navbar() {
                   : '/login?callbackUrl=%2Fdashboard%3Ftab%3Dwishlist'
               }
               className="hidden sm:flex flex-col items-center text-white/80 hover:text-white transition-colors relative"
-              aria-label="Wishlist"
+              aria-label={tr('Wishlist')}
             >
               <Heart size={20} />
               {mounted && wishlistCount > 0 && (
@@ -238,20 +239,20 @@ export default function Navbar() {
                   onClick={() => setIsUserMenuOpen(v => !v)}
                   aria-expanded={isUserMenuOpen}
                   aria-haspopup="true"
-                  aria-label="Open account menu"
+                  aria-label={tr('Open account menu')}
                   className="flex items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-white rounded-full"
                 >
                   <div className="w-8 h-8 rounded-full bg-[hsl(var(--accent))] text-[hsl(var(--primary))] flex items-center justify-center font-black text-xs">
                     {(session.user?.name ?? 'U').slice(0, 2).toUpperCase()}
                   </div>
                   <span className="hidden lg:block text-xs font-semibold text-white/90">
-                    My Account
+                    {tr('My Account')}
                   </span>
                 </button>
 
                 {isUserMenuOpen && (
                   <div
-                    className="absolute top-11 right-0 w-56 bg-white rounded-xl shadow-2xl z-50 overflow-hidden border border-gray-100 text-gray-900"
+                    className="absolute top-11 end-0 w-56 bg-white rounded-xl shadow-2xl z-50 overflow-hidden border border-gray-100 text-gray-900"
                     role="menu"
                   >
                     <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
@@ -285,7 +286,7 @@ export default function Navbar() {
                         clearCart();
                         signOut({ callbackUrl: '/' });
                       }}
-                      className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
+                      className="w-full text-start flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
                     >
                       <LogOut size={14} /> {t('SignOut')}
                     </button>
@@ -295,7 +296,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                aria-label={t('SignIn') || 'Sign In'}
+                aria-label={t('SignIn') || tr('Sign In')}
                 className="flex items-center gap-1.5 text-sm font-semibold text-white/85 hover:text-white transition-colors p-1"
               >
                 <User size={20} />
@@ -306,12 +307,12 @@ export default function Navbar() {
             {/* Cart */}
             <button
               onClick={() => setIsCartOpen(true)}
-              aria-label="Open cart"
+              aria-label={tr('Open cart')}
               className="relative text-white/85 hover:text-white transition-colors"
             >
               <ShoppingCart size={22} />
               {mounted && cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-amber-400 text-[#0d1f52] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-md animate-in zoom-in-50 duration-200">
+                <span className="absolute -top-2 -end-2 bg-amber-400 text-[#0d1f52] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-md animate-in zoom-in-50 duration-200">
                   {cartCount > 99 ? '99+' : cartCount}
                 </span>
               )}

@@ -1,3 +1,4 @@
+import { getServerTr } from '@/lib/i18n/server';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 
@@ -61,7 +62,8 @@ const SELLER_STEPS = [
   },
 ];
 
-export default function HowItWorksPage() {
+export default async function HowItWorksPage() {
+  const tr = await getServerTr();
   return (
     <div className="min-h-screen bg-gradient-to-br from-[hsl(var(--background))] via-white to-[hsl(var(--accent)/0.06)] text-[hsl(var(--foreground))]">
       <Navbar />
@@ -69,15 +71,16 @@ export default function HowItWorksPage() {
       {/* Hero Header */}
       <section className="py-16 md:py-24 px-4 text-center max-w-4xl mx-auto">
         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))] text-xs font-extrabold uppercase tracking-wider mb-4 border border-[hsl(var(--primary)/0.15)]">
-          💡 How Brandy Works
+          {tr('💡 How Brandy Works')}
         </span>
         <h1 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900 leading-tight">
-          Connecting Local Brands with <br />
-          <span className="text-[hsl(var(--primary))]">Millions of Shoppers</span>
+          {tr('Connecting Local Brands with')} <br />
+          <span className="text-[hsl(var(--primary))]">{tr('Millions of Shoppers')}</span>
         </h1>
         <p className="mt-4 text-gray-600 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
-          Brandy empowers Egyptian local sellers to build their digital storefronts while giving
-          shoppers a unified, reliable platform to discover local craftsmanship.
+          {tr(
+            'Brandy empowers Egyptian local sellers to build their digital storefronts while giving shoppers a unified, reliable platform to discover local craftsmanship.'
+          )}
         </p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
@@ -85,23 +88,23 @@ export default function HowItWorksPage() {
             href="/shop"
             className="px-6 py-3.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-dark))] text-white font-bold rounded-xl text-sm transition-all shadow-md"
           >
-            Start Shopping →
+            {tr('Start Shopping →')}
           </Link>
           <Link
             href="/become-seller"
             className="px-6 py-3.5 bg-white hover:bg-gray-50 text-[hsl(var(--primary))] font-bold rounded-xl text-sm border border-gray-200 transition-colors shadow-sm"
           >
-            Become a Seller
+            {tr('Become a Seller')}
           </Link>
         </div>
       </section>
 
       {/* For Shoppers Section */}
       <section className="max-w-6xl mx-auto px-4 py-12">
-        <div className="mb-10 text-center md:text-left">
-          <h2 className="text-2xl md:text-3xl font-black text-gray-900">For Shoppers</h2>
+        <div className="mb-10 text-center md:text-start">
+          <h2 className="text-2xl md:text-3xl font-black text-gray-900">{tr('For Shoppers')}</h2>
           <p className="text-gray-500 text-sm mt-1">
-            Simple, transparent, and enjoyable local shopping
+            {tr('Simple, transparent, and enjoyable local shopping')}
           </p>
         </div>
 
@@ -116,10 +119,10 @@ export default function HowItWorksPage() {
               </div>
               <div>
                 <span className="text-xs font-black text-[hsl(var(--primary))] tracking-wider">
-                  STEP {s.step}
+                  STEP {tr(s.step)}
                 </span>
-                <h3 className="text-lg font-bold text-gray-900 mt-1 mb-2">{s.title}</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">{s.desc}</p>
+                <h3 className="text-lg font-bold text-gray-900 mt-1 mb-2">{tr(s.title)}</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">{tr(s.desc)}</p>
               </div>
             </div>
           ))}
@@ -128,12 +131,12 @@ export default function HowItWorksPage() {
 
       {/* For Sellers Section */}
       <section className="max-w-6xl mx-auto px-4 py-16">
-        <div className="mb-10 text-center md:text-left">
+        <div className="mb-10 text-center md:text-start">
           <h2 className="text-2xl md:text-3xl font-black text-gray-900">
-            For Sellers & Local Brands
+            {tr('For Sellers & Local Brands')}
           </h2>
           <p className="text-gray-500 text-sm mt-1">
-            Grow your business with zero fixed monthly overhead
+            {tr('Grow your business with zero fixed monthly overhead')}
           </p>
         </div>
 
@@ -148,10 +151,10 @@ export default function HowItWorksPage() {
               </div>
               <div>
                 <span className="text-xs font-black text-indigo-400 tracking-wider">
-                  STEP {s.step}
+                  STEP {tr(s.step)}
                 </span>
-                <h3 className="text-lg font-bold text-white mt-1 mb-2">{s.title}</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">{s.desc}</p>
+                <h3 className="text-lg font-bold text-white mt-1 mb-2">{tr(s.title)}</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">{tr(s.desc)}</p>
               </div>
             </div>
           ))}
@@ -161,24 +164,27 @@ export default function HowItWorksPage() {
       {/* CTA Footer Banner */}
       <section className="max-w-4xl mx-auto px-4 py-16 text-center">
         <div className="bg-white border border-gray-100 rounded-3xl p-8 sm:p-12 shadow-2xl space-y-4">
-          <h2 className="text-3xl font-black text-gray-900">Ready to Get Started?</h2>
+          <h2 className="text-3xl font-black text-gray-900">{tr('Ready to Get Started?')}</h2>
           <p className="text-gray-600 text-sm max-w-lg mx-auto">
-            Join thousands of satisfied shoppers and local brand owners selling nationwide on
-            Brandy.
+            {tr(
+              'Join thousands of satisfied shoppers and local brand owners selling nationwide on Brandy.'
+            )}
           </p>
           <div className="pt-2 flex justify-center gap-4">
             <Link
               href="/become-seller"
               className="px-8 py-3.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-dark))] text-white font-bold rounded-xl text-sm transition-all shadow-md"
             >
-              Join as a Seller →
+              {tr('Join as a Seller →')}
             </Link>
           </div>
         </div>
       </section>
 
       <footer className="border-t border-gray-200 bg-white py-6 text-center text-gray-500 text-xs">
-        <p>© {new Date().getFullYear()} Brandy Marketplace. All rights reserved.</p>
+        <p>
+          © {new Date().getFullYear()} {tr('Brandy Marketplace. All rights reserved.')}
+        </p>
       </footer>
     </div>
   );

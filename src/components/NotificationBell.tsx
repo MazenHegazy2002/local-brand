@@ -29,6 +29,7 @@ const typeBg = { order: 'bg-blue-50', promo: 'bg-orange-50', system: 'bg-gray-50
 const typeDot = { order: 'bg-blue-500', promo: 'bg-orange-400', system: 'bg-gray-400' };
 
 export default function NotificationBell() {
+  const { tr } = useLanguage();
   const { data: session } = useSession();
   const {
     notifications: realtimeNotifications,
@@ -77,7 +78,7 @@ export default function NotificationBell() {
         id="notification-bell"
         onClick={() => setOpen(!open)}
         className="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-white/15 transition-colors"
-        aria-label="Notifications"
+        aria-label={tr('Notifications')}
       >
         <svg
           width="20"
@@ -93,12 +94,12 @@ export default function NotificationBell() {
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
         {currentUnreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none shadow">
+          <span className="absolute -top-1 -end-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1 leading-none shadow">
             {currentUnreadCount > 9 ? '9+' : currentUnreadCount}
           </span>
         )}
         {isConnected && (
-          <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-green-500 rounded-full border-2 border-white" />
+          <span className="absolute -bottom-1 -end-1 w-2 h-2 bg-green-500 rounded-full border-2 border-white" />
         )}
       </button>
 
@@ -116,7 +117,7 @@ export default function NotificationBell() {
           <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary-light))]">
             <div className="flex items-center gap-2">
               <span className="text-white font-bold text-sm">
-                {isRtl ? 'الإشعارات' : 'Notifications'}
+                {isRtl ? 'الإشعارات' : tr('Notifications')}
               </span>
               {currentUnreadCount > 0 && (
                 <span className="bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none">
@@ -129,7 +130,7 @@ export default function NotificationBell() {
                 onClick={handleMarkAllRead}
                 className="text-[11px] font-bold text-white/80 hover:text-white border border-white/30 hover:border-white/60 px-3 py-1 rounded-full transition-all"
               >
-                {isRtl ? 'تحديد الكل كمقروء' : 'Mark all read'}
+                {isRtl ? 'تحديد الكل كمقروء' : tr('Mark all read')}
               </button>
             )}
           </div>
@@ -139,7 +140,7 @@ export default function NotificationBell() {
             {notifications.length === 0 ? (
               <div className="px-4 py-10 text-center text-gray-400 text-sm">
                 <div className="text-3xl mb-2">🔔</div>
-                {isRtl ? 'لا توجد إشعارات' : 'No notifications yet'}
+                {isRtl ? 'لا توجد إشعارات' : tr('No notifications yet')}
               </div>
             ) : (
               notifications.map(n => (
@@ -172,7 +173,7 @@ export default function NotificationBell() {
                       {!n.read && (
                         <button
                           onClick={() => handleMarkRead(n.id)}
-                          title={isRtl ? 'تحديد كمقروء' : 'Mark as read'}
+                          title={isRtl ? 'تحديد كمقروء' : tr('Mark as read')}
                           className="shrink-0 mt-0.5 w-6 h-6 rounded-full bg-white border border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-400 hover:text-blue-500 flex items-center justify-center transition-all"
                         >
                           <svg
@@ -205,7 +206,7 @@ export default function NotificationBell() {
               onClick={() => setOpen(false)}
               className="text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors"
             >
-              {isRtl ? 'إغلاق' : 'Close'}
+              {isRtl ? 'إغلاق' : tr('Close')}
             </button>
           </div>
         </div>

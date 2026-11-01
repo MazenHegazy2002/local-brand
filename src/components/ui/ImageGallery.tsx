@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
@@ -15,6 +16,7 @@ interface ImageGalleryProps {
 }
 
 export function ImageGallery({ images, showLightbox = true, className = '' }: ImageGalleryProps) {
+  const { tr } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isZoomed, _setIsZoomed] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -58,7 +60,7 @@ export function ImageGallery({ images, showLightbox = true, className = '' }: Im
       >
         <Image
           src={getImageSrc(currentIndex)}
-          alt={images[currentIndex].alt || 'Product image'}
+          alt={images[currentIndex].alt || tr('Product image')}
           fill
           className={`object-cover transition-transform duration-300 ${isZoomed ? 'scale-150' : 'group-hover:scale-105'}`}
           priority
@@ -71,7 +73,7 @@ export function ImageGallery({ images, showLightbox = true, className = '' }: Im
                 e.stopPropagation();
                 goToPrevious();
               }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/90 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+              className="absolute start-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/90 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
             >
               <svg
                 width="20"
@@ -89,7 +91,7 @@ export function ImageGallery({ images, showLightbox = true, className = '' }: Im
                 e.stopPropagation();
                 goToNext();
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/90 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+              className="absolute end-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/90 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
             >
               <svg
                 width="20"
@@ -133,7 +135,7 @@ export function ImageGallery({ images, showLightbox = true, className = '' }: Im
         >
           <button
             onClick={() => setIsLightboxOpen(false)}
-            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 rounded-full"
+            className="absolute top-4 end-4 w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 rounded-full"
           >
             <svg
               width="24"
@@ -152,7 +154,7 @@ export function ImageGallery({ images, showLightbox = true, className = '' }: Im
               e.stopPropagation();
               goToPrevious();
             }}
-            className="absolute left-4 text-white p-4 hover:bg-white/10 rounded-full"
+            className="absolute start-4 text-white p-4 hover:bg-white/10 rounded-full"
           >
             <svg
               width="32"
@@ -168,7 +170,7 @@ export function ImageGallery({ images, showLightbox = true, className = '' }: Im
           <div className="relative w-[90vw] h-[90vh] max-w-4xl" onClick={e => e.stopPropagation()}>
             <Image
               src={getImageSrc(currentIndex)}
-              alt={images[currentIndex].alt || 'Product image'}
+              alt={images[currentIndex].alt || tr('Product image')}
               fill
               className="object-contain"
               onError={() => handleImageError(currentIndex)}
@@ -179,7 +181,7 @@ export function ImageGallery({ images, showLightbox = true, className = '' }: Im
               e.stopPropagation();
               goToNext();
             }}
-            className="absolute right-4 text-white p-4 hover:bg-white/10 rounded-full"
+            className="absolute end-4 text-white p-4 hover:bg-white/10 rounded-full"
           >
             <svg
               width="32"

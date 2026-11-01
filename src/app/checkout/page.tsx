@@ -34,6 +34,7 @@ interface SavedAddress {
 }
 
 function CheckoutPageInner() {
+  const { tr } = useLanguage();
   const { items, total, clearCart, removeItem, rewriteId } = useCartStore();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -148,7 +149,7 @@ function CheckoutPageInner() {
       setPaymentReceiptUrl(data.url);
     } catch (err: unknown) {
       const error = err as Error;
-      setError(error.message || 'Failed to upload receipt image');
+      setError(error.message || tr('Failed to upload receipt image'));
     } finally {
       setIsUploadingReceipt(false);
     }
@@ -476,7 +477,7 @@ function CheckoutPageInner() {
           <p className="mb-6">
             {lang === 'ar'
               ? 'يجب عليك إضافة منتجات إلى سلتك قبل المتابعة.'
-              : 'You need to add products to your cart before proceeding.'}
+              : tr('You need to add products to your cart before proceeding.')}
           </p>
           <button
             onClick={() => router.push('/shop')}
@@ -497,7 +498,9 @@ function CheckoutPageInner() {
       setError(
         lang === 'ar'
           ? 'المتجر حالياً في وضع القراءة فقط. الدفع وإتمام الطلبات متوقف مؤقتاً.'
-          : 'Store is currently in Read-Only Mode. Checkout and order placement are temporarily paused.'
+          : tr(
+              'Store is currently in Read-Only Mode. Checkout and order placement are temporarily paused.'
+            )
       );
       return;
     }
@@ -513,7 +516,7 @@ function CheckoutPageInner() {
       setError(
         lang === 'ar'
           ? 'يرجى ملء جميع حقول عنوان الشحن.'
-          : 'Please fill in all shipping address fields.'
+          : tr('Please fill in all shipping address fields.')
       );
       return;
     }
@@ -525,13 +528,15 @@ function CheckoutPageInner() {
         setError(
           lang === 'ar'
             ? 'يرجى إدخال عنوان بريدك الإلكتروني حتى نتمكن من إرسال تأكيد طلبك.'
-            : 'Please enter your email address so we can send your order confirmation.'
+            : tr('Please enter your email address so we can send your order confirmation.')
         );
         return;
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedGuestEmail)) {
         setError(
-          lang === 'ar' ? 'يرجى إدخال بريد إلكتروني صالح.' : 'Please enter a valid email address.'
+          lang === 'ar'
+            ? 'يرجى إدخال بريد إلكتروني صالح.'
+            : tr('Please enter a valid email address.')
         );
         return;
       }
@@ -539,7 +544,9 @@ function CheckoutPageInner() {
         setError(
           lang === 'ar'
             ? 'يتطلب الدفع الإلكتروني (PaySky / Fawry) حساباً على براندي. يرجى تسجيل الدخول أو اختيار الدفع عند الاستلام.'
-            : 'Online payment (PaySky / Fawry) requires a Brandy account. Please sign in or choose Cash on Delivery.'
+            : tr(
+                'Online payment (PaySky / Fawry) requires a Brandy account. Please sign in or choose Cash on Delivery.'
+              )
         );
         return;
       }
@@ -550,7 +557,9 @@ function CheckoutPageInner() {
         setError(
           lang === 'ar'
             ? 'يرجى إدخال اسم المستخدم أو رقم الهاتف الذي قمت بالتحويل منه عبر انستا باي.'
-            : 'Please enter your sender username or phone number used for the InstaPay transfer.'
+            : tr(
+                'Please enter your sender username or phone number used for the InstaPay transfer.'
+              )
         );
         return;
       }
@@ -558,7 +567,9 @@ function CheckoutPageInner() {
         setError(
           lang === 'ar'
             ? 'إرفاق صورة إيصال التحويل إجباري لإتمام الطلب عبر انستا باي. يرجى رفع صورة الإيصال.'
-            : 'Uploading a transfer receipt screenshot is required for InstaPay orders. Please upload your receipt image.'
+            : tr(
+                'Uploading a transfer receipt screenshot is required for InstaPay orders. Please upload your receipt image.'
+              )
         );
         return;
       }
@@ -569,7 +580,7 @@ function CheckoutPageInner() {
         setError(
           lang === 'ar'
             ? 'يرجى إدخال رقم محفظة فودافون كاش التي قمت بالتحويل منها.'
-            : 'Please enter your Vodafone Cash wallet phone number used for the transfer.'
+            : tr('Please enter your Vodafone Cash wallet phone number used for the transfer.')
         );
         return;
       }
@@ -577,7 +588,9 @@ function CheckoutPageInner() {
         setError(
           lang === 'ar'
             ? 'إرفاق صورة إيصال التحويل إجباري لإتمام الطلب عبر فودافون كاش. يرجى رفع صورة الإيصال.'
-            : 'Uploading a transfer receipt screenshot is required for Vodafone Cash orders. Please upload your receipt image.'
+            : tr(
+                'Uploading a transfer receipt screenshot is required for Vodafone Cash orders. Please upload your receipt image.'
+              )
         );
         return;
       }
@@ -810,7 +823,9 @@ function CheckoutPageInner() {
       setIsLoading(false);
     } catch (err: unknown) {
       const error = err as Error;
-      setError(error.message || (lang === 'ar' ? 'تعذّر إتمام الطلب' : 'Failed to place order'));
+      setError(
+        error.message || (lang === 'ar' ? 'تعذّر إتمام الطلب' : tr('Failed to place order'))
+      );
       setIsLoading(false);
     }
   };
@@ -868,7 +883,9 @@ function CheckoutPageInner() {
             <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed font-sans">
               {lang === 'ar'
                 ? 'لا يمكن لحسابات البائعين والمسؤولين تقديم طلبات شراء. يرجى تسجيل الدخول بحساب عميل لإتمام الشراء.'
-                : 'Sellers and Administrator accounts cannot place orders or purchase items. Please log in with a customer account to checkout.'}
+                : tr(
+                    'Sellers and Administrator accounts cannot place orders or purchase items. Please log in with a customer account to checkout.'
+                  )}
             </p>
             <div className="pt-2">
               <button
@@ -894,12 +911,14 @@ function CheckoutPageInner() {
                     <h4 className="font-bold text-sm">
                       {lang === 'ar'
                         ? 'المتجر حالياً في وضع القراءة فقط'
-                        : 'Store is in Read-Only Mode'}
+                        : tr('Store is in Read-Only Mode')}
                     </h4>
                     <p className="text-xs text-amber-800 mt-0.5">
                       {lang === 'ar'
                         ? 'يمكنك التصفح وإضافة المنتجات للسلة، ولكن عملية الشراء والدفع متوقفة مؤقتاً وسنعود قريباً!'
-                        : 'Browsing and adding to cart are allowed, but checkout and order placement are temporarily paused. We will be back soon!'}
+                        : tr(
+                            'Browsing and adding to cart are allowed, but checkout and order placement are temporarily paused. We will be back soon!'
+                          )}
                     </p>
                   </div>
                 </div>
@@ -994,7 +1013,7 @@ function CheckoutPageInner() {
                         <p className="text-xs text-gray-500 mt-1">
                           {lang === 'ar'
                             ? 'يمكنك تعديل الحقول أدناه لهذا الطلب فقط.'
-                            : 'You can edit the fields below for this order only.'}
+                            : tr('You can edit the fields below for this order only.')}
                         </p>
                       </div>
                     )}
@@ -1020,7 +1039,9 @@ function CheckoutPageInner() {
                         <p className="text-xs text-gray-500 mt-1">
                           {lang === 'ar'
                             ? 'سنرسل تأكيد طلبك وتحديثات التتبع هنا.'
-                            : "We'll send your order confirmation and tracking updates here."}{' '}
+                            : tr(
+                                "We'll send your order confirmation and tracking updates here."
+                              )}{' '}
                           <a
                             href="/login?callbackUrl=/checkout"
                             className="text-[#1e3b8a] font-medium hover:underline"
@@ -1386,15 +1407,17 @@ function CheckoutPageInner() {
                         />
                         <div className="flex-1">
                           <div className="font-bold text-gray-900 flex items-center gap-2">
-                            <span>InstaPay · انستا باي</span>
+                            <span>{tr('InstaPay · انستا باي')}</span>
                             <span className="text-[10px] bg-purple-600 text-white font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                              Instant / تحويل لحظي
+                              {tr('Instant / تحويل لحظي')}
                             </span>
                           </div>
                           <div className="text-sm text-gray-500">
                             {lang === 'ar'
                               ? 'تحويل بنكي مباشر عبر تطبيق انستا باي (IPA: mazenhegazyy@instapay)'
-                              : 'Direct bank transfer via InstaPay App (IPA: mazenhegazyy@instapay)'}
+                              : tr(
+                                  'Direct bank transfer via InstaPay App (IPA: mazenhegazyy@instapay)'
+                                )}
                           </div>
                         </div>
                         <div className="w-10 h-10 rounded-xl bg-purple-600 text-white font-black flex items-center justify-center text-xs shrink-0 shadow-sm">
@@ -1426,19 +1449,19 @@ function CheckoutPageInner() {
                         />
                         <div className="flex-1">
                           <div className="font-bold text-gray-900 flex items-center gap-2">
-                            <span>Vodafone Cash · فودافون كاش</span>
+                            <span>{tr('Vodafone Cash · فودافون كاش')}</span>
                             <span className="text-[10px] bg-red-600 text-white font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                              Mobile Wallet
+                              {tr('Mobile Wallet')}
                             </span>
                           </div>
                           <div className="text-sm text-gray-500">
                             {lang === 'ar'
                               ? 'تحويل مباشر لمحفظة فودافون كاش (01094379477)'
-                              : 'Direct transfer to Vodafone Cash wallet (01094379477)'}
+                              : tr('Direct transfer to Vodafone Cash wallet (01094379477)')}
                           </div>
                         </div>
                         <div className="w-10 h-10 rounded-xl bg-red-600 text-white font-black flex items-center justify-center text-xs shrink-0 shadow-sm">
-                          V-Cash
+                          {tr('V-Cash')}
                         </div>
                       </label>
                     )}
@@ -1451,7 +1474,7 @@ function CheckoutPageInner() {
                             <span>⚡</span>{' '}
                             {lang === 'ar'
                               ? 'بيانات التحويل عبر انستا باي'
-                              : 'InstaPay Payment Details'}
+                              : tr('InstaPay Payment Details')}
                           </h3>
                           <a
                             href={INSTAPAY_DETAILS.payLink}
@@ -1460,14 +1483,16 @@ function CheckoutPageInner() {
                             className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1 shadow-sm"
                           >
                             <span>📲</span>{' '}
-                            {lang === 'ar' ? 'افتح في تطبيق انستا باي' : 'Open in InstaPay'}
+                            {lang === 'ar' ? 'افتح في تطبيق انستا باي' : tr('Open in InstaPay')}
                           </a>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="bg-white p-3.5 rounded-xl border border-purple-100 shadow-sm space-y-1">
                             <span className="text-xs text-gray-500 font-semibold block">
-                              {lang === 'ar' ? 'عنوان انستا باي (IPA):' : 'InstaPay Address (IPA):'}
+                              {lang === 'ar'
+                                ? 'عنوان انستا باي (IPA):'
+                                : tr('InstaPay Address (IPA):')}
                             </span>
                             <div className="flex items-center justify-between">
                               <span className="font-mono font-bold text-purple-950 text-sm select-all">
@@ -1481,17 +1506,17 @@ function CheckoutPageInner() {
                                 {copiedField === 'ipa'
                                   ? lang === 'ar'
                                     ? 'تم النسخ ✓'
-                                    : 'Copied ✓'
+                                    : tr('Copied ✓')
                                   : lang === 'ar'
                                     ? 'نسخ'
-                                    : 'Copy'}
+                                    : tr('Copy')}
                               </button>
                             </div>
                           </div>
 
                           <div className="bg-white p-3.5 rounded-xl border border-purple-100 shadow-sm space-y-1">
                             <span className="text-xs text-gray-500 font-semibold block">
-                              {lang === 'ar' ? 'اسم صاحب الحساب:' : 'Account Holder Name:'}
+                              {lang === 'ar' ? 'اسم صاحب الحساب:' : tr('Account Holder Name:')}
                             </span>
                             <span className="font-bold text-gray-900 text-sm">
                               {INSTAPAY_DETAILS.accountName}
@@ -1505,11 +1530,11 @@ function CheckoutPageInner() {
                             <span className="text-xs font-bold text-gray-700 block">
                               {lang === 'ar'
                                 ? 'امسح رمز QR بواسطة تطبيق انستا باي:'
-                                : 'Scan QR code with InstaPay App:'}
+                                : tr('Scan QR code with InstaPay App:')}
                             </span>
                             <img
                               src={INSTAPAY_DETAILS.qrImageUrl}
-                              alt="InstaPay QR Code"
+                              alt={tr('InstaPay QR Code')}
                               className="w-48 h-auto mx-auto rounded-lg border border-purple-200 shadow-sm"
                             />
                           </div>
@@ -1518,14 +1543,16 @@ function CheckoutPageInner() {
                         {/* Customer Transfer Verification Fields */}
                         <div className="pt-2 border-t border-purple-100 space-y-3">
                           <h4 className="text-xs font-bold text-purple-900 uppercase tracking-wider">
-                            {lang === 'ar' ? 'تأكيد عملية التحويل:' : 'Transfer Verification Info:'}
+                            {lang === 'ar'
+                              ? 'تأكيد عملية التحويل:'
+                              : tr('Transfer Verification Info:')}
                           </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                               <label className="block text-xs font-semibold text-gray-700 mb-1">
                                 {lang === 'ar'
                                   ? 'رقم الهاتف أو حساب انستا باي المحوّل منه'
-                                  : 'Sender Phone / InstaPay IPA'}{' '}
+                                  : tr('Sender Phone / InstaPay IPA')}{' '}
                                 <span className="text-red-500">*</span>
                               </label>
                               <input
@@ -1535,7 +1562,7 @@ function CheckoutPageInner() {
                                 placeholder={
                                   lang === 'ar'
                                     ? 'مثال: 01012345678 أو username@instapay'
-                                    : 'e.g. 01012345678 or user@instapay'
+                                    : tr('e.g. 01012345678 or user@instapay')
                                 }
                                 className="w-full text-sm border border-purple-200 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-purple-500 outline-none"
                               />
@@ -1544,7 +1571,7 @@ function CheckoutPageInner() {
                               <label className="block text-xs font-semibold text-gray-700 mb-1">
                                 {lang === 'ar'
                                   ? 'رقم المعاملة / مرجع العملية'
-                                  : 'Transaction Reference / Ref No.'}
+                                  : tr('Transaction Reference / Ref No.')}
                               </label>
                               <input
                                 type="text"
@@ -1561,29 +1588,31 @@ function CheckoutPageInner() {
                           {/* Upload Receipt */}
                           <div>
                             <label className="block text-xs font-semibold text-gray-700 mb-1">
-                              {lang === 'ar' ? 'صورة إيصال التحويل' : 'Transfer Receipt Screenshot'}{' '}
+                              {lang === 'ar'
+                                ? 'صورة إيصال التحويل'
+                                : tr('Transfer Receipt Screenshot')}{' '}
                               <span className="text-red-500">
-                                * ({lang === 'ar' ? 'مطلوب' : 'Required'})
+                                * ({lang === 'ar' ? 'مطلوب' : tr('Required')})
                               </span>
                             </label>
                             {paymentReceiptUrl ? (
                               <div className="flex items-center gap-3 bg-white p-2.5 rounded-lg border border-purple-200">
                                 <img
                                   src={paymentReceiptUrl}
-                                  alt="Receipt"
+                                  alt={tr('Receipt')}
                                   className="w-12 h-12 object-cover rounded-md border"
                                 />
                                 <span className="text-xs text-green-700 font-bold flex-1">
                                   {lang === 'ar'
                                     ? 'تم إرفاق صورة الإيصال بنجاح ✓'
-                                    : 'Receipt uploaded successfully ✓'}
+                                    : tr('Receipt uploaded successfully ✓')}
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => setPaymentReceiptUrl('')}
                                   className="text-xs text-red-600 font-bold hover:underline"
                                 >
-                                  {lang === 'ar' ? 'حذف' : 'Remove'}
+                                  {lang === 'ar' ? 'حذف' : tr('Remove')}
                                 </button>
                               </div>
                             ) : (
@@ -1596,11 +1625,13 @@ function CheckoutPageInner() {
                                     const file = e.target.files?.[0];
                                     if (file) handleReceiptUpload(file);
                                   }}
-                                  className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer"
+                                  className="w-full text-xs text-gray-500 file:me-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer"
                                 />
                                 {isUploadingReceipt && (
-                                  <span className="text-xs text-purple-600 font-bold ml-2 animate-pulse">
-                                    {lang === 'ar' ? 'جاري رفع الإيصال...' : 'Uploading receipt...'}
+                                  <span className="text-xs text-purple-600 font-bold ms-2 animate-pulse">
+                                    {lang === 'ar'
+                                      ? 'جاري رفع الإيصال...'
+                                      : tr('Uploading receipt...')}
                                   </span>
                                 )}
                               </div>
@@ -1618,7 +1649,7 @@ function CheckoutPageInner() {
                             <span>📲</span>{' '}
                             {lang === 'ar'
                               ? 'بيانات التحويل لـ فودافون كاش'
-                              : 'Vodafone Cash Payment Details'}
+                              : tr('Vodafone Cash Payment Details')}
                           </h3>
                           <span className="text-xs bg-red-600 text-white px-2.5 py-1 rounded-lg font-mono font-bold">
                             {VODAFONE_CASH_DETAILS.dialShortcut}
@@ -1630,7 +1661,7 @@ function CheckoutPageInner() {
                             <span className="text-xs text-gray-500 font-semibold block">
                               {lang === 'ar'
                                 ? 'رقم محفظة فودافون كاش:'
-                                : 'Vodafone Cash Wallet Number:'}
+                                : tr('Vodafone Cash Wallet Number:')}
                             </span>
                             <div className="flex items-center justify-between">
                               <span className="font-mono font-bold text-red-950 text-base select-all">
@@ -1646,17 +1677,17 @@ function CheckoutPageInner() {
                                 {copiedField === 'vcash'
                                   ? lang === 'ar'
                                     ? 'تم النسخ ✓'
-                                    : 'Copied ✓'
+                                    : tr('Copied ✓')
                                   : lang === 'ar'
                                     ? 'نسخ'
-                                    : 'Copy'}
+                                    : tr('Copy')}
                               </button>
                             </div>
                           </div>
 
                           <div className="bg-white p-3.5 rounded-xl border border-red-100 shadow-sm space-y-1">
                             <span className="text-xs text-gray-500 font-semibold block">
-                              {lang === 'ar' ? 'اسم صاحب المحفظة:' : 'Account Holder Name:'}
+                              {lang === 'ar' ? 'اسم صاحب المحفظة:' : tr('Account Holder Name:')}
                             </span>
                             <span className="font-bold text-gray-900 text-sm">
                               {VODAFONE_CASH_DETAILS.accountName}
@@ -1667,14 +1698,16 @@ function CheckoutPageInner() {
                         {/* Customer Transfer Verification Fields */}
                         <div className="pt-2 border-t border-red-100 space-y-3">
                           <h4 className="text-xs font-bold text-red-900 uppercase tracking-wider">
-                            {lang === 'ar' ? 'تأكيد عملية التحويل:' : 'Transfer Verification Info:'}
+                            {lang === 'ar'
+                              ? 'تأكيد عملية التحويل:'
+                              : tr('Transfer Verification Info:')}
                           </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                               <label className="block text-xs font-semibold text-gray-700 mb-1">
                                 {lang === 'ar'
                                   ? 'رقم المحفظة التي قمت بالتحويل منها'
-                                  : 'Sender Wallet Phone Number'}{' '}
+                                  : tr('Sender Wallet Phone Number')}{' '}
                                 <span className="text-red-500">*</span>
                               </label>
                               <input
@@ -1691,7 +1724,7 @@ function CheckoutPageInner() {
                               <label className="block text-xs font-semibold text-gray-700 mb-1">
                                 {lang === 'ar'
                                   ? 'رقم العملية / مرجع التحويل'
-                                  : 'Transaction Reference / Ref No.'}
+                                  : tr('Transaction Reference / Ref No.')}
                               </label>
                               <input
                                 type="text"
@@ -1708,29 +1741,29 @@ function CheckoutPageInner() {
                             <label className="block text-xs font-semibold text-gray-700 mb-1">
                               {lang === 'ar'
                                 ? 'صورة إيصال / لقطة الشاشة للتحويل'
-                                : 'Transfer Receipt Screenshot'}{' '}
+                                : tr('Transfer Receipt Screenshot')}{' '}
                               <span className="text-red-500">
-                                * ({lang === 'ar' ? 'مطلوب' : 'Required'})
+                                * ({lang === 'ar' ? 'مطلوب' : tr('Required')})
                               </span>
                             </label>
                             {paymentReceiptUrl ? (
                               <div className="flex items-center gap-3 bg-white p-2.5 rounded-lg border border-red-200">
                                 <img
                                   src={paymentReceiptUrl}
-                                  alt="Receipt"
+                                  alt={tr('Receipt')}
                                   className="w-12 h-12 object-cover rounded-md border"
                                 />
                                 <span className="text-xs text-green-700 font-bold flex-1">
                                   {lang === 'ar'
                                     ? 'تم إرفاق صورة الإيصال بنجاح ✓'
-                                    : 'Receipt uploaded successfully ✓'}
+                                    : tr('Receipt uploaded successfully ✓')}
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => setPaymentReceiptUrl('')}
                                   className="text-xs text-red-600 font-bold hover:underline"
                                 >
-                                  {lang === 'ar' ? 'حذف' : 'Remove'}
+                                  {lang === 'ar' ? 'حذف' : tr('Remove')}
                                 </button>
                               </div>
                             ) : (
@@ -1743,11 +1776,13 @@ function CheckoutPageInner() {
                                     const file = e.target.files?.[0];
                                     if (file) handleReceiptUpload(file);
                                   }}
-                                  className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700 cursor-pointer"
+                                  className="w-full text-xs text-gray-500 file:me-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700 cursor-pointer"
                                 />
                                 {isUploadingReceipt && (
-                                  <span className="text-xs text-red-600 font-bold ml-2 animate-pulse">
-                                    {lang === 'ar' ? 'جاري رفع الإيصال...' : 'Uploading receipt...'}
+                                  <span className="text-xs text-red-600 font-bold ms-2 animate-pulse">
+                                    {lang === 'ar'
+                                      ? 'جاري رفع الإيصال...'
+                                      : tr('Uploading receipt...')}
                                   </span>
                                 )}
                               </div>
@@ -2050,7 +2085,7 @@ function CheckoutPageInner() {
                   {isReadOnly
                     ? lang === 'ar'
                       ? 'الشراء متوقف مؤقتاً (وضع القراءة فقط)'
-                      : 'Checkout Temporarily Paused (Read-Only Mode)'
+                      : tr('Checkout Temporarily Paused (Read-Only Mode)')
                     : isLoading
                       ? t('Processing')
                       : `${t('PlaceOrder')} — ${grandTotal.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { maximumFractionDigits: 2 })} ${t('EGP')}`}

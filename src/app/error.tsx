@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import React, { useEffect } from 'react';
 
@@ -9,6 +10,7 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { tr } = useLanguage();
   useEffect(() => {
     console.error(error);
     try {
@@ -46,24 +48,25 @@ export default function Error({
         </svg>
       </div>
       <h2 className="mb-2 text-3xl font-bold tracking-tight text-foreground">
-        Something went wrong!
+        {tr('Something went wrong!')}
       </h2>
       <p className="mb-8 max-w-md text-muted-foreground">
-        We apologize for the inconvenience. An unexpected error occurred. Our team has been notified
-        and we're working to fix it.
+        {tr(
+          "We apologize for the inconvenience. An unexpected error occurred. Our team has been notified and we're working to fix it."
+        )}
       </p>
       <div className="flex gap-4">
         <button
           onClick={() => reset()}
           className="rounded-full bg-emerald-600 px-8 py-3 font-semibold text-white transition-all hover:bg-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 active:scale-95"
         >
-          Try again
+          {tr('Try again')}
         </button>
         <button
           onClick={() => (window.location.href = '/')}
           className="rounded-full border-2 border-emerald-600 px-8 py-3 font-semibold text-emerald-600 transition-all hover:bg-emerald-50 hover:shadow-md focus:outline-none active:scale-95"
         >
-          Go Home
+          {tr('Go Home')}
         </button>
       </div>
     </div>

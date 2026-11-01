@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -25,6 +26,7 @@ interface SellerProfile {
 }
 
 export default function SellerSettingsPage() {
+  const { tr } = useLanguage();
   const [pendingName, setPendingName] = useState<string | null>(null); // requested store name awaiting approval
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -92,11 +94,11 @@ export default function SellerSettingsPage() {
           });
         } else if (res.status !== 401 && res.status !== 403) {
           const d = await res.json().catch(() => ({}));
-          setMessage({ type: 'error', text: d.message || 'Failed to load settings' });
+          setMessage({ type: 'error', text: d.message || tr('Failed to load settings') });
         }
       } catch (e) {
         console.error(e);
-        if (!cancelled) setMessage({ type: 'error', text: 'Could not load settings' });
+        if (!cancelled) setMessage({ type: 'error', text: tr('Could not load settings') });
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -119,13 +121,15 @@ export default function SellerSettingsPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage({ type: 'error', text: data.message || 'Failed to save settings' });
+        setMessage({ type: 'error', text: data.message || tr('Failed to save settings') });
       } else {
         setMessage({
           type: 'success',
-          text: data.seller?.pendingStoreName && data.seller.pendingStoreName === profile.storeName.trim()
-            ? 'Saved. Your new store name is waiting for admin approval.'
-            : 'Settings saved successfully.',
+          text:
+            data.seller?.pendingStoreName &&
+            data.seller.pendingStoreName === profile.storeName.trim()
+              ? tr('Saved. Your new store name is waiting for admin approval.')
+              : tr('Settings saved successfully.'),
         });
         if (data.seller) setPendingName(data.seller.pendingStoreName || null);
         if (data.seller) {
@@ -150,7 +154,7 @@ export default function SellerSettingsPage() {
       }
     } catch (err: unknown) {
       const e = err as Error;
-      setMessage({ type: 'error', text: e.message || 'Network error' });
+      setMessage({ type: 'error', text: e.message || tr('Network error') });
     } finally {
       setSaving(false);
     }
@@ -168,20 +172,20 @@ export default function SellerSettingsPage() {
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       const data = await res.json();
       if (!res.ok || !data.url) {
-        setMessage({ type: 'error', text: data.message || 'Upload failed' });
+        setMessage({ type: 'error', text: data.message || tr('Upload failed') });
         return;
       }
       if (data.url.startsWith('data:') && data.url.length > 5 * 1024 * 1024) {
         setMessage({
           type: 'error',
-          text: 'Logo is too large after compression. Pick a smaller image.',
+          text: tr('Logo is too large after compression. Pick a smaller image.'),
         });
         return;
       }
       setProfile(p => ({ ...p, logoUrl: data.url }));
     } catch (err) {
       console.error(err);
-      setMessage({ type: 'error', text: 'Upload failed' });
+      setMessage({ type: 'error', text: tr('Upload failed') });
     } finally {
       setUploading(false);
     }
@@ -190,7 +194,7 @@ export default function SellerSettingsPage() {
   if (!mounted || loading) {
     return (
       <div className="db">
-        <div className="main flex items-center justify-center min-h-screen">Loading…</div>
+        <div className="main flex items-center justify-center min-h-screen">{tr('Loading…')}</div>
       </div>
     );
   }
@@ -212,47 +216,53 @@ export default function SellerSettingsPage() {
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
-          Back to Shop
+          {tr('Back to Shop')}
         </Link>
         <Link href="/seller-hub?tab=overview" className="nav-item">
-          Overview
+          {tr('Overview')}
         </Link>
         <Link href="/seller-hub?tab=orders" className="nav-item">
-          Orders
+          {tr('Orders')}
         </Link>
         <Link href="/seller-hub?tab=products" className="nav-item">
-          Inventory
+          {tr('Inventory')}
         </Link>
         <Link href="/seller-hub?tab=analytics" className="nav-item">
-          Analytics
+          {tr('Analytics')}
         </Link>
         <Link href="/seller-hub?tab=wallet" className="nav-item">
-          Wallet
+          {tr('Wallet')}
         </Link>
         <Link href="/seller-hub/settings" className="nav-item active">
-          Settings
+          {tr('Settings')}
         </Link>
       </div>
 
       <div className="main">
         <div className="topbar">
-          <div className="page-title">Store Settings</div>
+          <div className="page-title">{tr('Store Settings')}</div>
         </div>
 
         <form onSubmit={handleSave} className="max-w-2xl space-y-6">
           <div className="card">
-            <h3 className="card-title mb-4">Store Information</h3>
+            <h3 className="card-title mb-4">{tr('Store Information')}</h3>
             <div className="flex items-center gap-6 mb-6">
               <div className="w-20 h-20 bg-slate-50 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center">
                 {profile.logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                  <img
+                    src={profile.logoUrl}
+                    alt={tr('Logo')}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
-                  <div className="text-slate-400 text-xs">Logo</div>
+                  <div className="text-slate-400 text-xs">{tr('Logo')}</div>
                 )}
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Store Logo</label>
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  {tr('Store Logo')}
+                </label>
                 <input
                   type="file"
                   accept="image/*"
@@ -260,13 +270,15 @@ export default function SellerSettingsPage() {
                   disabled={uploading}
                   className="text-xs"
                 />
-                {uploading && <div className="text-[10px] text-slate-400 mt-1">Uploading…</div>}
+                {uploading && (
+                  <div className="text-[10px] text-slate-400 mt-1">{tr('Uploading…')}</div>
+                )}
               </div>
             </div>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Store Name *
+                  {tr('Store Name *')}
                 </label>
                 <input
                   type="text"
@@ -277,36 +289,38 @@ export default function SellerSettingsPage() {
                 />
                 {pendingName && (
                   <div className="text-[11px] text-amber-700 mt-1">
-                    ⏳ “{pendingName}” is waiting for admin approval — your store keeps its current name until then.
+                    ⏳ “{pendingName}” is waiting for admin approval — your store keeps its current
+                    name until then.
                   </div>
                 )}
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Store Description
+                  {tr('Store Description')}
                 </label>
                 <textarea
                   value={profile.description}
                   onChange={e => setProfile({ ...profile, description: e.target.value })}
                   className="input-field"
                   rows={3}
-                  placeholder="Tell customers about your store..."
+                  placeholder={tr('Tell customers about your store...')}
                 />
               </div>
             </div>
           </div>
 
           <div className="card">
-            <h3 className="card-title mb-2">📍 Product Pickup & Warehouse Address</h3>
+            <h3 className="card-title mb-2">{tr('📍 Product Pickup & Warehouse Address')}</h3>
             <p className="text-xs text-slate-500 mb-4">
-              Shipping couriers dispatch drivers to this address to collect orders for buyer
-              delivery.
+              {tr(
+                'Shipping couriers dispatch drivers to this address to collect orders for buyer delivery.'
+              )}
             </p>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Pickup Governorate *
+                  {tr('Pickup Governorate *')}
                 </label>
                 <select
                   value={profile.governorate}
@@ -314,10 +328,10 @@ export default function SellerSettingsPage() {
                   className="input-field"
                   required
                 >
-                  <option value="">Select Governorate</option>
+                  <option value="">{tr('Select Governorate')}</option>
                   {GOVERNORATES.map(g => (
                     <option key={g.value} value={g.en}>
-                      {g.en} ({g.ar})
+                      {tr(g.en)}
                     </option>
                   ))}
                 </select>
@@ -325,7 +339,7 @@ export default function SellerSettingsPage() {
 
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Pickup City / Area *
+                  {tr('Pickup City / Area *')}
                 </label>
                 <input
                   type="text"
@@ -339,21 +353,21 @@ export default function SellerSettingsPage() {
 
               <div className="col-span-2">
                 <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Detailed Street Address *
+                  {tr('Detailed Street Address *')}
                 </label>
                 <input
                   type="text"
                   value={profile.pickupStreet}
                   onChange={e => setProfile({ ...profile, pickupStreet: e.target.value })}
                   className="input-field"
-                  placeholder="Street name, Building number, Floor & Flat number"
+                  placeholder={tr('Street name, Building number, Floor & Flat number')}
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Building / Landmark (Optional)
+                  {tr('Building / Landmark (Optional)')}
                 </label>
                 <input
                   type="text"
@@ -366,28 +380,28 @@ export default function SellerSettingsPage() {
 
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Pickup Contact Phone *
+                  {tr('Pickup Contact Phone *')}
                 </label>
                 <input
                   type="text"
                   value={profile.pickupPhone}
                   onChange={e => setProfile({ ...profile, pickupPhone: e.target.value })}
                   className="input-field"
-                  placeholder="+2010XXXXXXXX"
+                  placeholder={tr('+2010XXXXXXXX')}
                   required
                 />
               </div>
 
               <div className="col-span-2">
                 <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Pickup Contact Person Name (Optional)
+                  {tr('Pickup Contact Person Name (Optional)')}
                 </label>
                 <input
                   type="text"
                   value={profile.pickupContactName}
                   onChange={e => setProfile({ ...profile, pickupContactName: e.target.value })}
                   className="input-field"
-                  placeholder="Name of person responsible for handover"
+                  placeholder={tr('Name of person responsible for handover')}
                 />
               </div>
 
@@ -395,14 +409,14 @@ export default function SellerSettingsPage() {
               <div className="col-span-2 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <label className="block text-xs font-bold text-slate-700">
-                    🗺️ Warehouse Geolocation Coordinates (Latitude, Longitude)
+                    {tr('🗺️ Warehouse Geolocation Coordinates (Latitude, Longitude)')}
                   </label>
                   <button
                     type="button"
                     disabled={gettingLocation}
                     onClick={() => {
                       if (!navigator.geolocation) {
-                        alert('Geolocation is not supported by your browser.');
+                        alert(tr('Geolocation is not supported by your browser.'));
                         return;
                       }
                       setGettingLocation(true);
@@ -423,14 +437,14 @@ export default function SellerSettingsPage() {
                     }}
                     className="px-3 py-1.5 bg-[#1e3b8a] text-white text-xs font-bold rounded-lg hover:bg-[#152c6e] disabled:opacity-50 transition-colors"
                   >
-                    {gettingLocation ? 'Detecting GPS...' : '📍 Detect Live GPS Location'}
+                    {gettingLocation ? tr('Detecting GPS...') : tr('📍 Detect Live GPS Location')}
                   </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-medium text-slate-500 mb-1">
-                      Coordinates (Lat, Long)
+                      {tr('Coordinates (Lat, Long)')}
                     </label>
                     <input
                       type="text"
@@ -442,7 +456,7 @@ export default function SellerSettingsPage() {
                   </div>
                   <div>
                     <label className="block text-[11px] font-medium text-slate-500 mb-1">
-                      District / Zone
+                      {tr('District / Zone')}
                     </label>
                     <input
                       type="text"
@@ -458,20 +472,20 @@ export default function SellerSettingsPage() {
           </div>
 
           <div className="card">
-            <h3 className="card-title mb-4">Bank Account (Payouts)</h3>
+            <h3 className="card-title mb-4">{tr('Bank Account (Payouts)')}</h3>
             <div>
               <label className="block text-xs font-medium text-slate-500 mb-1">
-                IBAN / Account
+                {tr('IBAN / Account')}
               </label>
               <input
                 type="text"
                 value={profile.bankAccount}
                 onChange={e => setProfile({ ...profile, bankAccount: e.target.value })}
                 className="input-field"
-                placeholder="EG00 0000 0000 0000 0000 0000"
+                placeholder={tr('EG00 0000 0000 0000 0000 0000')}
               />
               <p className="text-xs text-slate-400 mt-1">
-                Payouts are processed within 5-7 business days.
+                {tr('Payouts are processed within 5-7 business days.')}
               </p>
             </div>
           </div>
@@ -493,7 +507,7 @@ export default function SellerSettingsPage() {
             disabled={saving}
             className="w-full py-4 bg-[#1e3b8a] text-white rounded-lg font-bold hover:bg-[#152c6e] disabled:opacity-50 transition-colors"
           >
-            {saving ? 'Saving…' : 'Save Settings'}
+            {saving ? tr('Saving…') : tr('Save Settings')}
           </button>
         </form>
       </div>

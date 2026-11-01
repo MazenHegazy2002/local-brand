@@ -2,12 +2,14 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { en, ar, fk, DictKey } from '@/lib/i18n/dicts';
+import { uiAr } from '@/lib/i18n/ui-ar';
 
 type Language = 'en' | 'ar' | 'fk';
 
 type LanguageContextType = {
   lang: Language;
   t: (key: DictKey) => string;
+  tr: <T>(text: T) => T;
   setLang: (lang: Language) => void;
   formatPrice: (amount: number) => string;
   formatDate: (date: Date | string) => string;
@@ -17,6 +19,7 @@ type LanguageContextType = {
 const LanguageContext = createContext<LanguageContextType>({
   lang: 'en',
   t: key => en[key] || key,
+  tr: text => text,
   setLang: () => {},
   formatPrice: amount => `${amount.toLocaleString()} EGP`,
   formatDate: date => new Date(date).toLocaleDateString('en-EG'),
@@ -151,6 +154,12 @@ export function LanguageProvider({
     [lang]
   );
 
+  const tr = useCallback(
+    <T,>(text: T): T =>
+      (lang === 'ar' && typeof text === 'string' ? (uiAr[text] ?? text) : text) as T,
+    [lang]
+  );
+
   const formatPrice = useMemo(() => {
     return (amount: number): string => {
       const locale = lang === 'ar' ? 'ar-EG' : 'en-EG'; // fk uses en-EG (Latin digits)
@@ -175,7 +184,7 @@ export function LanguageProvider({
   }, [lang]);
 
   return (
-    <LanguageContext.Provider value={{ lang, t, setLang, formatPrice, formatDate, isRTL }}>
+    <LanguageContext.Provider value={{ lang, t, tr, setLang, formatPrice, formatDate, isRTL }}>
       {children}
     </LanguageContext.Provider>
   );

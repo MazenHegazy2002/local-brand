@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -8,6 +9,7 @@ import { Skeleton } from '@/components/ui';
 import ProductCard, { ProductCardProduct } from '@/components/ProductCard';
 
 export default function SearchResultsPage() {
+  const { tr } = useLanguage();
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
 
@@ -45,9 +47,9 @@ export default function SearchResultsPage() {
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-black text-gray-900 mb-2">Search Results</h1>
+        <h1 className="text-3xl font-black text-gray-900 mb-2">{tr('Search Results')}</h1>
         <p className="text-gray-600 mb-8">
-          {query ? `Showing results for "${query}"` : 'Enter a search term to find products'}
+          {query ? `Showing results for "${query}"` : tr('Enter a search term to find products')}
         </p>
 
         {error && (
@@ -89,8 +91,10 @@ export default function SearchResultsPage() {
         ) : (
           <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
             <div className="text-6xl mb-4">🔍</div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">No products found</h2>
-            <p className="text-gray-500">We couldn't find any products matching your search.</p>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">{tr('No products found')}</h2>
+            <p className="text-gray-500">
+              {tr("We couldn't find any products matching your search.")}
+            </p>
           </div>
         )}
       </div>

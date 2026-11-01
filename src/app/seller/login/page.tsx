@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState, useEffect, Suspense } from 'react';
 import { signIn, useSession } from 'next-auth/react';
@@ -6,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 function SellerLoginForm() {
+  const { tr } = useLanguage();
   const router = useRouter();
   const { status } = useSession();
   const searchParams = useSearchParams();
@@ -35,12 +37,12 @@ function SellerLoginForm() {
       });
 
       if (res?.error) {
-        setError('Invalid seller email or password.');
+        setError(tr('Invalid seller email or password.'));
       } else {
         router.push(callbackUrl);
       }
     } catch {
-      setError('An unexpected error occurred. Please try again.');
+      setError(tr('An unexpected error occurred. Please try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -53,16 +55,16 @@ function SellerLoginForm() {
           <span className="text-4xl font-black tracking-tighter inline-flex items-center gap-1">
             <span className="text-[hsl(var(--primary))]">BRAND</span>
             <span className="text-[hsl(var(--accent))]">Y</span>
-            <span className="ml-1 text-xs uppercase tracking-widest font-bold px-2.5 py-0.5 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)] rounded-full">
-              Seller Hub
+            <span className="ms-1 text-xs uppercase tracking-widest font-bold px-2.5 py-0.5 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)] rounded-full">
+              {tr('Seller Hub')}
             </span>
           </span>
         </Link>
         <h1 className="mt-6 text-center text-3xl font-extrabold text-[hsl(var(--foreground))]">
-          Sign In to Seller Hub
+          {tr('Sign In to Seller Hub')}
         </h1>
         <p className="mt-2 text-center text-sm text-[hsl(var(--muted-foreground))]">
-          Exclusive portal for verified Egyptian local brands
+          {tr('Exclusive portal for verified Egyptian local brands')}
         </p>
       </div>
 
@@ -80,7 +82,7 @@ function SellerLoginForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Seller Email Address
+                {tr('Seller Email Address')}
               </label>
               <div className="mt-1">
                 <input
@@ -95,7 +97,7 @@ function SellerLoginForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <label className="block text-sm font-medium text-gray-700">{tr('Password')}</label>
               <div className="mt-1">
                 <input
                   type="password"
@@ -114,19 +116,19 @@ function SellerLoginForm() {
                 disabled={isLoading}
                 className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-colors bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-dark))] disabled:opacity-50"
               >
-                {isLoading ? 'Signing in...' : 'Sign In as Seller'}
+                {isLoading ? tr('Signing in...') : tr('Sign In as Seller')}
               </button>
             </div>
 
             <div className="w-full h-px bg-gray-100 my-4" />
 
             <div className="text-center text-xs text-gray-500">
-              New brand?{' '}
+              {tr('New brand?')}{' '}
               <Link
                 href="/become-seller"
                 className="font-bold text-[hsl(var(--primary))] hover:underline"
               >
-                Create Seller Account →
+                {tr('Create Seller Account →')}
               </Link>
             </div>
           </form>
@@ -137,9 +139,12 @@ function SellerLoginForm() {
 }
 
 export default function SellerLoginPage() {
+  const { tr } = useLanguage();
   return (
     <Suspense
-      fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">{tr('Loading...')}</div>
+      }
     >
       <SellerLoginForm />
     </Suspense>

@@ -63,7 +63,7 @@ export default function RightBannerSlider({ slides }: { slides: RightBannerSlide
             loading="lazy"
           />
           <div className="absolute inset-0 z-10 bg-gradient-to-t from-gray-900/90 to-transparent" />
-          <div className="absolute bottom-0 left-0 p-6 z-20 w-full text-left">
+          <div className="absolute bottom-0 start-0 p-6 z-20 w-full text-start">
             <h2 className="text-white text-xl md:text-2xl font-bold mb-1 tracking-tight">
               {renderText(slide.title, slide.isI18nKey)}
             </h2>
@@ -77,7 +77,7 @@ export default function RightBannerSlider({ slides }: { slides: RightBannerSlide
       ))}
 
       {slides.length > 1 && (
-        <div className="absolute bottom-3 right-3 z-30 flex items-center gap-0.5">
+        <div className="absolute bottom-3 end-3 z-30 flex items-center gap-0.5">
           {slides.map((_, idx) => (
             <button
               key={idx}

@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { ReactNode, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
@@ -23,12 +24,16 @@ const sizeStyles: Record<ModalSize, string> = {
 };
 
 export function Modal({ open, onClose, title, description, size = 'md', children }: ModalProps) {
+  const { tr } = useLanguage();
   const overlayRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
-  }, [onClose]);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    },
+    [onClose]
+  );
 
   useEffect(() => {
     if (open) {
@@ -43,7 +48,9 @@ export function Modal({ open, onClose, title, description, size = 'md', children
 
   useEffect(() => {
     if (open && modalRef.current) {
-      const focusable = modalRef.current.querySelector<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      const focusable = modalRef.current.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
       focusable?.focus();
     }
   }, [open]);
@@ -54,7 +61,7 @@ export function Modal({ open, onClose, title, description, size = 'md', children
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onClick={e => e.target === e.currentTarget && onClose()}
     >
       <div
         ref={modalRef}
@@ -82,21 +89,28 @@ export function Modal({ open, onClose, title, description, size = 'md', children
             )}
           </div>
         )}
-        
+
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-          aria-label="Close modal"
+          className="absolute top-4 end-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+          aria-label={tr('Close modal')}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          {children}
-        </div>
+        <div className="flex-1 overflow-y-auto p-6">{children}</div>
       </div>
     </div>
   );

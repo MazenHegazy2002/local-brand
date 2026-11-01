@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
@@ -121,6 +122,7 @@ export const FAQ_DATA: Record<Category, Array<{ q: string; a: string }>> = {
 };
 
 export default function FAQClient() {
+  const { tr } = useLanguage();
   const [activeCategory, setActiveCategory] = useState<Category>('orders');
   const [search, setSearch] = useState('');
 
@@ -130,13 +132,13 @@ export default function FAQClient() {
       return Object.entries(FAQ_DATA).flatMap(([cat, faqs]) =>
         faqs
           .filter(f => f.q.toLowerCase().includes(q) || f.a.toLowerCase().includes(q))
-          .map((f, i) => ({ id: `${cat}-${i}`, title: f.q, content: f.a }))
+          .map((f, i) => ({ id: `${cat}-${i}`, title: tr(f.q), content: tr(f.a) }))
       );
     }
     return FAQ_DATA[activeCategory].map((f, i) => ({
       id: `${activeCategory}-${i}`,
-      title: f.q,
-      content: f.a,
+      title: tr(f.q),
+      content: tr(f.a),
     }));
   })();
 
@@ -146,21 +148,23 @@ export default function FAQClient() {
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
-            <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-3">Help Center</h1>
-            <p className="text-gray-500 text-lg">Frequently asked questions and answers</p>
+            <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-3">
+              {tr('Help Center')}
+            </h1>
+            <p className="text-gray-500 text-lg">{tr('Frequently asked questions and answers')}</p>
           </div>
 
           <div className="mb-8">
             <label htmlFor="faq-search" className="sr-only">
-              Search FAQs
+              {tr('Search FAQs')}
             </label>
             <input
               id="faq-search"
               type="search"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search FAQs..."
-              aria-label="Search frequently asked questions"
+              placeholder={tr('Search FAQs...')}
+              aria-label={tr('Search frequently asked questions')}
               className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#1e3b8a] outline-none text-base shadow-sm"
             />
           </div>
@@ -172,14 +176,14 @@ export default function FAQClient() {
                   key={c.id}
                   onClick={() => setActiveCategory(c.id)}
                   aria-pressed={activeCategory === c.id}
-                  className={`p-4 rounded-2xl text-left transition-all border-2 ${
+                  className={`p-4 rounded-2xl text-start transition-all border-2 ${
                     activeCategory === c.id
                       ? 'bg-[#1e3b8a] text-white border-[#1e3b8a] shadow-md'
                       : 'bg-white border-gray-100 text-gray-700 hover:border-gray-300'
                   }`}
                 >
                   <div className="text-2xl mb-2">{c.icon}</div>
-                  <div className="font-bold text-sm">{c.label}</div>
+                  <div className="font-bold text-sm">{tr(c.label)}</div>
                 </button>
               ))}
             </div>
@@ -188,7 +192,9 @@ export default function FAQClient() {
           <div className="bg-white rounded-2xl p-2 border border-gray-100 shadow-sm">
             {accordionItems.length === 0 ? (
               <div className="py-16 text-center text-gray-400">
-                No FAQs match &quot;{search}&quot;. Try a different search term.
+                {tr('No FAQs match "')}
+                {search}
+                {tr('". Try a different search term.')}
               </div>
             ) : (
               <Accordion items={accordionItems} allowMultipleOpen />
@@ -196,13 +202,13 @@ export default function FAQClient() {
           </div>
 
           <div className="mt-12 p-6 md:p-8 bg-gradient-to-br from-[#1e3b8a]/5 to-[#0F6E56]/5 rounded-2xl border border-[#1e3b8a]/20 text-center">
-            <h3 className="text-xl font-black text-gray-900 mb-2">Still need help?</h3>
-            <p className="text-gray-600 mb-4">Our support team is here for you.</p>
+            <h3 className="text-xl font-black text-gray-900 mb-2">{tr('Still need help?')}</h3>
+            <p className="text-gray-600 mb-4">{tr('Our support team is here for you.')}</p>
             <a
               href="/help/contact"
               className="inline-flex items-center gap-2 bg-[#1e3b8a] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#152c6e] transition-colors"
             >
-              Contact Support
+              {tr('Contact Support')}
             </a>
           </div>
         </div>

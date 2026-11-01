@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -8,6 +9,7 @@ import Navbar from '@/components/Navbar';
 // The actual order rendering lives in /track/[id] — this page just collects
 // the order ID + email and forwards there.
 export default function TrackLookupPage() {
+  const { tr } = useLanguage();
   const router = useRouter();
   const [orderId, setOrderId] = useState('');
   const [email, setEmail] = useState('');
@@ -18,7 +20,7 @@ export default function TrackLookupPage() {
     const oid = orderId.trim();
     const em = email.trim();
     if (!oid || !em) {
-      setError('Please enter both order ID and email.');
+      setError(tr('Please enter both order ID and email.'));
       return;
     }
     router.push(`/track/${encodeURIComponent(oid)}?email=${encodeURIComponent(em)}`);
@@ -29,15 +31,19 @@ export default function TrackLookupPage() {
       <Navbar />
 
       <div className="container mx-auto px-4 py-12 max-w-2xl">
-        <h1 className="text-3xl font-black text-gray-900 mb-2">Track Your Order</h1>
+        <h1 className="text-3xl font-black text-gray-900 mb-2">{tr('Track Your Order')}</h1>
         <p className="text-gray-500 mb-8">
-          Enter the order ID from your confirmation email and the email you used at checkout.
+          {tr(
+            'Enter the order ID from your confirmation email and the email you used at checkout.'
+          )}
         </p>
 
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Order ID</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {tr('Order ID')}
+              </label>
               <input
                 type="text"
                 value={orderId}
@@ -48,7 +54,9 @@ export default function TrackLookupPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {tr('Email')}
+              </label>
               <input
                 type="email"
                 value={email}
@@ -63,17 +71,18 @@ export default function TrackLookupPage() {
               type="submit"
               className="w-full bg-[#1e3b8a] text-white font-bold py-3 rounded-lg hover:bg-[#152c6e] transition-colors"
             >
-              Track Order
+              {tr('Track Order')}
             </button>
           </form>
 
           <div className="mt-6 pt-6 border-t border-gray-100 text-sm text-gray-500">
-            Have an account?{' '}
+            {tr('Have an account?')}{' '}
             <a href="/login" className="text-[#1e3b8a] font-medium hover:underline">
-              Sign in
+              {tr('Sign in')}
             </a>{' '}
-            to see all your orders in one place. Guest orders made with your account&apos;s email
-            are linked automatically.
+            {tr(
+              "to see all your orders in one place. Guest orders made with your account's email are linked automatically."
+            )}
           </div>
         </div>
       </div>

@@ -21,6 +21,7 @@ const SUPPRESSED_PREFIXES = [
 ];
 
 export default function ExitIntentPopup() {
+  const { tr } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -99,8 +100,8 @@ export default function ExitIntentPopup() {
         {/* Header/Close */}
         <button
           onClick={() => setIsOpen(false)}
-          className={`absolute top-4 ${isRtl ? 'left-4' : 'right-4'} z-10 text-white/80 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/10`}
-          aria-label="Close dialog"
+          className={`absolute top-4 ${isRtl ? 'start-4' : 'end-4'} z-10 text-white/80 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/10`}
+          aria-label={tr('Close dialog')}
         >
           <X size={18} />
         </button>
@@ -109,12 +110,12 @@ export default function ExitIntentPopup() {
         <div className="bg-gradient-to-r from-blue-900 to-indigo-900 px-6 py-8 text-center text-white relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent)]" />
           <h3 className="text-2xl font-black tracking-tight mb-2">
-            {isRtl ? 'انتظر! لا ترحل فارغ اليدين' : "Wait! Don't Go Empty-Handed"}
+            {isRtl ? 'انتظر! لا ترحل فارغ اليدين' : tr("Wait! Don't Go Empty-Handed")}
           </h3>
           <p className="text-blue-100 text-sm font-medium">
             {isRtl
               ? 'احصل على خصم 10% على طلبك الأول اليوم!'
-              : 'Get 10% off your first order today!'}
+              : tr('Get 10% off your first order today!')}
           </p>
         </div>
 
@@ -125,22 +126,24 @@ export default function ExitIntentPopup() {
               <p className="text-gray-600 text-sm leading-relaxed text-center">
                 {isRtl
                   ? 'اشترك في نشرتنا البريدية لتصلك أحدث العروض والمنتجات الحصرية من أفضل الماركات المصرية المحلية.'
-                  : 'Subscribe to our newsletter to receive the latest deals and exclusive products from top local Egyptian brands.'}
+                  : tr(
+                      'Subscribe to our newsletter to receive the latest deals and exclusive products from top local Egyptian brands.'
+                    )}
               </p>
 
               <div className="relative">
                 <div
-                  className={`absolute inset-y-0 ${isRtl ? 'right-3' : 'left-3'} flex items-center pointer-events-none text-gray-400`}
+                  className={`absolute inset-y-0 ${isRtl ? 'end-3' : 'start-3'} flex items-center pointer-events-none text-gray-400`}
                 >
                   <Mail size={18} />
                 </div>
                 <input
                   type="email"
                   required
-                  placeholder={isRtl ? 'أدخل بريدك الإلكتروني' : 'Enter your email address'}
+                  placeholder={isRtl ? 'أدخل بريدك الإلكتروني' : tr('Enter your email address')}
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className={`w-full ${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent transition-all`}
+                  className={`w-full ${isRtl ? 'pe-10 ps-4' : 'ps-10 pe-4'} py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent transition-all`}
                 />
               </div>
 
@@ -150,7 +153,7 @@ export default function ExitIntentPopup() {
                 type="submit"
                 className="w-full py-3 text-sm font-bold text-white bg-blue-900 rounded-xl hover:bg-blue-800 transition-colors shadow-md shadow-blue-900/10"
               >
-                {isRtl ? 'احصل على الخصم الآن' : 'Claim My 10% Discount'}
+                {isRtl ? 'احصل على الخصم الآن' : tr('Claim My 10% Discount')}
               </button>
             </form>
           ) : (
@@ -161,12 +164,12 @@ export default function ExitIntentPopup() {
 
               <div className="space-y-2">
                 <h4 className="font-bold text-lg text-gray-900">
-                  {isRtl ? 'تم تفعيل كود الخصم بنجاح!' : 'Your Discount Code is Active!'}
+                  {isRtl ? 'تم تفعيل كود الخصم بنجاح!' : tr('Your Discount Code is Active!')}
                 </h4>
                 <p className="text-gray-600 text-sm">
                   {isRtl
                     ? 'استخدم هذا الكود عند الدفع للحصول على خصم 10%:'
-                    : 'Use this code at checkout to save 10% on your purchase:'}
+                    : tr('Use this code at checkout to save 10% on your purchase:')}
                 </p>
               </div>
 
@@ -184,11 +187,11 @@ export default function ExitIntentPopup() {
                 >
                   {copied ? (
                     <>
-                      <Check size={12} /> {isRtl ? 'تم النسخ' : 'Copied'}
+                      <Check size={12} /> {isRtl ? 'تم النسخ' : tr('Copied')}
                     </>
                   ) : (
                     <>
-                      <Copy size={12} /> {isRtl ? 'نسخ' : 'Copy'}
+                      <Copy size={12} /> {isRtl ? 'نسخ' : tr('Copy')}
                     </>
                   )}
                 </button>
@@ -198,7 +201,7 @@ export default function ExitIntentPopup() {
                 onClick={() => setIsOpen(false)}
                 className="text-gray-500 hover:text-gray-700 text-xs font-medium underline block mx-auto pt-2"
               >
-                {isRtl ? 'إغلاق ومتابعة التسوق' : 'Close and continue shopping'}
+                {isRtl ? 'إغلاق ومتابعة التسوق' : tr('Close and continue shopping')}
               </button>
             </div>
           )}
