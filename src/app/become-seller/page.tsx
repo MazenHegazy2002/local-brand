@@ -204,7 +204,7 @@ export default function BecomeSellerPage() {
           <p className="text-gray-600 text-sm leading-relaxed mb-6">
             {tr('Thank you for registering')}{' '}
             <strong className="text-[hsl(var(--primary))]">{storeName}</strong>{' '}
-            {tr('on Brandy! Your seller application is submitted and currently under review.')}
+            {tr('on Brandyy! Your seller application is submitted and currently under review.')}
           </p>
 
           <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-5 mb-8 text-start text-xs space-y-3">
@@ -306,7 +306,7 @@ export default function BecomeSellerPage() {
               </h1>
               <p className="mt-4 text-gray-600 text-base leading-relaxed">
                 {tr(
-                  'Set up your brand store on Brandy in minutes. Reach customers nationwide with zero fixed monthly fees.'
+                  'Set up your brand store on Brandyy in minutes. Reach customers nationwide with zero fixed monthly fees.'
                 )}
               </p>
             </div>
@@ -757,7 +757,7 @@ export default function BecomeSellerPage() {
                 </button>
 
                 <p className="text-center text-gray-500 text-xs mt-3">
-                  {tr('By registering, you agree to Brandy Seller Terms & Conditions.')}
+                  {tr('By registering, you agree to Brandyy Seller Terms & Conditions.')}
                 </p>
               </form>
             </div>
@@ -768,7 +768,7 @@ export default function BecomeSellerPage() {
       {/* Footer */}
       <footer className="border-t border-gray-200 bg-white py-6 text-center text-gray-500 text-xs">
         <p>
-          © {new Date().getFullYear()} {tr('Brandy Marketplace. All rights reserved.')}
+          © {new Date().getFullYear()} {tr('Brandyy Marketplace. All rights reserved.')}
         </p>
       </footer>
     </div>

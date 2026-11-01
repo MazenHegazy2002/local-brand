@@ -142,7 +142,7 @@ export function ReportButton({
               <form onSubmit={handleSubmit} className="space-y-4">
                 <p className="text-xs text-gray-500 leading-relaxed">
                   {tr(
-                    'Help us keep Brandy authentic and safe. Explain why you think the product listing for'
+                    'Help us keep Brandyy authentic and safe. Explain why you think the product listing for'
                   )}{' '}
                   <strong>"{productName}"</strong> {tr('violates our policies.')}
                 </p>

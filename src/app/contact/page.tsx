@@ -5,7 +5,7 @@ import { contactPageJsonLd, jsonLdScript } from '@/lib/jsonld';
 
 export const metadata: Metadata = {
   title: 'Contact Us',
-  description: 'Get in touch with Brandy customer support and operations team.',
+  description: 'Get in touch with Brandyy customer support and operations team.',
 };
 
 import ContactClient from './ContactClient';

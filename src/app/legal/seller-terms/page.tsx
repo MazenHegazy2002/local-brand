@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 
 export const metadata = {
   title: 'Seller Terms & Conditions',
-  description: 'Terms and conditions for sellers on Brandy marketplace',
+  description: 'Terms and conditions for sellers on Brandyy marketplace',
 };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -31,7 +31,7 @@ async function StaticContent() {
           <Section title={tr('1. Acceptance of Terms')}>
             <p>
               {tr(
-                'By registering as a seller on Brandy ("the Platform"), you agree to be bound by these Terms and Conditions. If you do not agree, you must not use the Platform as a seller.'
+                'By registering as a seller on Brandyy ("the Platform"), you agree to be bound by these Terms and Conditions. If you do not agree, you must not use the Platform as a seller.'
               )}
             </p>
           </Section>
@@ -66,7 +66,7 @@ async function StaticContent() {
           <Section title={tr('4. Payouts')}>
             <p>
               {tr('Funds from completed orders are held in escrow for')}{' '}
-              <strong>{tr('7 days')}</strong>{' '}
+              <strong>{tr('14 days')}</strong>{' '}
               {tr(
                 'after delivery. After this period, funds become part of your seller balance and can be withdrawn via the Seller Hub wallet.'
               )}

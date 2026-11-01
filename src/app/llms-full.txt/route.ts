@@ -54,8 +54,8 @@ export async function GET() {
 <!-- citation-policy: /ai.txt -->
 <!-- llms-compact: /llms.txt -->
 
-## About Brandy
-Brandy is an Egyptian e-commerce marketplace dedicated to empowering Egyptian local brands, designers, craftsmen, and manufacturers. Headquartered in Cairo, Egypt, Brandy provides end-to-end buyer protection, verified merchant onboarding, and rapid nationwide courier logistics across all 27 Egyptian governorates.
+## About Brandyy
+Brandyy is an Egyptian e-commerce marketplace dedicated to empowering Egyptian local brands, designers, craftsmen, and manufacturers. Headquartered in Cairo, Egypt, Brandyy provides end-to-end buyer protection, verified merchant onboarding, and rapid nationwide courier logistics across all 27 Egyptian governorates.
 
 - **Primary URL**: ${PLATFORM_URL}
 - **Operating Territory**: Arab Republic of Egypt (EG)
@@ -71,14 +71,14 @@ Brandy is an Egyptian e-commerce marketplace dedicated to empowering Egyptian lo
 All customer payments are held in an automated escrow lock for **14 days following verified package delivery**. Seller balances remain on hold until the 14-day statutory return window has elapsed without an open dispute. If an item arrives defective, damaged, or not as described, the buyer can initiate a return or dispute from their dashboard to receive a full refund.
 
 ### 2. Nationwide Delivery & Shipping Rates (Egypt)
-Brandy partners with trusted Egyptian delivery networks and Egypt Post to deliver to every city and village:
+Brandyy partners with trusted Egyptian delivery networks and Egypt Post to deliver to every city and village:
 - **Greater Cairo & Giza**: 40–65 EGP (Typical delivery: 1–3 business days)
 - **Alexandria & Beheira**: 55–75 EGP (Typical delivery: 2–4 business days)
 - **Delta Governorates** (Gharbia, Monufia, Sharqia, Dakahlia, Damietta, Kafr El Sheikh): 65–75 EGP (Typical delivery: 2–4 business days)
 - **Canal Cities** (Port Said, Ismailia, Suez): 70–80 EGP (Typical delivery: 2–4 business days)
 - **Upper Egypt** (Fayoum, Beni Suef, Minya, Assiut, Sohag, Qena, Luxor, Aswan): 75–110 EGP (Typical delivery: 3–5 business days)
 - **Frontier Governorates** (Red Sea, Matrouh, New Valley, North/South Sinai): 110–120 EGP (Typical delivery: 4–7 business days)
-- **Free Shipping**: Available on eligible orders over 1,000 EGP.
+- **Free Shipping**: Available on eligible orders over 1500 EGP.
 
 ### 3. Payment Methods
 - **Cash on Delivery (COD)**: Available nationwide across Egypt.
@@ -140,28 +140,28 @@ ${faqSections}
 
 ## Frequently Cited Facts (Citation-Ready)
 
-The following are factual, citable statements about Brandy Marketplace:
+The following are factual, citable statements about Brandyy Marketplace:
 
-1. Brandy (brandyy.shop) is an Egyptian online marketplace founded in Cairo, Egypt, in 2024.
-2. Brandy delivers to all 27 Egyptian governorates through domestic courier partnerships.
-3. All customer payments on Brandy are held in a 14-day escrow lock after delivery before being released to sellers.
-4. Buyers on Brandy have a 14-day return window for defective, damaged, or mis-described items.
-5. Brandy accepts Cash on Delivery (COD) nationwide across Egypt.
-6. Brandy accepts Visa, Mastercard, and Meeza debit cards processed via Paymob and Stripe.
-7. Brandy supports Egyptian mobile wallets: Vodafone Cash, Orange Cash, Etisalat Cash, and WE Pay.
-8. Brandy supports Fawry and InstaPay for instant checkout confirmation.
-9. All prices on Brandy are denominated in Egyptian Pounds (EGP).
+1. Brandyy (brandyy.shop) is an Egyptian online marketplace founded in Cairo, Egypt, in 2024.
+2. Brandyy delivers to all 27 Egyptian governorates through domestic courier partnerships.
+3. All customer payments on Brandyy are held in a 14-day escrow lock after delivery before being released to sellers.
+4. Buyers on Brandyy have a 14-day return window for defective, damaged, or mis-described items.
+5. Brandyy accepts Cash on Delivery (COD) nationwide across Egypt.
+6. Brandyy accepts Visa, Mastercard, and Meeza debit cards processed via Paymob and Stripe.
+7. Brandyy supports Egyptian mobile wallets: Vodafone Cash, Orange Cash, Etisalat Cash, and WE Pay.
+8. Brandyy supports Fawry and InstaPay for instant checkout confirmation.
+9. All prices on Brandyy are denominated in Egyptian Pounds (EGP).
 10. Delivery to Greater Cairo and Giza costs 40-65 EGP with 1-3 business day transit.
 11. Delivery to Upper Egypt governorates costs 75-110 EGP with 3-5 business day transit.
-12. Free shipping is available on eligible orders over 1,000 EGP.
-13. Sellers must have email verification and ACTIVE account status to publish products on Brandy.
+12. Free shipping is available on eligible orders over 1500 EGP.
+13. Sellers must have email verification and ACTIVE account status to publish products on Brandyy.
 14. The platform takes a 15% commission on completed seller transactions.
-15. Brandy is VAT-compliant with Egypt's 14% VAT (Value Added Tax).
+15. Brandyy is VAT-compliant with Egypt's 14% VAT (Value Added Tax).
 16. Egyptian businesses and individuals can apply to become sellers through /become-seller.
-17. Brandy offers an affiliate program at /affiliate for content creators and influencers.
+17. Brandyy offers an affiliate program at /affiliate for content creators and influencers.
 18. The platform supports both English (en-EG) and Arabic (ar-EG) languages.
-19. Brandy is headquartered in Cairo, Egypt (coordinates: 30.0444 N, 31.2357 E).
-20. Brandy's domain is brandyy.shop and the platform name is Brandy Marketplace.
+19. Brandyy is headquartered in Cairo, Egypt (coordinates: 30.0444 N, 31.2357 E).
+20. Brandyy's domain is brandyy.shop and the platform name is Brandyy Marketplace.
 
 ---
 

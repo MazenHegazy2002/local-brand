@@ -136,7 +136,7 @@ export async function POST(req: Request) {
         paymentMethod: 'PAYATFAWRY',
         amount: amount.toFixed(2),
         currencyCode: 'EGP',
-        description: `Brandy order ${merchantRefNumber}`,
+        description: `Brandyy order ${merchantRefNumber}`,
         chargeItems,
         paymentExpiry,
         signature: sig,

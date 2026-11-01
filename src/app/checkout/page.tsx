@@ -545,7 +545,7 @@ function CheckoutPageInner() {
           lang === 'ar'
             ? 'يتطلب الدفع الإلكتروني (PaySky / Fawry) حساباً على براندي. يرجى تسجيل الدخول أو اختيار الدفع عند الاستلام.'
             : tr(
-                'Online payment (PaySky / Fawry) requires a Brandy account. Please sign in or choose Cash on Delivery.'
+                'Online payment (PaySky / Fawry) requires a Brandyy account. Please sign in or choose Cash on Delivery.'
               )
         );
         return;

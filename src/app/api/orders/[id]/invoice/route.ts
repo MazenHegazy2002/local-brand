@@ -232,8 +232,8 @@ function generateInvoiceHTML({
   <div class="footer">
     <p><strong>Tax Registration Number:</strong> ${escapeHtml(getTaxRegistrationNumber())}</p>
     <p><strong>Payment Method:</strong> ${escapeHtml(order.paymentMethod?.replace(/_/g, ' ') || 'N/A')} | <strong>Payment Status:</strong> ${escapeHtml(order.paymentStatus)}</p>
-    <p style="margin-top: 20px;">Thank you for shopping with Brandy! Questions? Contact support@brandy.com</p>
-    <p>© ${new Date().getFullYear()} Brandy. All rights reserved.</p>
+    <p style="margin-top: 20px;">Thank you for shopping with Brandyy! Questions? Contact support@brandy.com</p>
+    <p>© ${new Date().getFullYear()} Brandyy. All rights reserved.</p>
   </div>
 </div>
 </body>

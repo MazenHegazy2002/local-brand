@@ -86,7 +86,7 @@ export default function Plugins() {
 
   const whatsappMsgEn =
     process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE_EN ||
-    'Hello Brandy! I have a question about my order.';
+    'Hello Brandyy! I have a question about my order.';
   const whatsappMsgAr =
     process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE_AR || 'مرحباً براندي! لدي استفسار بخصوص طلبي.';
   const activeWppMessage = lang === 'ar' ? whatsappMsgAr : whatsappMsgEn;

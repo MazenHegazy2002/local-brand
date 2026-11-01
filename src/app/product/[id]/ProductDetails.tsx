@@ -233,9 +233,17 @@ export default function ProductDetails({
   }, [uniqueSizes.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Dynamic color selection handler
+  const galleryRef = React.useRef<HTMLDivElement>(null);
+  const swipeStartX = React.useRef<number | null>(null);
+
   const handleColorSelect = (colorName: string, updateImage = true) => {
     setSelectedColor(colorName);
     if (updateImage) {
+      // Bring the photo back into view when the buyer picks a color further down the page.
+      const gallery = galleryRef.current;
+      if (gallery && gallery.getBoundingClientRect().top < 80) {
+        gallery.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+      }
       const matchedImg = getMatchedImageUrl(colorName);
       if (matchedImg) {
         setActiveImage(matchedImg);
@@ -385,11 +393,39 @@ export default function ProductDetails({
     setTimeout(() => setAdded(false), 1200);
   };
 
+  const imageUrls: string[] = images.map((img: ProductImage | string) =>
+    typeof img === 'string' ? img : img.url
+  );
+  const activeIndex = Math.max(imageUrls.indexOf(activeImage), 0);
+
+  const showImage = (step: number) => {
+    if (imageUrls.length < 2) return;
+    const next = (activeIndex + step + imageUrls.length) % imageUrls.length;
+    handleThumbnailClick(imageUrls[next], next);
+  };
+
+  const handleSwipeEnd = (endX: number) => {
+    if (swipeStartX.current === null) return;
+    const distance = endX - swipeStartX.current;
+    swipeStartX.current = null;
+    if (Math.abs(distance) < 40) return;
+    // Swiping toward the reading start moves forward, so the direction flips in RTL.
+    const forward = isAr ? distance > 0 : distance < 0;
+    showImage(forward ? 1 : -1);
+  };
+
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 md:p-10 shadow-sm border border-gray-100 dark:border-slate-800 flex flex-col md:flex-row gap-8 lg:gap-16">
       {/* ── Left Column: Media Showcase ── */}
       <div className="w-full md:w-1/2">
-        <div className="aspect-square bg-slate-50 dark:bg-slate-800/50 rounded-xl overflow-hidden border border-gray-100 dark:border-slate-800 mb-4 relative group">
+        <div
+          ref={galleryRef}
+          onTouchStart={e => (swipeStartX.current = e.touches[0].clientX)}
+          onTouchEnd={e => handleSwipeEnd(e.changedTouches[0].clientX)}
+          onMouseDown={e => (swipeStartX.current = e.clientX)}
+          onMouseUp={e => handleSwipeEnd(e.clientX)}
+          className="relative scroll-mt-24 touch-pan-y select-none aspect-square bg-slate-50 dark:bg-slate-800/50 rounded-xl overflow-hidden border border-gray-100 dark:border-slate-800 mb-4 relative group"
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={activeImage}
@@ -397,7 +433,36 @@ export default function ProductDetails({
             className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             fetchPriority="high"
             loading="eager"
+            draggable={false}
           />
+          {imageUrls.length > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label={tr('Previous')}
+                onClick={() => showImage(-1)}
+                className="absolute start-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 text-slate-800 shadow flex items-center justify-center font-black"
+              >
+                <span className="rtl:rotate-180">‹</span>
+              </button>
+              <button
+                type="button"
+                aria-label={tr('Next')}
+                onClick={() => showImage(1)}
+                className="absolute end-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 text-slate-800 shadow flex items-center justify-center font-black"
+              >
+                <span className="rtl:rotate-180">›</span>
+              </button>
+              <div className="absolute bottom-2 inset-x-0 flex justify-center gap-1.5">
+                {imageUrls.map((url, i) => (
+                  <span
+                    key={url + i}
+                    className={`w-2 h-2 rounded-full ${i === activeIndex ? 'bg-[#1e3b8a]' : 'bg-white/80'}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Gallery Thumbnails */}
@@ -440,11 +505,11 @@ export default function ProductDetails({
               href={`/brand/${(product.seller?.storeName || product.brand || 'brandy-store').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
               className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest hover:text-[#534AB7] dark:hover:text-[#6b8ff5] transition-colors"
             >
-              {product.seller?.storeName || product.brand || tr('Brandy Store')}
+              {product.seller?.storeName || product.brand || tr('Brandyy Store')}
             </Link>
             {(product.seller as { status?: string }).status === 'ACTIVE' && (
               <span
-                title={tr('Verified seller on Brandy')}
+                title={tr('Verified seller on Brandyy')}
                 className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#534AB7]/10 text-[#534AB7] dark:bg-[#534AB7]/20 dark:text-[#6b8ff5] rounded text-[10px] font-bold uppercase tracking-wide"
               >
                 <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
@@ -552,39 +617,6 @@ export default function ProductDetails({
             {tr('items left in stock.')}
           </div>
         )}
-
-        {/* Description */}
-        <p className="text-slate-600 dark:text-slate-350 leading-relaxed mb-8">
-          {productDescription}
-        </p>
-
-        {/* SKU/UPC code indicator */}
-        {(variants.some((v: any) => v.sku) || variants.some((v: any) => v.upc)) && (
-          <div className="mb-8 text-[11px] text-gray-400 dark:text-slate-500 font-mono flex flex-wrap gap-x-4 gap-y-1 bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-lg border border-gray-100 dark:border-slate-800/80">
-            {resolvedVariant?.sku && (
-              <span>
-                {tr('SKU:')} {resolvedVariant.sku}
-              </span>
-            )}
-            {!resolvedVariant?.sku && variants[0]?.sku && (
-              <span>
-                {tr('SKU:')} {variants[0].sku}
-              </span>
-            )}
-            {resolvedVariant?.upc && (
-              <span>
-                {tr('UPC:')} {resolvedVariant.upc}
-              </span>
-            )}
-            {!resolvedVariant?.upc && variants[0]?.upc && (
-              <span>
-                {tr('UPC:')} {variants[0].upc}
-              </span>
-            )}
-          </div>
-        )}
-
-        <div className="h-px w-full bg-gray-100 dark:bg-slate-800 mb-8" />
 
         {/* ── Variant Pickers (Client-side interactive swatches & sizing) ── */}
         <div className="space-y-6 mb-8">
@@ -768,6 +800,37 @@ export default function ProductDetails({
             <span className="text-base">✨</span>
             {tr('Try It On — AI Fitting Room')}
           </button>
+        )}
+
+        {/* Description */}
+        <p className="text-slate-600 dark:text-slate-350 leading-relaxed mt-8 mb-6 whitespace-pre-line">
+          {productDescription}
+        </p>
+
+        {/* SKU/UPC code indicator */}
+        {(variants.some((v: any) => v.sku) || variants.some((v: any) => v.upc)) && (
+          <div className="mb-8 text-[11px] text-gray-400 dark:text-slate-500 font-mono flex flex-wrap gap-x-4 gap-y-1 bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-lg border border-gray-100 dark:border-slate-800/80">
+            {resolvedVariant?.sku && (
+              <span>
+                {tr('SKU:')} {resolvedVariant.sku}
+              </span>
+            )}
+            {!resolvedVariant?.sku && variants[0]?.sku && (
+              <span>
+                {tr('SKU:')} {variants[0].sku}
+              </span>
+            )}
+            {resolvedVariant?.upc && (
+              <span>
+                {tr('UPC:')} {resolvedVariant.upc}
+              </span>
+            )}
+            {!resolvedVariant?.upc && variants[0]?.upc && (
+              <span>
+                {tr('UPC:')} {variants[0].upc}
+              </span>
+            )}
+          </div>
         )}
 
         {/* Global stock overview */}

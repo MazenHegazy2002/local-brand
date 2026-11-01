@@ -214,7 +214,7 @@ export default async function LookbookPage() {
               {tr('LATEST EDITION')}
             </span>
             <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-6">
-              {tr('Brandy Print Catalog')}
+              {tr('Brandyy Print Catalog')}
             </h2>
             <p className="text-slate-300 font-light text-base leading-relaxed mb-8">
               {tr(

@@ -3364,14 +3364,14 @@ export async function POST(req: Request) {
       sellerProfile = await prisma.sellerProfile.create({
         data: {
           userId: sellerUser.id,
-          storeName: 'Brandy Store',
+          storeName: 'Brandyy Store',
           description: 'Official seed products collection for local brand showcase.',
           status: 'ACTIVE',
           balance: 0,
           commissionRate: 0.1,
         },
       });
-      console.log(`  ➕ Created default active seller profile: Brandy Store`);
+      console.log(`  ➕ Created default active seller profile: Brandyy Store`);
     } else if (sellerProfile.status !== 'ACTIVE') {
       await prisma.sellerProfile.update({
         where: { id: sellerProfile.id },
@@ -3502,7 +3502,7 @@ export async function POST(req: Request) {
 // ─────────────────────────────────────────────────────────────────────────────
 // DELETE /api/admin/seed-catalog
 // Clears ALL products (+ cascaded variants, images, cart items, wishlists)
-// belonging to the Brandy Store demo seller account.
+// belonging to the Brandyy Store demo seller account.
 // Requires: ADMIN session OR x-seed-secret header matching SEED_SECRET env var.
 export async function DELETE(req: Request) {
   const authHeader = req.headers.get('x-seed-secret');
@@ -3528,7 +3528,7 @@ export async function DELETE(req: Request) {
 
     if (!sellerProfile) {
       return NextResponse.json({
-        message: 'Brandy Store seller not found in DB. Nothing to delete.',
+        message: 'Brandyy Store seller not found in DB. Nothing to delete.',
         deleted: 0,
       });
     }

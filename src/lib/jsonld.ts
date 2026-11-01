@@ -57,11 +57,11 @@ export function productJsonLd(input: ProductJsonLdInput) {
       if (img.startsWith('http://') || img.startsWith('https://')) return img;
       if (img.startsWith('/')) return `${PLATFORM_URL}${img}`;
       // For base64 or other data URIs, fallback to dynamic OG image
-      return `${PLATFORM_URL}/api/og?title=${encodeURIComponent(input.title)}&price=${input.price}&brand=${encodeURIComponent(input.brand || 'Brandy')}`;
+      return `${PLATFORM_URL}/api/og?title=${encodeURIComponent(input.title)}&price=${input.price}&brand=${encodeURIComponent(input.brand || 'Brandyy')}`;
     })
     .filter(Boolean) as string[];
 
-  const defaultImage = `${PLATFORM_URL}/api/og?title=${encodeURIComponent(input.title)}&price=${input.price}&brand=${encodeURIComponent(input.brand || 'Brandy')}`;
+  const defaultImage = `${PLATFORM_URL}/api/og?title=${encodeURIComponent(input.title)}&price=${input.price}&brand=${encodeURIComponent(input.brand || 'Brandyy')}`;
   const images = sanitizedImages.length > 0 ? sanitizedImages : [defaultImage];
 
   // Price valid until next year
@@ -185,9 +185,9 @@ export function organizationJsonLd() {
     additionalType: 'https://schema.org/OnlineStore',
     '@id': `${PLATFORM_URL}#organization`,
     name: PLATFORM_NAME,
-    legalName: 'Brandy Marketplace',
+    legalName: 'Brandyy Marketplace',
     alternateName: [
-      'Brandy Egypt',
+      'Brandyy Egypt',
       '\u0628\u0631\u0627\u0646\u062f\u064a',
       '\u0628\u0644\u0627\u062a\u0641\u0648\u0631\u0645 \u0628\u0631\u0627\u0646\u062f\u064a',
     ],
@@ -196,7 +196,7 @@ export function organizationJsonLd() {
     logo: `${PLATFORM_URL}/logo.png`,
     foundingDate: '2024',
     description:
-      "Brandy is Egypt's leading marketplace for authentic local Egyptian brands, designers, and artisans with nationwide shipping and 14-day escrow protection.",
+      "Brandyy is Egypt's leading marketplace for authentic local Egyptian brands, designers, and artisans with nationwide shipping and 14-day escrow protection.",
     address: {
       '@type': 'PostalAddress',
       streetAddress: 'Downtown',
@@ -222,7 +222,7 @@ export function organizationJsonLd() {
     ],
     hasOfferCatalog: {
       '@type': 'OfferCatalog',
-      name: 'Brandy Local Products Catalog',
+      name: 'Brandyy Local Products Catalog',
       url: `${PLATFORM_URL}/shop`,
     },
     acceptedPaymentMethod: [
@@ -295,7 +295,7 @@ export function brandStoreJsonLd(input: BrandStoreJsonLdInput) {
     description:
       input.description ||
       input.bio ||
-      `Shop authentic ${input.name} products directly from local Egyptian sellers on Brandy.`,
+      `Shop authentic ${input.name} products directly from local Egyptian sellers on Brandyy.`,
     image: input.logoUrl
       ? input.logoUrl.startsWith('http')
         ? input.logoUrl
@@ -358,15 +358,15 @@ export function aboutPageJsonLd() {
     name: `About ${PLATFORM_NAME}`,
     url: `${PLATFORM_URL}/about`,
     description:
-      "Learn about Brandy \u2014 Egypt's premier marketplace connecting shoppers with verified local Egyptian brands, artisans, and designers.",
+      "Learn about Brandyy \u2014 Egypt's premier marketplace connecting shoppers with verified local Egyptian brands, artisans, and designers.",
     mainEntity: {
       '@type': 'Organization',
       '@id': `${PLATFORM_URL}#organization`,
       name: PLATFORM_NAME,
-      legalName: 'Brandy Marketplace',
+      legalName: 'Brandyy Marketplace',
       foundingDate: '2024',
       description:
-        "Brandy is Egypt's leading marketplace for authentic local Egyptian brands, designers, and artisans. We provide end-to-end buyer protection, verified merchant onboarding, and rapid nationwide courier logistics across all 27 Egyptian governorates.",
+        "Brandyy is Egypt's leading marketplace for authentic local Egyptian brands, designers, and artisans. We provide end-to-end buyer protection, verified merchant onboarding, and rapid nationwide courier logistics across all 27 Egyptian governorates.",
       slogan: "Egypt's Marketplace for Local Brands",
       url: PLATFORM_URL,
       logo: `${PLATFORM_URL}/logo.png`,
@@ -396,7 +396,7 @@ export function contactPageJsonLd() {
     name: `Contact ${PLATFORM_NAME}`,
     url: `${PLATFORM_URL}/contact`,
     description:
-      'Get in touch with Brandy customer support for help with orders, returns, or seller inquiries.',
+      'Get in touch with Brandyy customer support for help with orders, returns, or seller inquiries.',
     mainEntity: {
       '@type': 'Organization',
       '@id': `${PLATFORM_URL}#organization`,
@@ -429,7 +429,7 @@ export function blogJsonLd(articles: BlogArticle[]) {
     name: `${PLATFORM_NAME} Journal`,
     url: `${PLATFORM_URL}/blog`,
     description:
-      'Fashion guides, seller success stories, Egyptian streetwear trends, and marketplace news from Brandy.',
+      'Fashion guides, seller success stories, Egyptian streetwear trends, and marketplace news from Brandyy.',
     publisher: {
       '@type': 'Organization',
       '@id': `${PLATFORM_URL}#organization`,
@@ -449,7 +449,7 @@ export function blogJsonLd(articles: BlogArticle[]) {
     })),
     mainEntity: {
       '@type': 'ItemList',
-      name: 'Brandy Blog Articles',
+      name: 'Brandyy Blog Articles',
       itemListElement: articles.map((a, i) => ({
         '@type': 'ListItem',
         position: i + 1,
@@ -473,7 +473,7 @@ export function shopCatalogJsonLd(input: ShopCatalogJsonLdInput) {
     name: `${PLATFORM_NAME} \u2014 Shop All Products`,
     url: `${PLATFORM_URL}/shop`,
     description:
-      'Browse all products from verified Egyptian local brands on Brandy. Shop fashion, electronics, home goods, accessories, and more.',
+      'Browse all products from verified Egyptian local brands on Brandyy. Shop fashion, electronics, home goods, accessories, and more.',
     provider: {
       '@type': 'Organization',
       '@id': `${PLATFORM_URL}#organization`,
@@ -481,7 +481,7 @@ export function shopCatalogJsonLd(input: ShopCatalogJsonLdInput) {
     },
     mainEntity: {
       '@type': 'OfferCatalog',
-      name: 'Brandy Product Catalog',
+      name: 'Brandyy Product Catalog',
       numberOfItems: input.products.length,
       itemListElement: input.products.slice(0, 20).map((p, i) => ({
         '@type': 'ListItem',
@@ -515,10 +515,10 @@ export function brandsListJsonLd(input: BrandListJsonLdInput) {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     '@id': `${PLATFORM_URL}/brands`,
-    name: 'Verified Egyptian Local Brands \u2014 Brandy',
+    name: 'Verified Egyptian Local Brands \u2014 Brandyy',
     url: `${PLATFORM_URL}/brands`,
     description:
-      'Directory of verified Egyptian local brands, designers, and artisans selling on Brandy marketplace.',
+      'Directory of verified Egyptian local brands, designers, and artisans selling on Brandyy marketplace.',
     provider: {
       '@type': 'Organization',
       '@id': `${PLATFORM_URL}#organization`,
@@ -537,7 +537,7 @@ export function brandsListJsonLd(input: BrandListJsonLdInput) {
           url: `${PLATFORM_URL}/brand/${b.slug}`,
           description:
             b.description ||
-            `${b.name} is a verified Egyptian local brand selling on Brandy marketplace.`,
+            `${b.name} is a verified Egyptian local brand selling on Brandyy marketplace.`,
           address: { '@type': 'PostalAddress', addressCountry: 'EG' },
         },
       })),

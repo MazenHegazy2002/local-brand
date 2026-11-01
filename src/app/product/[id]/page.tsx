@@ -63,7 +63,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   try {
     const { id } = await params;
-    if (!id) return { title: 'Product Details | Brandy' };
+    if (!id) return { title: 'Product Details | Brandyy' };
 
     const product = await getProduct(id);
 
@@ -73,13 +73,13 @@ export async function generateMetadata({
       product.deletedAt !== null ||
       product.seller?.status !== 'ACTIVE'
     ) {
-      return { title: 'Product Not Found | Brandy' };
+      return { title: 'Product Not Found | Brandyy' };
     }
 
     const price = product.flashSalePrice ?? product.basePrice ?? 0;
     const description =
       (product.description || '').slice(0, 155) ||
-      `Shop ${product.title} from ${product.seller?.storeName || 'Brandy Store'} on Brandy — Egypt's local marketplace. Price: ${price} EGP.`;
+      `Shop ${product.title} from ${product.seller?.storeName || 'Brandyy Store'} on Brandyy — Egypt's local marketplace. Price: ${price} EGP.`;
 
     const productUrl = `${PLATFORM_URL}/product/${product.slug || id}`;
     const ogImageUrl = `${PLATFORM_URL}/api/og?title=${encodeURIComponent(product.title || '')}&price=${price}&brand=${encodeURIComponent(product.seller?.storeName || '')}&category=${encodeURIComponent(product.category?.name || '')}`;
@@ -121,8 +121,8 @@ export async function generateMetadata({
   } catch (err) {
     console.error('[generateMetadata] error:', err);
     return {
-      title: 'Product Details | Brandy',
-      description: 'Shop verified local Egyptian products on Brandy.',
+      title: 'Product Details | Brandyy',
+      description: 'Shop verified local Egyptian products on Brandyy.',
     };
   }
 }

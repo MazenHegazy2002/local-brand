@@ -25,7 +25,7 @@ export async function generateMetadata({
   });
   if (!category) return { title: 'Category Not Found' };
 
-  const en = `Shop ${category.name} from Egyptian local sellers on Brandy. ${category._count.products} products available.`;
+  const en = `Shop ${category.name} from Egyptian local sellers on Brandyy. ${category._count.products} products available.`;
   const categoryUrl = `${PLATFORM_URL}/category/${slug}`;
   const ogImageUrl = `${PLATFORM_URL}/api/og?title=${encodeURIComponent(category.name)}&category=Category&badge=${encodeURIComponent(`${category._count.products} Local Products`)}`;
 
@@ -97,7 +97,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: `${category.name} — Egyptian Local Brands`,
-    description: `Shop ${category.name} from Egyptian local sellers on Brandy.`,
+    description: `Shop ${category.name} from Egyptian local sellers on Brandyy.`,
     url: `${PLATFORM_URL}/category/${category.slug}`,
     mainEntity: {
       '@type': 'ItemList',

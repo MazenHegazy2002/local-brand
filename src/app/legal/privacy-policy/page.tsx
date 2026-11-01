@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar';
 export const metadata = {
   title: 'Privacy Policy',
   description:
-    'Privacy Policy — PDPL (Law No. 151 of 2020) compliance for Brandy Egypt marketplace',
+    'Privacy Policy — PDPL (Law No. 151 of 2020) compliance for Brandyy Egypt marketplace',
 };
 
 async function StaticContent() {
@@ -31,14 +31,14 @@ async function StaticContent() {
           </h2>
           <div className="space-y-4">
             <p className="text-gray-600">
-              <strong>{tr('Brandy Egypt')}</strong>{' '}
+              <strong>{tr('Brandyy Egypt')}</strong>{' '}
               {tr(
-                '("we," "us," or "our") operates the Brandy marketplace platform. We are committed to protecting your personal data in compliance with Egypt\'s Personal Data Protection Law (Law No. 151 of 2020).'
+                '("we," "us," or "our") operates the Brandyy marketplace platform. We are committed to protecting your personal data in compliance with Egypt\'s Personal Data Protection Law (Law No. 151 of 2020).'
               )}
             </p>
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-sm">
-                <strong>{tr('Registered Entity:')}</strong> {tr('Brandy Egypt LLC')}
+                <strong>{tr('Registered Entity:')}</strong> {tr('Brandyy Egypt LLC')}
               </p>
               <p className="text-sm">
                 <strong>{tr('Address:')}</strong> {tr('Cairo, Egypt')}
@@ -262,7 +262,7 @@ async function StaticContent() {
             </p>
             <p>
               <strong>{tr('Address:')}</strong>{' '}
-              {tr('Data Protection Officer, Brandy Egypt, Cairo, Egypt')}
+              {tr('Data Protection Officer, Brandyy Egypt, Cairo, Egypt')}
             </p>
           </div>
           <p className="text-gray-600 text-sm mt-4">

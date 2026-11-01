@@ -139,7 +139,7 @@ export default function SellerApplicationPage() {
             {tr('For Sellers')}
           </p>
           <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">
-            {tr("Sell on Brandy — Egypt's Local Marketplace")}
+            {tr("Sell on Brandyy — Egypt's Local Marketplace")}
           </h1>
           <p className="text-base opacity-75 max-w-lg mx-auto mb-8 leading-relaxed">
             {tr(
@@ -165,7 +165,7 @@ export default function SellerApplicationPage() {
         {/* Benefits grid */}
         <section className="container mx-auto px-4 py-16">
           <h2 className="text-2xl font-black text-gray-900 text-center mb-10">
-            {tr('Why sell on Brandy?')}
+            {tr('Why sell on Brandyy?')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {BENEFITS.map(b => (
@@ -224,7 +224,7 @@ export default function SellerApplicationPage() {
               </h1>
               <p className="text-gray-600 mb-8 text-lg">
                 {tr(
-                  "Thank you for applying to become a seller on Brandy. Our team will review your application within 2-3 business days. We'll send an email with the next steps once approved."
+                  "Thank you for applying to become a seller on Brandyy. Our team will review your application within 2-3 business days. We'll send an email with the next steps once approved."
                 )}
               </p>
               <Link href="/dashboard">

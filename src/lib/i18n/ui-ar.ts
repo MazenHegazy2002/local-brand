@@ -1,12 +1,12 @@
 // Arabic for UI copy keyed by its English source text. Look up with tr() from useLanguage / getServerTr.
 export const uiAr: Record<string, string> = {
-  '"Brandy is exactly what the local industry needed. Vetted sellers, real reviews, Meeza/Fawry payment support, and great local style. Will definitely buy again."':
+  '"Brandyy is exactly what the local industry needed. Vetted sellers, real reviews, Meeza/Fawry payment support, and great local style. Will definitely buy again."':
     '"براندي هو بالضبط ما كانت تحتاجه الصناعة المحلية. بائعون موثوقون، وتقييمات حقيقية، ودعم للدفع عبر ميزة وفوري، وذوق محلي رائع. سأشتري مرة أخرى بالتأكيد."',
   '"Having the 14-day escrow protection gave me total confidence to buy online. The leather bag looks even better in person than the photos. Fits everything perfectly!"':
     '"منحتني حماية الضمان لمدة 14 يومًا ثقة كاملة في الشراء عبر الإنترنت. الحقيبة الجلدية أجمل في الواقع من الصور، وتتسع لكل شيء!"',
   '"The linen blouse is gorgeous! It\'s so rare to find authentic Egyptian linen of this high quality at this price range. Courier delivery to Mansoura was prompt and verified."':
     '"البلوزة الكتان رائعة! من النادر إيجاد كتان مصري أصلي بهذه الجودة وهذا السعر. وصل الطلب إلى المنصورة بسرعة وتم التحقق منه."',
-  '("we," "us," or "our") operates the Brandy marketplace platform. We are committed to protecting your personal data in compliance with Egypt\'s Personal Data Protection Law (Law No. 151 of 2020).':
+  '("we," "us," or "our") operates the Brandyy marketplace platform. We are committed to protecting your personal data in compliance with Egypt\'s Personal Data Protection Law (Law No. 151 of 2020).':
     '("نحن" أو ضمير المتكلمين) تدير منصة براندي. نلتزم بحماية بياناتك الشخصية وفقًا لقانون حماية البيانات الشخصية المصري (القانون رقم 151 لسنة 2020).',
   '(Optional)': '(اختياري)',
   '(guest)': '(زائر)',
@@ -73,7 +73,7 @@ export const uiAr: Record<string, string> = {
   'ACTIVE BRAND': 'ماركة نشطة',
   'AI Studio Fitting': 'غرفة القياس الذكية',
   APPROVED: 'تمت الموافقة',
-  'About Brandy': 'عن براندي',
+  'About Brandyy': 'عن براندي',
   'Accept All': 'قبول الكل',
   'Accept all': 'قبول الكل',
   Accessories: 'إكسسوارات',
@@ -227,19 +227,19 @@ export const uiAr: Record<string, string> = {
   'Brand Stories': 'قصص الماركات',
   'Brand Submitted for Approval': 'تم إرسال الماركة للموافقة',
   Brands: 'الماركات',
-  Brandy: 'براندي',
-  'Brandy Egypt': 'براندي مصر',
-  'Brandy Egypt LLC': 'براندي مصر ذ.م.م',
-  'Brandy Egypt — Legal documents governing our marketplace.':
+  Brandyy: 'براندي',
+  'Brandyy Egypt': 'براندي مصر',
+  'Brandyy Egypt LLC': 'براندي مصر ذ.م.م',
+  'Brandyy Egypt — Legal documents governing our marketplace.':
     'براندي مصر — المستندات القانونية المنظمة لمنصتنا.',
-  'Brandy Marketplace. All rights reserved.': 'منصة براندي. جميع الحقوق محفوظة.',
-  'Brandy Print Catalog': 'كتالوج براندي المطبوع',
-  'Brandy Store': 'متجر براندي',
-  'Brandy empowers Egyptian local sellers to build their digital storefronts while giving shoppers a unified, reliable platform to discover local craftsmanship.':
+  'Brandyy Marketplace. All rights reserved.': 'منصة براندي. جميع الحقوق محفوظة.',
+  'Brandyy Print Catalog': 'كتالوج براندي المطبوع',
+  'Brandyy Store': 'متجر براندي',
+  'Brandyy empowers Egyptian local sellers to build their digital storefronts while giving shoppers a unified, reliable platform to discover local craftsmanship.':
     'تمكّن براندي البائعين المصريين المحليين من بناء متاجرهم الرقمية، وتمنح المتسوقين منصة موحدة وموثوقة لاكتشاف الحرف المحلية.',
-  "Brandy is Egypt's premier dedicated":
+  "Brandyy is Egypt's premier dedicated":
     'براندي هي المنصة المصرية الرائدة لتمكين الماركات المحلية المستقلة والحرفيين والمبدعين. نؤمن بجودة المنتجات المصرية وإتقانها وإمكاناتها. نربط بين الصنّاع المحليين والمتسوقين الواعين لننمّي الأعمال المحلية ونقدم لك أزياء وديكورًا وإلكترونيات وإكسسوارات فريدة. جرّب التسوق المحلي بأسلوب جديد مع توثيق الماركات وطمأنينة الضمان الكاملة.',
-  "Brandy is Egypt's premier dedicated marketplace empowering local, independent brands, artisans, and creators. We believe in the quality, craftsmanship, and potential of Egyptian products. By bridging the gap between local makers and conscious shoppers, we help grow local businesses while providing you with unique, premium fashion, home decor, electronics, and accessories. Experience local shopping redefined with verified brand authentication and complete escrow peace of mind.":
+  "Brandyy is Egypt's premier dedicated marketplace empowering local, independent brands, artisans, and creators. We believe in the quality, craftsmanship, and potential of Egyptian products. By bridging the gap between local makers and conscious shoppers, we help grow local businesses while providing you with unique, premium fashion, home decor, electronics, and accessories. Experience local shopping redefined with verified brand authentication and complete escrow peace of mind.":
     'براندي هي المنصة المصرية الرائدة لتمكين الماركات المحلية المستقلة والحرفيين والمبدعين. نؤمن بجودة المنتجات المصرية وإتقانها وإمكاناتها. نربط بين الصنّاع المحليين والمتسوقين الواعين لننمّي الأعمال المحلية ونقدم لك أزياء وديكورًا وإلكترونيات وإكسسوارات فريدة. جرّب التسوق المحلي بأسلوب جديد مع توثيق الماركات وطمأنينة الضمان الكاملة.',
   Breadcrumb: 'مسار التنقل',
   'Brief Brand Description': 'وصف مختصر للماركة',
@@ -267,11 +267,11 @@ export const uiAr: Record<string, string> = {
   'Business Type': 'نوع النشاط',
   'Buy Again': 'اشترِ مجددًا',
   'Buyers may request returns within': 'يمكن للمشترين طلب الإرجاع خلال',
-  "By creating an account, you agree to Brandy's Conditions of Use and Privacy Notice.":
+  "By creating an account, you agree to Brandyy's Conditions of Use and Privacy Notice.":
     'بإنشاء حساب، فإنك توافق على شروط الاستخدام وإشعار الخصوصية الخاصين ببراندي.',
-  'By registering as a seller on Brandy ("the Platform"), you agree to be bound by these Terms and Conditions. If you do not agree, you must not use the Platform as a seller.':
+  'By registering as a seller on Brandyy ("the Platform"), you agree to be bound by these Terms and Conditions. If you do not agree, you must not use the Platform as a seller.':
     'بتسجيلك كبائع على براندي ("المنصة")، فإنك توافق على الالتزام بهذه الشروط والأحكام. إذا لم توافق عليها، فلا يجوز لك استخدام المنصة كبائع.',
-  'By registering, you agree to Brandy Seller Terms & Conditions.':
+  'By registering, you agree to Brandyy Seller Terms & Conditions.':
     'بالتسجيل، فإنك توافق على شروط وأحكام البائعين في براندي.',
   'By signing in you agree to our': 'بتسجيل الدخول، فإنك توافق على',
   'By submitting, you agree to our': 'بالإرسال، فإنك توافق على',
@@ -319,7 +319,7 @@ export const uiAr: Record<string, string> = {
   'Check your inbox for updates from our team': 'تابع بريدك الوارد للحصول على التحديثات من فريقنا',
   'Checkout Temporarily Paused (Read-Only Mode)': 'إتمام الشراء متوقف مؤقتًا (وضع القراءة فقط)',
   'Checkout is temporarily unavailable': 'إتمام الشراء غير متاح مؤقتًا',
-  'Choose a password (at least 8 characters). Your password is hashed and stored securely — nobody at Brandy can see it.':
+  'Choose a password (at least 8 characters). Your password is hashed and stored securely — nobody at Brandyy can see it.':
     'اختر كلمة مرور (8 أحرف على الأقل). تُخزَّن كلمة المرور مشفرة وبأمان — لا يمكن لأحد في براندي رؤيتها.',
   'Choose the item(s) you want to return and select a reason from the dropdown.':
     'اختر المنتجات التي تريد إرجاعها وحدد السبب من القائمة.',
@@ -450,7 +450,7 @@ export const uiAr: Record<string, string> = {
   'Dashboard → Settings → Danger Zone → Delete My Account. Your personal data will be anonymized per PDPL.':
     'لوحة التحكم ← الإعدادات ← منطقة الخطر ← حذف حسابي. ستُجعل بياناتك الشخصية مجهولة الهوية وفقًا لقانون حماية البيانات.',
   'Data Controller Information': 'معلومات المتحكم في البيانات',
-  'Data Protection Officer, Brandy Egypt, Cairo, Egypt':
+  'Data Protection Officer, Brandyy Egypt, Cairo, Egypt':
     'مسؤول حماية البيانات، براندي مصر، القاهرة، مصر',
   'Data Protection Officer:': 'مسؤول حماية البيانات:',
   'Data Retention': 'الاحتفاظ بالبيانات',
@@ -558,8 +558,8 @@ export const uiAr: Record<string, string> = {
   'End Date': 'تاريخ الانتهاء',
   'Ending Soon': 'ينتهي قريبًا',
   'Ends in:': 'ينتهي خلال:',
-  'Enjoy free shipping on all orders over 1000 EGP delivered to Cairo, Giza, and Alexandria.':
-    'استمتع بالشحن المجاني على كل الطلبات فوق 1000 ج.م إلى القاهرة والجيزة والإسكندرية.',
+  'Enjoy free shipping on all orders over 1500 EGP delivered to Cairo, Giza, and Alexandria.':
+    'استمتع بالشحن المجاني على كل الطلبات فوق 1500 ج.م إلى القاهرة والجيزة والإسكندرية.',
   'Enjoy safe payments, domestic support, and fast delivery across Egypt.':
     'استمتع بدفع آمن ودعم محلي وتوصيل سريع في جميع أنحاء مصر.',
   'Enter a search term to find products': 'اكتب كلمة بحث للعثور على المنتجات',
@@ -582,7 +582,7 @@ export const uiAr: Record<string, string> = {
   'Etisalat Cash': 'اتصالات كاش',
   'Every brand is carefully vetted':
     'يفحص فريق براندي كل ماركة ويوثقها بعناية لتتسوق منتجات عالية الجودة بثقة تامة.',
-  'Every brand is carefully vetted and verified by the Brandy team so you can shop premium quality with absolute confidence.':
+  'Every brand is carefully vetted and verified by the Brandyy team so you can shop premium quality with absolute confidence.':
     'يفحص فريق براندي كل ماركة ويوثقها بعناية لتتسوق منتجات عالية الجودة بثقة تامة.',
   'Every product is authenticated. Your payment is safely held in escrow for 14 days post-delivery to guarantee product quality, authenticity, and stress-free returns.':
     'كل منتج موثق. يُحفظ مبلغك بأمان في حساب الضمان لمدة 14 يومًا بعد التوصيل لضمان الجودة والأصالة وسهولة الإرجاع.',
@@ -592,7 +592,7 @@ export const uiAr: Record<string, string> = {
   'Explain in detail what the issue is...': 'اشرح المشكلة بالتفصيل...',
   'Explanation (minimum 10 characters)': 'التوضيح (10 أحرف على الأقل)',
   'Explore Full Catalog': 'استكشف الكتالوج كاملًا',
-  'Explore every category on Brandy.': 'استكشف كل الفئات على براندي.',
+  'Explore every category on Brandyy.': 'استكشف كل الفئات على براندي.',
   'Explore →': 'استكشف ←',
   'Export CSV': 'تصدير CSV',
   FAILED: 'فشل',
@@ -638,7 +638,7 @@ export const uiAr: Record<string, string> = {
   'Filter by product...': 'تصفية حسب المنتج...',
   Filters: 'الفلاتر',
   Finance: 'المالية',
-  'Find answers, get in touch, or learn how Brandy works.':
+  'Find answers, get in touch, or learn how Brandyy works.':
     'اعثر على الإجابات، أو تواصل معنا، أو تعرّف على طريقة عمل براندي.',
   'Flash Price': 'سعر التخفيض',
   'Flash Sale Settings': 'إعدادات التخفيضات السريعة',
@@ -664,15 +664,15 @@ export const uiAr: Record<string, string> = {
     'من التيشيرتات المطبوعة في القاهرة إلى الهوديز الواسعة، تتصدر ماركات ملابس الشارع المصرية المشهد. إليك أبرز المبدعين هذا الموسم.',
   'From Cairo graphic tees to oversized hoodies, local Egyptian streetwear brands are taking over. Here are the top standout creators this season.':
     'من التيشيرتات المطبوعة في القاهرة إلى الهوديز الواسعة، تتصدر ماركات ملابس الشارع المصرية المشهد. إليك أبرز المبدعين هذا الموسم.',
-  'From stylish fashion and unique accessories to home goods, beauty products, and electronics, every purchase on Brandy directly supports local entrepreneurs and the Egyptian economy.':
+  'From stylish fashion and unique accessories to home goods, beauty products, and electronics, every purchase on Brandyy directly supports local entrepreneurs and the Egyptian economy.':
     'من الأزياء الأنيقة والإكسسوارات الفريدة إلى المنزل والجمال والإلكترونيات، كل عملية شراء على براندي تدعم رواد الأعمال المحليين والاقتصاد المصري مباشرة.',
   'Fulfill Orders & Engage': 'نفّذ الطلبات وتفاعل مع العملاء',
   'Fulfillment Failed': 'فشل التنفيذ',
   'Full Name': 'الاسم الكامل',
   'Full Purchase History': 'سجل المشتريات الكامل',
   'Full name': 'الاسم الكامل',
-  'Funds are held in escrow for 7 days after delivery. After clearance, you can request a withdrawal from your Seller Hub.':
-    'تُحجز الأموال في حساب الضمان لمدة 7 أيام بعد التوصيل. بعد ذلك يمكنك طلب السحب من مركز البائعين.',
+  'Funds are held in escrow for 14 days after delivery. After clearance, you can request a withdrawal from your Seller Hub.':
+    'تُحجز الأموال في حساب الضمان لمدة 14 يومًا بعد التوصيل. بعد ذلك يمكنك طلب السحب من مركز البائعين.',
   'Funds from completed orders are held in escrow for':
     'تُحجز أموال الطلبات المكتملة في حساب الضمان لمدة',
   GOLD: 'ذهبي',
@@ -721,7 +721,7 @@ export const uiAr: Record<string, string> = {
   'Have questions about your delivery? Contact us:': 'هل لديك أسئلة عن التوصيل؟ تواصل معنا:',
   'Health & Beauty': 'الصحة والجمال',
   'Help Center': 'مركز المساعدة',
-  'Help us keep Brandy authentic and safe. Explain why you think the product listing for':
+  'Help us keep Brandyy authentic and safe. Explain why you think the product listing for':
     'ساعدنا في الحفاظ على براندي موثوقة وآمنة. اشرح سبب اعتقادك أن إعلان المنتج',
   'Help us understand how visitors interact with our website.':
     'تساعدنا على فهم طريقة تفاعل الزوار مع موقعنا.',
@@ -805,7 +805,7 @@ export const uiAr: Record<string, string> = {
     'انضم إلى منصتنا وصل إلى آلاف العملاء المحليين.',
   'Join the Affiliate Program': 'انضم إلى برنامج التسويق بالعمولة',
   'Join the Movement': 'انضم إلى الحركة',
-  'Join thousands of satisfied shoppers and local brand owners selling nationwide on Brandy.':
+  'Join thousands of satisfied shoppers and local brand owners selling nationwide on Brandyy.':
     'انضم إلى آلاف المتسوقين الراضين وأصحاب الماركات المحلية الذين يبيعون في كل مصر عبر براندي.',
   Joined: 'انضم في',
   'Kafr El Sheikh': 'كفر الشيخ',
@@ -994,7 +994,7 @@ export const uiAr: Record<string, string> = {
   'Once approved, you will receive an email and full access to set up products in your Seller Hub!':
     'بعد الموافقة ستصلك رسالة بريد إلكتروني وتحصل على صلاحية كاملة لإضافة المنتجات في مركز البائعين!',
   "Once your order ships, you'll receive:": 'بعد شحن طلبك، ستحصل على:',
-  'Online payment (PaySky / Fawry) requires a Brandy account. Please sign in or choose Cash on Delivery.':
+  'Online payment (PaySky / Fawry) requires a Brandyy account. Please sign in or choose Cash on Delivery.':
     'الدفع الإلكتروني (PaySky / فوري) يتطلب حسابًا على براندي. يرجى تسجيل الدخول أو اختيار الدفع عند الاستلام.',
   'Open account menu': 'فتح قائمة الحساب',
   'Open cart': 'فتح السلة',
@@ -1158,10 +1158,10 @@ export const uiAr: Record<string, string> = {
   'Processing...': 'جارٍ المعالجة...',
   Product: 'المنتج',
   'Product Details': 'تفاصيل المنتج',
-  'Product Details | Brandy': 'تفاصيل المنتج | براندي',
+  'Product Details | Brandyy': 'تفاصيل المنتج | براندي',
   'Product Image': 'صورة المنتج',
   'Product Not Found': 'المنتج غير موجود',
-  'Product Not Found | Brandy': 'المنتج غير موجود | براندي',
+  'Product Not Found | Brandyy': 'المنتج غير موجود | براندي',
   'Product Pickup & Warehouse Address': 'عنوان استلام المنتجات والمخزن',
   'Product Pickup Warehouse Address': 'عنوان مخزن استلام المنتجات',
   'Product Q&A': 'أسئلة وأجوبة المنتج',
@@ -1233,7 +1233,7 @@ export const uiAr: Record<string, string> = {
   'Referral Bonus': 'مكافأة الإحالة',
   Referrals: 'الإحالات',
   'Refund Timeline': 'الجدول الزمني للاسترداد',
-  'Refund credited to original payment method or Brandy wallet':
+  'Refund credited to original payment method or Brandyy wallet':
     'يُرد المبلغ إلى وسيلة الدفع الأصلية أو محفظة براندي',
   'Refunds are processed within 5-7 business days after seller confirmation.':
     'تُعالج المبالغ المستردة خلال 5-7 أيام عمل بعد تأكيد البائع.',
@@ -1366,9 +1366,9 @@ export const uiAr: Record<string, string> = {
   'Select method': 'اختر الطريقة',
   'Select...': 'اختر...',
   'Selected Tags (': 'الوسوم المختارة (',
-  "Sell on Brandy — Egypt's Local Marketplace": 'بع على براندي — المنصة المحلية في مصر',
+  "Sell on Brandyy — Egypt's Local Marketplace": 'بع على براندي — المنصة المحلية في مصر',
   'Sell to Thousands.': 'بع لآلاف العملاء.',
-  'Sell your brand on Brandy': 'بع ماركتك على براندي',
+  'Sell your brand on Brandyy': 'بع ماركتك على براندي',
   Seller: 'البائع',
   'Seller Agreement': 'اتفاقية البائع',
   'Seller Email Address': 'بريد البائع الإلكتروني',
@@ -1393,7 +1393,7 @@ export const uiAr: Record<string, string> = {
   'Sellers grant the Platform a non-exclusive, royalty-free license to use product images, descriptions, and seller trademarks for the purpose of promoting and displaying the products within the Platform and its marketing channels.':
     'يمنح البائعون المنصة ترخيصًا غير حصري ومعفى من الرسوم لاستخدام صور المنتجات وأوصافها وعلاماتهم التجارية لعرض المنتجات والترويج لها داخل المنصة وقنواتها التسويقية.',
   'Sellers must ship orders within': 'يجب على البائعين شحن الطلبات خلال',
-  'Selling on Brandy': 'البيع على براندي',
+  'Selling on Brandyy': 'البيع على براندي',
   'Send Another Message': 'إرسال رسالة أخرى',
   'Send Reset Link': 'إرسال رابط إعادة التعيين',
   'Send us a message': 'أرسل لنا رسالة',
@@ -1408,7 +1408,7 @@ export const uiAr: Record<string, string> = {
   'Set Default': 'تعيين كافتراضي',
   'Set a password': 'تعيين كلمة مرور',
   'Set as default address': 'تعيين كعنوان افتراضي',
-  'Set up your brand store on Brandy in minutes. Reach customers nationwide with zero fixed monthly fees.':
+  'Set up your brand store on Brandyy in minutes. Reach customers nationwide with zero fixed monthly fees.':
     'أنشئ متجر ماركتك على براندي في دقائق، وصل إلى العملاء في كل مصر بدون رسوم شهرية ثابتة.',
   Settings: 'الإعدادات',
   'Settings saved successfully.': 'تم حفظ الإعدادات بنجاح.',
@@ -1442,7 +1442,7 @@ export const uiAr: Record<string, string> = {
     'تسوق بأمان. يُحفظ مبلغك في حساب الضمان لمدة 14 يومًا بعد التوصيل لضمان أصالة المنتج وسهولة الإرجاع.',
   'Shop the Look:': 'تسوق الإطلالة:',
   'Shop to Qualify': 'تسوق لتتأهل',
-  'Shop verified local Egyptian products on Brandy.':
+  'Shop verified local Egyptian products on Brandyy.':
     'تسوق المنتجات المصرية المحلية الموثقة على براندي.',
   'Short tagline or description...': 'شعار قصير أو وصف...',
   'Show:': 'عرض:',
@@ -1566,7 +1566,7 @@ export const uiAr: Record<string, string> = {
     'أخبرنا بالمنتجات التي تبيعها وجمهورك المستهدف وتخصصك...',
   Terms: 'الشروط',
   'Terms of Service': 'شروط الخدمة',
-  "Thank you for applying to become a seller on Brandy. Our team will review your application within 2-3 business days. We'll send an email with the next steps once approved.":
+  "Thank you for applying to become a seller on Brandyy. Our team will review your application within 2-3 business days. We'll send an email with the next steps once approved.":
     'شكرًا لتقديمك لتصبح بائعًا على براندي. سيراجع فريقنا طلبك خلال 2-3 أيام عمل، وسنرسل إليك بريدًا بالخطوات التالية بعد الموافقة.',
   'Thank you for reaching out. We have logged your request under ticket reference:':
     'شكرًا لتواصلك معنا. سجلنا طلبك تحت رقم التذكرة:',
@@ -1719,7 +1719,7 @@ export const uiAr: Record<string, string> = {
   'Verified Purchase': 'عملية شراء موثقة',
   'Verified Quality Brands': 'ماركات موثقة الجودة',
   'Verified Seller Badge': 'شارة البائع الموثق',
-  'Verified seller on Brandy': 'بائع موثق على براندي',
+  'Verified seller on Brandyy': 'بائع موثق على براندي',
   'Verify your email (check': 'وثّق بريدك الإلكتروني (تحقق من',
   'Verifying your payment with PaySky…': 'جارٍ التحقق من دفعتك مع PaySky…',
   View: 'عرض',
@@ -1803,7 +1803,7 @@ export const uiAr: Record<string, string> = {
   'Who pays for return shipping?': 'من يتحمل تكلفة شحن الإرجاع؟',
   'Why Virtual AI Try-On is Changing How Egyptians Shop Online':
     'لماذا يغيّر القياس الافتراضي بالذكاء الاصطناعي طريقة تسوق المصريين؟',
-  'Why sell on Brandy?': 'لماذا تبيع على براندي؟',
+  'Why sell on Brandyy?': 'لماذا تبيع على براندي؟',
   Wishlist: 'قائمة الأمنيات',
   'Wishlist Preview': 'معاينة قائمة الأمنيات',
   'Wishlist empty.': 'قائمة الأمنيات فارغة.',
@@ -1915,9 +1915,9 @@ export const uiAr: Record<string, string> = {
     'من التوصيل. يلتزم البائعون بقبول طلبات الإرجاع الصحيحة للمنتجات المعيبة أو التالفة أو غير المطابقة للوصف. أما عند تغيير الرأي، فيمكن للبائع تحديد سياسته بشرط توضيحها في الإعلان.',
   'of delivery. Sellers are required to accept valid return requests for defective, damaged, or misrepresented items. For change-of-mind returns, the seller may set their own policy as long as it is clearly disclosed in the listing.':
     'من التوصيل. يلتزم البائعون بقبول طلبات الإرجاع الصحيحة للمنتجات المعيبة أو التالفة أو غير المطابقة للوصف. أما عند تغيير الرأي، فيمكن للبائع تحديد سياسته بشرط توضيحها في الإعلان.',
-  'on Brandy! Your seller application':
+  'on Brandyy! Your seller application':
     'على براندي! تم إرسال طلب البائع الخاص بك وهو قيد المراجعة حاليًا.',
-  'on Brandy! Your seller application is submitted and currently under review.':
+  'on Brandyy! Your seller application is submitted and currently under review.':
     'على براندي! تم إرسال طلب البائع الخاص بك وهو قيد المراجعة حاليًا.',
   'on each sale. VAT of': 'عن كل عملية بيع. ضريبة القيمة المضافة بنسبة',
   'on store. Platform retains': 'على المتجر. تحتفظ المنصة بـ',
@@ -1948,7 +1948,7 @@ export const uiAr: Record<string, string> = {
   'your email address': 'بريدك الإلكتروني',
   '• 1 pt = 1 EGP off at checkout': '• النقطة = خصم 1 ج.م عند الدفع',
   '• Early access to flash sales': '• وصول مبكر للتخفيضات السريعة',
-  '• Free shipping on orders over 1000 EGP': '• شحن مجاني للطلبات فوق 1000 ج.م',
+  '• Free shipping on orders over 1500 EGP': '• شحن مجاني للطلبات فوق 1500 ج.م',
   '← Back': '→ رجوع',
   '← Back to Legal': '→ العودة إلى الصفحات القانونية',
   '← Sign in with a password': '→ سجّل الدخول بكلمة المرور بدلًا من ذلك',
@@ -1962,13 +1962,13 @@ export const uiAr: Record<string, string> = {
   '✨ Virtual Try-On': '✨ القياس الافتراضي',
   '❌ Cancel Order': '❌ إلغاء الطلب',
   '❌ Unverified': '❌ غير موثق',
-  '💡 How Brandy Works': '💡 كيف يعمل براندي',
+  '💡 How Brandyy Works': '💡 كيف يعمل براندي',
   '💼 For Sellers': '💼 للبائعين',
   '📍 Detect Live GPS Location': '📍 تحديد الموقع المباشر',
   '📍 Get Live GPS Location': '📍 الحصول على الموقع المباشر',
   '📍 Pin Current Location': '📍 تثبيت الموقع الحالي',
   '📍 Product Pickup & Warehouse Address': '📍 عنوان استلام المنتجات والمخزن',
-  '📰 Brandy Journal & News': '📰 مجلة براندي وأخبارها',
+  '📰 Brandyy Journal & News': '📰 مجلة براندي وأخبارها',
   '🔗 Social Media Links': '🔗 روابط مواقع التواصل',
   '🗺️ Warehouse Geolocation Coordinates': '🗺️ إحداثيات موقع المخزن',
   '🗺️ Warehouse Geolocation Coordinates (Latitude': '🗺️ إحداثيات موقع المخزن (خط العرض، خط الطول)',
@@ -1979,4 +1979,21 @@ export const uiAr: Record<string, string> = {
   '🚚 Mark as Shipped': '🚚 تحديد كمشحون',
   '🚨 Status:': '🚨 الحالة:',
   '🛍️ For Shoppers': '🛍️ للمتسوقين',
+  'About Us': 'من نحن',
+  'Become an Affiliate': 'انضم كمسوق',
+  'Blog & Local Brand Stories — Brandyy': 'المدونة وقصص الماركات المحلية',
+  'Local Brands — Egyptian Sellers': 'الماركات المحلية — بائعون مصريون',
+  'All Categories': 'كل الفئات',
+  'Delete your account': 'حذف حسابك',
+  'Flash Sales — Limited-Time Deals': 'تخفيضات سريعة — عروض لفترة محدودة',
+  'Forgot Password': 'نسيت كلمة المرور',
+  'FAQ — Help Center': 'الأسئلة الشائعة — مركز المساعدة',
+  'How It Works — Brandyy Marketplace': 'كيف يعمل براندي',
+  'Lookbook – Style Inspiration': 'كتالوج الإطلالات',
+  'Register Account': 'إنشاء حساب',
+  'Seller Portal Sign In': 'تسجيل دخول البائعين',
+  'Shop — Browse All Products': 'المتجر — كل المنتجات',
+  'Shop — All Products': 'المتجر — كل المنتجات',
+  'My Dashboard': 'لوحة التحكم',
+  Checkout: 'إتمام الشراء',
 };

@@ -102,6 +102,22 @@ export function LanguageProvider({
     }
   }, [isRTL, lang]);
 
+  // Page titles come from English server metadata, so translate the tab text here.
+  useEffect(() => {
+    if (lang !== 'ar') return;
+    const translateTitle = () => {
+      const [page, ...rest] = document.title.split(' | ');
+      const translated = uiAr[page];
+      if (translated) document.title = [translated, ...rest].join(' | ');
+    };
+    translateTitle();
+    const titleEl = document.querySelector('title');
+    if (!titleEl) return;
+    const observer = new MutationObserver(translateTitle);
+    observer.observe(titleEl, { childList: true });
+    return () => observer.disconnect();
+  }, [lang]);
+
   const setLang = useCallback((nextLang: Language) => {
     setLangState(nextLang);
     try {

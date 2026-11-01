@@ -15,6 +15,12 @@ import { organizationJsonLd, websiteJsonLd, jsonLdScript } from '@/lib/jsonld';
 
 interface HomePageData {
   categories: { id: string; name: string; slug: string; parentId: string | null }[];
+  categoryRows?: {
+    id: string;
+    name: string;
+    slug: string;
+    products: (Product & { images: ProductImage[] })[];
+  }[];
   bestsellers: (Product & { images: ProductImage[] })[];
   newArrivals: (Product & { images: ProductImage[] })[];
   recommended: (Product & { images: ProductImage[] })[];
@@ -73,7 +79,7 @@ function ProductSection({
                 ...p,
                 name: p.title,
                 image: p.images[0]?.url,
-                brand: p.seller?.storeName || dict.Brandy || 'Local Brand',
+                brand: p.seller?.storeName || dict.Brandyy || 'Local Brand',
                 brandSlug: p.seller?.storeName
                   ? p.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
                   : '',
@@ -140,15 +146,15 @@ export default async function Home() {
   };
   let dict = en;
 
-  let aboutTitle = 'About Brandy';
+  let aboutTitle = 'About Brandyy';
   let aboutDesc =
-    "Brandy is Egypt's premier dedicated marketplace empowering local, independent brands, artisans, and creators. We believe in the quality, craftsmanship, and potential of Egyptian products. By bridging the gap between local makers and conscious shoppers, we help grow local businesses while providing you with unique, premium fashion, home decor, electronics, and accessories. Experience local shopping redefined with verified brand authentication and complete escrow peace of mind.";
+    "Brandyy is Egypt's premier dedicated marketplace empowering local, independent brands, artisans, and creators. We believe in the quality, craftsmanship, and potential of Egyptian products. By bridging the gap between local makers and conscious shoppers, we help grow local businesses while providing you with unique, premium fashion, home decor, electronics, and accessories. Experience local shopping redefined with verified brand authentication and complete escrow peace of mind.";
   let prop1Title = 'Supporting Local Talent';
   let prop1Desc =
     'Discover and directly support emerging Egyptian sellers, designers, and local artisans bringing you unique craftsmanship.';
   let prop2Title = 'Verified Quality Brands';
   let prop2Desc =
-    'Every brand is carefully vetted and verified by the Brandy team so you can shop premium quality with absolute confidence.';
+    'Every brand is carefully vetted and verified by the Brandyy team so you can shop premium quality with absolute confidence.';
   let prop3Title = '14-Day Escrow Guarantee';
   let prop3Desc =
     'Shop secure. Your payment is held in escrow for 14 days post-delivery to guarantee product authenticity and stress-free returns.';
@@ -165,7 +171,7 @@ export default async function Home() {
     const { getSetting } = await import('@/lib/admin-settings-registry');
     const [aTitle, aDesc, p1Title, p1Desc, p2Title, p2Desc, p3Title, p3Desc, hTitle, hDesc] =
       await Promise.all([
-        getSetting<string>('HOMEPAGE_ABOUT_TITLE').catch(() => 'About Brandy'),
+        getSetting<string>('HOMEPAGE_ABOUT_TITLE').catch(() => 'About Brandyy'),
         getSetting<string>('HOMEPAGE_ABOUT_DESC').catch(() => aboutDesc),
         getSetting<string>('HOMEPAGE_PROP1_TITLE').catch(() => 'Supporting Local Talent'),
         getSetting<string>('HOMEPAGE_PROP1_DESC').catch(() => prop1Desc),
@@ -190,7 +196,7 @@ export default async function Home() {
     console.error('Critical SSR Error:', e);
   }
 
-  const { bestsellers, newArrivals, recommended } = homeData;
+  const { bestsellers, newArrivals, recommended, categoryRows = [] } = homeData;
 
   return (
     <main className="min-h-screen font-sans" style={{ background: '#f6f6f7' }}>
@@ -240,9 +246,21 @@ export default async function Home() {
             dict={dict}
           />
         </Suspense>
+
+        {categoryRows.map(row => (
+          <ProductSection
+            key={row.id}
+            emoji=""
+            title={tr(row.name)}
+            linkLabel={dict.AllProducts}
+            linkHref={`/category/${row.slug}`}
+            products={row.products}
+            dict={dict}
+          />
+        ))}
       </div>
 
-      {/* ── About Brandy & Value Proposition Section ── */}
+      {/* ── About Brandyy & Value Proposition Section ── */}
       <section className="bg-white border-y border-gray-100 py-12 mb-8">
         <div className="home-shell">
           <div className="max-w-3xl mx-auto text-center mb-10">
@@ -504,7 +522,7 @@ export default async function Home() {
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
               <p className="text-xs text-slate-600 italic leading-relaxed mb-6">
                 {tr(
-                  '"Brandy is exactly what the local industry needed. Vetted sellers, real reviews, Meeza/Fawry payment support, and great local style. Will definitely buy again."'
+                  '"Brandyy is exactly what the local industry needed. Vetted sellers, real reviews, Meeza/Fawry payment support, and great local style. Will definitely buy again."'
                 )}
               </p>
               <div>
@@ -542,7 +560,7 @@ export default async function Home() {
           {tr('For Sellers')}
         </p>
         <h2 style={{ fontSize: 28, fontWeight: 900, marginBottom: 12, lineHeight: 1.2 }}>
-          {tr('Sell your brand on Brandy')}
+          {tr('Sell your brand on Brandyy')}
         </h2>
         <p
           style={{

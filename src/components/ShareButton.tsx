@@ -72,7 +72,7 @@ export function ShareButton({
       {open && (
         <div className="absolute end-0 mt-2 w-52 bg-white rounded-xl border border-gray-100 shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
           <a
-            href={`https://wa.me/?text=${encodeURIComponent(`Check out ${productName} on Brandy! ${typeof window !== 'undefined' ? window.location.origin : ''}/product/${productSlug || productId}`)}`}
+            href={`https://wa.me/?text=${encodeURIComponent(`Check out ${productName} on Brandyy! ${typeof window !== 'undefined' ? window.location.origin : ''}/product/${productSlug || productId}`)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 px-4 py-3 hover:bg-green-50 text-sm text-gray-700 transition-colors"

@@ -87,7 +87,7 @@ function SetPasswordContent() {
           <h1 className="text-2xl font-black text-gray-900 mb-2">{tr('Set a password')}</h1>
           <p className="text-sm text-gray-500 mb-6">
             {tr(
-              'Choose a password (at least 8 characters). Your password is hashed and stored securely — nobody at Brandy can see it.'
+              'Choose a password (at least 8 characters). Your password is hashed and stored securely — nobody at Brandyy can see it.'
             )}
           </p>
 

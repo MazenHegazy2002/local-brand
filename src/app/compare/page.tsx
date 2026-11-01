@@ -96,7 +96,7 @@ export default function ComparePage() {
                       key={item.id}
                       className="p-6 text-gray-600 border-e border-b border-gray-100"
                     >
-                      {item.seller?.storeName || tr('Brandy')}
+                      {item.seller?.storeName || tr('Brandyy')}
                     </td>
                   ))}
                 </tr>

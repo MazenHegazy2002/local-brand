@@ -247,7 +247,7 @@ export default function AffiliateDashboardPage() {
       <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 py-3.5 flex items-center justify-between">
           <span className="text-base font-black tracking-widest uppercase text-white">
-            {tr('Brandy')}
+            {tr('Brandyy')}
             <span className="text-indigo-400">.Affiliate</span>
           </span>
           <div className="flex items-center gap-2">
@@ -413,8 +413,8 @@ export default function AffiliateDashboardPage() {
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(
                   (lang === 'ar'
-                    ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} على Brandy واحصل على خصم ${affiliate.discountPct}% على طلبك! `
-                    : `Use my promo code ${affiliate.promoCode} at Brandy to get ${affiliate.discountPct}% off your order! `) +
+                    ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} على Brandyy واحصل على خصم ${affiliate.discountPct}% على طلبك! `
+                    : `Use my promo code ${affiliate.promoCode} at Brandyy to get ${affiliate.discountPct}% off your order! `) +
                     'https://brandyy.shop'
                 )}`}
                 target="_blank"
@@ -426,8 +426,8 @@ export default function AffiliateDashboardPage() {
               <a
                 href={`https://t.me/share/url?url=${encodeURIComponent('https://brandyy.shop')}&text=${encodeURIComponent(
                   lang === 'ar'
-                    ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} على Brandy واحصل على خصم ${affiliate.discountPct}% على طلبك!`
-                    : `Use my promo code ${affiliate.promoCode} at Brandy to get ${affiliate.discountPct}% off your order!`
+                    ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} على Brandyy واحصل على خصم ${affiliate.discountPct}% على طلبك!`
+                    : `Use my promo code ${affiliate.promoCode} at Brandyy to get ${affiliate.discountPct}% off your order!`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"

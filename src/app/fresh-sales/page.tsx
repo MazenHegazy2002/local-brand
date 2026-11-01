@@ -116,7 +116,7 @@ export default async function FreshSalesPage() {
                           name: product.title,
                           image: product.images?.[0]?.url,
                           price: product.flashSalePrice ?? product.basePrice,
-                          brand: product.seller?.storeName || 'Brandy',
+                          brand: product.seller?.storeName || 'Brandyy',
                           brandSlug: product.seller?.storeName
                             ? product.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
                             : '',

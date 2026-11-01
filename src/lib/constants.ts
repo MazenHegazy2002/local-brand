@@ -95,7 +95,7 @@ export const MAX_IMAGES_PER_PRODUCT = 10;
  * page titles, etc.).
  *
  * Set NEXT_PUBLIC_SITE_NAME in your .env / Vercel / Docker environment to
- * change the brand without touching any source files. Falls back to 'Brandy'.
+ * change the brand without touching any source files. Falls back to 'Brandyy'.
  */
 export const PLATFORM_NAME = process.env.NEXT_PUBLIC_SITE_NAME || 'Brandyy';
 const rawAppUrl = process.env.NEXT_PUBLIC_APP_URL;

@@ -35,17 +35,17 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: 'All Categories',
   description:
-    'Browse every product category on Brandy. Shop electronics, fashion, beauty, home goods, and more from verified Egyptian sellers.',
+    'Browse every product category on Brandyy. Shop electronics, fashion, beauty, home goods, and more from verified Egyptian sellers.',
   alternates: {
     canonical: `${PLATFORM_URL}/categories`,
     languages: {
       'ar-EG':
-        'تصفح جميع فئات المنتجات على Brandy. تسوق الإلكترونيات والموضة والجمال ومستلزمات المنزل وأكثر من البائعين المصريين الموثوقين.',
+        'تصفح جميع فئات المنتجات على Brandyy. تسوق الإلكترونيات والموضة والجمال ومستلزمات المنزل وأكثر من البائعين المصريين الموثوقين.',
     },
   },
   openGraph: {
     title: 'All Categories',
-    description: "Shop every category on Brandy — Egypt's local seller marketplace.",
+    description: "Shop every category on Brandyy — Egypt's local seller marketplace.",
     url: `${PLATFORM_URL}/categories`,
     type: 'website',
   },
@@ -232,7 +232,7 @@ export default async function CategoriesIndexPage() {
             {tr('All')} <span className="text-[hsl(var(--primary))]">{tr('Categories')}</span>
           </h1>
           <p className="text-[hsl(var(--muted-foreground))] text-base max-w-2xl">
-            {tr('Explore every category on Brandy.')} {totalProducts.toLocaleString()}{' '}
+            {tr('Explore every category on Brandyy.')} {totalProducts.toLocaleString()}{' '}
             {tr('products across')} {categories.length}{' '}
             {tr('categories from verified Egyptian sellers.')}
           </p>

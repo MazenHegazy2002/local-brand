@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Checkout | Brandy',
-  description: 'Complete your purchase securely on Brandy.',
+  title: 'Checkout | Brandyy',
+  description: 'Complete your purchase securely on Brandyy.',
   robots: { index: false, follow: false },
 };
 

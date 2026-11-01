@@ -4,7 +4,7 @@ import { PLATFORM_URL } from '@/lib/constants';
 export const metadata: Metadata = {
   title: 'Flash Sales — Limited-Time Deals',
   description:
-    'Shop limited-time flash sale deals on Brandy. Huge discounts on fashion, electronics, home goods and more from Egyptian local sellers. Hurry — offers expire soon!',
+    'Shop limited-time flash sale deals on Brandyy. Huge discounts on fashion, electronics, home goods and more from Egyptian local sellers. Hurry — offers expire soon!',
   alternates: {
     canonical: `${PLATFORM_URL}/flash-sales`,
   },

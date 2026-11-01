@@ -4,7 +4,7 @@ import SearchClient from './SearchClient';
 export const metadata: Metadata = {
   title: 'Search Results',
   description:
-    'Search thousands of products from verified Egyptian local sellers on Brandy. Find fashion, electronics, home goods, and more.',
+    'Search thousands of products from verified Egyptian local sellers on Brandyy. Find fashion, electronics, home goods, and more.',
   robots: {
     index: false, // search result pages should not be indexed
     follow: true,

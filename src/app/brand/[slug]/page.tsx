@@ -104,7 +104,7 @@ export async function generateMetadata({
   const { brandName, brandDescription, logoUrl } = brandData;
   const description =
     brandDescription ||
-    `Shop authentic ${brandName} products on Brandy — Egypt's marketplace for local sellers. Verified Egyptian brand.`;
+    `Shop authentic ${brandName} products on Brandyy — Egypt's marketplace for local sellers. Verified Egyptian brand.`;
   const brandUrl = `${PLATFORM_URL}/brand/${slug}`;
   const ogImageUrl =
     logoUrl ||

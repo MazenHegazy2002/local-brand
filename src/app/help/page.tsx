@@ -18,7 +18,7 @@ export default async function HelpPage() {
             {tr('Help Center')}
           </h1>
           <p className="text-gray-500 text-lg">
-            {tr('Find answers, get in touch, or learn how Brandy works.')}
+            {tr('Find answers, get in touch, or learn how Brandyy works.')}
           </p>
         </div>
 

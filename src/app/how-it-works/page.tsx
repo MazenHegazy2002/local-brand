@@ -3,9 +3,9 @@ import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'How It Works — Brandy Marketplace',
+  title: 'How It Works — Brandyy Marketplace',
   description:
-    'Learn how Brandy connects Egyptian shoppers with local brands, and how local sellers list, sell, and grow their businesses.',
+    'Learn how Brandyy connects Egyptian shoppers with local brands, and how local sellers list, sell, and grow their businesses.',
 };
 
 const SHOPPER_STEPS = [
@@ -71,7 +71,7 @@ export default async function HowItWorksPage() {
       {/* Hero Header */}
       <section className="py-16 md:py-24 px-4 text-center max-w-4xl mx-auto">
         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))] text-xs font-extrabold uppercase tracking-wider mb-4 border border-[hsl(var(--primary)/0.15)]">
-          {tr('💡 How Brandy Works')}
+          {tr('💡 How Brandyy Works')}
         </span>
         <h1 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900 leading-tight">
           {tr('Connecting Local Brands with')} <br />
@@ -79,7 +79,7 @@ export default async function HowItWorksPage() {
         </h1>
         <p className="mt-4 text-gray-600 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
           {tr(
-            'Brandy empowers Egyptian local sellers to build their digital storefronts while giving shoppers a unified, reliable platform to discover local craftsmanship.'
+            'Brandyy empowers Egyptian local sellers to build their digital storefronts while giving shoppers a unified, reliable platform to discover local craftsmanship.'
           )}
         </p>
 
@@ -167,7 +167,7 @@ export default async function HowItWorksPage() {
           <h2 className="text-3xl font-black text-gray-900">{tr('Ready to Get Started?')}</h2>
           <p className="text-gray-600 text-sm max-w-lg mx-auto">
             {tr(
-              'Join thousands of satisfied shoppers and local brand owners selling nationwide on Brandy.'
+              'Join thousands of satisfied shoppers and local brand owners selling nationwide on Brandyy.'
             )}
           </p>
           <div className="pt-2 flex justify-center gap-4">
@@ -183,7 +183,7 @@ export default async function HowItWorksPage() {
 
       <footer className="border-t border-gray-200 bg-white py-6 text-center text-gray-500 text-xs">
         <p>
-          © {new Date().getFullYear()} {tr('Brandy Marketplace. All rights reserved.')}
+          © {new Date().getFullYear()} {tr('Brandyy Marketplace. All rights reserved.')}
         </p>
       </footer>
     </div>

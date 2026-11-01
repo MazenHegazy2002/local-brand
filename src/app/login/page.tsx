@@ -4,7 +4,7 @@ import LoginClient from './LoginClient';
 export const metadata: Metadata = {
   title: 'Sign In',
   description:
-    'Sign in to your Brandy account to manage your orders, wishlist, and profile settings.',
+    'Sign in to your Brandyy account to manage your orders, wishlist, and profile settings.',
   robots: {
     index: false,
     follow: false,

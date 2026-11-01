@@ -23,10 +23,10 @@ const sections = [
 
 **5. القانون الحاكم**
 تخضع هذه الشروط لقوانين جمهورية مصر العربية.`,
-    content: `Welcome to Brandy Egypt. By accessing or using our marketplace, you agree to be bound by these Terms of Service and all applicable Egyptian laws and regulations.
+    content: `Welcome to Brandyy Egypt. By accessing or using our marketplace, you agree to be bound by these Terms of Service and all applicable Egyptian laws and regulations.
 
 **1. Acceptance of Terms**
-By creating an account or making a purchase on Brandy, you agree to these terms and our Privacy Policy.
+By creating an account or making a purchase on Brandyy, you agree to these terms and our Privacy Policy.
 
 **2. User Accounts**
 You are responsible for maintaining the security of your account. You may not share your credentials or register multiple accounts.
@@ -35,7 +35,7 @@ You are responsible for maintaining the security of your account. You may not sh
 Users may not list counterfeit goods, engage in price manipulation, or misrepresent product descriptions.
 
 **4. Dispute Resolution**
-All disputes between buyers and sellers shall be mediated by Brandy. Our decision is final and binding per Egyptian Commercial Law.
+All disputes between buyers and sellers shall be mediated by Brandyy. Our decision is final and binding per Egyptian Commercial Law.
 
 **5. Governing Law**
 These terms are governed by the laws of the Arab Republic of Egypt.`,
@@ -61,7 +61,7 @@ These terms are governed by the laws of the Arab Republic of Egypt.`,
 
 **الاحتفاظ بالبيانات**
 يُحتفظ ببيانات الطلبات لمدة 7 سنوات وفق قانون الضرائب المصري، وتصبح البيانات الشخصية مجهولة الهوية عند حذف الحساب.`,
-    content: `Brandy Egypt is committed to protecting your personal data in compliance with Egypt's Personal Data Protection Law (Law No. 151 of 2020).
+    content: `Brandyy Egypt is committed to protecting your personal data in compliance with Egypt's Personal Data Protection Law (Law No. 151 of 2020).
 
 **Data We Collect**
 - Account information (name, email, phone)
@@ -112,7 +112,7 @@ Customized, personalized, or hygiene-sensitive products are not eligible for ret
 5. Refund processed within 5-7 business days of seller confirmation
 
 **Refund Method**
-Refunds are returned to the original payment method or credited to your Brandy wallet.`,
+Refunds are returned to the original payment method or credited to your Brandyy wallet.`,
   },
   {
     title: 'Seller Agreement',
@@ -125,7 +125,7 @@ Refunds are returned to the original payment method or credited to your Brandy w
 - الحفاظ على تقييم بائع أعلى من 3.5 نجوم
 
 **هيكل العمولة**
-تحصل براندي على عمولة 15% عن كل عملية بيع ناجحة. تُعالج السحوبات بعد 7-14 يومًا من التوصيل.
+تحصل براندي على عمولة 15% عن كل عملية بيع ناجحة. تُعالج السحوبات بعد 14 يومًا من التوصيل.
 
 **الإعلانات المحظورة**
 يُحظر تمامًا عرض المنتجات المقلدة والمواد الخطرة والسلع الممنوعة بموجب القانون المصري.
@@ -136,20 +136,20 @@ Refunds are returned to the original payment method or credited to your Brandy w
 **الالتزامات الضريبية**
 يتحمل البائعون مسؤولية الإقرار بدخلهم وسداد الضرائب المستحقة وفق قانون الضرائب المصري.`,
     content: `**Seller Obligations**
-By becoming a Brandy seller, you agree to:
+By becoming a Brandyy seller, you agree to:
 - List only authentic, accurately described products
 - Fulfill orders within 2 business days of confirmation
-- Accept returns per Brandy's return policy
+- Accept returns per Brandyy's return policy
 - Maintain a seller rating above 3.5 stars
 
 **Commission Structure**
-Brandy charges a 15% commission on every successful sale. Payouts are processed 7-14 days post-delivery.
+Brandyy charges a 15% commission on every successful sale. Payouts are processed 14 days post-delivery.
 
 **Prohibited Listings**
 Counterfeit goods, hazardous materials, and items banned under Egyptian law are strictly prohibited.
 
 **Account Suspension**
-Brandy reserves the right to suspend seller accounts for policy violations, poor performance metrics, or fraudulent activity.
+Brandyy reserves the right to suspend seller accounts for policy violations, poor performance metrics, or fraudulent activity.
 
 **Tax Obligations**
 Sellers are responsible for declaring income and paying applicable taxes under Egyptian tax law.`,
@@ -164,7 +164,7 @@ export default function LegalPage() {
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <h1 className="text-4xl font-black text-gray-900 mb-2">{tr('Legal')}</h1>
         <p className="text-gray-500 mb-10">
-          {tr('Brandy Egypt — Legal documents governing our marketplace.')}
+          {tr('Brandyy Egypt — Legal documents governing our marketplace.')}
         </p>
 
         {/* Quick Nav */}

@@ -782,7 +782,7 @@ export default function EditProductPage() {
             <div className="mt-auto pt-6 flex flex-col gap-3">
               <div>
                 <div className="font-bold text-white text-xs truncate">
-                  {currentSeller?.storeName || tr('Brandy Store')}
+                  {currentSeller?.storeName || tr('Brandyy Store')}
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-white/75 mt-0.5">
                   <span
@@ -1020,7 +1020,7 @@ export default function EditProductPage() {
         <div className="mt-auto px-4 pb-6 flex flex-col gap-3">
           <div>
             <div className="store-label truncate max-w-full font-bold text-white text-xs">
-              {currentSeller?.storeName || tr('Brandy Store')}
+              {currentSeller?.storeName || tr('Brandyy Store')}
             </div>
             <div className="active-dot-row flex items-center gap-2 text-[10px] text-white/80 mt-0.5">
               <div

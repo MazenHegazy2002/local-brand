@@ -142,7 +142,7 @@ function CmsProductGridBlock({ title, products, dict }: any) {
               ...p,
               name: p.title,
               image: p.images[0]?.url,
-              brand: p.seller?.storeName || dict.Brandy || 'Local Brand',
+              brand: p.seller?.storeName || dict.Brandyy || 'Local Brand',
               brandSlug: p.seller?.storeName
                 ? p.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
                 : '',

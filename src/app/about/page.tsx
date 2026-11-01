@@ -6,7 +6,7 @@ import { aboutPageJsonLd, jsonLdScript } from '@/lib/jsonld';
 export const metadata: Metadata = {
   title: 'About Us',
   description:
-    "Learn more about Brandy - Egypt's marketplace for local sellers and authentic brands.",
+    "Learn more about Brandyy - Egypt's marketplace for local sellers and authentic brands.",
 };
 
 export default async function AboutPage() {
@@ -23,11 +23,11 @@ export default async function AboutPage() {
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-gray-100">
           <h1 className="text-3xl md:text-5xl font-black text-gray-900 mb-6 tracking-tight">
-            {tr('About Brandy')}
+            {tr('About Brandyy')}
           </h1>
           <div className="prose prose-blue max-w-none text-gray-600 leading-relaxed space-y-6">
             <p className="text-lg text-gray-700">
-              {tr('Welcome to')} <strong>{tr('Brandy')}</strong>
+              {tr('Welcome to')} <strong>{tr('Brandyy')}</strong>
               {tr(
                 ", Egypt's premier online marketplace dedicated to showcasing authentic local sellers and independent brands. Our mission is to bridge the gap between talented Egyptian designers, artisans, and manufacturers, and passionate shoppers looking for high-quality, homegrown products."
               )}
@@ -39,7 +39,7 @@ export default async function AboutPage() {
             </p>
             <p>
               {tr(
-                'From stylish fashion and unique accessories to home goods, beauty products, and electronics, every purchase on Brandy directly supports local entrepreneurs and the Egyptian economy.'
+                'From stylish fashion and unique accessories to home goods, beauty products, and electronics, every purchase on Brandyy directly supports local entrepreneurs and the Egyptian economy.'
               )}
             </p>
             <h2 className="text-2xl font-black text-gray-900 mt-8 mb-4">{tr('Our Core Values')}</h2>

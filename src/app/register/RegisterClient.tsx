@@ -301,7 +301,7 @@ export default function RegisterPage() {
 
             <p className="text-xs text-gray-500 text-center mt-4">
               {tr(
-                "By creating an account, you agree to Brandy's Conditions of Use and Privacy Notice."
+                "By creating an account, you agree to Brandyy's Conditions of Use and Privacy Notice."
               )}
             </p>
           </form>

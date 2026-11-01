@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 
 export const metadata = {
   title: 'Returns & Refunds Policy',
-  description: 'Brandy marketplace returns and refunds policy — 14-day return window across Egypt',
+  description: 'Brandyy marketplace returns and refunds policy — 14-day return window across Egypt',
 };
 
 async function StaticContent() {
@@ -150,7 +150,7 @@ async function StaticContent() {
               {
                 icon: '💳',
                 title: tr('Day 5-7: Refund Issued'),
-                desc: tr('Refund credited to original payment method or Brandy wallet'),
+                desc: tr('Refund credited to original payment method or Brandyy wallet'),
               },
             ].map(({ icon, title, desc }) => (
               <div key={title} className="flex items-start gap-4">

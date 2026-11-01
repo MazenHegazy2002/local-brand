@@ -3,9 +3,9 @@ import Navbar from '@/components/Navbar';
 import { blogJsonLd, jsonLdScript, type BlogArticle } from '@/lib/jsonld';
 
 export const metadata = {
-  title: 'Blog & Local Brand Stories — Brandy',
+  title: 'Blog & Local Brand Stories — Brandyy',
   description:
-    'Discover fashion guides, seller success stories, Egyptian streetwear trends, and marketplace news on the Brandy Blog.',
+    'Discover fashion guides, seller success stories, Egyptian streetwear trends, and marketplace news on the Brandyy Blog.',
 };
 
 const ARTICLES = [
@@ -66,7 +66,7 @@ export default async function BlogPage() {
       {/* Hero Header */}
       <section className="py-16 px-4 text-center max-w-4xl mx-auto">
         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))] text-xs font-extrabold uppercase tracking-wider mb-4 border border-[hsl(var(--primary)/0.15)]">
-          {tr('📰 Brandy Journal & News')}
+          {tr('📰 Brandyy Journal & News')}
         </span>
         <h1 className="text-4xl md:text-5xl font-black tracking-tight text-gray-900 leading-tight">
           {tr('Stories, Guides &')} <br />
@@ -116,7 +116,7 @@ export default async function BlogPage() {
 
       <footer className="border-t border-gray-200 bg-white py-6 text-center text-gray-500 text-xs">
         <p>
-          © {new Date().getFullYear()} {tr('Brandy Marketplace. All rights reserved.')}
+          © {new Date().getFullYear()} {tr('Brandyy Marketplace. All rights reserved.')}
         </p>
       </footer>
     </div>

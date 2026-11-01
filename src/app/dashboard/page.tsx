@@ -1290,7 +1290,7 @@ function WalletTab({ user }: { user?: User }) {
               <>
                 <div>{tr('• 1 pt = 1 EGP off at checkout')}</div>
                 <div>{tr('• Early access to flash sales')}</div>
-                <div>{tr('• Free shipping on orders over 1000 EGP')}</div>
+                <div>{tr('• Free shipping on orders over 1500 EGP')}</div>
               </>
             )}
           </div>

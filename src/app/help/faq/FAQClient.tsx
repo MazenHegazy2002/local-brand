@@ -13,7 +13,7 @@ const CATEGORIES: { id: Category; label: string; icon: string }[] = [
   { id: 'returns', label: 'Returns & Refunds', icon: '↩️' },
   { id: 'payments', label: 'Payments', icon: '💳' },
   { id: 'account', label: 'My Account', icon: '👤' },
-  { id: 'sellers', label: 'Selling on Brandy', icon: '🏪' },
+  { id: 'sellers', label: 'Selling on Brandyy', icon: '🏪' },
 ];
 
 export const FAQ_DATA: Record<Category, Array<{ q: string; a: string }>> = {
@@ -44,7 +44,7 @@ export const FAQ_DATA: Record<Category, Array<{ q: string; a: string }>> = {
       q: 'How long does delivery take?',
       a: 'Standard delivery: 2-4 business days for Cairo/Giza, 3-7 days for other governorates.',
     },
-    { q: 'Is free shipping available?', a: 'Yes, on orders over 1000 EGP throughout Egypt.' },
+    { q: 'Is free shipping available?', a: 'Yes, on orders over 1500 EGP throughout Egypt.' },
     { q: 'Do you ship internationally?', a: 'Not yet — we currently ship only within Egypt.' },
   ],
   returns: [
@@ -112,7 +112,7 @@ export const FAQ_DATA: Record<Category, Array<{ q: string; a: string }>> = {
     },
     {
       q: 'When do I get paid?',
-      a: 'Funds are held in escrow for 7 days after delivery. After clearance, you can request a withdrawal from your Seller Hub.',
+      a: 'Funds are held in escrow for 14 days after delivery. After clearance, you can request a withdrawal from your Seller Hub.',
     },
     {
       q: 'Can I sell non-Egyptian products?',

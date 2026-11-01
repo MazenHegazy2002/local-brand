@@ -249,7 +249,7 @@ export default function SellerHub() {
       return [
         {
           id: 'b-brandy',
-          name: 'Brandy Store',
+          name: 'Brandyy Store',
           slug: 'brandy-store',
           accentColor: '#7c3aed',
           status: 'ACTIVE',
@@ -2037,7 +2037,7 @@ function OverviewTab({
     totalOrderDemographics > 0
       ? [
           { name: 'Direct Store', percentage: 60, color: '#10b981' },
-          { name: 'Brandy Marketplace', percentage: 30, color: '#3b82f6' },
+          { name: 'Brandyy Marketplace', percentage: 30, color: '#3b82f6' },
           { name: 'External / Social', percentage: 10, color: '#8b5cf6' },
         ]
       : [{ name: 'Direct Store', percentage: 100, color: '#10b981' }];
