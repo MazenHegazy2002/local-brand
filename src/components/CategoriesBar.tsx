@@ -308,7 +308,7 @@ export default function CategoriesBar() {
                 <span style={{ color }} className="group-hover:text-white transition-colors">
                   {getCategoryIcon(category.name)}
                 </span>
-                <span>{category.name}</span>
+                <span>{tr(category.name)}</span>
                 <span className="text-[10px] text-gray-600 group-hover:text-white/80">
                   ({category._count?.products ?? 0})
                 </span>

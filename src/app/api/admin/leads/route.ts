@@ -16,12 +16,12 @@ async function requireAdmin() {
 }
 
 const COLUMNS: [keyof ParsedLead, RegExp][] = [
-  ['storeNameAr', /name.*\(ar\)/i],
+  ['storeNameAr', /name.*\bar\b/i],
   ['storeName', /(store|brand|page|business).*name|^name/i],
   ['category', /categor|product line/i],
   ['phone', /phone|whatsapp|mobile/i],
-  ['address', /address|landmark|location/i],
-  ['socialUrl', /social|facebook|link|url/i],
+  ['address', /address|street|landmark|location/i],
+  ['socialUrl', /^(?!.*whatsapp).*(social|facebook|instagram|link|url)/i],
 ];
 
 interface ParsedLead {
@@ -46,7 +46,13 @@ function parseSheet(sheet: ExcelJS.Worksheet): ParsedLead[] {
   sheet.getRow(1).eachCell((cell, col) => {
     const header = cellText(cell.value);
     const match = COLUMNS.find(([key, re]) => re.test(header) && ![...map.values()].includes(key));
-    if (match) map.set(col, match[0]);
+    if (/facebook/i.test(header)) {
+      // Facebook is the page we verify, so it wins over an earlier Instagram column.
+      map.forEach((key, c) => key === 'socialUrl' && map.delete(c));
+      map.set(col, 'socialUrl');
+    } else if (match) {
+      map.set(col, match[0]);
+    }
   });
   const rows: ParsedLead[] = [];
   sheet.eachRow((row, n) => {
