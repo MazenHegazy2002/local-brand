@@ -178,6 +178,25 @@ export default function ProductCard({
   );
   const [imgSrc, setImgSrc] = useState<string>(activeImage || displayImage || '/placeholder.png');
   const [added, setAdded] = useState(false);
+  const swipeStartX = React.useRef<number | null>(null);
+  const didSwipe = React.useRef(false);
+  const cardImages = (product.images || []).map(img => img.url).filter(Boolean);
+
+  const showImage = (step: number) => {
+    if (cardImages.length < 2) return;
+    const current = Math.max(cardImages.indexOf(imgSrc), 0);
+    setImgSrc(cardImages[(current + step + cardImages.length) % cardImages.length]);
+  };
+
+  const handleSwipeEnd = (endX: number) => {
+    if (swipeStartX.current === null) return;
+    const distance = endX - swipeStartX.current;
+    swipeStartX.current = null;
+    if (Math.abs(distance) < 30) return;
+    didSwipe.current = true;
+    // Swiping toward the reading start moves forward, so the direction flips in RTL.
+    showImage((isAr ? distance > 0 : distance < 0) ? 1 : -1);
+  };
 
   useEffect(() => {
     setImgSrc(activeImage || displayImage || '/placeholder.png');
@@ -320,12 +339,27 @@ export default function ProductCard({
             ? `عرض ${displayName}${productBrand ? ` من ${productBrand}` : ''} (${displayId.slice(-4)})`
             : `View ${displayName}${productBrand ? ` by ${productBrand}` : ''} (${displayId.slice(-4)})`
         }
-        className="block overflow-hidden relative aspect-[4/5] shrink-0 bg-gray-50"
+        className="block overflow-hidden relative aspect-[4/5] shrink-0 bg-gray-50 touch-pan-y"
+        draggable={false}
+        onTouchStart={e => {
+          didSwipe.current = false;
+          swipeStartX.current = e.touches[0].clientX;
+        }}
+        onTouchEnd={e => handleSwipeEnd(e.changedTouches[0].clientX)}
+        onMouseDown={e => {
+          didSwipe.current = false;
+          swipeStartX.current = e.clientX;
+        }}
+        onMouseUp={e => handleSwipeEnd(e.clientX)}
+        onClick={e => {
+          if (didSwipe.current) e.preventDefault();
+        }}
       >
         <Image
           src={imgSrc}
           alt={displayName}
           fill
+          draggable={false}
           sizes="(max-width: 480px) 45vw, (max-width: 768px) 48vw, (max-width: 1024px) 33vw, 220px"
           className="object-cover transition-transform duration-700 group-hover:scale-115"
           loading="lazy"
@@ -335,6 +369,32 @@ export default function ProductCard({
             }
           }}
         />
+        {cardImages.length > 1 && (
+          <>
+            {[-1, 1].map(step => (
+              <button
+                key={step}
+                type="button"
+                aria-label={tr(step < 0 ? 'Previous' : 'Next')}
+                onClick={e => {
+                  e.preventDefault();
+                  showImage(step);
+                }}
+                className={`absolute top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white/90 text-slate-800 shadow font-black hidden md:group-hover:flex items-center justify-center ${step < 0 ? 'start-2' : 'end-2'}`}
+              >
+                <span className="rtl:rotate-180">{step < 0 ? '‹' : '›'}</span>
+              </button>
+            ))}
+            <div className="absolute bottom-2 inset-x-0 flex justify-center gap-1 z-10">
+              {cardImages.map((url, i) => (
+                <span
+                  key={url + i}
+                  className={`w-1.5 h-1.5 rounded-full ${url === imgSrc ? 'bg-[#1e3b8a]' : 'bg-white/80'}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
         {/* Wishlist Button Overlay */}
         <div className="absolute top-4 end-4 z-20">
           <WishlistButton product={product as unknown as WishlistProduct} />
