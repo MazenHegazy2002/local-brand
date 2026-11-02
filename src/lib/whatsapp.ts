@@ -5,7 +5,7 @@ import { getSetting } from './admin-settings-registry';
  * Generates the standard message text sent to the customer.
  */
 export function getWhatsAppConfirmationText(orderId: string, totalAmount: number): string {
-  return `Welcome to Brandy! Please confirm your order #${orderId.substring(0, 8)} of amount ${totalAmount.toFixed(2)} EGP.\n\nReply:\n*1* to Confirm\n*2* to Cancel`;
+  return `Welcome to Brandyy! Please confirm your order #${orderId.substring(0, 8)} of amount ${totalAmount.toFixed(2)} EGP.\n\nReply:\n*1* to Confirm\n*2* to Cancel`;
 }
 
 /**

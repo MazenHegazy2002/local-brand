@@ -11,6 +11,7 @@ import { useLanguage } from '@/providers/LanguageContext';
 // The slide-out CartDrawer still works via the navbar icon;
 // this page ensures /cart bookmarks and direct links don't 404.
 export default function CartPage() {
+  const { tr } = useLanguage();
   const items = useCartStore(s => s.items);
   const removeItem = useCartStore(s => s.removeItem);
   const updateQty = useCartStore(s => s.updateQty);
@@ -83,7 +84,7 @@ export default function CartPage() {
 
       <div className="container mx-auto px-4 py-10 max-w-4xl">
         <h1 className="text-3xl font-black text-gray-900 mb-2">
-          {isAr ? 'سلة التسوق' : 'Your Cart'}
+          {isAr ? 'سلة التسوق' : tr('Your Cart')}
         </h1>
         <p className="text-gray-500 mb-8">
           {count === 0
@@ -97,16 +98,16 @@ export default function CartPage() {
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
             <div className="text-5xl mb-4">🛒</div>
             <h2 className="text-xl font-bold text-gray-800 mb-2">
-              {isAr ? 'لا يوجد شيء هنا بعد' : 'Nothing here yet'}
+              {isAr ? 'لا يوجد شيء هنا بعد' : tr('Nothing here yet')}
             </h2>
             <p className="text-gray-500 mb-6">
-              {isAr ? 'أضف بعض المنتجات لتبدأ.' : 'Add some products to get started.'}
+              {isAr ? 'أضف بعض المنتجات لتبدأ.' : tr('Add some products to get started.')}
             </p>
             <Link
               href="/shop"
               className="inline-block bg-[#1e3b8a] text-white font-bold py-3 px-8 rounded-xl hover:bg-[#152c6e] transition-colors"
             >
-              {isAr ? 'تصفح المنتجات' : 'Browse Products'}
+              {isAr ? 'تصفح المنتجات' : tr('Browse Products')}
             </Link>
           </div>
         ) : (
@@ -198,7 +199,7 @@ export default function CartPage() {
             <div className="lg:col-span-1">
               <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm sticky top-24">
                 <h2 className="font-black text-gray-900 text-lg mb-4">
-                  {isAr ? 'ملخص الطلب' : 'Order Summary'}
+                  {isAr ? 'ملخص الطلب' : tr('Order Summary')}
                 </h2>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between text-gray-600">
@@ -208,13 +209,13 @@ export default function CartPage() {
                     <span className="font-semibold">{money(total)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600">
-                    <span>{isAr ? 'الشحن' : 'Shipping'}</span>
+                    <span>{isAr ? 'الشحن' : tr('Shipping')}</span>
                     <span className="text-green-600 font-semibold">
-                      {isAr ? 'يُحسب عند الدفع' : 'Calculated at checkout'}
+                      {isAr ? 'يُحسب عند الدفع' : tr('Calculated at checkout')}
                     </span>
                   </div>
                   <div className="border-t border-gray-100 pt-3 flex justify-between text-base font-black text-gray-900">
-                    <span>{isAr ? 'الإجمالي' : 'Total'}</span>
+                    <span>{isAr ? 'الإجمالي' : tr('Total')}</span>
                     <span className="text-[#1e3b8a]">{money(total)}</span>
                   </div>
                 </div>
@@ -224,7 +225,7 @@ export default function CartPage() {
                   data-track="checkout"
                   className="mt-6 block w-full text-center bg-[#1e3b8a] text-white font-black py-3.5 rounded-xl hover:bg-[#152c6e] transition-colors shadow-sm"
                 >
-                  {isAr ? 'متابعة إلى الدفع ←' : 'Proceed to Checkout →'}
+                  {isAr ? 'متابعة إلى الدفع ←' : tr('Proceed to Checkout →')}
                 </Link>
                 <Link
                   href="/shop"

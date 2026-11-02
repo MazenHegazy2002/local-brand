@@ -47,6 +47,7 @@ interface AffiliateDashboardData {
 }
 
 function CopyButton({ text }: { text: string }) {
+  const { tr } = useLanguage();
   const [copied, setCopied] = useState(false);
   const { t } = useLanguage();
   return (
@@ -62,12 +63,13 @@ function CopyButton({ text }: { text: string }) {
           : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white'
       }`}
     >
-      {copied ? t('AffiliateCopiedBtn') || 'Copied!' : t('AffiliateCopyBtn') || 'Copy'}
+      {copied ? t('AffiliateCopiedBtn') || tr('Copied!') : t('AffiliateCopyBtn') || tr('Copy')}
     </button>
   );
 }
 
 export default function AffiliateDashboardPage() {
+  const { tr } = useLanguage();
   const { data: session, status } = useSession();
   const router = useRouter();
   const { t, lang, isRTL } = useLanguage();
@@ -96,7 +98,7 @@ export default function AffiliateDashboardPage() {
         if (d.error) setError(d.error);
         else setData(d);
       })
-      .catch(() => setError('Failed to load dashboard.'));
+      .catch(() => setError(tr('Failed to load dashboard.')));
   }, [status, router]);
 
   useEffect(() => {
@@ -160,7 +162,7 @@ export default function AffiliateDashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-zinc-950">
         <div className="text-zinc-500 text-sm animate-pulse font-bold tracking-widest uppercase">
-          {t('AffiliateLoadingDashboard') || 'Loading Dashboard…'}
+          {t('AffiliateLoadingDashboard') || tr('Loading Dashboard…')}
         </div>
       </div>
     );
@@ -175,17 +177,17 @@ export default function AffiliateDashboardPage() {
         <div className="text-center max-w-sm">
           <div className="text-7xl mb-6">🚀</div>
           <h1 className="text-3xl font-black text-white mb-3 uppercase tracking-tight">
-            {t('AffiliateNotAffiliateYet') || 'Not an Affiliate Yet'}
+            {t('AffiliateNotAffiliateYet') || tr('Not an Affiliate Yet')}
           </h1>
           <p className="text-zinc-400 text-sm mb-8 leading-relaxed">
             {t('AffiliateNotAffiliateDesc') ||
-              'Join our growth network to start earning premium commissions.'}
+              tr('Join our growth network to start earning premium commissions.')}
           </p>
           <Link
             href="/affiliate"
             className="inline-block px-8 py-4 bg-white text-zinc-950 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-zinc-200 transition-colors shadow-lg"
           >
-            {t('AffiliateApplyFree') || "Apply Now — It's Free"}
+            {t('AffiliateApplyFree') || tr("Apply Now — It's Free")}
           </Link>
         </div>
       </div>
@@ -245,7 +247,8 @@ export default function AffiliateDashboardPage() {
       <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 py-3.5 flex items-center justify-between">
           <span className="text-base font-black tracking-widest uppercase text-white">
-            Brandy<span className="text-indigo-400">.Affiliate</span>
+            {tr('Brandyy')}
+            <span className="text-indigo-400">.Affiliate</span>
           </span>
           <div className="flex items-center gap-2">
             <Link
@@ -296,7 +299,7 @@ export default function AffiliateDashboardPage() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-2xl font-black text-white tracking-tight">
-                {t('AffiliateMyDashboard') || 'Affiliate Dashboard'}
+                {t('AffiliateMyDashboard') || tr('Affiliate Dashboard')}
               </h1>
               <span
                 className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${sBadge.bg} ${sBadge.text}`}
@@ -307,7 +310,7 @@ export default function AffiliateDashboardPage() {
             <p className="text-zinc-500 text-xs font-medium">
               {session?.user?.name}
               {' · '}
-              {t('AffiliateJoined') || 'Joined'}{' '}
+              {t('AffiliateJoined') || tr('Joined')}{' '}
               {new Date(affiliate.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-EG', {
                 day: 'numeric',
                 month: 'short',
@@ -317,7 +320,7 @@ export default function AffiliateDashboardPage() {
           </div>
           <div className="sm:text-end shrink-0">
             <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-1">
-              {t('AffiliateTierLabel') || 'Tier'}
+              {t('AffiliateTierLabel') || tr('Tier')}
             </p>
             <p
               className={`text-xl font-black uppercase ${tierAccent[affiliate.tier] ?? 'text-indigo-400'}`}
@@ -336,7 +339,7 @@ export default function AffiliateDashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             {
-              label: t('AffiliateTotalEarned') || 'Total Earned',
+              label: t('AffiliateTotalEarned') || tr('Total Earned'),
               value:
                 lang === 'ar'
                   ? `${affiliate.totalEarnedEgp.toLocaleString('ar-EG')} ج.م`
@@ -345,7 +348,7 @@ export default function AffiliateDashboardPage() {
               icon: '💰',
             },
             {
-              label: t('AffiliatePending') || 'Pending Balance',
+              label: t('AffiliatePending') || tr('Pending Balance'),
               value:
                 lang === 'ar'
                   ? `${affiliate.pendingEarningsEgp.toLocaleString('ar-EG')} ج.م`
@@ -354,7 +357,7 @@ export default function AffiliateDashboardPage() {
               icon: '⏳',
             },
             {
-              label: t('AffiliateTotalReferrals') || 'Referrals',
+              label: t('AffiliateTotalReferrals') || tr('Referrals'),
               value:
                 lang === 'ar'
                   ? affiliate.totalConversions.toLocaleString('ar-EG')
@@ -363,7 +366,7 @@ export default function AffiliateDashboardPage() {
               icon: '👥',
             },
             {
-              label: t('AffiliateConversions') || 'Conversions',
+              label: t('AffiliateConversions') || tr('Conversions'),
               value:
                 lang === 'ar'
                   ? affiliate.totalConversions.toLocaleString('ar-EG')
@@ -390,7 +393,7 @@ export default function AffiliateDashboardPage() {
           {/* Promo code */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4">
-              {t('AffiliateMyPromoCode') || 'My Promo Code'}
+              {t('AffiliateMyPromoCode') || tr('My Promo Code')}
             </h3>
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-1 bg-black border border-zinc-700 rounded-xl py-3 px-4 font-mono text-xl font-black text-center tracking-[0.2em] text-white uppercase select-all">
@@ -410,8 +413,8 @@ export default function AffiliateDashboardPage() {
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(
                   (lang === 'ar'
-                    ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} على Brandy واحصل على خصم ${affiliate.discountPct}% على طلبك! `
-                    : `Use my promo code ${affiliate.promoCode} at Brandy to get ${affiliate.discountPct}% off your order! `) +
+                    ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} على Brandyy واحصل على خصم ${affiliate.discountPct}% على طلبك! `
+                    : `Use my promo code ${affiliate.promoCode} at Brandyy to get ${affiliate.discountPct}% off your order! `) +
                     'https://brandyy.shop'
                 )}`}
                 target="_blank"
@@ -423,14 +426,14 @@ export default function AffiliateDashboardPage() {
               <a
                 href={`https://t.me/share/url?url=${encodeURIComponent('https://brandyy.shop')}&text=${encodeURIComponent(
                   lang === 'ar'
-                    ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} على Brandy واحصل على خصم ${affiliate.discountPct}% على طلبك!`
-                    : `Use my promo code ${affiliate.promoCode} at Brandy to get ${affiliate.discountPct}% off your order!`
+                    ? `استخدم كود الخصم الخاص بي ${affiliate.promoCode} على Brandyy واحصل على خصم ${affiliate.discountPct}% على طلبك!`
+                    : `Use my promo code ${affiliate.promoCode} at Brandyy to get ${affiliate.discountPct}% off your order!`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-400 rounded-lg text-xs font-bold transition-all"
               >
-                <span>Telegram</span>
+                <span>{tr('Telegram')}</span>
               </a>
             </div>
           </div>
@@ -438,7 +441,7 @@ export default function AffiliateDashboardPage() {
           {/* Referral link */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4">
-              {t('AffiliateMyReferralLink') || 'My Referral Link'}
+              {t('AffiliateMyReferralLink') || tr('My Referral Link')}
             </h3>
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-1 bg-black border border-zinc-700 rounded-xl py-3 px-3 text-[11px] text-zinc-400 select-all truncate font-mono">
@@ -470,13 +473,13 @@ export default function AffiliateDashboardPage() {
                 rel="noopener noreferrer"
                 className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-400 rounded-lg text-xs font-bold transition-all"
               >
-                <span>Telegram</span>
+                <span>{tr('Telegram')}</span>
               </a>
             </div>
             {settings.bonusesEnabled && (
               <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3">
                 <p className="text-[10px] font-black text-indigo-400 uppercase tracking-wider mb-1">
-                  {t('AffiliateReferralBonus') || 'Referral Bonus'}
+                  {t('AffiliateReferralBonus') || tr('Referral Bonus')}
                 </p>
                 <p className="text-[11px] text-indigo-300/80 leading-relaxed">
                   {(
@@ -537,7 +540,7 @@ export default function AffiliateDashboardPage() {
                         <p className="text-[10px] text-zinc-600 mt-0.5">
                           {lang === 'ar'
                             ? 'تُفعَّل عندما يُتم الشخص الذي دعوته أول طلب له'
-                            : 'Activates when your referral completes their first order'}
+                            : tr('Activates when your referral completes their first order')}
                         </p>
                       )}
                     </div>
@@ -565,7 +568,7 @@ export default function AffiliateDashboardPage() {
         {/* ── Tier progression ── */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
           <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4">
-            {t('AffiliateProgressNextTier') || 'Tier Progression'}
+            {t('AffiliateProgressNextTier') || tr('Tier Progression')}
           </h3>
           {nextTier ? (
             <>
@@ -600,7 +603,7 @@ export default function AffiliateDashboardPage() {
             <p className="text-sm text-emerald-400 font-bold">
               🎉{' '}
               {t('AffiliateHighestTierReached') ||
-                'Congratulations! You have reached the highest affiliate tier.'}
+                tr('Congratulations! You have reached the highest affiliate tier.')}
             </p>
           )}
         </div>
@@ -608,21 +611,21 @@ export default function AffiliateDashboardPage() {
         {/* ── Recent Commissions ── */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
           <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4">
-            {t('AffiliateRecentCommissions') || 'Recent Commissions'}
+            {t('AffiliateRecentCommissions') || tr('Recent Commissions')}
           </h3>
           {recentCommissions.length === 0 ? (
             <p className="text-xs text-zinc-600 italic text-center py-8">
-              {t('AffiliateNoCommissions') || 'No conversions registered yet.'}
+              {t('AffiliateNoCommissions') || tr('No conversions registered yet.')}
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-start border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-zinc-800 text-zinc-600 uppercase tracking-widest font-black text-[9px]">
-                    <th className="pb-3">{t('AffiliateOrderHeader') || 'Order'}</th>
-                    <th className="pb-3">{t('AffiliateSaleValueHeader') || 'Sale'}</th>
-                    <th className="pb-3">{t('AffiliateRateHeader') || 'Rate'}</th>
-                    <th className="pb-3 text-end">{t('AffiliateEarnedHeader') || 'Earned'}</th>
+                    <th className="pb-3">{t('AffiliateOrderHeader') || tr('Order')}</th>
+                    <th className="pb-3">{t('AffiliateSaleValueHeader') || tr('Sale')}</th>
+                    <th className="pb-3">{t('AffiliateRateHeader') || tr('Rate')}</th>
+                    <th className="pb-3 text-end">{t('AffiliateEarnedHeader') || tr('Earned')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -662,7 +665,7 @@ export default function AffiliateDashboardPage() {
         {affiliate.status === 'ACTIVE' && affiliate.pendingEarningsEgp > 0 && (
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">
-              {t('AffiliateRequestPayoutLabel') || 'Request Withdrawal'}
+              {t('AffiliateRequestPayoutLabel') || tr('Request Withdrawal')}
             </h3>
             <p className="text-xs text-zinc-500 mb-5">
               {lang === 'ar'
@@ -676,7 +679,7 @@ export default function AffiliateDashboardPage() {
                 onChange={e => setPayoutForm(f => ({ ...f, method: e.target.value }))}
                 className="flex-1 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs bg-zinc-800 text-white focus:outline-none focus:border-indigo-500"
               >
-                <option value="">{t('AffiliateSelectMethod') || 'Select method'}</option>
+                <option value="">{t('AffiliateSelectMethod') || tr('Select method')}</option>
                 <option value="VODAFONE_CASH">{translatePayoutMethod('Vodafone Cash')}</option>
                 <option value="ORANGE_MONEY">{translatePayoutMethod('Orange Money')}</option>
                 <option value="ETISALAT_CASH">{translatePayoutMethod('Etisalat Cash')}</option>
@@ -685,7 +688,7 @@ export default function AffiliateDashboardPage() {
               </select>
               <input
                 required
-                placeholder={t('AffiliatePhoneOrIban') || 'Phone or IBAN'}
+                placeholder={t('AffiliatePhoneOrIban') || tr('Phone or IBAN')}
                 value={payoutForm.payoutDetails}
                 onChange={e => setPayoutForm(f => ({ ...f, payoutDetails: e.target.value }))}
                 className="flex-[2] border border-zinc-700 rounded-xl px-4 py-2.5 text-xs bg-zinc-800 text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500"
@@ -696,8 +699,8 @@ export default function AffiliateDashboardPage() {
                 className="px-6 py-2.5 bg-white text-zinc-950 rounded-xl font-black text-xs uppercase tracking-wider hover:bg-zinc-200 transition-colors disabled:opacity-40"
               >
                 {payoutLoading
-                  ? t('AffiliateRequestingPayout') || 'Requesting…'
-                  : t('AffiliateRequestPayoutBtn') || 'Withdraw'}
+                  ? t('AffiliateRequestingPayout') || tr('Requesting…')
+                  : t('AffiliateRequestPayoutBtn') || tr('Withdraw')}
               </button>
             </form>
             {payoutMsg && (

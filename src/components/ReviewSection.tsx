@@ -22,6 +22,7 @@ export default function ReviewSection({
   initialReviews: Review[];
   eligibleOrderItems?: { id: string }[];
 }) {
+  const { tr } = useLanguage();
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
@@ -49,14 +50,17 @@ export default function ReviewSection({
         setReviews([data.review, ...reviews]);
         setComment('');
         setRating(5);
-        toast({ title: 'Review submitted!', variant: 'success' });
+        toast({ title: tr('Review submitted!'), variant: 'success' });
         // Remove the used item from eligibility
         eligibleOrderItems.shift();
       } else {
-        toast({ title: data.message || 'Failed to submit review.', variant: 'error' });
+        toast({ title: data.message || tr('Failed to submit review.'), variant: 'error' });
       }
     } catch (_err) {
-      toast({ title: 'Failed to submit review. Make sure you are logged in.', variant: 'error' });
+      toast({
+        title: tr('Failed to submit review. Make sure you are logged in.'),
+        variant: 'error',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -90,7 +94,10 @@ export default function ReviewSection({
 
       <div className="space-y-8">
         {reviews.length === 0 && (
-          <EmptyState title="No reviews yet" description="Be the first to review this product" />
+          <EmptyState
+            title={tr('No reviews yet')}
+            description={tr('Be the first to review this product')}
+          />
         )}
         {reviews.map((r: Review) => (
           <div key={r.id} className="border-b border-gray-100 pb-8 last:border-0">
@@ -99,10 +106,10 @@ export default function ReviewSection({
                 <Avatar fallback={r.user?.name?.substring(0, 1) || 'U'} size="md" />
                 <div>
                   <div className="font-bold text-gray-900 flex items-center gap-2">
-                    {r.user?.name || 'User'}
+                    {r.user?.name || tr('User')}
                     {r.verifiedPurchase && (
                       <Badge variant="success" size="sm">
-                        Verified Purchase
+                        {tr('Verified Purchase')}
                       </Badge>
                     )}
                   </div>
@@ -113,7 +120,7 @@ export default function ReviewSection({
               </div>
               <RatingStars value={r.rating} readOnly size="sm" />
             </div>
-            <p className="text-gray-600 text-sm leading-relaxed ml-13">{r.comment}</p>
+            <p className="text-gray-600 text-sm leading-relaxed ms-13">{r.comment}</p>
           </div>
         ))}
       </div>

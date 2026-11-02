@@ -13,6 +13,7 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
+  const { tr } = useLanguage();
   const { items, removeItem, updateQty, total, clearCart, rewriteId } = useCartStore();
   const { t, lang } = useLanguage();
   const [isAnimating, setIsAnimating] = useState(false);
@@ -232,7 +233,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     setPromoError('');
                   }}
                   className="text-green-700 hover:text-green-900"
-                  aria-label={lang === 'ar' ? 'إزالة كود الخصم' : 'Remove promo code'}
+                  aria-label={lang === 'ar' ? 'إزالة كود الخصم' : tr('Remove promo code')}
                 >
                   <X size={14} />
                 </button>

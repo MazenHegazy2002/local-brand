@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
@@ -25,6 +26,7 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
 };
 
 function LoginForm() {
+  const { tr } = useLanguage();
   const _router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
@@ -110,7 +112,7 @@ function LoginForm() {
   const handleMagicLinkRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
-      setError('Please enter the email you used at checkout.');
+      setError(tr('Please enter the email you used at checkout.'));
       return;
     }
     setError('');
@@ -123,12 +125,12 @@ function LoginForm() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.message || 'Failed to send the sign-in link.');
+        setError(data?.message || tr('Failed to send the sign-in link.'));
         return;
       }
       setMagicLinkSent(true);
     } catch {
-      setError('Failed to send the sign-in link. Please try again.');
+      setError(tr('Failed to send the sign-in link. Please try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -163,7 +165,7 @@ function LoginForm() {
         captchaAnswer: failedAttempts >= 3 || lockoutSeconds > 0 ? captchaAnswer : undefined,
       });
     } catch (_networkErr) {
-      setError('Unable to connect. Please check your internet connection and try again.');
+      setError(tr('Unable to connect. Please check your internet connection and try again.'));
       setIsLoading(false);
       return;
     }
@@ -181,9 +183,9 @@ function LoginForm() {
         );
         fetchCaptcha();
       } else if (res.error.toLowerCase().includes('email not verified')) {
-        setError('Please verify your email address before logging in.');
+        setError(tr('Please verify your email address before logging in.'));
       } else {
-        setError('Invalid email or password');
+        setError(tr('Invalid email or password'));
         if (failedAttempts + 1 >= 3) {
           fetchCaptcha();
         }
@@ -245,10 +247,10 @@ function LoginForm() {
           </span>
         </Link>
         <h1 className="mt-6 text-center text-3xl font-extrabold text-[hsl(var(--foreground))]">
-          Welcome Back
+          {tr('Welcome Back')}
         </h1>
         <p className="mt-2 text-center text-sm text-[hsl(var(--muted-foreground))]">
-          Sign in to continue your journey
+          {tr('Sign in to continue your journey')}
         </p>
       </div>
 
@@ -293,7 +295,9 @@ function LoginForm() {
                     />
                   </svg>
                 )}
-                <span className="capitalize">Continue with {provider}</span>
+                <span className="capitalize">
+                  {tr('Continue with')} {provider}
+                </span>
               </button>
             ))}
           </div>
@@ -304,18 +308,21 @@ function LoginForm() {
               <div className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-3 bg-white text-gray-400 font-medium">or sign in with email</span>
+              <span className="px-3 bg-white text-gray-400 font-medium">
+                {tr('or sign in with email')}
+              </span>
             </div>
           </div>
 
           {/* ─── Magic-link confirmation banner ─────────────────────────────── */}
           {magicLinkSent ? (
             <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-xl p-4 text-sm">
-              <div className="font-bold mb-1">Check your email</div>
+              <div className="font-bold mb-1">{tr('Check your email')}</div>
               <p className="leading-relaxed">
-                If an account with <strong>{email}</strong> exists, we just sent it a sign-in link.
-                The link is good for 30 minutes and works once. After signing in, you&apos;ll be
-                asked to set a password so you can use email + password next time.
+                {tr('If an account with')} <strong>{email}</strong>{' '}
+                {tr(
+                  "exists, we just sent it a sign-in link. The link is good for 30 minutes and works once. After signing in, you'll be asked to set a password so you can use email + password next time."
+                )}
               </p>
               <button
                 type="button"
@@ -325,7 +332,7 @@ function LoginForm() {
                 }}
                 className="mt-3 text-emerald-700 font-medium hover:underline text-xs"
               >
-                Use a different email
+                {tr('Use a different email')}
               </button>
             </div>
           ) : (
@@ -335,7 +342,7 @@ function LoginForm() {
             >
               <div>
                 <label htmlFor="email-input" className="block text-sm font-medium text-gray-700">
-                  Email address
+                  {tr('Email address')}
                 </label>
                 <div className="mt-1">
                   <input
@@ -357,7 +364,7 @@ function LoginForm() {
                     htmlFor="password-input"
                     className="block text-sm font-medium text-gray-700"
                   >
-                    Password
+                    {tr('Password')}
                   </label>
                   <div className="mt-1 relative">
                     <input
@@ -367,13 +374,13 @@ function LoginForm() {
                       autoComplete="current-password"
                       value={password}
                       onChange={e => setPassword(e.target.value)}
-                      className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm pr-10 transition-all"
-                      placeholder="Enter your password"
+                      className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm pe-10 transition-all"
+                      placeholder={tr('Enter your password')}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
                       {showPassword ? (
                         <svg
@@ -409,10 +416,10 @@ function LoginForm() {
               {!magicLinkMode && (failedAttempts >= 3 || lockoutSeconds > 0) && captchaQuestion && (
                 <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 space-y-3">
                   <div className="text-xs font-bold text-orange-800 uppercase tracking-wider">
-                    Security Verification Required
+                    {tr('Security Verification Required')}
                   </div>
                   <div className="text-sm text-gray-700">
-                    Prove you are human to bypass lockout and verify your login attempt:
+                    {tr('Prove you are human to bypass lockout and verify your login attempt:')}
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-black bg-white px-3 py-2 border border-gray-200 rounded-lg shadow-sm font-mono text-gray-800">
@@ -423,7 +430,7 @@ function LoginForm() {
                       required
                       value={captchaAnswer}
                       onChange={e => setCaptchaAnswer(e.target.value)}
-                      placeholder="Answer"
+                      placeholder={tr('Answer')}
                       className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm text-center font-mono focus:ring-2 focus:ring-orange-400 focus:outline-none"
                     />
                   </div>
@@ -440,8 +447,8 @@ function LoginForm() {
                       onChange={e => setRememberMe(e.target.checked)}
                       className="h-4 w-4 text-[hsl(var(--primary))] focus:ring-[hsl(var(--ring))] border-gray-300 rounded"
                     />
-                    <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                      Remember me
+                    <label htmlFor="remember-me" className="ms-2 block text-sm text-gray-900">
+                      {tr('Remember me')}
                     </label>
                   </div>
                   <div className="text-sm">
@@ -449,7 +456,7 @@ function LoginForm() {
                       href="/forgot-password"
                       className="font-medium text-[hsl(var(--primary))] hover:text-[hsl(var(--primary-dark))]"
                     >
-                      Forgot password?
+                      {tr('Forgot password?')}
                     </Link>
                   </div>
                 </div>
@@ -482,12 +489,12 @@ function LoginForm() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       />
                     </svg>
-                    {magicLinkMode ? 'Sending link...' : 'Signing in...'}
+                    {magicLinkMode ? tr('Sending link...') : tr('Signing in...')}
                   </span>
                 ) : magicLinkMode ? (
-                  'Email me a sign-in link'
+                  tr('Email me a sign-in link')
                 ) : (
-                  'Sign in'
+                  tr('Sign in')
                 )}
               </button>
 
@@ -501,32 +508,32 @@ function LoginForm() {
                 className="w-full text-center text-sm text-[hsl(var(--primary))] font-medium hover:underline"
               >
                 {magicLinkMode
-                  ? '← Sign in with a password instead'
-                  : 'No password yet? Email me a sign-in link →'}
+                  ? tr('← Sign in with a password instead')
+                  : tr('No password yet? Email me a sign-in link →')}
               </button>
             </form>
           )}
 
           {/* Register link */}
           <p className="mt-6 text-center text-sm text-gray-600">
-            Don&apos;t have an account?{' '}
+            {tr("Don't have an account?")}{' '}
             <Link
               href="/register"
               className="font-medium text-[hsl(var(--primary))] hover:text-[hsl(var(--primary-dark))]"
             >
-              Create one now
+              {tr('Create one now')}
             </Link>
           </p>
 
           {/* Legal footer */}
           <p className="mt-6 text-center text-xs text-gray-400">
-            By signing in you agree to our{' '}
+            {tr('By signing in you agree to our')}{' '}
             <Link href="/legal#terms" className="underline hover:text-gray-600">
-              Terms
+              {tr('Terms')}
             </Link>
             {' & '}
             <Link href="/legal#privacy" className="underline hover:text-gray-600">
-              Privacy Policy
+              {tr('Privacy Policy')}
             </Link>
           </p>
         </div>
@@ -536,11 +543,12 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const { tr } = useLanguage();
   return (
     <Suspense
       fallback={
         <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center text-gray-400">
-          Loading...
+          {tr('Loading...')}
         </div>
       }
     >

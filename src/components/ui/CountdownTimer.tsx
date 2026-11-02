@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState, useEffect } from 'react';
 
@@ -36,14 +37,21 @@ function calculateTimeLeft(targetDate: Date | string | number): TimeLeft {
   };
 }
 
-export function CountdownTimer({ targetDate, onExpire, compact = false, variant = 'default', className = '' }: CountdownTimerProps) {
+export function CountdownTimer({
+  targetDate,
+  onExpire,
+  compact = false,
+  variant = 'default',
+  className = '',
+}: CountdownTimerProps) {
+  const { tr } = useLanguage();
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => calculateTimeLeft(targetDate));
 
   useEffect(() => {
     const timer = setInterval(() => {
       const newTime = calculateTimeLeft(targetDate);
       setTimeLeft(newTime);
-      
+
       if (newTime.total <= 0) {
         clearInterval(timer);
         onExpire?.();
@@ -56,24 +64,39 @@ export function CountdownTimer({ targetDate, onExpire, compact = false, variant 
   if (timeLeft.total <= 0) {
     return (
       <div className={`text-center ${className}`}>
-        <span className="text-red-500 font-bold">Expired</span>
+        <span className="text-red-500 font-bold">{tr('Expired')}</span>
       </div>
     );
   }
 
-  const bgColor = variant === 'accent' ? 'bg-[hsl(var(--accent))] text-[hsl(var(--primary))]' : 'bg-[hsl(var(--primary))] text-white';
+  const bgColor =
+    variant === 'accent'
+      ? 'bg-[hsl(var(--accent))] text-[hsl(var(--primary))]'
+      : 'bg-[hsl(var(--primary))] text-white';
   const compactBg = variant === 'accent' ? 'bg-amber-100 text-amber-800' : 'bg-gray-900 text-white';
 
   if (compact) {
     const parts = [
       timeLeft.days > 0 && `${timeLeft.days}d`,
-      `${String(timeLeft.hours).padStart(2, '0')}:${String(timeLeft.minutes).padStart(2, '0')}:${String(timeLeft.seconds).padStart(2, '0')}`
-    ].filter(Boolean).join(' ');
-    
+      `${String(timeLeft.hours).padStart(2, '0')}:${String(timeLeft.minutes).padStart(2, '0')}:${String(timeLeft.seconds).padStart(2, '0')}`,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-mono font-bold ${compactBg} ${className}`}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-mono font-bold ${compactBg} ${className}`}
+      >
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
         </svg>
         {parts}
       </span>
@@ -85,23 +108,35 @@ export function CountdownTimer({ targetDate, onExpire, compact = false, variant 
       {timeLeft.days > 0 && (
         <div className={`flex flex-col items-center p-2 rounded-lg ${bgColor}`}>
           <span className="text-2xl font-black">{String(timeLeft.days).padStart(2, '0')}</span>
-          <span className="text-[10px] font-semibold uppercase">Days</span>
+          <span className="text-[10px] font-semibold uppercase">{tr('Days')}</span>
         </div>
       )}
-      <span className={`text-2xl font-black ${bgColor ? 'text-white' : 'text-[hsl(var(--primary))]'}`}>:</span>
+      <span
+        className={`text-2xl font-black ${bgColor ? 'text-white' : 'text-[hsl(var(--primary))]'}`}
+      >
+        :
+      </span>
       <div className={`flex flex-col items-center p-2 rounded-lg ${bgColor}`}>
         <span className="text-2xl font-black">{String(timeLeft.hours).padStart(2, '0')}</span>
-        <span className="text-[10px] font-semibold uppercase">Hours</span>
+        <span className="text-[10px] font-semibold uppercase">{tr('Hours')}</span>
       </div>
-      <span className={`text-2xl font-black ${bgColor ? 'text-white' : 'text-[hsl(var(--primary))]'}`}>:</span>
+      <span
+        className={`text-2xl font-black ${bgColor ? 'text-white' : 'text-[hsl(var(--primary))]'}`}
+      >
+        :
+      </span>
       <div className={`flex flex-col items-center p-2 rounded-lg ${bgColor}`}>
         <span className="text-2xl font-black">{String(timeLeft.minutes).padStart(2, '0')}</span>
-        <span className="text-[10px] font-semibold uppercase">Min</span>
+        <span className="text-[10px] font-semibold uppercase">{tr('Min')}</span>
       </div>
-      <span className={`text-2xl font-black ${bgColor ? 'text-white' : 'text-[hsl(var(--primary))]'}`}>:</span>
+      <span
+        className={`text-2xl font-black ${bgColor ? 'text-white' : 'text-[hsl(var(--primary))]'}`}
+      >
+        :
+      </span>
       <div className={`flex flex-col items-center p-2 rounded-lg ${bgColor}`}>
         <span className="text-2xl font-black">{String(timeLeft.seconds).padStart(2, '0')}</span>
-        <span className="text-[10px] font-semibold uppercase">Sec</span>
+        <span className="text-[10px] font-semibold uppercase">{tr('Sec')}</span>
       </div>
     </div>
   );

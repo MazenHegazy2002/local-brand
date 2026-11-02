@@ -60,7 +60,7 @@ function summarise(payload: AlertPayload): { title: string; body: string; isDown
     const a = payload.data.attributes;
     const isDown = a.status === 'down' || !a.resolved_at;
     return {
-      title: `[Brandy Uptime] ${isDown ? '🔴 DOWN' : '🟢 RECOVERED'}: ${a.name || a.url}`,
+      title: `[Brandyy Uptime] ${isDown ? '🔴 DOWN' : '🟢 RECOVERED'}: ${a.name || a.url}`,
       body: `Monitor: ${a.name || a.url}\nStatus: ${a.status}\nCause: ${a.cause || '—'}\nStarted: ${a.started_at || '—'}\nResolved: ${a.resolved_at || '—'}`,
       isDown,
     };
@@ -70,7 +70,7 @@ function summarise(payload: AlertPayload): { title: string; body: string; isDown
   const alertType = Number(payload.alertType);
   const isDown = alertType === 1;
   return {
-    title: `[Brandy Uptime] ${isDown ? '🔴 DOWN' : '🟢 RECOVERED'}: ${payload.monitorFriendlyName || payload.monitorURL || 'Unknown monitor'}`,
+    title: `[Brandyy Uptime] ${isDown ? '🔴 DOWN' : '🟢 RECOVERED'}: ${payload.monitorFriendlyName || payload.monitorURL || 'Unknown monitor'}`,
     body: `Monitor: ${payload.monitorFriendlyName || '—'}\nURL: ${payload.monitorURL || '—'}\nEvent: ${payload.alertTypeFriendlyName || String(alertType)}\nDetails: ${payload.alertDetails || '—'}\nDowntime: ${payload.alertDuration ? `${payload.alertDuration}s` : '—'}`,
     isDown,
   };
@@ -119,7 +119,7 @@ export async function POST(req: Request) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'Brandy Alerts <alerts@brandyy.shop>',
+          from: 'Brandyy Alerts <alerts@brandyy.shop>',
           to: alertEmail,
           subject: title,
           text: body,

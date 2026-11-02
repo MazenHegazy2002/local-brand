@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -8,6 +9,7 @@ import PasswordStrength from '@/components/PasswordStrength';
 type Step = 'form' | 'check-email' | 'seller-pending';
 
 export default function RegisterPage() {
+  const { tr } = useLanguage();
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -23,7 +25,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError(tr('Passwords do not match.'));
       return;
     }
 
@@ -71,20 +73,21 @@ export default function RegisterPage() {
                 />
               </svg>
             </div>
-            <h1 className="text-2xl font-black text-gray-900 mb-2">Check your email</h1>
+            <h1 className="text-2xl font-black text-gray-900 mb-2">{tr('Check your email')}</h1>
             <p className="text-gray-500 text-sm leading-relaxed mb-2">
-              We sent a verification link to <strong className="text-gray-800">{email}</strong>.
+              {tr('We sent a verification link to')}{' '}
+              <strong className="text-gray-800">{email}</strong>.
             </p>
-            <p className="text-gray-400 text-xs mb-6">The link expires in 10 minutes.</p>
+            <p className="text-gray-400 text-xs mb-6">{tr('The link expires in 10 minutes.')}</p>
             <button
               onClick={() => router.push(`/verify-email?email=${encodeURIComponent(email)}`)}
               className="text-sm text-[hsl(var(--primary))] hover:underline"
             >
-              Didn&apos;t receive it? Resend
+              {tr("Didn't receive it? Resend")}
             </button>
             <p className="text-xs text-gray-400 mt-6">
               <Link href="/login" className="hover:underline text-gray-500">
-                Back to sign in
+                {tr('Back to sign in')}
               </Link>
             </p>
           </div>
@@ -116,25 +119,29 @@ export default function RegisterPage() {
                 />
               </svg>
             </div>
-            <h1 className="text-2xl font-black text-gray-900 mb-2">Application received! 🎉</h1>
+            <h1 className="text-2xl font-black text-gray-900 mb-2">
+              {tr('Application received! 🎉')}
+            </h1>
             <p className="text-gray-500 text-sm leading-relaxed mb-4">
-              Your seller application for{' '}
-              <strong className="text-gray-800">{storeName || `${name}'s Store`}</strong> has been
-              submitted.
+              {tr('Your seller application for')}{' '}
+              <strong className="text-gray-800">{storeName || `${name}'s Store`}</strong>{' '}
+              {tr('has been submitted.')}
             </p>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left">
-              <p className="text-amber-800 text-sm font-semibold mb-1">⏳ What happens next?</p>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-start">
+              <p className="text-amber-800 text-sm font-semibold mb-1">
+                {tr('⏳ What happens next?')}
+              </p>
               <ol className="text-amber-700 text-xs space-y-1 list-decimal list-inside">
                 <li>
-                  Verify your email (check <strong>{email}</strong>)
+                  {tr('Verify your email (check')} <strong>{email}</strong>)
                 </li>
-                <li>Our team reviews your application (1–2 business days)</li>
-                <li>You get an approval email — then you can list products!</li>
+                <li>{tr('Our team reviews your application (1–2 business days)')}</li>
+                <li>{tr('You get an approval email — then you can list products!')}</li>
               </ol>
             </div>
             <p className="text-xs text-gray-400">
               <Link href="/login" className="hover:underline text-gray-500">
-                Sign in to check your status
+                {tr('Sign in to check your status')}
               </Link>
             </p>
           </div>
@@ -154,26 +161,26 @@ export default function RegisterPage() {
           </span>
         </Link>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-[hsl(var(--foreground))]">
-          Join the Movement
+          {tr('Join the Movement')}
         </h2>
         <p className="mt-2 text-center text-sm text-[hsl(var(--muted-foreground))]">
-          Already have an account?{' '}
+          {tr('Already have an account?')}{' '}
           <Link
             href="/login"
             className="font-medium text-[hsl(var(--primary))] hover:text-[hsl(var(--primary-dark))]"
           >
-            Sign in
+            {tr('Sign in')}
           </Link>
         </p>
 
         {/* Dedicated Seller Banner */}
         <div className="mt-4 bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-center text-xs text-indigo-900 flex items-center justify-between gap-2">
-          <span>Are you a brand owner or seller?</span>
+          <span>{tr('Are you a brand owner or seller?')}</span>
           <Link
             href="/become-seller"
             className="font-bold text-indigo-600 hover:text-indigo-800 underline shrink-0"
           >
-            Become a Seller →
+            {tr('Become a Seller →')}
           </Link>
         </div>
       </div>
@@ -191,7 +198,7 @@ export default function RegisterPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Full Name</label>
+              <label className="block text-sm font-medium text-gray-700">{tr('Full Name')}</label>
               <div className="mt-1">
                 <input
                   type="text"
@@ -205,7 +212,9 @@ export default function RegisterPage() {
 
             {role === 'SELLER' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700">Store Name</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  {tr('Store Name')}
+                </label>
                 <div className="mt-1">
                   <input
                     type="text"
@@ -220,7 +229,9 @@ export default function RegisterPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Email address</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {tr('Email address')}
+              </label>
               <div className="mt-1">
                 <input
                   type="email"
@@ -234,7 +245,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Phone Number (Optional)
+                {tr('Phone Number (Optional)')}
               </label>
               <div className="mt-1">
                 <input
@@ -248,7 +259,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <label className="block text-sm font-medium text-gray-700">{tr('Password')}</label>
               <div className="mt-1">
                 <input
                   type="password"
@@ -263,7 +274,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {tr('Confirm Password')}
+              </label>
               <div className="mt-1">
                 <input
                   type="password"
@@ -282,13 +295,14 @@ export default function RegisterPage() {
                 disabled={isLoading}
                 className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-colors bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-dark))] disabled:opacity-50"
               >
-                {isLoading ? 'Creating account...' : 'Create Customer Account'}
+                {isLoading ? tr('Creating account...') : tr('Create Customer Account')}
               </button>
             </div>
 
             <p className="text-xs text-gray-500 text-center mt-4">
-              By creating an account, you agree to Brandy&apos;s Conditions of Use and Privacy
-              Notice.
+              {tr(
+                "By creating an account, you agree to Brandyy's Conditions of Use and Privacy Notice."
+              )}
             </p>
           </form>
         </div>

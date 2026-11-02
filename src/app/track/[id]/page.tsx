@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -44,6 +45,7 @@ const STATUS_STEPS = [
 ];
 
 export default function TrackOrderPage() {
+  const { tr } = useLanguage();
   const params = useParams();
   const searchParams = useSearchParams();
   const orderId = params.id as string;
@@ -90,7 +92,7 @@ export default function TrackOrderPage() {
     const oid = (searchOrderId || orderId || '').trim();
     const em = searchEmail.trim();
     if (!oid || !em) {
-      setError('Please enter both order ID and email');
+      setError(tr('Please enter both order ID and email'));
       return;
     }
     fetchOrder(oid, em);
@@ -109,7 +111,7 @@ export default function TrackOrderPage() {
       <Navbar />
 
       <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <h1 className="text-3xl font-black text-gray-900 mb-8">Track Your Order</h1>
+        <h1 className="text-3xl font-black text-gray-900 mb-8">{tr('Track Your Order')}</h1>
 
         {/* Error Feedback */}
         {error && (
@@ -124,13 +126,15 @@ export default function TrackOrderPage() {
           <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
             <p className="text-sm text-gray-500 mb-4">
               {orderId
-                ? 'Enter the email you used at checkout to view this order.'
-                : 'Enter your order ID and the email you used at checkout.'}
+                ? tr('Enter the email you used at checkout to view this order.')
+                : tr('Enter your order ID and the email you used at checkout.')}
             </p>
             <form onSubmit={handleSearch} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Order ID</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    {tr('Order ID')}
+                  </label>
                   <input
                     type="text"
                     value={searchOrderId}
@@ -143,7 +147,9 @@ export default function TrackOrderPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    {tr('Email')}
+                  </label>
                   <input
                     type="email"
                     value={searchEmail}
@@ -158,7 +164,7 @@ export default function TrackOrderPage() {
                 type="submit"
                 className="w-full bg-[#1e3b8a] text-white font-bold py-3 rounded-lg hover:bg-[#152c6e] transition-colors"
               >
-                Track Order
+                {tr('Track Order')}
               </button>
             </form>
           </div>
@@ -168,7 +174,7 @@ export default function TrackOrderPage() {
         {loading && (
           <div className="text-center py-12">
             <div className="animate-spin h-8 w-8 border-4 border-[#1e3b8a] border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-500">Loading order details...</p>
+            <p className="text-gray-500">{tr('Loading order details...')}</p>
           </div>
         )}
 
@@ -179,10 +185,10 @@ export default function TrackOrderPage() {
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <div className="text-sm text-gray-500 mb-1">Order ID</div>
+                  <div className="text-sm text-gray-500 mb-1">{tr('Order ID')}</div>
                   <div className="text-xl font-bold text-gray-900">{order.id}</div>
                 </div>
-                <div className="text-right">
+                <div className="text-end">
                   <span
                     className={`px-4 py-2 rounded-full text-sm font-bold ${
                       order.status === 'DELIVERED'
@@ -199,14 +205,14 @@ export default function TrackOrderPage() {
                 </div>
               </div>
               <div className="text-gray-600 text-sm">
-                Placed on {new Date(order.createdAt).toLocaleDateString()} •{' '}
+                {tr('Placed on')} {new Date(order.createdAt).toLocaleDateString()} •{' '}
                 {order.paymentMethod.replace(/_/g, ' ')}
               </div>
             </div>
 
             {/* Tracking Progress */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900 mb-6">Order Progress</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-6">{tr('Order Progress')}</h2>
               <div className="flex items-center justify-between">
                 {STATUS_STEPS.map((step, idx) => {
                   const isCompleted = idx <= getCurrentStepIndex();
@@ -228,7 +234,7 @@ export default function TrackOrderPage() {
                       <div
                         className={`text-xs font-medium text-center ${isCompleted ? 'text-gray-900' : 'text-gray-400'}`}
                       >
-                        {step.label}
+                        {tr(step.label)}
                       </div>
                     </div>
                   );
@@ -239,20 +245,20 @@ export default function TrackOrderPage() {
             {/* Shipping Address */}
             {address && (
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Shipping Address</h2>
+                <h2 className="text-lg font-bold text-gray-900 mb-4">{tr('Shipping Address')}</h2>
                 <div className="text-gray-600">
                   <p>{address.street}</p>
                   <p>
                     {address.city}, {address.governorate}
                   </p>
-                  <p>Egypt</p>
+                  <p>{tr('Egypt')}</p>
                 </div>
               </div>
             )}
 
             {/* Order Items */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Order Items</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-4">{tr('Order Items')}</h2>
               <div className="space-y-4">
                 {order.items.map(item => (
                   <div
@@ -276,7 +282,7 @@ export default function TrackOrderPage() {
                     <div className="flex-1">
                       <div className="font-medium text-gray-900">{item.productTitleSnapshot}</div>
                       <div className="text-sm text-gray-500">
-                        Qty: {item.quantity}
+                        {tr('Qty:')} {item.quantity}
                         {item.selectedColor && ` • Color: ${item.selectedColor}`}
                         {item.selectedSize && ` • Size: ${item.selectedSize}`}
                         {!item.selectedColor &&
@@ -285,9 +291,9 @@ export default function TrackOrderPage() {
                           ` • Variant: ${item.variant.title}`}
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-end">
                       <div className="font-bold text-gray-900">
-                        {(item.priceAtPurchase * item.quantity).toLocaleString()} EGP
+                        {(item.priceAtPurchase * item.quantity).toLocaleString()} {tr('EGP')}
                       </div>
                       <span
                         className={`text-xs px-2 py-0.5 rounded ${item.status === 'DELIVERED' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}
@@ -302,33 +308,37 @@ export default function TrackOrderPage() {
 
             {/* Order Summary */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-4">{tr('Order Summary')}</h2>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
+                  <span className="text-gray-600">{tr('Subtotal')}</span>
                   <span className="font-medium">
                     {(
                       order.totalAmount -
                       order.shippingFee -
                       (order.discountAmount || 0)
                     ).toLocaleString()}{' '}
-                    EGP
+                    {tr('EGP')}
                   </span>
                 </div>
                 {order.discountAmount > 0 && (
                   <div className="flex justify-between text-green-600">
-                    <span>Discount</span>
-                    <span>-{order.discountAmount.toLocaleString()} EGP</span>
+                    <span>{tr('Discount')}</span>
+                    <span>
+                      -{order.discountAmount.toLocaleString()} {tr('EGP')}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Shipping</span>
-                  <span className="font-medium">{order.shippingFee.toLocaleString()} EGP</span>
+                  <span className="text-gray-600">{tr('Shipping')}</span>
+                  <span className="font-medium">
+                    {order.shippingFee.toLocaleString()} {tr('EGP')}
+                  </span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-gray-100">
-                  <span className="font-bold text-gray-900">Total</span>
+                  <span className="font-bold text-gray-900">{tr('Total')}</span>
                   <span className="font-bold text-xl text-[#1e3b8a]">
-                    {order.totalAmount.toLocaleString()} EGP
+                    {order.totalAmount.toLocaleString()} {tr('EGP')}
                   </span>
                 </div>
               </div>
@@ -336,12 +346,12 @@ export default function TrackOrderPage() {
 
             {/* Help */}
             <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-2">Need Help?</h3>
+              <h3 className="font-bold text-gray-900 mb-2">{tr('Need Help?')}</h3>
               <p className="text-sm text-gray-600 mb-4">
-                Contact our support team if you have any questions about your order.
+                {tr('Contact our support team if you have any questions about your order.')}
               </p>
               <Link href="/help" className="text-[#1e3b8a] font-medium hover:underline">
-                Contact Support →
+                {tr('Contact Support →')}
               </Link>
             </div>
           </div>

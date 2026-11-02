@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useEffect } from 'react';
 
@@ -9,6 +10,7 @@ export default function SellerHubError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { tr } = useLanguage();
   useEffect(() => {
     console.error('[seller-hub] error:', error);
   }, [error]);
@@ -19,22 +21,22 @@ export default function SellerHubError({
         <div className="mb-6 mx-auto w-16 h-16 rounded-full bg-red-50 flex items-center justify-center text-2xl">
           ⚠️
         </div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">SellerHub couldn&apos;t load</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">{tr("SellerHub couldn't load")}</h2>
         <p className="text-slate-500 mb-6">
-          Something went wrong loading your seller dashboard. Please retry or sign back in.
+          {tr('Something went wrong loading your seller dashboard. Please retry or sign back in.')}
         </p>
         <div className="flex gap-3 justify-center">
           <button
             onClick={() => reset()}
             className="px-6 py-3 rounded-xl bg-[#0F6E56] text-white font-bold hover:opacity-90"
           >
-            Retry
+            {tr('Retry')}
           </button>
           <a
             href="/"
             className="px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50"
           >
-            Go Home
+            {tr('Go Home')}
           </a>
         </div>
       </div>

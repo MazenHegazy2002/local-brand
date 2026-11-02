@@ -195,6 +195,7 @@ const COPY: Record<'en' | 'ar' | 'fk', Copy> = {
 };
 
 export default function DeleteAccountClient() {
+  const { tr } = useLanguage();
   const { lang } = useLanguage();
   const c = COPY[lang] ?? COPY.en;
   const { data: session, status } = useSession();
@@ -231,7 +232,7 @@ export default function DeleteAccountClient() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl">
       <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">{c.title}</h1>
+        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">{tr(c.title)}</h1>
         <p className="text-gray-600 leading-relaxed">{c.intro}</p>
       </div>
 
@@ -269,7 +270,7 @@ export default function DeleteAccountClient() {
             role="status"
             className={`mt-4 text-sm font-semibold ${message.ok ? 'text-green-700' : 'text-red-600'}`}
           >
-            {message.text}
+            {tr(message.text)}
           </p>
         )}
       </section>
@@ -282,7 +283,7 @@ export default function DeleteAccountClient() {
             { title: c.webTitle, steps: c.webSteps },
           ].map(block => (
             <div key={block.title}>
-              <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
+              <h3 className="font-bold text-gray-900 mb-2">{tr(block.title)}</h3>
               <ol className="list-decimal ps-5 space-y-1.5 text-sm text-gray-600 leading-relaxed">
                 {block.steps.map(s => (
                   <li key={s}>{s}</li>

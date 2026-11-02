@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -21,6 +22,7 @@ interface Review {
 }
 
 export default function ReviewsPage() {
+  const { tr } = useLanguage();
   const { data: _session, status } = useSession();
   const router = useRouter();
   const { confirm } = useConfirm();
@@ -58,8 +60,8 @@ export default function ReviewsPage() {
 
   const deleteReview = async (id: string) => {
     const confirmed = await confirm({
-      title: 'Delete Review',
-      message: 'Are you sure you want to delete this review?',
+      title: tr('Delete Review'),
+      message: tr('Are you sure you want to delete this review?'),
       type: 'danger',
     });
     if (!confirmed) return;
@@ -68,12 +70,12 @@ export default function ReviewsPage() {
       setReviews(prev => prev.filter(r => r.id !== id));
       toast({
         variant: 'success',
-        title: 'Review Deleted',
-        description: 'Your review was deleted successfully.',
+        title: tr('Review Deleted'),
+        description: tr('Your review was deleted successfully.'),
       });
     } catch (e) {
       console.error(e);
-      toast({ variant: 'error', title: 'Error', description: 'Failed to delete review.' });
+      toast({ variant: 'error', title: tr('Error'), description: tr('Failed to delete review.') });
     }
   };
 
@@ -115,7 +117,7 @@ export default function ReviewsPage() {
   if (loading) {
     return (
       <div className="db">
-        <div className="main">Loading...</div>
+        <div className="main">{tr('Loading...')}</div>
       </div>
     );
   }
@@ -124,37 +126,38 @@ export default function ReviewsPage() {
     <div className="db">
       <div className="sidebar">
         <div className="logo">
-          My<span>LB</span>
+          {tr('My')}
+          <span>LB</span>
         </div>
 
-        <div className="nav-section">Personal</div>
+        <div className="nav-section">{tr('Personal')}</div>
         <Link href="/dashboard" className="nav-item">
-          Overview
+          {tr('Overview')}
         </Link>
         <Link href="/dashboard/orders" className="nav-item">
-          My Orders
+          {tr('My Orders')}
         </Link>
         <Link href="/dashboard/wishlist" className="nav-item">
-          Wishlist
+          {tr('Wishlist')}
         </Link>
         <Link href="/dashboard/notifications" className="nav-item">
-          Alerts
+          {tr('Alerts')}
         </Link>
 
-        <div className="nav-section">Finance</div>
+        <div className="nav-section">{tr('Finance')}</div>
         <Link href="/dashboard/wallet" className="nav-item">
-          Wallet
+          {tr('Wallet')}
         </Link>
 
-        <div className="nav-section">System</div>
+        <div className="nav-section">{tr('System')}</div>
         <Link href="/dashboard/settings" className="nav-item">
-          Settings
+          {tr('Settings')}
         </Link>
       </div>
 
       <div className="main">
         <div className="topbar">
-          <div className="page-title">My reviews</div>
+          <div className="page-title">{tr('My reviews')}</div>
           <span className="text-xs text-slate-500">{reviews.length} reviews</span>
         </div>
 
@@ -163,7 +166,7 @@ export default function ReviewsPage() {
             type="text"
             value={filter}
             onChange={e => setFilter(e.target.value)}
-            placeholder="Filter by product..."
+            placeholder={tr('Filter by product...')}
             className="input-field max-w-xs"
           />
         </div>
@@ -171,15 +174,15 @@ export default function ReviewsPage() {
         {reviews.length === 0 ? (
           <div className="card text-center py-20">
             <div className="text-5xl mb-4">⭐</div>
-            <h3 className="text-lg font-semibold mb-2">No reviews yet</h3>
+            <h3 className="text-lg font-semibold mb-2">{tr('No reviews yet')}</h3>
             <p className="text-sm text-slate-500 mb-6">
-              Share your experience with products you&apos;ve purchased
+              {tr("Share your experience with products you've purchased")}
             </p>
             <Link
               href="/shop"
               className="inline-block px-6 py-3 bg-[#534AB7] text-white rounded-lg font-medium"
             >
-              Browse Products
+              {tr('Browse Products')}
             </Link>
           </div>
         ) : (
@@ -222,13 +225,13 @@ export default function ReviewsPage() {
                       onClick={() => openEditModal(review)}
                       className="text-xs text-[#534AB7] hover:underline"
                     >
-                      Edit
+                      {tr('Edit')}
                     </button>
                     <button
                       onClick={() => deleteReview(review.id)}
                       className="text-xs text-red-500 hover:underline"
                     >
-                      Delete
+                      {tr('Delete')}
                     </button>
                   </div>
                 </div>
@@ -241,10 +244,12 @@ export default function ReviewsPage() {
       {editingReview && (
         <div className="modal-overlay" onClick={() => setEditingReview(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3 className="card-title mb-6">Edit Review</h3>
+            <h3 className="card-title mb-6">{tr('Edit Review')}</h3>
             <form onSubmit={handleEditSubmit}>
               <div className="mb-4">
-                <label className="block text-xs font-medium text-slate-500 mb-2">Rating</label>
+                <label className="block text-xs font-medium text-slate-500 mb-2">
+                  {tr('Rating')}
+                </label>
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map(star => (
                     <button
@@ -259,7 +264,9 @@ export default function ReviewsPage() {
                 </div>
               </div>
               <div className="mb-4">
-                <label className="block text-xs font-medium text-slate-500 mb-1">Title</label>
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  {tr('Title')}
+                </label>
                 <input
                   type="text"
                   value={editForm.title}
@@ -269,7 +276,9 @@ export default function ReviewsPage() {
                 />
               </div>
               <div className="mb-6">
-                <label className="block text-xs font-medium text-slate-500 mb-1">Review</label>
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  {tr('Review')}
+                </label>
                 <textarea
                   value={editForm.content}
                   onChange={e => setEditForm({ ...editForm, content: e.target.value })}
@@ -284,14 +293,14 @@ export default function ReviewsPage() {
                   onClick={() => setEditingReview(null)}
                   className="flex-1 py-3 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium"
                 >
-                  Cancel
+                  {tr('Cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
                   className="flex-1 py-3 bg-[#534AB7] text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium"
                 >
-                  {saving ? 'Saving...' : 'Save Changes'}
+                  {saving ? tr('Saving...') : tr('Save Changes')}
                 </button>
               </div>
             </form>

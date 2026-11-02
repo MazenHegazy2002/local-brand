@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState, useCallback } from 'react';
 
@@ -51,47 +52,54 @@ export function DataTable<T extends Record<string, unknown>>({
   emptyMessage = 'No data available',
   className = '',
 }: DataTableProps<T>) {
+  const { tr } = useLanguage();
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedRows, setSelectedRows] = useState<Set<unknown>>(new Set());
 
-  const handleSort = useCallback((key: string) => {
-    if (sortKey === key) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortOrder('asc');
-    }
-  }, [sortKey, sortOrder]);
+  const handleSort = useCallback(
+    (key: string) => {
+      if (sortKey === key) {
+        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      } else {
+        setSortKey(key);
+        setSortOrder('asc');
+      }
+    },
+    [sortKey, sortOrder]
+  );
 
   const handleSelectAll = useCallback(() => {
     if (selectedRows.size === data.length) {
       setSelectedRows(new Set());
       onSelectionChange?.([]);
     } else {
-      const allIds = new Set(data.map((row) => row.id));
+      const allIds = new Set(data.map(row => row.id));
       setSelectedRows(allIds);
       onSelectionChange?.(data);
     }
   }, [data, selectedRows, onSelectionChange]);
 
-  const handleSelectRow = useCallback((id: unknown) => {
-    const newSelected = new Set(selectedRows);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedRows(newSelected);
-    onSelectionChange?.(data.filter((row) => newSelected.has(row.id)));
-  }, [selectedRows, data, onSelectionChange]);
+  const handleSelectRow = useCallback(
+    (id: unknown) => {
+      const newSelected = new Set(selectedRows);
+      if (newSelected.has(id)) {
+        newSelected.delete(id);
+      } else {
+        newSelected.add(id);
+      }
+      setSelectedRows(newSelected);
+      onSelectionChange?.(data.filter(row => newSelected.has(row.id)));
+    },
+    [selectedRows, data, onSelectionChange]
+  );
 
   let filteredData = data;
   if (search) {
-    filteredData = data.filter((row) =>
-      Object.values(row).some((val) => String(val).toLowerCase().includes(search.toLowerCase()))
+    filteredData = data.filter(row =>
+      Object.values(row).some(val => String(val).toLowerCase().includes(search.toLowerCase()))
     );
   }
 
@@ -108,14 +116,20 @@ export function DataTable<T extends Record<string, unknown>>({
   const totalItems = totalCount ?? filteredData.length;
   const totalPages = Math.ceil(totalItems / pageSize);
   const startIdx = (currentPage - 1) * pageSize;
-  const paginatedData = pagination ? filteredData.slice(startIdx, startIdx + pageSize) : filteredData;
+  const paginatedData = pagination
+    ? filteredData.slice(startIdx, startIdx + pageSize)
+    : filteredData;
 
   const exportToCSV = () => {
-    const headers = columns.map((c) => c.header).join(',');
-    const rows = filteredData.map((row) => columns.map((c) => {
-      const val = c.render ? c.render(row) : row[c.key];
-      return `"${String(val).replace(/"/g, '""')}"`;
-    }).join(','));
+    const headers = columns.map(c => c.header).join(',');
+    const rows = filteredData.map(row =>
+      columns
+        .map(c => {
+          const val = c.render ? c.render(row) : row[c.key];
+          return `"${String(val).replace(/"/g, '""')}"`;
+        })
+        .join(',')
+    );
     const csv = [headers, ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -134,14 +148,17 @@ export function DataTable<T extends Record<string, unknown>>({
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               placeholder={searchPlaceholder}
               className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] w-64"
             />
           )}
           {exportable && (
-            <button onClick={onExport || exportToCSV} className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50">
-              Export CSV
+            <button
+              onClick={onExport || exportToCSV}
+              className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50"
+            >
+              {tr('Export CSV')}
             </button>
           )}
         </div>
@@ -161,10 +178,10 @@ export function DataTable<T extends Record<string, unknown>>({
                   />
                 </th>
               )}
-              {columns.map((col) => (
+              {columns.map(col => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3 text-left text-sm font-semibold text-gray-600 ${col.sortable ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                  className={`px-4 py-3 text-start text-sm font-semibold text-gray-600 ${col.sortable ? 'cursor-pointer hover:bg-gray-100' : ''}`}
                   onClick={() => col.sortable && handleSort(col.key)}
                 >
                   <div className="flex items-center gap-2">
@@ -175,21 +192,31 @@ export function DataTable<T extends Record<string, unknown>>({
                   </div>
                 </th>
               ))}
-              {actions && <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600">Actions</th>}
+              {actions && (
+                <th className="px-4 py-3 text-end text-sm font-semibold text-gray-600">
+                  {tr('Actions')}
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="border-b border-gray-100">
-                  <td colSpan={columns.length + (selectable ? 1 : 0) + (actions ? 1 : 0)} className="px-4 py-4">
+                  <td
+                    colSpan={columns.length + (selectable ? 1 : 0) + (actions ? 1 : 0)}
+                    className="px-4 py-4"
+                  >
                     <div className="h-4 bg-gray-100 rounded animate-pulse" />
                   </td>
                 </tr>
               ))
             ) : paginatedData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + (selectable ? 1 : 0) + (actions ? 1 : 0)} className="px-4 py-12 text-center text-gray-500">
+                <td
+                  colSpan={columns.length + (selectable ? 1 : 0) + (actions ? 1 : 0)}
+                  className="px-4 py-12 text-center text-gray-500"
+                >
                   {emptyMessage}
                 </td>
               </tr>
@@ -206,13 +233,13 @@ export function DataTable<T extends Record<string, unknown>>({
                       />
                     </td>
                   )}
-                  {columns.map((col) => (
+                  {columns.map(col => (
                     <td key={col.key} className="px-4 py-3 text-sm text-gray-700">
                       {col.render ? col.render(row) : String(row[col.key] ?? '-')}
                     </td>
                   ))}
                   {actions && (
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-end">
                       <div className="flex justify-end gap-2">
                         {actions.map((action, j) => (
                           <button
@@ -235,21 +262,24 @@ export function DataTable<T extends Record<string, unknown>>({
 
       {pagination && totalPages > 1 && (
         <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
-          <span>Showing {startIdx + 1}-{Math.min(startIdx + pageSize, totalItems)} of {totalItems}</span>
+          <span>
+            {tr('Showing')} {startIdx + 1}-{Math.min(startIdx + pageSize, totalItems)} of{' '}
+            {totalItems}
+          </span>
           <div className="flex gap-2">
             <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
             >
-              Previous
+              {tr('Previous')}
             </button>
             <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
               className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
             >
-              Next
+              {tr('Next')}
             </button>
           </div>
         </div>

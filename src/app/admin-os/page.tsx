@@ -27,6 +27,7 @@ import PluginsTab from './_components/PluginsTab';
 import PagesTab from './_components/PagesTab';
 import ReviewsTab from './_components/ReviewsTab';
 import MarketingTab from './_components/MarketingTab';
+import LeadsBank from './_components/LeadsBank';
 import SupportTab from './_components/SupportTab';
 import MaintenanceTab from './_components/MaintenanceTab';
 import ShippingTab from './_components/ShippingTab';
@@ -805,7 +806,12 @@ export default function AdminOS() {
           {!isCoAdmin && activeTab === 'banners' && <BannersTab />}
           {!isCoAdmin && activeTab === 'pages' && <PagesTab />}
           {!isCoAdmin && activeTab === 'reviews' && <ReviewsTab />}
-          {!isCoAdmin && activeTab === 'marketing' && <MarketingTab />}
+          {!isCoAdmin && activeTab === 'marketing' && (
+            <>
+              <LeadsBank />
+              <MarketingTab />
+            </>
+          )}
           {!isCoAdmin && activeTab === 'support' && <SupportTab />}
           {!isCoAdmin && activeTab === 'shipping' && <ShippingTab />}
           {!isCoAdmin && activeTab === 'maintenance' && <MaintenanceTab />}

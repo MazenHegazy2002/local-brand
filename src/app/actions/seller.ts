@@ -140,7 +140,7 @@ export async function getDashboardStats() {
           seller = await prisma.sellerProfile.create({
             data: {
               userId: user.id,
-              storeName: user.name ? `${user.name}'s Store` : 'Brandy Official Store',
+              storeName: user.name ? `${user.name}'s Store` : 'Brandyy Official Store',
               status: SellerStatus.ACTIVE,
             },
             include: {
@@ -832,11 +832,11 @@ export async function getDashboardStats() {
 
 export async function getHomepageData() {
   return getCachedData(
-    'homepage:data:v3',
+    'homepage:data:v4',
     async () => {
       try {
         const categories = await prisma.category.findMany({
-          take: 6,
+          take: 8,
           where: { parentId: null },
         });
 
@@ -862,7 +862,7 @@ export async function getHomepageData() {
               seller: { select: { storeName: true } },
               reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
             },
-            take: 6,
+            take: 12,
           });
         }
         if (bestsellers.length === 0) {
@@ -879,7 +879,7 @@ export async function getHomepageData() {
               seller: { select: { storeName: true } },
               reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
             },
-            take: 6,
+            take: 12,
           });
         }
 
@@ -899,7 +899,7 @@ export async function getHomepageData() {
               reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
             },
             orderBy: { createdAt: 'desc' },
-            take: 6,
+            take: 12,
           });
         }
         if (newArrivals.length === 0) {
@@ -912,7 +912,7 @@ export async function getHomepageData() {
               reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
             },
             orderBy: { createdAt: 'desc' },
-            take: 6,
+            take: 12,
           });
         }
 
@@ -931,7 +931,7 @@ export async function getHomepageData() {
               seller: { select: { storeName: true } },
               reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
             },
-            take: 6,
+            take: 12,
           });
         }
         if (recommended.length === 0) {
@@ -951,17 +951,47 @@ export async function getHomepageData() {
               seller: { select: { storeName: true } },
               reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
             },
-            take: 6,
+            take: 12,
             orderBy: { updatedAt: 'desc' },
           });
           // If still empty (no featured products), pick from bestsellers excluding newArrivals
           if (recommended.length === 0) {
-            recommended = bestsellers.filter((p: any) => !excludeIds.includes(p.id)).slice(0, 6);
+            recommended = bestsellers.filter((p: any) => !excludeIds.includes(p.id)).slice(0, 12);
           }
         }
 
+        // One extra homepage row per top-level category that has products.
+        const categoryRows = (
+          await Promise.all(
+            categories.map(async cat => ({
+              id: cat.id,
+              name: cat.name,
+              slug: cat.slug,
+              products: sanitizeProducts(
+                await prisma.product.findMany({
+                  where: {
+                    published: true,
+                    seller: { status: 'ACTIVE' },
+                    deletedAt: null,
+                    category: { OR: [{ id: cat.id }, { parentId: cat.id }] },
+                  },
+                  include: {
+                    images: true,
+                    variants: true,
+                    seller: { select: { storeName: true } },
+                    reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
+                  },
+                  orderBy: { createdAt: 'desc' },
+                  take: 12,
+                })
+              ),
+            }))
+          )
+        ).filter(row => row.products.length > 0);
+
         return {
           categories,
+          categoryRows,
           bestsellers: sanitizeProducts(bestsellers),
           newArrivals: sanitizeProducts(newArrivals),
           recommended: sanitizeProducts(recommended),
@@ -969,7 +999,13 @@ export async function getHomepageData() {
       } catch (err: unknown) {
         const error = err as Error;
         console.error('[getHomepageData] Error:', error);
-        return { categories: [], bestsellers: [], newArrivals: [], recommended: [] };
+        return {
+          categories: [],
+          categoryRows: [],
+          bestsellers: [],
+          newArrivals: [],
+          recommended: [],
+        };
       }
     },
     120 // Cache for 2 minutes

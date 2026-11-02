@@ -1,3 +1,4 @@
+import { getServerTr } from '@/lib/i18n/server';
 import Navbar from '@/components/Navbar';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -8,6 +9,7 @@ import { getDictionary } from '@/lib/i18n/server';
 import { ar } from '@/lib/i18n/dicts';
 
 export default async function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
+  const tr = await getServerTr();
   const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect('/login');
@@ -220,7 +222,7 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
                   <a href={order.paymentReceiptUrl} target="_blank" rel="noopener noreferrer">
                     <img
                       src={order.paymentReceiptUrl}
-                      alt="Payment Receipt"
+                      alt={tr('Payment Receipt')}
                       className="w-24 h-24 object-cover rounded-lg border border-slate-200 hover:opacity-90 transition-opacity"
                     />
                   </a>
@@ -432,9 +434,17 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
                     </div>
                     {(item.variant?.sku || item.variant?.upc) && (
                       <div className="mt-1.5 text-[10px] text-slate-400 font-mono">
-                        {item.variant.sku && <span>SKU: {item.variant.sku}</span>}
+                        {item.variant.sku && (
+                          <span>
+                            {tr('SKU:')} {item.variant.sku}
+                          </span>
+                        )}
                         {item.variant.sku && item.variant.upc && <span className="mx-2">·</span>}
-                        {item.variant.upc && <span>UPC: {item.variant.upc}</span>}
+                        {item.variant.upc && (
+                          <span>
+                            {tr('UPC:')} {item.variant.upc}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>

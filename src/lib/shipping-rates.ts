@@ -11,7 +11,7 @@ export const EGYPT_POST_STAMP_FEE = 0.5; // 0.50 EGP administrative stamp fee
 
 export const DEFAULT_SHIPPING_BASE_RATE = 65;
 export const DEFAULT_SHIPPING_RATE = 75; // 65 EGP base + VAT & stamp fee rounded UP to next integer (75 EGP)
-export const FREE_SHIPPING_THRESHOLD = 1000;
+export const FREE_SHIPPING_THRESHOLD = 1500;
 
 // Alias mapping for alternate governorate spellings
 const GOVERNORATE_ALIASES: Record<string, string> = {

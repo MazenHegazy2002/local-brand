@@ -6,6 +6,7 @@ import ProductDetails from '@/app/product/[id]/ProductDetails';
 jest.mock('@/providers/LanguageContext', () => ({
   useLanguage: () => ({
     t: (key: string) => key,
+    tr: <T,>(text: T) => text,
     lang: 'en',
     dir: 'ltr',
     setLanguage: jest.fn(),

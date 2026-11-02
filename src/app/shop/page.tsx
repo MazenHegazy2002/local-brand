@@ -7,10 +7,10 @@ import { PLATFORM_URL } from '@/lib/constants';
 export const metadata: Metadata = {
   title: 'Shop — All Products',
   description:
-    'Browse thousands of products from verified Egyptian local sellers on Brandy. Filter by category, price, brand, and more. Fast delivery across Egypt.',
+    'Browse thousands of products from verified Egyptian local sellers on Brandyy. Filter by category, price, brand, and more. Fast delivery across Egypt.',
   openGraph: {
     title: 'Shop — All Products',
-    description: 'Browse thousands of products from verified Egyptian local sellers on Brandy.',
+    description: 'Browse thousands of products from verified Egyptian local sellers on Brandyy.',
     type: 'website',
   },
 };

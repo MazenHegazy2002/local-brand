@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 interface PasswordStrengthProps {
   password: string;
@@ -26,14 +27,15 @@ const LABELS: Record<Strength, { label: string; color: string }> = {
 };
 
 export default function PasswordStrength({ password }: PasswordStrengthProps) {
+  const { tr } = useLanguage();
   const strength = scorePassword(password);
   const label = LABELS[strength];
 
   const tips = [
-    { ok: password.length >= 8, text: 'At least 8 characters' },
-    { ok: /[A-Z]/.test(password) && /[a-z]/.test(password), text: 'Mix upper and lower case' },
-    { ok: /[0-9]/.test(password), text: 'Contains a number' },
-    { ok: /[^A-Za-z0-9]/.test(password), text: 'Contains a symbol' },
+    { ok: password.length >= 8, text: tr('At least 8 characters') },
+    { ok: /[A-Z]/.test(password) && /[a-z]/.test(password), text: tr('Mix upper and lower case') },
+    { ok: /[0-9]/.test(password), text: tr('Contains a number') },
+    { ok: /[^A-Za-z0-9]/.test(password), text: tr('Contains a symbol') },
   ];
 
   if (!password) return null;
@@ -41,7 +43,7 @@ export default function PasswordStrength({ password }: PasswordStrengthProps) {
   return (
     <div className="mt-2">
       <div className="flex gap-1 mb-1">
-        {[1, 2, 3, 4].map((i) => (
+        {[1, 2, 3, 4].map(i => (
           <div
             key={i}
             className={`flex-1 h-1 rounded-full transition-colors ${
@@ -52,21 +54,29 @@ export default function PasswordStrength({ password }: PasswordStrengthProps) {
       </div>
       {label.label && (
         <div className="flex items-center justify-between text-xs">
-          <span className={`font-semibold ${
-            strength === 1 ? 'text-red-600' :
-            strength === 2 ? 'text-amber-600' :
-            strength === 3 ? 'text-yellow-600' :
-            'text-emerald-600'
-          }`}>
-            Password strength: {label.label}
+          <span
+            className={`font-semibold ${
+              strength === 1
+                ? 'text-red-600'
+                : strength === 2
+                  ? 'text-amber-600'
+                  : strength === 3
+                    ? 'text-yellow-600'
+                    : 'text-emerald-600'
+            }`}
+          >
+            {tr('Password strength:')} {tr(label.label)}
           </span>
         </div>
       )}
       <ul className="mt-2 space-y-0.5">
-        {tips.map((t) => (
-          <li key={t.text} className={`text-[11px] flex items-center gap-2 ${t.ok ? 'text-emerald-600' : 'text-gray-400'}`}>
+        {tips.map(t => (
+          <li
+            key={t.text}
+            className={`text-[11px] flex items-center gap-2 ${t.ok ? 'text-emerald-600' : 'text-gray-400'}`}
+          >
             <span>{t.ok ? '✓' : '○'}</span>
-            <span>{t.text}</span>
+            <span>{tr(t.text)}</span>
           </li>
         ))}
       </ul>

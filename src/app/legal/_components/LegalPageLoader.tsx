@@ -1,3 +1,4 @@
+import { getServerTr, isServerArabic } from '@/lib/i18n/server';
 // Server component — loads legal page content from the CMS (Page model).
 // Falls back to the provided staticContent if the DB record doesn't exist yet.
 // The admin can edit the content at /admin-os → Pages.
@@ -102,6 +103,7 @@ export default async function LegalPageLoader({
   staticContent,
   staticTitle: _staticTitle,
 }: Props) {
+  const tr = await getServerTr();
   const session = await getServerSession(authOptions);
   const isAdmin = (session?.user as SessionUser | undefined)?.role === 'ADMIN';
 
@@ -111,8 +113,13 @@ export default async function LegalPageLoader({
   try {
     const page = await prisma.page.findUnique({ where: { slug: dbSlug } });
     if (page && page.status === PageStatus.PUBLISHED) {
-      cmsContent = renderMarkdown(page.bodyEn);
-      cmsTitle = page.titleEn;
+      // Arabic readers get the Arabic CMS body, or the translated static page until one is written.
+      const isArabic = await isServerArabic();
+      const body = isArabic ? page.bodyAr : page.bodyEn;
+      if (body) {
+        cmsContent = renderMarkdown(body);
+        cmsTitle = (isArabic && page.titleAr) || page.titleEn;
+      }
     }
   } catch {
     // DB unavailable — fall through to static
@@ -125,12 +132,12 @@ export default async function LegalPageLoader({
         <div className="container mx-auto px-4 py-12 max-w-4xl">
           <div className="mb-8">
             <Link href="/legal" className="text-sm text-[#1e3b8a] hover:underline mb-4 block">
-              ← Back to Legal
+              {tr('← Back to Legal')}
             </Link>
             <h1 className="text-4xl font-black text-gray-900 mb-2">{cmsTitle}</h1>
             {isAdmin && (
               <p className="text-xs text-gray-400">
-                Content managed via Admin → Pages (slug: <code>{dbSlug}</code>)
+                {tr('Content managed via Admin → Pages (slug:')} <code>{dbSlug}</code>)
               </p>
             )}
           </div>

@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -49,6 +50,7 @@ const governorates = [
 ];
 
 export default function AddressesPage() {
+  const { tr } = useLanguage();
   const { data: _session, status } = useSession();
   const router = useRouter();
   const { confirm } = useConfirm();
@@ -119,8 +121,8 @@ export default function AddressesPage() {
     if (!form.street || !form.city || !form.governorate) {
       toast({
         variant: 'warning',
-        title: 'Required Fields',
-        description: 'Please fill in all required fields',
+        title: tr('Required Fields'),
+        description: tr('Please fill in all required fields'),
       });
       return;
     }
@@ -140,15 +142,19 @@ export default function AddressesPage() {
         setShowModal(false);
         toast({
           variant: 'success',
-          title: 'Address Saved',
-          description: 'Your delivery address has been saved.',
+          title: tr('Address Saved'),
+          description: tr('Your delivery address has been saved.'),
         });
       } else {
-        toast({ variant: 'error', title: 'Save Failed', description: 'Failed to save address' });
+        toast({
+          variant: 'error',
+          title: tr('Save Failed'),
+          description: tr('Failed to save address'),
+        });
       }
     } catch (e) {
       console.error(e);
-      toast({ variant: 'error', title: 'Error', description: 'Error saving address' });
+      toast({ variant: 'error', title: tr('Error'), description: tr('Error saving address') });
     } finally {
       setSaving(false);
     }
@@ -156,8 +162,8 @@ export default function AddressesPage() {
 
   const deleteAddress = async (id: string) => {
     const confirmed = await confirm({
-      title: 'Delete Address',
-      message: 'Are you sure you want to delete this address?',
+      title: tr('Delete Address'),
+      message: tr('Are you sure you want to delete this address?'),
       type: 'danger',
     });
     if (!confirmed) return;
@@ -166,12 +172,12 @@ export default function AddressesPage() {
       await fetchAddresses();
       toast({
         variant: 'success',
-        title: 'Address Deleted',
-        description: 'Address deleted successfully.',
+        title: tr('Address Deleted'),
+        description: tr('Address deleted successfully.'),
       });
     } catch (e) {
       console.error(e);
-      toast({ variant: 'error', title: 'Error', description: 'Failed to delete address.' });
+      toast({ variant: 'error', title: tr('Error'), description: tr('Failed to delete address.') });
     }
   };
 
@@ -191,7 +197,7 @@ export default function AddressesPage() {
   if (loading) {
     return (
       <div className="db">
-        <div className="main">Loading...</div>
+        <div className="main">{tr('Loading...')}</div>
       </div>
     );
   }
@@ -200,52 +206,55 @@ export default function AddressesPage() {
     <div className="db">
       <div className="sidebar">
         <div className="logo">
-          My<span>LB</span>
+          {tr('My')}
+          <span>LB</span>
         </div>
 
-        <div className="nav-section">Personal</div>
+        <div className="nav-section">{tr('Personal')}</div>
         <Link href="/dashboard" className="nav-item">
-          Overview
+          {tr('Overview')}
         </Link>
         <Link href="/dashboard/orders" className="nav-item">
-          My Orders
+          {tr('My Orders')}
         </Link>
         <Link href="/dashboard/wishlist" className="nav-item">
-          Wishlist
+          {tr('Wishlist')}
         </Link>
         <Link href="/dashboard/notifications" className="nav-item">
-          Alerts
+          {tr('Alerts')}
         </Link>
 
-        <div className="nav-section">Finance</div>
+        <div className="nav-section">{tr('Finance')}</div>
         <Link href="/dashboard/wallet" className="nav-item">
-          Wallet
+          {tr('Wallet')}
         </Link>
 
-        <div className="nav-section">System</div>
+        <div className="nav-section">{tr('System')}</div>
         <Link href="/dashboard/settings" className="nav-item">
-          Settings
+          {tr('Settings')}
         </Link>
       </div>
 
       <div className="main">
         <div className="topbar">
-          <div className="page-title">Delivery addresses</div>
+          <div className="page-title">{tr('Delivery addresses')}</div>
           <button onClick={openAddModal} className="refresh-btn">
-            + Add Address
+            {tr('+ Add Address')}
           </button>
         </div>
 
         {addresses.length === 0 ? (
           <div className="card text-center py-20">
             <div className="text-5xl mb-4">📍</div>
-            <h3 className="text-lg font-semibold mb-2">No addresses saved</h3>
-            <p className="text-sm text-slate-500 mb-6">Add a delivery address to get started</p>
+            <h3 className="text-lg font-semibold mb-2">{tr('No addresses saved')}</h3>
+            <p className="text-sm text-slate-500 mb-6">
+              {tr('Add a delivery address to get started')}
+            </p>
             <button
               onClick={openAddModal}
               className="px-6 py-3 bg-[#534AB7] text-white rounded-lg font-medium"
             >
-              Add Address
+              {tr('Add Address')}
             </button>
           </div>
         ) : (
@@ -266,7 +275,7 @@ export default function AddressesPage() {
                       onClick={() => openEditModal(addr)}
                       className="text-xs text-[#534AB7] hover:underline"
                     >
-                      Edit
+                      {tr('Edit')}
                     </button>
                     {!addr.isDefault && (
                       <>
@@ -274,13 +283,13 @@ export default function AddressesPage() {
                           onClick={() => setAsDefault(addr.id)}
                           className="text-xs text-green-600 hover:underline"
                         >
-                          Set Default
+                          {tr('Set Default')}
                         </button>
                         <button
                           onClick={() => deleteAddress(addr.id)}
                           className="text-xs text-red-500 hover:underline"
                         >
-                          Delete
+                          {tr('Delete')}
                         </button>
                       </>
                     )}
@@ -292,7 +301,9 @@ export default function AddressesPage() {
                     {addr.city}, {addr.governorate}
                   </p>
                   {addr.postalCode && (
-                    <p className="text-slate-400 text-xs">Postal: {addr.postalCode}</p>
+                    <p className="text-slate-400 text-xs">
+                      {tr('Postal:')} {addr.postalCode}
+                    </p>
                   )}
                 </div>
               </div>
@@ -304,36 +315,40 @@ export default function AddressesPage() {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3 className="card-title mb-6">{editingId ? 'Edit Address' : 'Add New Address'}</h3>
+            <h3 className="card-title mb-6">
+              {editingId ? tr('Edit Address') : tr('Add New Address')}
+            </h3>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Street Address *
+                  {tr('Street Address *')}
                 </label>
                 <input
                   type="text"
                   value={form.street}
                   onChange={e => setForm({ ...form, street: e.target.value })}
                   className="input-field"
-                  placeholder="123 Main Street, Building, Floor"
+                  placeholder={tr('123 Main Street, Building, Floor')}
                   required
                 />
               </div>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">City *</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                    {tr('City *')}
+                  </label>
                   <input
                     type="text"
                     value={form.city}
                     onChange={e => setForm({ ...form, city: e.target.value })}
                     className="input-field"
-                    placeholder="Cairo"
+                    placeholder={tr('Cairo')}
                     required
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Governorate *
+                    {tr('Governorate *')}
                   </label>
                   <select
                     value={form.governorate}
@@ -341,7 +356,7 @@ export default function AddressesPage() {
                     className="input-field bg-white"
                     required
                   >
-                    <option value="">Select...</option>
+                    <option value="">{tr('Select...')}</option>
                     {governorates.map(g => (
                       <option key={g} value={g}>
                         {g}
@@ -351,7 +366,9 @@ export default function AddressesPage() {
                 </div>
               </div>
               <div className="mb-4">
-                <label className="block text-xs font-medium text-slate-500 mb-1">Postal Code</label>
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  {tr('Postal Code')}
+                </label>
                 <input
                   type="text"
                   value={form.postalCode}
@@ -368,7 +385,7 @@ export default function AddressesPage() {
                     onChange={e => setForm({ ...form, isDefault: e.target.checked })}
                     className="rounded border-slate-300 text-[#534AB7]"
                   />
-                  <span className="text-sm text-slate-700">Set as default address</span>
+                  <span className="text-sm text-slate-700">{tr('Set as default address')}</span>
                 </label>
               </div>
               <div className="flex gap-3">
@@ -377,14 +394,14 @@ export default function AddressesPage() {
                   onClick={() => setShowModal(false)}
                   className="flex-1 py-3 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium"
                 >
-                  Cancel
+                  {tr('Cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
                   className="flex-1 py-3 bg-[#534AB7] text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium"
                 >
-                  {saving ? 'Saving...' : 'Save Address'}
+                  {saving ? tr('Saving...') : tr('Save Address')}
                 </button>
               </div>
             </form>

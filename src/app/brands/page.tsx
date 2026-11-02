@@ -1,3 +1,4 @@
+import { getServerTr } from '@/lib/i18n/server';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Local Brands — Egyptian Sellers',
   description:
-    'Discover verified Egyptian local brands on Brandy. Shop authentic products direct from local sellers across fashion, electronics, home goods, and more.',
+    'Discover verified Egyptian local brands on Brandyy. Shop authentic products direct from local sellers across fashion, electronics, home goods, and more.',
   openGraph: {
     title: 'Local Brands — Egyptian Sellers',
     description: 'Shop authentic products from verified Egyptian local sellers.',
@@ -21,6 +22,7 @@ export const metadata: Metadata = {
 };
 
 export default async function BrandsPage() {
+  const tr = await getServerTr();
   const t = await getDictionary();
 
   let brands: Array<{
@@ -111,7 +113,7 @@ export default async function BrandsPage() {
         {brands.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <div className="text-5xl mb-4">🛍️</div>
-            <p>No active brands yet — check back soon.</p>
+            <p>{tr('No active brands yet — check back soon.')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

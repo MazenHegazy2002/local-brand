@@ -1,3 +1,4 @@
+import { getServerTr } from '@/lib/i18n/server';
 import Navbar from '@/components/Navbar';
 import ProductCard, { ProductCardProduct } from '@/components/ProductCard';
 import { prisma } from '@/lib/prisma';
@@ -103,7 +104,7 @@ export async function generateMetadata({
   const { brandName, brandDescription, logoUrl } = brandData;
   const description =
     brandDescription ||
-    `Shop authentic ${brandName} products on Brandy — Egypt's marketplace for local sellers. Verified Egyptian brand.`;
+    `Shop authentic ${brandName} products on Brandyy — Egypt's marketplace for local sellers. Verified Egyptian brand.`;
   const brandUrl = `${PLATFORM_URL}/brand/${slug}`;
   const ogImageUrl =
     logoUrl ||
@@ -137,6 +138,7 @@ export async function generateMetadata({
 }
 
 export default async function BrandPage({ params }: { params: Promise<{ slug: string }> }) {
+  const tr = await getServerTr();
   const { slug } = await params;
   const brandData = await resolveBrandOrSeller(slug);
 
@@ -221,7 +223,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
             {brandName}
           </h1>
           <span className="bg-amber-400 text-amber-950 text-xs uppercase font-extrabold tracking-widest px-4 py-1 rounded-full shadow-md">
-            Official Egyptian Brand
+            {tr('Official Egyptian Brand')}
           </span>
           {brandDescription && (
             <p className="text-white/80 text-sm md:text-base max-w-2xl mt-4 leading-relaxed font-medium">
@@ -236,8 +238,8 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           className="mb-8"
           separator="/"
           items={[
-            { label: 'Home', href: '/' },
-            { label: 'Brands', href: '/brands' },
+            { label: tr('Home'), href: '/' },
+            { label: tr('Brands'), href: '/brands' },
             { label: brandName },
           ]}
         />
@@ -245,18 +247,21 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         <div className="flex items-center justify-between mb-8 border-b border-gray-200 dark:border-slate-800 pb-4">
           <div>
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-slate-900 dark:text-slate-100">
-              Brand <span className="text-[#1e3b8a] dark:text-[#6b8ff5]">Collection</span>
+              {tr('Brand')}{' '}
+              <span className="text-[#1e3b8a] dark:text-[#6b8ff5]">{tr('Collection')}</span>
             </h2>
           </div>
           <span className="text-slate-500 font-bold uppercase tracking-widest text-xs">
-            {products.length} Products
+            {products.length} {tr('Products')}
           </span>
         </div>
 
         {products.length === 0 ? (
           <div className="text-center py-20 text-slate-400">
             <div className="text-5xl mb-4">🛍️</div>
-            <p className="text-base font-medium">No products listed for {brandName} yet.</p>
+            <p className="text-base font-medium">
+              {tr('No products listed for')} {brandName} yet.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

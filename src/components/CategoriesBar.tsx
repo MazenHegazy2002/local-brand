@@ -143,6 +143,7 @@ function getCategoryColor(name: string): string {
 }
 
 export default function CategoriesBar() {
+  const { tr } = useLanguage();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -249,8 +250,8 @@ export default function CategoriesBar() {
         <button
           type="button"
           onClick={() => scrollBy(-280)}
-          aria-label="Scroll categories left"
-          className={`hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 items-center justify-center text-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white transition-all ${
+          aria-label={tr('Scroll categories left')}
+          className={`hidden md:flex absolute start-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 items-center justify-center text-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white transition-all ${
             showLeftArrow ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         >
@@ -272,8 +273,8 @@ export default function CategoriesBar() {
         <button
           type="button"
           onClick={() => scrollBy(280)}
-          aria-label="Scroll categories right"
-          className={`hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 items-center justify-center text-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white transition-all ${
+          aria-label={tr('Scroll categories right')}
+          className={`hidden md:flex absolute end-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 items-center justify-center text-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white transition-all ${
             showRightArrow ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         >
@@ -307,7 +308,7 @@ export default function CategoriesBar() {
                 <span style={{ color }} className="group-hover:text-white transition-colors">
                   {getCategoryIcon(category.name)}
                 </span>
-                <span>{category.name}</span>
+                <span>{tr(category.name)}</span>
                 <span className="text-[10px] text-gray-600 group-hover:text-white/80">
                   ({category._count?.products ?? 0})
                 </span>

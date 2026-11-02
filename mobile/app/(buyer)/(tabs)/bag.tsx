@@ -17,7 +17,7 @@ import { colors, radii, spacing } from '@/lib/tokens';
 import { api, fmtEGP, absUrl } from '@/lib/api';
 import { useT } from '@/lib/i18n';
 
-const FREE_THRESHOLD = 1000;
+const FREE_THRESHOLD = 1500;
 
 export default function Bag() {
   const router = useRouter();

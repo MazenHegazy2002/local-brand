@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import React, { useState } from 'react';
 
@@ -13,6 +14,7 @@ export function PriceCommissionCalculator({
   commissionRate = 0.1,
   onApplyPrice,
 }: PriceCommissionCalculatorProps) {
+  const { tr } = useLanguage();
   const [mode, setMode] = useState<'deduct' | 'add'>('add');
   const price = typeof basePrice === 'number' ? basePrice : parseFloat(basePrice) || 0;
   const pct = Math.round(commissionRate * 100);
@@ -30,7 +32,7 @@ export function PriceCommissionCalculator({
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
         <div className="flex items-center gap-1.5 font-bold text-slate-700">
           <span className="text-sm">💰</span>
-          <span>Platform Fee Breakdown</span>
+          <span>{tr('Platform Fee Breakdown')}</span>
           <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-[#0F6E56] text-[11px] font-black border border-emerald-200/60">
             {pct}% Fee
           </span>
@@ -47,7 +49,7 @@ export function PriceCommissionCalculator({
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Take from me
+            {tr('Take from me')}
           </button>
           <button
             type="button"
@@ -58,7 +60,7 @@ export function PriceCommissionCalculator({
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Add percentage
+            {tr('Add percentage')}
           </button>
         </div>
       </div>
@@ -70,20 +72,21 @@ export function PriceCommissionCalculator({
             {/* Box 1: Platform Cut */}
             <div className="p-2.5 rounded-lg bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between">
               <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
-                Platform Cut ({pct}%)
+                {tr('Platform Cut (')}
+                {pct}%)
               </div>
               <div className="text-sm font-black text-amber-600 mt-1">
-                -{feeAmount.toFixed(2)} EGP
+                -{feeAmount.toFixed(2)} {tr('EGP')}
               </div>
             </div>
 
             {/* Box 2: Seller Net Receive */}
             <div className="p-2.5 rounded-lg bg-emerald-50/80 border border-emerald-200/80 shadow-xs flex flex-col justify-between">
               <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-800">
-                You Receive (Net Payout)
+                {tr('You Receive (Net Payout)')}
               </div>
               <div className="text-sm font-black text-[#0F6E56] mt-1">
-                {sellerNetWithDeduct.toFixed(2)} EGP
+                {sellerNetWithDeduct.toFixed(2)} {tr('EGP')}
               </div>
             </div>
           </>
@@ -92,29 +95,32 @@ export function PriceCommissionCalculator({
             {/* Box 1: Markup Added */}
             <div className="p-2.5 rounded-lg bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between">
               <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
-                Markup Added (+{pct}%)
+                {tr('Markup Added (+')}
+                {pct}%)
               </div>
               <div className="text-sm font-black text-blue-600 mt-1">
-                +{feeAmount.toFixed(2)} EGP
+                +{feeAmount.toFixed(2)} {tr('EGP')}
               </div>
             </div>
 
             {/* Box 2: New Customer Price */}
             <div className="p-2.5 rounded-lg bg-blue-50/80 border border-blue-200/80 shadow-xs flex flex-col justify-between">
               <div className="text-[10px] uppercase font-bold tracking-wider text-blue-800 flex items-center justify-between">
-                <span>New Customer Price</span>
+                <span>{tr('New Customer Price')}</span>
                 {onApplyPrice && (
                   <button
                     type="button"
                     onClick={() => onApplyPrice(customerPriceWithAdd)}
                     className="px-2 py-0.5 rounded bg-[#0F6E56] hover:bg-[#0c5945] text-white text-[10px] font-bold transition-all cursor-pointer shadow-xs"
                   >
-                    Apply Price
+                    {tr('Apply Price')}
                   </button>
                 )}
               </div>
               <div className="text-sm font-black text-blue-700 mt-1">
-                <span>{customerPriceWithAdd.toFixed(2)} EGP</span>
+                <span>
+                  {customerPriceWithAdd.toFixed(2)} {tr('EGP')}
+                </span>
               </div>
             </div>
           </>
@@ -125,17 +131,35 @@ export function PriceCommissionCalculator({
       <div className="text-[10px] text-slate-500 mt-2 leading-relaxed bg-white/70 p-1.5 rounded border border-slate-100">
         {mode === 'deduct' ? (
           <span>
-            Customer pays <strong>{price.toFixed(2)} EGP</strong> on store. Platform retains{' '}
+            {tr('Customer pays')}{' '}
             <strong>
-              {pct}% ({feeAmount.toFixed(2)} EGP)
+              {price.toFixed(2)} {tr('EGP')}
+            </strong>{' '}
+            {tr('on store. Platform retains')}{' '}
+            <strong>
+              {pct}% ({feeAmount.toFixed(2)} {tr('EGP)')}
             </strong>
-            , and you receive <strong>{sellerNetWithDeduct.toFixed(2)} EGP</strong>.
+            {tr(', and you receive')}{' '}
+            <strong>
+              {sellerNetWithDeduct.toFixed(2)} {tr('EGP')}
+            </strong>
+            .
           </span>
         ) : (
           <span>
-            {pct}% platform fee (<strong>{feeAmount.toFixed(2)} EGP</strong>) is added on top.
-            Customer price becomes <strong>{customerPriceWithAdd.toFixed(2)} EGP</strong> so your
-            net earnings remain <strong>{price.toFixed(2)} EGP</strong>.
+            {pct}% platform fee (
+            <strong>
+              {feeAmount.toFixed(2)} {tr('EGP')}
+            </strong>
+            ) is added on top. Customer price becomes{' '}
+            <strong>
+              {customerPriceWithAdd.toFixed(2)} {tr('EGP')}
+            </strong>{' '}
+            {tr('so your net earnings remain')}{' '}
+            <strong>
+              {price.toFixed(2)} {tr('EGP')}
+            </strong>
+            .
           </span>
         )}
       </div>

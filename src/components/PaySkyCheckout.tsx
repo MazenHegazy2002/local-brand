@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -98,6 +99,7 @@ export default function PaySkyCheckout({
   onError,
   onCancel,
 }: PaySkyCheckoutProps) {
+  const { tr } = useLanguage();
   const [status, setStatus] = useState<'loading' | 'ready' | 'verifying' | 'error'>('loading');
   const [errorMsg, setErrorMsg] = useState('');
   const triggeredRef = useRef(false);
@@ -191,7 +193,9 @@ export default function PaySkyCheckout({
     return (
       <div className="flex flex-col items-center gap-3 py-6">
         <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-medium text-slate-600">Verifying your payment with PaySky…</p>
+        <p className="text-sm font-medium text-slate-600">
+          {tr('Verifying your payment with PaySky…')}
+        </p>
       </div>
     );
   }
@@ -199,14 +203,14 @@ export default function PaySkyCheckout({
   if (status === 'error') {
     return (
       <div className="bg-red-50 border border-red-200 rounded-xl p-5 space-y-3">
-        <p className="text-sm font-bold text-red-800">{errorMsg || 'Payment failed.'}</p>
+        <p className="text-sm font-bold text-red-800">{errorMsg || tr('Payment failed.')}</p>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={reopen}
             className="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700"
           >
-            Try again
+            {tr('Try again')}
           </button>
         </div>
       </div>
@@ -218,15 +222,15 @@ export default function PaySkyCheckout({
       <div className="w-8 h-8 border-4 border-[#1e3b8a] border-t-transparent rounded-full animate-spin" />
       <p className="text-xs text-slate-500">
         {status === 'loading'
-          ? 'Loading secure PaySky checkout…'
-          : 'PaySky checkout is open.'}
+          ? tr('Loading secure PaySky checkout…')
+          : tr('PaySky checkout is open.')}
       </p>
       <button
         type="button"
         onClick={reopen}
         className="text-xs text-[#1e3b8a] underline hover:no-underline"
       >
-        Reopen checkout window
+        {tr('Reopen checkout window')}
       </button>
     </div>
   );

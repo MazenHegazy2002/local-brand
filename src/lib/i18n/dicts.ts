@@ -24,7 +24,7 @@ export const en = {
   HeroSubtitle: 'SEASONAL COLLECTION 2026',
   ExploreLookbook: 'Explore Lookbook',
   ShopNow: 'Shop Now',
-  PromoBannerMessage: 'Free shipping across Egypt on orders over 1000 EGP',
+  PromoBannerMessage: 'Free shipping across Egypt on orders over 1500 EGP',
   ViewAllDepartments: 'View All Categories',
   BrowseCategories: 'Browse Categories',
   Electronics: 'Electronics',
@@ -43,7 +43,7 @@ export const en = {
   PremiumQuality: 'Premium Quality',
   NextGenFootwear: 'Next Gen Footwear',
   TimelessDesign: 'Timeless Design',
-  Brandy: 'Brandy',
+  Brandyy: 'Brandyy',
   EGP: 'EGP',
   Sale: 'Sale',
   Bestsellers: 'Bestsellers',
@@ -85,7 +85,7 @@ export const en = {
   Left: 'left',
   AddToCart: 'Add to Cart',
   AddedToCart: '✓ Added to Cart',
-  BrandyGuarantee: 'Brandy Guarantee',
+  BrandyGuarantee: 'Brandyy Guarantee',
   GuaranteeText:
     'Every product is authenticated. Free returns within 14 days for all domestic orders. Secure payment processing.',
   ProductNotFound: 'Product Not Found',
@@ -108,7 +108,7 @@ export const en = {
   // Brands page
   OurCreators: 'Our Sellers',
   OurCreatorsDesc:
-    'Meet the verified local sellers on Brandy. We vet every seller to ensure you get authentic Egyptian products and a great shopping experience.',
+    'Meet the verified local sellers on Brandyy. We vet every seller to ensure you get authentic Egyptian products and a great shopping experience.',
   PartnerSince: 'PARTNER SINCE',
 
   // Reviews
@@ -136,7 +136,7 @@ export const en = {
   AffiliateEarnEverySaleDesc:
     'Every buyer who uses your code earns you commission. Get bonuses for new affiliates you refer.',
   AffiliateReadyStart: 'Ready to start earning?',
-  AffiliateJoinHundreds: 'Join hundreds of Egyptian affiliates already earning on Brandy.',
+  AffiliateJoinHundreds: 'Join hundreds of Egyptian affiliates already earning on Brandyy.',
   AffiliateCommissionSub: 'per confirmed sale',
   AffiliateBuyerDiscount: 'Buyer discount',
   AffiliateBuyerDiscountSub: 'applied at checkout',
@@ -396,7 +396,7 @@ export const ar: Partial<typeof en> = {
   PremiumQuality: 'جودة عالية',
   NextGenFootwear: 'أحذية الجيل القادم',
   TimelessDesign: 'تصميم كلاسيكي',
-  Brandy: 'براندي',
+  Brandyy: 'براندي',
   EGP: 'ج.م',
   Sale: 'خصم',
   Bestsellers: 'الأكثر مبيعاً',
@@ -726,7 +726,7 @@ export const fk: Partial<typeof en> = {
   HeroSubtitle: 'COLLECTION 2026',
   ExploreLookbook: 'shof el lookbook',
   ShopNow: '2eshtery delwa2ty',
-  PromoBannerMessage: 'shipping balash fi masr 3ala 2ay order fo2 1000 geneh',
+  PromoBannerMessage: 'shipping balash fi masr 3ala 2ay order fo2 1500 geneh',
   ViewAllDepartments: 'shof kol el 2a2sam',
   BrowseCategories: 'et2asal bel 2a2sam',
   Electronics: 'electroneyyat',
@@ -744,7 +744,7 @@ export const fk: Partial<typeof en> = {
   PremiumQuality: 'gawda 3alya',
   NextGenFootwear: 'gazma el mostakbal',
   TimelessDesign: 'design abad',
-  Brandy: 'Brandy',
+  Brandyy: 'Brandyy',
   EGP: 'geneh',
   Sale: 'sale',
   Bestsellers: 'el best sellers',
@@ -786,7 +786,7 @@ export const fk: Partial<typeof en> = {
   Left: 'fadel',
   AddToCart: '7ot fl basket',
   AddedToCart: '✓ Etdaf fl basket',
-  BrandyGuarantee: 'Daman Brandy',
+  BrandyGuarantee: 'Daman Brandyy',
   GuaranteeText: 'kol monta7 ma2mool 2asalo. erga3 bel balash fi 14 yom. daf3 aman.',
   ProductNotFound: 'el monta7 msh mawgood',
   ProductNotFoundDesc: 'el monta7 da msh mawgood aw et7azaf.',
@@ -808,7 +808,7 @@ export const fk: Partial<typeof en> = {
   // Brands page
   OurCreators: 'el ba2ya3een beta3etna',
   OurCreatorsDesc:
-    'et3araf 3la el ba2ya3een el ma7alyeen 3la Brandy. ben2akked kol ba2ya3 3ashan ta7sal 3la monta7at masriya asliya.',
+    'et3araf 3la el ba2ya3een el ma7alyeen 3la Brandyy. ben2akked kol ba2ya3 3ashan ta7sal 3la monta7at masriya asliya.',
   PartnerSince: 'MA3NA MN',
 
   // Reviews

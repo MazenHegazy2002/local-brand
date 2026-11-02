@@ -163,8 +163,8 @@ export default function CheckoutSuccessPage() {
       <div className="container mx-auto px-4 py-32 text-center">
         <div className="max-w-xl mx-auto bg-white p-10 md:p-16 rounded-3xl shadow-xl border border-gray-100 relative overflow-hidden">
           {/* Background decoration */}
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#facc15] opacity-20 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-[#1e3b8a] opacity-10 rounded-full blur-3xl"></div>
+          <div className="absolute -top-24 -end-24 w-48 h-48 bg-[#facc15] opacity-20 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-24 -start-24 w-64 h-64 bg-[#1e3b8a] opacity-10 rounded-full blur-3xl"></div>
 
           <Suspense
             fallback={<div className="relative z-10 py-10">{t('LoadingOrderDetails')}</div>}

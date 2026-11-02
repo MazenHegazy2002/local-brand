@@ -28,16 +28,16 @@ const cairo = Cairo({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
+const siteMetadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://brandyy.shop'),
   alternates: {
     canonical: './',
     languages: {
       'x-default': 'https://brandyy.shop',
       'en-EG': 'https://brandyy.shop',
-      'ar-EG': 'https://brandyy.shop?lang=ar',
+      'ar-EG': 'https://brandyy.shop/ar',
       en: 'https://brandyy.shop',
-      ar: 'https://brandyy.shop?lang=ar',
+      ar: 'https://brandyy.shop/ar',
     },
   },
   title: {
@@ -68,6 +68,8 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icon-48.png', sizes: '48x48', type: 'image/png' },
       { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
       { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
     ],
@@ -157,6 +159,15 @@ import Plugins from '@/components/Plugins';
 import CsrfProvider from '@/components/CsrfProvider';
 import Footer from '@/components/Footer';
 
+export async function generateMetadata(): Promise<Metadata> {
+  if ((await headers()).get('x-lang') !== 'ar') return siteMetadata;
+  return {
+    ...siteMetadata,
+    title: { default: 'براندي — سوق الماركات المصرية المحلية', template: '%s | براندي' },
+    description: 'تسوق منتجات الماركات المصرية المحلية الموثقة على براندي بضمان 14 يومًا.',
+  };
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -212,9 +223,9 @@ export default async function RootLayout({
       >
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[hsl(var(--primary))] focus:text-white focus:rounded-md focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:start-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[hsl(var(--primary))] focus:text-white focus:rounded-md focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
         >
-          Skip to main content
+          {isArabic ? 'تخطَّ إلى المحتوى الرئيسي' : 'Skip to main content'}
         </a>
         <ScrollToTop />
         <LanguageProvider defaultLang={_lang}>

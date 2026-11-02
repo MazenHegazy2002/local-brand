@@ -281,14 +281,14 @@ describe('proxy — Arabic subpathing & rewriting', () => {
     expect(res.cookies.get('googtrans')?.value).toBe('/en/ar');
   });
 
-  it('sets x-lang: en and googtrans: /en/en when path is not prefixed with /ar', async () => {
+  it('sets x-lang: en and keeps the saved language cookie when path is not prefixed with /ar', async () => {
     getTokenMock.mockResolvedValue({ role: 'BUYER', sub: 'buyer-user-id' });
     const req = buildReq('/dashboard');
 
     const res = await proxy(req);
 
     expect(req.headers.get('x-lang')).toBe('en');
-    expect(res.cookies.get('googtrans')?.value).toBe('/en/en');
+    expect(res.cookies.get('googtrans')).toBeUndefined();
   });
 
   it('preserves /ar prefix on redirect for unauthenticated users', async () => {

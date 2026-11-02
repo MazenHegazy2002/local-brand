@@ -320,8 +320,8 @@ export async function proxy(req: NextRequest) {
 
     if (isArabic) {
       response.cookies.set('googtrans', '/en/ar', { path: '/' });
-    } else {
-      response.cookies.set('googtrans', '/en/en', { path: '/' });
+    } else if (isFranko) {
+      response.cookies.delete('googtrans');
     }
 
     return attachCsp(req, response, csrfToken, isNewCsrf);
@@ -398,8 +398,8 @@ export async function proxy(req: NextRequest) {
 
   if (isArabic) {
     response.cookies.set('googtrans', '/en/ar', { path: '/' });
-  } else {
-    response.cookies.set('googtrans', '/en/en', { path: '/' });
+  } else if (isFranko) {
+    response.cookies.delete('googtrans');
   }
 
   return attachCsp(req, response, csrfToken, isNewCsrf);

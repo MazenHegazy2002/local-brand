@@ -64,7 +64,7 @@ export async function GET() {
   }
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'Brandy';
+  wb.creator = 'Brandyy';
   wb.created = new Date();
 
   const ws = wb.addWorksheet('Products');
@@ -96,7 +96,7 @@ export async function GET() {
   // Add an "Instructions" sheet
   const inst = wb.addWorksheet('Instructions');
   inst.columns = [{ width: 18 }, { width: 80 }];
-  inst.getCell('A1').value = 'Brandy bulk product import';
+  inst.getCell('A1').value = 'Brandyy bulk product import';
   inst.getCell('A1').font = { bold: true, size: 16 };
   inst.mergeCells('A1:B1');
 

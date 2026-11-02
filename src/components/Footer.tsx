@@ -72,6 +72,7 @@ const SOCIAL_LINKS = [
 ];
 
 export default function Footer() {
+  const { tr } = useLanguage();
   const pathname = usePathname();
   const { t } = useLanguage();
   const year = new Date().getFullYear();
@@ -125,7 +126,7 @@ export default function Footer() {
             >
               <img
                 src="/icon-192.png"
-                alt="Brandyy"
+                alt={tr('Brandyy')}
                 className="w-7 h-7 rounded-full object-contain bg-white shadow-sm"
                 width={28}
                 height={28}
@@ -323,7 +324,7 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="container mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/75">
           <p>
-            © {year} {PLATFORM_NAME} (brandyy.shop). {t('FooterRightsReserved')}
+            © {year} {PLATFORM_NAME} {tr('(brandyy.shop).')} {t('FooterRightsReserved')}
           </p>
 
           {/* Payment Badges & SSL Seal */}

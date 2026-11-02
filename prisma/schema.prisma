@@ -1453,3 +1453,27 @@ model CacheEntry {
   updatedAt DateTime  @updatedAt
   @@index([expiresAt])
 }
+
+enum LeadStatus {
+  UNVERIFIED
+  VERIFIED
+  REJECTED
+}
+
+// Prospective sellers for the marketing team. Only an admin can mark one VERIFIED.
+model Lead {
+  id          String     @id @default(uuid())
+  storeName   String
+  storeNameAr String?
+  category    String?
+  phone       String?
+  address     String?
+  socialUrl   String?
+  source      String
+  status      LeadStatus @default(UNVERIFIED)
+  dedupeKey   String     @unique
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([status])
+}

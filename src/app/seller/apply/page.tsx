@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
@@ -43,6 +44,7 @@ const BENEFITS = [
 ];
 
 export default function SellerApplicationPage() {
+  const { tr } = useLanguage();
   const { status } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -133,26 +135,29 @@ export default function SellerApplicationPage() {
 
         {/* Hero */}
         <section className="bg-[#1e3b8a] text-white py-20 px-4 text-center">
-          <p className="text-xs font-bold uppercase tracking-widest mb-3 opacity-60">For Sellers</p>
+          <p className="text-xs font-bold uppercase tracking-widest mb-3 opacity-60">
+            {tr('For Sellers')}
+          </p>
           <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">
-            Sell on Brandy — Egypt&apos;s Local Marketplace
+            {tr("Sell on Brandyy — Egypt's Local Marketplace")}
           </h1>
           <p className="text-base opacity-75 max-w-lg mx-auto mb-8 leading-relaxed">
-            Join emerging Egyptian local brands already growing their business. Reach thousands of
-            buyers with zero upfront costs.
+            {tr(
+              'Join emerging Egyptian local brands already growing their business. Reach thousands of buyers with zero upfront costs.'
+            )}
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
             <Link
               href="/seller/login?callbackUrl=/seller/apply"
               className="bg-white text-[#1e3b8a] font-black px-8 py-3 rounded-full text-sm hover:bg-gray-100 transition-colors"
             >
-              Sign in to apply →
+              {tr('Sign in to apply →')}
             </Link>
             <Link
               href="/seller/register?callbackUrl=/seller/apply"
               className="border border-white/40 text-white font-bold px-8 py-3 rounded-full text-sm hover:bg-white/10 transition-colors"
             >
-              Create an account
+              {tr('Create an account')}
             </Link>
           </div>
         </section>
@@ -160,7 +165,7 @@ export default function SellerApplicationPage() {
         {/* Benefits grid */}
         <section className="container mx-auto px-4 py-16">
           <h2 className="text-2xl font-black text-gray-900 text-center mb-10">
-            Why sell on Brandy?
+            {tr('Why sell on Brandyy?')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {BENEFITS.map(b => (
@@ -169,8 +174,8 @@ export default function SellerApplicationPage() {
                 className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col gap-3"
               >
                 <div className="text-3xl">{b.icon}</div>
-                <h3 className="font-black text-gray-900 text-base">{b.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{b.desc}</p>
+                <h3 className="font-black text-gray-900 text-base">{tr(b.title)}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{tr(b.desc)}</p>
               </div>
             ))}
           </div>
@@ -179,22 +184,22 @@ export default function SellerApplicationPage() {
         {/* Bottom CTA */}
         <section className="container mx-auto px-4 pb-16 text-center">
           <div className="bg-[#1e3b8a]/5 border border-[#1e3b8a]/10 rounded-3xl py-12 px-6 max-w-2xl mx-auto">
-            <h2 className="text-2xl font-black text-gray-900 mb-3">Ready to start?</h2>
+            <h2 className="text-2xl font-black text-gray-900 mb-3">{tr('Ready to start?')}</h2>
             <p className="text-gray-500 mb-6">
-              Create a free account or sign in to submit your seller application.
+              {tr('Create a free account or sign in to submit your seller application.')}
             </p>
             <div className="flex gap-3 justify-center flex-wrap">
               <Link
                 href="/seller/login?callbackUrl=/seller/apply"
                 className="bg-[#1e3b8a] text-white font-black px-8 py-3 rounded-full text-sm hover:bg-[#16307a] transition-colors"
               >
-                Sign in to apply
+                {tr('Sign in to apply')}
               </Link>
               <Link
                 href="/seller/register?callbackUrl=/seller/apply"
                 className="border border-[#1e3b8a] text-[#1e3b8a] font-bold px-8 py-3 rounded-full text-sm hover:bg-[#1e3b8a]/5 transition-colors"
               >
-                Register free
+                {tr('Register free')}
               </Link>
             </div>
           </div>
@@ -214,22 +219,24 @@ export default function SellerApplicationPage() {
               <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">
                 ✓
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">Application Submitted!</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                {tr('Application Submitted!')}
+              </h1>
               <p className="text-gray-600 mb-8 text-lg">
-                Thank you for applying to become a seller on Brandy. Our team will review your
-                application within 2-3 business days. We&apos;ll send an email with the next steps
-                once approved.
+                {tr(
+                  "Thank you for applying to become a seller on Brandyy. Our team will review your application within 2-3 business days. We'll send an email with the next steps once approved."
+                )}
               </p>
               <Link href="/dashboard">
-                <Button className="w-full text-lg h-14">Return to Dashboard</Button>
+                <Button className="w-full text-lg h-14">{tr('Return to Dashboard')}</Button>
               </Link>
             </div>
           ) : (
             <>
               <div className="text-center mb-10">
-                <h1 className="text-3xl font-black text-gray-900 mb-3">Become a Seller</h1>
+                <h1 className="text-3xl font-black text-gray-900 mb-3">{tr('Become a Seller')}</h1>
                 <p className="text-gray-500">
-                  Join our marketplace and reach thousands of local customers.
+                  {tr('Join our marketplace and reach thousands of local customers.')}
                 </p>
               </div>
 
@@ -243,7 +250,7 @@ export default function SellerApplicationPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Store Name
+                    {tr('Store Name')}
                   </label>
                   <input
                     required
@@ -258,7 +265,7 @@ export default function SellerApplicationPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Business Type
+                      {tr('Business Type')}
                     </label>
                     <select
                       required
@@ -266,14 +273,14 @@ export default function SellerApplicationPage() {
                       onChange={e => setType(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none bg-white"
                     >
-                      <option value="INDIVIDUAL">Individual / Freelancer</option>
-                      <option value="BUSINESS">Registered Company</option>
+                      <option value="INDIVIDUAL">{tr('Individual / Freelancer')}</option>
+                      <option value="BUSINESS">{tr('Registered Company')}</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Phone Number
+                      {tr('Phone Number')}
                     </label>
                     <input
                       required
@@ -289,18 +296,19 @@ export default function SellerApplicationPage() {
                 {/* Warehouse Pickup Address Section */}
                 <div className="border-t border-gray-100 pt-6">
                   <h3 className="text-sm font-black text-gray-800 mb-2 uppercase tracking-wider flex items-center gap-2">
-                    <span>📍</span> Product Pickup Warehouse Address
+                    <span>📍</span> {tr('Product Pickup Warehouse Address')}
                   </h3>
                   <p className="text-xs text-gray-500 mb-4">
-                    Couriers will dispatch drivers to this address to collect sold orders for
-                    delivery.
+                    {tr(
+                      'Couriers will dispatch drivers to this address to collect sold orders for delivery.'
+                    )}
                   </p>
 
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">
-                          Pickup Governorate *
+                          {tr('Pickup Governorate *')}
                         </label>
                         <select
                           required
@@ -310,7 +318,7 @@ export default function SellerApplicationPage() {
                         >
                           {GOVERNORATES.map(g => (
                             <option key={g.value} value={g.en}>
-                              {g.en} ({g.ar})
+                              {tr(g.en)}
                             </option>
                           ))}
                         </select>
@@ -318,7 +326,7 @@ export default function SellerApplicationPage() {
 
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">
-                          Pickup City / Area *
+                          {tr('Pickup City / Area *')}
                         </label>
                         <input
                           required
@@ -333,7 +341,7 @@ export default function SellerApplicationPage() {
 
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1">
-                        Detailed Pickup Street Address *
+                        {tr('Detailed Pickup Street Address *')}
                       </label>
                       <input
                         required
@@ -341,14 +349,14 @@ export default function SellerApplicationPage() {
                         value={pickupStreet}
                         onChange={e => setPickupStreet(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none text-sm"
-                        placeholder="Street name, Building number, Floor & Flat number"
+                        placeholder={tr('Street name, Building number, Floor & Flat number')}
                       />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">
-                          Building / Landmark (Optional)
+                          {tr('Building / Landmark (Optional)')}
                         </label>
                         <input
                           type="text"
@@ -361,7 +369,7 @@ export default function SellerApplicationPage() {
 
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">
-                          Pickup Contact Phone *
+                          {tr('Pickup Contact Phone *')}
                         </label>
                         <input
                           required
@@ -369,7 +377,7 @@ export default function SellerApplicationPage() {
                           value={pickupPhone}
                           onChange={e => setPickupPhone(e.target.value)}
                           className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none text-sm"
-                          placeholder="Courier driver contact phone"
+                          placeholder={tr('Courier driver contact phone')}
                         />
                       </div>
                     </div>
@@ -378,14 +386,14 @@ export default function SellerApplicationPage() {
                     <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <label className="block text-xs font-bold text-slate-700">
-                          🗺️ Warehouse Geolocation Coordinates (Latitude, Longitude)
+                          {tr('🗺️ Warehouse Geolocation Coordinates (Latitude, Longitude)')}
                         </label>
                         <button
                           type="button"
                           disabled={gettingLocation}
                           onClick={() => {
                             if (!navigator.geolocation) {
-                              alert('Geolocation is not supported by your browser.');
+                              alert(tr('Geolocation is not supported by your browser.'));
                               return;
                             }
                             setGettingLocation(true);
@@ -405,7 +413,9 @@ export default function SellerApplicationPage() {
                           }}
                           className="px-3 py-1.5 bg-[#1e3b8a] text-white text-xs font-bold rounded-lg hover:bg-[#16307a] transition-all disabled:opacity-50"
                         >
-                          {gettingLocation ? 'Detecting GPS...' : '📍 Get Live GPS Location'}
+                          {gettingLocation
+                            ? tr('Detecting GPS...')
+                            : tr('📍 Get Live GPS Location')}
                         </button>
                       </div>
 
@@ -419,7 +429,7 @@ export default function SellerApplicationPage() {
                             placeholder="e.g. 30.067807, 31.518141"
                           />
                           <p className="text-[10px] text-slate-400 mt-1">
-                            Format: Lat, Long (e.g. 30.067807, 31.518141)
+                            {tr('Format: Lat, Long (e.g. 30.067807, 31.518141)')}
                           </p>
                         </div>
                         <div>
@@ -428,7 +438,7 @@ export default function SellerApplicationPage() {
                             value={pickupZone}
                             onChange={e => setPickupZone(e.target.value)}
                             className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white outline-none"
-                            placeholder="District / Zone (e.g. قسم اول القاهرة الجديدة)"
+                            placeholder={tr('District / Zone (e.g. قسم اول القاهرة الجديدة)')}
                           />
                         </div>
                       </div>
@@ -439,20 +449,20 @@ export default function SellerApplicationPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Tax Registration Number (Optional)
+                      {tr('Tax Registration Number (Optional)')}
                     </label>
                     <input
                       type="text"
                       value={taxNumber}
                       onChange={e => setTaxNumber(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
-                      placeholder="XXX-XXX-XXX"
+                      placeholder={tr('XXX-XXX-XXX')}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Store Logo (Optional)
+                      {tr('Store Logo (Optional)')}
                     </label>
                     <div className="flex items-center gap-4 border border-dashed border-gray-350 rounded-xl p-4 bg-gray-50/50 hover:bg-gray-50/80 transition-colors">
                       <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center border border-gray-100 overflow-hidden shrink-0 shadow-sm relative">
@@ -460,7 +470,7 @@ export default function SellerApplicationPage() {
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={logoUrl}
-                            alt="Store Logo Preview"
+                            alt={tr('Store Logo Preview')}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -493,7 +503,7 @@ export default function SellerApplicationPage() {
                               if (data.url) setLogoUrl(data.url);
                             } catch (err) {
                               console.error(err);
-                              alert('Failed to upload logo.');
+                              alert(tr('Failed to upload logo.'));
                             } finally {
                               setIsUploadingLogo(false);
                             }
@@ -506,13 +516,15 @@ export default function SellerApplicationPage() {
                           className={`inline-block px-4 py-2 bg-white border border-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold rounded-lg cursor-pointer transition-all shadow-sm ${isUploadingLogo ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           {isUploadingLogo
-                            ? 'Uploading...'
+                            ? tr('Uploading...')
                             : logoUrl
-                              ? 'Change Logo'
-                              : 'Upload Logo'}
+                              ? tr('Change Logo')
+                              : tr('Upload Logo')}
                         </label>
                         <p className="text-[10px] text-gray-400 mt-1">
-                          PNG, JPG up to 10MB. If empty, a letter-initial placeholder will be shown.
+                          {tr(
+                            'PNG, JPG up to 10MB. If empty, a letter-initial placeholder will be shown.'
+                          )}
                         </p>
                       </div>
                     </div>
@@ -521,12 +533,12 @@ export default function SellerApplicationPage() {
 
                 <div className="border-t border-gray-100 pt-6">
                   <h3 className="text-sm font-black text-gray-800 mb-4 uppercase tracking-wider">
-                    🔗 Social Media Links
+                    {tr('🔗 Social Media Links')}
                   </h3>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 mb-1">
-                        Facebook Page URL
+                        {tr('Facebook Page URL')}
                       </label>
                       <input
                         type="url"
@@ -538,7 +550,7 @@ export default function SellerApplicationPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 mb-1">
-                        Instagram URL
+                        {tr('Instagram URL')}
                       </label>
                       <input
                         type="url"
@@ -550,7 +562,7 @@ export default function SellerApplicationPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 mb-1">
-                        TikTok URL
+                        {tr('TikTok URL')}
                       </label>
                       <input
                         type="url"
@@ -565,7 +577,7 @@ export default function SellerApplicationPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    What products will you sell?
+                    {tr('What products will you sell?')}
                   </label>
                   <textarea
                     required
@@ -573,7 +585,7 @@ export default function SellerApplicationPage() {
                     onChange={e => setDescription(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1e3b8a] outline-none"
                     rows={4}
-                    placeholder="Describe your product catalog..."
+                    placeholder={tr('Describe your product catalog...')}
                   />
                 </div>
 
@@ -583,12 +595,12 @@ export default function SellerApplicationPage() {
                     disabled={isSubmitting}
                     className="w-full h-14 text-lg bg-[#1e3b8a] hover:bg-[#16307a] text-white"
                   >
-                    {isSubmitting ? 'Submitting...' : 'Submit Application'}
+                    {isSubmitting ? tr('Submitting...') : tr('Submit Application')}
                   </Button>
                   <p className="text-center text-xs text-gray-500 mt-4">
-                    By submitting, you agree to our{' '}
+                    {tr('By submitting, you agree to our')}{' '}
                     <Link href="/legal" className="text-[#1e3b8a] hover:underline">
-                      Seller Terms & Conditions
+                      {tr('Seller Terms & Conditions')}
                     </Link>
                     .
                   </p>

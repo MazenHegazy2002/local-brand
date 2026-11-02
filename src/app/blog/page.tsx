@@ -1,10 +1,11 @@
+import { getServerTr } from '@/lib/i18n/server';
 import Navbar from '@/components/Navbar';
 import { blogJsonLd, jsonLdScript, type BlogArticle } from '@/lib/jsonld';
 
 export const metadata = {
-  title: 'Blog & Local Brand Stories — Brandy',
+  title: 'Blog & Local Brand Stories — Brandyy',
   description:
-    'Discover fashion guides, seller success stories, Egyptian streetwear trends, and marketplace news on the Brandy Blog.',
+    'Discover fashion guides, seller success stories, Egyptian streetwear trends, and marketplace news on the Brandyy Blog.',
 };
 
 const ARTICLES = [
@@ -50,7 +51,8 @@ const ARTICLES = [
   },
 ];
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  const tr = await getServerTr();
   const schema = blogJsonLd(ARTICLES as BlogArticle[]);
 
   return (
@@ -64,15 +66,16 @@ export default function BlogPage() {
       {/* Hero Header */}
       <section className="py-16 px-4 text-center max-w-4xl mx-auto">
         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))] text-xs font-extrabold uppercase tracking-wider mb-4 border border-[hsl(var(--primary)/0.15)]">
-          📰 Brandy Journal & News
+          {tr('📰 Brandyy Journal & News')}
         </span>
         <h1 className="text-4xl md:text-5xl font-black tracking-tight text-gray-900 leading-tight">
-          Stories, Guides & <br />
-          <span className="text-[hsl(var(--primary))]">Egyptian Local Brand Culture</span>
+          {tr('Stories, Guides &')} <br />
+          <span className="text-[hsl(var(--primary))]">{tr('Egyptian Local Brand Culture')}</span>
         </h1>
         <p className="mt-4 text-gray-600 text-base max-w-xl mx-auto leading-relaxed">
-          Stay updated with local fashion trends, merchant growth tips, and news from Egypt&apos;s
-          thriving brand ecosystem.
+          {tr(
+            "Stay updated with local fashion trends, merchant growth tips, and news from Egypt's thriving brand ecosystem."
+          )}
         </p>
       </section>
 
@@ -87,23 +90,23 @@ export default function BlogPage() {
               <div>
                 <div className="flex items-center justify-between gap-2 mb-4">
                   <span className="text-xs font-bold px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
-                    {article.category}
+                    {tr(article.category)}
                   </span>
-                  <span className="text-xs text-gray-400">{article.readTime}</span>
+                  <span className="text-xs text-gray-400">{tr(article.readTime)}</span>
                 </div>
                 <div className="text-4xl mb-4 p-4 rounded-2xl bg-[hsl(var(--primary)/0.06)] w-fit border border-[hsl(var(--primary)/0.12)]">
                   {article.image}
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 group-hover:text-[hsl(var(--primary))] transition-colors leading-snug">
-                  {article.title}
+                  {tr(article.title)}
                 </h2>
-                <p className="text-xs text-gray-500 mt-3 leading-relaxed">{article.excerpt}</p>
+                <p className="text-xs text-gray-500 mt-3 leading-relaxed">{tr(article.excerpt)}</p>
               </div>
 
               <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs">
-                <span className="text-gray-400">{article.date}</span>
+                <span className="text-gray-400">{tr(article.date)}</span>
                 <span className="font-bold text-[hsl(var(--primary))] group-hover:underline">
-                  Read Article →
+                  {tr('Read Article →')}
                 </span>
               </div>
             </article>
@@ -112,7 +115,9 @@ export default function BlogPage() {
       </section>
 
       <footer className="border-t border-gray-200 bg-white py-6 text-center text-gray-500 text-xs">
-        <p>© {new Date().getFullYear()} Brandy Marketplace. All rights reserved.</p>
+        <p>
+          © {new Date().getFullYear()} {tr('Brandyy Marketplace. All rights reserved.')}
+        </p>
       </footer>
     </div>
   );

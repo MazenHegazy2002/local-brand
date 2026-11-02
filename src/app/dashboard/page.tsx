@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
@@ -30,11 +31,12 @@ interface DashboardData {
 }
 
 export default function CustomerDashboardPage() {
+  const { tr } = useLanguage();
   return (
     <Suspense
       fallback={
         <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#1e3b8a] font-medium">
-          Loading dashboard…
+          {tr('Loading dashboard…')}
         </div>
       }
     >
@@ -44,6 +46,7 @@ export default function CustomerDashboardPage() {
 }
 
 function CustomerDashboard() {
+  const { tr } = useLanguage();
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -96,7 +99,7 @@ function CustomerDashboard() {
       setData(res);
     } catch (err: unknown) {
       const error = err as Error;
-      setError(error.message || 'Unauthorized');
+      setError(error.message || tr('Unauthorized'));
     } finally {
       setLoading(false);
     }
@@ -108,7 +111,7 @@ function CustomerDashboard() {
       await refreshData();
     } catch (err: unknown) {
       const error = err as Error;
-      toast({ variant: 'error', title: 'Error', description: error.message });
+      toast({ variant: 'error', title: tr('Error'), description: error.message });
     }
   };
 
@@ -119,11 +122,15 @@ function CustomerDashboard() {
     const payload = Object.fromEntries(formData);
     try {
       await updateProfile(payload);
-      toast({ variant: 'success', title: 'Success', description: 'Profile updated successfully!' });
+      toast({
+        variant: 'success',
+        title: tr('Success'),
+        description: tr('Profile updated successfully!'),
+      });
       await refreshData();
     } catch (err: unknown) {
       const error = err as Error;
-      toast({ variant: 'error', title: 'Update Failed', description: error.message });
+      toast({ variant: 'error', title: tr('Update Failed'), description: error.message });
     } finally {
       setIsUpdating(false);
     }
@@ -131,58 +138,58 @@ function CustomerDashboard() {
 
   const handleCancelOrder = async (orderId: string) => {
     const reason = await prompt({
-      title: 'Cancel Order',
-      message: 'Please provide a reason for cancelling this order:',
-      placeholder: 'e.g. Changed my mind, found a better price...',
+      title: tr('Cancel Order'),
+      message: tr('Please provide a reason for cancelling this order:'),
+      placeholder: tr('e.g. Changed my mind, found a better price...'),
       confirmText: 'Cancel Order',
     });
     if (reason === null) return;
     try {
       const res = await cancelOrder(orderId, reason.trim() || 'No reason provided');
       if (res.error) {
-        toast({ variant: 'error', title: 'Cancellation Failed', description: res.error });
+        toast({ variant: 'error', title: tr('Cancellation Failed'), description: res.error });
         return;
       }
       toast({
         variant: 'success',
-        title: 'Order Cancelled',
-        description: 'Order cancelled successfully.',
+        title: tr('Order Cancelled'),
+        description: tr('Order cancelled successfully.'),
       });
       await refreshData();
     } catch (err: unknown) {
       const error = err as Error;
-      toast({ variant: 'error', title: 'Error', description: error.message });
+      toast({ variant: 'error', title: tr('Error'), description: error.message });
     }
   };
 
   const handleRequestReturn = async (orderItemId: string) => {
     const reason = await prompt({
-      title: 'Request Return',
-      message: 'Reason for return (e.g. Damaged, Wrong size):',
-      placeholder: 'Reason',
+      title: tr('Request Return'),
+      message: tr('Reason for return (e.g. Damaged, Wrong size):'),
+      placeholder: tr('Reason'),
     });
     if (!reason) return;
     const details =
       (await prompt({
-        title: 'Request Return',
-        message: 'Additional details (optional):',
-        placeholder: 'Details (optional)',
+        title: tr('Request Return'),
+        message: tr('Additional details (optional):'),
+        placeholder: tr('Details (optional)'),
       })) || undefined;
     try {
       const res = await requestReturn(orderItemId, reason, details);
       if (res.error) {
-        toast({ variant: 'error', title: 'Request Failed', description: res.error });
+        toast({ variant: 'error', title: tr('Request Failed'), description: res.error });
         return;
       }
       toast({
         variant: 'success',
-        title: 'Return Requested',
-        description: 'Return requested. Our team will review it shortly.',
+        title: tr('Return Requested'),
+        description: tr('Return requested. Our team will review it shortly.'),
       });
       await refreshData();
     } catch (err: unknown) {
       const error = err as Error;
-      toast({ variant: 'error', title: 'Error', description: error.message });
+      toast({ variant: 'error', title: tr('Error'), description: error.message });
     }
   };
 
@@ -225,7 +232,7 @@ function CustomerDashboard() {
       router.push('/checkout');
     } catch (err: unknown) {
       const error = err as Error;
-      toast({ variant: 'error', title: 'Reorder Failed', description: error.message });
+      toast({ variant: 'error', title: tr('Reorder Failed'), description: error.message });
     }
   };
 
@@ -236,7 +243,7 @@ function CustomerDashboard() {
   if (loading && !data)
     return (
       <div className="flex h-screen items-center justify-center bg-[#f8fafc] text-[#1a1a2e] font-medium">
-        Initializing Dashboard...
+        {tr('Initializing Dashboard...')}
       </div>
     );
   if (error)
@@ -254,9 +261,9 @@ function CustomerDashboard() {
     <div className="db">
       {/* Sidebar */}
       <div className="sidebar">
-        <div className="logo" title={data?.user?.name || 'My Account'}>
-          {data?.user?.name?.split(' ')[0] || 'My'}
-          <span> {data?.user?.name?.split(' ').slice(1).join(' ') || 'Account'}</span>
+        <div className="logo" title={data?.user?.name || tr('My Account')}>
+          {data?.user?.name?.split(' ')[0] || tr('My')}
+          <span> {data?.user?.name?.split(' ').slice(1).join(' ') || tr('Account')}</span>
         </div>
         <Link href="/" className="home-link">
           <svg
@@ -270,48 +277,48 @@ function CustomerDashboard() {
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
-          Back to Shop
+          {tr('Back to Shop')}
         </Link>
 
-        <div className="nav-section">Personal</div>
+        <div className="nav-section">{tr('Personal')}</div>
         <NavItem
           active={activeTab === 'overview'}
           onClick={() => setActiveTab('overview')}
-          label="Overview"
+          label={tr('Overview')}
           icon={<OverviewIcon />}
         />
         <NavItem
           active={activeTab === 'orders'}
           onClick={() => setActiveTab('orders')}
-          label="My Orders"
+          label={tr('My Orders')}
           icon={<OrdersIcon />}
         />
         <NavItem
           active={activeTab === 'wishlist'}
           onClick={() => setActiveTab('wishlist')}
-          label="Wishlist"
+          label={tr('Wishlist')}
           icon={<WishlistIcon />}
         />
         <NavItem
           active={activeTab === 'notifications'}
           onClick={() => setActiveTab('notifications')}
-          label="Alerts"
+          label={tr('Alerts')}
           icon={<ModerationIcon />}
         />
 
-        <div className="nav-section">Finance</div>
+        <div className="nav-section">{tr('Finance')}</div>
         <NavItem
           active={activeTab === 'wallet'}
           onClick={() => setActiveTab('wallet')}
-          label="Wallet"
+          label={tr('Wallet')}
           icon={<PayoutsIcon />}
         />
 
-        <div className="nav-section">System</div>
+        <div className="nav-section">{tr('System')}</div>
         <NavItem
           active={activeTab === 'track'}
           onClick={() => setActiveTab('track')}
-          label="Track Order"
+          label={tr('Track Order')}
           icon={
             <svg
               className="nav-icon"
@@ -331,7 +338,7 @@ function CustomerDashboard() {
         <NavItem
           active={activeTab === 'settings'}
           onClick={() => setActiveTab('settings')}
-          label="Settings"
+          label={tr('Settings')}
           icon={<SettingsIcon />}
         />
 
@@ -339,7 +346,7 @@ function CustomerDashboard() {
           <div className="user-label flex items-center gap-1.5">
             {data?.user?.name}
             {data?.user?.emailVerified && (
-              <span className="text-blue-400 text-xs shrink-0" title="Verified Account">
+              <span className="text-blue-400 text-xs shrink-0" title={tr('Verified Account')}>
                 ☑️
               </span>
             )}
@@ -360,7 +367,7 @@ function CustomerDashboard() {
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
-            <span>Sign Out</span>
+            <span>{tr('Sign Out')}</span>
           </button>
         </div>
       </div>
@@ -368,10 +375,10 @@ function CustomerDashboard() {
       {/* Main Content Area */}
       <div className="main">
         <div className="topbar">
-          <div className="page-title">{TITLES[activeTab] || 'Dashboard'}</div>
+          <div className="page-title">{tr(TITLES[activeTab] || 'Dashboard')}</div>
           <div className="top-actions">
             <div className="tier-badge">
-              Member Tier:{' '}
+              {tr('Member Tier:')}{' '}
               <span className="badge b-new">
                 {(data?.user?.loyaltyPoints || 0) >= 5000
                   ? 'GOLD'
@@ -411,18 +418,19 @@ function CustomerDashboard() {
                 <div className="mb-5 flex items-center justify-between gap-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-violet-50 p-4 shadow-sm">
                   <div>
                     <p className="text-xs font-black uppercase tracking-widest text-indigo-600 mb-0.5">
-                      Affiliate Program
+                      {tr('Affiliate Program')}
                     </p>
                     <p className="text-sm font-bold text-slate-800">
-                      You have an active affiliate account — track your commissions and referral
-                      earnings.
+                      {tr(
+                        'You have an active affiliate account — track your commissions and referral earnings.'
+                      )}
                     </p>
                   </div>
                   <Link
                     href="/affiliate/dashboard"
                     className="shrink-0 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow"
                   >
-                    Affiliate Portal →
+                    {tr('Affiliate Portal →')}
                   </Link>
                 </div>
               )}
@@ -857,6 +865,7 @@ interface TabProps {
 }
 
 function OverviewTab({ data, wishlist, myOrders }: TabProps) {
+  const { tr } = useLanguage();
   const orders = myOrders || [];
   const items = wishlist || [];
 
@@ -864,44 +873,47 @@ function OverviewTab({ data, wishlist, myOrders }: TabProps) {
     <>
       <div className="stats">
         <div className="stat">
-          <div className="stat-label">Orders</div>
+          <div className="stat-label">{tr('Orders')}</div>
           <div className="stat-val">{orders.length}</div>
           <div className="stat-sub" style={{ color: '#1D9E75' }}>
-            Total purchases
+            {tr('Total purchases')}
           </div>
         </div>
         <div className="stat">
-          <div className="stat-label">Wishlist</div>
+          <div className="stat-label">{tr('Wishlist')}</div>
           <div className="stat-val">{items.length}</div>
           <div className="stat-sub" style={{ color: '#1e3b8a' }}>
-            Saved items
+            {tr('Saved items')}
           </div>
         </div>
         <div className="stat">
-          <div className="stat-label">Loyalty Points</div>
+          <div className="stat-label">{tr('Loyalty Points')}</div>
           <div className="stat-val" style={{ color: '#1e3b8a' }}>
             {(data?.user?.loyaltyPoints || 0).toLocaleString()}
           </div>
-          <div className="stat-sub">Redeemable credits</div>
+          <div className="stat-sub">{tr('Redeemable credits')}</div>
         </div>
         <div className="stat">
-          <div className="stat-label">Wallet (Points × EGP)</div>
+          <div className="stat-label">{tr('Wallet (Points × EGP)')}</div>
           <div className="stat-val" style={{ color: '#f59e0b' }}>
             {(data?.user?.loyaltyPoints || 0).toLocaleString()}
           </div>
-          <div className="stat-sub">EGP equivalent</div>
+          <div className="stat-sub">{tr('EGP equivalent')}</div>
         </div>
       </div>
 
       <div className="grid2">
         <div className="card">
           <div className="card-header">
-            <div className="card-title">Recent Orders</div>
+            <div className="card-title">{tr('Recent Orders')}</div>
           </div>
           {orders.slice(0, 3).map(o => (
             <div key={o.id} className="row-item">
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '12px', fontWeight: 600 }}>ORD-{o.id.substring(0, 8)}</div>
+                <div style={{ fontSize: '12px', fontWeight: 600 }}>
+                  {tr('ORD-')}
+                  {o.id.substring(0, 8)}
+                </div>
                 <div style={{ fontSize: '11px', color: '#64748b' }}>
                   {new Date(o.createdAt).toLocaleDateString()}
                 </div>
@@ -910,12 +922,12 @@ function OverviewTab({ data, wishlist, myOrders }: TabProps) {
             </div>
           ))}
           {!orders.length && (
-            <div className="py-10 text-center text-xs text-slate-400">No orders yet.</div>
+            <div className="py-10 text-center text-xs text-slate-400">{tr('No orders yet.')}</div>
           )}
         </div>
         <div className="card">
           <div className="card-header">
-            <div className="card-title">Wishlist Preview</div>
+            <div className="card-title">{tr('Wishlist Preview')}</div>
           </div>
           {items.slice(0, 3).map(w => (
             <div key={w.productId} className="row-item">
@@ -935,11 +947,13 @@ function OverviewTab({ data, wishlist, myOrders }: TabProps) {
               <span style={{ fontSize: '12px', fontWeight: 500 }} className="truncate flex-1">
                 {w.product?.title}
               </span>
-              <div style={{ fontSize: '12px', fontWeight: 600 }}>{w.product?.basePrice} EGP</div>
+              <div style={{ fontSize: '12px', fontWeight: 600 }}>
+                {w.product?.basePrice} {tr('EGP')}
+              </div>
             </div>
           ))}
           {!items.length && (
-            <div className="py-10 text-center text-xs text-slate-400">Wishlist empty.</div>
+            <div className="py-10 text-center text-xs text-slate-400">{tr('Wishlist empty.')}</div>
           )}
         </div>
       </div>
@@ -958,13 +972,14 @@ function OrdersTab({
   onReturn: (itemId: string) => void;
   onReorder: (order: Order) => void;
 }) {
+  const { tr } = useLanguage();
   const canCancel = (status: string) =>
     ['PENDING_PAYMENT', 'PENDING', 'CONFIRMED', 'PROCESSING'].includes(status);
 
   return (
     <div className="card">
       <div className="card-header">
-        <div className="card-title">Full Purchase History</div>
+        <div className="card-title">{tr('Full Purchase History')}</div>
       </div>
       {orders.map(o => (
         <div
@@ -975,31 +990,32 @@ function OrdersTab({
           <div className="flex justify-between items-start mb-4">
             <div>
               <div style={{ fontSize: '13px', fontWeight: 700 }}>
-                Order #ORD-{o.id.substring(0, 8)}
+                {tr('Order #ORD-')}
+                {o.id.substring(0, 8)}
               </div>
               <div style={{ fontSize: '11px', color: '#64748b' }}>
-                Placed on {new Date(o.createdAt).toLocaleString()}
+                {tr('Placed on')} {new Date(o.createdAt).toLocaleString()}
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-end">
               <div style={{ fontSize: '15px', fontWeight: 700 }}>
-                {o.totalAmount?.toLocaleString()} EGP
+                {o.totalAmount?.toLocaleString()} {tr('EGP')}
               </div>
               <span className="badge b-active">{o.status}</span>
             </div>
           </div>
           {/* Tracking Step UI */}
           <div className="flex items-center gap-2 mb-4 px-2">
-            <TrackStep active={true} label="Ordered" />
+            <TrackStep active={true} label={tr('Ordered')} />
             <TrackLine active={['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(o.status)} />
             <TrackStep
               active={['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(o.status)}
-              label="Processing"
+              label={tr('Processing')}
             />
             <TrackLine active={['SHIPPED', 'DELIVERED'].includes(o.status)} />
-            <TrackStep active={['SHIPPED', 'DELIVERED'].includes(o.status)} label="Shipped" />
+            <TrackStep active={['SHIPPED', 'DELIVERED'].includes(o.status)} label={tr('Shipped')} />
             <TrackLine active={o.status === 'DELIVERED'} />
-            <TrackStep active={o.status === 'DELIVERED'} label="Delivered" />
+            <TrackStep active={o.status === 'DELIVERED'} label={tr('Delivered')} />
           </div>
 
           {o.items?.map((item: OrderItem) => (
@@ -1026,7 +1042,9 @@ function OrdersTab({
                     marginTop: '2px',
                   }}
                 >
-                  <span>Qty: {item.quantity}</span>
+                  <span>
+                    {tr('Qty:')} {item.quantity}
+                  </span>
                   {item.selectedColor && <span>· Color: {item.selectedColor}</span>}
                   {item.selectedSize && <span>· Size: {item.selectedSize}</span>}
                   {!item.selectedColor && !item.selectedSize && item.variant?.title && (
@@ -1040,7 +1058,7 @@ function OrdersTab({
                   className="action-btn"
                   style={{ borderColor: '#F59E0B', color: '#B45309' }}
                 >
-                  Return
+                  {tr('Return')}
                 </button>
               )}
             </div>
@@ -1054,20 +1072,20 @@ function OrdersTab({
                 className="action-btn"
                 style={{ borderColor: '#A32D2D', color: '#791F1F' }}
               >
-                Cancel Order
+                {tr('Cancel Order')}
               </button>
             )}
             <button onClick={() => onReorder(o)} className="action-btn">
-              Buy Again
+              {tr('Buy Again')}
             </button>
             <Link href={`/dashboard/orders/${o.id}`} className="action-btn">
-              View Details
+              {tr('View Details')}
             </Link>
           </div>
         </div>
       ))}
       {!orders.length && (
-        <div className="py-20 text-center text-xs text-slate-400">No orders found.</div>
+        <div className="py-20 text-center text-xs text-slate-400">{tr('No orders found.')}</div>
       )}
     </div>
   );
@@ -1080,10 +1098,11 @@ function WishlistTab({
   items: (WishlistItem & { product: Product })[];
   onToggle: (id: string) => void;
 }) {
+  const { tr } = useLanguage();
   return (
     <div className="card">
       <div className="card-header">
-        <div className="card-title">My Saved Items</div>
+        <div className="card-title">{tr('My Saved Items')}</div>
       </div>
       {items.map(w => (
         <div key={w.productId} className="row-item">
@@ -1098,34 +1117,37 @@ function WishlistTab({
             <div style={{ fontSize: '11px', color: '#64748b' }}>{w.product?.category?.name}</div>
           </div>
           <div style={{ textAlign: 'right', padding: '0 20px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 600 }}>{w.product?.basePrice} EGP</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>
+              {w.product?.basePrice} {tr('EGP')}
+            </div>
           </div>
           <div className="flex gap-3">
             <Link href={`/product/${w.productId}`} className="action-btn">
-              View
+              {tr('View')}
             </Link>
             <button
               onClick={() => onToggle(w.productId)}
               className="action-btn"
               style={{ borderColor: '#A32D2D', color: '#791F1F' }}
             >
-              Remove
+              {tr('Remove')}
             </button>
           </div>
         </div>
       ))}
       {!items.length && (
-        <div className="py-20 text-center text-xs text-slate-400">Wishlist empty.</div>
+        <div className="py-20 text-center text-xs text-slate-400">{tr('Wishlist empty.')}</div>
       )}
     </div>
   );
 }
 
 function NotificationsTab({ items }: { items: Notification[] }) {
+  const { tr } = useLanguage();
   return (
     <div className="card">
       <div className="card-header">
-        <div className="card-title">System Alerts</div>
+        <div className="card-title">{tr('System Alerts')}</div>
       </div>
       {items.map(n => (
         <div key={n.id} className="row-item">
@@ -1143,7 +1165,9 @@ function NotificationsTab({ items }: { items: Notification[] }) {
         </div>
       ))}
       {!items.length && (
-        <div className="py-20 text-center text-xs text-slate-400">No new notifications.</div>
+        <div className="py-20 text-center text-xs text-slate-400">
+          {tr('No new notifications.')}
+        </div>
       )}
     </div>
   );
@@ -1158,6 +1182,7 @@ interface LoyaltyTx {
 }
 
 function WalletTab({ user }: { user?: User }) {
+  const { tr } = useLanguage();
   const points = user?.loyaltyPoints || 0;
   // Tier thresholds — aligned with POINTS_PER_ORDER=10
   // Bronze: 0-499 pts | Silver: 500-1999 pts | Gold: 2000+ pts
@@ -1210,13 +1235,17 @@ function WalletTab({ user }: { user?: User }) {
             marginBottom: '10px',
           }}
         >
-          Loyalty Balance
+          {tr('Loyalty Balance')}
         </div>
         <div style={{ fontSize: '42px', fontWeight: 800, color: '#1e3b8a' }}>
           {points.toLocaleString()} <span style={{ fontSize: '20px', color: '#94a3b8' }}>pts</span>
         </div>
         <div style={{ fontSize: '13px', color: '#64748b', marginTop: '8px' }}>
-          Worth <strong>{points.toLocaleString()} EGP</strong> at checkout (1 pt = 1 EGP)
+          {tr('Worth')}{' '}
+          <strong>
+            {points.toLocaleString()} {tr('EGP')}
+          </strong>{' '}
+          {tr('at checkout (1 pt = 1 EGP)')}
         </div>
         {points > 0 && (
           <div className="mt-4">
@@ -1224,18 +1253,18 @@ function WalletTab({ user }: { user?: User }) {
               href="/shop"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1e3b8a] text-white text-xs font-bold hover:bg-[#152e6e] transition-colors shadow-sm"
             >
-              <span>🛍️</span> Use Points at Checkout
+              <span>🛍️</span> {tr('Use Points at Checkout')}
             </Link>
           </div>
         )}
         <div className="mt-6 pt-6 border-t border-slate-100">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-bold uppercase" style={{ color: tierColor }}>
-              {tier} Member
+              {tier} {tr('Member')}
             </div>
             {nextTier && (
               <div className="text-[10px] text-slate-400">
-                {(nextTierPoints - points).toLocaleString()} pts to {nextTier}
+                {(nextTierPoints - points).toLocaleString()} {tr('pts to')} {nextTier}
               </div>
             )}
           </div>
@@ -1248,20 +1277,20 @@ function WalletTab({ user }: { user?: User }) {
           {/* Tier benefits */}
           <div className="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500">
             <div className="font-bold text-slate-700 mb-1" style={{ color: tierColor }}>
-              Your {tier} benefits:
+              {tr('Your')} {tier} benefits:
             </div>
-            {tier === 'Bronze' && <div>• 1 pt = 1 EGP off at checkout</div>}
+            {tier === 'Bronze' && <div>{tr('• 1 pt = 1 EGP off at checkout')}</div>}
             {tier === 'Silver' && (
               <>
-                <div>• 1 pt = 1 EGP off at checkout</div>
-                <div>• Early access to flash sales</div>
+                <div>{tr('• 1 pt = 1 EGP off at checkout')}</div>
+                <div>{tr('• Early access to flash sales')}</div>
               </>
             )}
             {tier === 'Gold' && (
               <>
-                <div>• 1 pt = 1 EGP off at checkout</div>
-                <div>• Early access to flash sales</div>
-                <div>• Free shipping on orders over 1000 EGP</div>
+                <div>{tr('• 1 pt = 1 EGP off at checkout')}</div>
+                <div>{tr('• Early access to flash sales')}</div>
+                <div>{tr('• Free shipping on orders over 1500 EGP')}</div>
               </>
             )}
           </div>
@@ -1270,12 +1299,14 @@ function WalletTab({ user }: { user?: User }) {
 
       {/* History section */}
       <div className="card">
-        <div className="card-title mb-4">Transaction History</div>
+        <div className="card-title mb-4">{tr('Transaction History')}</div>
         {historyLoading ? (
-          <div className="py-8 text-center text-xs text-slate-400">Loading transactions…</div>
+          <div className="py-8 text-center text-xs text-slate-400">
+            {tr('Loading transactions…')}
+          </div>
         ) : history.length === 0 ? (
           <div className="py-10 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg">
-            No loyalty transactions yet. Place your first order to earn points!
+            {tr('No loyalty transactions yet. Place your first order to earn points!')}
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -1316,15 +1347,17 @@ function WalletTab({ user }: { user?: User }) {
 
       {/* How to earn */}
       <div className="card">
-        <div className="card-title mb-4">How to earn points</div>
+        <div className="card-title mb-4">{tr('How to earn points')}</div>
         <div className="space-y-3 text-sm text-slate-600">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-amber-50 text-[#1e3b8a] flex items-center justify-center text-sm">
               🛍️
             </div>
             <div>
-              <div className="font-bold text-slate-900">Shop purchases</div>
-              <div className="text-[11px] text-slate-400">10 points per completed order</div>
+              <div className="font-bold text-slate-900">{tr('Shop purchases')}</div>
+              <div className="text-[11px] text-slate-400">
+                {tr('10 points per completed order')}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -1332,9 +1365,9 @@ function WalletTab({ user }: { user?: User }) {
               ⭐
             </div>
             <div>
-              <div className="font-bold text-slate-900">Write reviews</div>
+              <div className="font-bold text-slate-900">{tr('Write reviews')}</div>
               <div className="text-[11px] text-slate-400">
-                Earn 5 points per verified purchase review
+                {tr('Earn 5 points per verified purchase review')}
               </div>
             </div>
           </div>
@@ -1343,9 +1376,9 @@ function WalletTab({ user }: { user?: User }) {
               👥
             </div>
             <div>
-              <div className="font-bold text-slate-900">Refer friends</div>
+              <div className="font-bold text-slate-900">{tr('Refer friends')}</div>
               <div className="text-[11px] text-slate-400">
-                50 points when a friend completes their first order
+                {tr('50 points when a friend completes their first order')}
               </div>
             </div>
           </div>
@@ -1354,10 +1387,10 @@ function WalletTab({ user }: { user?: User }) {
 
       {/* Refer a Friend */}
       <div className="card">
-        <div className="card-title mb-2">Refer a Friend</div>
+        <div className="card-title mb-2">{tr('Refer a Friend')}</div>
         <div className="text-xs text-slate-500 mb-4">
-          Share your unique referral link. Earn <strong>50 bonus points</strong> when a friend signs
-          up and completes their first order.
+          {tr('Share your unique referral link. Earn')} <strong>{tr('50 bonus points')}</strong>{' '}
+          {tr('when a friend signs up and completes their first order.')}
         </div>
         {user?.email && <ReferralLinkWidget email={user.email} />}
       </div>
@@ -1366,6 +1399,7 @@ function WalletTab({ user }: { user?: User }) {
 }
 
 function ReferralLinkWidget({ email }: { email: string }) {
+  const { tr } = useLanguage();
   const [copied, setCopied] = React.useState(false);
   const refCode = Buffer.from(email)
     .toString('base64')
@@ -1392,7 +1426,7 @@ function ReferralLinkWidget({ email }: { email: string }) {
         onClick={copy}
         className="px-3 py-2 bg-[#1e3b8a] text-white text-xs font-bold rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap"
       >
-        {copied ? 'Copied ✓' : 'Copy Link'}
+        {copied ? tr('Copied ✓') : tr('Copy Link')}
       </button>
     </div>
   );
@@ -1407,6 +1441,7 @@ function SettingsTab({
   onUpdate: (e: React.FormEvent) => void;
   isUpdating: boolean;
 }) {
+  const { tr } = useLanguage();
   const [avatar, setAvatar] = useState(user?.avatarUrl || '');
   const [uploading, setUploading] = useState(false);
   const { confirm } = useConfirm();
@@ -1436,8 +1471,8 @@ function SettingsTab({
       console.error('Avatar upload failed', err);
       toast({
         variant: 'error',
-        title: 'Upload Failed',
-        description: (err as Error).message || 'Avatar upload failed.',
+        title: tr('Upload Failed'),
+        description: (err as Error).message || tr('Avatar upload failed.'),
       });
       setAvatar(user?.avatarUrl || '');
     } finally {
@@ -1447,8 +1482,8 @@ function SettingsTab({
 
   const handleDeleteAccount = async () => {
     const confirmed = await confirm({
-      title: 'Delete Account',
-      message: 'Delete your account? This anonymizes your data and cannot be undone.',
+      title: tr('Delete Account'),
+      message: tr('Delete your account? This anonymizes your data and cannot be undone.'),
       type: 'danger',
     });
     if (!confirmed) return;
@@ -1457,8 +1492,8 @@ function SettingsTab({
       if (res.ok) {
         toast({
           variant: 'success',
-          title: 'Account Deleted',
-          description: 'Account deleted. Signing you out…',
+          title: tr('Account Deleted'),
+          description: tr('Account deleted. Signing you out…'),
         });
         setTimeout(() => {
           window.location.href = '/api/auth/signout';
@@ -1467,19 +1502,19 @@ function SettingsTab({
         const d = await res.json();
         toast({
           variant: 'error',
-          title: 'Deletion Failed',
-          description: d.message || 'Failed to delete account',
+          title: tr('Deletion Failed'),
+          description: d.message || tr('Failed to delete account'),
         });
       }
     } catch (err: unknown) {
       const e = err as Error;
-      toast({ variant: 'error', title: 'Error', description: e.message });
+      toast({ variant: 'error', title: tr('Error'), description: e.message });
     }
   };
 
   return (
     <div className="card max-w-xl">
-      <div className="card-title mb-6">Profile Management</div>
+      <div className="card-title mb-6">{tr('Profile Management')}</div>
       <form onSubmit={onUpdate}>
         {/* Avatar */}
         <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
@@ -1493,11 +1528,11 @@ function SettingsTab({
           </div>
           <div className="flex-1">
             <label className="text-[11px] text-slate-400 uppercase font-bold block mb-2">
-              Profile Photo
+              {tr('Profile Photo')}
             </label>
             <div className="flex items-center gap-2 flex-wrap">
               <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-semibold text-slate-700">
-                {avatar ? 'Replace photo' : 'Upload photo'}
+                {avatar ? tr('Replace photo') : tr('Upload photo')}
                 <input
                   type="file"
                   accept="image/*"
@@ -1512,23 +1547,23 @@ function SettingsTab({
                   onClick={() => setAvatar('')}
                   className="text-xs font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded-md hover:bg-red-50"
                 >
-                  Remove
+                  {tr('Remove')}
                 </button>
               )}
-              {uploading && <span className="text-[11px] text-slate-400">Uploading…</span>}
+              {uploading && <span className="text-[11px] text-slate-400">{tr('Uploading…')}</span>}
             </div>
             <input type="hidden" name="avatarUrl" value={avatar} />
           </div>
         </div>
         <div>
           <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">
-            Full Name
+            {tr('Full Name')}
           </label>
           <input name="name" defaultValue={user?.name} className="input-profile" />
         </div>
         <div>
           <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">
-            Email Address
+            {tr('Email Address')}
           </label>
           <div className="flex items-center gap-2">
             <input
@@ -1540,24 +1575,24 @@ function SettingsTab({
             />
             {user?.emailVerified ? (
               <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs px-2.5 py-2.5 rounded-xl font-bold flex items-center gap-1">
-                ✅ Verified
+                {tr('✅ Verified')}
               </span>
             ) : (
               <span className="bg-red-50 text-red-700 border border-red-200 text-xs px-2.5 py-2.5 rounded-xl font-bold flex items-center gap-1">
-                ❌ Unverified
+                {tr('❌ Unverified')}
               </span>
             )}
           </div>
         </div>
         <div>
           <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">
-            Phone Number
+            {tr('Phone Number')}
           </label>
           <input
             name="phone"
             defaultValue={user?.phone || ''}
             className="input-profile"
-            placeholder="+20 1XX XXX XXXX"
+            placeholder={tr('+20 1XX XXX XXXX')}
           />
         </div>
         <button
@@ -1565,23 +1600,25 @@ function SettingsTab({
           type="submit"
           className="w-full py-3 bg-[#1e3b8a] text-white rounded font-bold mt-4 disabled:opacity-50"
         >
-          {isUpdating ? 'Updating...' : 'Save Changes'}
+          {isUpdating ? tr('Updating...') : tr('Save Changes')}
         </button>
 
         {/* Danger zone */}
         <div className="mt-8 pt-6 border-t border-slate-100">
-          <div className="text-[11px] text-red-600 uppercase font-bold mb-2">Danger Zone</div>
+          <div className="text-[11px] text-red-600 uppercase font-bold mb-2">
+            {tr('Danger Zone')}
+          </div>
           <p className="text-xs text-slate-500 mb-3">
-            Deleting your account will anonymize your personal data in compliance with Egyptian PDPL
-            law. Your order history is retained for legal/tax reasons but will no longer be linked
-            to your identity.
+            {tr(
+              'Deleting your account will anonymize your personal data in compliance with Egyptian PDPL law. Your order history is retained for legal/tax reasons but will no longer be linked to your identity.'
+            )}
           </p>
           <button
             type="button"
             onClick={handleDeleteAccount}
             className="w-full py-2.5 border border-red-200 text-red-600 rounded font-bold text-xs hover:bg-red-50"
           >
-            Delete My Account
+            {tr('Delete My Account')}
           </button>
         </div>
       </form>
@@ -1594,6 +1631,7 @@ interface TrackLookupTabProps {
 }
 
 function TrackLookupTab({ data }: TrackLookupTabProps) {
+  const { tr } = useLanguage();
   const [orderId, setOrderId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -1619,7 +1657,7 @@ function TrackLookupTab({ data }: TrackLookupTabProps) {
 
       setTrackResult(payload.order);
     } catch (err: any) {
-      setError(err.message || 'Failed to retrieve order tracking info');
+      setError(err.message || tr('Failed to retrieve order tracking info'));
     } finally {
       setLoading(false);
     }
@@ -1644,12 +1682,12 @@ function TrackLookupTab({ data }: TrackLookupTabProps) {
 
   return (
     <div className="card">
-      <div className="card-title mb-4">Track Order Progress</div>
+      <div className="card-title mb-4">{tr('Track Order Progress')}</div>
 
       <form onSubmit={handleTrack} className="space-y-4 max-w-md mb-6">
         <div>
           <label className="text-[11px] text-slate-400 uppercase font-bold block mb-1">
-            Order Number / ID
+            {tr('Order Number / ID')}
           </label>
           <div className="flex gap-2">
             <input
@@ -1675,7 +1713,7 @@ function TrackLookupTab({ data }: TrackLookupTabProps) {
               disabled={loading}
               className="bg-[#1e3b8a] hover:bg-[#16307a] text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
             >
-              {loading ? 'Searching...' : 'Track'}
+              {loading ? tr('Searching...') : tr('Track')}
             </button>
           </div>
         </div>
@@ -1691,12 +1729,14 @@ function TrackLookupTab({ data }: TrackLookupTabProps) {
         <div className="border border-slate-100 rounded-2xl p-6 bg-slate-50 space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200/60 pb-4">
             <div>
-              <div className="text-[10px] text-slate-400 font-bold uppercase">Order Tracked</div>
+              <div className="text-[10px] text-slate-400 font-bold uppercase">
+                {tr('Order Tracked')}
+              </div>
               <div className="text-sm font-extrabold text-slate-800 mt-0.5">#{trackResult.id}</div>
             </div>
-            <div className="text-right">
+            <div className="text-end">
               <div className="text-[10px] text-slate-400 font-bold uppercase">
-                Estimated Delivery
+                {tr('Estimated Delivery')}
               </div>
               <div className="text-sm font-bold text-[#1e3b8a] mt-0.5">
                 {new Date(
@@ -1711,9 +1751,9 @@ function TrackLookupTab({ data }: TrackLookupTabProps) {
             <div className="py-4">
               <div className="flex justify-between items-center relative mb-4">
                 {/* Horizontal progress lines */}
-                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-slate-200 -z-10 rounded-full" />
+                <div className="absolute start-0 end-0 top-1/2 -translate-y-1/2 h-1 bg-slate-200 -z-10 rounded-full" />
                 <div
-                  className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-emerald-500 -z-10 transition-all duration-500 rounded-full"
+                  className="absolute start-0 top-1/2 -translate-y-1/2 h-1 bg-emerald-500 -z-10 transition-all duration-500 rounded-full"
                   style={{ width: `${(statusIdx / (steps.length - 1)) * 100}%` }}
                 />
 
@@ -1749,46 +1789,50 @@ function TrackLookupTab({ data }: TrackLookupTabProps) {
                         : 'text-slate-400'
                     }
                   >
-                    {stepLabels[step]}
+                    {tr(stepLabels[step])}
                   </span>
                 ))}
               </div>
             </div>
           ) : (
             <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-850 text-xs font-bold uppercase tracking-wider text-center">
-              🚨 Status: {trackResult.status.replace(/_/g, ' ')}
+              {tr('🚨 Status:')} {trackResult.status.replace(/_/g, ' ')}
             </div>
           )}
 
           {/* Mini Invoice Summary */}
           <div className="border-t border-slate-200/60 pt-4">
-            <div className="text-[10px] text-slate-400 font-bold uppercase mb-3">Order Details</div>
+            <div className="text-[10px] text-slate-400 font-bold uppercase mb-3">
+              {tr('Order Details')}
+            </div>
             <div className="space-y-3">
               {trackResult.items.map((item: any) => (
                 <div key={item.id} className="flex justify-between items-center text-xs">
-                  <div className="flex-1 min-w-0 pr-4 text-left">
+                  <div className="flex-1 min-w-0 pe-4 text-start">
                     <div className="font-bold text-slate-800 truncate">
                       {item.productTitleSnapshot}
                     </div>
                     <div className="text-[10px] text-slate-400">
-                      Qty: {item.quantity}
+                      {tr('Qty:')} {item.quantity}
                       {item.selectedColor && ` · Color: ${item.selectedColor}`}
                       {item.selectedSize && ` · Size: ${item.selectedSize}`}
                       {!item.selectedColor &&
                         !item.selectedSize &&
                         item.variant?.title &&
                         ` · Variant: ${item.variant.title}`}
-                      {` · Price: ${item.priceAtPurchase} EGP`}
+                      {` · Price: ${item.priceAtPurchase} ${tr('EGP')}`}
                     </div>
                   </div>
                   <div className="font-extrabold text-slate-700">
-                    {(item.priceAtPurchase * item.quantity).toLocaleString()} EGP
+                    {(item.priceAtPurchase * item.quantity).toLocaleString()} {tr('EGP')}
                   </div>
                 </div>
               ))}
               <div className="border-t border-slate-200 pt-2 flex justify-between font-extrabold text-sm text-slate-800">
-                <span>Total Amount</span>
-                <span>{trackResult.totalAmount.toLocaleString()} EGP</span>
+                <span>{tr('Total Amount')}</span>
+                <span>
+                  {trackResult.totalAmount.toLocaleString()} {tr('EGP')}
+                </span>
               </div>
             </div>
           </div>

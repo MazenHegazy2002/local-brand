@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -180,6 +181,7 @@ const detectImageColor = async (file: File): Promise<string> => {
 };
 
 export default function EditProductPage() {
+  const { tr } = useLanguage();
   const { data: session, status } = useSession();
   // Admins and co-admins edit any seller's product here and return to Admin OS.
   const viewerRole = (session?.user as SessionUser)?.role;
@@ -383,7 +385,7 @@ export default function EditProductPage() {
           title:
             next[index].title && next[index].title !== 'Default' && next[index].title !== ''
               ? next[index].title
-              : suggestedColor || 'Default',
+              : suggestedColor || tr('Default'),
         };
       }
       return next;
@@ -424,7 +426,7 @@ export default function EditProductPage() {
       });
     } catch (e) {
       console.error(e);
-      toast({ title: (e as Error).message || 'Upload failed.', variant: 'error' });
+      toast({ title: (e as Error).message || tr('Upload failed.'), variant: 'error' });
       setVariants(prev => {
         const next = [...prev];
         if (next[index]) {
@@ -518,7 +520,7 @@ export default function EditProductPage() {
       if (res.ok) {
         router.push(backHref);
       } else {
-        toast({ title: 'Failed to update product', variant: 'error' });
+        toast({ title: tr('Failed to update product'), variant: 'error' });
       }
     } catch (e) {
       console.error(e);
@@ -529,8 +531,8 @@ export default function EditProductPage() {
 
   const handleDelete = async () => {
     const ok = await confirm({
-      title: 'Delete Product',
-      message: 'Are you sure you want to delete this product? This cannot be undone.',
+      title: tr('Delete Product'),
+      message: tr('Are you sure you want to delete this product? This cannot be undone.'),
       confirmText: 'Delete',
       type: 'danger',
     });
@@ -577,7 +579,7 @@ export default function EditProductPage() {
   if (!mounted || loading) {
     return (
       <div className="db">
-        <div className="main">Loading...</div>
+        <div className="main">{tr('Loading...')}</div>
       </div>
     );
   }
@@ -596,7 +598,7 @@ export default function EditProductPage() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
-            aria-label="Open seller navigation menu"
+            aria-label={tr('Open seller navigation menu')}
             className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-all cursor-pointer"
           >
             <Menu size={20} />
@@ -619,7 +621,7 @@ export default function EditProductPage() {
               letterSpacing: '.4px',
             }}
           >
-            {isMultiBrand ? 'MULTI-BRAND' : 'SINGLE BRAND'}
+            {isMultiBrand ? tr('MULTI-BRAND') : tr('SINGLE BRAND')}
           </span>
         </div>
       </div>
@@ -642,7 +644,7 @@ export default function EditProductPage() {
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white cursor-pointer"
-                aria-label="Close menu"
+                aria-label={tr('Close menu')}
               >
                 <X size={18} />
               </button>
@@ -651,13 +653,13 @@ export default function EditProductPage() {
             {/* Multi-Brand tag */}
             <div className="py-2.5 flex items-center gap-2">
               <span className="text-[10px] bg-amber-400 text-amber-950 font-bold px-2 py-0.5 rounded-full">
-                {isMultiBrand ? 'MULTI-BRAND' : 'SINGLE BRAND'}
+                {isMultiBrand ? tr('MULTI-BRAND') : tr('SINGLE BRAND')}
               </span>
             </div>
 
             {/* Brand Switcher in drawer */}
             <div className="text-[11px] font-bold text-white/70 tracking-wider mt-2 mb-1">
-              ACTIVE BRAND
+              {tr('ACTIVE BRAND')}
             </div>
             <div className="flex flex-col gap-1 mb-4">
               <button
@@ -673,7 +675,7 @@ export default function EditProductPage() {
                     : 'text-white hover:bg-white/10'
                 }`}
               >
-                <span>All brands</span>
+                <span>{tr('All brands')}</span>
                 <span className="text-xs opacity-90">{ordersCount}</span>
               </button>
 
@@ -698,7 +700,7 @@ export default function EditProductPage() {
                       className="w-2.5 h-2.5 rounded-full shrink-0"
                       style={{ background: b.accentColor || '#0c674a' }}
                     />
-                    <span className="truncate flex-1 text-left">{b.name}</span>
+                    <span className="truncate flex-1 text-start">{b.name}</span>
                   </button>
                 );
               })}
@@ -712,7 +714,7 @@ export default function EditProductPage() {
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/90 hover:bg-white/10 transition-all"
               >
                 <LayoutDashboard size={18} />
-                <span>Overview</span>
+                <span>{tr('Overview')}</span>
               </Link>
               <Link
                 href="/seller-hub?tab=orders"
@@ -720,7 +722,7 @@ export default function EditProductPage() {
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/90 hover:bg-white/10 transition-all"
               >
                 <Package size={18} />
-                <span>Orders</span>
+                <span>{tr('Orders')}</span>
               </Link>
               <Link
                 href="/seller-hub?tab=products"
@@ -728,7 +730,7 @@ export default function EditProductPage() {
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm bg-white/25 font-bold text-white transition-all"
               >
                 <ShoppingBag size={18} />
-                <span>Inventory & Products</span>
+                <span>{tr('Inventory & Products')}</span>
               </Link>
               <Link
                 href="/seller-hub?tab=analytics"
@@ -736,7 +738,7 @@ export default function EditProductPage() {
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/90 hover:bg-white/10 transition-all"
               >
                 <BarChart3 size={18} />
-                <span>Analytics</span>
+                <span>{tr('Analytics')}</span>
               </Link>
               <Link
                 href="/seller-hub?tab=wallet"
@@ -744,7 +746,7 @@ export default function EditProductPage() {
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/90 hover:bg-white/10 transition-all"
               >
                 <Wallet size={18} />
-                <span>Wallet & Payouts</span>
+                <span>{tr('Wallet & Payouts')}</span>
               </Link>
               <Link
                 href="/seller-hub?tab=settings"
@@ -752,7 +754,7 @@ export default function EditProductPage() {
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/90 hover:bg-white/10 transition-all"
               >
                 <Settings size={18} />
-                <span>Store Settings</span>
+                <span>{tr('Store Settings')}</span>
               </Link>
             </div>
 
@@ -773,20 +775,20 @@ export default function EditProductPage() {
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
-              <span>Back to Public Shop</span>
+              <span>{tr('Back to Public Shop')}</span>
             </Link>
 
             {/* Drawer Footer */}
             <div className="mt-auto pt-6 flex flex-col gap-3">
               <div>
                 <div className="font-bold text-white text-xs truncate">
-                  {currentSeller?.storeName || 'Brandy Store'}
+                  {currentSeller?.storeName || tr('Brandyy Store')}
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-white/75 mt-0.5">
                   <span
                     className={`w-2 h-2 rounded-full ${isMultiBrand ? 'bg-amber-400' : 'bg-green-400'}`}
                   />
-                  <span>{isMultiBrand ? 'Upgraded by admin' : 'Active seller'}</span>
+                  <span>{isMultiBrand ? tr('Upgraded by admin') : tr('Active seller')}</span>
                 </div>
               </div>
               <button
@@ -795,7 +797,7 @@ export default function EditProductPage() {
                 className="flex items-center gap-2 text-xs font-semibold text-emerald-100 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-2 rounded-xl transition-all w-full cursor-pointer border border-white/10"
               >
                 <LogOut size={15} />
-                <span>Sign Out</span>
+                <span>{tr('Sign Out')}</span>
               </button>
             </div>
           </div>
@@ -831,7 +833,7 @@ export default function EditProductPage() {
               letterSpacing: '.5px',
             }}
           >
-            {isMultiBrand ? 'MULTI-BRAND' : 'SINGLE BRAND'}
+            {isMultiBrand ? tr('MULTI-BRAND') : tr('SINGLE BRAND')}
           </span>
           {isMultiBrand && (
             <span style={{ fontSize: '12px', opacity: 0.8, color: '#fff' }}>
@@ -851,7 +853,7 @@ export default function EditProductPage() {
             fontWeight: 700,
           }}
         >
-          ACTIVE BRAND
+          {tr('ACTIVE BRAND')}
         </div>
         <div
           style={{
@@ -890,7 +892,7 @@ export default function EditProductPage() {
             <span
               style={{ textAlign: 'left', flex: 1, fontWeight: activeBrand === 'all' ? 700 : 400 }}
             >
-              All brands
+              {tr('All brands')}
             </span>
             <span
               style={{
@@ -986,45 +988,45 @@ export default function EditProductPage() {
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
-          Back to Shop
+          {tr('Back to Shop')}
         </Link>
 
         {/* Main Nav Items */}
         <Link href="/seller-hub?tab=overview" className="nav-item">
           <LayoutDashboard size={18} />
-          <span>Overview</span>
+          <span>{tr('Overview')}</span>
         </Link>
         <Link href="/seller-hub?tab=orders" className="nav-item">
           <Package size={18} />
-          <span>Orders</span>
+          <span>{tr('Orders')}</span>
         </Link>
         <Link href="/seller-hub?tab=products" className="nav-item active">
           <ShoppingBag size={18} />
-          <span>Inventory</span>
+          <span>{tr('Inventory')}</span>
         </Link>
         <Link href="/seller-hub?tab=analytics" className="nav-item">
           <BarChart3 size={18} />
-          <span>Analytics</span>
+          <span>{tr('Analytics')}</span>
         </Link>
         <Link href="/seller-hub?tab=wallet" className="nav-item">
           <Wallet size={18} />
-          <span>Wallet</span>
+          <span>{tr('Wallet')}</span>
         </Link>
         <Link href="/seller-hub?tab=settings" className="nav-item">
           <Settings size={18} />
-          <span>Settings</span>
+          <span>{tr('Settings')}</span>
         </Link>
 
         <div className="mt-auto px-4 pb-6 flex flex-col gap-3">
           <div>
             <div className="store-label truncate max-w-full font-bold text-white text-xs">
-              {currentSeller?.storeName || 'Brandy Store'}
+              {currentSeller?.storeName || tr('Brandyy Store')}
             </div>
             <div className="active-dot-row flex items-center gap-2 text-[10px] text-white/80 mt-0.5">
               <div
                 className={`active-dot w-2 h-2 rounded-full ${isMultiBrand ? 'bg-amber-400' : 'bg-green-400'}`}
               ></div>
-              {isMultiBrand ? 'Upgraded by admin' : 'Active seller'}
+              {isMultiBrand ? tr('Upgraded by admin') : tr('Active seller')}
             </div>
           </div>
           <button
@@ -1032,24 +1034,26 @@ export default function EditProductPage() {
             className="flex items-center gap-2 text-xs font-semibold text-emerald-100 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-2 rounded-xl transition-all w-full cursor-pointer border border-white/10"
           >
             <LogOut size={15} />
-            <span>Sign Out</span>
+            <span>{tr('Sign Out')}</span>
           </button>
         </div>
       </div>
 
       <div className="main">
         <div className="topbar">
-          <div className="page-title">{isStaff ? 'Edit Product (Admin)' : 'Edit Product'}</div>
+          <div className="page-title">
+            {isStaff ? tr('Edit Product (Admin)') : tr('Edit Product')}
+          </div>
           <div className="flex gap-3">
             <Link href={backHref} className="px-4 py-2 border border-slate-200 rounded text-sm">
-              Cancel
+              {tr('Cancel')}
             </Link>
             <button
               onClick={handleSave}
               disabled={saving}
               className="px-4 py-2 bg-[#0F6E56] text-white rounded text-sm font-medium disabled:opacity-50"
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? tr('Saving...') : tr('Save Changes')}
             </button>
           </div>
         </div>
@@ -1057,10 +1061,12 @@ export default function EditProductPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <div className="card">
-              <h3 className="card-title mb-4">Basic Information</h3>
+              <h3 className="card-title mb-4">{tr('Basic Information')}</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Title *</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                    {tr('Title *')}
+                  </label>
                   <input
                     type="text"
                     value={form.title}
@@ -1070,13 +1076,15 @@ export default function EditProductPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Category</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                    {tr('Category')}
+                  </label>
                   <select
                     value={form.categoryId}
                     onChange={e => setForm({ ...form, categoryId: e.target.value })}
                     className="input-field bg-white"
                   >
-                    <option value="">Select...</option>
+                    <option value="">{tr('Select...')}</option>
                     {categories.map(c => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -1085,21 +1093,23 @@ export default function EditProductPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Condition</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                    {tr('Condition')}
+                  </label>
                   <select
                     value={form.condition}
                     onChange={e => setForm({ ...form, condition: e.target.value })}
                     className="input-field bg-white"
                   >
-                    <option value="NEW">New</option>
-                    <option value="LIKE_NEW">Like New</option>
-                    <option value="USED">Used</option>
-                    <option value="REFURBISHED">Refurbished</option>
+                    <option value="NEW">{tr('New')}</option>
+                    <option value="LIKE_NEW">{tr('Like New')}</option>
+                    <option value="USED">{tr('Used')}</option>
+                    <option value="REFURBISHED">{tr('Refurbished')}</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Base Price (EGP) *
+                    {tr('Base Price (EGP) *')}
                   </label>
                   <input
                     type="number"
@@ -1116,7 +1126,7 @@ export default function EditProductPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Weight (KG) *
+                    {tr('Weight (KG) *')}
                   </label>
                   <input
                     type="number"
@@ -1133,7 +1143,7 @@ export default function EditProductPage() {
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Description
+                    {tr('Description')}
                   </label>
                   <textarea
                     value={form.description}
@@ -1147,7 +1157,7 @@ export default function EditProductPage() {
 
             <div className="card">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="card-title">Variants & Stock</h3>
+                <h3 className="card-title">{tr('Variants & Stock')}</h3>
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
@@ -1159,14 +1169,14 @@ export default function EditProductPage() {
                     }}
                     className="text-xs font-bold text-[#0F6E56] hover:underline"
                   >
-                    Same Price for All Variants
+                    {tr('Same Price for All Variants')}
                   </button>
                   <button
                     onClick={addVariant}
                     type="button"
                     className="text-xs text-[#0F6E56] font-bold hover:underline"
                   >
-                    + ADD VARIANT
+                    {tr('+ ADD VARIANT')}
                   </button>
                 </div>
               </div>
@@ -1179,19 +1189,19 @@ export default function EditProductPage() {
                     <div className="grid grid-cols-12 gap-2 items-center">
                       <div className="col-span-3">
                         <label className="text-[10px] text-slate-400 block font-semibold">
-                          Color / Variant
+                          {tr('Color / Variant')}
                         </label>
                         <input
                           type="text"
                           value={v.color || ''}
                           onChange={e => updateVariant(i, 'color', e.target.value)}
                           className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500"
-                          placeholder="Color"
+                          placeholder={tr('Color')}
                         />
                       </div>
                       <div className="col-span-2">
                         <label className="text-[10px] text-slate-400 block font-semibold">
-                          Stock
+                          {tr('Stock')}
                         </label>
                         <input
                           type="number"
@@ -1203,7 +1213,7 @@ export default function EditProductPage() {
                       </div>
                       <div className="col-span-3">
                         <label className="text-[10px] text-slate-400 block font-semibold">
-                          Price
+                          {tr('Price')}
                         </label>
                         <input
                           type="number"
@@ -1215,11 +1225,13 @@ export default function EditProductPage() {
                       </div>
                       <div className="col-span-3">
                         <label className="text-[10px] text-slate-400 block font-semibold">
-                          {(v.images?.length || 0) > 0 ? `Photos (${v.images?.length})` : 'Photos'}
+                          {(v.images?.length || 0) > 0
+                            ? `Photos (${v.images?.length})`
+                            : tr('Photos')}
                         </label>
                         <label
                           className="flex items-center justify-center gap-1 px-2 py-2 rounded-lg border border-dashed border-slate-300 bg-white hover:bg-slate-50 cursor-pointer text-[10px] text-slate-600 font-semibold h-[34px] transition-colors"
-                          title="Add photos for this variant"
+                          title={tr('Add photos for this variant')}
                         >
                           <svg
                             width="12"
@@ -1233,7 +1245,9 @@ export default function EditProductPage() {
                             <polyline points="17 8 12 3 7 8" />
                             <line x1="12" y1="3" x2="12" y2="15" />
                           </svg>
-                          {(v.images && v.images.length > 0) || v.image ? '+ Add Photos' : 'Upload'}
+                          {(v.images && v.images.length > 0) || v.image
+                            ? tr('+ Add Photos')
+                            : tr('Upload')}
                           <input
                             type="file"
                             accept="image/*"
@@ -1249,7 +1263,7 @@ export default function EditProductPage() {
                           onClick={() => removeVariant(i)}
                           disabled={variants.length === 1}
                           className="text-red-500 hover:text-red-700 disabled:opacity-30"
-                          aria-label="Remove variant"
+                          aria-label={tr('Remove variant')}
                         >
                           <svg
                             width="14"
@@ -1274,13 +1288,13 @@ export default function EditProductPage() {
                           type="text"
                           value={v.sizes || ''}
                           onChange={e => updateVariant(i, 'sizes', e.target.value)}
-                          placeholder="Sizes (CSV, e.g. S, M, L, XL)"
+                          placeholder={tr('Sizes (CSV, e.g. S, M, L, XL)')}
                           className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-emerald-500"
                           autoComplete="off"
                         />
                         <div className="flex flex-wrap gap-1.5 mt-2 items-center">
-                          <span className="text-[10px] font-bold text-slate-400 mr-1 select-none">
-                            Quick select:
+                          <span className="text-[10px] font-bold text-slate-400 me-1 select-none">
+                            {tr('Quick select:')}
                           </span>
                           {['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Free Size'].map(sz => {
                             const active = (v.sizes || '')
@@ -1326,7 +1340,7 @@ export default function EditProductPage() {
                           type="text"
                           value={v.sku || ''}
                           onChange={e => updateVariant(i, 'sku', e.target.value)}
-                          placeholder="SKU (auto if blank)"
+                          placeholder={tr('SKU (auto if blank)')}
                           className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-emerald-500"
                           autoComplete="off"
                         />
@@ -1336,7 +1350,7 @@ export default function EditProductPage() {
                           type="text"
                           value={v.upc || ''}
                           onChange={e => updateVariant(i, 'upc', e.target.value.slice(0, 14))}
-                          placeholder="UPC / barcode (optional)"
+                          placeholder={tr('UPC / barcode (optional)')}
                           className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-[11px] outline-none focus:ring-2 focus:ring-emerald-500"
                           autoComplete="off"
                         />
@@ -1352,7 +1366,8 @@ export default function EditProductPage() {
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-semibold text-slate-700">
-                                Variant Photos ({imgList.length})
+                                {tr('Variant Photos (')}
+                                {imgList.length})
                               </span>
                               {v.uploading ? (
                                 <span className="text-[11px] text-amber-600 font-medium animate-pulse flex items-center gap-1">
@@ -1375,7 +1390,7 @@ export default function EditProductPage() {
                                       d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                                     />
                                   </svg>
-                                  Uploading…
+                                  {tr('Uploading…')}
                                 </span>
                               ) : (
                                 <span className="text-[11px] text-emerald-600 font-medium">
@@ -1389,7 +1404,7 @@ export default function EditProductPage() {
                                 onClick={() => clearVariantImages(i)}
                                 className="text-[11px] text-slate-400 hover:text-red-600 font-semibold transition-colors"
                               >
-                                Remove All
+                                {tr('Remove All')}
                               </button>
                             )}
                           </div>
@@ -1407,8 +1422,8 @@ export default function EditProductPage() {
                                   className="w-full h-full object-cover"
                                 />
                                 {imgIdx === 0 && (
-                                  <span className="absolute bottom-1 left-1 right-1 bg-emerald-600/90 text-white text-[9px] font-bold text-center py-0.5 rounded shadow">
-                                    Cover
+                                  <span className="absolute bottom-1 start-1 end-1 bg-emerald-600/90 text-white text-[9px] font-bold text-center py-0.5 rounded shadow">
+                                    {tr('Cover')}
                                   </span>
                                 )}
                                 {!v.uploading && (
@@ -1417,7 +1432,7 @@ export default function EditProductPage() {
                                       <button
                                         type="button"
                                         onClick={() => setVariantPrimaryImage(i, imgIdx)}
-                                        title="Make Cover Image"
+                                        title={tr('Make Cover Image')}
                                         className="p-1 bg-white/90 hover:bg-white text-amber-500 rounded text-[11px] leading-none shadow"
                                       >
                                         ★
@@ -1426,7 +1441,7 @@ export default function EditProductPage() {
                                     <button
                                       type="button"
                                       onClick={() => removeVariantImage(i, imgIdx)}
-                                      title="Remove photo"
+                                      title={tr('Remove photo')}
                                       className="p-1 bg-white/90 hover:bg-red-50 text-red-600 rounded text-[11px] leading-none shadow"
                                     >
                                       ✕
@@ -1438,7 +1453,7 @@ export default function EditProductPage() {
 
                             <label
                               className="w-16 h-16 rounded-lg border-2 border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50/50 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-emerald-600 transition-all flex-shrink-0"
-                              title="Add more photos"
+                              title={tr('Add more photos')}
                             >
                               <svg
                                 width="18"
@@ -1451,7 +1466,7 @@ export default function EditProductPage() {
                                 <line x1="12" y1="5" x2="12" y2="19" />
                                 <line x1="5" y1="12" x2="19" y2="12" />
                               </svg>
-                              <span className="text-[9px] font-semibold mt-0.5">+ Add</span>
+                              <span className="text-[9px] font-semibold mt-0.5">{tr('+ Add')}</span>
                               <input
                                 type="file"
                                 accept="image/*"
@@ -1462,8 +1477,9 @@ export default function EditProductPage() {
                             </label>
                           </div>
                           <p className="text-[10px] text-slate-400 mt-1.5">
-                            Tip: You can add multiple photos. Hover over a photo to delete it or set
-                            it as the cover image.
+                            {tr(
+                              'Tip: You can add multiple photos. Hover over a photo to delete it or set it as the cover image.'
+                            )}
                           </p>
                         </div>
                       );
@@ -1474,11 +1490,11 @@ export default function EditProductPage() {
             </div>
 
             <div className="card">
-              <h3 className="card-title mb-4">Flash Sale Settings</h3>
+              <h3 className="card-title mb-4">{tr('Flash Sale Settings')}</h3>
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">
-                    Flash Price
+                    {tr('Flash Price')}
                   </label>
                   <input
                     type="number"
@@ -1490,11 +1506,13 @@ export default function EditProductPage() {
                       })
                     }
                     className="input-field"
-                    placeholder="Sale price"
+                    placeholder={tr('Sale price')}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">End Date</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                    {tr('End Date')}
+                  </label>
                   <input
                     type="date"
                     value={form.flashSaleEndsAt}
@@ -1503,7 +1521,9 @@ export default function EditProductPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Limit</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                    {tr('Limit')}
+                  </label>
                   <input
                     type="number"
                     value={form.flashSaleLimit || ''}
@@ -1514,23 +1534,24 @@ export default function EditProductPage() {
                       })
                     }
                     className="input-field"
-                    placeholder="Max qty"
+                    placeholder={tr('Max qty')}
                   />
                 </div>
               </div>
             </div>
 
             <div className="card">
-              <h3 className="card-title mb-1">Tags</h3>
+              <h3 className="card-title mb-1">{tr('Tags')}</h3>
               <p className="text-xs text-slate-400 mb-3">
-                Click any tag below to select or deselect it for your product.
+                {tr('Click any tag below to select or deselect it for your product.')}
               </p>
 
               {/* Active Selected Tags */}
               {tags.length > 0 && (
                 <div className="mb-3">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
-                    Selected Tags ({tags.length}):
+                    {tr('Selected Tags (')}
+                    {tags.length}):
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {tags.map(tag => (
@@ -1542,8 +1563,8 @@ export default function EditProductPage() {
                         <button
                           type="button"
                           onClick={() => removeTag(tag)}
-                          className="text-white/80 hover:text-white font-bold ml-0.5 cursor-pointer"
-                          title="Remove tag"
+                          className="text-white/80 hover:text-white font-bold ms-0.5 cursor-pointer"
+                          title={tr('Remove tag')}
                         >
                           ×
                         </button>
@@ -1556,7 +1577,7 @@ export default function EditProductPage() {
               {/* Interactive Tag Picker */}
               <div className="mb-4">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
-                  Available System Tags:
+                  {tr('Available System Tags:')}
                 </span>
                 <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 max-h-52 overflow-y-auto">
                   {(() => {
@@ -1603,14 +1624,14 @@ export default function EditProductPage() {
                   onChange={e => setNewTag(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
                   className="input-field text-xs"
-                  placeholder="Or type a custom tag and click Add..."
+                  placeholder={tr('Or type a custom tag and click Add...')}
                 />
                 <button
                   type="button"
                   onClick={() => addTag()}
                   className="px-4 py-2 bg-slate-800 text-white font-bold rounded-lg text-xs hover:bg-slate-900 transition-colors cursor-pointer shrink-0"
                 >
-                  Add
+                  {tr('Add')}
                 </button>
               </div>
             </div>
@@ -1618,7 +1639,7 @@ export default function EditProductPage() {
 
           <div className="space-y-6">
             <div className="card">
-              <h3 className="card-title mb-4">Preview</h3>
+              <h3 className="card-title mb-4">{tr('Preview')}</h3>
               <div className="aspect-square bg-slate-50 rounded-lg overflow-hidden mb-3">
                 {product?.images?.[0] ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -1629,11 +1650,11 @@ export default function EditProductPage() {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-slate-400">
-                    No image
+                    {tr('No image')}
                   </div>
                 )}
               </div>
-              <h4 className="font-bold text-sm">{form.title || 'Product Title'}</h4>
+              <h4 className="font-bold text-sm">{form.title || tr('Product Title')}</h4>
               {(() => {
                 const rate = sellerData?.currentSeller?.commissionRate ?? 0.1;
                 const baseP = Number(form.basePrice) || 0;
@@ -1641,20 +1662,25 @@ export default function EditProductPage() {
                   baseP > 0 ? (Math.round(baseP * (1 + rate) * 100) / 100).toFixed(2) : '0';
                 return (
                   <div className="mt-1">
-                    <p className="text-[#0F6E56] font-black text-base">{customerP} EGP</p>
+                    <p className="text-[#0F6E56] font-black text-base">
+                      {customerP} {tr('EGP')}
+                    </p>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                      New Customer Price ({Math.round(rate * 100)}% fee)
+                      {tr('New Customer Price (')}
+                      {Math.round(rate * 100)}% fee)
                     </p>
                   </div>
                 );
               })()}
               {form.flashSalePrice && (
-                <p className="text-red-500 text-sm mt-1">{form.flashSalePrice} EGP Sale!</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {form.flashSalePrice} {tr('EGP Sale!')}
+                </p>
               )}
             </div>
 
             <div className="card">
-              <h3 className="card-title mb-4">Status</h3>
+              <h3 className="card-title mb-4">{tr('Status')}</h3>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -1662,17 +1688,17 @@ export default function EditProductPage() {
                   onChange={e => setForm({ ...form, published: e.target.checked })}
                   className="rounded border-slate-300 text-[#0F6E56]"
                 />
-                <span className="text-sm text-slate-700">Published</span>
+                <span className="text-sm text-slate-700">{tr('Published')}</span>
               </label>
             </div>
 
             <div className="card">
-              <h3 className="card-title mb-4 text-red-600">Danger Zone</h3>
+              <h3 className="card-title mb-4 text-red-600">{tr('Danger Zone')}</h3>
               <button
                 onClick={handleDelete}
                 className="w-full py-3 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100"
               >
-                Delete Product
+                {tr('Delete Product')}
               </button>
             </div>
           </div>
@@ -1680,13 +1706,13 @@ export default function EditProductPage() {
       </div>
 
       {/* Mobile Sticky Bottom Navigation Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 px-2 py-1.5 flex items-center justify-around shadow-lg">
+      <div className="md:hidden fixed bottom-0 start-0 end-0 z-40 bg-white border-t border-slate-200 px-2 py-1.5 flex items-center justify-around shadow-lg">
         <Link
           href="/seller-hub?tab=overview"
           className="flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-slate-500 hover:text-slate-800 transition-colors"
         >
           <LayoutDashboard size={20} />
-          <span className="text-[10px]">Overview</span>
+          <span className="text-[10px]">{tr('Overview')}</span>
         </Link>
 
         <Link
@@ -1694,7 +1720,7 @@ export default function EditProductPage() {
           className="flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-slate-500 hover:text-slate-800 transition-colors"
         >
           <Package size={20} />
-          <span className="text-[10px]">Orders</span>
+          <span className="text-[10px]">{tr('Orders')}</span>
         </Link>
 
         <Link
@@ -1702,7 +1728,7 @@ export default function EditProductPage() {
           className="flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-[#0f6e56] font-bold transition-colors"
         >
           <ShoppingBag size={20} />
-          <span className="text-[10px]">Inventory</span>
+          <span className="text-[10px]">{tr('Inventory')}</span>
         </Link>
 
         <Link
@@ -1710,7 +1736,7 @@ export default function EditProductPage() {
           className="flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-slate-500 hover:text-slate-800 transition-colors"
         >
           <BarChart3 size={20} />
-          <span className="text-[10px]">Analytics</span>
+          <span className="text-[10px]">{tr('Analytics')}</span>
         </Link>
 
         <button
@@ -1719,7 +1745,7 @@ export default function EditProductPage() {
           className="flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
         >
           <Menu size={20} />
-          <span className="text-[10px]">Menu</span>
+          <span className="text-[10px]">{tr('Menu')}</span>
         </button>
       </div>
 

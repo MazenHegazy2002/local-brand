@@ -11,6 +11,7 @@ import type { Product } from '@/types';
 const RECENT_SEARCHES_KEY = 'recentSearches';
 
 export default function LiveSearch() {
+  const { tr } = useLanguage();
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<Partial<Product>[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -136,17 +137,17 @@ export default function LiveSearch() {
           }}
           onKeyDown={handleKeyDown}
           placeholder={t('SearchPlaceholder')}
-          aria-label="Search products"
+          aria-label={tr('Search products')}
           aria-autocomplete="list"
           aria-expanded={isOpen}
           aria-controls="live-search-results"
           role="combobox"
-          className="w-full bg-white/15 border border-white/40 text-white placeholder:text-white/75 rounded-lg py-2.5 px-4 pr-10 outline-none text-sm focus:bg-white/25 focus:border-white/60 transition-all"
+          className="w-full bg-white/15 border border-white/40 text-white placeholder:text-white/75 rounded-lg py-2.5 px-4 pe-10 outline-none text-sm focus:bg-white/25 focus:border-white/60 transition-all"
         />
         <button
           type="submit"
-          aria-label="Search"
-          className="absolute right-1 top-1/2 -translate-y-1/2 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-white/85 hover:text-white transition-colors"
+          aria-label={tr('Search')}
+          className="absolute end-1 top-1/2 -translate-y-1/2 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-white/85 hover:text-white transition-colors"
         >
           {isSearching ? (
             <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
@@ -187,11 +188,11 @@ export default function LiveSearch() {
         <div
           id="live-search-results"
           role="listbox"
-          aria-label="Search suggestions"
-          className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-slideDown"
+          aria-label={tr('Search suggestions')}
+          className="absolute top-full start-0 end-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-slideDown"
         >
           {isSearching ? (
-            <div className="p-4 text-center text-sm text-gray-500">Searching...</div>
+            <div className="p-4 text-center text-sm text-gray-500">{tr('Searching...')}</div>
           ) : search.trim().length > 0 ? (
             results.length > 0 ? (
               <ul className="max-h-80 overflow-y-auto">
@@ -214,14 +215,16 @@ export default function LiveSearch() {
                           fill
                           sizes="48px"
                           className="object-cover"
-                          alt={product.title || 'Product'}
+                          alt={product.title || tr('Product')}
                         />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug">
                           {product.title}
                         </h4>
-                        <p className="text-xs text-gray-500 font-medium">{product.basePrice} EGP</p>
+                        <p className="text-xs text-gray-500 font-medium">
+                          {product.basePrice} {tr('EGP')}
+                        </p>
                       </div>
                       <svg
                         width="16"
@@ -242,24 +245,27 @@ export default function LiveSearch() {
                     onClick={e => handleSearch(e)}
                     className="w-full p-3 text-center text-sm text-[#1e3b8a] hover:bg-blue-50 font-bold transition-colors border-t border-gray-100"
                   >
-                    View all results for "{search}"
+                    {tr('View all results for "')}
+                    {search}"
                   </button>
                 </li>
               </ul>
             ) : (
-              <div className="p-4 text-center text-sm text-gray-500">No products found.</div>
+              <div className="p-4 text-center text-sm text-gray-500">
+                {tr('No products found.')}
+              </div>
             )
           ) : recentSearches.length > 0 ? (
             <div className="p-3">
               <div className="flex justify-between items-center mb-2 px-1">
                 <span className="text-xs font-semibold text-gray-500 uppercase">
-                  Recent Searches
+                  {tr('Recent Searches')}
                 </span>
                 <button
                   onClick={clearRecentSearches}
                   className="text-xs text-[#1e3b8a] hover:underline"
                 >
-                  Clear
+                  {tr('Clear')}
                 </button>
               </div>
               <ul>
@@ -267,7 +273,7 @@ export default function LiveSearch() {
                   <li key={idx}>
                     <button
                       onClick={() => handleRecentClick(rs)}
-                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded flex items-center gap-2"
+                      className="w-full text-start px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded flex items-center gap-2"
                     >
                       <svg
                         width="14"

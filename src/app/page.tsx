@@ -1,3 +1,4 @@
+import { getServerTr } from '@/lib/i18n/server';
 export const revalidate = 60;
 
 import Navbar from '@/components/Navbar';
@@ -14,6 +15,12 @@ import { organizationJsonLd, websiteJsonLd, jsonLdScript } from '@/lib/jsonld';
 
 interface HomePageData {
   categories: { id: string; name: string; slug: string; parentId: string | null }[];
+  categoryRows?: {
+    id: string;
+    name: string;
+    slug: string;
+    products: (Product & { images: ProductImage[] })[];
+  }[];
   bestsellers: (Product & { images: ProductImage[] })[];
   newArrivals: (Product & { images: ProductImage[] })[];
   recommended: (Product & { images: ProductImage[] })[];
@@ -72,7 +79,7 @@ function ProductSection({
                 ...p,
                 name: p.title,
                 image: p.images[0]?.url,
-                brand: p.seller?.storeName || dict.Brandy || 'Local Brand',
+                brand: p.seller?.storeName || dict.Brandyy || 'Local Brand',
                 brandSlug: p.seller?.storeName
                   ? p.seller.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
                   : '',
@@ -130,6 +137,7 @@ function ProductSectionSkeleton({ emoji, title }: { emoji: string; title: string
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default async function Home() {
+  const tr = await getServerTr();
   let homeData: HomePageData = {
     categories: [],
     bestsellers: [],
@@ -138,15 +146,15 @@ export default async function Home() {
   };
   let dict = en;
 
-  let aboutTitle = 'About Brandy';
+  let aboutTitle = 'About Brandyy';
   let aboutDesc =
-    "Brandy is Egypt's premier dedicated marketplace empowering local, independent brands, artisans, and creators. We believe in the quality, craftsmanship, and potential of Egyptian products. By bridging the gap between local makers and conscious shoppers, we help grow local businesses while providing you with unique, premium fashion, home decor, electronics, and accessories. Experience local shopping redefined with verified brand authentication and complete escrow peace of mind.";
+    "Brandyy is Egypt's premier dedicated marketplace empowering local, independent brands, artisans, and creators. We believe in the quality, craftsmanship, and potential of Egyptian products. By bridging the gap between local makers and conscious shoppers, we help grow local businesses while providing you with unique, premium fashion, home decor, electronics, and accessories. Experience local shopping redefined with verified brand authentication and complete escrow peace of mind.";
   let prop1Title = 'Supporting Local Talent';
   let prop1Desc =
     'Discover and directly support emerging Egyptian sellers, designers, and local artisans bringing you unique craftsmanship.';
   let prop2Title = 'Verified Quality Brands';
   let prop2Desc =
-    'Every brand is carefully vetted and verified by the Brandy team so you can shop premium quality with absolute confidence.';
+    'Every brand is carefully vetted and verified by the Brandyy team so you can shop premium quality with absolute confidence.';
   let prop3Title = '14-Day Escrow Guarantee';
   let prop3Desc =
     'Shop secure. Your payment is held in escrow for 14 days post-delivery to guarantee product authenticity and stress-free returns.';
@@ -163,7 +171,7 @@ export default async function Home() {
     const { getSetting } = await import('@/lib/admin-settings-registry');
     const [aTitle, aDesc, p1Title, p1Desc, p2Title, p2Desc, p3Title, p3Desc, hTitle, hDesc] =
       await Promise.all([
-        getSetting<string>('HOMEPAGE_ABOUT_TITLE').catch(() => 'About Brandy'),
+        getSetting<string>('HOMEPAGE_ABOUT_TITLE').catch(() => 'About Brandyy'),
         getSetting<string>('HOMEPAGE_ABOUT_DESC').catch(() => aboutDesc),
         getSetting<string>('HOMEPAGE_PROP1_TITLE').catch(() => 'Supporting Local Talent'),
         getSetting<string>('HOMEPAGE_PROP1_DESC').catch(() => prop1Desc),
@@ -188,7 +196,7 @@ export default async function Home() {
     console.error('Critical SSR Error:', e);
   }
 
-  const { bestsellers, newArrivals, recommended } = homeData;
+  const { bestsellers, newArrivals, recommended, categoryRows = [] } = homeData;
 
   return (
     <main className="min-h-screen font-sans" style={{ background: '#f6f6f7' }}>
@@ -238,14 +246,28 @@ export default async function Home() {
             dict={dict}
           />
         </Suspense>
+
+        {categoryRows.map(row => (
+          <ProductSection
+            key={row.id}
+            emoji=""
+            title={tr(row.name)}
+            linkLabel={dict.AllProducts}
+            linkHref={`/category/${row.slug}`}
+            products={row.products}
+            dict={dict}
+          />
+        ))}
       </div>
 
-      {/* ── About Brandy & Value Proposition Section ── */}
+      {/* ── About Brandyy & Value Proposition Section ── */}
       <section className="bg-white border-y border-gray-100 py-12 mb-8">
         <div className="home-shell">
           <div className="max-w-3xl mx-auto text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-black text-[#1e3b8a] mb-4">{aboutTitle}</h2>
-            <p className="text-slate-650 leading-relaxed text-sm md:text-base">{aboutDesc}</p>
+            <h2 className="text-2xl md:text-3xl font-black text-[#1e3b8a] mb-4">
+              {tr(aboutTitle)}
+            </h2>
+            <p className="text-slate-650 leading-relaxed text-sm md:text-base">{tr(aboutDesc)}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -253,24 +275,24 @@ export default async function Home() {
               <div className="w-12 h-12 rounded-full bg-blue-50 text-[#1e3b8a] flex items-center justify-center text-xl font-bold mx-auto mb-4">
                 🇪🇬
               </div>
-              <h3 className="font-bold text-slate-900 text-base mb-2">{prop1Title}</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">{prop1Desc}</p>
+              <h3 className="font-bold text-slate-900 text-base mb-2">{tr(prop1Title)}</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">{tr(prop1Desc)}</p>
             </div>
 
             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center">
               <div className="w-12 h-12 rounded-full bg-green-50 text-green-700 flex items-center justify-center text-xl font-bold mx-auto mb-4">
                 🛡️
               </div>
-              <h3 className="font-bold text-slate-900 text-base mb-2">{prop2Title}</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">{prop2Desc}</p>
+              <h3 className="font-bold text-slate-900 text-base mb-2">{tr(prop2Title)}</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">{tr(prop2Desc)}</p>
             </div>
 
             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center">
               <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center text-xl font-bold mx-auto mb-4">
                 🔒
               </div>
-              <h3 className="font-bold text-slate-900 text-base mb-2">{prop3Title}</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">{prop3Desc}</p>
+              <h3 className="font-bold text-slate-900 text-base mb-2">{tr(prop3Title)}</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">{tr(prop3Desc)}</p>
             </div>
           </div>
         </div>
@@ -280,15 +302,15 @@ export default async function Home() {
       <section className="bg-slate-50 border-b border-gray-100 py-16">
         <div className="home-shell">
           <div className="max-w-3xl mx-auto text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-black text-[#1e3b8a] mb-3">{howTitle}</h2>
-            <p className="text-slate-500 text-sm md:text-base">{howDesc}</p>
+            <h2 className="text-2xl md:text-3xl font-black text-[#1e3b8a] mb-3">{tr(howTitle)}</h2>
+            <p className="text-slate-500 text-sm md:text-base">{tr(howDesc)}</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* For Shoppers */}
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
               <h3 className="text-lg font-black text-[#1e3b8a] mb-6 flex items-center gap-2">
-                🛍️ For Shoppers
+                {tr('🛍️ For Shoppers')}
               </h3>
               <div className="space-y-6">
                 <div className="flex gap-4">
@@ -297,11 +319,12 @@ export default async function Home() {
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-800 text-sm mb-1">
-                      Discover Unique Local Brands
+                      {tr('Discover Unique Local Brands')}
                     </h4>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      Browse hundreds of hand-selected clothing, accessories, and home decor items
-                      crafted by local artisans and Egyptian designers.
+                      {tr(
+                        'Browse hundreds of hand-selected clothing, accessories, and home decor items crafted by local artisans and Egyptian designers.'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -311,11 +334,12 @@ export default async function Home() {
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-800 text-sm mb-1">
-                      100% Escrow Protection
+                      {tr('100% Escrow Protection')}
                     </h4>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      Pay securely with Credit Cards, Meeza, or Fawry. Your funds are held safely in
-                      escrow for 14 days post-delivery to guarantee quality.
+                      {tr(
+                        'Pay securely with Credit Cards, Meeza, or Fawry. Your funds are held safely in escrow for 14 days post-delivery to guarantee quality.'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -324,10 +348,11 @@ export default async function Home() {
                     3
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-800 text-sm mb-1">Track & Trust</h4>
+                    <h4 className="font-bold text-slate-800 text-sm mb-1">{tr('Track & Trust')}</h4>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      Follow your shipping in real-time. If there is a dispute or sizing error,
-                      return the item within 14 days for a complete refund.
+                      {tr(
+                        'Follow your shipping in real-time. If there is a dispute or sizing error, return the item within 14 days for a complete refund.'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -337,7 +362,7 @@ export default async function Home() {
             {/* For Sellers */}
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
               <h3 className="text-lg font-black text-[#1e3b8a] mb-6 flex items-center gap-2">
-                💼 For Sellers
+                {tr('💼 For Sellers')}
               </h3>
               <div className="space-y-6">
                 <div className="flex gap-4">
@@ -346,11 +371,12 @@ export default async function Home() {
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-800 text-sm mb-1">
-                      Apply & Launch Storefront
+                      {tr('Apply & Launch Storefront')}
                     </h4>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      Submit your application and activate your store. Upload product photos,
-                      pricing, and stock details in minutes.
+                      {tr(
+                        'Submit your application and activate your store. Upload product photos, pricing, and stock details in minutes.'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -360,11 +386,12 @@ export default async function Home() {
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-800 text-sm mb-1">
-                      Built-in Delivery Integration
+                      {tr('Built-in Delivery Integration')}
                     </h4>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      No courier contracts needed. Our system automatically books shipping labels
-                      with our integrated domestic courier networks.
+                      {tr(
+                        'No courier contracts needed. Our system automatically books shipping labels with our integrated domestic courier networks.'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -373,10 +400,13 @@ export default async function Home() {
                     3
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-800 text-sm mb-1">Earn Vetted Payouts</h4>
+                    <h4 className="font-bold text-slate-800 text-sm mb-1">
+                      {tr('Earn Vetted Payouts')}
+                    </h4>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      After the 14-day escrow window, your earnings are computed and automatically
-                      transferred to your seller wallet.
+                      {tr(
+                        'After the 14-day escrow window, your earnings are computed and automatically transferred to your seller wallet.'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -391,44 +421,53 @@ export default async function Home() {
         <div className="home-shell">
           <div className="max-w-3xl mx-auto text-center mb-12">
             <h2 className="text-2xl md:text-3xl font-black text-[#1e3b8a] mb-3">
-              Seller Spotlight
+              {tr('Seller Spotlight')}
             </h2>
             <p className="text-slate-500 text-sm md:text-base">
-              Highlighting the incredible local brands that craft our marketplace catalogs.
+              {tr('Highlighting the incredible local brands that craft our marketplace catalogs.')}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="border border-slate-100 rounded-3xl p-6 hover:shadow-md transition-shadow">
               <span className="inline-block bg-blue-50 text-[#1e3b8a] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-3">
-                Cairo Loom
+                {tr('Cairo Loom')}
               </span>
-              <h3 className="font-bold text-slate-900 text-base mb-2">Cairo Loom Garments</h3>
+              <h3 className="font-bold text-slate-900 text-base mb-2">
+                {tr('Cairo Loom Garments')}
+              </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Specializing in relaxed-fit linen shirts, dresses, and trousers crafted locally in
-                Cairo. Supporting breathable, organic fabrics for Egypt's summer season.
+                {tr(
+                  "Specializing in relaxed-fit linen shirts, dresses, and trousers crafted locally in Cairo. Supporting breathable, organic fabrics for Egypt's summer season."
+                )}
               </p>
             </div>
 
             <div className="border border-slate-100 rounded-3xl p-6 hover:shadow-md transition-shadow">
               <span className="inline-block bg-green-50 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-3">
-                Alex Leather
+                {tr('Alex Leather')}
               </span>
-              <h3 className="font-bold text-slate-900 text-base mb-2">Alexandria Leatherworks</h3>
+              <h3 className="font-bold text-slate-900 text-base mb-2">
+                {tr('Alexandria Leatherworks')}
+              </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Handcrafted genuine leather bags, belts, and accessories made by master craftsmen in
-                Alexandria. Built for longevity, design elegance, and everyday durability.
+                {tr(
+                  'Handcrafted genuine leather bags, belts, and accessories made by master craftsmen in Alexandria. Built for longevity, design elegance, and everyday durability.'
+                )}
               </p>
             </div>
 
             <div className="border border-slate-100 rounded-3xl p-6 hover:shadow-md transition-shadow">
               <span className="inline-block bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-3">
-                Fayoum Clay
+                {tr('Fayoum Clay')}
               </span>
-              <h3 className="font-bold text-slate-900 text-base mb-2">Oasis Terracotta Craft</h3>
+              <h3 className="font-bold text-slate-900 text-base mb-2">
+                {tr('Oasis Terracotta Craft')}
+              </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Handmade clay pots, tableware, and custom home accents sourced directly from
-                artisans in Tunis Village, Fayoum. Blending tradition with modern kitchen utility.
+                {tr(
+                  'Handmade clay pots, tableware, and custom home accents sourced directly from artisans in Tunis Village, Fayoum. Blending tradition with modern kitchen utility.'
+                )}
               </p>
             </div>
           </div>
@@ -440,52 +479,58 @@ export default async function Home() {
         <div className="home-shell">
           <div className="max-w-3xl mx-auto text-center mb-12">
             <h2 className="text-2xl md:text-3xl font-black text-[#1e3b8a] mb-3">
-              Verified Buyer Testimonials
+              {tr('Verified Buyer Testimonials')}
             </h2>
             <p className="text-slate-500 text-sm md:text-base">
-              See how our customers feel about supporting local makers with complete security.
+              {tr(
+                'See how our customers feel about supporting local makers with complete security.'
+              )}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
               <p className="text-xs text-slate-600 italic leading-relaxed mb-6">
-                "The linen blouse is gorgeous! It's so rare to find authentic Egyptian linen of this
-                high quality at this price range. Courier delivery to Mansoura was prompt and
-                verified."
+                {tr(
+                  '"The linen blouse is gorgeous! It\'s so rare to find authentic Egyptian linen of this high quality at this price range. Courier delivery to Mansoura was prompt and verified."'
+                )}
               </p>
               <div>
                 <div className="text-[#d97706] font-bold text-xs mb-1">★★★★★</div>
-                <div className="font-bold text-slate-800 text-xs">Farida K.</div>
+                <div className="font-bold text-slate-800 text-xs">{tr('Farida K.')}</div>
                 <div className="text-[10px] text-slate-600 font-medium">
-                  Verified Buyer, Mansoura
+                  {tr('Verified Buyer, Mansoura')}
                 </div>
               </div>
             </div>
 
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
               <p className="text-xs text-slate-600 italic leading-relaxed mb-6">
-                "Having the 14-day escrow protection gave me total confidence to buy online. The
-                leather bag looks even better in person than the photos. Fits everything perfectly!"
+                {tr(
+                  '"Having the 14-day escrow protection gave me total confidence to buy online. The leather bag looks even better in person than the photos. Fits everything perfectly!"'
+                )}
               </p>
               <div>
                 <div className="text-[#d97706] font-bold text-xs mb-1">★★★★★</div>
-                <div className="font-bold text-slate-800 text-xs">Tarek M.</div>
+                <div className="font-bold text-slate-800 text-xs">{tr('Tarek M.')}</div>
                 <div className="text-[10px] text-slate-600 font-medium">
-                  Verified Buyer, Alexandria
+                  {tr('Verified Buyer, Alexandria')}
                 </div>
               </div>
             </div>
 
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
               <p className="text-xs text-slate-600 italic leading-relaxed mb-6">
-                "Brandy is exactly what the local industry needed. Vetted sellers, real reviews,
-                Meeza/Fawry payment support, and great local style. Will definitely buy again."
+                {tr(
+                  '"Brandyy is exactly what the local industry needed. Vetted sellers, real reviews, Meeza/Fawry payment support, and great local style. Will definitely buy again."'
+                )}
               </p>
               <div>
                 <div className="text-[#d97706] font-bold text-xs mb-1">★★★★★</div>
-                <div className="font-bold text-slate-800 text-xs">Yasmine A.</div>
-                <div className="text-[10px] text-slate-600 font-medium">Verified Buyer, Cairo</div>
+                <div className="font-bold text-slate-800 text-xs">{tr('Yasmine A.')}</div>
+                <div className="text-[10px] text-slate-600 font-medium">
+                  {tr('Verified Buyer, Cairo')}
+                </div>
               </div>
             </div>
           </div>
@@ -512,10 +557,10 @@ export default async function Home() {
             marginBottom: 12,
           }}
         >
-          For Sellers
+          {tr('For Sellers')}
         </p>
         <h2 style={{ fontSize: 28, fontWeight: 900, marginBottom: 12, lineHeight: 1.2 }}>
-          Sell your brand on Brandy
+          {tr('Sell your brand on Brandyy')}
         </h2>
         <p
           style={{
@@ -526,8 +571,9 @@ export default async function Home() {
             lineHeight: 1.6,
           }}
         >
-          Join emerging Egyptian local brands already growing their business. Zero upfront costs —
-          just sign up and start selling.
+          {tr(
+            'Join emerging Egyptian local brands already growing their business. Zero upfront costs — just sign up and start selling.'
+          )}
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <a
@@ -543,11 +589,11 @@ export default async function Home() {
               display: 'inline-block',
             }}
           >
-            Start Selling →
+            {tr('Start Selling →')}
           </a>
           <a
             href="/legal/seller-terms"
-            aria-label="Learn more about seller terms and requirements"
+            aria-label={tr('Learn more about seller terms and requirements')}
             style={{
               border: '1.5px solid rgba(255,255,255,0.4)',
               color: '#fff',
@@ -559,7 +605,7 @@ export default async function Home() {
               display: 'inline-block',
             }}
           >
-            Learn more about seller terms
+            {tr('Learn more about seller terms')}
           </a>
         </div>
       </section>

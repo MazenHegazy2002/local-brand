@@ -10,6 +10,7 @@ export default function CheckoutError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { tr } = useLanguage();
   const { lang } = useLanguage();
 
   useEffect(() => {
@@ -23,25 +24,29 @@ export default function CheckoutError({
           ⚠️
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          {lang === 'ar' ? 'إتمام الشراء غير متاح مؤقتاً' : 'Checkout is temporarily unavailable'}
+          {lang === 'ar'
+            ? 'إتمام الشراء غير متاح مؤقتاً'
+            : tr('Checkout is temporarily unavailable')}
         </h2>
         <p className="text-gray-500 mb-6">
           {lang === 'ar'
             ? 'حدث خطأ أثناء إتمام الشراء. سلتك محفوظة، يرجى المحاولة مرة أخرى.'
-            : 'We hit an error while processing checkout. Your cart is saved — please try again.'}
+            : tr(
+                'We hit an error while processing checkout. Your cart is saved — please try again.'
+              )}
         </p>
         <div className="flex gap-3 justify-center">
           <button
             onClick={() => reset()}
             className="px-6 py-3 rounded-xl bg-[#1e3b8a] text-white font-bold hover:bg-[#152c6e]"
           >
-            {lang === 'ar' ? 'حاول مرة أخرى' : 'Try Again'}
+            {lang === 'ar' ? 'حاول مرة أخرى' : tr('Try Again')}
           </button>
           <a
             href="/shop"
             className="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50"
           >
-            {lang === 'ar' ? 'العودة للمتجر' : 'Back to Shop'}
+            {lang === 'ar' ? 'العودة للمتجر' : tr('Back to Shop')}
           </a>
         </div>
       </div>

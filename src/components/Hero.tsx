@@ -1,3 +1,4 @@
+import { getServerTr } from '@/lib/i18n/server';
 import { getCachedBanners } from '@/lib/cache';
 import HeroSlider, { type HeroSlide } from './HeroSlider';
 import RightBannerSlider, { type RightBannerSlide } from './RightBannerSlider';

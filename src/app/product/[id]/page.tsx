@@ -1,3 +1,4 @@
+import { getServerTr } from '@/lib/i18n/server';
 import { cache } from 'react';
 import { prisma } from '@/lib/prisma';
 import Navbar from '@/components/Navbar';
@@ -62,7 +63,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   try {
     const { id } = await params;
-    if (!id) return { title: 'Product Details | Brandy' };
+    if (!id) return { title: 'Product Details | Brandyy' };
 
     const product = await getProduct(id);
 
@@ -72,13 +73,13 @@ export async function generateMetadata({
       product.deletedAt !== null ||
       product.seller?.status !== 'ACTIVE'
     ) {
-      return { title: 'Product Not Found | Brandy' };
+      return { title: 'Product Not Found | Brandyy' };
     }
 
     const price = product.flashSalePrice ?? product.basePrice ?? 0;
     const description =
       (product.description || '').slice(0, 155) ||
-      `Shop ${product.title} from ${product.seller?.storeName || 'Brandy Store'} on Brandy — Egypt's local marketplace. Price: ${price} EGP.`;
+      `Shop ${product.title} from ${product.seller?.storeName || 'Brandyy Store'} on Brandyy — Egypt's local marketplace. Price: ${price} EGP.`;
 
     const productUrl = `${PLATFORM_URL}/product/${product.slug || id}`;
     const ogImageUrl = `${PLATFORM_URL}/api/og?title=${encodeURIComponent(product.title || '')}&price=${price}&brand=${encodeURIComponent(product.seller?.storeName || '')}&category=${encodeURIComponent(product.category?.name || '')}`;
@@ -120,13 +121,14 @@ export async function generateMetadata({
   } catch (err) {
     console.error('[generateMetadata] error:', err);
     return {
-      title: 'Product Details | Brandy',
-      description: 'Shop verified local Egyptian products on Brandy.',
+      title: 'Product Details | Brandyy',
+      description: 'Shop verified local Egyptian products on Brandyy.',
     };
   }
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const tr = await getServerTr();
   try {
     const { id } = await params;
     const dict = await getDictionary();
@@ -155,9 +157,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <div className="container mx-auto px-4 py-32 text-center text-gray-500">
             <div className="text-6xl mb-4">🔍</div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {t.ProductNotFound || 'Product Not Found'}
+              {t.ProductNotFound || tr('Product Not Found')}
             </h1>
-            <p>{t.ProductNotFoundDesc || "This product couldn't be found."}</p>
+            <p>{t.ProductNotFoundDesc || tr("This product couldn't be found.")}</p>
           </div>
         </main>
       );
@@ -180,9 +182,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             <div className="container mx-auto px-4 py-32 text-center text-gray-500">
               <div className="text-6xl mb-4">🔍</div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                {t.ProductNotFound || 'Product Not Found'}
+                {t.ProductNotFound || tr('Product Not Found')}
               </h1>
-              <p>{t.ProductNotFoundDesc || "This product couldn't be found."}</p>
+              <p>{t.ProductNotFoundDesc || tr("This product couldn't be found.")}</p>
             </div>
           </main>
         );
@@ -252,7 +254,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             }
           : undefined,
       reviews: product.reviews.map(r => ({
-        author: r.user?.name || 'Verified Buyer',
+        author: r.user?.name || tr('Verified Buyer'),
         rating: r.rating,
         body: r.comment || '',
         datePublished:
@@ -286,7 +288,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         <Navbar />
 
         {/* Breadcrumb */}
-        <nav aria-label="Breadcrumb" className="bg-white border-b border-gray-100 py-3">
+        <nav aria-label={tr('Breadcrumb')} className="bg-white border-b border-gray-100 py-3">
           <div className="container mx-auto px-4">
             <Breadcrumb
               separator="/"
@@ -344,17 +346,18 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         <Navbar />
         <div className="container mx-auto px-4 py-32 text-center text-gray-500">
           <div className="text-6xl mb-4">🔍</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Product Unavailable</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{tr('Product Unavailable')}</h1>
           <p>
-            This product couldn&apos;t be loaded right now. Please try again or explore other items
-            in our shop.
+            {tr(
+              "This product couldn't be loaded right now. Please try again or explore other items in our shop."
+            )}
           </p>
           <div className="mt-6">
             <a
               href="/shop"
               className="inline-block px-6 py-3 rounded-xl bg-[#1e3b8a] text-white font-bold hover:bg-[#152c6e] transition-colors"
             >
-              Browse Shop
+              {tr('Browse Shop')}
             </a>
           </div>
         </div>

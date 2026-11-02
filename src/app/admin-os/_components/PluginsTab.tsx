@@ -333,7 +333,7 @@ export default function PluginsTab() {
                     marginBottom: '16px',
                   }}
                 >
-                  Brandy Egyptian local marketplace is built with a modular, highly extensible
+                  Brandyy Egyptian local marketplace is built with a modular, highly extensible
                   plugin registry system. You can easily add and package your custom microservices,
                   payment processors, custom CRM webhooks, and trackers by following these steps:
                 </p>

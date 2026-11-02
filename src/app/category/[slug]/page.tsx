@@ -1,3 +1,4 @@
+import { getServerTr } from '@/lib/i18n/server';
 import Navbar from '@/components/Navbar';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -24,7 +25,7 @@ export async function generateMetadata({
   });
   if (!category) return { title: 'Category Not Found' };
 
-  const en = `Shop ${category.name} from Egyptian local sellers on Brandy. ${category._count.products} products available.`;
+  const en = `Shop ${category.name} from Egyptian local sellers on Brandyy. ${category._count.products} products available.`;
   const categoryUrl = `${PLATFORM_URL}/category/${slug}`;
   const ogImageUrl = `${PLATFORM_URL}/api/og?title=${encodeURIComponent(category.name)}&category=Category&badge=${encodeURIComponent(`${category._count.products} Local Products`)}`;
 
@@ -55,6 +56,7 @@ export async function generateMetadata({
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
+  const tr = await getServerTr();
   const { slug } = await params;
 
   const category = await prisma.category.findUnique({
@@ -75,16 +77,16 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         <Navbar />
         <div className="container mx-auto px-4 py-20 text-center">
           <h1 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-4">
-            Category Not Found
+            {tr('Category Not Found')}
           </h1>
           <p className="text-[hsl(var(--muted-foreground))] mb-8">
-            The category you&apos;re looking for doesn&apos;t exist.
+            {tr("The category you're looking for doesn't exist.")}
           </p>
           <Link
             href="/categories"
             className="inline-block bg-[hsl(var(--primary))] text-white px-6 py-3 rounded-lg font-bold hover:bg-[hsl(var(--primary-dark))] transition-colors"
           >
-            View All Categories
+            {tr('View All Categories')}
           </Link>
         </div>
       </main>
@@ -95,7 +97,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: `${category.name} — Egyptian Local Brands`,
-    description: `Shop ${category.name} from Egyptian local sellers on Brandy.`,
+    description: `Shop ${category.name} from Egyptian local sellers on Brandyy.`,
     url: `${PLATFORM_URL}/category/${category.slug}`,
     mainEntity: {
       '@type': 'ItemList',
@@ -139,14 +141,14 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           className="mb-6"
           separator="/"
           items={[
-            { label: 'Home', href: '/' },
-            { label: 'Categories', href: '/categories' },
-            { label: category.name },
+            { label: tr('Home'), href: '/' },
+            { label: tr('Categories'), href: '/categories' },
+            { label: tr(category.name) },
           ]}
         />
 
         <h1 className="text-3xl md:text-4xl font-black text-[hsl(var(--foreground))] mb-2">
-          {category.name}
+          {tr(category.name)}
         </h1>
         <p className="text-[hsl(var(--muted-foreground))] mb-8">
           {category.products.length} {category.products.length === 1 ? 'product' : 'products'} found
@@ -155,7 +157,9 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         {/* Subcategories */}
         {category.children && category.children.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-lg font-bold text-[hsl(var(--foreground))] mb-4">Subcategories</h2>
+            <h2 className="text-lg font-bold text-[hsl(var(--foreground))] mb-4">
+              {tr('Subcategories')}
+            </h2>
             <div className="flex flex-wrap gap-2">
               {category.children.map((child: Category) => (
                 <Link
@@ -192,13 +196,13 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
                     </div>
                     <div className="p-3">
                       <p className="text-[10px] text-[hsl(var(--muted-foreground))] font-semibold uppercase tracking-wide mb-0.5">
-                        {category.name}
+                        {tr(category.name)}
                       </p>
                       <h3 className="font-bold text-[hsl(var(--foreground))] text-sm mb-2 leading-tight line-clamp-2">
-                        {product.title}
+                        {tr(product.title)}
                       </h3>
                       <p className="font-black text-[hsl(var(--primary))] text-sm">
-                        {product.basePrice?.toLocaleString()} EGP
+                        {product.basePrice?.toLocaleString()} {tr('EGP')}
                       </p>
                     </div>
                   </div>
@@ -209,10 +213,10 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
             <div className="text-center py-20">
               <div className="text-6xl mb-4">📦</div>
               <p className="text-[hsl(var(--foreground))] text-lg mb-2">
-                No products in this category yet
+                {tr('No products in this category yet')}
               </p>
               <p className="text-[hsl(var(--muted-foreground))] text-sm">
-                Check back later or explore other categories
+                {tr('Check back later or explore other categories')}
               </p>
             </div>
           )}

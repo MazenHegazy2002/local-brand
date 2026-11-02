@@ -28,6 +28,7 @@ interface Brand {
 }
 
 function ShopContent() {
+  const { tr } = useLanguage();
   const searchParams = useSearchParams();
   const initialQ = searchParams.get('q') ?? '';
   const initialCategory = searchParams.get('category') ?? 'all';
@@ -163,13 +164,14 @@ function ShopContent() {
             {filters.q
               ? `${t('ResultsFor')} "${filters.q}"`
               : filters.category !== 'all'
-                ? categories.find((c: Category) => c.slug === filters.category)?.name || 'Products'
+                ? categories.find((c: Category) => c.slug === filters.category)?.name ||
+                  tr('Products')
                 : t('AllProducts')}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             {loading ? (
               <span className="text-gray-400 animate-pulse">
-                {t('SearchDots') || 'Searching...'}
+                {t('SearchDots') || tr('Searching...')}
               </span>
             ) : total > 0 ? (
               `${total} ${t('Products')}`
@@ -258,7 +260,7 @@ function ShopContent() {
                 onChange={e => handleFilterChange('brand', e.target.value)}
                 className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm bg-white"
               >
-                <option value="">All Brands</option>
+                <option value="">{tr('All Brands')}</option>
                 {brands.map((b: Brand) => (
                   <option key={b.storeSlug} value={b.storeSlug}>
                     {b.storeName}
@@ -268,11 +270,13 @@ function ShopContent() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-xs font-semibold text-gray-600 mb-2">Price Range</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-2">
+                {tr('Price Range')}
+              </label>
               <div className="flex gap-2">
                 <input
                   type="number"
-                  placeholder="Min"
+                  placeholder={tr('Min')}
                   value={localMin}
                   onChange={e => setLocalMin(e.target.value)}
                   onBlur={e => handleFilterChange('minPrice', e.target.value)}
@@ -283,7 +287,7 @@ function ShopContent() {
                 />
                 <input
                   type="number"
-                  placeholder="Max"
+                  placeholder={tr('Max')}
                   value={localMax}
                   onChange={e => setLocalMax(e.target.value)}
                   onBlur={e => handleFilterChange('maxPrice', e.target.value)}
@@ -296,22 +300,26 @@ function ShopContent() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-xs font-semibold text-gray-600 mb-2">Condition</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-2">
+                {tr('Condition')}
+              </label>
               <select
                 value={filters.condition}
                 onChange={e => handleFilterChange('condition', e.target.value)}
                 className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm bg-white"
               >
-                <option value="">Any</option>
-                <option value="NEW">New</option>
-                <option value="LIKE_NEW">Like New</option>
-                <option value="USED">Used</option>
-                <option value="REFURBISHED">Refurbished</option>
+                <option value="">{tr('Any')}</option>
+                <option value="NEW">{tr('New')}</option>
+                <option value="LIKE_NEW">{tr('Like New')}</option>
+                <option value="USED">{tr('Used')}</option>
+                <option value="REFURBISHED">{tr('Refurbished')}</option>
               </select>
             </div>
 
             <div className="mb-4">
-              <label className="block text-xs font-semibold text-gray-600 mb-2">Rating</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-2">
+                {tr('Rating')}
+              </label>
               <div className="flex gap-1">
                 {[4, 3, 2, 1].map(star => (
                   <button
@@ -324,7 +332,7 @@ function ShopContent() {
                 ))}
               </div>
               <p className="text-xs text-gray-500">
-                {filters.rating > 0 ? `${filters.rating}+ stars` : 'Any rating'}
+                {filters.rating > 0 ? `${filters.rating}+ stars` : tr('Any rating')}
               </p>
             </div>
 
@@ -336,7 +344,7 @@ function ShopContent() {
                   onChange={e => handleFilterChange('inStock', e.target.checked)}
                   className="rounded border-gray-300 text-[#1e3b8a] focus:ring-[#1e3b8a]"
                 />
-                <span className="text-sm text-gray-700">In Stock Only</span>
+                <span className="text-sm text-gray-700">{tr('In Stock Only')}</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -345,7 +353,7 @@ function ShopContent() {
                   onChange={e => handleFilterChange('flashSale', e.target.checked)}
                   className="rounded border-gray-300 text-[#1e3b8a] focus:ring-[#1e3b8a]"
                 />
-                <span className="text-sm text-gray-700">Flash Sales</span>
+                <span className="text-sm text-gray-700">{tr('Flash Sales')}</span>
               </label>
             </div>
           </div>
@@ -372,7 +380,7 @@ function ShopContent() {
               <h3 className="text-xl font-bold text-gray-700 mb-2">{t('NoProductsFound')}</h3>
               <p className="text-gray-400 text-sm mb-6 max-w-xs">
                 {t('TryAdjustingFilters') ||
-                  "Try adjusting your filters or search term to find what you're looking for."}
+                  tr("Try adjusting your filters or search term to find what you're looking for.")}
               </p>
               <button
                 onClick={clearFilters}
@@ -411,7 +419,7 @@ function ShopContent() {
                     disabled={page <= 1}
                     className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
                   >
-                    {t('Previous') || 'Previous'}
+                    {t('Previous') || tr('Previous')}
                   </button>
 
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -446,7 +454,7 @@ function ShopContent() {
                     disabled={page >= totalPages}
                     className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
                   >
-                    {t('Next') || 'Next'}
+                    {t('Next') || tr('Next')}
                   </button>
                 </div>
               )}

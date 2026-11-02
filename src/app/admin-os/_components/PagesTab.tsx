@@ -175,8 +175,8 @@ export default function PagesTab() {
         type,
         items: [
           {
-            question: 'What is Brandy?',
-            answer: "Brandy is Egypt's marketplace for local brands.",
+            question: 'What is Brandyy?',
+            answer: "Brandyy is Egypt's marketplace for local brands.",
           },
         ],
       };

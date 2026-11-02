@@ -5,7 +5,7 @@ import FAQClient, { FAQ_DATA } from './FAQClient';
 export const metadata: Metadata = {
   title: 'FAQ — Help Center',
   description:
-    "Find answers to common questions about orders, shipping, returns, payments, and selling on Brandy — Egypt's marketplace for local sellers.",
+    "Find answers to common questions about orders, shipping, returns, payments, and selling on Brandyy — Egypt's marketplace for local sellers.",
 };
 
 /** Flatten all FAQ entries for the schema.org FAQPage structured data */

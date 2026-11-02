@@ -30,6 +30,7 @@ export default function BuyerAnnouncementPopup({
   previewData,
   onPreviewClose,
 }: BuyerAnnouncementPopupProps) {
+  const { tr } = useLanguage();
   const [data, setData] = useState<PopupAnnouncementData | null>(previewData ?? null);
   const [isOpen, setIsOpen] = useState<boolean>(Boolean(previewData));
   const [dontShowAgain, setDontShowAgain] = useState<boolean>(true);
@@ -187,7 +188,7 @@ export default function BuyerAnnouncementPopup({
           <button
             onClick={handleClose}
             className={`absolute top-4 end-4 z-10 text-white/80 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/10`}
-            aria-label={isRtl ? 'إغلاق الرسالة' : 'Close message'}
+            aria-label={isRtl ? 'إغلاق الرسالة' : tr('Close message')}
           >
             <X size={20} />
           </button>
@@ -222,12 +223,12 @@ export default function BuyerAnnouncementPopup({
                   className="rounded border-gray-300 text-blue-900 focus:ring-blue-900"
                 />
                 <span>
-                  {isRtl ? 'لا تُظهر هذه الرسالة مرة أخرى' : "Don't show this message again"}
+                  {isRtl ? 'لا تُظهر هذه الرسالة مرة أخرى' : tr("Don't show this message again")}
                 </span>
               </label>
             ) : (
               <span className="text-xs text-amber-600 font-semibold bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-md">
-                {isRtl ? 'معاينة مباشرة من لوحة التحكم' : 'Live Admin Preview'}
+                {isRtl ? 'معاينة مباشرة من لوحة التحكم' : tr('Live Admin Preview')}
               </span>
             )}
 
@@ -236,7 +237,7 @@ export default function BuyerAnnouncementPopup({
               className={`w-full sm:w-auto px-6 py-2.5 text-sm font-bold text-white rounded-xl transition-all shadow-md ${theme.btnBg} flex items-center justify-center gap-2`}
             >
               <Check className="w-4 h-4" />
-              <span>{isRtl ? 'حسناً، فهمت' : 'Got it, thanks'}</span>
+              <span>{isRtl ? 'حسناً، فهمت' : tr('Got it, thanks')}</span>
             </button>
           </div>
         </div>

@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -31,6 +32,7 @@ const BENEFITS = [
 ];
 
 export default function BecomeSellerPage() {
+  const { tr } = useLanguage();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -91,7 +93,7 @@ export default function BecomeSellerPage() {
 
   const handleGetLocation = () => {
     if (typeof window === 'undefined' || !navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+      alert(tr('Geolocation is not supported by your browser.'));
       return;
     }
     setGettingLocation(true);
@@ -103,7 +105,7 @@ export default function BecomeSellerPage() {
       },
       err => {
         console.warn('Geolocation error:', err);
-        alert('Unable to retrieve location. Please check your browser location permissions.');
+        alert(tr('Unable to retrieve location. Please check your browser location permissions.'));
         setGettingLocation(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -114,33 +116,33 @@ export default function BecomeSellerPage() {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError(tr('Passwords do not match.'));
       return;
     }
 
     if (!storeName.trim()) {
-      setError('Please provide your Store or Brand Name.');
+      setError(tr('Please provide your Store or Brand Name.'));
       return;
     }
 
     if (!governorate.trim()) {
-      setError('Please select your Pickup Governorate.');
+      setError(tr('Please select your Pickup Governorate.'));
       return;
     }
 
     if (!city.trim()) {
-      setError('Please provide your Pickup City / Area.');
+      setError(tr('Please provide your Pickup City / Area.'));
       return;
     }
 
     if (!pickupStreet.trim()) {
-      setError('Please provide your Detailed Pickup Street Address.');
+      setError(tr('Please provide your Detailed Pickup Street Address.'));
       return;
     }
 
     const resolvedPickupPhone = pickupPhone.trim() || phone.trim();
     if (!resolvedPickupPhone) {
-      setError('Please provide a Pickup Contact Phone Number for couriers.');
+      setError(tr('Please provide a Pickup Contact Phone Number for couriers.'));
       return;
     }
 
@@ -197,32 +199,33 @@ export default function BecomeSellerPage() {
             ✓
           </div>
           <h1 className="text-3xl font-black tracking-tight text-gray-900 mb-3">
-            Application Received! 🎉
+            {tr('Application Received! 🎉')}
           </h1>
           <p className="text-gray-600 text-sm leading-relaxed mb-6">
-            Thank you for registering{' '}
-            <strong className="text-[hsl(var(--primary))]">{storeName}</strong> on Brandy! Your
-            seller application is submitted and currently under review.
+            {tr('Thank you for registering')}{' '}
+            <strong className="text-[hsl(var(--primary))]">{storeName}</strong>{' '}
+            {tr('on Brandyy! Your seller application is submitted and currently under review.')}
           </p>
 
-          <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-5 mb-8 text-left text-xs space-y-3">
+          <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-5 mb-8 text-start text-xs space-y-3">
             <p className="font-bold text-amber-900 text-sm mb-1 flex items-center gap-2">
-              <span>⏳</span> Next Steps:
+              <span>⏳</span> {tr('Next Steps:')}
             </p>
             <ol className="space-y-2 list-decimal list-inside text-amber-800 leading-relaxed">
               <li>
-                Check your inbox at <strong className="text-gray-900">{email}</strong> to verify
-                your email address.
+                {tr('Check your inbox at')} <strong className="text-gray-900">{email}</strong>{' '}
+                {tr('to verify your email address.')}
               </li>
-              <li>Our merchant team will review your brand details (1–2 business days).</li>
+              <li>{tr('Our merchant team will review your brand details (1–2 business days).')}</li>
               <li>
-                Once approved, you will receive an email and full access to set up products in your
-                Seller Hub!
+                {tr(
+                  'Once approved, you will receive an email and full access to set up products in your Seller Hub!'
+                )}
               </li>
             </ol>
 
             <div className="pt-3 border-t border-amber-200/60 flex items-center justify-between text-xs">
-              <span className="text-amber-900">Didn&apos;t get the verification link?</span>
+              <span className="text-amber-900">{tr("Didn't get the verification link?")}</span>
               <button
                 type="button"
                 onClick={async () => {
@@ -242,10 +245,10 @@ export default function BecomeSellerPage() {
                 className="font-bold text-[hsl(var(--primary))] hover:underline disabled:opacity-60"
               >
                 {resendStatus === 'sending'
-                  ? 'Sending...'
+                  ? tr('Sending...')
                   : resendStatus === 'sent'
                     ? '✓ Email Sent!'
-                    : 'Resend Email'}
+                    : tr('Resend Email')}
               </button>
             </div>
           </div>
@@ -254,7 +257,7 @@ export default function BecomeSellerPage() {
             href="/seller/login"
             className="block w-full py-3.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-dark))] text-white font-bold rounded-xl text-sm tracking-wide shadow-lg transition-all"
           >
-            Sign In to Seller Hub
+            {tr('Sign In to Seller Hub')}
           </Link>
         </div>
       </div>
@@ -271,17 +274,19 @@ export default function BecomeSellerPage() {
         >
           <span className="text-[hsl(var(--primary))]">BRAND</span>
           <span className="text-[hsl(var(--accent))]">Y</span>
-          <span className="ml-2 text-xs uppercase tracking-widest font-bold px-2.5 py-0.5 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)] rounded-full">
-            Seller Portal
+          <span className="ms-2 text-xs uppercase tracking-widest font-bold px-2.5 py-0.5 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)] rounded-full">
+            {tr('Seller Portal')}
           </span>
         </Link>
         <div className="flex items-center gap-4 text-xs font-semibold">
-          <span className="text-gray-500 hidden sm:inline">Already registered as a seller?</span>
+          <span className="text-gray-500 hidden sm:inline">
+            {tr('Already registered as a seller?')}
+          </span>
           <Link
             href="/seller/login"
             className="px-4 py-2 rounded-xl bg-white hover:bg-gray-50 text-[hsl(var(--primary))] border border-gray-200 shadow-sm font-bold transition-colors"
           >
-            Seller Sign In
+            {tr('Seller Sign In')}
           </Link>
         </div>
       </header>
@@ -293,15 +298,16 @@ export default function BecomeSellerPage() {
           <div className="w-full lg:w-5/12 space-y-6">
             <div>
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[hsl(var(--primary)/0.08)] border border-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))] text-xs font-bold uppercase tracking-wider mb-4">
-                🚀 Join Egypt&apos;s Premier Local Marketplace
+                {tr("🚀 Join Egypt's Premier Local Marketplace")}
               </div>
               <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-gray-900 leading-tight">
-                Grow Your Brand. <br />
-                <span className="text-[hsl(var(--primary))]">Sell to Thousands.</span>
+                {tr('Grow Your Brand.')} <br />
+                <span className="text-[hsl(var(--primary))]">{tr('Sell to Thousands.')}</span>
               </h1>
               <p className="mt-4 text-gray-600 text-base leading-relaxed">
-                Set up your brand store on Brandy in minutes. Reach customers nationwide with zero
-                fixed monthly fees.
+                {tr(
+                  'Set up your brand store on Brandyy in minutes. Reach customers nationwide with zero fixed monthly fees.'
+                )}
               </p>
             </div>
 
@@ -316,8 +322,8 @@ export default function BecomeSellerPage() {
                     {item.icon}
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-gray-900">{item.title}</h3>
-                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{item.desc}</p>
+                    <h3 className="text-sm font-bold text-gray-900">{tr(item.title)}</h3>
+                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{tr(item.desc)}</p>
                   </div>
                 </div>
               ))}
@@ -325,11 +331,12 @@ export default function BecomeSellerPage() {
 
             <div className="p-4 rounded-2xl bg-indigo-50/80 border border-indigo-100 text-xs text-indigo-900 space-y-1">
               <p className="font-bold flex items-center gap-1.5 text-indigo-950">
-                <span>🔒</span> Safe & Transparent Partnership
+                <span>🔒</span> {tr('Safe & Transparent Partnership')}
               </p>
               <p className="text-indigo-800">
-                Payouts processed safely, customer dispute support, and dedicated merchant
-                assistance.
+                {tr(
+                  'Payouts processed safely, customer dispute support, and dedicated merchant assistance.'
+                )}
               </p>
             </div>
           </div>
@@ -338,9 +345,9 @@ export default function BecomeSellerPage() {
           <div className="w-full lg:w-7/12">
             <div className="bg-white border border-gray-100 rounded-3xl p-6 sm:p-10 shadow-2xl">
               <div className="border-b border-gray-100 pb-5 mb-6">
-                <h2 className="text-2xl font-black text-gray-900">Create Seller Account</h2>
+                <h2 className="text-2xl font-black text-gray-900">{tr('Create Seller Account')}</h2>
                 <p className="text-xs text-gray-500 mt-1">
-                  Fill in your store details below to submit your brand application.
+                  {tr('Fill in your store details below to submit your brand application.')}
                 </p>
               </div>
 
@@ -348,7 +355,7 @@ export default function BecomeSellerPage() {
                 <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-3">
                   <span className="text-lg">⚠️</span>
                   <div>
-                    <strong className="block font-bold">Registration Error</strong>
+                    <strong className="block font-bold">{tr('Registration Error')}</strong>
                     <span>{error}</span>
                   </div>
                 </div>
@@ -359,7 +366,7 @@ export default function BecomeSellerPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Store / Brand Name <span className="text-red-500">*</span>
+                      {tr('Store / Brand Name')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -373,7 +380,7 @@ export default function BecomeSellerPage() {
 
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Owner / Contact Name <span className="text-red-500">*</span>
+                      {tr('Owner / Contact Name')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -390,7 +397,7 @@ export default function BecomeSellerPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Email Address <span className="text-red-500">*</span>
+                      {tr('Email Address')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="email"
@@ -404,7 +411,7 @@ export default function BecomeSellerPage() {
 
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Phone / WhatsApp <span className="text-red-500">*</span>
+                      {tr('Phone / WhatsApp')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"
@@ -421,13 +428,13 @@ export default function BecomeSellerPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Password <span className="text-red-500">*</span>
+                      {tr('Password')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="password"
                       required
                       minLength={8}
-                      placeholder="At least 8 characters"
+                      placeholder={tr('At least 8 characters')}
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white"
@@ -437,13 +444,13 @@ export default function BecomeSellerPage() {
 
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Confirm Password <span className="text-red-500">*</span>
+                      {tr('Confirm Password')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="password"
                       required
                       minLength={8}
-                      placeholder="Repeat password"
+                      placeholder={tr('Repeat password')}
                       value={confirmPassword}
                       onChange={e => setConfirmPassword(e.target.value)}
                       className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white"
@@ -456,16 +463,16 @@ export default function BecomeSellerPage() {
                   <div className="border-b border-slate-200 pb-3">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <h3 className="text-sm font-black text-gray-900 flex items-center gap-2">
-                        <span>📍</span> Product Pickup & Warehouse Address
+                        <span>📍</span> {tr('Product Pickup & Warehouse Address')}
                       </h3>
                       <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        Required for Couriers
+                        {tr('Required for Couriers')}
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                      Shipping couriers dispatch drivers to this address to collect sold orders for
-                      buyer delivery. This address will automatically connect to your Seller Hub
-                      settings.
+                      {tr(
+                        'Shipping couriers dispatch drivers to this address to collect sold orders for buyer delivery. This address will automatically connect to your Seller Hub settings.'
+                      )}
                     </p>
                   </div>
 
@@ -473,7 +480,7 @@ export default function BecomeSellerPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1">
-                        Pickup Governorate <span className="text-red-500">*</span>
+                        {tr('Pickup Governorate')} <span className="text-red-500">*</span>
                       </label>
                       <select
                         required
@@ -481,10 +488,10 @@ export default function BecomeSellerPage() {
                         onChange={e => setGovernorate(e.target.value)}
                         className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 bg-white focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm"
                       >
-                        <option value="">Select Governorate</option>
+                        <option value="">{tr('Select Governorate')}</option>
                         {GOVERNORATES.map(g => (
                           <option key={g.value} value={g.en}>
-                            {g.en} ({g.ar})
+                            {tr(g.en)}
                           </option>
                         ))}
                       </select>
@@ -492,7 +499,7 @@ export default function BecomeSellerPage() {
 
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1">
-                        Pickup City / Area <span className="text-red-500">*</span>
+                        {tr('Pickup City / Area')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -508,12 +515,12 @@ export default function BecomeSellerPage() {
                   {/* Detailed Street Address */}
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Detailed Street Address <span className="text-red-500">*</span>
+                      {tr('Detailed Street Address')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="Street name, Building number, Floor & Flat / Unit number"
+                      placeholder={tr('Street name, Building number, Floor & Flat / Unit number')}
                       value={pickupStreet}
                       onChange={e => setPickupStreet(e.target.value)}
                       className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white"
@@ -524,12 +531,12 @@ export default function BecomeSellerPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1">
-                        Building / Landmark{' '}
-                        <span className="text-gray-400 font-normal">(Optional)</span>
+                        {tr('Building / Landmark')}{' '}
+                        <span className="text-gray-400 font-normal">{tr('(Optional)')}</span>
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. Near Ahly Club, Mall 1st floor"
+                        placeholder={tr('e.g. Near Ahly Club, Mall 1st floor')}
                         value={pickupBuilding}
                         onChange={e => setPickupBuilding(e.target.value)}
                         className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white"
@@ -538,7 +545,7 @@ export default function BecomeSellerPage() {
 
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1">
-                        Pickup Contact Phone <span className="text-red-500">*</span>
+                        {tr('Pickup Contact Phone')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="tel"
@@ -552,7 +559,7 @@ export default function BecomeSellerPage() {
                         className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white"
                       />
                       <p className="text-[11px] text-gray-400 mt-1">
-                        Contact phone courier driver will call upon arrival.
+                        {tr('Contact phone courier driver will call upon arrival.')}
                       </p>
                     </div>
                   </div>
@@ -560,12 +567,12 @@ export default function BecomeSellerPage() {
                   {/* Pickup Contact Person */}
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Pickup Contact Person Name{' '}
-                      <span className="text-gray-400 font-normal">(Optional)</span>
+                      {tr('Pickup Contact Person Name')}{' '}
+                      <span className="text-gray-400 font-normal">{tr('(Optional)')}</span>
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Warehouse Manager or Store Contact Person"
+                      placeholder={tr('e.g. Warehouse Manager or Store Contact Person')}
                       value={pickupContactName}
                       onChange={e => setPickupContactName(e.target.value)}
                       className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white"
@@ -576,8 +583,8 @@ export default function BecomeSellerPage() {
                   <div className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <label className="block text-xs font-bold text-slate-700">
-                        🗺️ Warehouse Geolocation Coordinates{' '}
-                        <span className="text-gray-400 font-normal">(Optional)</span>
+                        {tr('🗺️ Warehouse Geolocation Coordinates')}{' '}
+                        <span className="text-gray-400 font-normal">{tr('(Optional)')}</span>
                       </label>
                       <button
                         type="button"
@@ -588,10 +595,10 @@ export default function BecomeSellerPage() {
                         {gettingLocation ? (
                           <>
                             <span className="w-3 h-3 border-2 border-slate-400 border-t-slate-700 rounded-full animate-spin" />
-                            Detecting...
+                            {tr('Detecting...')}
                           </>
                         ) : (
-                          <>📍 Pin Current Location</>
+                          <>{tr('📍 Pin Current Location')}</>
                         )}
                       </button>
                     </div>
@@ -603,8 +610,9 @@ export default function BecomeSellerPage() {
                       className="appearance-none block w-full px-3 py-2 border border-gray-200 rounded-xl text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[hsl(var(--primary))] bg-slate-50/50 font-mono"
                     />
                     <p className="text-[11px] text-gray-400">
-                      Coordinates help couriers navigate directly to your warehouse or store pickup
-                      point.
+                      {tr(
+                        'Coordinates help couriers navigate directly to your warehouse or store pickup point.'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -613,7 +621,7 @@ export default function BecomeSellerPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Business Type
+                      {tr('Business Type')}
                     </label>
                     <div className="grid grid-cols-2 gap-2 bg-gray-100 p-1 rounded-xl">
                       <button
@@ -625,7 +633,7 @@ export default function BecomeSellerPage() {
                             : 'text-gray-500 hover:text-gray-800'
                         }`}
                       >
-                        Individual / Brand
+                        {tr('Individual / Brand')}
                       </button>
                       <button
                         type="button"
@@ -636,15 +644,15 @@ export default function BecomeSellerPage() {
                             : 'text-gray-500 hover:text-gray-800'
                         }`}
                       >
-                        Company / LLC
+                        {tr('Company / LLC')}
                       </button>
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Tax Registration ID{' '}
-                      <span className="text-gray-400 font-normal">(Optional)</span>
+                      {tr('Tax Registration ID')}{' '}
+                      <span className="text-gray-400 font-normal">{tr('(Optional)')}</span>
                     </label>
                     <input
                       type="text"
@@ -659,12 +667,14 @@ export default function BecomeSellerPage() {
                 {/* Store Description */}
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Brief Brand Description{' '}
-                    <span className="text-gray-400 font-normal">(Optional)</span>
+                    {tr('Brief Brand Description')}{' '}
+                    <span className="text-gray-400 font-normal">{tr('(Optional)')}</span>
                   </label>
                   <textarea
                     rows={2}
-                    placeholder="Tell us what products you sell, your target audience, or specialty..."
+                    placeholder={tr(
+                      'Tell us what products you sell, your target audience, or specialty...'
+                    )}
                     value={description}
                     onChange={e => setDescription(e.target.value)}
                     className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white resize-none"
@@ -674,27 +684,27 @@ export default function BecomeSellerPage() {
                 {/* Social Handles */}
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Social Handles / Store Page{' '}
-                    <span className="text-gray-400 font-normal">(Optional)</span>
+                    {tr('Social Handles / Store Page')}{' '}
+                    <span className="text-gray-400 font-normal">{tr('(Optional)')}</span>
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <input
                       type="url"
-                      placeholder="Instagram URL"
+                      placeholder={tr('Instagram URL')}
                       value={instagramUrl}
                       onChange={e => setInstagramUrl(e.target.value)}
                       className="px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-xs focus:outline-none focus:border-[hsl(var(--primary))] bg-white"
                     />
                     <input
                       type="url"
-                      placeholder="Facebook Page URL"
+                      placeholder={tr('Facebook Page URL')}
                       value={facebookUrl}
                       onChange={e => setFacebookUrl(e.target.value)}
                       className="px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-xs focus:outline-none focus:border-[hsl(var(--primary))] bg-white"
                     />
                     <input
                       type="url"
-                      placeholder="TikTok Profile URL"
+                      placeholder={tr('TikTok Profile URL')}
                       value={tiktokUrl}
                       onChange={e => setTiktokUrl(e.target.value)}
                       className="px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-xs focus:outline-none focus:border-[hsl(var(--primary))] bg-white"
@@ -705,13 +715,13 @@ export default function BecomeSellerPage() {
                 {/* Referral / Promo Code */}
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Referral / Promo Code{' '}
-                    <span className="text-gray-400 font-normal">(Optional)</span>
+                    {tr('Referral / Promo Code')}{' '}
+                    <span className="text-gray-400 font-normal">{tr('(Optional)')}</span>
                   </label>
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder="e.g. PARTNER10 or affiliate code"
+                      placeholder={tr('e.g. PARTNER10 or affiliate code')}
                       value={referralCode}
                       onChange={e =>
                         setReferralCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))
@@ -719,13 +729,14 @@ export default function BecomeSellerPage() {
                       maxLength={30}
                       className="appearance-none block w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] sm:text-sm bg-white uppercase tracking-wider font-mono"
                     />
-                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm select-none pointer-events-none">
+                    <span className="absolute end-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm select-none pointer-events-none">
                       🏷️
                     </span>
                   </div>
                   <p className="text-[11px] text-gray-400 mt-1">
-                    Were you referred by an affiliate or partner? Enter their promo/referral code
-                    here.
+                    {tr(
+                      'Were you referred by an affiliate or partner? Enter their promo/referral code here.'
+                    )}
                   </p>
                 </div>
 
@@ -738,15 +749,15 @@ export default function BecomeSellerPage() {
                   {isLoading ? (
                     <>
                       <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Submitting Application...
+                      {tr('Submitting Application...')}
                     </>
                   ) : (
-                    'Submit Seller Application →'
+                    tr('Submit Seller Application →')
                   )}
                 </button>
 
                 <p className="text-center text-gray-500 text-xs mt-3">
-                  By registering, you agree to Brandy Seller Terms & Conditions.
+                  {tr('By registering, you agree to Brandyy Seller Terms & Conditions.')}
                 </p>
               </form>
             </div>
@@ -756,7 +767,9 @@ export default function BecomeSellerPage() {
 
       {/* Footer */}
       <footer className="border-t border-gray-200 bg-white py-6 text-center text-gray-500 text-xs">
-        <p>© {new Date().getFullYear()} Brandy Marketplace. All rights reserved.</p>
+        <p>
+          © {new Date().getFullYear()} {tr('Brandyy Marketplace. All rights reserved.')}
+        </p>
       </footer>
     </div>
   );

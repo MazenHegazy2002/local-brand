@@ -11,6 +11,7 @@ import { useCartStore } from '@/lib/cartStore';
 import { useUIStore } from '@/lib/uiStore';
 
 export default function BottomNavigation() {
+  const { tr } = useLanguage();
   const pathname = usePathname();
   const { t } = useLanguage();
   const { data: session } = useSession();
@@ -79,11 +80,11 @@ export default function BottomNavigation() {
   };
 
   const navItems: NavItem[] = [
-    { href: '/', icon: <HomeIcon />, label: t('Home' as DictKey) || 'Home' },
+    { href: '/', icon: <HomeIcon />, label: t('Home' as DictKey) || tr('Home') },
     {
       href: '/categories',
       icon: <CategoryIcon />,
-      label: t('Categories' as DictKey) || 'Categories',
+      label: t('Categories' as DictKey) || tr('Categories'),
     },
     {
       href: '#cart',
@@ -102,29 +103,29 @@ export default function BottomNavigation() {
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
           </svg>
           {cartCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-md">
+            <span className="absolute -top-1.5 -end-1.5 bg-red-500 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-md">
               {cartCount > 9 ? '9+' : cartCount}
             </span>
           )}
         </div>
       ),
-      label: t('Cart' as DictKey) || 'Cart',
+      label: t('Cart' as DictKey) || tr('Cart'),
       isCartTrigger: true,
     },
-    { href: '/shop?local=true', icon: <LocalIcon />, label: t('Local' as DictKey) || 'Local' },
+    { href: '/shop?local=true', icon: <LocalIcon />, label: t('Local' as DictKey) || tr('Local') },
     {
       href: '#profile',
       icon: (
         <div className="relative">
           <ProfileIcon />
           {wishlistCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-md">
+            <span className="absolute -top-1.5 -end-1.5 bg-red-500 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-md">
               {wishlistCount > 9 ? '9+' : wishlistCount}
             </span>
           )}
         </div>
       ),
-      label: t('Profile' as DictKey) || 'Profile',
+      label: t('Profile' as DictKey) || tr('Profile'),
       hasSubmenu: true,
     },
   ];
@@ -140,23 +141,27 @@ export default function BottomNavigation() {
   // For unauthenticated users we point to /login instead.
   const profileItems = session
     ? [
-        { href: '/dashboard', label: t('Dashboard' as DictKey) || 'Dashboard', icon: '📊' },
+        { href: '/dashboard', label: t('Dashboard' as DictKey) || tr('Dashboard'), icon: '📊' },
         {
           href: '/dashboard?tab=wishlist',
-          label: t('Wishlist' as DictKey) || 'Wishlist',
+          label: t('Wishlist' as DictKey) || tr('Wishlist'),
           icon: '❤️',
         },
-        { href: '/dashboard?tab=wallet', label: t('Points' as DictKey) || 'Points', icon: '⭐' },
+        {
+          href: '/dashboard?tab=wallet',
+          label: t('Points' as DictKey) || tr('Points'),
+          icon: '⭐',
+        },
       ]
     : [
-        { href: '/login', label: t('SignIn' as DictKey) || 'Sign in', icon: '🔑' },
-        { href: '/register', label: t('Register' as DictKey) || 'Register', icon: '📝' },
+        { href: '/login', label: t('SignIn' as DictKey) || tr('Sign in'), icon: '🔑' },
+        { href: '/register', label: t('Register' as DictKey) || tr('Register'), icon: '📝' },
       ];
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 flex justify-around items-center px-2 py-2 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] pb-safe"
-      aria-label="Bottom navigation"
+      className="md:hidden fixed bottom-0 start-0 end-0 bg-white border-t border-gray-200 z-50 flex justify-around items-center px-2 py-2 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] pb-safe"
+      aria-label={tr('Bottom navigation')}
     >
       {navItems.map(item => {
         const isActive =
@@ -213,7 +218,7 @@ export default function BottomNavigation() {
 
             {item.hasSubmenu && showProfileMenu && (
               <div
-                className="absolute bottom-16 right-0 bg-white rounded-xl shadow-xl border border-gray-200 py-2 min-w-[180px]"
+                className="absolute bottom-16 end-0 bg-white rounded-xl shadow-xl border border-gray-200 py-2 min-w-[180px]"
                 role="menu"
               >
                 {profileItems.map((subItem, i) => (
@@ -228,7 +233,7 @@ export default function BottomNavigation() {
                     <span className="text-sm font-medium text-gray-700">
                       {subItem.label}
                       {subItem.label === 'Wishlist' && wishlistCount > 0 && (
-                        <span className="ml-2 inline-flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                        <span className="ms-2 inline-flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold">
                           {wishlistCount > 9 ? '9+' : wishlistCount}
                         </span>
                       )}

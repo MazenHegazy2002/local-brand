@@ -45,7 +45,7 @@ export async function GET(req: Request) {
             titleEn: 'About Us',
             titleAr: 'من نحن',
             bodyEn:
-              '# About Us\n\nWelcome to Brandy, the premier marketplace for local Egyptian brands! We connect talented local artisans and creators directly with buyers across Egypt.',
+              '# About Us\n\nWelcome to Brandyy, the premier marketplace for local Egyptian brands! We connect talented local artisans and creators directly with buyers across Egypt.',
             bodyAr: '# من نحن\n\nمرحباً بكم في براندي، المنصة الرائدة للماركات المصرية المحلية!',
             status: PageStatus.PUBLISHED,
             footerOrder: 1,
@@ -72,7 +72,7 @@ export async function GET(req: Request) {
             titleEn: 'Terms & Conditions',
             titleAr: 'الشروط والأحكام',
             bodyEn:
-              '# Terms & Conditions\n\nWelcome to Brandy. By accessing our platform, you agree to our terms of service and usage policies.',
+              '# Terms & Conditions\n\nWelcome to Brandyy. By accessing our platform, you agree to our terms of service and usage policies.',
             bodyAr:
               '# الشروط والأحكام\n\nأهلاً بكم في براندي. باستخدامكم لمنصتنا، فإنكم توافقون على شروط الخدمة.',
             status: PageStatus.PUBLISHED,
@@ -112,7 +112,7 @@ export async function GET(req: Request) {
           titleEn: 'Privacy Policy (PDPL)',
           titleAr: 'سياسة الخصوصية',
           bodyEn:
-            "# Privacy Policy (PDPL)\n\n## Data Controller\n\n**Brandy Egypt** operates this marketplace and is responsible for your personal data under Egypt's Personal Data Protection Law (Law No. 151 of 2020).\n\n## What We Collect\n\n- Account information: name, email, phone, delivery addresses\n- Transaction data: order history, payment references (no card numbers stored)\n- Device & usage data: IP address, browser, pages visited\n\n## How We Use Your Data\n\n- Fulfil and track orders\n- Send transactional emails (order confirmations, shipping updates)\n- Improve the platform via aggregated analytics\n- Comply with legal obligations\n\n## Your Rights\n\nYou may request access, correction, deletion, or portability of your data at any time by emailing **privacy@brandy.eg**.\n\n## Data Retention\n\nAccount data is retained for 5 years after your last transaction, or until you request deletion.\n\n## Cookies\n\nWe use essential cookies for authentication and a CSRF security cookie. Analytics cookies are opt-in via the cookie consent banner.",
+            "# Privacy Policy (PDPL)\n\n## Data Controller\n\n**Brandyy Egypt** operates this marketplace and is responsible for your personal data under Egypt's Personal Data Protection Law (Law No. 151 of 2020).\n\n## What We Collect\n\n- Account information: name, email, phone, delivery addresses\n- Transaction data: order history, payment references (no card numbers stored)\n- Device & usage data: IP address, browser, pages visited\n\n## How We Use Your Data\n\n- Fulfil and track orders\n- Send transactional emails (order confirmations, shipping updates)\n- Improve the platform via aggregated analytics\n- Comply with legal obligations\n\n## Your Rights\n\nYou may request access, correction, deletion, or portability of your data at any time by emailing **privacy@brandy.eg**.\n\n## Data Retention\n\nAccount data is retained for 5 years after your last transaction, or until you request deletion.\n\n## Cookies\n\nWe use essential cookies for authentication and a CSRF security cookie. Analytics cookies are opt-in via the cookie consent banner.",
           bodyAr:
             '# سياسة الخصوصية (PDPL)\n\n## المتحكم في البيانات\n\nتتولى **براندي مصر** تشغيل هذه المنصة وهي المسؤولة عن بياناتك الشخصية وفقاً لقانون حماية البيانات الشخصية المصري (قانون رقم 151 لسنة 2020).\n\n## ما نجمعه\n\n- معلومات الحساب: الاسم، البريد الإلكتروني، رقم الهاتف، عناوين التوصيل\n- بيانات المعاملات: سجل الطلبات، مراجع الدفع\n- بيانات الجهاز والاستخدام\n\n## حقوقك\n\nيمكنك طلب الوصول أو التصحيح أو الحذف أو نقل بياناتك في أي وقت عبر **privacy@brandy.eg**.',
           status: PageStatus.PUBLISHED,
@@ -140,7 +140,7 @@ export async function GET(req: Request) {
           titleEn: 'Seller Terms & Conditions',
           titleAr: 'شروط وأحكام البائع',
           bodyEn:
-            '# Seller Terms & Conditions\n\n## Eligibility\n\nTo sell on Brandy you must be a registered Egyptian business or an individual with a valid national ID. Accounts are subject to admin approval before you can publish listings.\n\n## Listing Rules\n\n- Products must be genuine, accurately described, and not counterfeit\n- Prices must include VAT where applicable\n- Images must be your own or properly licensed\n- Prohibited categories: weapons, tobacco, adult content, live animals\n\n## Commission & Fees\n\nBrandy charges a **platform commission** on each completed sale. The exact rate is displayed in your Seller Hub under Finance.\n\n## Escrow & Payouts\n\nFunds are held in escrow for **14 days** after confirmed delivery to protect buyers. After the escrow window, earnings are released to your payout balance.\n\n## Intellectual Property\n\nYou retain ownership of your product images. By listing on Brandy you grant us a non-exclusive licence to display your images on the platform and in marketing.\n\n## Violations\n\nViolation of these terms may result in listing removal, account suspension, or permanent ban.',
+            '# Seller Terms & Conditions\n\n## Eligibility\n\nTo sell on Brandyy you must be a registered Egyptian business or an individual with a valid national ID. Accounts are subject to admin approval before you can publish listings.\n\n## Listing Rules\n\n- Products must be genuine, accurately described, and not counterfeit\n- Prices must include VAT where applicable\n- Images must be your own or properly licensed\n- Prohibited categories: weapons, tobacco, adult content, live animals\n\n## Commission & Fees\n\nBrandy charges a **platform commission** on each completed sale. The exact rate is displayed in your Seller Hub under Finance.\n\n## Escrow & Payouts\n\nFunds are held in escrow for **14 days** after confirmed delivery to protect buyers. After the escrow window, earnings are released to your payout balance.\n\n## Intellectual Property\n\nYou retain ownership of your product images. By listing on Brandyy you grant us a non-exclusive licence to display your images on the platform and in marketing.\n\n## Violations\n\nViolation of these terms may result in listing removal, account suspension, or permanent ban.',
           bodyAr:
             '# شروط وأحكام البائع\n\n## الأهلية\n\nللبيع على براندي يجب أن تكون شركة مصرية مسجلة أو فرداً لديه بطاقة هوية وطنية سارية. تخضع الحسابات لموافقة المشرف قبل نشر القوائم.\n\n## قواعد القوائم\n\n- يجب أن تكون المنتجات أصلية وموصوفة بدقة وغير مقلدة\n- يجب أن تتضمن الأسعار ضريبة القيمة المضافة عند الاقتضاء\n\n## الضمان الأمين والمدفوعات\n\nتُحجز الأموال في الضمان لمدة **14 يوماً** بعد التسليم المؤكد لحماية المشترين.',
           status: PageStatus.PUBLISHED,

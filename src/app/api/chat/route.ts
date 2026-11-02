@@ -127,7 +127,7 @@ export async function POST(req: Request) {
       response = '🚚 For shipping inquiries:\n\n';
       response += '• Standard delivery: 3-7 business days\n';
       response += '• Express delivery: 1-2 business days\n';
-      response += '• Free shipping on orders over 1000 EGP\n\n';
+      response += '• Free shipping on orders over 1500 EGP\n\n';
       response += 'Would you like to calculate shipping for a specific product?';
     } else if (isRefund) {
       response = '↩️ Return & Refund Policy:\n\n';

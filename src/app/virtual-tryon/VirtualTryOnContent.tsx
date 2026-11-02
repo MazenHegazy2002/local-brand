@@ -1,4 +1,5 @@
 'use client';
+import { useLanguage } from '@/providers/LanguageContext';
 
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -14,6 +15,7 @@ const LOADING_MESSAGES = [
 ];
 
 export default function VirtualTryOnContent() {
+  const { tr } = useLanguage();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -116,7 +118,7 @@ export default function VirtualTryOnContent() {
       setResult(data.result);
       setIsDemoMode(false);
     } catch (err: any) {
-      setError(err.message ?? 'Unexpected error. Please try again.');
+      setError(err.message ?? tr('Unexpected error. Please try again.'));
     } finally {
       setIsGenerating(false);
     }
@@ -140,7 +142,7 @@ export default function VirtualTryOnContent() {
       <div className="bg-white border-b border-gray-100 py-3">
         <div className="container mx-auto px-4 text-xs font-semibold text-gray-500 flex items-center gap-2">
           <Link href="/" className="hover:text-[#1e3b8a] transition-colors">
-            Home
+            {tr('Home')}
           </Link>
           <span>/</span>
           {productTitle && (
@@ -154,7 +156,7 @@ export default function VirtualTryOnContent() {
               <span>/</span>
             </>
           )}
-          <span className="text-[#1e3b8a]">Virtual Try-On</span>
+          <span className="text-[#1e3b8a]">{tr('Virtual Try-On')}</span>
         </div>
       </div>
 
@@ -163,16 +165,20 @@ export default function VirtualTryOnContent() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-              <span>✨ Virtual Try-On</span>
+              <span>{tr('✨ Virtual Try-On')}</span>
               <span className="text-xs bg-blue-100 text-blue-800 border border-blue-200 font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                AI Studio Fitting
+                {tr('AI Studio Fitting')}
               </span>
             </h1>
             <p className="text-slate-500 text-sm max-w-xl mt-1">
-              Upload your photo to see how this piece fits you in realistic studio lighting — no
-              changing rooms needed.
+              {tr(
+                'Upload your photo to see how this piece fits you in realistic studio lighting — no changing rooms needed.'
+              )}
               {colorParam && (
-                <span className="font-semibold text-slate-700"> Color: {colorParam}.</span>
+                <span className="font-semibold text-slate-700">
+                  {' '}
+                  {tr('Color:')} {colorParam}.
+                </span>
               )}
             </p>
           </div>
@@ -183,7 +189,7 @@ export default function VirtualTryOnContent() {
             className="self-start md:self-auto px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm active:scale-95"
           >
             <span className="text-sm">⚡</span>
-            <span>Load Sample Look (Denim Outfit)</span>
+            <span>{tr('Load Sample Look (Denim Outfit)')}</span>
           </button>
         </div>
 
@@ -192,11 +198,11 @@ export default function VirtualTryOnContent() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">
-                Garment
+                {tr('Garment')}
               </h2>
               {customProductImage && (
                 <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                  Sample Outfit
+                  {tr('Sample Outfit')}
                 </span>
               )}
             </div>
@@ -205,18 +211,18 @@ export default function VirtualTryOnContent() {
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={activeProductImageUrl}
-                  alt="Product"
+                  alt={tr('Product')}
                   className="w-full h-full object-cover"
                 />
               ) : (
                 <div className="text-center p-6 space-y-2">
                   <span className="text-3xl">🧥</span>
-                  <p className="text-gray-400 text-xs font-semibold">No product selected</p>
+                  <p className="text-gray-400 text-xs font-semibold">{tr('No product selected')}</p>
                   <button
                     onClick={handleLoadDemoLook}
                     className="text-xs text-[#1e3b8a] font-bold hover:underline block pt-1"
                   >
-                    Load Sample Look
+                    {tr('Load Sample Look')}
                   </button>
                 </div>
               )}
@@ -227,11 +233,11 @@ export default function VirtualTryOnContent() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">
-                Your Photo
+                {tr('Your Photo')}
               </h2>
               {isDemoMode && (
                 <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                  Sample Model
+                  {tr('Sample Model')}
                 </span>
               )}
             </div>
@@ -243,7 +249,11 @@ export default function VirtualTryOnContent() {
             >
               {userPhoto ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={userPhoto} alt="Your photo" className="w-full h-full object-cover" />
+                <img
+                  src={userPhoto}
+                  alt={tr('Your photo')}
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <div className="text-center p-6 space-y-3">
                   <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
@@ -261,10 +271,12 @@ export default function VirtualTryOnContent() {
                       />
                     </svg>
                   </div>
-                  <p className="text-sm font-semibold text-slate-600">Click to upload your photo</p>
-                  <p className="text-xs text-slate-400">PNG, JPG, HEIC — Max 10 MB</p>
+                  <p className="text-sm font-semibold text-slate-600">
+                    {tr('Click to upload your photo')}
+                  </p>
+                  <p className="text-xs text-slate-400">{tr('PNG, JPG, HEIC — Max 10 MB')}</p>
                   <p className="text-xs text-slate-400 max-w-[180px]">
-                    Best results: full-body or waist-up, good lighting
+                    {tr('Best results: full-body or waist-up, good lighting')}
                   </p>
                 </div>
               )}
@@ -285,13 +297,13 @@ export default function VirtualTryOnContent() {
                   }}
                   className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
                 >
-                  Remove photo
+                  {tr('Remove photo')}
                 </button>
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="text-xs text-[#1e3b8a] font-bold hover:underline"
                 >
-                  Upload different photo
+                  {tr('Upload different photo')}
                 </button>
               </div>
             )}
@@ -301,11 +313,11 @@ export default function VirtualTryOnContent() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-black uppercase tracking-widest text-slate-400">
-                Result
+                {tr('Result')}
               </h2>
               {result && (
                 <span className="text-[10px] font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded border border-green-200">
-                  Photorealistic Fit
+                  {tr('Photorealistic Fit')}
                 </span>
               )}
             </div>
@@ -314,24 +326,28 @@ export default function VirtualTryOnContent() {
                 <div className="text-center space-y-4 p-6">
                   <div className="w-16 h-16 border-4 border-slate-100 border-t-[#1e3b8a] rounded-full animate-spin mx-auto" />
                   <p className="text-sm font-semibold text-slate-700">{progressMsg}</p>
-                  <p className="text-xs text-slate-400">Running AI Studio Try-On…</p>
+                  <p className="text-xs text-slate-400">{tr('Running AI Studio Try-On…')}</p>
                 </div>
               ) : result ? (
                 <>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={result} alt="Try-on result" className="w-full h-full object-cover" />
+                  <img
+                    src={result}
+                    alt={tr('Try-on result')}
+                    className="w-full h-full object-cover"
+                  />
                   <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity flex gap-2">
                     <button
                       onClick={handleDownload}
                       className="flex-1 py-2.5 bg-white text-black text-xs font-black uppercase tracking-widest rounded-xl"
                     >
-                      Download
+                      {tr('Download')}
                     </button>
                     <button
                       onClick={() => setResult(null)}
                       className="px-4 py-2.5 bg-white/20 backdrop-blur text-white text-xs font-black uppercase tracking-widest rounded-xl"
                     >
-                      Reset
+                      {tr('Reset')}
                     </button>
                   </div>
                 </>
@@ -341,10 +357,10 @@ export default function VirtualTryOnContent() {
                     ✨
                   </div>
                   <p className="text-sm font-semibold text-slate-500">
-                    Your result will appear here
+                    {tr('Your result will appear here')}
                   </p>
                   <p className="text-xs text-slate-400">
-                    Click &quot;Try It On&quot; to generate your fit
+                    {tr('Click "Try It On" to generate your fit')}
                   </p>
                 </div>
               )}
@@ -354,7 +370,7 @@ export default function VirtualTryOnContent() {
                 onClick={handleDownload}
                 className="w-full py-3 bg-[#1e3b8a] hover:bg-[#152c6e] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-colors shadow-sm"
               >
-                Download HD Image
+                {tr('Download HD Image')}
               </button>
             )}
           </div>
@@ -381,18 +397,18 @@ export default function VirtualTryOnContent() {
             {isGenerating ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Generating Fit…
+                {tr('Generating Fit…')}
               </>
             ) : (
               <>
                 <span className="text-base">✨</span>
-                Try It On
+                {tr('Try It On')}
               </>
             )}
           </button>
           {!userPhoto && (
             <p className="text-xs text-slate-400">
-              Upload your photo above or click &quot;Load Sample Look&quot; to test.
+              {tr('Upload your photo above or click "Load Sample Look" to test.')}
             </p>
           )}
         </div>
@@ -401,12 +417,12 @@ export default function VirtualTryOnContent() {
         <div className="mt-12 bg-blue-50 border border-blue-100 rounded-2xl px-6 py-4 flex gap-4 max-w-2xl mx-auto">
           <span className="text-xl shrink-0">💡</span>
           <div>
-            <p className="text-sm font-bold text-blue-900 mb-1">Tips for best results</p>
+            <p className="text-sm font-bold text-blue-900 mb-1">{tr('Tips for best results')}</p>
             <ul className="text-xs text-blue-700 space-y-1 list-disc list-inside">
-              <li>Use a well-lit, front-facing photo</li>
-              <li>Plain or light-colored background works best</li>
-              <li>Waist-up or full-body photos give the most realistic fit</li>
-              <li>Avoid heavy filters or extreme crops</li>
+              <li>{tr('Use a well-lit, front-facing photo')}</li>
+              <li>{tr('Plain or light-colored background works best')}</li>
+              <li>{tr('Waist-up or full-body photos give the most realistic fit')}</li>
+              <li>{tr('Avoid heavy filters or extreme crops')}</li>
             </ul>
           </div>
         </div>
