@@ -85,7 +85,11 @@ export async function GET(req: Request) {
       where: { parentId: null }, // only top-level
       include: {
         children: true,
-        _count: { select: { products: { where: { published: true, deletedAt: null } } } },
+        _count: {
+          select: {
+            products: { where: { published: true, seller: { status: 'ACTIVE' }, deletedAt: null } },
+          },
+        },
         // Newest product's image doubles as the category card cover
         products: {
           where: {
