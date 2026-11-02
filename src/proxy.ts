@@ -99,6 +99,9 @@ function buildCsp(nonce: string, isDev: boolean): string {
     'https://*.hotjar.com',
     'wss://*.hotjar.com',
     'https://connect.facebook.net',
+    // Meta pixel gateway
+    'https://capig.stape.us',
+    'https://*.a.run.app',
     'https://*.facebook.com',
     // Additional marketing pixels
     'https://*.tiktok.com',
@@ -115,10 +118,10 @@ function buildCsp(nonce: string, isDev: boolean): string {
     "font-src 'self' data: https://fonts.gstatic.com https://client.crisp.chat https://*.hotjar.com",
     "img-src 'self' data: https: blob:",
     `connect-src ${["'self'", ...connectHosts].join(' ')}`,
-    'frame-src https://js.stripe.com https://grey.paysky.io https://cube.paysky.io https://accept.paymob.com https://*.hotjar.com',
+    'frame-src https://www.facebook.com https://js.stripe.com https://grey.paysky.io https://cube.paysky.io https://accept.paymob.com https://*.hotjar.com',
     "frame-ancestors 'self'",
     "base-uri 'self'",
-    "form-action 'self'",
+    "form-action 'self' https://www.facebook.com",
   ].join('; ');
 }
 

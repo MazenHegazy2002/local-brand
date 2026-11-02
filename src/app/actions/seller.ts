@@ -832,11 +832,10 @@ export async function getDashboardStats() {
 
 export async function getHomepageData() {
   return getCachedData(
-    'homepage:data:v4',
+    'homepage:data:v5',
     async () => {
       try {
         const categories = await prisma.category.findMany({
-          take: 8,
           where: { parentId: null },
         });
 
@@ -879,6 +878,21 @@ export async function getHomepageData() {
               seller: { select: { storeName: true } },
               reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
             },
+            take: 12,
+          });
+        }
+
+        // Stores with nothing featured still need a full top row.
+        if (bestsellers.length === 0) {
+          bestsellers = await prisma.product.findMany({
+            where: { published: true, seller: { status: 'ACTIVE' }, deletedAt: null },
+            include: {
+              images: true,
+              variants: true,
+              seller: { select: { storeName: true } },
+              reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
+            },
+            orderBy: { updatedAt: 'desc' },
             take: 12,
           });
         }
@@ -958,6 +972,25 @@ export async function getHomepageData() {
           if (recommended.length === 0) {
             recommended = bestsellers.filter((p: any) => !excludeIds.includes(p.id)).slice(0, 12);
           }
+        }
+
+        if (recommended.length === 0) {
+          recommended = await prisma.product.findMany({
+            where: {
+              published: true,
+              seller: { status: 'ACTIVE' },
+              deletedAt: null,
+              id: { notIn: newArrivals.map((p: any) => p.id) },
+            },
+            include: {
+              images: true,
+              variants: true,
+              seller: { select: { storeName: true } },
+              reviews: { where: { status: 'PUBLISHED' }, select: { rating: true } },
+            },
+            orderBy: { updatedAt: 'asc' },
+            take: 12,
+          });
         }
 
         // One extra homepage row per top-level category that has products.
