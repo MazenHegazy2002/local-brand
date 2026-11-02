@@ -62,14 +62,23 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const category = await prisma.category.findUnique({
     where: { slug },
     include: {
-      products: {
-        where: { published: true, seller: { status: 'ACTIVE' }, deletedAt: null },
-        include: { images: true, category: true },
-        take: 60,
-      },
       children: true,
     },
   });
+
+  // Parent categories also show what is listed under their subcategories.
+  const products = category
+    ? await prisma.product.findMany({
+        where: {
+          published: true,
+          seller: { status: 'ACTIVE' },
+          deletedAt: null,
+          category: { OR: [{ id: category.id }, { parentId: category.id }] },
+        },
+        include: { images: true, category: true },
+        take: 60,
+      })
+    : [];
 
   if (!category) {
     return (
@@ -101,8 +110,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     url: `${PLATFORM_URL}/category/${category.slug}`,
     mainEntity: {
       '@type': 'ItemList',
-      numberOfItems: category.products.length,
-      itemListElement: category.products.map((product, index) => ({
+      numberOfItems: products.length,
+      itemListElement: products.map((product, index) => ({
         '@type': 'ListItem',
         position: index + 1,
         name: product.title,
@@ -151,7 +160,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           {tr(category.name)}
         </h1>
         <p className="text-[hsl(var(--muted-foreground))] mb-8">
-          {category.products.length} {category.products.length === 1 ? 'product' : 'products'} found
+          {products.length} {products.length === 1 ? 'product' : 'products'} found
         </p>
 
         {/* Subcategories */}
@@ -175,10 +184,10 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         )}
 
         {/* Products Grid */}
-        <Suspense fallback={<ProductGridSkeleton count={category.products.length || 12} />}>
-          {category.products.length > 0 ? (
+        <Suspense fallback={<ProductGridSkeleton count={products.length || 12} />}>
+          {products.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {category.products.map((product: Product & { images: ProductImage[] }) => (
+              {products.map((product: Product & { images: ProductImage[] }) => (
                 <Link key={product.id} href={`/product/${product.id}`} className="group">
                   <div className="bg-white rounded-xl border border-[hsl(var(--border))] overflow-hidden hover:shadow-md hover:border-[hsl(var(--primary))] transition-all">
                     <div className="aspect-square relative overflow-hidden bg-[hsl(var(--muted))]">
