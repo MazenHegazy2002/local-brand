@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getRequestUser } from '@/lib/mobile-auth';
 import { prisma } from '@/lib/prisma';
-import { SessionUser } from '@/types';
 import { rateLimit } from '@/lib/rateLimit';
 import { requestImport } from '@/lib/website-import-run';
 
@@ -12,13 +10,14 @@ import { requestImport } from '@/lib/website-import-run';
  *      products on the seller's old website. Once approved they land in the
  *      seller's catalogue as drafts to review and publish.
  */
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user as SessionUser)?.role !== 'SELLER') {
+// Works with the website session and the app's Bearer token.
+export async function GET(req: NextRequest) {
+  const user = await getRequestUser(req);
+  if (!user || user.role !== 'SELLER') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const profile = await prisma.sellerProfile.findUnique({
-    where: { userId: (session.user as SessionUser).id },
+    where: { userId: user.id },
     select: { id: true },
   });
   if (!profile) return NextResponse.json({ requests: [] });
@@ -32,8 +31,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user as SessionUser)?.role !== 'SELLER') {
+  const user = await getRequestUser(req);
+  if (!user || user.role !== 'SELLER') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -51,7 +50,7 @@ export async function POST(req: NextRequest) {
   }
 
   const profile = await prisma.sellerProfile.findUnique({
-    where: { userId: (session.user as SessionUser).id },
+    where: { userId: user.id },
     select: { id: true },
   });
   if (!profile) return NextResponse.json({ error: 'Seller profile not found' }, { status: 404 });
@@ -59,7 +58,7 @@ export async function POST(req: NextRequest) {
   const out = await requestImport({
     sellerId: profile.id,
     url,
-    requestedById: (session.user as SessionUser).id,
+    requestedById: user.id,
     requestedRole: 'SELLER',
   });
   return out.ok

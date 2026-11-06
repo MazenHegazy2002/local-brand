@@ -15,7 +15,7 @@ import {
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { Plus } from 'lucide-react-native';
+import { Plus, Globe2 } from 'lucide-react-native';
 import { api, fmtEGP, absUrl } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
@@ -62,10 +62,20 @@ export default function SellerProducts() {
     <View style={styles.root}>
       <View style={styles.header}>
         <Text style={styles.title}>{t('Products')}</Text>
-        <Pressable style={styles.newBtn} onPress={() => router.push('/(seller)/add-product')}>
-          <Plus size={16} color="#fff" strokeWidth={2.4} />
-          <Text style={styles.newBtnText}>{t('New')}</Text>
-        </Pressable>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Pressable
+            style={[styles.newBtn, styles.importBtn]}
+            accessibilityLabel={t('Import from your website')}
+            onPress={() => router.push('/(seller)/import' as Href)}
+          >
+            <Globe2 size={16} color={colors.primary} strokeWidth={2.2} />
+            <Text style={[styles.newBtnText, { color: colors.primary }]}>{t('Import')}</Text>
+          </Pressable>
+          <Pressable style={styles.newBtn} onPress={() => router.push('/(seller)/add-product')}>
+            <Plus size={16} color="#fff" strokeWidth={2.4} />
+            <Text style={styles.newBtnText}>{t('New')}</Text>
+          </Pressable>
+        </View>
       </View>
       <View>
         <ScrollView
@@ -198,6 +208,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     backgroundColor: colors.primary,
   },
+  importBtn: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.primary },
   newBtnText: { fontFamily: 'Inter-SemiBold', fontSize: 13.5, color: '#fff' },
   chips: { paddingHorizontal: spacing.page, gap: 8, paddingBottom: 12 },
   chip: {

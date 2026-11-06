@@ -49,6 +49,11 @@ export const STATUS_COLORS: Record<string, string> = {
   REQUESTED: colors.accent,
   PAID: '#4ade80',
   UNPAID: '#a78bfa',
+  // products / website imports
+  DRAFT: colors.accent,
+  RUNNING: '#60a5fa',
+  DONE: '#4ade80',
+  FAILED: '#f87171',
 };
 
 /** Screen title; `back` adds a back arrow for stack screens. */
