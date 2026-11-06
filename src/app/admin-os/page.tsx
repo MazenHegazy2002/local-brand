@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ProductPhotoTools from './_components/ProductPhotoTools';
 import WebsiteImportPanel from './_components/WebsiteImportPanel';
+import { csrfFetch } from '@/lib/csrf';
 import {
   getDashboardStats,
   updateSellerStatus,
@@ -71,6 +72,7 @@ import type { SellerStatus } from '@/generated/client';
 // extend the canonical Product type because the admin query returns a
 // reduced shape (only the fields we need for the listing).
 interface AdminProduct {
+  published?: boolean;
   id: string;
   title: string;
   basePrice: number;
@@ -786,7 +788,7 @@ export default function AdminOS() {
           {activeTab === 'products' && data && (
             <>
               <WebsiteImportPanel />
-              <ProductsTab data={data} />
+              <ProductsTab data={data} onChanged={refreshData} />
             </>
           )}
           {activeTab === 'orders' && data && <OrdersTab data={data} onRefresh={refreshData} />}
@@ -6241,9 +6243,15 @@ function EditOrderModal({ order, onClose, onSaved }: EditOrderModalProps) {
 
 interface ProductsTabProps {
   data: DashboardData;
+  onChanged: () => Promise<void>;
 }
 
-function ProductsTab({ data }: ProductsTabProps) {
+function ProductsTab({ data, onChanged }: ProductsTabProps) {
+  const { confirm } = useConfirm();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'draft'>('all');
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState<'all' | 'in' | 'out' | 'low'>('all');
@@ -6253,6 +6261,8 @@ function ProductsTab({ data }: ProductsTabProps) {
   const q = search.trim().toLowerCase();
   const filtered = products.filter(p => {
     if (categoryFilter !== 'all' && p.category?.id !== categoryFilter) return false;
+    if (statusFilter === 'active' && !p.published) return false;
+    if (statusFilter === 'draft' && p.published) return false;
     const stock = (p.variants || []).reduce((a, b) => a + (b.stockCount || 0), 0);
     if (stockFilter === 'in' && stock <= 0) return false;
     if (stockFilter === 'out' && stock !== 0) return false;
@@ -6262,6 +6272,58 @@ function ProductsTab({ data }: ProductsTabProps) {
       .toLowerCase()
       .includes(q);
   });
+
+  const visibleSelected = filtered.filter(p => selected.has(p.id));
+  const allShownSelected = filtered.length > 0 && visibleSelected.length === filtered.length;
+  const toggle = (id: string) =>
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const toggleAll = () =>
+    setSelected(allShownSelected ? new Set() : new Set(filtered.map(p => p.id)));
+
+  const runBulk = async (action: 'delete' | 'publish' | 'unpublish') => {
+    const ids = visibleSelected.map(p => p.id);
+    if (!ids.length) return;
+    if (action === 'delete') {
+      const ok = await confirm({
+        title: `Delete ${ids.length} product${ids.length === 1 ? '' : 's'}?`,
+        message:
+          "They will be removed from the shop and from the sellers' product lists. Past orders are kept.",
+        type: 'danger',
+      });
+      if (!ok) return;
+    }
+    setBulkBusy(true);
+    setBulkMsg(null);
+    try {
+      const res = await csrfFetch('/api/admin/products/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, action }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setBulkMsg(d.error || 'Action failed.');
+        return;
+      }
+      const verb =
+        action === 'delete' ? 'deleted' : action === 'publish' ? 'published' : 'set to draft';
+      setBulkMsg(
+        `${d.changed} ${verb}` +
+          (d.skipped ? ` — ${d.skipped} not published (they need a photo and a price)` : '')
+      );
+      setSelected(new Set());
+      await onChanged();
+    } catch (err) {
+      setBulkMsg((err as Error).message);
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   return (
     <div className="card">
@@ -6304,6 +6366,16 @@ function ProductsTab({ data }: ProductsTabProps) {
           )}
         </div>
         <select
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
+          aria-label="Status"
+          className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
+        >
+          <option value="all">Active &amp; draft</option>
+          <option value="active">Active only</option>
+          <option value="draft">Drafts only</option>
+        </select>
+        <select
           value={categoryFilter}
           onChange={e => setCategoryFilter(e.target.value)}
           className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[12px] focus:outline-none focus:ring-2 focus:ring-[#534AB7]"
@@ -6326,10 +6398,60 @@ function ProductsTab({ data }: ProductsTabProps) {
           <option value="out">Out of stock</option>
         </select>
       </div>
+      {(visibleSelected.length > 0 || bulkMsg) && (
+        <div className="flex flex-wrap items-center gap-2 mb-3 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-[12px]">
+          {visibleSelected.length > 0 && (
+            <>
+              <span className="font-semibold">{visibleSelected.length} selected</span>
+              <button
+                type="button"
+                disabled={bulkBusy}
+                onClick={() => runBulk('publish')}
+                className="rounded-md bg-emerald-600 text-white px-3 py-1 font-semibold disabled:opacity-50"
+              >
+                Publish
+              </button>
+              <button
+                type="button"
+                disabled={bulkBusy}
+                onClick={() => runBulk('unpublish')}
+                className="rounded-md border border-slate-300 bg-white px-3 py-1 font-semibold disabled:opacity-50"
+              >
+                Set to draft
+              </button>
+              <button
+                type="button"
+                disabled={bulkBusy}
+                onClick={() => runBulk('delete')}
+                className="rounded-md bg-red-600 text-white px-3 py-1 font-semibold disabled:opacity-50"
+              >
+                Delete
+              </button>
+              <button
+                type="button"
+                disabled={bulkBusy}
+                onClick={() => setSelected(new Set())}
+                className="text-slate-500 underline"
+              >
+                Clear
+              </button>
+            </>
+          )}
+          {bulkMsg && <span className="text-slate-600">{bulkBusy ? 'Working…' : bulkMsg}</span>}
+        </div>
+      )}
       <div
         className="row-item"
         style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}
       >
+        <div style={{ width: 28 }} onClick={e => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={allShownSelected}
+            onChange={toggleAll}
+            aria-label="Select all shown products"
+          />
+        </div>
         <div style={{ width: 40 }} />
         <div style={{ flex: 1 }}>Title / Category</div>
         <div style={{ width: 160 }}>Seller</div>
@@ -6346,6 +6468,14 @@ function ProductsTab({ data }: ProductsTabProps) {
             className="row-item cursor-pointer hover:bg-slate-50 transition-colors"
             onClick={() => setSelectedProduct(p)}
           >
+            <div style={{ width: 28 }} onClick={e => e.stopPropagation()}>
+              <input
+                type="checkbox"
+                checked={selected.has(p.id)}
+                onChange={() => toggle(p.id)}
+                aria-label={`Select ${p.title}`}
+              />
+            </div>
             <div
               style={{
                 width: 40,
@@ -6377,7 +6507,18 @@ function ProductsTab({ data }: ProductsTabProps) {
               >
                 {p.title}
               </div>
-              <div style={{ fontSize: '11px', color: '#64748b' }}>{p.category?.name || '—'}</div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>
+                <span
+                  className={
+                    p.published
+                      ? 'mr-1.5 rounded bg-emerald-50 px-1.5 py-px text-[10px] font-semibold text-emerald-700'
+                      : 'mr-1.5 rounded bg-amber-50 px-1.5 py-px text-[10px] font-semibold text-amber-700'
+                  }
+                >
+                  {p.published ? 'Active' : 'Draft'}
+                </span>
+                {p.category?.name || '—'}
+              </div>
             </div>
             <div
               style={{

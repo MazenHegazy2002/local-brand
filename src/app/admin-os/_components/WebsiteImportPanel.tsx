@@ -7,6 +7,7 @@ type Seller = { id: string; storeName: string; status: string; user?: { email: s
 type ImportResult = {
   found: number;
   created: number;
+  updated?: number;
   skipped: number;
   noImage: number;
   noPrice: number;
@@ -125,7 +126,8 @@ export default function WebsiteImportPanel() {
           <div>
             <span className="text-emerald-600 font-semibold">{result.data.created}</span> products
             added to <b>{result.store}</b> as drafts
-            {result.data.skipped > 0 && <> — {result.data.skipped} already there, skipped</>}
+            {!!result.data.updated && <> — {result.data.updated} existing drafts updated</>}
+            {result.data.skipped > 0 && <> — {result.data.skipped} already published, left as is</>}
             {result.data.failed > 0 && (
               <>
                 {' '}
@@ -139,7 +141,7 @@ export default function WebsiteImportPanel() {
               {result.data.noPrice > 0 && <>{result.data.noPrice} need a price. </>}
             </div>
           )}
-          {result.data.created > 0 && (
+          {result.data.created + (result.data.updated ?? 0) > 0 && (
             <div>
               The seller sees them in Seller Hub → Products and publishes each one. Reload this page
               to see them in the list below.

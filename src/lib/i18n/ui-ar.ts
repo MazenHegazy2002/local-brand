@@ -2003,7 +2003,8 @@ export const uiAr: Record<string, string> = {
   'Importing… this can take a few minutes': 'جاري الاستيراد… ممكن ياخد كام دقيقة',
   'Import failed. Please try again.': 'فشل الاستيراد. حاول مرة تانية.',
   'products imported as drafts': 'منتج اتنقل كمسودة',
-  'already in your store, skipped': 'موجود بالفعل في متجرك، اتخطيناه',
+  'already published, left as is': 'منشور بالفعل، سبناه زي ما هو',
+  'existing drafts updated': 'مسودة موجودة اتحدثت',
   'need a photo': 'محتاج صورة',
   'need a price': 'محتاج سعر',
   'Set the stock for each product, then publish it from the list below.':
