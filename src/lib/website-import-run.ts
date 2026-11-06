@@ -6,6 +6,23 @@ import { scrapeWebsite, safeFetch, type ImportedProduct } from '@/lib/website-im
 // Shared by the seller import (Seller Hub) and the staff import (Admin OS).
 
 const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+// Non-standard labels some hosts send (e.g. Easy Orders sends image/jpg).
+const TYPE_ALIASES: Record<string, string> = {
+  'image/jpg': 'image/jpeg',
+  'image/pjpeg': 'image/jpeg',
+  'image/x-png': 'image/png',
+};
+
+/** Detects the format from the file's first bytes. */
+export function sniffImageType(b: Buffer): string | null {
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'image/jpeg';
+  if (b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])))
+    return 'image/png';
+  if (b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP')
+    return 'image/webp';
+  if (b.toString('ascii', 0, 4) === 'GIF8') return 'image/gif';
+  return null;
+}
 const MAX_IMAGES = 5;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
@@ -14,10 +31,12 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 async function copyImage(url: string): Promise<string | null> {
   try {
     const r = await safeFetch(url, { accept: 'image/*', maxBytes: MAX_IMAGE_BYTES });
-    const type = r?.contentType.split(';')[0].trim().toLowerCase();
-    if (!r || r.status !== 200 || !type || !IMAGE_TYPES.has(type) || r.body.length < 100)
-      return null;
-    return await saveFile(r.body, type);
+    if (!r || r.status !== 200 || r.body.length < 100) return null;
+    const label = r.contentType.split(';')[0].trim().toLowerCase();
+    const type = IMAGE_TYPES.has(TYPE_ALIASES[label] ?? label)
+      ? (TYPE_ALIASES[label] ?? label)
+      : sniffImageType(r.body);
+    return type ? await saveFile(r.body, type) : null;
   } catch {
     return null;
   }
@@ -40,6 +59,7 @@ export type ImportOutcome =
         source: string;
         found: number;
         created: number;
+        updated: number;
         skipped: number;
         noImage: number;
         noPrice: number;
@@ -50,8 +70,9 @@ export type ImportOutcome =
 
 /**
  * Reads a website and creates every product it finds as a DRAFT in the given
- * seller's catalogue, with images copied to our storage. Products the seller
- * already has (same title) are skipped, so re-running is safe.
+ * seller's catalogue, with images copied to our storage. Re-running is safe:
+ * drafts with the same title are refreshed (missing photos, sizes, colours,
+ * description, price, stock filled in); published products are left alone.
  */
 export async function importWebsiteForSeller(opts: {
   sellerId: string;
@@ -86,19 +107,27 @@ export async function importWebsiteForSeller(opts: {
   const category = await prisma.category.findFirst({ orderBy: { name: 'asc' } });
   if (!category) return { ok: false, status: 500, error: 'No categories exist on the platform.' };
 
-  const existing = new Set(
+  const existing = new Map(
     (
       await prisma.product.findMany({
         where: { sellerId: profile.id, deletedAt: null },
-        select: { title: true },
+        select: {
+          id: true,
+          title: true,
+          published: true,
+          basePrice: true,
+          _count: { select: { images: true } },
+          variants: { select: { id: true }, orderBy: { id: 'asc' }, take: 1 },
+        },
       })
-    ).map(p => p.title.trim().toLowerCase())
+    ).map(p => [p.title.trim().toLowerCase(), p])
   );
 
   const result = {
     source: scraped.source,
     found: scraped.products.length,
     created: 0,
+    updated: 0,
     skipped: 0,
     noImage: 0,
     noPrice: 0,
@@ -107,17 +136,58 @@ export async function importWebsiteForSeller(opts: {
   };
 
   for (const [i, p] of scraped.products.entries()) {
-    if (existing.has(p.title.trim().toLowerCase())) {
+    const key = p.title.trim().toLowerCase();
+    const prev = existing.get(key);
+    // Published products are the seller's live listings — never touched.
+    // (Also covers duplicates within this same run, marked published below.)
+    if (prev?.published) {
       result.skipped++;
       continue;
     }
     try {
-      const images: string[] = [];
-      for (const src of p.images.slice(0, MAX_IMAGES)) {
-        const saved = await copyImage(src);
-        if (saved) images.push(saved);
+      const copyAll = async () => {
+        const out: string[] = [];
+        for (const src of p.images.slice(0, MAX_IMAGES)) {
+          const saved = await copyImage(src);
+          if (saved) out.push(saved);
+        }
+        return out;
+      };
+      const attributes = JSON.stringify({
+        color: p.colors.length === 1 ? p.colors[0] : 'Default',
+        ...(p.colors.length > 1 ? { colors: p.colors } : {}),
+        ...(p.sizes.length ? { sizes: p.sizes } : {}),
+      });
+      const stockCount = p.stock && p.stock > 0 ? p.stock : 0;
+
+      if (prev) {
+        // Draft from an earlier run: fill in what's missing.
+        const images = prev._count.images ? [] : await copyAll();
+        const price = p.price ?? prev.basePrice;
+        await prisma.product.update({
+          where: { id: prev.id },
+          data: {
+            description: p.description.slice(0, 5000) || undefined,
+            ...(p.descriptionAr ? { descriptionAr: p.descriptionAr.slice(0, 5000) } : {}),
+            basePrice: price,
+            ...(images.length
+              ? { images: { create: images.map((u, n) => ({ url: u, isPrimary: n === 0 })) } }
+              : {}),
+          },
+        });
+        if (prev.variants[0]) {
+          await prisma.productVariant.update({
+            where: { id: prev.variants[0].id },
+            data: { attributes, price, ...(stockCount ? { stockCount } : {}) },
+          });
+        }
+        result.updated++;
+        if (!prev._count.images && !images.length) result.noImage++;
+        if (!(price > 0)) result.noPrice++;
+        continue;
       }
 
+      const images = await copyAll();
       const price = p.price ?? 0;
       const slug = slugify(p.title, i);
 
@@ -139,18 +209,21 @@ export async function importWebsiteForSeller(opts: {
             create: {
               sku: `${slug.toUpperCase().slice(0, 40)}`,
               title: 'Default',
-              attributes: JSON.stringify({
-                color: p.colors.length === 1 ? p.colors[0] : 'Default',
-                ...(p.colors.length > 1 ? { colors: p.colors } : {}),
-                ...(p.sizes.length ? { sizes: p.sizes } : {}),
-              }),
+              attributes,
               price,
-              stockCount: p.stock && p.stock > 0 ? p.stock : 0,
+              stockCount,
             },
           },
         },
       });
-      existing.add(p.title.trim().toLowerCase());
+      existing.set(key, {
+        id: '',
+        title: p.title,
+        published: true,
+        basePrice: price,
+        _count: { images: 0 },
+        variants: [],
+      });
       result.created++;
       if (!images.length) result.noImage++;
       if (!(price > 0)) result.noPrice++;
@@ -160,17 +233,18 @@ export async function importWebsiteForSeller(opts: {
     }
   }
 
-  if (result.created > 0) {
+  if (result.created + result.updated > 0) {
     const who = opts.startedBy ?? profile.storeName;
     void notifyAdminEvent({
       icon: '🌐',
-      title: `${who} imported ${result.created} products from a website into ${profile.storeName}`,
+      title: `${who} imported ${result.created} products (${result.updated} refreshed) from a website into ${profile.storeName}`,
       summary: `${who} imported ${result.created} draft products from ${url} into ${profile.storeName}.`,
       details: {
         Store: profile.storeName,
         'Started by': who,
         Website: url,
         Created: result.created,
+        'Drafts refreshed': result.updated,
         'Without image': result.noImage,
         'Without price': result.noPrice,
       },

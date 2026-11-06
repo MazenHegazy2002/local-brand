@@ -547,7 +547,7 @@ export async function getDashboardStats() {
           seller: { select: { id: true, storeName: true } },
         },
         orderBy: { createdAt: 'desc' },
-        take: 100,
+        take: 500,
       });
       const auditLogs = await prisma.auditLog.findMany({
         include: { admin: { select: { name: true, email: true } } },

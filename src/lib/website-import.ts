@@ -26,8 +26,9 @@ export type ImportedProduct = {
 
 export const MAX_PRODUCTS = 200;
 const MAX_PAGE_BYTES = 5 * 1024 * 1024;
-const MAX_SITEMAP_PAGES = 60;
+const MAX_SITEMAP_PAGES = MAX_PRODUCTS;
 const TIMEOUT_MS = 15_000;
+const PAGE_BATCH = 3; // product pages fetched at once — keep it gentle
 const UA = 'Mozilla/5.0 (compatible; BrandyyImporter/1.0; +https://brandyy.shop)';
 
 // ── URL safety (no fetching our own server / private network) ─────────────
@@ -118,9 +119,20 @@ export async function safeFetch(
   return null;
 }
 
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+/** safeFetch that backs off and retries when the site says it's busy (429/503). */
+async function politeFetch(url: string, accept: string) {
+  for (let attempt = 0; ; attempt++) {
+    const r = await safeFetch(url, { accept });
+    if (!r || (r.status !== 429 && r.status !== 503) || attempt >= 3) return r;
+    await sleep(3000 * 2 ** attempt); // 3s, 6s, 12s
+  }
+}
+
 async function getJson(url: string): Promise<unknown> {
   try {
-    const r = await safeFetch(url, { accept: 'application/json' });
+    const r = await politeFetch(url, 'application/json');
     if (!r || r.status !== 200 || !/json/i.test(r.contentType)) return null;
     return JSON.parse(r.body.toString('utf8'));
   } catch {
@@ -130,7 +142,7 @@ async function getJson(url: string): Promise<unknown> {
 
 async function getText(url: string): Promise<string | null> {
   try {
-    const r = await safeFetch(url, { accept: 'text/html,application/xml,text/xml,*/*' });
+    const r = await politeFetch(url, 'text/html,application/xml,text/xml,*/*');
     return r && r.status === 200 ? r.body.toString('utf8') : null;
   } catch {
     return null;
@@ -412,7 +424,98 @@ function metaContent(html: string, prop: string) {
 }
 
 /** Finds products described on one HTML page. */
+// ── Next.js page data (Easy Orders and other Next.js shops) ──────────────
+
+type NextProduct = {
+  name?: string;
+  title?: string;
+  description?: string;
+  price?: number | string;
+  sale_price?: number | string;
+  thumb?: string;
+  image?: string;
+  images?: (string | { src?: string; url?: string })[];
+  quantity?: number;
+  sku?: string;
+  slug?: string;
+  variations?: { name: string; props?: { name: string }[] }[];
+  variants?: { price?: number; sale_price?: number; quantity?: number }[];
+};
+
+/** The product object a Next.js shop page renders from (props.pageProps.product). */
+export function parseNextData(html: string, pageUrl: string): ImportedProduct | null {
+  const m = /<script[^>]+id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i.exec(html);
+  if (!m) return null;
+  let p: NextProduct | undefined;
+  try {
+    p = JSON.parse(m[1]).props?.pageProps?.product;
+  } catch {
+    return null;
+  }
+  const title = p?.name ?? p?.title;
+  if (!p || typeof title !== 'string' || !title.trim()) return null;
+
+  const opt = (re: RegExp) =>
+    uniq(
+      (p.variations ?? [])
+        .filter(v => re.test(v.name))
+        .flatMap(v => (v.props ?? []).map(x => x.name))
+    );
+  // A sale price of 0 means "no sale".
+  const sale = toNumber(p.sale_price);
+  const variantPrices = (p.variants ?? [])
+    .map(v => toNumber(v.sale_price) ?? toNumber(v.price))
+    .filter((n): n is number => n !== null);
+  const price = sale ?? (variantPrices.length ? Math.min(...variantPrices) : toNumber(p.price));
+  const images = [
+    p.thumb,
+    p.image,
+    ...(p.images ?? []).map(i => (typeof i === 'string' ? i : (i?.src ?? i?.url))),
+  ];
+  const stock = toNumber(p.quantity);
+
+  return {
+    title: title.trim(),
+    description: htmlToText(p.description),
+    price,
+    currency: null,
+    images: uniq(images.map(i => (i ? absolute(i, pageUrl) : null))),
+    sizes: opt(SIZE_OPT),
+    colors: opt(COLOR_OPT),
+    sku: p.sku || null,
+    stock: stock === null ? null : Math.floor(stock),
+    sourceUrl: pageUrl,
+  };
+}
+
+/** Fills gaps in `a` from `b` (both describe the same product). */
+function mergeProduct(a: ImportedProduct, b: ImportedProduct): ImportedProduct {
+  return {
+    ...a,
+    // The page data has the full description; JSON-LD often only the meta summary.
+    description: b.description.length > a.description.length ? b.description : a.description,
+    price: b.price ?? a.price,
+    currency: a.currency ?? b.currency,
+    images: uniq([...a.images, ...b.images]),
+    sizes: a.sizes.length ? a.sizes : b.sizes,
+    colors: a.colors.length ? a.colors : b.colors,
+    sku: a.sku ?? b.sku,
+    stock: a.stock ?? b.stock,
+  };
+}
+
 export function parseProductPage(html: string, pageUrl: string): ImportedProduct[] {
+  const next = parseNextData(html, pageUrl);
+  const found = parseLdAndMeta(html, pageUrl);
+  if (!next) return found;
+  if (!found.length) return [next];
+  // Usually one product per page: enrich it with the page data.
+  return found.map((p, i) =>
+    i === 0 || p.title.toLowerCase() === next.title.toLowerCase() ? mergeProduct(p, next) : p
+  );
+}
+
+function parseLdAndMeta(html: string, pageUrl: string): ImportedProduct[] {
   const nodes: LdNode[] = [];
   const re = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
   for (let m; (m = re.exec(html)); ) {
@@ -516,9 +619,9 @@ async function fromPages(start: URL): Promise<ImportedProduct[]> {
 
   const urls = (await productUrlsFromSitemap(origin)).slice(0, MAX_SITEMAP_PAGES);
   // A few at a time so we don't hammer the old site.
-  for (let i = 0; i < urls.length && results.length < MAX_PRODUCTS; i += 5) {
+  for (let i = 0; i < urls.length && results.length < MAX_PRODUCTS; i += PAGE_BATCH) {
     const batch = await Promise.all(
-      urls.slice(i, i + 5).map(async u => {
+      urls.slice(i, i + PAGE_BATCH).map(async u => {
         const html = await getText(u);
         return html ? parseProductPage(html, u) : [];
       })

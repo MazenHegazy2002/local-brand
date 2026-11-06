@@ -6,6 +6,7 @@ import {
   mapShopify,
   mapWoo,
   normalizeSiteUrl,
+  parseNextData,
   parseProductPage,
   sitemapLocs,
 } from '@/lib/website-import';
@@ -99,5 +100,40 @@ describe('website-import parsers', () => {
   it('normalizes links and rejects non-http', () => {
     expect(normalizeSiteUrl('myshop.com').toString()).toBe('https://myshop.com/');
     expect(() => normalizeSiteUrl('ftp://x.com')).toThrow();
+  });
+
+  it('reads Easy Orders / Next.js page data and merges it into JSON-LD', () => {
+    const next = {
+      props: {
+        pageProps: {
+          product: {
+            name: 'Ronaldo Jersey',
+            description: '<p>Full&nbsp;description</p><p>Size chart</p>',
+            price: 325,
+            sale_price: 0,
+            thumb: 'https://files.easy-orders.net/1.jpg',
+            images: ['https://files.easy-orders.net/2.jpg'],
+            quantity: 4,
+            variations: [
+              { name: 'المقاس', props: [{ name: 'M' }, { name: 'L' }] },
+              { name: 'اللون', props: [{ name: 'أحمر' }] },
+            ],
+          },
+        },
+      },
+    };
+    const html = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify(next)}</script>
+      <script type="application/ld+json">{"@type":"Product","name":"Ronaldo Jersey","description":"Short",
+      "offers":{"price":"325","priceCurrency":"EGP"}}</script>`;
+    expect(parseNextData(html, 'https://s.com/p')).toMatchObject({ sizes: ['M', 'L'], stock: 4 });
+    expect(parseProductPage(html, 'https://s.com/p')[0]).toMatchObject({
+      title: 'Ronaldo Jersey',
+      description: 'Full description\nSize chart',
+      price: 325,
+      currency: 'EGP',
+      images: ['https://files.easy-orders.net/1.jpg', 'https://files.easy-orders.net/2.jpg'],
+      sizes: ['M', 'L'],
+      colors: ['أحمر'],
+    });
   });
 });

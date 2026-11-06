@@ -7,6 +7,7 @@ import { csrfFetch } from '@/lib/csrf';
 type ImportResult = {
   found: number;
   created: number;
+  updated?: number;
   skipped: number;
   noImage: number;
   noPrice: number;
@@ -40,7 +41,7 @@ export function WebsiteImportCard({ onImported }: { onImported: () => Promise<vo
         setError(data.error || tr('Import failed. Please try again.'));
       } else {
         setResult(data);
-        if (data.created > 0) await onImported();
+        if (data.created + (data.updated ?? 0) > 0) await onImported();
       }
     } catch (err) {
       setError((err as Error).message);
@@ -84,10 +85,16 @@ export function WebsiteImportCard({ onImported }: { onImported: () => Promise<vo
           <div>
             <span className="text-emerald-600 font-semibold">{result.created}</span>{' '}
             {tr('products imported as drafts')}
+            {!!result.updated && (
+              <>
+                {' '}
+                — {result.updated} {tr('existing drafts updated')}
+              </>
+            )}
             {result.skipped > 0 && (
               <>
                 {' '}
-                — {result.skipped} {tr('already in your store, skipped')}
+                — {result.skipped} {tr('already published, left as is')}
               </>
             )}
             {result.failed > 0 && (
@@ -111,7 +118,7 @@ export function WebsiteImportCard({ onImported }: { onImported: () => Promise<vo
               )}
             </div>
           )}
-          {result.created > 0 && (
+          {result.created + (result.updated ?? 0) > 0 && (
             <div>{tr('Set the stock for each product, then publish it from the list below.')}</div>
           )}
           {result.errors && result.errors.length > 0 && (
