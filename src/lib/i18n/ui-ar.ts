@@ -2009,4 +2009,19 @@ export const uiAr: Record<string, string> = {
   'need a price': 'محتاج سعر',
   'Set the stock for each product, then publish it from the list below.':
     'حدد المخزون لكل منتج، وبعدين انشره من القائمة اللي تحت.',
+  'Paste the link to your current online shop. After an admin approves it, we copy your products, photos, prices and descriptions here as drafts. Review each one, then publish it.':
+    'الصق رابط متجرك الإلكتروني الحالي. بعد موافقة الإدارة، هننقل منتجاتك وصورها وأسعارها ووصفها هنا كمسودات. راجع كل منتج وبعدين انشره.',
+  'Request import': 'اطلب الاستيراد',
+  'Sending…': 'جاري الإرسال…',
+  'You already asked for this link — it is waiting for approval.':
+    'انت طلبت الرابط ده قبل كده — مستني موافقة الإدارة.',
+  "Request sent. An admin will review it and you'll get a notification when your products are added.":
+    'الطلب اتبعت. الإدارة هتراجعه وهيوصلك إشعار لما منتجاتك تتضاف.',
+  'Waiting for approval': 'مستني الموافقة',
+  'Importing…': 'جاري الاستيراد…',
+  Imported: 'اتنقل',
+  'Not approved': 'مترفض',
+  Failed: 'فشل',
+  added: 'اتضاف',
+  updated: 'اتحدث',
 };

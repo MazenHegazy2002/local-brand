@@ -1,7 +1,13 @@
 import { prisma } from '@/lib/prisma';
 import { saveFile } from '@/lib/file-store';
 import { notifyAdminEvent } from '@/lib/admin-registration-alerts';
-import { scrapeWebsite, safeFetch, type ImportedProduct } from '@/lib/website-import';
+import {
+  normalizeSiteUrl,
+  scrapeWebsite,
+  safeFetch,
+  type ImportedProduct,
+} from '@/lib/website-import';
+import { notifyUser } from '@/lib/notification-helpers';
 
 // Shared by the seller import (Seller Hub) and the staff import (Admin OS).
 
@@ -253,4 +259,115 @@ export async function importWebsiteForSeller(opts: {
   }
 
   return { ok: true, result };
+}
+
+// ── Approval flow ────────────────────────────────────────────────────────
+// Sellers and co-admins ask; an admin approves (runs the import) or rejects.
+
+export async function requestImport(opts: {
+  sellerId: string;
+  url: string;
+  requestedById: string;
+  requestedRole: 'SELLER' | 'CO_ADMIN';
+}) {
+  let url: string;
+  try {
+    url = normalizeSiteUrl(opts.url).toString();
+  } catch {
+    return {
+      ok: false as const,
+      status: 400,
+      error: 'That link does not look like a website address.',
+    };
+  }
+  const profile = await prisma.sellerProfile.findUnique({
+    where: { id: opts.sellerId },
+    select: { storeName: true },
+  });
+  if (!profile) return { ok: false as const, status: 404, error: 'Seller profile not found' };
+
+  const pending = await prisma.productImportRequest.findFirst({
+    where: { sellerId: opts.sellerId, url, status: 'PENDING' },
+  });
+  if (pending) return { ok: true as const, request: pending, alreadyPending: true };
+
+  const request = await prisma.productImportRequest.create({
+    data: {
+      sellerId: opts.sellerId,
+      url,
+      requestedById: opts.requestedById,
+      requestedRole: opts.requestedRole,
+    },
+  });
+  const who = opts.requestedRole === 'CO_ADMIN' ? 'A co-admin' : profile.storeName;
+  void notifyAdminEvent({
+    icon: '🌐',
+    title: `Approve product import for ${profile.storeName}?`,
+    summary: `${who} asked to import products from ${url} into ${profile.storeName}. Approve or reject it in Admin OS → Products.`,
+    details: { Store: profile.storeName, Website: url, 'Requested by': who },
+    link: '/admin-os?tab=products',
+  });
+  return { ok: true as const, request, alreadyPending: false };
+}
+
+export async function decideImportRequest(opts: {
+  id: string;
+  adminId: string;
+  approve: boolean;
+}): Promise<
+  { ok: false; status: number; error: string } | { ok: true; status: string; result?: unknown }
+> {
+  // Claim the request so two admins can't run it twice.
+  const claimed = await prisma.productImportRequest.updateMany({
+    where: { id: opts.id, status: 'PENDING' },
+    data: {
+      status: opts.approve ? 'RUNNING' : 'REJECTED',
+      decidedById: opts.adminId,
+      decidedAt: new Date(),
+    },
+  });
+  if (!claimed.count) return { ok: false, status: 409, error: 'This request was already handled.' };
+  const req = await prisma.productImportRequest.findUniqueOrThrow({ where: { id: opts.id } });
+  const seller = await prisma.sellerProfile.findUnique({
+    where: { id: req.sellerId },
+    select: { userId: true, storeName: true },
+  });
+
+  if (!opts.approve) {
+    if (seller && req.requestedRole === 'SELLER') {
+      await notifyUser({
+        userId: seller.userId,
+        title: 'Product import not approved',
+        message: `Your request to import products from ${req.url} was not approved.`,
+        link: '/seller-hub?tab=products',
+      });
+    }
+    return { ok: true, status: 'REJECTED' };
+  }
+
+  const out = await importWebsiteForSeller({
+    sellerId: req.sellerId,
+    url: req.url,
+    startedBy: `Admin (approved request)`,
+  });
+  await prisma.productImportRequest.update({
+    where: { id: req.id },
+    data: {
+      status: out.ok ? 'DONE' : 'FAILED',
+      result: JSON.stringify(out.ok ? out.result : { error: out.error }),
+    },
+  });
+  if (seller) {
+    await notifyUser({
+      userId: seller.userId,
+      title: out.ok ? 'Your products were imported' : 'Product import failed',
+      message: out.ok
+        ? `${out.result.created} products were added to your store as drafts (${out.result.updated} updated). Review and publish them.`
+        : `We couldn't import products from ${req.url}: ${out.error}`,
+      link: '/seller-hub?tab=products',
+    });
+  }
+  return out.ok
+    ? { ok: true, status: 'DONE', result: out.result }
+    : { ok: false, status: out.status, error: out.error };
 }

@@ -2,16 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getRequestUser } from '@/lib/mobile-auth';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rateLimit';
-import { importWebsiteForSeller } from '@/lib/website-import-run';
+import { importWebsiteForSeller, requestImport } from '@/lib/website-import-run';
 
 export const maxDuration = 300;
 
 const isStaff = (role?: string) => role === 'ADMIN' || role === 'CO_ADMIN';
 
-// GET  /api/admin/products/import-from-url → every seller, for the picker
+// GET  /api/admin/products/import-from-url → every seller (for the picker)
+//      and the latest import requests
 // POST /api/admin/products/import-from-url { url, sellerId }
-//      → copies the website's products into that seller's store as drafts.
-// Admins and co-admins only.
+//      admin    → copies the website's products into that seller's store now
+//      co-admin → creates a request an admin has to approve
 
 export async function GET(req: NextRequest) {
   const user = await getRequestUser(req);
@@ -22,7 +23,16 @@ export async function GET(req: NextRequest) {
     select: { id: true, storeName: true, status: true, user: { select: { email: true } } },
     orderBy: { storeName: 'asc' },
   });
-  return NextResponse.json({ sellers });
+  const requests = await prisma.productImportRequest.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 30,
+  });
+  const names = new Map(sellers.map(s => [s.id, s.storeName]));
+  return NextResponse.json({
+    sellers,
+    canApprove: user.role === 'ADMIN',
+    requests: requests.map(r => ({ ...r, storeName: names.get(r.sellerId) ?? '—' })),
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -50,8 +60,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Choose a seller.' }, { status: 400 });
   }
 
+  if (user.role === 'CO_ADMIN') {
+    const out = await requestImport({
+      sellerId,
+      url,
+      requestedById: user.id,
+      requestedRole: 'CO_ADMIN',
+    });
+    return out.ok
+      ? NextResponse.json({ pending: true, alreadyPending: out.alreadyPending })
+      : NextResponse.json({ error: out.error }, { status: out.status });
+  }
+
   const staff = await prisma.user.findUnique({ where: { id: user.id }, select: { email: true } });
-  const who = `${user.role === 'CO_ADMIN' ? 'Co-admin' : 'Admin'} ${staff?.email ?? user.id}`;
+  const who = `Admin ${staff?.email ?? user.id}`;
   const out = await importWebsiteForSeller({ sellerId, url, startedBy: who });
   if (!out.ok) return NextResponse.json({ error: out.error }, { status: out.status });
 

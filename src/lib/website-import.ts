@@ -24,7 +24,7 @@ export type ImportedProduct = {
   sourceUrl: string | null;
 };
 
-export const MAX_PRODUCTS = 200;
+export const MAX_PRODUCTS = 500;
 const MAX_PAGE_BYTES = 5 * 1024 * 1024;
 const MAX_SITEMAP_PAGES = MAX_PRODUCTS;
 const TIMEOUT_MS = 15_000;
