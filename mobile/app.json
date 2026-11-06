@@ -29,7 +29,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "shop.brandyy.app",
-      "versionCode": 8,
+      "versionCode": 9,
       "permissions": ["android.permission.POST_NOTIFICATIONS"],
       "blockedPermissions": [
         "android.permission.CAMERA",
