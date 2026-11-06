@@ -1477,3 +1477,21 @@ model Lead {
 
   @@index([status])
 }
+
+// A request to copy a website's products into a seller's store. Sellers and
+// co-admins create these; an admin approves (which runs the import) or rejects.
+model ProductImportRequest {
+  id            String    @id @default(uuid())
+  sellerId      String
+  url           String
+  requestedById String
+  requestedRole String // SELLER | CO_ADMIN
+  status        String    @default("PENDING") // PENDING | RUNNING | REJECTED | DONE | FAILED
+  result        String? // JSON summary of the import, or the error
+  decidedById   String?
+  decidedAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([status, createdAt])
+  @@index([sellerId, createdAt])
+}

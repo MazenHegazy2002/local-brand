@@ -4,17 +4,33 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
 import { rateLimit } from '@/lib/rateLimit';
-import { importWebsiteForSeller } from '@/lib/website-import-run';
-
-export const maxDuration = 300;
+import { requestImport } from '@/lib/website-import-run';
 
 /**
- * POST /api/products/import-from-url  { url }
- *
- * Copies every product on a seller's old website into their own catalogue
- * as drafts (see importWebsiteForSeller). The seller reviews them and
- * publishes each one from Seller Hub > Products.
+ * GET  /api/products/import-from-url → the seller's import requests
+ * POST /api/products/import-from-url  { url } → asks an admin to import the
+ *      products on the seller's old website. Once approved they land in the
+ *      seller's catalogue as drafts to review and publish.
  */
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session || (session.user as SessionUser)?.role !== 'SELLER') {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const profile = await prisma.sellerProfile.findUnique({
+    where: { userId: (session.user as SessionUser).id },
+    select: { id: true },
+  });
+  if (!profile) return NextResponse.json({ requests: [] });
+  const requests = await prisma.productImportRequest.findMany({
+    where: { sellerId: profile.id },
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+    select: { id: true, url: true, status: true, result: true, createdAt: true },
+  });
+  return NextResponse.json({ requests });
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session || (session.user as SessionUser)?.role !== 'SELLER') {
@@ -40,8 +56,13 @@ export async function POST(req: NextRequest) {
   });
   if (!profile) return NextResponse.json({ error: 'Seller profile not found' }, { status: 404 });
 
-  const out = await importWebsiteForSeller({ sellerId: profile.id, url });
+  const out = await requestImport({
+    sellerId: profile.id,
+    url,
+    requestedById: (session.user as SessionUser).id,
+    requestedRole: 'SELLER',
+  });
   return out.ok
-    ? NextResponse.json(out.result)
+    ? NextResponse.json({ pending: true, alreadyPending: out.alreadyPending })
     : NextResponse.json({ error: out.error }, { status: out.status });
 }
