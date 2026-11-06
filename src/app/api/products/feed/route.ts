@@ -46,7 +46,9 @@ export async function GET() {
         // Find primary image or fallback to first image or placeholder
         const primaryImage =
           product.images.find(img => img.isPrimary)?.url || product.images[0]?.url;
-        const imageLink = primaryImage || `${baseUrl}/placeholder.png`;
+        const imageLink = primaryImage?.startsWith('/')
+          ? `${baseUrl}${primaryImage}`
+          : primaryImage || `${baseUrl}/placeholder.png`;
 
         const price = product.flashSalePrice ?? product.basePrice;
         const priceStr = `${price} EGP`;
