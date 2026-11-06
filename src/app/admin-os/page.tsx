@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ProductPhotoTools from './_components/ProductPhotoTools';
+import WebsiteImportPanel from './_components/WebsiteImportPanel';
 import {
   getDashboardStats,
   updateSellerStatus,
@@ -782,7 +783,12 @@ export default function AdminOS() {
               isCoAdmin={isCoAdmin}
             />
           )}
-          {activeTab === 'products' && data && <ProductsTab data={data} />}
+          {activeTab === 'products' && data && (
+            <>
+              <WebsiteImportPanel />
+              <ProductsTab data={data} />
+            </>
+          )}
           {activeTab === 'orders' && data && <OrdersTab data={data} onRefresh={refreshData} />}
           {activeTab === 'payouts' && data && <PayoutsTab data={data} />}
           {activeTab === 'analytics' && data && <AnalyticsTab data={data} />}

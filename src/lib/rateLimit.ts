@@ -21,7 +21,10 @@ function normalizePath(pathname: string): string {
   path = path.replace(/\/\d+(?=\/|$)/g, '/:id');
   if (path.startsWith('/api/products/')) {
     const segments = path.split('/');
-    if (segments.length === 4 && !['bulk-upload', 'evaluate', 'list'].includes(segments[3])) {
+    if (
+      segments.length === 4 &&
+      !['bulk-upload', 'import-from-url', 'evaluate', 'list'].includes(segments[3])
+    ) {
       segments[3] = ':id';
       path = segments.join('/');
     }
