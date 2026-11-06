@@ -655,11 +655,12 @@ export async function scrapeWebsite(
     products = await fromPages(start);
   }
 
-  // De-duplicate by title, keep the richest entry.
+  // De-duplicate by product page (shops can list two products with the same
+  // name), falling back to the title; keep the richest entry.
   const byTitle = new Map<string, ImportedProduct>();
   for (const p of products) {
     if (!p.title) continue;
-    const key = p.title.toLowerCase();
+    const key = p.sourceUrl?.split(/[?#]/)[0].replace(/\/$/, '') || p.title.toLowerCase();
     const prev = byTitle.get(key);
     if (
       !prev ||
