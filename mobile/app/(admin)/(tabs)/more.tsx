@@ -8,6 +8,8 @@ import {
   LifeBuoy,
   TicketPercent,
   HandCoins,
+  Package,
+  Globe2,
   Languages,
   Globe,
   LogOut,
@@ -28,6 +30,13 @@ export default function AdminMore() {
   const go = (p: string) => () => router.push(p as Href);
 
   const sections = [
+    {
+      title: 'Catalog',
+      rows: [
+        { Icon: Package, label: 'Products', onPress: go('/(admin)/products') },
+        { Icon: Globe2, label: 'Website imports', onPress: go('/(admin)/imports') },
+      ],
+    },
     {
       title: 'Moderation',
       rows: [
