@@ -42,6 +42,7 @@ import {
 } from '../actions/seller';
 import { Product, Order, Category, SellerProfile, SessionUser, Tag, Collection } from '@/types';
 import { PriceCommissionCalculator } from '@/components/seller/PriceCommissionCalculator';
+import { WebsiteImportCard } from '@/components/seller/WebsiteImportCard';
 
 interface DashboardStats {
   totalProducts: number;
@@ -3283,6 +3284,8 @@ function ProductsTab({
           )}
         </div>
       )}
+
+      <WebsiteImportCard onImported={onAfterRefresh} />
 
       {/* Search/filter toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-3">

@@ -1996,4 +1996,16 @@ export const uiAr: Record<string, string> = {
   'Shop — All Products': 'المتجر — كل المنتجات',
   'My Dashboard': 'لوحة التحكم',
   Checkout: 'إتمام الشراء',
+  'Import from your website': 'استيراد من موقعك',
+  'Paste the link to your current online shop. We copy your products, photos, prices and descriptions here as drafts. Review each one, then publish it.':
+    'الصق رابط متجرك الإلكتروني الحالي. هننقل منتجاتك وصورها وأسعارها ووصفها هنا كمسودات. راجع كل منتج وبعدين انشره.',
+  'Import products': 'استيراد المنتجات',
+  'Importing… this can take a few minutes': 'جاري الاستيراد… ممكن ياخد كام دقيقة',
+  'Import failed. Please try again.': 'فشل الاستيراد. حاول مرة تانية.',
+  'products imported as drafts': 'منتج اتنقل كمسودة',
+  'already in your store, skipped': 'موجود بالفعل في متجرك، اتخطيناه',
+  'need a photo': 'محتاج صورة',
+  'need a price': 'محتاج سعر',
+  'Set the stock for each product, then publish it from the list below.':
+    'حدد المخزون لكل منتج، وبعدين انشره من القائمة اللي تحت.',
 };

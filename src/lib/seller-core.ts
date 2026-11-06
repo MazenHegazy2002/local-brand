@@ -393,6 +393,10 @@ export async function toggleProductPublishedForSeller(
     if (product.images.length === 0) {
       return { error: 'Add at least one image before publishing this product.' };
     }
+    // Website imports can arrive without a price.
+    if (!(product.basePrice > 0)) {
+      return { error: 'Set a price before publishing this product.' };
+    }
     if (!user?.emailVerified) {
       return {
         error:
