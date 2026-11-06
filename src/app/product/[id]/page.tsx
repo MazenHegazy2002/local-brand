@@ -82,7 +82,17 @@ export async function generateMetadata({
       `Shop ${product.title} from ${product.seller?.storeName || 'Brandyy Store'} on Brandyy — Egypt's local marketplace. Price: ${price} EGP.`;
 
     const productUrl = `${PLATFORM_URL}/product/${product.slug || id}`;
-    const ogImageUrl = `${PLATFORM_URL}/api/og?title=${encodeURIComponent(product.title || '')}&price=${price}&brand=${encodeURIComponent(product.seller?.storeName || '')}&category=${encodeURIComponent(product.category?.name || '')}`;
+    // Link previews show the product's own photo; the generated card is
+    // only a fallback for products without a usable image.
+    const photo = (product.images.find(img => img.isPrimary) ?? product.images[0])?.url;
+    const photoUrl = photo?.startsWith('http')
+      ? photo
+      : photo?.startsWith('/')
+        ? `${PLATFORM_URL}${photo}`
+        : null;
+    const ogImageUrl =
+      photoUrl ??
+      `${PLATFORM_URL}/api/og?title=${encodeURIComponent(product.title || '')}&price=${price}&brand=${encodeURIComponent(product.seller?.storeName || '')}&category=${encodeURIComponent(product.category?.name || '')}`;
 
     return {
       title: product.seller?.storeName
@@ -102,12 +112,9 @@ export async function generateMetadata({
         description,
         url: productUrl,
         images: [
-          {
-            url: ogImageUrl,
-            width: 1200,
-            height: 630,
-            alt: product.title,
-          },
+          photoUrl
+            ? { url: ogImageUrl, alt: product.title }
+            : { url: ogImageUrl, width: 1200, height: 630, alt: product.title },
         ],
         type: 'website',
       },
