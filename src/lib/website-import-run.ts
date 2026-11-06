@@ -113,21 +113,31 @@ export async function importWebsiteForSeller(opts: {
   const category = await prisma.category.findFirst({ orderBy: { name: 'asc' } });
   if (!category) return { ok: false, status: 500, error: 'No categories exist on the platform.' };
 
-  const existing = new Map(
-    (
-      await prisma.product.findMany({
-        where: { sellerId: profile.id, deletedAt: null },
-        select: {
-          id: true,
-          title: true,
-          published: true,
-          basePrice: true,
-          _count: { select: { images: true } },
-          variants: { select: { id: true }, orderBy: { id: 'asc' }, take: 1 },
-        },
-      })
-    ).map(p => [p.title.trim().toLowerCase(), p])
-  );
+  type Existing = {
+    id: string;
+    title: string;
+    published: boolean;
+    basePrice: number;
+    _count: { images: number };
+    variants: { id: string }[];
+  };
+  // Same-title products are kept apart: each scraped product claims one
+  // existing product with that title, extra ones become new drafts.
+  const existing = new Map<string, Existing[]>();
+  for (const p of await prisma.product.findMany({
+    where: { sellerId: profile.id, deletedAt: null },
+    select: {
+      id: true,
+      title: true,
+      published: true,
+      basePrice: true,
+      _count: { select: { images: true } },
+      variants: { select: { id: true }, orderBy: { id: 'asc' }, take: 1 },
+    },
+  })) {
+    const key = p.title.trim().toLowerCase();
+    existing.set(key, [...(existing.get(key) ?? []), p as Existing]);
+  }
 
   const result = {
     source: scraped.source,
@@ -143,9 +153,8 @@ export async function importWebsiteForSeller(opts: {
 
   for (const [i, p] of scraped.products.entries()) {
     const key = p.title.trim().toLowerCase();
-    const prev = existing.get(key);
+    const prev = existing.get(key)?.shift();
     // Published products are the seller's live listings — never touched.
-    // (Also covers duplicates within this same run, marked published below.)
     if (prev?.published) {
       result.skipped++;
       continue;
@@ -221,14 +230,6 @@ export async function importWebsiteForSeller(opts: {
             },
           },
         },
-      });
-      existing.set(key, {
-        id: '',
-        title: p.title,
-        published: true,
-        basePrice: price,
-        _count: { images: 0 },
-        variants: [],
       });
       result.created++;
       if (!images.length) result.noImage++;
