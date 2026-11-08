@@ -404,6 +404,11 @@ model Order {
   cancelReason String? // Reason why the order was cancelled
   giftWrapping Boolean @default(false)
 
+  // Where the order came from: WEBSITE / APP checkout, or an order an admin or
+  // co-admin entered by hand (WHATSAPP, INSTAGRAM, FACEBOOK, PHONE, IN_PERSON, OTHER).
+  source      String  @default("WEBSITE")
+  createdById String? // staff member who entered a manual order
+
   // Snapshots for historical integrity
   shippingAddressSnapshot String // JSON string of address
 
@@ -427,6 +432,7 @@ model Order {
   @@index([status])
   @@index([paymentStatus])
   @@index([createdAt])
+  @@index([source])
 }
 
 model OrderItem {

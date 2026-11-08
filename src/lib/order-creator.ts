@@ -22,6 +22,9 @@ import { VAT_RATE, MAX_DISCOUNT_PCT, LOYALTY_POINT_VALUE } from '@/lib/constants
 import { createOrderSchema } from '@/lib/validation';
 import { getSetting } from '@/lib/admin-settings-registry';
 
+/** Placeholder email domain for customers added through manual orders. */
+export const MANUAL_EMAIL_DOMAIN = '@manual.brandyy.shop';
+
 export interface CreateOrderResult {
   success?: boolean;
   orderId?: string;
@@ -42,7 +45,11 @@ export async function createOrderForUser(
   /** referralSlug read from the `brandy_ref` cookie by the server action (Task 32) */
   referralSlug?: string | null,
   /** quoteOnly: compute the totals and return them without creating the order */
-  opts: { quoteOnly?: boolean } = {}
+  opts: {
+    quoteOnly?: boolean;
+    /** Order entered by hand by an admin / co-admin (e.g. from WhatsApp). */
+    manual?: { source: string; createdById: string };
+  } = {}
 ): Promise<CreateOrderResult> {
   try {
     // Every order needs an account: all order paths end here, so guests are refused for good.
@@ -404,6 +411,9 @@ export async function createOrderForUser(
           shippingAddressSnapshot: JSON.stringify(addressSnapshot),
           orderNotes: orderNotes || null,
           giftWrapping: giftWrapping || false,
+          ...(opts.manual
+            ? { source: opts.manual.source, createdById: opts.manual.createdById }
+            : {}),
           items: { create: orderItemsData },
         },
       });
@@ -495,7 +505,8 @@ export async function createOrderForUser(
         try {
           if (userId) {
             const user = await prisma.user.findUnique({ where: { id: userId } });
-            if (user?.email) {
+            // Manual-order customers without a real email get a placeholder address.
+            if (user?.email && !user.email.endsWith(MANUAL_EMAIL_DOMAIN)) {
               await m.sendEmail({
                 to: user.email,
                 subject: `Order Confirmation - ${order.id.slice(0, 8)}`,
@@ -546,47 +557,51 @@ export async function createOrderForUser(
     })();
 
     // Best-effort WhatsApp confirmation message. Failures must not block the checkout thread.
-    void (async () => {
-      try {
-        const { sendWhatsAppConfirmation } = await import('@/lib/whatsapp');
-        const phone = resolvedAddress.phone;
-        if (phone) {
-          await sendWhatsAppConfirmation(order.id, phone);
+    // Manual orders were already agreed with the customer, and they are not
+    // website conversions, so they skip the confirmation bot and the ad events.
+    if (!opts.manual)
+      void (async () => {
+        try {
+          const { sendWhatsAppConfirmation } = await import('@/lib/whatsapp');
+          const phone = resolvedAddress.phone;
+          if (phone) {
+            await sendWhatsAppConfirmation(order.id, phone);
+          }
+        } catch (err) {
+          console.error('WhatsApp order confirmation dispatch failed:', err);
         }
-      } catch (err) {
-        console.error('WhatsApp order confirmation dispatch failed:', err);
-      }
-    })();
+      })();
 
     // Best-effort Server-Side Purchase Event (Meta CAPI & TikTok Events API for COD & Online)
-    void (async () => {
-      try {
-        const { dispatchServerPurchaseEvents } = await import('@/lib/server-events');
-        const orderWithItems = await prisma.order.findUnique({
-          where: { id: order.id },
-          include: { items: true },
-        });
-        const userObj = userId
-          ? await prisma.user.findUnique({ where: { id: userId }, select: { email: true } })
-          : null;
-        const email = userObj?.email || guestEmail || undefined;
+    if (!opts.manual)
+      void (async () => {
+        try {
+          const { dispatchServerPurchaseEvents } = await import('@/lib/server-events');
+          const orderWithItems = await prisma.order.findUnique({
+            where: { id: order.id },
+            include: { items: true },
+          });
+          const userObj = userId
+            ? await prisma.user.findUnique({ where: { id: userId }, select: { email: true } })
+            : null;
+          const email = userObj?.email || guestEmail || undefined;
 
-        await dispatchServerPurchaseEvents({
-          orderId: order.id,
-          totalAmount: order.totalAmount,
-          currency: 'EGP',
-          customerEmail: email,
-          customerPhone: resolvedAddress.phone,
-          items: (orderWithItems?.items || []).map(i => ({
-            id: i.variantId,
-            price: i.priceAtPurchase,
-            quantity: i.quantity,
-          })),
-        });
-      } catch (capiErr) {
-        console.error('Server purchase event dispatch failed:', capiErr);
-      }
-    })();
+          await dispatchServerPurchaseEvents({
+            orderId: order.id,
+            totalAmount: order.totalAmount,
+            currency: 'EGP',
+            customerEmail: email,
+            customerPhone: resolvedAddress.phone,
+            items: (orderWithItems?.items || []).map(i => ({
+              id: i.variantId,
+              price: i.priceAtPurchase,
+              quantity: i.quantity,
+            })),
+          });
+        } catch (capiErr) {
+          console.error('Server purchase event dispatch failed:', capiErr);
+        }
+      })();
 
     return { success: true, orderId: order.id };
   } catch (error: unknown) {
