@@ -7,6 +7,7 @@ import Link from 'next/link';
 import ProductPhotoTools from './_components/ProductPhotoTools';
 import WebsiteImportPanel from './_components/WebsiteImportPanel';
 import ManualOrderForm from './_components/ManualOrderForm';
+import UserDetailsModal from './_components/UserDetailsModal';
 import { csrfFetch } from '@/lib/csrf';
 import {
   getDashboardStats,
@@ -3210,6 +3211,19 @@ function SellerDetailsModal({
   }, [seller?.id, seller?.commissionRate]);
 
   const productIds = new Set((seller.products || []).map((p: any) => p.id));
+  const [productCounts, setProductCounts] = useState<{ active: number; draft: number } | null>(
+    null
+  );
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/admin/sellers/${seller.id}/product-counts`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => alive && d && setProductCounts(d))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [seller.id]);
   const sellerOrders = (allOrders || []).filter((o: any) =>
     o.items?.some((item: any) => productIds.has(item.variant?.productId))
   );
@@ -3799,8 +3813,18 @@ function SellerDetailsModal({
           )}
 
           {/* Stats Cards Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px' }}>
             {[
+              {
+                label: 'Active Products',
+                value: productCounts ? productCounts.active : '…',
+                color: '#059669',
+              },
+              {
+                label: 'Draft Products',
+                value: productCounts ? productCounts.draft : '…',
+                color: '#d97706',
+              },
               { label: 'Total Orders', value: stats.orderCount, color: '#4f46e5' },
               {
                 label: 'Total Revenue',
@@ -4905,6 +4929,7 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick, isCoAdmin }: UsersTab
     'all' | 'BUYER' | 'SELLER' | 'ADMIN' | 'CO_ADMIN' | 'AFFILIATE'
   >('all');
   const [resettingEmails, setResettingEmails] = useState<Record<string, boolean>>({});
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
 
   const handleSendResetLink = async (email: string) => {
     setResettingEmails(prev => ({ ...prev, [email]: true }));
@@ -5036,8 +5061,17 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick, isCoAdmin }: UsersTab
           >
             {(u.name || '?')[0].toUpperCase()}
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '12px', fontWeight: 500 }}>{u.name}</div>
+          <div
+            style={{ flex: 1, cursor: 'pointer' }}
+            role="button"
+            tabIndex={0}
+            title="View details"
+            onClick={() => setViewingUserId(u.id)}
+            onKeyDown={e => e.key === 'Enter' && setViewingUserId(u.id)}
+          >
+            <div style={{ fontSize: '12px', fontWeight: 500 }} className="hover:underline">
+              {u.name}
+            </div>
             <div
               style={{
                 fontSize: '11px',
@@ -5152,6 +5186,9 @@ function UsersTab({ data, onDelete, onEdit, onCreateClick, isCoAdmin }: UsersTab
           </div>
         </div>
       ))}
+      {viewingUserId && (
+        <UserDetailsModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />
+      )}
       {users.length === 0 && (
         <div className="py-10 text-center text-xs text-slate-400">
           {q || roleFilter !== 'all' ? 'No users match the current filters.' : 'No users found.'}
