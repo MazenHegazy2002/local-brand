@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ProductPhotoTools from './_components/ProductPhotoTools';
 import WebsiteImportPanel from './_components/WebsiteImportPanel';
+import ManualOrderForm from './_components/ManualOrderForm';
 import { csrfFetch } from '@/lib/csrf';
 import {
   getDashboardStats,
@@ -5209,6 +5210,7 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
 
   const q = search.trim().toLowerCase();
   const orders = (data?.orders || []).filter((o: Order) => {
@@ -5353,16 +5355,40 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
     <div className="card">
       <div className="card-header flex items-center justify-between flex-wrap gap-3">
         <div className="card-title">Platform Orders</div>
-        <button
-          type="button"
-          disabled={exporting}
-          onClick={handleExportTemplateBatch}
-          className="px-4 py-2 bg-[#059669] text-white text-xs font-bold rounded-lg hover:bg-[#047857] transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
-        >
-          📦 Export {selectedOrderIds.length > 0 ? `Selected (${selectedOrderIds.length})` : 'All'}{' '}
-          Orders (NewTemplate.xlsx)
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setManualOpen(true)}
+            className="px-4 py-2 bg-[#534AB7] text-white text-xs font-bold rounded-lg hover:opacity-90 shadow-sm"
+          >
+            + New manual order
+          </button>
+          <button
+            type="button"
+            disabled={exporting}
+            onClick={handleExportTemplateBatch}
+            className="px-4 py-2 bg-[#059669] text-white text-xs font-bold rounded-lg hover:bg-[#047857] transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+          >
+            📦 Export{' '}
+            {selectedOrderIds.length > 0 ? `Selected (${selectedOrderIds.length})` : 'All'} Orders
+            (NewTemplate.xlsx)
+          </button>
+        </div>
       </div>
+      {manualOpen && (
+        <ManualOrderForm
+          onClose={() => setManualOpen(false)}
+          onCreated={async id => {
+            setManualOpen(false);
+            await onRefresh();
+            toast({
+              variant: 'success',
+              title: 'Order created',
+              description: `#ORD-${id.substring(0, 8)} was added and the seller was notified.`,
+            });
+          }}
+        />
+      )}
       <div className="flex items-center gap-3 mb-3 flex-wrap">
         <div className="relative flex-1 min-w-[220px]">
           <svg
@@ -5434,6 +5460,13 @@ function OrdersTab({ data, onRefresh }: OrdersTabProps) {
                 <span className="text-[10px] text-slate-400">
                   ({new Date(o.createdAt).toLocaleDateString()})
                 </span>
+                {(o as Order & { source?: string }).source &&
+                  (o as Order & { source?: string }).source !== 'WEBSITE' && (
+                    <span className="rounded bg-emerald-50 px-1.5 py-px text-[10px] font-semibold text-emerald-700">
+                      {(o as Order & { source?: string }).source!.replace('_', ' ').toLowerCase()} ·
+                      manual
+                    </span>
+                  )}
               </div>
               <div style={{ fontSize: '11px', color: '#64748b' }}>
                 {customerLabel} · {o.items?.length || 0} items
