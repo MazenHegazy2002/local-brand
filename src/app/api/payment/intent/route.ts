@@ -1,15 +1,11 @@
 import { NextResponse } from 'next/server';
+import { resolveCartShipping } from '@/lib/shipping-helper';
+import { getVatRate } from '@/lib/vat';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { DiscountType } from '@/generated/client';
-import {
-  VAT_RATE,
-  MAX_DISCOUNT_PCT,
-  STRIPE_API_VERSION,
-  getShippingRate,
-  LOYALTY_POINT_VALUE,
-} from '@/lib/constants';
+import { MAX_DISCOUNT_PCT, STRIPE_API_VERSION, LOYALTY_POINT_VALUE } from '@/lib/constants';
 import { SessionUser, ProductImage } from '@/types';
 import type Stripe from 'stripe';
 import crypto from 'crypto';
@@ -178,7 +174,14 @@ export async function POST(req: Request) {
 
     const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
 
-    let shippingFee = addressInfo?.governorate ? getShippingRate(addressInfo.governorate) : 50;
+    let shippingFee = addressInfo?.governorate
+      ? (
+          await resolveCartShipping(
+            addressInfo.governorate,
+            cartItems.map(c => ({ id: c.id, quantity: c.qty }))
+          )
+        ).fee
+      : 55;
     try {
       const { getSetting } = await import('@/lib/admin-settings-registry');
       const freeShippingEnabled = await getSetting<boolean>('FREE_SHIPPING_ENABLED');
@@ -193,7 +196,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const vatAmount = subtotalAfterDiscount * VAT_RATE;
+    const vatAmount = subtotalAfterDiscount * (await getVatRate());
     const total = subtotalAfterDiscount + vatAmount + shippingFee;
 
     // 3. Generate idempotency key to prevent double-charge on retry

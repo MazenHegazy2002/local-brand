@@ -560,8 +560,9 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     category: 'tax',
     type: 'toggle',
     label: 'Charge VAT',
-    defaultValue: true,
-    description: 'Master switch; turn off for tax-free testing.',
+    defaultValue: false,
+    description:
+      'On: VAT (rate below) is added on top of product prices at checkout. Off: product prices already include VAT and nothing is added.',
   },
   {
     key: 'VAT_RATE',

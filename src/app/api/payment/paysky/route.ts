@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
+import { resolveCartShipping } from '@/lib/shipping-helper';
+import { getVatRate } from '@/lib/vat';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { VAT_RATE, MAX_DISCOUNT_PCT, getShippingRate, LOYALTY_POINT_VALUE } from '@/lib/constants';
+import { MAX_DISCOUNT_PCT, LOYALTY_POINT_VALUE } from '@/lib/constants';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
 import {
@@ -156,7 +158,14 @@ export async function POST(req: Request) {
 
     const subtotalAfter = Math.max(0, subtotal - discount);
 
-    let shipping = addressInfo?.governorate ? getShippingRate(addressInfo.governorate) : 50;
+    let shipping = addressInfo?.governorate
+      ? (
+          await resolveCartShipping(
+            addressInfo.governorate,
+            cartItems.map(c => ({ id: c.id, quantity: c.qty }))
+          )
+        ).fee
+      : 55;
     try {
       const { getSetting } = await import('@/lib/admin-settings-registry');
       const freeShippingEnabled = await getSetting<boolean>('FREE_SHIPPING_ENABLED');
@@ -171,7 +180,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const vat = subtotalAfter * VAT_RATE;
+    const vat = subtotalAfter * (await getVatRate());
     const total = subtotalAfter + vat + shipping;
 
     if (total <= 0) {
