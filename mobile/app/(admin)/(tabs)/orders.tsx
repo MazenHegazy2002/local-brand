@@ -1,9 +1,9 @@
 // Admin orders: filter by status, search, open an order to change status / payment.
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, RefreshControl, Linking, Pressable } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronDown, ChevronUp } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, Plus } from 'lucide-react-native';
 import { api, fmtEGP } from '@/lib/api';
 import { absUrl } from '@/lib/seller';
 import { useT, statusKey } from '@/lib/i18n';
@@ -72,6 +72,7 @@ interface OrdersRes {
 
 export default function AdminOrders() {
   const { t } = useT();
+  const router = useRouter();
   // `at` changes on every shortcut tap, so the same shortcut re-applies its filter.
   const params = useLocalSearchParams<{ status?: string; at?: string }>();
   const [status, setStatus] = useState(params.status ?? '');
@@ -104,7 +105,19 @@ export default function AdminOrders() {
 
   return (
     <View style={s.root}>
-      <Header title={t('Orders')} />
+      <Header
+        title={t('Orders')}
+        right={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('New manual order')}
+            hitSlop={8}
+            onPress={() => router.push('/(admin)/manual-order' as Href)}
+          >
+            <Plus size={24} color="#fff" />
+          </Pressable>
+        }
+      />
       <SearchBox value={text} onChange={setText} placeholder={t('Search order, name or email')} />
       <Chips
         options={[
