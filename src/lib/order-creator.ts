@@ -18,7 +18,7 @@ import {
   PaymentStatus,
   PaymentMethod,
 } from '@/generated/client';
-import { VAT_RATE, MAX_DISCOUNT_PCT, LOYALTY_POINT_VALUE } from '@/lib/constants';
+import { MAX_DISCOUNT_PCT, LOYALTY_POINT_VALUE } from '@/lib/constants';
 import { createOrderSchema } from '@/lib/validation';
 import { getSetting } from '@/lib/admin-settings-registry';
 
@@ -167,6 +167,8 @@ export async function createOrderForUser(
 
     let subtotal = 0;
     let totalWeightGrams = 0;
+    // One parcel per seller, shipped from the seller's governorate.
+    const parcels = new Map<string, { originGovernorate: string | null; weightGrams: number }>();
     const orderItemsData: Array<{
       variantId: string;
       productTitleSnapshot: string;
@@ -214,7 +216,14 @@ export async function createOrderForUser(
       subtotal += lineTotal;
 
       // Accumulate weight
-      totalWeightGrams += (variant.product.weightGrams ?? 500) * itemInput.quantity;
+      const lineGrams = (variant.product.weightGrams ?? 500) * itemInput.quantity;
+      totalWeightGrams += lineGrams;
+      const parcel = parcels.get(variant.product.sellerId) ?? {
+        originGovernorate: variant.product.seller?.governorate ?? null,
+        weightGrams: 0,
+      };
+      parcel.weightGrams += lineGrams;
+      parcels.set(variant.product.sellerId, parcel);
 
       orderItemsData.push({
         variantId: variant.id,
@@ -314,16 +323,12 @@ export async function createOrderForUser(
     discountAmount = Math.min(discountAmount + pointsDiscount, subtotal * MAX_DISCOUNT_PCT);
 
     const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
-    const vatAmount = subtotalAfterDiscount * VAT_RATE;
+    const { getVatRate } = await import('@/lib/vat');
+    const vatAmount = subtotalAfterDiscount * (await getVatRate());
 
-    // Resolve dynamic shipping cost checking FREE_SHIPPING_THRESHOLD
-    const { resolveShippingRate } = await import('@/lib/shipping-helper');
-    const effectiveWeightGrams = totalWeightGrams > 0 ? totalWeightGrams : 1000;
-    let shippingFee = await resolveShippingRate(
-      resolvedAddress.governorate,
-      'cairo',
-      effectiveWeightGrams
-    );
+    // Egypt Post price per seller parcel (seller's governorate -> customer's).
+    const { getOrderShippingFee } = await import('@/lib/shipping-rates');
+    let shippingFee = getOrderShippingFee(resolvedAddress.governorate, [...parcels.values()]);
     try {
       const { getSetting } = await import('@/lib/admin-settings-registry');
       const freeShippingEnabled = await getSetting<boolean>('FREE_SHIPPING_ENABLED');

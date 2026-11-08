@@ -348,11 +348,13 @@ function CheckoutPageInner() {
   const pointsDiscount = pointsToUse;
   const afterDiscount = subtotal - couponDiscount - pointsDiscount;
 
-  const [shipping, setShipping] = useState(50);
+  const [shipping, setShipping] = useState(55);
+  // VAT rate set in Admin OS > Settings > Tax (0 when VAT is off).
+  const [vatRate, setVatRate] = useState(VAT_RATE);
 
   useEffect(() => {
     if (!address.governorate) {
-      setShipping(50);
+      setShipping(55);
       return;
     }
 
@@ -372,7 +374,8 @@ function CheckoutPageInner() {
         });
         if (res.ok) {
           const data = await res.json();
-          setShipping(data.shippingCost ?? 50);
+          setShipping(data.shippingCost ?? 55);
+          if (typeof data.vatRate === 'number') setVatRate(data.vatRate);
         }
       } catch (err) {
         console.error('Failed to calculate shipping:', err);
@@ -387,7 +390,6 @@ function CheckoutPageInner() {
   }, [address.governorate, items, afterDiscount]);
 
   const giftWrapFee = giftWrapping ? 25 : 0;
-  const vatRate = VAT_RATE;
   const vatAmount = Math.max(0, afterDiscount * vatRate);
   const grandTotal = Math.max(0, afterDiscount + shipping + vatAmount + giftWrapFee);
 

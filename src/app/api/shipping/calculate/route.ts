@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getCachedShippingRate } from '@/lib/cache';
-import { FREE_SHIPPING_THRESHOLD } from '@/lib/shipping-rates';
+import { FREE_SHIPPING_THRESHOLD, getShippingRate } from '@/lib/shipping-rates';
+import { getSetting } from '@/lib/admin-settings-registry';
+import { getVatRate } from '@/lib/vat';
 import { shippingCalculateSchema } from '@/lib/validation';
 
 const FAST_GOVERNORATES = new Set(['Cairo', 'Giza', 'Qalyubia', 'Alexandria']);
@@ -28,46 +28,46 @@ export async function POST(req: Request) {
     }
 
     const { governorate } = parsed.data;
-    const originGovernorate =
-      typeof body?.originGovernorate === 'string' ? body.originGovernorate : 'cairo';
     const cartItems: Array<{ id?: string; qty?: number; quantity?: number }> = Array.isArray(
       body?.cartItems
     )
       ? body.cartItems
       : [];
 
-    let totalWeightGrams = typeof body?.weightGrams === 'number' ? body.weightGrams : 0;
-    if (cartItems.length > 0) {
-      let itemWeightSum = 0;
-      for (const item of cartItems) {
-        const qty = item.qty ?? item.quantity ?? 1;
-        let perUnitGrams = 500; // sensible fallback for 0.5kg item
-        if (item.id) {
-          const product = await prisma.product.findUnique({
-            where: { id: item.id },
-            select: { weightGrams: true },
-          });
-          if (product?.weightGrams) perUnitGrams = product.weightGrams;
-        }
-        itemWeightSum += perUnitGrams * qty;
-      }
-      totalWeightGrams = itemWeightSum;
-    }
+    // One Egypt Post parcel per seller, priced from the seller's governorate.
+    const { resolveCartShipping } = await import('@/lib/shipping-helper');
+    const quote = cartItems.length
+      ? await resolveCartShipping(
+          governorate,
+          cartItems.map(i => ({ id: i.id, quantity: i.qty ?? i.quantity ?? 1 }))
+        )
+      : {
+          fee: getShippingRate(
+            governorate,
+            typeof body?.originGovernorate === 'string' ? body.originGovernorate : 'cairo',
+            typeof body?.weightGrams === 'number' && body.weightGrams > 0 ? body.weightGrams : 1000
+          ),
+          weightGrams: typeof body?.weightGrams === 'number' ? body.weightGrams : 1000,
+        };
+    let shippingCost = quote.fee;
+    const totalWeightGrams = quote.weightGrams;
 
-    if (totalWeightGrams <= 0) {
-      totalWeightGrams = 1000; // default 1 kg
-    }
-
-    let shippingCost = await getCachedShippingRate(governorate, originGovernorate, totalWeightGrams);
-
-    // Subtotal-based free shipping (when caller passed a subtotal).
+    // Free shipping follows the same admin settings as order creation.
     const subtotal: number | undefined =
       typeof body?.subtotal === 'number' ? body.subtotal : undefined;
     let freeShippingApplied = false;
-    if (typeof subtotal === 'number' && subtotal >= FREE_SHIPPING_THRESHOLD) {
-      shippingCost = 0;
-      freeShippingApplied = true;
+    let freeShippingThreshold = FREE_SHIPPING_THRESHOLD;
+    try {
+      const enabled = await getSetting<boolean>('FREE_SHIPPING_ENABLED');
+      freeShippingThreshold = await getSetting<number>('FREE_SHIPPING_THRESHOLD');
+      if (enabled && typeof subtotal === 'number' && subtotal >= freeShippingThreshold) {
+        shippingCost = 0;
+        freeShippingApplied = true;
+      }
+    } catch {
+      /* keep the fee */
     }
+    const vatRate = await getVatRate();
 
     const estimatedDays = FAST_GOVERNORATES.has(governorate) ? '1-3' : '3-5';
 
@@ -79,7 +79,8 @@ export async function POST(req: Request) {
         courier: 'Egypt Post (البريد المصري)',
         weightGrams: totalWeightGrams,
         freeShippingApplied,
-        freeShippingThreshold: FREE_SHIPPING_THRESHOLD,
+        freeShippingThreshold,
+        vatRate,
       },
       { status: 200 }
     );

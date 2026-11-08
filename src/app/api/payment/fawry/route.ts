@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import { resolveCartShipping } from '@/lib/shipping-helper';
+import { getVatRate } from '@/lib/vat';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { VAT_RATE, getShippingRate } from '@/lib/constants';
 import { SessionUser } from '@/types';
 import crypto from 'crypto';
 import { z } from 'zod';
@@ -96,8 +97,15 @@ export async function POST(req: Request) {
       }
     }
 
-    const shipping = addressInfo?.governorate ? getShippingRate(addressInfo.governorate) : 50;
-    const vat = (subtotal - discount) * VAT_RATE;
+    const shipping = addressInfo?.governorate
+      ? (
+          await resolveCartShipping(
+            addressInfo.governorate,
+            cartItems.map(c => ({ id: c.id, quantity: c.qty }))
+          )
+        ).fee
+      : 55;
+    const vat = (subtotal - discount) * (await getVatRate());
     const amount = Math.max(0, subtotal - discount + vat + shipping);
 
     const merchantCode = process.env.FAWRY_MERCHANT_CODE;

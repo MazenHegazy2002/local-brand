@@ -239,9 +239,9 @@ describe('createOrderForUser — stock + variant resolution', () => {
 
     expect(result.success).toBe(true);
     const createPayload = (txOrderCreate.mock.calls[0][0] as any).data;
-    // Subtotal 100*2 + 200*1 = 400 (prices include VAT, nothing added), +Cairo 1.5kg shipping (65 base + 7 extra = 72; 72 * 1.14 + 0.5 = 82.58, rounded up to 83) = 483
-    expect(createPayload.totalAmount).toBe(483);
-    expect(createPayload.shippingFee).toBe(83);
+    // Subtotal 100*2 + 200*1 = 400 (prices include VAT, nothing added), +Cairo->Cairo 1.5kg shipping (55 first kg + 7 extra kg = 62) = 462
+    expect(createPayload.totalAmount).toBe(462);
+    expect(createPayload.shippingFee).toBe(62);
     expect(createPayload.discountAmount).toBe(0);
     expect(createPayload.items.create.length).toBe(2);
   });
@@ -299,8 +299,8 @@ describe('createOrderForUser — coupon application', () => {
     const payload = (txOrderCreate.mock.calls[0][0] as any).data;
     // 50% of 1000 = 500, capped at maxDiscount=200
     expect(payload.discountAmount).toBe(200);
-    // (1000 - 200) + 75.00 shipping = 875.00 (prices include VAT)
-    expect(payload.totalAmount).toBeCloseTo(875.0);
+    // (1000 - 200) + 55.00 Cairo->Cairo shipping = 855.00 (prices include VAT)
+    expect(payload.totalAmount).toBeCloseTo(855.0);
     expect(payload.couponId).toBe('coupon-1');
     expect(couponUpdateMany).toHaveBeenCalledWith(
       expect.objectContaining({
