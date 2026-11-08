@@ -18,14 +18,9 @@ import {
 } from '@/lib/constants';
 
 describe('calculateVAT', () => {
-  it('applies 14% VAT to a round number', () => {
-    // 100 * 0.14 = 14
-    expect(calculateVAT(100)).toBe(14);
-  });
-
-  it('rounds to 2 decimal places', () => {
-    // 33.33 * 0.14 = 4.6662 → 4.67
-    expect(calculateVAT(33.33)).toBe(4.67);
+  it('adds no VAT on top (prices already include it)', () => {
+    expect(calculateVAT(100)).toBe(0);
+    expect(calculateVAT(33.33)).toBe(0);
   });
 
   it('returns 0 for a zero subtotal', () => {

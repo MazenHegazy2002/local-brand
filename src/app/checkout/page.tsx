@@ -2052,22 +2052,24 @@ function CheckoutPageInner() {
                       </span>
                     </div>
                   )}
-                  <div className="flex justify-between text-gray-600">
-                    <span>
-                      {t('CheckoutVat')} (
-                      {(vatRate * 100).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', {
-                        maximumFractionDigits: 0,
-                      })}
-                      %)
-                    </span>
-                    <span className="font-medium text-gray-900">
-                      {vatAmount.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{' '}
-                      {t('EGP')}
-                    </span>
-                  </div>
+                  {vatRate > 0 && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>
+                        {t('CheckoutVat')} (
+                        {(vatRate * 100).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', {
+                          maximumFractionDigits: 0,
+                        })}
+                        %)
+                      </span>
+                      <span className="font-medium text-gray-900">
+                        {vatAmount.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}{' '}
+                        {t('EGP')}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-gray-900 border-t border-gray-100 pt-3">
                     <span className="font-bold text-base">{t('Total')}</span>
                     <span className="font-black text-xl text-[#1e3b8a]">

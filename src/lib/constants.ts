@@ -2,7 +2,9 @@
 // BUSINESS CONSTANTS — Single source of truth
 // ============================================================
 
-export const VAT_RATE = 0.14; // Egypt VAT 14%
+// VAT is not added on top at checkout: product prices already include it.
+// Set back to 0.14 to charge 14% VAT on top of the product price again.
+export const VAT_RATE = 0;
 export const DEFAULT_COMMISSION_RATE = 0.1; // Platform takes 10%
 // Hard cap: no coupon/promo can discount more than 60% of the pre-discount subtotal.
 // Prevents promotional codes from being used to buy products for near-zero cost.
