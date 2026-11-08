@@ -490,7 +490,11 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
               0
             );
             const afterDiscount = Math.max(0, subtotal - (order.discountAmount || 0));
-            const calculatedVat = Math.round(afterDiscount * 0.14 * 100) / 100;
+            // Older orders were charged VAT on top; derive it from the stored total.
+            const calculatedVat = Math.max(
+              0,
+              Math.round((order.totalAmount - order.shippingFee - afterDiscount) * 100) / 100
+            );
             return (
               <div className="mt-6 pt-6 border-t border-slate-100 space-y-1.5 text-sm">
                 <div className="flex justify-between text-slate-600">

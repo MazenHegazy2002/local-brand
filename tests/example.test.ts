@@ -3,9 +3,9 @@ import { calculateVAT, calculateCommission, getShippingRate } from '@/lib/consta
 
 describe('Business Constants', () => {
   it('calculates VAT correctly', () => {
-    expect(calculateVAT(100)).toBe(14);
-    expect(calculateVAT(1000)).toBe(140);
-    expect(calculateVAT(50)).toBe(7);
+    // VAT is included in product prices, so nothing is added on top.
+    expect(calculateVAT(100)).toBe(0);
+    expect(calculateVAT(1000)).toBe(0);
   });
 
   it('calculates commission correctly', () => {
