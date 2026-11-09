@@ -2,6 +2,7 @@
 import { useLanguage } from '@/providers/LanguageContext';
 
 import React, { useEffect } from 'react';
+import { isStaleDeployError, reloadForNewVersion } from '@/lib/stale-deploy';
 
 export default function Error({
   error,
@@ -12,6 +13,8 @@ export default function Error({
 }) {
   const { tr } = useLanguage();
   useEffect(() => {
+    // Old tab after a deploy: reload into the new version instead of erroring.
+    if (isStaleDeployError(error) && reloadForNewVersion()) return;
     console.error(error);
     try {
       fetch('/api/alerts/error', {
