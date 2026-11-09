@@ -113,7 +113,13 @@ function Content({
             <Text style={styles.btnPrimaryText}>{t('Next')}</Text>
           </Pressable>
         ) : (
-          <Pressable style={styles.btnPrimary} onPress={() => router.push('/(auth)/sign-in')}>
+          <Pressable
+            style={styles.btnPrimary}
+            onPress={async () => {
+              await useAuth.getState().browseAsGuest();
+              router.replace('/(buyer)/(tabs)');
+            }}
+          >
             <Text style={styles.btnPrimaryText}>{t('Get started')}</Text>
           </Pressable>
         )}

@@ -37,6 +37,7 @@ function ProductCard({ item }: { item: Product }) {
   // Same ['wishlist'] key as the product page + wishlist screen, so one fetch is shared.
   const { data: wish } = useQuery({
     queryKey: ['wishlist'],
+    enabled: !!useAuth.getState().user,
     queryFn: () => api.get<Wish>('/api/wishlist?view=items'),
   });
   const liked = !!wish?.items.some(w => w.id === item.id);
@@ -61,7 +62,9 @@ function ProductCard({ item }: { item: Product }) {
         />
         <Pressable
           style={styles.cardHeart}
-          onPress={() => toggleLike.mutate()}
+          onPress={() =>
+            useAuth.getState().user ? toggleLike.mutate() : router.push('/(auth)/sign-in')
+          }
           disabled={toggleLike.isPending}
           hitSlop={8}
         >
@@ -108,9 +111,17 @@ export default function Home() {
     queryKey: ['public-products'],
     queryFn: () => api.get<{ products: Product[] }>('/api/export/public-products?limit=30'),
   });
+  // Fixed sellers list (every active seller), independent of which products are newest.
+  const { data: sellersData } = useQuery({
+    queryKey: ['public-sellers'],
+    queryFn: () =>
+      api.get<{ sellers: { sellerId: string; name: string }[] }>('/api/export/public-sellers'),
+  });
+  const sellers = sellersData?.sellers ?? [];
   // Same ['notifications'] key as the notifications screen; the bell dot only shows for unread ones.
   const { data: notifs } = useQuery({
     queryKey: ['notifications'],
+    enabled: !!useAuth.getState().user,
     queryFn: () => api.get<{ notifications: { isRead: boolean }[] }>('/api/notifications'),
   });
   const hasUnread = !!notifs?.notifications.some(n => !n.isRead);
@@ -208,14 +219,14 @@ export default function Home() {
         {/* Content sheet */}
         <View style={styles.sheet}>
           {/* Brand avatar row */}
-          {!isLoading && products.length > 0 && (
+          {sellers.length > 0 && (
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.brandsRow}
             >
-              {Array.from(new Map(products.map(p => [p.brand, p.sellerId])))
-                .slice(0, 8)
+              {sellers
+                .map(sl => [sl.name, sl.sellerId] as const)
                 .map(([brand, sellerId]) => (
                   <Pressable
                     key={brand}

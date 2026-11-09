@@ -1,4 +1,5 @@
 // Screen 2e — Product detail
+import { useAuth } from '@/store/auth';
 import { useRef, useState } from 'react';
 import {
   View,
@@ -201,7 +202,9 @@ export default function ProductDetail() {
           </Pressable>
           <Pressable
             style={[styles.galleryBtn, { right: 16 }]}
-            onPress={() => toggleLike.mutate()}
+            onPress={() =>
+              useAuth.getState().user ? toggleLike.mutate() : router.push('/(auth)/sign-in')
+            }
             disabled={toggleLike.isPending}
             accessibilityRole="button"
             accessibilityLabel={liked ? t('Remove from wishlist') : t('Save to wishlist')}

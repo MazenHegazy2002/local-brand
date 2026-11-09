@@ -20,13 +20,15 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const limit = Math.min(parseInt(searchParams.get('limit') || '30', 10), 100);
 
-    const products = await prisma.product.findMany({
+    const newest = await prisma.product.findMany({
       where: {
         published: true,
         seller: { status: 'ACTIVE' },
         deletedAt: null,
       },
-      take: limit,
+      // Read a wider window than `limit`, then mix sellers (below) so one big upload
+      // doesn't fill the whole feed with a single store.
+      take: Math.min(limit * 8, 800),
       select: {
         id: true,
         sellerId: true,
@@ -79,6 +81,21 @@ export async function GET(req: NextRequest) {
         createdAt: 'desc',
       },
     });
+
+    // Round-robin by seller (each seller's own items stay newest-first).
+    const bySeller = new Map<string, typeof newest>();
+    for (const p of newest) {
+      const list = bySeller.get(p.sellerId);
+      if (list) list.push(p);
+      else bySeller.set(p.sellerId, [p]);
+    }
+    const queues = [...bySeller.values()];
+    const products: typeof newest = [];
+    for (let i = 0; products.length < limit && queues.some(q => i < q.length); i++) {
+      for (const q of queues) {
+        if (i < q.length && products.length < limit) products.push(q[i]);
+      }
+    }
 
     // Images stored inline as base64 made this response ~12 MB. Point data: URLs
     // at the streaming route instead so each image is fetched and cached separately.

@@ -12,14 +12,18 @@ export default function Local() {
   const router = useRouter();
   const { t } = useT();
   const { data, isLoading } = useQuery({
-    queryKey: ['public-brands'],
+    queryKey: ['public-sellers'],
     queryFn: () =>
-      api.get<{ products: { brand: string; image: string; sellerId?: string }[] }>(
-        '/api/export/public-products?limit=100'
-      ),
+      api.get<{
+        sellers: { sellerId: string; name: string; image: string | null; logoUrl: string | null }[];
+      }>('/api/export/public-sellers'),
   });
 
-  const brands = Array.from(new Map((data?.products ?? []).map(p => [p.brand, p])).values());
+  const brands = (data?.sellers ?? []).map(sl => ({
+    brand: sl.name,
+    sellerId: sl.sellerId,
+    image: sl.logoUrl || sl.image || '',
+  }));
 
   return (
     <View style={styles.root}>

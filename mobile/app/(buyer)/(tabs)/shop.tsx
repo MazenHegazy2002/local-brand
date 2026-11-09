@@ -14,7 +14,7 @@ import {
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Search, SlidersHorizontal } from 'lucide-react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { api, fmtEGP, absUrl } from '@/lib/api';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
@@ -124,18 +124,21 @@ export default function Shop() {
     queryFn: () => api.get<{ categories: Category[] }>('/api/categories'),
   });
 
-  const { data, isLoading } = useQuery({
+  // Pages of 40, loaded as the list scrolls, so every product can be reached.
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['products', search, selectedCat, priceMin, priceMax, sortBy],
-    queryFn: () => {
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) => {
       const sort = sortBy !== 'newest' ? sortBy : '';
-      return api.get<{ products: Product[] }>(
-        `/api/products?q=${encodeURIComponent(search)}&category=${selectedCat}&minPrice=${priceMin || ''}&maxPrice=${priceMax < P_MAX ? priceMax : ''}&sort=${sort}&limit=40`
+      return api.get<{ products: Product[]; pagination?: { hasNext: boolean } }>(
+        `/api/products?q=${encodeURIComponent(search)}&category=${selectedCat}&minPrice=${priceMin || ''}&maxPrice=${priceMax < P_MAX ? priceMax : ''}&sort=${sort}&limit=40&page=${pageParam}`
       );
     },
+    getNextPageParam: (last, pages) => (last.pagination?.hasNext ? pages.length + 1 : undefined),
     staleTime: 20_000,
   });
 
-  const products = data?.products ?? [];
+  const products = data?.pages.flatMap(pg => pg.products) ?? [];
 
   const allCategories = cats?.categories ?? [];
   const resultCount = products.length;
@@ -280,6 +283,15 @@ export default function Shop() {
         <FlatList
           key="products-grid"
           data={products}
+          onEndReachedThreshold={0.6}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+          }}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+            ) : null
+          }
           keyExtractor={i => i.id}
           numColumns={2}
           columnWrapperStyle={{ gap: 12 }}

@@ -1,4 +1,5 @@
 // Screen 3a — Bag
+import { useAuth } from '@/store/auth';
 import { useState } from 'react';
 import {
   View,
@@ -176,7 +177,12 @@ export default function Bag() {
           <Text style={styles.footerLabel}>{t('Subtotal')}</Text>
           <Text style={styles.footerTotal}>{fmtEGP(subtotal)}</Text>
         </View>
-        <Pressable style={styles.checkoutBtn} onPress={() => router.push('/(buyer)/checkout')}>
+        <Pressable
+          style={styles.checkoutBtn}
+          onPress={() =>
+            router.push(useAuth.getState().user ? '/(buyer)/checkout' : '/(auth)/sign-in')
+          }
+        >
           <Text style={styles.checkoutText}>{t('Checkout')}</Text>
         </Pressable>
       </View>

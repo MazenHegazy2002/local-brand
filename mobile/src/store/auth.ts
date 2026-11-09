@@ -39,6 +39,9 @@ interface User {
 
 interface AuthStore {
   user: User | null;
+  /** Browsing the store without an account (sign-in is asked at checkout). */
+  guest: boolean;
+  browseAsGuest: () => Promise<void>;
   lang: Lang;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
@@ -50,6 +53,7 @@ interface AuthStore {
 
 export const useAuth = create<AuthStore>((set, get) => ({
   user: null,
+  guest: false,
   lang: 'en',
   loading: true,
 
@@ -57,7 +61,8 @@ export const useAuth = create<AuthStore>((set, get) => ({
     try {
       const raw = await storage.get('user');
       const lang = (await storage.get('lang')) as Lang | null;
-      set({ user: raw ? JSON.parse(raw) : null, lang: lang ?? 'en', loading: false });
+      const guest = (await storage.get('guest')) === '1';
+      set({ user: raw ? JSON.parse(raw) : null, guest, lang: lang ?? 'en', loading: false });
     } catch {
       set({ loading: false });
     }
@@ -67,6 +72,11 @@ export const useAuth = create<AuthStore>((set, get) => ({
     const user = await apiSignIn(email, password);
     await storage.set('user', JSON.stringify(user));
     set({ user: user as User });
+  },
+
+  browseAsGuest: async () => {
+    await storage.set('guest', '1');
+    set({ guest: true });
   },
 
   signOut: async () => {

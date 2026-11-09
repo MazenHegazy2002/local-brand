@@ -77,6 +77,7 @@ export default function RootLayout() {
   // Side insets: devices with a side status bar / camera (and landscape notches).
   const insets = useSafeAreaInsets();
   const role = useAuth(s => s.user?.role);
+  const guest = useAuth(s => s.guest);
 
   const [fontsLoaded] = useFonts({
     'Outfit-Regular': require('../assets/fonts/Outfit-Regular.ttf'),
@@ -122,11 +123,12 @@ export default function RootLayout() {
                 to the first section available to them, and a section never mounts (or
                 fires its API calls) for the wrong user, even at launch. */}
             <Stack screenOptions={{ headerShown: false }}>
+              {/* Guests (no account) browse the buyer store; sign-in opens on top at checkout. */}
+              <Stack.Protected guard={role === 'BUYER' || (!role && guest)}>
+                <Stack.Screen name="(buyer)" />
+              </Stack.Protected>
               <Stack.Protected guard={!role}>
                 <Stack.Screen name="(auth)" />
-              </Stack.Protected>
-              <Stack.Protected guard={role === 'BUYER'}>
-                <Stack.Screen name="(buyer)" />
               </Stack.Protected>
               <Stack.Protected guard={role === 'SELLER'}>
                 <Stack.Screen name="(seller)" />

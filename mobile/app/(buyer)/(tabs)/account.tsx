@@ -59,14 +59,17 @@ export default function Account() {
   const pts = loyalty.data?.points;
   const orders = useQuery({
     queryKey: ['orders'],
+    enabled: !!user,
     queryFn: () => api.get<{ orders: OrderRow[] }>('/api/orders'),
   });
   const wishlist = useQuery({
     queryKey: ['wishlist'],
+    enabled: !!user,
     queryFn: () => api.get<{ items: unknown[] }>('/api/wishlist?view=items'),
   });
   const addresses = useQuery({
     queryKey: ['addresses'],
+    enabled: !!user,
     queryFn: () => api.get<{ addresses: AddressRow[] }>('/api/addresses'),
   });
   const count = (n?: number) => (n == null ? '–' : String(n));
@@ -157,6 +160,42 @@ export default function Account() {
       onPress: () => openWeb('/privacy'),
     },
   ];
+
+  // Guests see a sign-in prompt instead of an empty account.
+  if (!user) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: '#F8F7F4',
+          justifyContent: 'center',
+          padding: 24,
+          gap: 12,
+        }}
+      >
+        <Text style={{ fontFamily: 'InstrumentSerif-Regular', fontSize: 34, color: '#111827' }}>
+          {t('Your account')}
+        </Text>
+        <Text style={{ fontFamily: 'Inter-Regular', fontSize: 15, color: '#4B5563' }}>
+          {t('Sign in to track orders and use your points.')}
+        </Text>
+        <Pressable
+          onPress={() => router.push('/(auth)/sign-in')}
+          style={{
+            backgroundColor: '#1E3A8A',
+            borderRadius: 14,
+            paddingVertical: 16,
+            alignItems: 'center',
+            marginTop: 8,
+          }}
+        >
+          <Text style={{ fontFamily: 'Inter-SemiBold', fontSize: 16, color: '#fff' }}>
+            {t('Sign in')}
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.inner}>
