@@ -156,6 +156,7 @@ import WebVitalsReporter from '@/components/WebVitalsReporter';
 import VisitorTracker from '@/components/VisitorTracker';
 import InstallPrompt from '@/components/InstallPrompt';
 import Plugins from '@/components/Plugins';
+import StaleDeployReload from '@/components/StaleDeployReload';
 import CsrfProvider from '@/components/CsrfProvider';
 import Footer from '@/components/Footer';
 
@@ -248,6 +249,7 @@ export default async function RootLayout({
           </ToastProvider>
         </LanguageProvider>
         <Plugins />
+        <StaleDeployReload />
         <CsrfProvider />
         {process.env.VERCEL === '1' && (
           <>
