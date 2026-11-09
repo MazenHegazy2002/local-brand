@@ -1,6 +1,7 @@
 // Admin users: search, filter by role, suspend / reactivate / change role.
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, RefreshControl } from 'react-native';
+import { useRouter, type Href } from 'expo-router';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useT } from '@/lib/i18n';
@@ -62,6 +63,7 @@ export default function AdminUsers() {
       getNextPageParam: (last, pages) =>
         pages.length < last.totalPages ? pages.length + 1 : undefined,
     });
+  const router = useRouter();
   const total = data?.pages[0]?.total;
   const users = data?.pages.flatMap(p => p.users) ?? [];
   const act = useMutation({
@@ -108,7 +110,7 @@ export default function AdminUsers() {
           />
         }
         renderItem={({ item: u }) => (
-          <Card>
+          <Card onPress={() => router.push(`/(admin)/user/${u.id}` as Href)}>
             <View style={s.between}>
               <Text style={s.strong} numberOfLines={1}>
                 {u.name}
