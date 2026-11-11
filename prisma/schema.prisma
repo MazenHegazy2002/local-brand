@@ -1501,3 +1501,20 @@ model ProductImportRequest {
   @@index([status, createdAt])
   @@index([sellerId, createdAt])
 }
+
+// Over-the-air app updates (expo-updates). Files live in
+// UPLOAD_DIR/app-updates/<id>/ (output of `expo export`). The newest ACTIVE
+// update for a runtime version is served to the app; deactivating it rolls
+// phones back to the previous one (or the version built into the store app).
+model AppUpdate {
+  id             String   @id // uuid, also the update id sent to the app
+  runtimeVersion String
+  message        String?
+  gitCommit      String?
+  platforms      String   @default("android,ios")
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  createdBy      String?
+
+  @@index([runtimeVersion, active, createdAt])
+}

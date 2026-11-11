@@ -4,6 +4,7 @@
 // Mobile app) and a push-notification sender (POST /api/admin/app/push).
 
 import React, { useEffect, useState } from 'react';
+import AppUpdatesPanel from './AppUpdatesPanel';
 import { csrfFetch } from '@/lib/csrf';
 
 const STATUS_KEYS: Array<[string, string]> = [
@@ -75,6 +76,8 @@ export default function MobileAppTab({ onOpenSettings }: { onOpenSettings?: () =
     <div>
       {err && <div className="maint-err">{err}</div>}
       {info && <div className="maint-info">{info}</div>}
+
+      <AppUpdatesPanel />
 
       <div className="maint-grid">
         <div className="maint-card">

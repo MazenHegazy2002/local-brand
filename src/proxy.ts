@@ -207,7 +207,9 @@ export async function proxy(req: NextRequest) {
   if (
     targetPathname.startsWith('/api') &&
     !targetPathname.startsWith('/api/auth/session') &&
-    !targetPathname.startsWith('/api/images')
+    !targetPathname.startsWith('/api/images') &&
+    // App update downloads fetch many files at once from one phone.
+    !targetPathname.startsWith('/api/app/updates')
   ) {
     const result = await rateLimit(req);
     if (result.limited) {
@@ -274,6 +276,7 @@ export async function proxy(req: NextRequest) {
     !targetPathname.startsWith('/admin-os') &&
     !targetPathname.startsWith('/api/admin') &&
     !targetPathname.startsWith('/api/app/config') &&
+    !targetPathname.startsWith('/api/app/updates') &&
     !targetPathname.startsWith('/login') &&
     !targetPathname.startsWith('/maintenance')
   ) {
