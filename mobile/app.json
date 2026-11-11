@@ -29,7 +29,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "shop.brandyy.app",
-      "versionCode": 11,
+      "versionCode": 12,
       "permissions": ["android.permission.POST_NOTIFICATIONS"],
       "blockedPermissions": [
         "android.permission.CAMERA",
@@ -78,10 +78,26 @@
       ],
       "./plugins/with-quoted-bundle-script",
       "./plugins/with-android-release-signing",
-      "./plugins/with-ios-scene-lifecycle"
+      "./plugins/with-ios-scene-lifecycle",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://brandyy.shop/api/app/updates/manifest",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
     }
   }
 }
