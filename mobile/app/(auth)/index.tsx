@@ -54,7 +54,7 @@ export default function Onboarding() {
 
   return (
     <View style={styles.root}>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <StatusBar barStyle="light-content" />
 
       {bgUri ? (
         <ImageBackground source={{ uri: bgUri }} style={styles.bg} resizeMode="cover">

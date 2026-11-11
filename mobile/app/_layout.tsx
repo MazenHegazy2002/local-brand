@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
-import { Platform, View } from 'react-native';
+import { Dimensions, Platform, View } from 'react-native';
 import { Stack, router, type Href } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -15,6 +16,16 @@ import VersionGate from '@/components/VersionGate';
 import { useT } from '@/lib/i18n';
 
 SplashScreen.preventAutoHideAsync();
+
+// Phones stay in portrait; tablets and foldables (shortest side >= 600dp)
+// can rotate. Locked at runtime instead of in the manifest, which Android 16
+// ignores on large screens and Play flags.
+{
+  const { width, height } = Dimensions.get('screen');
+  if (Platform.OS !== 'web' && Math.min(width, height) < 600) {
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+  }
+}
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
