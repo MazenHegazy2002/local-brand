@@ -6,6 +6,7 @@ import {
   setFmtLang,
   setOnSessionExpired,
   signIn as apiSignIn,
+  signInWithGoogleToken,
   signOut as apiSignOut,
 } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
@@ -45,6 +46,7 @@ interface AuthStore {
   lang: Lang;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: (idToken: string) => Promise<void>;
   signOut: () => Promise<void>;
   setLang: (lang: Lang) => void;
   updateUser: (patch: Partial<User>) => Promise<void>;
@@ -70,6 +72,12 @@ export const useAuth = create<AuthStore>((set, get) => ({
 
   signIn: async (email, password) => {
     const user = await apiSignIn(email, password);
+    await storage.set('user', JSON.stringify(user));
+    set({ user: user as User });
+  },
+
+  signInWithGoogle: async idToken => {
+    const user = await signInWithGoogleToken(idToken);
     await storage.set('user', JSON.stringify(user));
     set({ user: user as User });
   },

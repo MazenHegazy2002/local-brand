@@ -391,6 +391,8 @@ export const ar: Record<string, string> = {
   'Show {n} results': 'عرض {n} نتائج',
   'Sign in': 'تسجيل الدخول',
   'Sign in failed': 'فشل تسجيل الدخول',
+  'Continue with Google': 'المتابعة بحساب Google',
+  or: 'أو',
   'Sign in to track orders and use your points.': 'سجّل الدخول لتتابع طلباتك وتستخدم نقاطك.',
   'Sign out': 'تسجيل الخروج',
   'Sign out?': 'تسجيل الخروج؟',
@@ -1052,6 +1054,8 @@ export const franco: Record<string, string> = {
   'Show {n} results': 'Warry {n} nata2eg',
   'Sign in': 'Login',
   'Sign in failed': 'El login mansha2sh',
+  'Continue with Google': 'Kamel b Google',
+  or: 'aw',
   'Sign in to track orders and use your points.':
     'E3mel login 3ashan tetabe3 el orders w testa5dem el points.',
   'Sign out': 'Sign out',
