@@ -1,5 +1,5 @@
 // Screen 2b — Sign in / Register
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import { useAuth } from '@/store/auth';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
 import { getGoogleIdToken } from '@/lib/google-signin';
+import { appleSignInAvailable, getAppleIdentity } from '@/lib/apple-signin';
 
 const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
 
@@ -35,7 +36,13 @@ export default function SignIn() {
   // Set after sign-up (or an unverified sign-in): show the "check your email" step.
   const [verifyEmail, setVerifyEmail] = useState('');
   const [resent, setResent] = useState(false);
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, signInWithApple } = useAuth();
+  const [appleAvailable, setAppleAvailable] = useState(false);
+  useEffect(() => {
+    appleSignInAvailable()
+      .then(setAppleAvailable)
+      .catch(() => {});
+  }, []);
   const [googleLoading, setGoogleLoading] = useState(false);
   const { t } = useT();
 
@@ -77,6 +84,19 @@ export default function SignIn() {
       if (code !== 'SIGN_IN_CANCELLED' && code !== '12501') {
         showError((e as Error).message ?? t('Sign in failed'));
       }
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
+
+  async function handleApple() {
+    setError('');
+    setGoogleLoading(true);
+    try {
+      const identity = await getAppleIdentity();
+      if (identity) await signInWithApple(identity.identityToken, identity.name);
+    } catch (e: unknown) {
+      showError((e as Error).message ?? t('Sign in failed'));
     } finally {
       setGoogleLoading(false);
     }
@@ -278,6 +298,18 @@ export default function SignIn() {
           <Text style={styles.dividerText}>{t('or')}</Text>
           <View style={styles.dividerLine} />
         </View>
+        {appleAvailable && (
+          <Pressable
+            style={[styles.socialBtn, styles.socialBtnDark, { marginBottom: 12 }]}
+            onPress={handleApple}
+            disabled={googleLoading || loading}
+            accessibilityRole="button"
+          >
+            <Text style={styles.socialTextLight}>
+              {'\uF8FF'} {t('Continue with Apple')}
+            </Text>
+          </Pressable>
+        )}
         <View style={styles.socialRow}>
           <Pressable
             style={[styles.socialBtn, styles.socialBtnLight, googleLoading && { opacity: 0.7 }]}

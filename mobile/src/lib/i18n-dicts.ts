@@ -392,6 +392,7 @@ export const ar: Record<string, string> = {
   'Sign in': 'تسجيل الدخول',
   'Sign in failed': 'فشل تسجيل الدخول',
   'Continue with Google': 'المتابعة بحساب Google',
+  'Continue with Apple': 'المتابعة بحساب Apple',
   or: 'أو',
   'Sign in to track orders and use your points.': 'سجّل الدخول لتتابع طلباتك وتستخدم نقاطك.',
   'Sign out': 'تسجيل الخروج',
@@ -1055,6 +1056,7 @@ export const franco: Record<string, string> = {
   'Sign in': 'Login',
   'Sign in failed': 'El login mansha2sh',
   'Continue with Google': 'Kamel b Google',
+  'Continue with Apple': 'Kamel b Apple',
   or: 'aw',
   'Sign in to track orders and use your points.':
     'E3mel login 3ashan tetabe3 el orders w testa5dem el points.',
