@@ -7,6 +7,7 @@ import {
   setOnSessionExpired,
   signIn as apiSignIn,
   signInWithGoogleToken,
+  signInWithAppleToken,
   signOut as apiSignOut,
 } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
@@ -47,6 +48,7 @@ interface AuthStore {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: (idToken: string) => Promise<void>;
+  signInWithApple: (identityToken: string, name: string | null) => Promise<void>;
   signOut: () => Promise<void>;
   setLang: (lang: Lang) => void;
   updateUser: (patch: Partial<User>) => Promise<void>;
@@ -78,6 +80,12 @@ export const useAuth = create<AuthStore>((set, get) => ({
 
   signInWithGoogle: async idToken => {
     const user = await signInWithGoogleToken(idToken);
+    await storage.set('user', JSON.stringify(user));
+    set({ user: user as User });
+  },
+
+  signInWithApple: async (identityToken, name) => {
+    const user = await signInWithAppleToken(identityToken, name);
     await storage.set('user', JSON.stringify(user));
     set({ user: user as User });
   },

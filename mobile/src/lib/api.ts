@@ -122,6 +122,20 @@ export async function signInWithGoogleToken(idToken: string) {
   return data.user;
 }
 
+export async function signInWithAppleToken(identityToken: string, name: string | null) {
+  const data = await request<{
+    accessToken: string;
+    refreshToken: string;
+    user: { id: string; name: string; email: string; role: string; image: string | null };
+  }>('/api/auth/mobile/apple', {
+    method: 'POST',
+    body: JSON.stringify({ identityToken, name }),
+  });
+  await storage.set('access_token', data.accessToken);
+  await storage.set('refresh_token', data.refreshToken);
+  return data.user;
+}
+
 export async function signOut() {
   await storage.del('access_token');
   await storage.del('refresh_token');

@@ -10,7 +10,8 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "shop.brandyy.app",
-      "buildNumber": "8",
+      "buildNumber": "13",
+      "usesAppleSignIn": true,
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -93,7 +94,8 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.25071648810-i07tvl36fn9hcj4nnvumh90nemh6f37p"
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true
