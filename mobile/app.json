@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "shop.brandyy.app",
-      "buildNumber": "13",
+      "buildNumber": "14",
       "usesAppleSignIn": true,
       "config": {
         "usesNonExemptEncryption": false

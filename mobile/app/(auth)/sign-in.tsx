@@ -299,16 +299,18 @@ export default function SignIn() {
           <View style={styles.dividerLine} />
         </View>
         {appleAvailable && (
-          <Pressable
-            style={[styles.socialBtn, styles.socialBtnDark, { marginBottom: 12 }]}
-            onPress={handleApple}
-            disabled={googleLoading || loading}
-            accessibilityRole="button"
-          >
-            <Text style={styles.socialTextLight}>
-              {'\uF8FF'} {t('Continue with Apple')}
-            </Text>
-          </Pressable>
+          <View style={[styles.socialRow, { marginBottom: 12 }]}>
+            <Pressable
+              style={[styles.socialBtn, styles.socialBtnDark]}
+              onPress={handleApple}
+              disabled={googleLoading || loading}
+              accessibilityRole="button"
+            >
+              <Text style={styles.socialTextLight}>
+                {'\uF8FF'} {t('Continue with Apple')}
+              </Text>
+            </Pressable>
+          </View>
         )}
         <View style={styles.socialRow}>
           <Pressable
