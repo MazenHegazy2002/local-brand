@@ -4,11 +4,12 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
+import { uploadedImageUrl } from '@/lib/validation';
 
 const updateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   subtitle: z.string().max(500).optional(),
-  imageUrl: z.string().url().optional(),
+  imageUrl: uploadedImageUrl.optional(),
   linkUrl: z.string().min(1).optional(),
   ctaLabel: z.string().max(50).optional(),
   position: z.number().int().min(0).optional(),
@@ -45,7 +46,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ banner });
   } catch (error: unknown) {
     const err = error as Error;
-    return NextResponse.json({ message: err.message || 'Failed to update banner' }, { status: 500 });
+    return NextResponse.json(
+      { message: err.message || 'Failed to update banner' },
+      { status: 500 }
+    );
   }
 }
 
@@ -63,6 +67,9 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const err = error as Error;
-    return NextResponse.json({ message: err.message || 'Failed to delete banner' }, { status: 500 });
+    return NextResponse.json(
+      { message: err.message || 'Failed to delete banner' },
+      { status: 500 }
+    );
   }
 }

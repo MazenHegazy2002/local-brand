@@ -1,5 +1,16 @@
 import { z } from 'zod';
 
+// An image address from /api/upload: a full http(s) URL (Blob/Cloudinary),
+// a server-stored "/api/files/<name>" path, or a dev data:image URL.
+// Rejects javascript: and other schemes that z.string().url() would allow.
+export const isUploadedImageUrl = (v: string) =>
+  /^\/api\/files\/[\w-]+(\.\w+)?$/.test(v) ||
+  (/^https?:\/\//i.test(v) && z.string().url().safeParse(v).success) ||
+  /^data:image\//.test(v);
+export const uploadedImageUrl = z
+  .string()
+  .refine(isUploadedImageUrl, { message: 'Invalid image url' });
+
 // ============================================
 // AUTH SCHEMAS
 // ============================================
