@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { uploadedImageUrl } from '@/lib/validation';
 import { sendEmail } from '@/lib/email';
 import { notifyAdminNewRegistration } from '@/lib/admin-registration-alerts';
 
@@ -25,7 +26,7 @@ const SellerApplySchema = z.object({
   facebookUrl: z.string().url().or(z.literal('')).optional(),
   instagramUrl: z.string().url().or(z.literal('')).optional(),
   tiktokUrl: z.string().url().or(z.literal('')).optional(),
-  logoUrl: z.string().url().or(z.literal('')).optional(),
+  logoUrl: uploadedImageUrl.or(z.literal('')).optional(),
 });
 
 export async function POST(req: NextRequest) {

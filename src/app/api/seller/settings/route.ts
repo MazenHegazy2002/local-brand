@@ -5,13 +5,14 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
+import { uploadedImageUrl } from '@/lib/validation';
 import { getRequestUser } from '@/lib/mobile-auth';
 import { encryptSecret, readSecret, redactBankAccount } from '@/lib/secrets';
 
 const settingsSchema = z.object({
   storeName: z.string().min(2).max(100).optional(),
   description: z.string().max(2000).optional(),
-  logoUrl: z.string().url().optional().or(z.literal('')),
+  logoUrl: uploadedImageUrl.optional().or(z.literal('')),
   city: z.string().max(80).optional(),
   governorate: z.string().max(80).optional(),
   pickupStreet: z.string().max(300).optional(),
@@ -136,7 +137,10 @@ export async function PATCH(req: Request) {
           select: { id: true },
         });
         if (taken) {
-          return NextResponse.json({ message: 'This store name is already taken' }, { status: 409 });
+          return NextResponse.json(
+            { message: 'This store name is already taken' },
+            { status: 409 }
+          );
         }
         data.pendingStoreName = wanted;
         data.pendingStoreNameAt = new Date();
@@ -160,7 +164,10 @@ export async function PATCH(req: Request) {
 
     if (requestedName) {
       try {
-        const admins = await prisma.user.findMany({ where: { role: { in: ['ADMIN', 'CO_ADMIN'] } }, select: { id: true } });
+        const admins = await prisma.user.findMany({
+          where: { role: { in: ['ADMIN', 'CO_ADMIN'] } },
+          select: { id: true },
+        });
         await notifyMultiple(
           admins.map(a => a.id),
           {

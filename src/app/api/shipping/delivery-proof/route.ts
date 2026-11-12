@@ -5,10 +5,11 @@ import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
 import { PLATFORM_URL } from '@/lib/constants';
 import { z } from 'zod';
+import { uploadedImageUrl } from '@/lib/validation';
 
 const proofSchema = z.object({
   orderItemId: z.string().uuid(),
-  proofImageUrl: z.string().url().optional(),
+  proofImageUrl: uploadedImageUrl.optional(),
   signature: z.string().min(1).optional(),
   notes: z.string().max(500).optional(),
 });

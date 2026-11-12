@@ -4,11 +4,12 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
+import { uploadedImageUrl } from '@/lib/validation';
 
 const bannerSchema = z.object({
   title: z.string().min(1).max(200),
   subtitle: z.string().max(500).optional(),
-  imageUrl: z.string().url(),
+  imageUrl: uploadedImageUrl,
   linkUrl: z.string().min(1),
   ctaLabel: z.string().max(50).optional(),
   position: z.number().int().min(0).default(0),

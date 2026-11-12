@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { SessionUser } from '@/types';
 import { z } from 'zod';
+import { uploadedImageUrl } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,8 +12,8 @@ const createBrandSchema = z.object({
   name: z.string().min(2, 'Brand name must be at least 2 characters').max(80),
   nameAr: z.string().max(80).optional().nullable(),
   description: z.string().max(500).optional().nullable(),
-  logoUrl: z.string().url().optional().or(z.literal('')).nullable(),
-  coverUrl: z.string().url().optional().or(z.literal('')).nullable(),
+  logoUrl: uploadedImageUrl.optional().or(z.literal('')).nullable(),
+  coverUrl: uploadedImageUrl.optional().or(z.literal('')).nullable(),
   accentColor: z
     .string()
     .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
