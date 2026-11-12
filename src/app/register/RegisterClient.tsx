@@ -4,6 +4,7 @@ import { useLanguage } from '@/providers/LanguageContext';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import SocialSignIn from '@/components/SocialSignIn';
 import PasswordStrength from '@/components/PasswordStrength';
 
 type Step = 'form' | 'check-email' | 'seller-pending';
@@ -187,6 +188,12 @@ export default function RegisterPage() {
 
       <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10 border border-gray-100">
+          <SocialSignIn callbackUrl="/dashboard" />
+          <div className="my-5 flex items-center gap-3 text-xs text-gray-400">
+            <span className="h-px flex-1 bg-gray-200" />
+            {tr('or sign up with email')}
+            <span className="h-px flex-1 bg-gray-200" />
+          </div>
           <form className="space-y-5" onSubmit={handleSubmit}>
             {error && (
               <div className="mb-5 bg-red-50 text-red-700 p-4 rounded-xl text-sm border border-red-200 flex items-center gap-2">
