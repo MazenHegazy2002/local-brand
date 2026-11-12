@@ -1,5 +1,5 @@
 // Screen 2a — Onboarding
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,13 @@ import { useT, LANGS, LANG_NAMES } from '@/lib/i18n';
 import { useAuth } from '@/store/auth';
 
 const { width, height } = screen;
-const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
+
+// Fixed, bundled backgrounds (not live product photos): the logo, a watch, a body splash.
+const SLIDE_IMAGES = [
+  require('../../assets/onboard-logo.jpg'),
+  require('../../assets/onboard-watch.jpg'),
+  require('../../assets/onboard-splash.jpg'),
+];
 
 const SLIDES_STATIC = [
   {
@@ -34,38 +40,18 @@ const SLIDES_STATIC = [
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
-  const [bgImages, setBgImages] = useState<string[]>([]);
   const router = useRouter();
 
-  useEffect(() => {
-    fetch(`${BASE}/api/export/public-products?limit=3`)
-      .then(r => r.json())
-      .then(d => {
-        const imgs: string[] = (d.products ?? [])
-          .map((p: { image?: string }) => p.image)
-          .filter(Boolean);
-        if (imgs.length) setBgImages(imgs);
-      })
-      .catch(() => {});
-  }, []);
-
   const slide = SLIDES_STATIC[step];
-  const bgUri = bgImages[step]?.startsWith('/') ? `${BASE}${bgImages[step]}` : bgImages[step];
 
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
 
-      {bgUri ? (
-        <ImageBackground source={{ uri: bgUri }} style={styles.bg} resizeMode="cover">
-          <View style={styles.overlay} />
-          <Content slide={slide} step={step} setStep={setStep} router={router} />
-        </ImageBackground>
-      ) : (
-        <View style={[styles.bg, { backgroundColor: colors.navy }]}>
-          <Content slide={slide} step={step} setStep={setStep} router={router} />
-        </View>
-      )}
+      <ImageBackground source={SLIDE_IMAGES[step]} style={styles.bg} resizeMode="cover">
+        <View style={styles.overlay} />
+        <Content slide={slide} step={step} setStep={setStep} router={router} />
+      </ImageBackground>
     </View>
   );
 }
