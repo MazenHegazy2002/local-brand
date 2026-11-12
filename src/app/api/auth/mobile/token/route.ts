@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { SignJWT } from 'jose';
 import { prisma } from '@/lib/prisma';
-import { redis } from '@/lib/redis';
+import { issueMobileTokens } from '@/lib/mobile-tokens';
 import { rateLimit } from '@/lib/rateLimit';
-
-const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!);
-const ACCESS_TTL = 60 * 60; // 1 h
-const REFRESH_TTL = 60 * 60 * 24 * 30; // 30 d
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -58,35 +53,5 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const payload = { id: user.id, role: user.role, email: user.email };
-
-  const accessToken = await new SignJWT(payload)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime(`${ACCESS_TTL}s`)
-    .setAudience('mobile-access')
-    .sign(JWT_SECRET);
-
-  const refreshToken = await new SignJWT(payload)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime(`${REFRESH_TTL}s`)
-    .setAudience('mobile-refresh')
-    .sign(JWT_SECRET);
-
-  // Store refresh token in Redis for revocation support; refuse to issue if it can't be persisted
-  await redis?.set(`mobile:refresh:${user.id}`, refreshToken, 'EX', REFRESH_TTL);
-
-  return NextResponse.json({
-    accessToken,
-    refreshToken,
-    expiresIn: ACCESS_TTL,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      image: user.avatarUrl,
-    },
-  });
+  return NextResponse.json(await issueMobileTokens(user));
 }

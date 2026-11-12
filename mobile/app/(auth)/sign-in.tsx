@@ -19,6 +19,7 @@ import { ArrowLeft, Eye, EyeOff } from 'lucide-react-native';
 import { useAuth } from '@/store/auth';
 import { colors, radii, spacing } from '@/lib/tokens';
 import { useT } from '@/lib/i18n';
+import { getGoogleIdToken } from '@/lib/google-signin';
 
 const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://brandyy.shop';
 
@@ -34,7 +35,8 @@ export default function SignIn() {
   // Set after sign-up (or an unverified sign-in): show the "check your email" step.
   const [verifyEmail, setVerifyEmail] = useState('');
   const [resent, setResent] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
   const { t } = useT();
 
   function showError(msg: string) {
@@ -61,6 +63,22 @@ export default function SignIn() {
       showError((e as Error).message ?? t('Sign in failed'));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleGoogle() {
+    setError('');
+    setGoogleLoading(true);
+    try {
+      const idToken = await getGoogleIdToken();
+      if (idToken) await signInWithGoogle(idToken);
+    } catch (e: unknown) {
+      const code = (e as { code?: string }).code;
+      if (code !== 'SIGN_IN_CANCELLED' && code !== '12501') {
+        showError((e as Error).message ?? t('Sign in failed'));
+      }
+    } finally {
+      setGoogleLoading(false);
     }
   }
 
@@ -254,6 +272,26 @@ export default function SignIn() {
             </Text>
           )}
         </Pressable>
+
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>{t('or')}</Text>
+          <View style={styles.dividerLine} />
+        </View>
+        <View style={styles.socialRow}>
+          <Pressable
+            style={[styles.socialBtn, styles.socialBtnLight, googleLoading && { opacity: 0.7 }]}
+            onPress={handleGoogle}
+            disabled={googleLoading || loading}
+            accessibilityRole="button"
+          >
+            {googleLoading ? (
+              <ActivityIndicator color={colors.ink} />
+            ) : (
+              <Text style={styles.socialTextDark}>G {t('Continue with Google')}</Text>
+            )}
+          </Pressable>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

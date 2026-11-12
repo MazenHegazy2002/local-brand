@@ -106,6 +106,22 @@ export async function signIn(email: string, password: string) {
   return data.user;
 }
 
+// Google sign-in: the native sheet returns an ID token for our web client ID;
+// the server verifies it and signs in or creates the account.
+export async function signInWithGoogleToken(idToken: string) {
+  const data = await request<{
+    accessToken: string;
+    refreshToken: string;
+    user: { id: string; name: string; email: string; role: string; image: string | null };
+  }>('/api/auth/mobile/google', {
+    method: 'POST',
+    body: JSON.stringify({ idToken }),
+  });
+  await storage.set('access_token', data.accessToken);
+  await storage.set('refresh_token', data.refreshToken);
+  return data.user;
+}
+
 export async function signOut() {
   await storage.del('access_token');
   await storage.del('refresh_token');

@@ -24,6 +24,7 @@ declare module 'next-auth/jwt' {
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import AppleProvider from 'next-auth/providers/apple';
+import { findOrCreateGoogleUser } from '@/lib/oauth-user';
 import FacebookProvider from 'next-auth/providers/facebook';
 import TwitterProvider from 'next-auth/providers/twitter';
 import { prisma } from '@/lib/prisma';
@@ -266,6 +267,22 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    // Google sign-in: map the Google profile to (or create) the Brandyy user,
+    // so the session carries our own user id and role, not Google's id.
+    async signIn({ user, account }) {
+      if (account?.provider === 'google' || account?.provider === 'apple') {
+        if (!user?.email) return false;
+        const dbUser = await findOrCreateGoogleUser({
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        });
+        if (!dbUser) return false;
+        user.id = dbUser.id;
+        (user as { role?: string }).role = dbUser.role;
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
