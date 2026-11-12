@@ -91,8 +91,10 @@ export const useAuth = create<AuthStore>((set, get) => ({
   },
 
   browseAsGuest: async () => {
-    await storage.set('guest', '1');
+    // Enter guest mode first: if the device's secure storage refuses the write,
+    // browsing still works (the flag just won't survive a restart).
     set({ guest: true });
+    await storage.set('guest', '1').catch(() => {});
   },
 
   signOut: async () => {
