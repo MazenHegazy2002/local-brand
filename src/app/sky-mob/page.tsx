@@ -12,19 +12,15 @@ export default async function SkyMobPage() {
         {[1, 2, 3, 4, 5].map(i => (
           <div
             key={i}
+            className="transition-transform duration-200 hover:scale-[1.02]"
             style={{
               borderRadius: 16,
               overflow: 'hidden',
               border: '1px solid #E5E7EB',
               padding: 20,
               cursor: 'pointer',
-              transition: 'transform 0.2s',
               background: '#fff',
             }}
-            onMouseEnter={e =>
-              ((e.currentTarget as HTMLDivElement).style.transform = 'scale(1.02)')
-            }
-            onMouseLeave={e => ((e.currentTarget as HTMLDivElement).style.transform = 'scale(1)')}
           >
             <div
               style={{

@@ -547,6 +547,16 @@ const errorAlertThrottle = new Map<string, number>();
 
 export async function notifyAdminError(params: ErrorAlertParams): Promise<void> {
   try {
+    // In local development, do not send actual alert emails to avoid alarming the developer
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(
+        '[admin-alerts] Local dev error intercepted (skipping email alert):',
+        params.path,
+        params.message
+      );
+      return;
+    }
+
     const errorKey = `${params.path || ''}:${params.message.slice(0, 100)}`;
     const now = Date.now();
     const lastSent = errorAlertThrottle.get(errorKey);
