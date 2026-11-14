@@ -16,7 +16,8 @@ const storage = {
   get: (key: string) =>
     Platform.OS === 'web'
       ? Promise.resolve(localStorage.getItem(key))
-      : SecureStore.getItemAsync(key),
+      : // A Keychain read error must not block public requests: treat it as signed out.
+        SecureStore.getItemAsync(key).catch(() => null),
   set: (key: string, value: string) =>
     Platform.OS === 'web'
       ? Promise.resolve(localStorage.setItem(key, value))
