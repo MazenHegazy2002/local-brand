@@ -93,11 +93,13 @@ export async function createOrderForUser(
       return { error: 'Unauthorized. Please log in or provide guest email.' };
     }
 
+    let buyerContact: { name: string | null; phone: string | null } | null = null;
     if (userId) {
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { role: true },
+        select: { role: true, name: true, phone: true },
       });
+      if (user) buyerContact = { name: user.name, phone: user.phone };
       if (user && user.role !== 'BUYER') {
         return {
           error:
@@ -115,8 +117,9 @@ export async function createOrderForUser(
 
     const resolvedAddress = address
       ? {
-          fullName: undefined as string | undefined,
-          phone: undefined as string | undefined,
+          // Saved addresses carry no contact fields, so take them from the account.
+          fullName: buyerContact?.name || undefined,
+          phone: buyerContact?.phone || undefined,
           street: address.street,
           city: address.city,
           governorate: address.governorate,
@@ -124,7 +127,11 @@ export async function createOrderForUser(
           country: address.country,
         }
       : shippingAddress
-        ? { ...shippingAddress }
+        ? {
+            ...shippingAddress,
+            fullName: shippingAddress.fullName || buyerContact?.name || undefined,
+            phone: shippingAddress.phone || buyerContact?.phone || undefined,
+          }
         : null;
 
     if (!resolvedAddress) {
