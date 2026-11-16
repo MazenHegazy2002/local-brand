@@ -15,13 +15,13 @@ describe('Business Constants', () => {
 
   it('gets shipping rate for known governorates', () => {
     // Egypt Post list, shipped from Cairo, first 1 kg
-    expect(getShippingRate('cairo')).toBe(55);
-    expect(getShippingRate('giza')).toBe(55);
-    expect(getShippingRate('alexandria')).toBe(65);
+    expect(getShippingRate('cairo')).toBe(79.6);
+    expect(getShippingRate('giza')).toBe(79.6);
+    expect(getShippingRate('alexandria')).toBe(91);
   });
 
   it('returns default shipping rate for unknown governorates', () => {
-    expect(getShippingRate('unknown')).toBe(65);
+    expect(getShippingRate('unknown')).toBe(79.6);
   });
 });
 
