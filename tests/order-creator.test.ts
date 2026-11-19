@@ -50,15 +50,28 @@ describe('createOrderForUser — input validation', () => {
     expect(result.success).toBeUndefined();
   });
 
-  it('rejects an order without an account, even with a guest email', async () => {
+  it('rejects a guest order with missing contact details', async () => {
     const result = await createOrderForUser(null, {
       guestEmail: 'guest@example.com',
       items: [{ variantId: VALID_VARIANT_ID, quantity: 1 }],
-      shippingAddress: baseInlineAddress,
+      shippingAddress: { ...baseInlineAddress, fullName: '', phone: '' },
       paymentMethod: 'CASH_ON_DELIVERY',
     });
 
-    expect(result.error).toMatch(/sign in/i);
+    expect(result.error).toBeDefined();
+    expect(result.success).toBeUndefined();
+  });
+
+  it('rejects a guest order with an invalid email', async () => {
+    const result = await createOrderForUser(null, {
+      guestEmail: 'not-an-email',
+      items: [{ variantId: VALID_VARIANT_ID, quantity: 1 }],
+      shippingAddress: { ...baseInlineAddress, fullName: 'Guest', phone: '01012345678' },
+      paymentMethod: 'CASH_ON_DELIVERY',
+    });
+
+    expect(result.error).toBeDefined();
+    expect(result.success).toBeUndefined();
   });
 
   it('creates an order for a signed-in user with an inline address', async () => {
