@@ -31,7 +31,12 @@ function SuccessContent() {
     clearCart();
     if (orderId) {
       import('@/lib/pixel-events').then(({ trackPurchase }) => {
-        trackPurchase({ id: orderId, totalAmount: 0, currency: 'EGP' }, orderId);
+        let totalAmount = 0;
+        try {
+          totalAmount = Number(sessionStorage.getItem(`order-total-${orderId}`)) || 0;
+          sessionStorage.removeItem(`order-total-${orderId}`);
+        } catch {}
+        trackPurchase({ id: orderId, totalAmount, currency: 'EGP' }, orderId);
       });
     }
   }, [clearCart, orderId]);

@@ -754,6 +754,9 @@ function CheckoutPageInner() {
             clearCart();
             setCouponApplied(null);
             setPointsToUse(0);
+            try {
+              sessionStorage.setItem(`order-total-${mockRes.orderId}`, String(grandTotal));
+            } catch {}
             router.push(`/checkout/success?orderId=${mockRes.orderId}`);
             return;
           }
@@ -819,6 +822,9 @@ function CheckoutPageInner() {
         clearCart();
         setCouponApplied(null);
         setPointsToUse(0);
+        try {
+          sessionStorage.setItem(`order-total-${res.orderId}`, String(grandTotal));
+        } catch {}
         router.push(`/checkout/success?orderId=${res.orderId}`);
         return;
       }
@@ -841,6 +847,9 @@ function CheckoutPageInner() {
     setCouponApplied(null);
     setPointsToUse(0);
     setPaySkyInit(null);
+    try {
+      sessionStorage.setItem(`order-total-${orderId}`, String(grandTotal));
+    } catch {}
     router.push(`/checkout/success?orderId=${orderId}`);
   };
 
