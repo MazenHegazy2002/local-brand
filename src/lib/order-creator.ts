@@ -52,12 +52,6 @@ export async function createOrderForUser(
   } = {}
 ): Promise<CreateOrderResult> {
   try {
-    // Every order needs an account: all order paths end here, so guests are refused for good.
-    // Quotes stay open (they create nothing).
-    if (!userId && !opts.quoteOnly) {
-      return { error: 'Please sign in or create an account to place your order.' };
-    }
-
     // ── 0. Guard Read-Only Mode ───────────────────────────────────────────────
     const isReadOnly = await getSetting<boolean>('READ_ONLY_MODE');
     if (isReadOnly) {
@@ -136,6 +130,26 @@ export async function createOrderForUser(
 
     if (!resolvedAddress) {
       return { error: 'A shipping address is required to place an order.' };
+    }
+
+    // Guests have no saved profile, so every contact and delivery field must be filled in.
+    if (!userId) {
+      const a = resolvedAddress as Record<string, unknown>;
+      const filled = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
+      const phoneDigits = String(a.phone ?? '').replace(/\D/g, '');
+      if (
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(guestEmail).trim()) ||
+        !filled(a.fullName) ||
+        phoneDigits.length < 10 ||
+        !filled(a.street) ||
+        !filled(a.city) ||
+        !filled(a.governorate)
+      ) {
+        return {
+          error:
+            'Please fill in your name, phone, email, address, city and governorate to place your order.',
+        };
+      }
     }
 
     // Persist the guest contact email inside the address snapshot too, so
