@@ -38,10 +38,12 @@ export async function GET() {
 
     const itemsXml = products
       .map(product => {
-        const id = product.id;
         const title = escapeXml(product.title);
         const description = escapeXml(product.description || '');
         const link = `${baseUrl}/product/${product.slug || product.id}`;
+        // Same ID the Meta pixel auto-detects (the page URL), so feed rows merge with
+        // catalogue items the pixel already created instead of duplicating them.
+        const id = escapeXml(link);
 
         // Find primary image or fallback to first image or placeholder
         const primaryImage =
