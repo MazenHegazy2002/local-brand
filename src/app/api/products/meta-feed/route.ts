@@ -43,7 +43,9 @@ export async function GET() {
         const link = `${baseUrl}/product/${product.slug || product.id}`;
         // Same ID the Meta pixel auto-detects (the page URL), so feed rows merge with
         // catalogue items the pixel already created instead of duplicating them.
-        const id = escapeXml(link);
+        // Meta caps retailer IDs at 100 chars; long (e.g. Arabic, percent-encoded) URLs
+        // fall back to the product ID.
+        const id = escapeXml(encodeURI(link).length <= 100 ? link : product.id);
 
         // Find primary image or fallback to first image or placeholder
         const primaryImage =
