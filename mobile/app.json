@@ -2,7 +2,7 @@
   "expo": {
     "name": "Brandyy",
     "slug": "brandyy",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "scheme": "brandyy",
@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "shop.brandyy.app",
-      "buildNumber": "15",
+      "buildNumber": "16",
       "usesAppleSignIn": true,
       "config": {
         "usesNonExemptEncryption": false

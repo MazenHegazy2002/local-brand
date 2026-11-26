@@ -33,12 +33,20 @@ workflows:
     name: iOS Build (Brandyy Expo App)
     max_build_duration: 60
     instance_type: mac_mini_m1
+    integrations:
+      # App Store Connect API key added in Codemagic: Teams > Integrations > Developer Portal.
+      # The name here must match the key's name there.
+      app_store_connect: codemagic
     environment:
-      node: 20.x
+      node: 22.x
       xcode: latest
       cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: shop.brandyy.app
       vars:
         EXPO_PUBLIC_API_URL: "https://brandyy.shop"
+        APP_STORE_APPLE_ID: "6834098884" # Brandyy on the App Store
     scripts:
       - name: Install npm dependencies
         script: |
@@ -52,6 +60,14 @@ workflows:
         script: |
           cd mobile/ios
           pod install
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
+      - name: Set a new build number
+        script: |
+          cd mobile/ios
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
+          agvtool new-version -all $((LATEST + 1))
       - name: Build iOS app
         script: |
           xcode-project build-ipa \
@@ -59,3 +75,7 @@ workflows:
             --scheme "Brandyy"
     artifacts:
       - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
