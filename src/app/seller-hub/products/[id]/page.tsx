@@ -1130,12 +1130,6 @@ export default function EditProductPage() {
                     commissionRate={sellerData?.currentSeller?.commissionRate ?? 0.1}
                     mode={feeMode}
                     onModeChange={setFeeMode}
-                    onApplyPrice={() => {
-                      setForm({ ...form, basePrice: addFee(form.basePrice) });
-                      setVariants(
-                        variants.map(v => ({ ...v, price: addFee(v.price || form.basePrice) }))
-                      );
-                    }}
                   />
                 </div>
                 <div>
