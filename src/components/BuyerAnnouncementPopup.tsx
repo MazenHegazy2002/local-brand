@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { stripLangPrefix } from '@/lib/i18n/path';
 import { useSession } from 'next-auth/react';
 import { X, Info, AlertTriangle, AlertCircle, Megaphone, Check } from 'lucide-react';
 import { useLanguage } from '@/providers/LanguageContext';
@@ -38,7 +39,7 @@ export default function BuyerAnnouncementPopup({
 
   const { lang } = useLanguage();
   const isRtl = lang === 'ar';
-  const pathname = usePathname();
+  const pathname = stripLangPrefix(usePathname());
   const { data: session, status: sessionStatus } = useSession();
 
   const isSuppressed = !previewData && SUPPRESSED_PREFIXES.some(p => pathname.startsWith(p));

@@ -43,6 +43,7 @@ import {
 import { Product, Order, Category, SellerProfile, SessionUser, Tag, Collection } from '@/types';
 import { PriceCommissionCalculator } from '@/components/seller/PriceCommissionCalculator';
 import { WebsiteImportCard } from '@/components/seller/WebsiteImportCard';
+import { SellerLanguageSwitch } from '@/components/seller/SellerLanguageSwitch';
 
 interface DashboardStats {
   totalProducts: number;
@@ -781,7 +782,7 @@ export default function SellerHub() {
           </button>
           <div className="flex items-center gap-2 font-bold text-base font-serif">
             <ShoppingBag size={18} />
-            <span>SellerHub</span>
+            <span>{tr('SellerHub')}</span>
           </div>
           <span className="text-[10px] font-bold bg-[#fbbf24] text-[#3b2a00] px-2 py-0.5 rounded-full ms-1">
             {isMultiBrand ? tr('MULTI-BRAND') : tr('SINGLE BRAND')}
@@ -815,7 +816,7 @@ export default function SellerHub() {
             <div className="flex items-center justify-between pb-3 border-b border-white/15">
               <div className="flex items-center gap-2 font-bold text-lg text-white">
                 <ShoppingBag size={20} />
-                <span>SellerHub</span>
+                <span>{tr('SellerHub')}</span>
               </div>
               <button
                 type="button"
@@ -826,6 +827,8 @@ export default function SellerHub() {
                 <X size={20} />
               </button>
             </div>
+
+            <SellerLanguageSwitch className="mt-3" />
 
             {/* Active Brand Section */}
             <div className="mt-4 mb-2 text-[11px] font-bold text-white/70 tracking-wider">
@@ -886,7 +889,7 @@ export default function SellerHub() {
 
             {/* Main Navigation Items */}
             <div className="text-[11px] font-bold text-white/70 tracking-wider mb-2">
-              NAVIGATION
+              {tr('NAVIGATION')}
             </div>
 
             <div className="flex flex-col gap-1">
@@ -1134,7 +1137,7 @@ export default function SellerHub() {
       >
         <div className="logo flex items-center gap-2 px-4 py-4 text-white font-bold text-base">
           <ShoppingBag size={20} />
-          <span>SellerHub</span>
+          <span>{tr('SellerHub')}</span>
         </div>
 
         {/* Multi-Brand Header Indicator */}
@@ -1154,7 +1157,7 @@ export default function SellerHub() {
           </span>
           {isMultiBrand && (
             <span style={{ fontSize: '12px', opacity: 0.8, color: '#fff' }}>
-              {brands.length} brands
+              {brands.length} {tr('brands')}
             </span>
           )}
         </div>
@@ -1204,7 +1207,7 @@ export default function SellerHub() {
             }}
           >
             <span
-              style={{ textAlign: 'left', flex: 1, fontWeight: activeBrand === 'all' ? 700 : 400 }}
+              style={{ textAlign: 'start', flex: 1, fontWeight: activeBrand === 'all' ? 700 : 400 }}
             >
               {tr('All brands')}
             </span>
@@ -1275,7 +1278,7 @@ export default function SellerHub() {
                     }}
                   />
                   <span
-                    style={{ flex: 1, textAlign: 'left', fontWeight: isSelected ? 700 : 400 }}
+                    style={{ flex: 1, textAlign: 'start', fontWeight: isSelected ? 700 : 400 }}
                     className="truncate"
                   >
                     {b.name}
@@ -1316,9 +1319,10 @@ export default function SellerHub() {
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '4px',
-                      margin: '6px 0 8px 24px',
-                      paddingLeft: '12px',
-                      borderLeft: '2px solid rgba(255,255,255,0.3)',
+                      marginBlock: '6px 8px',
+                      marginInlineStart: '24px',
+                      paddingInlineStart: '12px',
+                      borderInlineStart: '2px solid rgba(255,255,255,0.3)',
                     }}
                   >
                     {['Overview', 'Orders', 'Inventory', 'Analytics'].map(l => {
@@ -1409,7 +1413,7 @@ export default function SellerHub() {
             <NavItem
               active={activeTab === 'orders'}
               onClick={() => setActiveTab('orders')}
-              label={`Orders${filteredOrders.flatMap((o: any) => o.items || []).filter((i: any) => i.status === 'PENDING').length > 0 ? ` (${filteredOrders.flatMap((o: any) => o.items || []).filter((i: any) => i.status === 'PENDING').length})` : ''}`}
+              label={`${tr('Orders')}${filteredOrders.flatMap((o: any) => o.items || []).filter((i: any) => i.status === 'PENDING').length > 0 ? ` (${filteredOrders.flatMap((o: any) => o.items || []).filter((i: any) => i.status === 'PENDING').length})` : ''}`}
               icon={<Package size={18} />}
             />
             <NavItem
@@ -1440,6 +1444,7 @@ export default function SellerHub() {
         />
 
         <div className="mt-auto px-4 pb-6 flex flex-col gap-3">
+          <SellerLanguageSwitch />
           <div>
             <div className="store-label truncate max-w-full font-bold text-white text-xs">
               {data?.currentSeller?.storeName || tr('Store')}
@@ -1600,7 +1605,7 @@ export default function SellerHub() {
                   required
                   value={brandDraft.name}
                   onChange={e => setBrandDraft({ ...brandDraft, name: e.target.value })}
-                  placeholder="e.g. Nile Threads, Oasis Home"
+                  placeholder={tr('e.g. Nile Threads, Oasis Home')}
                   className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#0f6b50] outline-none"
                 />
               </div>
@@ -1863,7 +1868,7 @@ export default function SellerHub() {
           opacity: 1;
           background: rgba(255, 255, 255, 0.1);
           font-weight: 700;
-          border-right: 4px solid #4ade80;
+          border-inline-end: 4px solid #4ade80;
         }
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out;
@@ -1928,7 +1933,8 @@ function OverviewTab({
   onSelectBrand?: (slug: string) => void;
   setShowAddBrandModal?: (show: boolean) => void;
 }) {
-  const { tr } = useLanguage();
+  const { tr, lang } = useLanguage();
+  const dateLocale = lang === 'ar' ? 'ar-EG' : 'en-US';
   const activeBrandObj = brands.find((b: any) => b.slug === activeBrand);
   const dailyData =
     stats.dailyRevenue && stats.dailyRevenue.length > 0
@@ -1936,7 +1942,7 @@ function OverviewTab({
           const d = new Date();
           d.setDate(d.getDate() - (6 - i));
           return {
-            date: d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+            date: d.toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' }),
             sales: val,
             orders: val > 0 ? Math.max(1, Math.floor(val / 250)) : 0,
           };
@@ -1945,7 +1951,7 @@ function OverviewTab({
           const d = new Date();
           d.setDate(d.getDate() - (6 - i));
           return {
-            date: d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+            date: d.toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' }),
             sales: 0,
             orders: 0,
           };
@@ -2098,7 +2104,7 @@ function OverviewTab({
           <div className="mt-3">
             <div className="text-xl font-black text-slate-900">{stats.totalOrders}</div>
             <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
-              +{stats.todayOrdersCount} today
+              +{stats.todayOrdersCount} {tr('today')}
             </span>
           </div>
         </div>
@@ -2209,12 +2215,12 @@ function OverviewTab({
           </div>
           <div className="min-w-[680px] text-xs">
             <div className="grid grid-cols-7 gap-3 py-2 px-3 text-slate-400 font-bold uppercase tracking-wider text-[11px] border-b border-slate-100">
-              <div className="col-span-2">BRAND</div>
+              <div className="col-span-2">{tr('BRAND')}</div>
               <div>{tr('SALES (EGP)')}</div>
-              <div>ORDERS</div>
-              <div>PRODUCTS</div>
-              <div>SHARE</div>
-              <div>STATUS</div>
+              <div>{tr('ORDERS')}</div>
+              <div>{tr('PRODUCTS')}</div>
+              <div>{tr('SHARE')}</div>
+              <div>{tr('STATUS')}</div>
             </div>
             {brandPerformanceRows.map((r: any) => (
               <div
@@ -2456,7 +2462,7 @@ function OverviewTab({
                       className="w-2.5 h-2.5 rounded-full inline-block"
                       style={{ backgroundColor: item.color }}
                     />
-                    {item.name}
+                    {tr(item.name)}
                   </span>
                   <span>{item.percentage}%</span>
                 </div>
@@ -2481,7 +2487,7 @@ function OverviewTab({
                 className="flex items-center justify-between p-2 rounded-xl bg-slate-50/70 text-xs"
               >
                 <span className="font-bold text-slate-800 flex items-center gap-2">
-                  <span className="text-base">{c.flag}</span> {c.country}
+                  <span className="text-base">{c.flag}</span> {tr(c.country)}
                 </span>
                 <span className="font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg">
                   {c.percentage}%
@@ -2626,7 +2632,8 @@ function OrdersTab({
   onFulfill: (id: string) => void;
   onRefresh?: () => Promise<void>;
 }) {
-  const { tr } = useLanguage();
+  const { tr, lang } = useLanguage();
+  const dateLocale = lang === 'ar' ? 'ar-EG' : 'en-US';
   const { confirm } = useConfirm();
   const { toast } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -2756,7 +2763,7 @@ function OrdersTab({
                 : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
             }`}
           >
-            {s === 'all' ? tr('All') : s.charAt(0) + s.slice(1).toLowerCase()}
+            {s === 'all' ? tr('All') : tr(s.charAt(0) + s.slice(1).toLowerCase())}
             {s !== 'all' && statusCounts[s] ? (
               <span
                 className={`ms-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${
@@ -2797,7 +2804,7 @@ function OrdersTab({
                     {item.productTitleSnapshot}
                   </div>
                   <div className="text-[11px] text-slate-400">
-                    {new Date(item.date).toLocaleDateString()}
+                    {new Date(item.date).toLocaleDateString(dateLocale)}
                   </div>
                   {/* Variant specs (color / sizes) — Task 11 */}
                   {item.selectedColor || item.selectedSize ? (
@@ -3066,7 +3073,7 @@ function OrdersTab({
               <h4 className="font-black text-base mb-4 text-slate-800">{tr('Cancel Order')}</h4>
               <p className="text-xs text-slate-500 mb-4">
                 {tr('Are you sure you want to cancel order #')}
-                {selectedOrder?.orderId.slice(0, 8)}? This action cannot be undone.
+                {selectedOrder?.orderId.slice(0, 8)}? {tr('This action cannot be undone.')}
               </p>
 
               <div className="space-y-4">
@@ -3246,7 +3253,7 @@ function ProductsTab({
               <div className="font-bold text-slate-900">{tr('Bulk import result')}</div>
               <div className="text-xs text-slate-500 mt-1">
                 <span className="text-emerald-600 font-semibold">{bulkResult.success}</span>{' '}
-                imported
+                {tr('imported')}
                 {typeof bulkResult.drafts === 'number' && (
                   <>
                     {' '}
@@ -3260,13 +3267,14 @@ function ProductsTab({
                     — <span className="text-emerald-600 font-semibold">
                       {bulkResult.published}
                     </span>{' '}
-                    published
+                    {tr('published')}
                   </>
                 )}
                 {bulkResult.failed > 0 && (
                   <>
                     {' '}
-                    — <span className="text-red-600 font-semibold">{bulkResult.failed}</span> failed
+                    — <span className="text-red-600 font-semibold">{bulkResult.failed}</span>{' '}
+                    {tr('failed')}
                   </>
                 )}
               </div>
@@ -3284,7 +3292,11 @@ function ProductsTab({
               {bulkResult.errors.slice(0, 50).map((e, i) => (
                 <li key={i}>{e}</li>
               ))}
-              {bulkResult.errors.length > 50 && <li>+ {bulkResult.errors.length - 50} more…</li>}
+              {bulkResult.errors.length > 50 && (
+                <li>
+                  + {bulkResult.errors.length - 50} {tr('more…')}
+                </li>
+              )}
             </ul>
           )}
         </div>
@@ -3482,7 +3494,8 @@ function ProductsTab({
 }
 
 function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[] }) {
-  const { tr } = useLanguage();
+  const { tr, lang } = useLanguage();
+  const dateLocale = lang === 'ar' ? 'ar-EG' : 'en-US';
   // Compute product-wise top-sellers & status breakdown from real data
   const totalRevenue = stats.revenue;
   const avgOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
@@ -3494,12 +3507,12 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
     // Pre-fill the last 6 months with 0 so months with no orders still appear
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = d.toLocaleString('en-US', { month: 'short', year: '2-digit' });
+      const key = d.toLocaleString(dateLocale, { month: 'short', year: '2-digit' });
       map.set(key, 0);
     }
     for (const o of orders) {
       const d = new Date(o.createdAt);
-      const key = d.toLocaleString('en-US', { month: 'short', year: '2-digit' });
+      const key = d.toLocaleString(dateLocale, { month: 'short', year: '2-digit' });
       if (map.has(key)) {
         map.set(key, (map.get(key) ?? 0) + (o.totalAmount ?? 0));
       }
@@ -3540,7 +3553,7 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
           </div>
           <div className="text-[11px] text-slate-400 mt-2">
             {stats.monthlyChangePct > 0 ? '+' : ''}
-            {stats.monthlyChangePct}% MoM
+            {stats.monthlyChangePct}% {tr('MoM')}
           </div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
@@ -3551,7 +3564,7 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
             {Math.round(avgOrderValue).toLocaleString()} {tr('EGP')}
           </div>
           <div className="text-[11px] text-slate-400 mt-2">
-            {tr('Across')} {orders.length} orders
+            {tr('Across')} {orders.length} {tr('orders')}
           </div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
@@ -3562,7 +3575,9 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
             {stats.avgRating > 0 ? stats.avgRating.toFixed(1) : tr('New')}
             <span className="text-yellow-500 ms-1">★</span>
           </div>
-          <div className="text-[11px] text-slate-400 mt-2">{stats.reviewCount} reviews</div>
+          <div className="text-[11px] text-slate-400 mt-2">
+            {stats.reviewCount} {tr('reviews')}
+          </div>
         </div>
       </div>
 
@@ -3623,7 +3638,7 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
                     <div className="flex justify-between items-center text-xs mb-1">
                       <span className="font-bold text-slate-600">{tr(status)}</span>
                       <span className="text-slate-400">
-                        {count} orders ({pct}%)
+                        {count} {tr('orders')} ({pct}%)
                       </span>
                     </div>
                     <div className="w-full h-2 bg-slate-50 rounded-full overflow-hidden">
@@ -3676,7 +3691,8 @@ function AnalyticsTab({ stats, orders }: { stats: DashboardStats; orders: Order[
 }
 
 function WalletTab({ data }: { data: DashboardData }) {
-  const { tr } = useLanguage();
+  const { tr, lang } = useLanguage();
+  const dateLocale = lang === 'ar' ? 'ar-EG' : 'en-US';
   // Don't seed balance from data?.currentSeller?.balance — that column is
   // legacy/stale. Always fetch the computed value from the payouts API.
   const [balance, setBalance] = useState(0);
@@ -3804,7 +3820,7 @@ function WalletTab({ data }: { data: DashboardData }) {
                     <div className="text-[11px] text-slate-500 mt-1">
                       {tr('Next release on')}{' '}
                       <span className="font-semibold text-slate-700">
-                        {new Date(nextReleaseAt).toLocaleDateString(undefined, {
+                        {new Date(nextReleaseAt).toLocaleDateString(dateLocale, {
                           day: 'numeric',
                           month: 'long',
                           year: 'numeric',
@@ -3840,7 +3856,7 @@ function WalletTab({ data }: { data: DashboardData }) {
                 type="number"
                 value={requestAmount}
                 onChange={e => setRequestAmount(e.target.value)}
-                placeholder={`Max: ${balance.toFixed(2)}`}
+                placeholder={`${tr('Max:')} ${balance.toFixed(2)}`}
                 min="1"
                 max={balance}
                 step="0.01"
@@ -3855,7 +3871,7 @@ function WalletTab({ data }: { data: DashboardData }) {
                 type="text"
                 value={bankAccount}
                 onChange={e => setBankAccount(e.target.value)}
-                placeholder="e.g. NBE-EG12-3456-7890..."
+                placeholder={tr('e.g. NBE-EG12-3456-7890...')}
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
@@ -3917,7 +3933,7 @@ function WalletTab({ data }: { data: DashboardData }) {
                 {payouts.map(p => (
                   <tr key={p.id} className="hover:bg-slate-50/50">
                     <td className="px-6 py-3 text-xs text-slate-500">
-                      {new Date(p.createdAt).toLocaleDateString()}
+                      {new Date(p.createdAt).toLocaleDateString(dateLocale)}
                     </td>
                     <td className="px-6 py-3 font-black text-slate-900">
                       {p.amount.toLocaleString()} {tr('EGP')}
@@ -4303,7 +4319,7 @@ function AddProductModal({
                 type="number"
                 step="0.01"
                 min="0.01"
-                placeholder="e.g. 0.5"
+                placeholder={tr('e.g. 0.5')}
                 value={newProduct.weightKg}
                 onChange={e => setNewProduct({ ...newProduct, weightKg: e.target.value })}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -4339,7 +4355,7 @@ function AddProductModal({
                   {newProduct.mainImageUploading ? (
                     <span className="text-amber-600 font-semibold">{tr('Uploading…')}</span>
                   ) : (
-                    <span className="text-emerald-600 font-semibold">✓ Image ready</span>
+                    <span className="text-emerald-600 font-semibold">{tr('✓ Image ready')}</span>
                   )}
                 </div>
                 {!newProduct.mainImageUploading && (
@@ -4470,7 +4486,7 @@ function AddProductModal({
                       <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
                     {(v.images && v.images.length > 0) || v.image
-                      ? `+ Photos (${v.images?.length || 1})`
+                      ? `+ ${tr('Photos')} (${v.images?.length || 1})`
                       : tr('Upload')}
                     <input
                       type="file"
@@ -4634,7 +4650,7 @@ function AddProductModal({
                               </span>
                             ) : (
                               <span className="text-[10px] text-emerald-600 font-medium">
-                                ✓ Ready
+                                {tr('✓ Ready')}
                               </span>
                             )}
                           </div>

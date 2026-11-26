@@ -117,6 +117,13 @@ body.font-cairo {
   font-family: var(--font-cairo), system-ui, sans-serif !important;
 }
 
+/* Seller Hub / dashboards set a Latin serif (Georgia) inline on the sidebar,
+   which has no Arabic letters. In Arabic, use Cairo everywhere inside them. */
+html[dir="rtl"] .db,
+html[dir="rtl"] .db * {
+  font-family: var(--font-cairo), system-ui, sans-serif !important;
+}
+
 /* Ensure RTL layout swap works for our common containers */
 html[dir="rtl"] .container,
 html[dir="rtl"] body {

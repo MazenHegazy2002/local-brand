@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { stripLangPrefix } from '@/lib/i18n/path';
 import { X, Mail, Check, Copy } from 'lucide-react';
 import { useLanguage } from '@/providers/LanguageContext';
 
@@ -29,7 +30,7 @@ export default function ExitIntentPopup() {
   const [submitError, setSubmitError] = useState('');
   const { lang } = useLanguage();
   const isRtl = lang === 'ar';
-  const pathname = usePathname();
+  const pathname = stripLangPrefix(usePathname());
 
   // Suppress popup on non-storefront pages
   const isSuppressed = SUPPRESSED_PREFIXES.some(prefix => pathname.startsWith(prefix));

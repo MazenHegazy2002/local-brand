@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { SessionUser } from '@/types';
 import { useToast } from '@/components/ui';
+import { SellerLanguageSwitch } from '@/components/seller/SellerLanguageSwitch';
 
 interface ReturnRequest {
   id: string;
@@ -128,7 +129,7 @@ export default function ReturnsPage() {
   return (
     <div className="db">
       <div className="sidebar">
-        <div className="logo">SellerHub</div>
+        <div className="logo">{tr('SellerHub')}</div>
 
         <Link href="/" className="home-link">
           <svg
@@ -164,7 +165,12 @@ export default function ReturnsPage() {
       <div className="main">
         <div className="topbar">
           <div className="page-title">{tr('Return Requests')}</div>
-          <span className="text-xs text-slate-500">{returns.length} total</span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-500">
+              {returns.length} {tr('total')}
+            </span>
+            <SellerLanguageSwitch tone="light" />
+          </div>
         </div>
 
         <div className="flex gap-2 mb-6">
@@ -178,7 +184,7 @@ export default function ReturnsPage() {
                   : 'bg-white border border-slate-200 text-slate-600 hover:border-[#0F6E56]'
               }`}
             >
-              {f === 'all' ? tr('All') : f}
+              {f === 'all' ? tr('All') : tr(f)}
             </button>
           ))}
         </div>
@@ -207,8 +213,11 @@ export default function ReturnsPage() {
                         {ret.orderItem?.productTitleSnapshot}
                       </div>
                       <div className="text-xs text-slate-500">
-                        {tr('Qty:')} {ret.orderItem?.quantity} · ORD-
-                        {ret.orderItem?.order?.id?.slice(0, 8)}
+                        {tr('Qty:')} {ret.orderItem?.quantity} ·{' '}
+                        <span dir="ltr">
+                          ORD-
+                          {ret.orderItem?.order?.id?.slice(0, 8)}
+                        </span>
                       </div>
                     </div>
                     <div className="w-32 text-sm text-slate-600">
@@ -219,7 +228,7 @@ export default function ReturnsPage() {
                       {new Date(ret.createdAt).toLocaleDateString()}
                     </div>
                     <div className="w-24 flex justify-center">
-                      <span className={`badge ${badge.bg} ${badge.text}`}>{ret.status}</span>
+                      <span className={`badge ${badge.bg} ${badge.text}`}>{tr(ret.status)}</span>
                     </div>
                     <div className="w-32">
                       <button
@@ -265,7 +274,7 @@ export default function ReturnsPage() {
                 <span
                   className={`badge ${getStatusBadge(selectedReturn.status).bg} ${getStatusBadge(selectedReturn.status).text}`}
                 >
-                  {selectedReturn.status}
+                  {tr(selectedReturn.status)}
                 </span>
               </div>
             </div>

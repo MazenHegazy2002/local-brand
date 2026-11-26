@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { getDashboardStats } from '@/app/actions/seller';
 import { PriceCommissionCalculator } from '@/components/seller/PriceCommissionCalculator';
+import { SellerLanguageSwitch } from '@/components/seller/SellerLanguageSwitch';
 
 const AVAILABLE_SYSTEM_TAGS = [
   'Men',
@@ -540,7 +541,7 @@ export default function EditProductPage() {
     const ok = await confirm({
       title: tr('Delete Product'),
       message: tr('Are you sure you want to delete this product? This cannot be undone.'),
-      confirmText: 'Delete',
+      confirmText: tr('Delete'),
       type: 'danger',
     });
     if (!ok) return;
@@ -612,7 +613,7 @@ export default function EditProductPage() {
           </button>
           <div className="flex items-center gap-1.5">
             <ShoppingBag size={18} className="text-emerald-300" />
-            <span className="font-bold text-sm tracking-tight">SellerHub</span>
+            <span className="font-bold text-sm tracking-tight">{tr('SellerHub')}</span>
           </div>
         </div>
 
@@ -645,7 +646,7 @@ export default function EditProductPage() {
             <div className="flex items-center justify-between pb-3 border-b border-white/15">
               <div className="flex items-center gap-2 font-bold text-base text-white">
                 <ShoppingBag size={20} />
-                <span>SellerHub</span>
+                <span>{tr('SellerHub')}</span>
               </div>
               <button
                 type="button"
@@ -787,6 +788,7 @@ export default function EditProductPage() {
 
             {/* Drawer Footer */}
             <div className="mt-auto pt-6 flex flex-col gap-3">
+              <SellerLanguageSwitch />
               <div>
                 <div className="font-bold text-white text-xs truncate">
                   {currentSeller?.storeName || tr('Brandyy Store')}
@@ -824,7 +826,7 @@ export default function EditProductPage() {
       >
         <div className="logo flex items-center gap-2 px-4 py-4 text-white font-bold text-base">
           <ShoppingBag size={20} />
-          <span>SellerHub</span>
+          <span>{tr('SellerHub')}</span>
         </div>
 
         {/* Multi-Brand Header Indicator */}
@@ -844,7 +846,7 @@ export default function EditProductPage() {
           </span>
           {isMultiBrand && (
             <span style={{ fontSize: '12px', opacity: 0.8, color: '#fff' }}>
-              {brands.length} brands
+              {brands.length} {tr('brands')}
             </span>
           )}
         </div>
@@ -897,7 +899,7 @@ export default function EditProductPage() {
             }}
           >
             <span
-              style={{ textAlign: 'left', flex: 1, fontWeight: activeBrand === 'all' ? 700 : 400 }}
+              style={{ textAlign: 'start', flex: 1, fontWeight: activeBrand === 'all' ? 700 : 400 }}
             >
               {tr('All brands')}
             </span>
@@ -961,7 +963,7 @@ export default function EditProductPage() {
                     }}
                   />
                   <span
-                    style={{ flex: 1, textAlign: 'left', fontWeight: isSelected ? 700 : 400 }}
+                    style={{ flex: 1, textAlign: 'start', fontWeight: isSelected ? 700 : 400 }}
                     className="truncate"
                   >
                     {b.name}
@@ -1025,6 +1027,7 @@ export default function EditProductPage() {
         </Link>
 
         <div className="mt-auto px-4 pb-6 flex flex-col gap-3">
+          <SellerLanguageSwitch />
           <div>
             <div className="store-label truncate max-w-full font-bold text-white text-xs">
               {currentSeller?.storeName || tr('Brandyy Store')}
@@ -1094,7 +1097,10 @@ export default function EditProductPage() {
                     <option value="">{tr('Select...')}</option>
                     {categories.map(c => (
                       <option key={c.id} value={c.id}>
-                        {c.name}
+                        {c.name
+                          .split(' > ')
+                          .map(part => tr(part))
+                          .join(' > ')}
                       </option>
                     ))}
                   </select>
@@ -1140,7 +1146,7 @@ export default function EditProductPage() {
                     type="number"
                     step="0.01"
                     min="0.01"
-                    placeholder="e.g. 0.5"
+                    placeholder={tr('e.g. 0.5')}
                     value={form.weightGrams ? form.weightGrams / 1000 : ''}
                     onChange={e =>
                       setForm({ ...form, weightGrams: Math.round(Number(e.target.value) * 1000) })
@@ -1234,7 +1240,7 @@ export default function EditProductPage() {
                       <div className="col-span-3">
                         <label className="text-[10px] text-slate-400 block font-semibold">
                           {(v.images?.length || 0) > 0
-                            ? `Photos (${v.images?.length})`
+                            ? `${tr('Photos')} (${v.images?.length})`
                             : tr('Photos')}
                         </label>
                         <label
@@ -1402,7 +1408,7 @@ export default function EditProductPage() {
                                 </span>
                               ) : (
                                 <span className="text-[11px] text-emerald-600 font-medium">
-                                  ✓ Ready
+                                  {tr('✓ Ready')}
                                 </span>
                               )}
                             </div>
@@ -1793,7 +1799,7 @@ export default function EditProductPage() {
           opacity: 1;
           background: rgba(255, 255, 255, 0.1);
           font-weight: 700;
-          border-right: 4px solid #4ade80;
+          border-inline-end: 4px solid #4ade80;
           color: #fff;
         }
         .main {

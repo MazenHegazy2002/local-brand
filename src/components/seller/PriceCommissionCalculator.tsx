@@ -44,7 +44,7 @@ export function PriceCommissionCalculator({
           <span className="text-sm">💰</span>
           <span>{tr('Platform Fee Breakdown')}</span>
           <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-[#0F6E56] text-[11px] font-black border border-emerald-200/60">
-            {pct}% Fee
+            {pct}% {tr('Fee')}
           </span>
         </div>
 
@@ -160,11 +160,11 @@ export function PriceCommissionCalculator({
           </span>
         ) : (
           <span>
-            {pct}% platform fee (
+            {pct}% {tr('platform fee')} (
             <strong>
               {feeAmount.toFixed(2)} {tr('EGP')}
             </strong>
-            ) is added on top. Customer price becomes{' '}
+            ) {tr('is added on top. Customer price becomes')}{' '}
             <strong>
               {customerPriceWithAdd.toFixed(2)} {tr('EGP')}
             </strong>{' '}

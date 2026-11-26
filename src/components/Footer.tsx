@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { stripLangPrefix } from '@/lib/i18n/path';
 import { PLATFORM_NAME, SUPPORT_EMAIL, CONTACT_PHONE, CONTACT_WHATSAPP } from '@/lib/constants';
 import { useLanguage } from '@/providers/LanguageContext';
 
@@ -73,7 +74,7 @@ const SOCIAL_LINKS = [
 
 export default function Footer() {
   const { tr } = useLanguage();
-  const pathname = usePathname();
+  const pathname = stripLangPrefix(usePathname());
   const { t } = useLanguage();
   const year = new Date().getFullYear();
   const [email, setEmail] = useState('');

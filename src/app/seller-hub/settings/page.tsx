@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { SessionUser } from '@/types';
 import { GOVERNORATES } from '@/lib/governorates';
+import { SellerLanguageSwitch } from '@/components/seller/SellerLanguageSwitch';
 
 interface SellerProfile {
   storeName: string;
@@ -202,7 +203,7 @@ export default function SellerSettingsPage() {
   return (
     <div className="db">
       <div className="sidebar">
-        <div className="logo">SellerHub</div>
+        <div className="logo">{tr('SellerHub')}</div>
 
         <Link href="/" className="home-link">
           <svg
@@ -241,6 +242,7 @@ export default function SellerSettingsPage() {
       <div className="main">
         <div className="topbar">
           <div className="page-title">{tr('Store Settings')}</div>
+          <SellerLanguageSwitch tone="light" />
         </div>
 
         <form onSubmit={handleSave} className="max-w-2xl space-y-6">
@@ -289,8 +291,10 @@ export default function SellerSettingsPage() {
                 />
                 {pendingName && (
                   <div className="text-[11px] text-amber-700 mt-1">
-                    ⏳ “{pendingName}” is waiting for admin approval — your store keeps its current
-                    name until then.
+                    ⏳ “{pendingName}”{' '}
+                    {tr(
+                      'is waiting for admin approval — your store keeps its current name until then.'
+                    )}
                   </div>
                 )}
               </div>
@@ -346,7 +350,7 @@ export default function SellerSettingsPage() {
                   value={profile.city}
                   onChange={e => setProfile({ ...profile, city: e.target.value })}
                   className="input-field"
-                  placeholder="e.g. Nasr City, Maadi, Dokki"
+                  placeholder={tr('e.g. Nasr City, Maadi, Dokki')}
                   required
                 />
               </div>
@@ -374,7 +378,7 @@ export default function SellerSettingsPage() {
                   value={profile.pickupBuilding}
                   onChange={e => setProfile({ ...profile, pickupBuilding: e.target.value })}
                   className="input-field"
-                  placeholder="e.g. Near Ahly Club"
+                  placeholder={tr('e.g. Near Ahly Club')}
                 />
               </div>
 
@@ -387,7 +391,7 @@ export default function SellerSettingsPage() {
                   value={profile.pickupPhone}
                   onChange={e => setProfile({ ...profile, pickupPhone: e.target.value })}
                   className="input-field"
-                  placeholder={tr('+2010XXXXXXXX')}
+                  placeholder="+2010XXXXXXXX"
                   required
                 />
               </div>
@@ -451,7 +455,7 @@ export default function SellerSettingsPage() {
                       value={profile.pickupGeo}
                       onChange={e => setProfile({ ...profile, pickupGeo: e.target.value })}
                       className="input-field font-mono text-xs"
-                      placeholder="e.g. 30.067807, 31.518141"
+                      placeholder={tr('e.g. 30.067807, 31.518141')}
                     />
                   </div>
                   <div>
@@ -463,7 +467,7 @@ export default function SellerSettingsPage() {
                       value={profile.pickupZone}
                       onChange={e => setProfile({ ...profile, pickupZone: e.target.value })}
                       className="input-field text-xs"
-                      placeholder="e.g. قسم اول القاهرة الجديدة"
+                      placeholder={tr('e.g. قسم اول القاهرة الجديدة')}
                     />
                   </div>
                 </div>
@@ -482,7 +486,7 @@ export default function SellerSettingsPage() {
                 value={profile.bankAccount}
                 onChange={e => setProfile({ ...profile, bankAccount: e.target.value })}
                 className="input-field"
-                placeholder={tr('EG00 0000 0000 0000 0000 0000')}
+                placeholder="EG00 0000 0000 0000 0000 0000"
               />
               <p className="text-xs text-slate-400 mt-1">
                 {tr('Payouts are processed within 5-7 business days.')}
@@ -548,7 +552,7 @@ export default function SellerSettingsPage() {
           font-size: 13px;
           color: rgba(255, 255, 255, 0.7);
           transition: all 0.2s;
-          border-left: 3px solid transparent;
+          border-inline-start: 3px solid transparent;
         }
         .nav-item:hover {
           color: #fff;
@@ -557,7 +561,7 @@ export default function SellerSettingsPage() {
         .nav-item.active {
           color: #fff;
           background: rgba(245, 158, 11, 0.12);
-          border-left-color: #f59e0b;
+          border-inline-start-color: #f59e0b;
           font-weight: 600;
         }
         .main {
