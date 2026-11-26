@@ -15,7 +15,7 @@ export function PriceCommissionCalculator({
   onApplyPrice,
 }: PriceCommissionCalculatorProps) {
   const { tr } = useLanguage();
-  const [mode, setMode] = useState<'deduct' | 'add'>('add');
+  const [mode, setMode] = useState<'deduct' | 'add'>('deduct');
   const price = typeof basePrice === 'number' ? basePrice : parseFloat(basePrice) || 0;
   const pct = Math.round(commissionRate * 100);
 
