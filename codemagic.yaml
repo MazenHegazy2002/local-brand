@@ -66,7 +66,7 @@ workflows:
       - name: Set a new build number
         script: |
           cd mobile/ios
-          LATEST=$(app-store-connect get-latest-testflight-build-number "${APP_STORE_APPLE_ID:-}" --bundle-id-identifier shop.brandyy.app 2>/dev/null || echo 0)
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
           agvtool new-version -all $((LATEST + 1))
       - name: Build iOS app
         script: |
