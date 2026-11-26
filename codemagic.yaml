@@ -46,7 +46,7 @@ workflows:
         bundle_identifier: shop.brandyy.app
       vars:
         EXPO_PUBLIC_API_URL: "https://brandyy.shop"
-        APP_STORE_APPLE_ID: "" # optional: the app's numeric Apple ID from App Store Connect
+        APP_STORE_APPLE_ID: "6834098884" # Brandyy on the App Store
     scripts:
       - name: Install npm dependencies
         script: |
