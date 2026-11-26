@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { stripLangPrefix } from '@/lib/i18n/path';
 import { useLanguage } from '@/providers/LanguageContext';
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
@@ -12,7 +13,7 @@ import { useUIStore } from '@/lib/uiStore';
 
 export default function BottomNavigation() {
   const { tr } = useLanguage();
-  const pathname = usePathname();
+  const pathname = stripLangPrefix(usePathname());
   const { t } = useLanguage();
   const { data: session } = useSession();
   const [showProfileMenu, setShowProfileMenu] = useState(false);

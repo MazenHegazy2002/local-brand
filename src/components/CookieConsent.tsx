@@ -4,6 +4,7 @@ import { useLanguage } from '@/providers/LanguageContext';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { stripLangPrefix } from '@/lib/i18n/path';
 
 const STORAGE_KEY = 'local-brand-cookie-consent';
 
@@ -30,7 +31,7 @@ export default function CookieConsent() {
     setVisible(false);
   };
 
-  const pathname = usePathname();
+  const pathname = stripLangPrefix(usePathname());
   const isDashboardRoute =
     pathname?.startsWith('/dashboard') ||
     pathname?.startsWith('/seller-hub') ||

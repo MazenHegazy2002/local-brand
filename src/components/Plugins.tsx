@@ -32,13 +32,14 @@ import { useLanguage } from '@/providers/LanguageContext';
 import { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { stripLangPrefix } from '@/lib/i18n/path';
 
 export default function Plugins() {
   const { lang } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const widgetRef = useRef<HTMLDivElement>(null);
-  const pathname = usePathname();
+  const pathname = stripLangPrefix(usePathname());
   const isDashboardRoute =
     pathname?.startsWith('/dashboard') ||
     pathname?.startsWith('/seller-hub') ||
