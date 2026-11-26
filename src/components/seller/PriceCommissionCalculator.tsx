@@ -7,15 +7,25 @@ interface PriceCommissionCalculatorProps {
   basePrice: number | string;
   commissionRate?: number;
   onApplyPrice?: (newPrice: number) => void;
+  /** Controlled mode. 'add' means the fee is added to the price when the product is saved. */
+  mode?: 'deduct' | 'add';
+  onModeChange?: (mode: 'deduct' | 'add') => void;
 }
 
 export function PriceCommissionCalculator({
   basePrice,
   commissionRate = 0.1,
   onApplyPrice,
+  mode: controlledMode,
+  onModeChange,
 }: PriceCommissionCalculatorProps) {
   const { tr } = useLanguage();
-  const [mode, setMode] = useState<'deduct' | 'add'>('add');
+  const [localMode, setLocalMode] = useState<'deduct' | 'add'>('deduct');
+  const mode = controlledMode ?? localMode;
+  const setMode = (m: 'deduct' | 'add') => {
+    setLocalMode(m);
+    onModeChange?.(m);
+  };
   const price = typeof basePrice === 'number' ? basePrice : parseFloat(basePrice) || 0;
   const pct = Math.round(commissionRate * 100);
 
@@ -110,7 +120,10 @@ export function PriceCommissionCalculator({
                 {onApplyPrice && (
                   <button
                     type="button"
-                    onClick={() => onApplyPrice(customerPriceWithAdd)}
+                    onClick={() => {
+                      onApplyPrice(customerPriceWithAdd);
+                      setMode('deduct');
+                    }}
                     className="px-2 py-0.5 rounded bg-[#0F6E56] hover:bg-[#0c5945] text-white text-[10px] font-bold transition-all cursor-pointer shadow-xs"
                   >
                     {tr('Apply Price')}
