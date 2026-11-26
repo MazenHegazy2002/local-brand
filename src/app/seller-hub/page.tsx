@@ -4317,9 +4317,6 @@ function AddProductModal({
             commissionRate={commissionRate}
             mode={newProduct.feeMode ?? 'deduct'}
             onModeChange={m => setNewProduct({ ...newProduct, feeMode: m })}
-            onApplyPrice={newPrice =>
-              setNewProduct({ ...newProduct, basePrice: String(newPrice), feeMode: 'deduct' })
-            }
           />
 
           {/* Primary product image */}
