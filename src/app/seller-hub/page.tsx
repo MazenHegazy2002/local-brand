@@ -591,7 +591,7 @@ export default function SellerHub() {
       const { mainImageUploading: _uiUploading, feeMode, ...productData } = newProduct;
       const feeRate = data?.currentSeller?.commissionRate ?? 0.1;
       const withFee = (n: number) =>
-        feeMode === 'add' ? Math.round(n * (1 + feeRate) * 100) / 100 : n;
+        (feeMode ?? 'add') === 'add' ? Math.round(n * (1 + feeRate) * 100) / 100 : n;
       const res = (await createProduct({
         ...productData,
         basePrice: withFee(Number(newProduct.basePrice)),
@@ -4315,7 +4315,7 @@ function AddProductModal({
           <PriceCommissionCalculator
             basePrice={newProduct.basePrice}
             commissionRate={commissionRate}
-            mode={newProduct.feeMode ?? 'deduct'}
+            mode={newProduct.feeMode ?? 'add'}
             onModeChange={m => setNewProduct({ ...newProduct, feeMode: m })}
           />
 
