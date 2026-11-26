@@ -79,6 +79,8 @@ interface DashboardData {
 }
 
 interface NewProductState {
+  /** 'add' = add the platform fee on top of the entered prices when creating. */
+  feeMode?: 'deduct' | 'add';
   title: string;
   description: string;
   basePrice: string | number;
@@ -586,10 +588,13 @@ export default function SellerHub() {
         throw new Error('All variant prices are required');
 
       const mainImageUrl = newProduct.mainImage || undefined;
-      const { mainImageUploading: _uiUploading, ...productData } = newProduct;
+      const { mainImageUploading: _uiUploading, feeMode, ...productData } = newProduct;
+      const feeRate = data?.currentSeller?.commissionRate ?? 0.1;
+      const withFee = (n: number) =>
+        feeMode === 'add' ? Math.round(n * (1 + feeRate) * 100) / 100 : n;
       const res = (await createProduct({
         ...productData,
-        basePrice: Number(newProduct.basePrice),
+        basePrice: withFee(Number(newProduct.basePrice)),
         weightKg: Number(newProduct.weightKg),
         flashSalePrice:
           Number(newProduct.flashSalePrice) > 0 ? Number(newProduct.flashSalePrice) : undefined,
@@ -598,7 +603,7 @@ export default function SellerHub() {
           return {
             ...v,
             stock: Number(v.stock),
-            price: Number(v.price) || Number(newProduct.basePrice),
+            price: withFee(Number(v.price) || Number(newProduct.basePrice)),
             sizes: v.sizes || '',
             image: imgList[0] || '',
             images: imgList,
@@ -4310,7 +4315,11 @@ function AddProductModal({
           <PriceCommissionCalculator
             basePrice={newProduct.basePrice}
             commissionRate={commissionRate}
-            onApplyPrice={newPrice => setNewProduct({ ...newProduct, basePrice: String(newPrice) })}
+            mode={newProduct.feeMode ?? 'deduct'}
+            onModeChange={m => setNewProduct({ ...newProduct, feeMode: m })}
+            onApplyPrice={newPrice =>
+              setNewProduct({ ...newProduct, basePrice: String(newPrice), feeMode: 'deduct' })
+            }
           />
 
           {/* Primary product image */}

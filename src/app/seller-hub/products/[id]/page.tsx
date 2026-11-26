@@ -493,6 +493,10 @@ export default function EditProductPage() {
     });
   };
 
+  const [feeMode, setFeeMode] = useState<'deduct' | 'add'>('deduct');
+  const feeRate = sellerData?.currentSeller?.commissionRate ?? 0.1;
+  const addFee = (n: number) => Math.round((Number(n) || 0) * (1 + feeRate) * 100) / 100;
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -502,6 +506,8 @@ export default function EditProductPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          // "Add percentage" selected: the platform fee is added on top of the seller's prices.
+          basePrice: feeMode === 'add' ? addFee(form.basePrice) : form.basePrice,
           flashSaleEndsAt: form.flashSaleEndsAt
             ? new Date(form.flashSaleEndsAt).toISOString()
             : null,
@@ -509,6 +515,7 @@ export default function EditProductPage() {
             const imgList = v.images && v.images.length > 0 ? v.images : v.image ? [v.image] : [];
             return {
               ...v,
+              price: feeMode === 'add' ? addFee(v.price || form.basePrice) : v.price,
               title: v.color || v.title || 'Standard',
               sizes: v.sizes || '',
               images: imgList,
@@ -1121,7 +1128,14 @@ export default function EditProductPage() {
                   <PriceCommissionCalculator
                     basePrice={form.basePrice}
                     commissionRate={sellerData?.currentSeller?.commissionRate ?? 0.1}
-                    onApplyPrice={newPrice => setForm({ ...form, basePrice: newPrice })}
+                    mode={feeMode}
+                    onModeChange={setFeeMode}
+                    onApplyPrice={() => {
+                      setForm({ ...form, basePrice: addFee(form.basePrice) });
+                      setVariants(
+                        variants.map(v => ({ ...v, price: addFee(v.price || form.basePrice) }))
+                      );
+                    }}
                   />
                 </div>
                 <div>
@@ -1657,7 +1671,11 @@ export default function EditProductPage() {
               <h4 className="font-bold text-sm">{form.title || tr('Product Title')}</h4>
               <div className="mt-1">
                 <p className="text-[#0F6E56] font-black text-base">
-                  {(Number(form.basePrice) || 0).toFixed(2)} {tr('EGP')}
+                  {(feeMode === 'add'
+                    ? addFee(form.basePrice)
+                    : Number(form.basePrice) || 0
+                  ).toFixed(2)}{' '}
+                  {tr('EGP')}
                 </p>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                   {tr('Customer pays')}
