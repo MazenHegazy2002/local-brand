@@ -246,6 +246,15 @@ export default function SellerHub() {
   const [creatingBrand, setCreatingBrand] = useState(false);
 
   const isMultiBrand = !!data?.currentSeller?.isMultiBrand;
+  // A suspended or banned seller can still sign in, so the sidebar must say so instead of 'Active'.
+  const sellerStatus = data?.currentSeller?.status;
+  const isSuspended = sellerStatus === 'SUSPENDED' || sellerStatus === 'BANNED';
+  const suspendedLabel = sellerStatus === 'BANNED' ? tr('Banned') : tr('Suspended');
+  const statusDotClass = isSuspended
+    ? 'bg-red-500'
+    : isMultiBrand
+      ? 'bg-amber-400'
+      : 'bg-green-400';
   const rawBrands = ((data?.currentSeller as any)?.brands || []) as any[];
   const displayBrands = useMemo(() => {
     if (rawBrands && rawBrands.length > 0) return rawBrands;
@@ -850,7 +859,7 @@ export default function SellerHub() {
               >
                 <span>{tr('All brands')}</span>
                 <span className="text-xs opacity-80 font-normal">
-                  {(data?.myOrders || []).length > 0 ? (data?.myOrders || []).length : 635}
+                  {(data?.myOrders || []).length}
                 </span>
               </button>
 
@@ -1024,10 +1033,14 @@ export default function SellerHub() {
                   {data?.currentSeller?.storeName || tr('Store')}
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-white/75 mt-0.5">
-                  <div
-                    className={`w-2 h-2 rounded-full ${isMultiBrand ? 'bg-amber-400' : 'bg-green-400'}`}
-                  />
-                  <span>{isMultiBrand ? tr('Multi-brand seller') : tr('Active seller')}</span>
+                  <div className={`w-2 h-2 rounded-full ${statusDotClass}`} />
+                  <span>
+                    {isSuspended
+                      ? suspendedLabel
+                      : isMultiBrand
+                        ? tr('Multi-brand seller')
+                        : tr('Active seller')}
+                  </span>
                 </div>
               </div>
               <button
@@ -1220,7 +1233,7 @@ export default function SellerHub() {
                 opacity: activeBrand === 'all' ? 1 : 0.85,
               }}
             >
-              {(data?.myOrders || []).length > 0 ? (data?.myOrders || []).length : 635}
+              {(data?.myOrders || []).length}
             </span>
           </button>
 
@@ -1234,16 +1247,7 @@ export default function SellerHub() {
               )
             ).length;
 
-            const defaultOrderCounts: Record<string, number> = {
-              'brandy-store': 312,
-              'nile-threads': 205,
-              'oasis-home': 118,
-              'sahara-kids': 0,
-            };
-            const displayCount =
-              (data?.myOrders || []).length > 0
-                ? bOrdersCount
-                : (defaultOrderCounts[b.slug] ?? bOrdersCount);
+            const displayCount = bOrdersCount;
 
             return (
               <div key={b.id || b.slug} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1450,10 +1454,12 @@ export default function SellerHub() {
               {data?.currentSeller?.storeName || tr('Store')}
             </div>
             <div className="active-dot-row flex items-center gap-2 text-[10px] text-white/80 mt-0.5">
-              <div
-                className={`active-dot w-2 h-2 rounded-full ${isMultiBrand ? 'bg-amber-400' : 'bg-green-400'}`}
-              ></div>
-              {isMultiBrand ? tr('Upgraded by admin') : tr('Active seller')}
+              <div className={`active-dot w-2 h-2 rounded-full ${statusDotClass}`}></div>
+              {isSuspended
+                ? suspendedLabel
+                : isMultiBrand
+                  ? tr('Upgraded by admin')
+                  : tr('Active seller')}
             </div>
           </div>
           <button
@@ -1478,7 +1484,7 @@ export default function SellerHub() {
               </div>
               <div className="text-xs text-slate-400 font-medium">
                 {activeBrandObj
-                  ? `Managing brand store: ${activeBrandObj.name}`
+                  ? `${tr('Managing brand store:')} ${activeBrandObj.name}`
                   : tr('Combined overview across all seller brands')}
               </div>
             </div>
@@ -1514,6 +1520,24 @@ export default function SellerHub() {
             <Plus size={16} /> {tr('Add product')}
           </button>
         </div>
+
+        {isSuspended && (
+          <div
+            role="alert"
+            className="mx-[14px] md:mx-5 mt-3 shrink-0 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          >
+            <div className="font-bold">
+              {sellerStatus === 'BANNED'
+                ? tr('Your store is banned')
+                : tr('Your store is suspended')}
+            </div>
+            <div className="text-xs mt-1 text-red-700">
+              {tr(
+                "Your products are hidden from shoppers and you can't publish new ones. Contact Brandyy support to reactivate your store."
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="tab-content animate-fadeIn">
           {activeTab === 'overview' && (

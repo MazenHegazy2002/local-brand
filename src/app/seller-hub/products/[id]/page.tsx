@@ -593,10 +593,23 @@ export default function EditProductPage() {
   }
 
   const isMultiBrand = sellerData?.isMultiBrand || false;
+  const sellerStatus = sellerData?.currentSeller?.status;
+  const isSuspended = sellerStatus === 'SUSPENDED' || sellerStatus === 'BANNED';
+  const sellerStatusLabel = isSuspended
+    ? sellerStatus === 'BANNED'
+      ? tr('Banned')
+      : tr('Suspended')
+    : isMultiBrand
+      ? tr('Upgraded by admin')
+      : tr('Active seller');
+  const statusDotClass = isSuspended
+    ? 'bg-red-500'
+    : isMultiBrand
+      ? 'bg-amber-400'
+      : 'bg-green-400';
   const brands = sellerData?.brands || [];
   const currentSeller = sellerData?.currentSeller || null;
-  const ordersCount =
-    (sellerData?.myOrders || []).length > 0 ? (sellerData?.myOrders || []).length : 635;
+  const ordersCount = (sellerData?.myOrders || []).length;
 
   return (
     <div className="db">
@@ -794,10 +807,8 @@ export default function EditProductPage() {
                   {currentSeller?.storeName || tr('Brandyy Store')}
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-white/75 mt-0.5">
-                  <span
-                    className={`w-2 h-2 rounded-full ${isMultiBrand ? 'bg-amber-400' : 'bg-green-400'}`}
-                  />
-                  <span>{isMultiBrand ? tr('Upgraded by admin') : tr('Active seller')}</span>
+                  <span className={`w-2 h-2 rounded-full ${statusDotClass}`} />
+                  <span>{sellerStatusLabel}</span>
                 </div>
               </div>
               <button
@@ -925,7 +936,7 @@ export default function EditProductPage() {
                   i.variant?.product?.brandId === b.id || i.variant?.product?.brand === b.name
               )
             ).length;
-            const displayCount = (sellerData?.myOrders || []).length > 0 ? bOrdersCount : 0;
+            const displayCount = bOrdersCount;
 
             return (
               <div key={b.id || b.slug} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1033,10 +1044,8 @@ export default function EditProductPage() {
               {currentSeller?.storeName || tr('Brandyy Store')}
             </div>
             <div className="active-dot-row flex items-center gap-2 text-[10px] text-white/80 mt-0.5">
-              <div
-                className={`active-dot w-2 h-2 rounded-full ${isMultiBrand ? 'bg-amber-400' : 'bg-green-400'}`}
-              ></div>
-              {isMultiBrand ? tr('Upgraded by admin') : tr('Active seller')}
+              <div className={`active-dot w-2 h-2 rounded-full ${statusDotClass}`}></div>
+              {sellerStatusLabel}
             </div>
           </div>
           <button

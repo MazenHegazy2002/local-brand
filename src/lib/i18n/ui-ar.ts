@@ -2068,6 +2068,13 @@ export const uiAr: Record<string, string> = {
   'e.g. 0.5': 'مثال: 0.5',
   'e.g. 30.067807, 31.518141': 'مثال: 30.067807, 31.518141',
   'e.g. قسم اول القاهرة الجديدة': 'مثال: قسم أول القاهرة الجديدة',
+  Suspended: 'موقوف',
+  Banned: 'محظور',
+  'Your store is suspended': 'متجرك موقوف',
+  'Your store is banned': 'متجرك محظور',
+  "Your products are hidden from shoppers and you can't publish new ones. Contact Brandyy support to reactivate your store.":
+    'منتجاتك مخفية عن المتسوقين ولا يمكنك نشر منتجات جديدة. تواصل مع دعم براندي لإعادة تفعيل متجرك.',
+  'Managing brand store:': 'إدارة متجر الماركة:',
   Pending: 'قيد الانتظار',
   Cancelled: 'ملغي',
   Returned: 'مرتجع',
