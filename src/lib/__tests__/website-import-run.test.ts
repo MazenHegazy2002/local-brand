@@ -18,3 +18,12 @@ describe('sniffImageType', () => {
     expect(sniffImageType(Buffer.from('<html>nope</html>'))).toBeNull();
   });
 });
+
+describe('withPlatformFee', () => {
+  it('adds the 10% platform fee to website prices', async () => {
+    const { withPlatformFee } = await import('../website-import-run');
+    expect(withPlatformFee(375)).toBe(412.5);
+    expect(withPlatformFee(395)).toBe(434.5);
+    expect(withPlatformFee(0)).toBe(0);
+  });
+});
