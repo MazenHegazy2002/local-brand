@@ -48,6 +48,13 @@ async function copyImage(url: string): Promise<string | null> {
   }
 }
 
+// Website prices are what the seller charged on their own shop. On Brandyy the
+// customer price always includes the 10% platform fee on top.
+export const IMPORT_PLATFORM_FEE = 0.1;
+export function withPlatformFee(price: number): number {
+  return Math.round(price * (1 + IMPORT_PLATFORM_FEE) * 100) / 100;
+}
+
 function slugify(title: string, i: number) {
   const base = title
     .toLowerCase()
@@ -78,7 +85,8 @@ export type ImportOutcome =
  * Reads a website and creates every product it finds as a DRAFT in the given
  * seller's catalogue, with images copied to our storage. Re-running is safe:
  * drafts with the same title are refreshed (missing photos, sizes, colours,
- * description, price, stock filled in); published products are left alone.
+ * description, price, stock filled in). Every imported price gets the 10%
+ * platform fee added; published products are left alone.
  */
 export async function importWebsiteForSeller(opts: {
   sellerId: string;
@@ -178,7 +186,7 @@ export async function importWebsiteForSeller(opts: {
       if (prev) {
         // Draft from an earlier run: fill in what's missing.
         const images = prev._count.images ? [] : await copyAll();
-        const price = p.price ?? prev.basePrice;
+        const price = p.price != null ? withPlatformFee(p.price) : prev.basePrice;
         await prisma.product.update({
           where: { id: prev.id },
           data: {
@@ -203,7 +211,7 @@ export async function importWebsiteForSeller(opts: {
       }
 
       const images = await copyAll();
-      const price = p.price ?? 0;
+      const price = p.price != null ? withPlatformFee(p.price) : 0;
       const slug = slugify(p.title, i);
 
       await prisma.product.create({
